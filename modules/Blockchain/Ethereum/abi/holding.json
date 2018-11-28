@@ -187,6 +187,20 @@
 		"constant": false,
 		"inputs": [
 			{
+				"name": "newHubAddress",
+				"type": "address"
+			}
+		],
+		"name": "setHubAddress",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
 				"name": "newOwner",
 				"type": "address"
 			}
@@ -215,6 +229,20 @@
 		"constant": true,
 		"inputs": [],
 		"name": "holdingStorage",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "litigationStorage",
 		"outputs": [
 			{
 				"name": "",

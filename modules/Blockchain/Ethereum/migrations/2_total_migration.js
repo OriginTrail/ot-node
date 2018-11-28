@@ -5,13 +5,16 @@ var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
+var Litigation = artifacts.require('Litigation'); // eslint-disable-line no-undef
 var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
 var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
 
 var ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
 var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
+var LitigationStorage = artifacts.require('LitigationStorage'); // eslint-disable-line no-undef
 
 var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
+var MockLitigation = artifacts.require('MockLitigation'); // eslint-disable-line no-undef
 var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
@@ -24,11 +27,13 @@ module.exports = async (deployer, network, accounts) => {
 
     let profile;
     let holding;
+    let litigation;
     let reading;
     let approval;
 
     let profileStorage;
     let holdingStorage;
+    let litigationStorage;
 
     var amounts = [];
     var recepients = [];
@@ -55,6 +60,13 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
+        litigationStorage = await deployer.deploy(
+            LitigationStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setLitigationStorageAddress(holdingStorage.address);
+
         approval = await deployer.deploy(MockApproval);
         await hub.setApprovalAddress(approval.address);
 
@@ -66,6 +78,13 @@ module.exports = async (deployer, network, accounts) => {
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
+
+        litigation = await deployer.deploy(
+            MockLitigation,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setLitigationAddress(holding.address);
 
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);
@@ -97,6 +116,13 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
+        litigationStorage = await deployer.deploy(
+            LitigationStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setLitigationStorageAddress(holdingStorage.address);
+
         approval = await deployer.deploy(Approval);
         await hub.setApprovalAddress(approval.address);
 
@@ -108,6 +134,13 @@ module.exports = async (deployer, network, accounts) => {
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
+
+        litigation = await deployer.deploy(
+            MockLitigation,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setLitigationAddress(holding.address);
 
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);

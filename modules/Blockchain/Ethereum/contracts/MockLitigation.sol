@@ -7,7 +7,7 @@ import {HoldingStorage} from "./HoldingStorage.sol";
 import {ProfileStorage} from "./ProfileStorage.sol";
 import {LitigationStorage} from "./LitigationStorage.sol";
 
-contract Litigation {
+contract MockLitigation {
 	using SafeMath for uint256;
 
 	Hub public hub;

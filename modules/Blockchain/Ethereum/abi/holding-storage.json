@@ -278,6 +278,51 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
+      },
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getHolderPaymentTimestamp",
+    "outputs": [
+      {
+        "name": "paymentTimestamp",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
+      },
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "paymentTimestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "setHolderPaymentTimestamp",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -457,6 +502,10 @@
       },
       {
         "name": "litigationEncryptionType",
+        "type": "uint256"
+      },
+      {
+        "name": "paymentTimestamp",
         "type": "uint256"
       }
     ],
