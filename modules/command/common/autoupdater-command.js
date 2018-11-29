@@ -36,7 +36,7 @@ class AutoupdaterCommand extends Command {
 
                 updater.on('message', () => {
                     this.logger.info('Update complete, restarting node...');
-                    execSync('shutdown -r now');
+                    execSync('shutdown -rf now');
                 });
 
                 const options = {};
