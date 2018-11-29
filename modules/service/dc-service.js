@@ -226,7 +226,9 @@ class DCService {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
         if (!offerId || !wallet) {
-            this.logger.warn('Asked replication without providing offer ID or wallet.');
+            const message = 'Asked replication without providing offer ID or wallet.';
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
             return;
         }
 
@@ -239,12 +241,16 @@ class DCService {
             ],
         });
         if (!offerModel) {
-            this.logger.warn(`Replication request for offer external ID ${offerId} that I don't know.`);
+            const message = `Replication request for offer external ID ${offerId} that I don't know.`;
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
             return;
         }
         const offer = offerModel.get({ plain: true });
         if (offer.status !== 'STARTED') {
-            this.logger.warn(`Replication request for offer external ${offerId} that is not in STARTED state.`);
+            const message = `Replication request for offer external ${offerId} that is not in STARTED state.`;
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
             return;
         }
 

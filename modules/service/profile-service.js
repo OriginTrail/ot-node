@@ -80,7 +80,7 @@ class ProfileService {
         const reputation = new BN(profile.reputation, 10);
         const withdrawalTimestamp = new BN(profile.withdrawalTimestamp, 10);
         const withdrawalAmount = new BN(profile.withdrawalAmount, 10);
-        const nodeId = new BN(profile.nodeId, 10);
+        const nodeId = new BN(Utilities.denormalizeHex(profile.nodeId), 16);
         return !(stake.eq(zero) && stakeReserved.eq(zero) &&
             reputation.eq(zero) && withdrawalTimestamp.eq(zero) &&
             withdrawalAmount.eq(zero) && nodeId.eq(zero));

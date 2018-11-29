@@ -20,3 +20,11 @@ Feature: ERC725 Profile features
     And the 1st node's spend all the Ethers
     And I start the node
     Then the 1st node should start normally
+
+  Scenario: Provide own ERC725 identity and expect node to create profile
+    Given I setup 1 node
+    When I manually create ERC725 identity for 1st node
+    And I use the created ERC725 identity in 1st node
+    And I start the node
+    Then the 1st node should have a valid ERC725 identity
+    And the 1st node should have a valid profile
