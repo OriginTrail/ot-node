@@ -128,6 +128,21 @@ class Blockchain {
     }
 
     /**
+     * Completes litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param challengerIdentity - DC identity
+     * @param proofData - answer
+     * @return {Promise<void>}
+     */
+    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData) {
+        return this.blockchain.completeLitigation(
+            offerId, holderIdentity,
+            challengerIdentity, proofData,
+        );
+    }
+
+    /**
      * Answers litigation from DH side
      * @param offerId
      * @param holderIdentity

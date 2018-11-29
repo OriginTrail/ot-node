@@ -1096,6 +1096,28 @@ class Ethereum {
             [offerId, holderIdentity, litigatorIdentity, requestedDataIndex, hashArray], options,
         );
     }
+
+    /**
+     * Completes litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param challengerIdentity - DC identity
+     * @param proofData - answer
+     * @return {Promise<void>}
+     */
+    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.litigationContractAddress,
+        };
+
+        this.log.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData})`);
+        return this.transactions.queueTransaction(
+            this.litigationContractAbi, 'completeLitigation',
+            [offerId, holderIdentity, challengerIdentity, proofData], options,
+        );
+    }
 }
 
 module.exports = Ethereum;

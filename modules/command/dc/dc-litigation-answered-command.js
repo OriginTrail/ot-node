@@ -1,11 +1,11 @@
 const Command = require('../command');
-const Utilities = require('../../Utilities');
-const Models = require('../../../models/index');
+const utilities = require('../../Utilities');
+const models = require('../../../models/index');
 
 /**
- * Repeatable command that checks whether litigation is successfully initiated
+ * Repeatable command that checks whether DH has answered the litigation
  */
-class DcLitigationInitiatedCommand extends Command {
+class DCLitigationAnsweredCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -22,9 +22,9 @@ class DcLitigationInitiatedCommand extends Command {
             blockId,
         } = command.data;
 
-        const events = await Models.events.findAll({
+        const events = await models.events.findAll({
             where: {
-                event: 'LitigationInitiated',
+                event: 'LitigationAnswered',
                 finished: 0,
             },
         });
@@ -33,27 +33,22 @@ class DcLitigationInitiatedCommand extends Command {
                 const {
                     offerId: eventOfferId,
                     holderIdentity,
-                    requestedDataIndex,
                 } = JSON.parse(e.data);
-                return Utilities.compareHexStrings(offerId, eventOfferId)
-                    && Utilities.compareHexStrings(dhIdentity, holderIdentity)
-                    && blockId === parseInt(requestedDataIndex, 10);
+                return utilities.compareHexStrings(offerId, eventOfferId)
+                    && utilities.compareHexStrings(dhIdentity, holderIdentity);
             });
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                this.logger.important(`Litigation initiated for DH ${dhIdentity} and offer ${offerId}.`);
+                this.logger.important(`Litigation answered for DH ${dhIdentity} and offer ${offerId}.`);
 
-                const replicatedData = await Models.replicated_data.findOne({
+                const replicatedData = await models.replicated_data.findOne({
                     where: { offer_id: offerId, dh_identity: dhIdentity },
                 });
-                replicatedData.status = 'LITIGATION_STARTED';
+                replicatedData.status = 'LITIGATION_ANSWERED';
                 await replicatedData.save({ fields: ['status'] });
 
-                const offer = await Models.offers.findOne({
-                    where: { offer_id: offerId },
-                });
                 return {
                     commands: [
                         {
@@ -62,9 +57,7 @@ class DcLitigationInitiatedCommand extends Command {
                                 dhIdentity,
                                 blockId,
                             },
-                            name: 'dcLitigationAnsweredCommand',
-                            period: 5000,
-                            deadline_at: (offer.litigation_interval_in_minutes * 60 * 1000),
+                            name: 'dcLitigationCompleteCommand',
                         },
                     ],
                 };
@@ -74,13 +67,46 @@ class DcLitigationInitiatedCommand extends Command {
     }
 
     /**
+     * Execute strategy when event is too late
+     * @param command
+     */
+    async expired(command) {
+        const {
+            offerId,
+            dhIdentity,
+            blockId,
+        } = command.data;
+
+        const replicatedData = await models.replicated_data.findOne({
+            where: { offer_id: offerId, dh_identity: dhIdentity },
+        });
+        replicatedData.status = 'LITIGATION_NOT_ANSWERED';
+        await replicatedData.save({ fields: ['status'] });
+
+        return {
+            commands: [
+                {
+                    data: {
+                        offerId,
+                        dhIdentity,
+                        blockId,
+                    },
+                    name: 'dcLitigationCompleteCommand',
+                },
+            ],
+        };
+    }
+
+    /**
      * Builds default AddCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'dcLitigationInitiatedCommand',
+            data: {
+            },
+            name: 'dcLitigationAnsweredCommand',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
@@ -91,4 +117,4 @@ class DcLitigationInitiatedCommand extends Command {
     }
 }
 
-module.exports = DcLitigationInitiatedCommand;
+module.exports = DCLitigationAnsweredCommand;
