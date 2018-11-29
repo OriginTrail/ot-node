@@ -1,6 +1,7 @@
 const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
+const importUtilities = require('../../ImportUtilities');
 
 /**
  * Initiates litigation completion from the DC side
@@ -37,7 +38,9 @@ class DCLitigationCompleteCommand extends Command {
                     offer_id: offerId,
                 },
         });
-        await this.blockchain.completeLitigation(offerId, dhIdentity, dcIdentity, challenge.answer);
+
+        const answer = utilities.normalizeHex(Buffer.from(challenge.answer, 'utf-8').toString('hex'));
+        await this.blockchain.completeLitigation(offerId, dhIdentity, dcIdentity, answer);
         return Command.empty();
     }
 

@@ -52,6 +52,7 @@ class DCChallengeCommand extends Command {
         const currentTime = new Date().getTime();
         const challengeRecord = await models.challenges.create({
             dh_id: dhId,
+            dh_identity: dhIdentity,
             data_set_id: offer.data_set_id,
             block_id: challenge.block_id,
             expected_answer: challenge.answer,
