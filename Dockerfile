@@ -5,6 +5,7 @@ LABEL maintainer="OriginTrail"
 ARG targetEnvironment=autoupdater
 
 ENV NODE_ENV=$targetEnvironment
+ENV SEQUELIZEDB=/ot-node/current/data/system.db
 ENV GRANAX_USE_SYSTEM_TOR=1
 
 RUN apt-get -qq update && apt-get -qq -y install curl
