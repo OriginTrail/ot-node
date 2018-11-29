@@ -61,6 +61,7 @@ class CommandExecutor {
      */
     async init() {
         await this.startCleaner();
+        await this.startAutoupdater();
         this.logger.trace('Command executor has been initialized...');
     }
 
@@ -182,6 +183,12 @@ class CommandExecutor {
     async startCleaner() {
         await CommandExecutor._delete('cleanerCommand');
         const handler = this.commandResolver.resolve('cleanerCommand');
+        await this.add(handler.default(), 0, true);
+    }
+
+    async startAutoupdater() {
+        await CommandExecutor._delete('autoupdaterCommand');
+        const handler = this.commandResolver.resolve('autoupdaterCommand');
         await this.add(handler.default(), 0, true);
     }
 
@@ -319,7 +326,7 @@ class CommandExecutor {
                         STATUS.started,
                         STATUS.repeating],
                 },
-                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand'] },
+                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand', 'autoupdaterCommand'] },
             },
         });
 
