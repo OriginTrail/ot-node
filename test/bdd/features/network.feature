@@ -109,7 +109,7 @@ Feature: Test basic network features
     # Start node and let it create own profile. It needs some ETH and TRAC for that.
     Given I setup 1 node
     And I start the node
-    And I stop the nodes
+    And I stop the node
     # Spend all the funds and try to query network.
     When the 1st node's spend all the Tokens
     And the 1st node's spend all the Ethers
