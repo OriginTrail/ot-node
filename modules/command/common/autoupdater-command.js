@@ -34,10 +34,8 @@ class AutoupdaterCommand extends Command {
 
                 this.logger.info('New version found');
 
-                updater.on('message', (msg) => {
+                updater.on('message', () => {
                     this.logger.info('Update complete, restarting node...');
-
-                    process.argv.shift();
                     execSync('shutdown -r now');
                 });
 
