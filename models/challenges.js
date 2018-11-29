@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: () => uuidv4(),
         },
         dh_id: DataTypes.STRING,
+        dh_identity: DataTypes.STRING,
         block_id: DataTypes.INTEGER,
         offer_id: DataTypes.STRING,
         answer: DataTypes.STRING,

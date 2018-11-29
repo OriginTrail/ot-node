@@ -64,7 +64,8 @@ class DcLitigationInitiatedCommand extends Command {
                             },
                             name: 'dcLitigationAnsweredCommand',
                             period: 5000,
-                            deadline_at: (offer.litigation_interval_in_minutes * 60 * 1000),
+                            deadline_at: Date.now() +
+                                            (offer.litigation_interval_in_minutes * 60 * 1000),
                         },
                     ],
                 };
