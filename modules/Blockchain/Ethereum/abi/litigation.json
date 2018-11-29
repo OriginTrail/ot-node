@@ -306,5 +306,49 @@
 		],
 		"name": "LitigationCompleted",
 		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "challengerIdentity",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "litigationRootHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "ReplacementStarted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "challengerIdentity",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "chosenHolder",
+				"type": "address"
+			}
+		],
+		"name": "ReplacementCompleted",
+		"type": "event"
 	}
 ]
