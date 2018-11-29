@@ -68,7 +68,7 @@ class AutoupdaterCommand extends Command {
             name: 'autoupdaterCommand',
             data: {
             },
-            period: 1 * 60 * 1000,
+            period: 3 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
