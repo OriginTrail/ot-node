@@ -800,13 +800,12 @@ class GS1Importer {
             }
             // eslint-disable-next-line
             const { vertices: newDenormalizedVertices, edges: newDenormalizedEdges } = denormalizeGraph(dataSetId, allVertices, allEdges);
-
-            allVertices.map((v) => {
+            newDenormalizedVertices.map((v) => {
                 v.inTransaction = true;
                 return v;
             });
             await Promise.all(newDenormalizedVertices.map(vertex => this.db.addVertex(vertex)));
-            allEdges.map((e) => {
+            newDenormalizedEdges.map((e) => {
                 e.inTransaction = true;
                 return e;
             });
@@ -823,6 +822,9 @@ class GS1Importer {
             }));
 
             await this.db.commit();
+
+
+
 
             return {
                 vertices: normalizedVertices,
