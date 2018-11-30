@@ -823,9 +823,6 @@ class GS1Importer {
 
             await this.db.commit();
 
-
-
-
             return {
                 vertices: normalizedVertices,
                 edges: normalizedEdges,
