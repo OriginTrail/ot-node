@@ -29,7 +29,6 @@ class AutoupdaterCommand extends Command {
 
         const currentVersion = pjson.version;
         Utilities.getVersion(config.autoUpdater.branch).then((gitVersion) => {
-            console.log(packageJson);
             console.log('Git Version: ', gitVersion);
             console.log('Current Version: ', currentVersion);
             if (semver.lt(currentVersion, gitVersion)) {
