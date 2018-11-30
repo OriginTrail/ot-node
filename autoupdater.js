@@ -3,52 +3,53 @@ const request = require('request');
 const fs = require('fs');
 const Zip = require('machinepack-zip');
 const Umzug = require('umzug');
+const logger = require('../modules/logger');
 
 process.once('message', async ([options]) => {
     const filename = `https://github.com/${options.autoUpdater.repo}/archive/${options.autoUpdater.branch}.zip`;
-    console.log(`Downloading update: ${filename} ...`);
+    logger.info(`Downloading update: ${filename} ...`);
     const response = await request(filename);
     const filestream = fs.createWriteStream('update.zip');
     response.pipe(filestream);
 
     filestream.on('finish', () => {
-        console.log('Download complete');
-        console.log('Extracting update...');
+        logger.info('Download complete');
+        logger.info('Extracting update...');
 
         Zip.unzip({
             source: 'update.zip',
             destination: '..',
         }).exec({
             error(err) {
-                console.log(err);
+                logger.error(err);
             },
 
             success() {
                 try {
-                    console.log('Update extraction complete');
-                    console.log(`Moving update to directory ${options.version}...`);
+                    logger.info('Update extraction complete');
+                    logger.info(`Moving update to directory ${options.version}...`);
 
-                    console.log('Cleaning update destination directory');
+                    logger.info('Cleaning update destination directory');
                     execSync(`rm -rf ../${options.version}`);
 
                     let extractedFileName = options.autoUpdater.branch;
-                    console.log(extractedFileName);
+                    logger.info(extractedFileName);
                     extractedFileName = `ot-node-${extractedFileName.replace('/', '-')}`;
                     execSync(`mv ../${extractedFileName} ../${options.version}`);
 
-                    console.log(`Update has been moved to directory ${options.version}`);
-                    console.log('Migrating node modules...');
+                    logger.info(`Update has been moved to directory ${options.version}`);
+                    logger.info('Migrating node modules...');
 
                     execSync(`cp -r ./node_modules ../${options.version}/`);
-                    console.log('Node modules migrated');
-                    console.log('Installing new node modules');
+                    logger.info('Node modules migrated');
+                    logger.info('Installing new node modules');
 
                     execSync(`cd ../${options.version} && npm install`);
-                    console.log('npm modules have been installed');
-                    console.log('Migrating node configuration');
+                    logger.info('npm modules have been installed');
+                    logger.info('Migrating node configuration');
 
                     execSync(`cp -r ${options.appDataPath} /ot-node/${options.version}/`);
-                    console.log('Configuration migration complete');
+                    logger.info('Configuration migration complete');
 
                     const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
                     process.env.SEQUELIZEDB = `/ot-node/${options.version}/data/system.db`;
@@ -75,19 +76,19 @@ process.once('message', async ([options]) => {
                     });
 
                     umzug_migrations.up().then((migrations) => {
-                        console.log('Database migrated.');
-                        console.log('Switching node version');
+                        logger.info('Database migrated.');
+                        logger.info('Switching node version');
                         process.send('complete');
                         execSync(`ln -sfn /ot-node/${options.version}/ /ot-node/current`);
                         process.exit(0);
                     }).catch((err) => {
-                        console.log('Update failed');
+                        logger.error('Update failed');
                         process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
-                        console.log(err);
+                        logger.error(err);
                     });
                 } catch (err) {
                     // TODO: Rollback
-                    console.log(err);
+                    logger.error(err);
                 }
             },
         });
