@@ -30,6 +30,9 @@ class AutoupdaterCommand extends Command {
 
         const currentVersion = pjson.version;
         Utilities.getVersion(config.autoUpdater.branch).then((gitVersion) => {
+            console.log(packageJSON);
+            console.log('Git Version: ', gitVersion);
+            console.log('Current Version: ', currentVersion);
             if (semver.lt(currentVersion, gitVersion)) {
                 const updater = fork(path.join(__dirname, '..', '..', '..', 'autoupdater.js'), [], {
                     stdio: [0, 1, 2, 'ipc'],
@@ -40,7 +43,7 @@ class AutoupdaterCommand extends Command {
 
                 updater.on('message', () => {
                     this.logger.info('Update complete, restarting node...');
-                    execSync('shutdown -rf now');
+                    process.exit(0);
                 });
 
                 const options = {};
