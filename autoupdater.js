@@ -3,7 +3,7 @@ const request = require('request');
 const fs = require('fs');
 const Zip = require('machinepack-zip');
 const Umzug = require('umzug');
-const logger = require('../modules/logger');
+const logger = require('./modules/logger');
 
 process.once('message', async ([options]) => {
     const filename = `https://github.com/${options.autoUpdater.repo}/archive/${options.autoUpdater.branch}.zip`;
