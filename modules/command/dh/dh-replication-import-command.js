@@ -46,6 +46,7 @@ class DhReplicationImportCommand extends Command {
             distributionRootHash,
             distributionSignature,
             transactionHash,
+            encColor,
         } = command.data;
         const decryptedVertices =
             await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
@@ -108,7 +109,7 @@ class DhReplicationImportCommand extends Command {
             vertices: litigationVertices,
             edges,
             wallet: dcWallet,
-        }, true);
+        }, true, encColor);
 
         if (importResult.error) {
             throw Error(importResult.error);

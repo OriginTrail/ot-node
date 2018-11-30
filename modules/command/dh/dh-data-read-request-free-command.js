@@ -66,9 +66,19 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
-            const encrypted = dataInfo.origin === 'HOLDING';
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, encrypted);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, encrypted);
+            // Get replication key and then encrypt data.
+            const holdingDataModels = await Models.holding_data.find({
+                where: { data_set_id: importId },
+            });
+
+            let holdingDataModel = null;
+            if (holdingDataModels.length > 0) {
+                [holdingDataModel] = holdingDataModels; // take the first one
+            }
+
+            const encColor = holdingDataModel !== null ? holdingDataModel.color : null;
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, encColor);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, encColor);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
             const vertices = values[0];
@@ -77,11 +87,6 @@ class DHDataReadRequestFreeCommand extends Command {
             ImportUtilities.unpackKeys(vertices, edges);
             ImportUtilities.deleteInternal(edges);
             ImportUtilities.deleteInternal(vertices);
-
-            // Get replication key and then encrypt data.
-            const holdingDataModel = await Models.holding_data.find({
-                where: { data_set_id: importId },
-            });
 
             if (holdingDataModel) {
                 const holdingData = holdingDataModel.get({ plain: true });

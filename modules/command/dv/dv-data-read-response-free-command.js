@@ -107,12 +107,6 @@ class DVDataReadResponseFreeCommand extends Command {
                 dataSetId,
                 wallet: dcWallet,
             }, false);
-            await this.importer.importJSON({
-                vertices: message.data.vertices,
-                edges: message.data.edges,
-                dataSetId,
-                wallet: dcWallet,
-            }, true);
         } catch (error) {
             this.logger.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);

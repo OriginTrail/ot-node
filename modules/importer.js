@@ -51,11 +51,19 @@ class Importer {
         });
     }
 
-    async importJSON(json_document, packKeys = false) {
+    /**
+     * Import dataset in JSON format
+     * @param jsonDocument - Dataset document
+     * @param packKeys - Pack or not
+     * @param encColor - Encrypted color used when packing
+     * @return {Promise<*>}
+     */
+    async importJSON(jsonDocument, packKeys = false, encColor = null) {
         try {
             const result = await this._import('JSON', {
+                encColor,
                 packKeys,
-                json_document,
+                jsonDocument,
             });
             return {
                 response: await this.afterImport(result, packKeys),
@@ -77,6 +85,7 @@ class Importer {
         this.log.info('Entering importJSON');
         const {
             packKeys,
+            encColor,
             json_document,
         } = data;
 
@@ -95,7 +104,7 @@ class Importer {
         ImportUtilities.deleteInternal(vertices);
 
         if (packKeys) {
-            ImportUtilities.packKeys(vertices, edges);
+            ImportUtilities.packKeys(vertices, edges, encColor);
         }
 
         vertices = await Promise.all(vertices.map(async (vertex) => {
