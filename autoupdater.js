@@ -84,10 +84,12 @@ process.once('message', async ([options]) => {
                     }).catch((err) => {
                         logger.error('Update failed');
                         process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
+                        logger.error('Database migrations failed');
                         logger.error(err);
                     });
                 } catch (err) {
                     // TODO: Rollback
+                    logger.error('Update failed');
                     logger.error(err);
                 }
             },
