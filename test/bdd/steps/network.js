@@ -195,12 +195,10 @@ Given(/^I stop \[(.+)\] nodes[s]*$/, { timeout: 3000000 }, function (nodeIndices
 
     const nodeIndices = JSON.parse(`[${nodeIndicesString}]`);
     expect(nodeIndices, 'Provide at least one index.').to.have.lengthOf.above(0);
-    expect(nodeIndices, 'Indices out boundaries.').to.satisfy(
-        indices => indices.reduce((acc, index) => (index - 1 >= 0 && index <= this.state.nodes.length), true),
-    );
-    expect(nodeIndices, 'Node expected to be running.').to.satisfy(
-        indices => indices.reduce((acc, index) => this.state.nodes[index - 1].isRunning, true),
-    );
+    expect(nodeIndices, 'Indices out boundaries.').to
+        .satisfy(indices => indices.reduce((acc, index) => (index - 1 >= 0 && index <= this.state.nodes.length), true));
+    expect(nodeIndices, 'Node expected to be running.').to
+        .satisfy(indices => indices.reduce((acc, index) => this.state.nodes[index - 1].isRunning, true));
 
     const nodesStops = [];
 
