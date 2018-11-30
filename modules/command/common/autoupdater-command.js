@@ -1,7 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
 const fs = require('fs');
-const packageJSON = require('../../../package');
 const semver = require('semver');
 const path = require('path');
 const { fork, spawn, execSync } = require('child_process');
@@ -25,12 +24,12 @@ class AutoupdaterCommand extends Command {
         this.logger.info('Checking for new node version');
         const { config } = this;
 
-        const packageJson = fs.readFileSync('../../../package.json', { encoding: 'utf8' });
+        const packageJson = fs.readFileSync('/ot-node/current/package.json', { encoding: 'utf8' });
         const pjson = JSON.parse(packageJson);
 
         const currentVersion = pjson.version;
         Utilities.getVersion(config.autoUpdater.branch).then((gitVersion) => {
-            console.log(packageJSON);
+            console.log(packageJson);
             console.log('Git Version: ', gitVersion);
             console.log('Current Version: ', currentVersion);
             if (semver.lt(currentVersion, gitVersion)) {
