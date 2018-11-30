@@ -158,7 +158,7 @@ Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     Promise.all(nodesStarts).then(() => done());
 });
 
-Given(/^I stop the nodes[s]*$/, { timeout: 3000000 }, function () {
+Given(/^I stop the node[s]*$/, { timeout: 3000000 }, function () {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
