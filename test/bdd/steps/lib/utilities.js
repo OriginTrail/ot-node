@@ -2,6 +2,7 @@
 const sortedStringify = require('sorted-json-stringify');
 const { sha3_256 } = require('js-sha3');
 const _ = require('lodash');
+const BN = require('bn.js');
 
 
 function calculateImportHash(data) {
@@ -58,6 +59,16 @@ function findVertexUid(verticesArray, vertex_type, sender_id, uid, data) {
     return response;
 }
 
+/**
+     * Checks if hash is zero or any given hex string regardless of prefix 0x
+     * @param {string} hash
+     */
+function isZeroHash(hash) {
+    const num = new BN(this.denormalizeHex(hash));
+
+    return num.eqn(0);
+}
+
 
 module.exports = {
     calculateImportHash,
@@ -65,4 +76,5 @@ module.exports = {
     denormalizeHex,
     findVertexIdValue,
     findVertexUid,
+    isZeroHash,
 };
