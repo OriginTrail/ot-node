@@ -1,6 +1,6 @@
 
 module.exports = {
-    up: (queryInterface, Sequelize) => queryInterface.createTable('fake_table', {
+    down: (queryInterface, Sequelize) => queryInterface.createTable('fake_table', {
         id: {
             allowNull: false,
             autoIncrement: true,
@@ -16,5 +16,5 @@ module.exports = {
             type: Sequelize.STRING,
         },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('fake_table'),
+    up: (queryInterface, Sequelize) => queryInterface.dropTable('fake_table'),
 };
