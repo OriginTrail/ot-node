@@ -44,3 +44,21 @@ Feature: Data layer related features
     Given DC initiates the replication for last imported dataset
     And DC waits for last offer to get written to blockchain
     Then DC manually calculated datasets data and root hashes matches ones from blockchain
+
+  Scenario: Imported XML's private data should be hashed
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "test/modules/test_xml/GraphExample_1.xml" as GS1
+    Given I query DC node locally for last imported data set id
+    Then DC's local query response should contain hashed private attributes
+    Given DC initiates the replication for last imported dataset
+    And DC waits for replication window to close
+    Given I additionally setup 1 node
+    And I start additional nodes
+    And I use 2nd node as DV
+    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
+    Then all nodes with last import should answer to last network query by DV
+    Given the DV purchases import from the last query from the DC
+    Given I query DV node locally for last imported data set id
+    Then DV's local query response should contain hashed private attributes
