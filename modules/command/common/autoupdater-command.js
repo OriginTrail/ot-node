@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const fs = require('fs');
 const packageJSON = require('../../../package');
 const semver = require('semver');
 const path = require('path');
@@ -24,7 +25,10 @@ class AutoupdaterCommand extends Command {
         this.logger.info('Checking for new node version');
         const { config } = this;
 
-        const currentVersion = packageJSON.version;
+        const packageJson = fs.readFileSync('../../../package.json', { encoding: 'utf8' });
+        const pjson = JSON.parse(packageJson);
+
+        const currentVersion = pjson.version;
         Utilities.getVersion(config.autoUpdater.branch).then((gitVersion) => {
             if (semver.lt(currentVersion, gitVersion)) {
                 const updater = fork(path.join(__dirname, '..', '..', '..', 'autoupdater.js'), [], {
