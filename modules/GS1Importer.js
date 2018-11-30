@@ -823,6 +823,16 @@ class GS1Importer {
 
             await this.db.commit();
 
+            normalizedVertices.map((v) => {
+                delete v.inTransaction;
+                return v;
+            });
+
+            normalizedEdges.map((e) => {
+                delete e.inTransaction;
+                return e;
+            });
+
             return {
                 vertices: normalizedVertices,
                 edges: normalizedEdges,
