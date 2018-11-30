@@ -168,22 +168,22 @@ contract Profile {
         }
 
         require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
-            "Profile does not have enough stake to take new jobs!");
+            "Data creator does not have enough stake to take new jobs!");
         require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)),
-            "Profile does not have enough stake to take new jobs!");
+            "First profile does not have enough stake to take new jobs!");
         require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)),
-            "Profile does not have enough stake to take new jobs!");
+            "Second profile does not have enough stake to take new jobs!");
         require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)),
-            "Profile does not have enough stake to take new jobs!");
+            "Third profile does not have enough stake to take new jobs!");
         
         require(profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)) >= amount.mul(3), 
-            "Profile does not have enough stake for reserving!");
+            "Data creator does not have enough stake for reserving!");
         require(profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)) >= amount, 
-            "Profile does not have enough stake for reserving!");
+            "First profile does not have enough stake for reserving!");
         require(profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)) >= amount, 
-            "Profile does not have enough stake for reserving!");
+            "Second profile does not have enough stake for reserving!");
         require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount, 
-            "Profile does not have enough stake for reserving!");
+            "Third profile does not have enough stake for reserving!");
 
 
         profileStorage.increaseStakesReserved(
