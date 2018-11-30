@@ -86,18 +86,18 @@ class Importer {
         const {
             packKeys,
             encColor,
-            json_document,
+            jsonDocument,
         } = data;
 
         let {
             vertices,
             edges,
-        } = json_document;
+        } = jsonDocument;
 
         const {
             dataSetId,
             wallet,
-        } = json_document;
+        } = jsonDocument;
 
         this.log.trace('Import vertices and edges');
         ImportUtilities.deleteInternal(edges);

@@ -137,6 +137,7 @@ class DhReplicationImportCommand extends Command {
             distribution_private_key: distributionPrivateKey,
             distribution_epk: distributionEpk,
             transaction_hash: transactionHash,
+            color: encColor,
         });
 
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
