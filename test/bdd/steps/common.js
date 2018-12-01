@@ -14,3 +14,16 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should start normally$/, function (nodeIndex
     const node = this.state.nodes[nodeIndex - 1];
     expect(node.isRunning).to.be.true;
 });
+
+/*
+    Dummy sentence to check if everything is ok
+ */
+Then(/^everything should be ok$/, function (done) {
+    this.state.nodes.forEach((node) => {
+        expect(node.isRunning).to.be.true;
+    });
+    this.state.bootstraps.forEach((node) => {
+        expect(node.isRunning).to.be.true;
+    });
+    done();
+});
