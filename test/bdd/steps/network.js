@@ -172,6 +172,63 @@ Given(/^I stop the node[s]*$/, { timeout: 3000000 }, function () {
     return Promise.all(nodesStops);
 });
 
+Given(/^I start the (\d+)[st|nd|rd|th]+ node$/, { timeout: 3000000 }, function (nodeIndex) {
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const node = this.state.nodes[nodeIndex - 1];
+    expect(node.isRunning, 'Node should not work.').to.be.false;
+    node.start();
+
+    return new Promise((accept, reject) => {
+        node.once('initialized', () => accept());
+        node.once('error', reject);
+    });
+});
+
+
+Given(/^I stop the (\d+)[st|nd|rd|th]+ node$/, { timeout: 3000000 }, function (nodeIndex) {
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const node = this.state.nodes[nodeIndex - 1];
+    expect(node.isRunning, 'Node should work.').to.be.true;
+    node.stop();
+
+    return new Promise((accept, reject) => {
+        node.once('finished', () => accept());
+        node.once('error', reject);
+    });
+});
+
+Given(/^I stop \[(.+)\] nodes[s]*$/, { timeout: 3000000 }, function (nodeIndicesString) {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const nodeIndices = JSON.parse(`[${nodeIndicesString}]`);
+    expect(nodeIndices, 'Provide at least one index.').to.have.lengthOf.above(0);
+    expect(nodeIndices, 'Indices out boundaries.').to
+        .satisfy(indices => indices.reduce((acc, index) => (index - 1 >= 0 && index <= this.state.nodes.length), true));
+    expect(nodeIndices, 'Node expected to be running.').to
+        .satisfy(indices => indices.reduce((acc, index) => this.state.nodes[index - 1].isRunning, true));
+
+    const nodesStops = [];
+
+    nodeIndices.forEach((index) => {
+        const node = this.state.nodes[index - 1];
+        nodesStops.push(new Promise((accept, reject) => {
+            node.once('finished', () => accept());
+            node.once('error', reject);
+        }));
+        node.stop();
+    });
+
+    return Promise.all(nodesStops);
+});
+
+
 Then(/^all nodes should be aware of each other$/, function (done) {
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -270,12 +327,14 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 
     // All nodes including DC emit offer-finalized.
     this.state.nodes.forEach((node) => {
-        promises.push(new Promise((acc) => {
-            node.once('offer-finalized', (offerId) => {
-                // TODO: Change API to connect internal offer ID and external offer ID.
-                acc();
-            });
-        }));
+        if (node.isRunning) {
+            promises.push(new Promise((acc) => {
+                node.once('offer-finalized', (offerId) => {
+                    // TODO: Change API to connect internal offer ID and external offer ID.
+                    acc();
+                });
+            }));
+        }
     });
 
     return Promise.all(promises);
@@ -290,8 +349,11 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     const { dc } = this.state;
 
-    // Expect everyone to have data
-    expect(dc.state.replications.length, 'Not every node replicated data.').to.equal(this.state.nodes.length - 1);
+    // Expect everyone running to have data
+    expect(
+        dc.state.replications.length,
+        'Not every node replicated data.',
+    ).to.equal(this.state.nodes.reduce((acc, node) => acc + node.isRunning, -1)); // Start from -1. DC is not counted.
 
     // Get offer ID for last import.
     const lastOfferId =

@@ -4,6 +4,7 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
 const Graph = require('../../Graph');
+const Utilities = require('../../Utilities');
 
 /**
  * Handles data read response for free.
@@ -73,10 +74,9 @@ class DVDataReadResponseFreeCommand extends Command {
 
         // Calculate root hash and check is it the same on the SC.
         const { vertices, edges } = message.data;
-
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
-        if (!fingerprint) {
+        if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
             const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${dataSetId}`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
