@@ -209,16 +209,16 @@ async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
  * Fetch /api/query/local/import/{{data_set_id}}
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
- * @param {string} importId ID.
+ * @param {string} dataSetId ID.
  * @return {Promise.<QueryLocalImportByDataSetId>}
  */
-async function apiQueryLocalImportByDataSetId(nodeRpcUrl, importId) {
+async function apiQueryLocalImportByDataSetId(nodeRpcUrl, dataSetId) {
     return new Promise((accept, reject) => {
         request(
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local/import/${importId}`,
+                uri: `${nodeRpcUrl}/api/query/local/import/${dataSetId}`,
                 json: true,
             },
             (err, res, body) => {
