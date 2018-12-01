@@ -89,7 +89,7 @@
       "branch": "develop"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 10080,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
@@ -189,7 +189,7 @@
       "branch": "release/staging"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 1440,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "1",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 1440,
@@ -289,7 +289,7 @@
       "branch": "release/stable"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 10080,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
@@ -392,7 +392,7 @@
       "branch": "master"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 10080,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
