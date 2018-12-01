@@ -10,11 +10,11 @@ Feature: Protocol related issues.
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
-    Then the last import's hash should be the same as one manually calculated
+    Then DC's last import's hash should be the same as one manually calculated
     # Stop the node to avoid replication.
     When I stop the 7th node
     # Start replication to force DC to write fingerprint so DV can buy it. Do not wait to finish.
-    Given DC initiates the replication
+    Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
