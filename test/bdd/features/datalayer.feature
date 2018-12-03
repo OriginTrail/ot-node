@@ -90,10 +90,5 @@ Feature: Data layer related features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:ot:object:actor:id:Company_Green" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     And the DV purchases import from the last query from a DH
-    Given DV publishes query consisting of path: "identifiers.id", value: "urn:ot:object:actor:id:Company_Pink" and opcode: "EQ" to the network
-    Then all nodes with last import should answer to last network query by DV
-    And the DV purchases import from the last query from a DH
     Given DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
-    Then last consensus response should have 1 event with 1 match
-    Given DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
     Then last consensus response should have 1 event with 1 match
