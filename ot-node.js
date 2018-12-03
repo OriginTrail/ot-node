@@ -988,7 +988,7 @@ console.log('╚██████╔╝   ██║   ██║ ╚████
 console.log(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
 
 console.log('======================================================');
-console.log(`             OriginTrail Node v${pjson.version} !!!`);
+console.log(`             OriginTrail Node v${pjson.version}`);
 console.log('======================================================');
 console.log('');
 
