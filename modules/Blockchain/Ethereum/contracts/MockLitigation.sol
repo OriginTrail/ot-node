@@ -25,7 +25,7 @@ contract MockLitigation {
 
 		litigationStorage = LitigationStorage(hub.litigationStorageAddress());
 		holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-		profileStorage = ProfileStorage(hub.holdingStorageAddress());
+		profileStorage = ProfileStorage(hub.profileStorageAddress());
 	}
 
 	function setHubAddress(address newHubAddress) public {
@@ -37,7 +37,7 @@ contract MockLitigation {
 
 		litigationStorage = LitigationStorage(hub.litigationStorageAddress());
 		holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-		profileStorage = ProfileStorage(hub.holdingStorageAddress());
+		profileStorage = ProfileStorage(hub.profileStorageAddress());
 	}
 
 	/*    ----------------------------- LITIGATION -----------------------------     */
@@ -100,15 +100,16 @@ contract MockLitigation {
 			parameters[0]++;
 		}
 
-	
+
 		if(holdingStorage.getHolderLitigationEncryptionType(offerId, holderIdentity) == 0){
-			bytesParameters[3] = holdingStorage.getOfferRedLitigationHash(offerId);
+			bytesParameters[2] = litigationStorage.getLitigationRequestedData(offerId, holderIdentity);
 		} else if (holdingStorage.getHolderLitigationEncryptionType(offerId, holderIdentity) == 1) {
-			bytesParameters[3] = holdingStorage.getOfferGreenLitigationHash(offerId);
+			bytesParameters[2] = holdingStorage.getOfferGreenLitigationHash(offerId);
 		} else {
-			bytesParameters[3] = holdingStorage.getOfferBlueLitigationHash(offerId);
+			bytesParameters[2] = holdingStorage.getOfferBlueLitigationHash(offerId);
 		}
-		if(bytesParameters[1] == bytesParameters[3] || bytesParameters[0] != bytesParameters[3]){
+
+		if(bytesParameters[1] == bytesParameters[2] || bytesParameters[0] != bytesParameters[2]){
 			// DH has the requested data -> Set litigation as completed, no transfer of tokens
 			
 			litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
