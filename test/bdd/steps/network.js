@@ -634,7 +634,6 @@ Then(/^DC wallet and DC profile balances should diff by (\d+) with rounding erro
 });
 
 Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, function (eventsCount, matchesCount) {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastConsensusResponse, 'lastConsensusResponse should be already defined').to.not.be.undefined;
     expect(this.state.lastConsensusResponse, 'Should have key called events').to.have.all.keys('events');
 
