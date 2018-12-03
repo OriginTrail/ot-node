@@ -28,7 +28,7 @@ class DHLitigationAnswerCommand extends Command {
 
         const vertices = await this.graphStorage.findVerticesByImportId(dataSetId, true);
         importUtilities.unpackKeys(vertices, []);
-        const answer = this.challengeService.answerChallengeQuestion(blockId, vertices);
+        const answer = utilities.normalizeHex(Buffer.from(this.challengeService.answerChallengeQuestion(blockId, vertices), 'utf-8').toString('hex'));
         this.logger.important(`Answering litigation for offer ${offerId} and blockId ${blockId}. Answer: ${answer}`);
 
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
