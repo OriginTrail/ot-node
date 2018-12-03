@@ -29,6 +29,9 @@ class AutoupdaterCommand extends Command {
 
         const currentVersion = pjson.version;
         Utilities.getVersion(config.autoUpdater.branch).then((gitVersion) => {
+
+            this.logger(`Local version: ${currentVersion}, Git version: ${gitVersion}`);
+
             if (semver.lt(currentVersion, gitVersion)) {
                 const updater = fork(path.join(__dirname, '..', '..', '..', 'autoupdater.js'), [], {
                     stdio: [0, 1, 2, 'ipc'],

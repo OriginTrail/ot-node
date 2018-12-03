@@ -926,6 +926,6 @@ class Utilities {
     }
 }
 
-console.log('UTILITIES 123');
+console.log('TEST');
 
 module.exports = Utilities;
