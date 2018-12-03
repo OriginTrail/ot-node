@@ -191,10 +191,11 @@ Given(/^I attempt to deposit (\d+) tokens from DC wallet[s]*$/, { timeout: 12000
     return Promise.all(promises);
 });
 
-Given(/^DC calls consensus endpoint for sender: "(\S+)"$/, async function (senderId) {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+Given(/^([DC|DH|DV]+) calls consensus endpoint for sender: "(\S+)"$/, async function (nodeType, senderId) {
+    expect(nodeType, 'Node type can only be DC, DH, DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+
+    const myNode = this.state[nodeType.toLowerCase()];
+    const host = myNode.state.node_rpc_url;
 
     const consensusResponse = await httpApiHelper.apiConsensus(host, senderId);
     expect(consensusResponse, 'Should have key called events').to.have.all.keys('events');

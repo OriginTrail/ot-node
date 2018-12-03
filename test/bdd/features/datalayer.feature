@@ -67,3 +67,18 @@ Feature: Data layer related features
     Given the DV purchases import from the last query from the DC
     Given I query DV node locally for last imported data set id
     Then DV's local query response should contain hashed private attributes
+
+  @only
+  Scenario: Remote event connection on DH
+    Given I setup 5 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And I use 2nd node as DC
+    Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
+    Then last consensus response should have 1 event with 1 match
