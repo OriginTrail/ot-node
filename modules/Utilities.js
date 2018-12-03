@@ -18,6 +18,8 @@ const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
+const { execSync } = require('child_process');
+const Umzug = require('umzug');
 
 const logger = require('./logger');
 
@@ -171,99 +173,57 @@ class Utilities {
             });
         });
     }
-    checkForUpdates(options) {
+    runUpdate() {
         return new Promise(async (resolve, reject) => {
-                const filename = `https://github.com/${options.autoUpdater.repo}/archive/${options.autoUpdater.branch}.zip`;
-                logger.info(`Downloading update: ${filename} ...`);
-                const response = await request(filename);
-                const filestream = fs.createWriteStream('update.zip');
-                response.pipe(filestream);
+            try {
+                const { version, configPath } = JSON.parse(fs.readFileSync('/ot-node/current/UPDATE'));
+                logger.info('Migrating node configuration');
 
-                filestream.on('finish', () => {
-                    logger.info('Download complete');
-                    logger.info('Extracting update...');
+                execSync(`cp -r ${configPath} /ot-node/${version}/`);
+                logger.info('Configuration migration complete');
 
-                    Zip.unzip({
-                        source: 'update.zip',
-                        destination: '..',
-                    }).exec({
-                        error(err) {
-                            logger.error(err);
-                        },
+                const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
+                process.env.SEQUELIZEDB = `/ot-node/${version}/data/system.db`;
 
-                        success() {
-                            try {
-                                logger.info('Update extraction complete');
-                                logger.info(`Moving update to directory ${options.version}...`);
+                // eslint-disable-next-line
+                const Models = require(`../${version}/models`);
 
-                                logger.info('Cleaning update destination directory');
-                                execSync(`rm -rf ../${options.version}`);
+                const umzug_migrations = new Umzug({
 
-                                let extractedFileName = options.autoUpdater.branch;
-                                logger.info(extractedFileName);
-                                extractedFileName = `ot-node-${extractedFileName.replace('/', '-')}`;
-                                execSync(`mv ../${extractedFileName} ../${options.version}`);
+                    storage: 'sequelize',
 
-                                logger.info(`Update has been moved to directory ${options.version}`);
-                                logger.info('Migrating node modules...');
+                    storageOptions: {
+                        sequelize: Models.sequelize,
+                    },
 
-                                execSync(`cp -r ./node_modules ../${options.version}/`);
-                                logger.info('Node modules migrated');
-                                logger.info('Installing new node modules');
-
-                                execSync(`cd ../${options.version} && npm install`);
-                                logger.info('npm modules have been installed');
-                                logger.info('Migrating node configuration');
-
-                                execSync(`cp -r ${options.appDataPath} /ot-node/${options.version}/`);
-                                logger.info('Configuration migration complete');
-
-                                const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
-                                process.env.SEQUELIZEDB = `/ot-node/${options.version}/data/system.db`;
-
-                                // eslint-disable-next-line
-                                const Models = require(`../${options.version}/models`);
-
-                                const umzug_migrations = new Umzug({
-
-                                    storage: 'sequelize',
-
-                                    storageOptions: {
-                                        sequelize: Models.sequelize,
-                                    },
-
-                                    migrations: {
-                                        params: [Models.sequelize.getQueryInterface(),
-                                            Models.sequelize.constructor, () => {
-                                                throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.');
-                                            }],
-                                        path: `../${options.version}/migrations`,
-                                        pattern: /\.js$/,
-                                    },
-                                });
-
-                                umzug_migrations.up().then((migrations) => {
-                                    logger.info('Database migrated.');
-                                    logger.info('Switching node version');
-                                    process.send('complete');
-                                    execSync(`ln -sfn /ot-node/${options.version}/ /ot-node/current`);
-                                    process.exit(0);
-                                }).catch((err) => {
-                                    logger.error('Update failed');
-                                    process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
-                                    logger.error('Database migrations failed');
-                                    logger.error(err);
-                                });
-                            } catch (err) {
-                                // TODO: Rollback
-                                logger.error('Update failed');
-                                logger.error(err);
-                            }
-                        },
-                    });
+                    migrations: {
+                        params: [Models.sequelize.getQueryInterface(),
+                            Models.sequelize.constructor, () => {
+                                throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.');
+                            }],
+                        path: `../${version}/migrations`,
+                        pattern: /\.js$/,
+                    },
                 });
-            });
-        }
+
+                umzug_migrations.up().then((migrations) => {
+                    logger.info('Database migrated.');
+                    logger.info('Switching node version');
+                    process.send('complete');
+                    execSync(`ln -sfn /ot-node/${version}/ /ot-node/current`);
+                    process.exit(0);
+                }).catch((err) => {
+                    logger.error('Update failed');
+                    process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
+                    logger.error('Database migrations failed');
+                    logger.error(err);
+                    reject(err);
+                });
+            } catch (err) {
+                logger.error('Update failed');
+                logger.error(err);
+            }
+        });
     }
 
     /**

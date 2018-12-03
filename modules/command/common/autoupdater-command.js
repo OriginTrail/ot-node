@@ -38,7 +38,11 @@ class AutoupdaterCommand extends Command {
                 this.logger.info('New version found');
 
                 updater.on('message', () => {
-                    this.logger.info('Update complete, restarting node...');
+                    fs.writeFileSync('/ot-node/current/UPDATE', JSON.stringify({
+                        version: gitVersion,
+                        configPath: config.appDataPath,
+                    }));
+                    this.logger.info('Update ready, restarting node...');
                     process.exit(0);
                 });
 

@@ -46,6 +46,7 @@ const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
 const RestAPIValidator = require('./modules/validator/rest-api-validator');
 const APIUtilities = require('./modules/utility/api-utilities');
+const { execSync } = require('child_process');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -282,14 +283,27 @@ class OTNode {
         config.erc725Identity = '';
         Object.seal(config);
 
-        // check for Updates
+        let updatesReady;
+
+        // check for ready updates
         try {
-            log.info('Checking for updates');
-            await Utilities.checkForUpdates(config);
+            fs.accessSync('/ot-node/current/UPDATE', fs.F_OK);
+            log.info('Installing new update');
+            updatesReady = true;
         } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
+            log.info('No updates waiting');
+            updatesReady = false;
+        }
+
+        if (updatesReady) {
+            try {
+                await Utilities.runUpdate(config);
+                execSync('rm -rf UPDATE');
+                process.exit(0);
+            } catch (err) {
+                log.error('Update installation failed, rolling back');
+                execSync('rm -rf UPDATE');
+            }
         }
 
         const web3 =

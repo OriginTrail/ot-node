@@ -187,9 +187,11 @@ class CommandExecutor {
     }
 
     async startAutoupdater() {
-        await CommandExecutor._delete('autoupdaterCommand');
-        const handler = this.commandResolver.resolve('autoupdaterCommand');
-        await this.add(handler.default(), 0, true);
+        if (process.env.OTNODE_MODE === 'docker') {
+            await CommandExecutor._delete('autoupdaterCommand');
+            const handler = this.commandResolver.resolve('autoupdaterCommand');
+            await this.add(handler.default(), 0, true);
+        }
     }
 
     /**
