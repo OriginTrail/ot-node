@@ -3,11 +3,13 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
+  @first
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
+  @first
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -20,6 +22,7 @@ Feature: Test basic network features
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
 
+  @first
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -39,7 +42,7 @@ Feature: Test basic network features
     Then the last import should be the same on DC and DV nodes
     Then DV's last purchase's hash should be the same as one manually calculated
 
-
+  @first
   Scenario: Smoke check /api/withdraw endpoint
     Given I setup 1 node
     And I start the node
@@ -47,6 +50,7 @@ Feature: Test basic network features
     Given I attempt to withdraw 5 tokens from DC profile
     Then DC wallet and DC profile balances should diff by 5 with rounding error of 0.1
 
+  @first
   Scenario: Smoke check /api/deposit endpoint
     Given I setup 1 node
     And I start the node
@@ -54,6 +58,7 @@ Feature: Test basic network features
     Given I attempt to deposit 50 tokens from DC wallet
     Then DC wallet and DC profile balances should diff by 50 with rounding error of 0.1
 
+  @first
   Scenario: Smoke check /api/consensus endpoint
     Given I setup 1 node
     And I start the node
@@ -65,6 +70,7 @@ Feature: Test basic network features
     Given DC calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
     Then last consensus response should have 1 event with 1 match
 
+  @first
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
@@ -82,6 +88,7 @@ Feature: Test basic network features
     Given the DV purchases import from the last query from the DC
     Then the last import should be the same on DC and DV nodes
 
+  @first
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
@@ -107,6 +114,7 @@ Feature: Test basic network features
     Then the last import should be the same on DC and DV nodes
     Then the last import should be the same on DC and DV2 nodes
 
+  @first
   Scenario: DV should be able to publish network query regardless of the funds
     # Start node and let it create own profile. It needs some ETH and TRAC for that.
     Given I setup 1 node
@@ -120,6 +128,7 @@ Feature: Test basic network features
     When DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then everything should be ok
 
+  @first
   Scenario: API calls should be forbidden
     Given I setup 1 node
     And I override configuration for all nodes
@@ -128,6 +137,7 @@ Feature: Test basic network features
     And I use 1st node as DC
     Then API calls will be forbidden
 
+  @first
   Scenario: API calls should not be authorized
     Given I setup 1 node
     And I override configuration for all nodes

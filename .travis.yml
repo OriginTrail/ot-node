@@ -3,7 +3,9 @@ language: node_js
 node_js:
   - "9"
 env:
-  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=first
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=second
+
 sudo: enabled
 addons:
   apt:
@@ -25,7 +27,12 @@ script:
   - npm run lint
   - if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then
       npm run test:bdd:dryrun
-      npm run test:bdd -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+    fi
+  - if [ "$TRAVIS_EVENT_TYPE" != "push" && "BDD_SECTION" == "first" ]; then
+      npm run test:bdd:first -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+    fi
+  - if [ "$TRAVIS_EVENT_TYPE" != "push" && "BDD_SECTION" == "second" ]; then
+      npm run test:bdd:second -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   # checks for arangodb based solution
   - npm test 2> $ARTIFACTS_DIR/mocha-logs.log
