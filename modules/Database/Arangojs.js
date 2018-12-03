@@ -221,8 +221,8 @@ class ArangoJS {
 
     /**
      * Finds vertices by query defined in DataLocationRequestObject
-     * @param encColor
-     * @param inputQuery
+     * @param encColor - Encrypted color
+     * @param inputQuery - Search query
      */
     async dataLocationQuery(inputQuery, encColor = null) {
         const params = {};
