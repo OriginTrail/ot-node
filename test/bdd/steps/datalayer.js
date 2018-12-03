@@ -108,11 +108,15 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
     this.state.apiQueryLocalImportByDataSetIdResponse.vertices.forEach((vertex) => {
         if (vertex.data) {
             if (vertex.data.private) {
+                let sumOfHashesLengths = 0;
+                let randomHashLength;
                 Object.keys(vertex.data.private).forEach((key) => {
                     expect((vertex.data.private[key]).startsWith('0x'), 'Private value should start with 0x').to.be.true;
                     expect(utilities.isZeroHash(vertex.data.private[key]), 'Private value should not be empty hash').to.be.false;
-                    expect((vertex.data.private[key]).length).to.be.equal(66);
+                    sumOfHashesLengths += (vertex.data.private[key]).length;
+                    randomHashLength = (vertex.data.private[key]).length;
                 });
+                expect(sumOfHashesLengths % randomHashLength, 'All hashes should be of same length').to.equal(0);
             }
         }
     });
