@@ -68,7 +68,7 @@ Feature: Data layer related features
     Given I query DV node locally for last imported data set id
     Then DV's local query response should contain hashed private attributes
 
-  @only
+  @second
   Scenario: Remote event connection on DH and DV
     Given I setup 5 nodes
     And I start the nodes
@@ -83,12 +83,4 @@ Feature: Data layer related features
     Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
     Then last consensus response should have 1 event with 1 match
     Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
-    Then last consensus response should have 1 event with 1 match
-    Given I additionally setup 1 node
-    And I start additional nodes
-    And I use 6th node as DV
-    Given DV publishes query consisting of path: "identifiers.id", value: "urn:ot:object:actor:id:Company_Green" and opcode: "EQ" to the network
-    Then all nodes with last import should answer to last network query by DV
-    And the DV purchases import from the last query from a DH
-    Given DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
     Then last consensus response should have 1 event with 1 match
