@@ -61,7 +61,7 @@ contract Holding is Ownable {
         require(holdingTimeInMinutes > 0, "Holding time cannot be zero");
         require(dataSetSizeInBytes > 0, "Data size cannot be zero");
         require(tokenAmountPerHolder > 0, "Token amount per holder cannot be zero");
-        require(litigationIntervalInMinutes > 0, "Litigation time cannot be zero");
+        require(litigationIntervalInMinutes > 0, "Litigation interval cannot be zero");
 
         // Writing data root hash if it wasn't previously set
         if(holdingStorage.fingerprint(bytes32(dataSetId)) == bytes32(0)){
@@ -94,6 +94,7 @@ contract Holding is Ownable {
             bytes32(dataSetId),
             holdingTimeInMinutes,
             tokenAmountPerHolder,
+            litigationIntervalInMinutes,
             blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1),
             difficulty
         );
