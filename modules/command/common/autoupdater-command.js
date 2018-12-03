@@ -38,7 +38,7 @@ class AutoupdaterCommand extends Command {
                 this.logger.info('New version found');
 
                 updater.on('message', () => {
-                    fs.writeFileSync('/ot-node/current/UPDATE', JSON.stringify({
+                    fs.writeFileSync('../UPDATE', JSON.stringify({
                         version: gitVersion,
                         configPath: config.appDataPath,
                     }));
