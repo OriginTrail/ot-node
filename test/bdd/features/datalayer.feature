@@ -69,7 +69,7 @@ Feature: Data layer related features
     Then DV's local query response should contain hashed private attributes
 
   @second
-  Scenario: Remote event connection on DH and DV
+  Scenario: Remote event connection on DH
     Given I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
