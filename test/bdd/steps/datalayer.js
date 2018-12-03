@@ -97,3 +97,28 @@ Then(/^DC manually calculated datasets data and root hashes matches ones from bl
     }
 });
 
+Then(/^([DC|DV]+)'s local query response should contain hashed private attributes$/, async function (nodeType) {
+    expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
+    expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
+
+    expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'Query response of last local imported data set id not defined').to.be.equal(true);
+
+    expect(this.state.apiQueryLocalImportByDataSetIdResponse, 'Response should contain two keys').to.have.keys(['edges', 'vertices']);
+
+    this.state.apiQueryLocalImportByDataSetIdResponse.vertices.forEach((vertex) => {
+        if (vertex.data) {
+            if (vertex.data.private) {
+                let sumOfHashesLengths = 0;
+                let randomHashLength;
+                Object.keys(vertex.data.private).forEach((key) => {
+                    expect((vertex.data.private[key]).startsWith('0x'), 'Private value should start with 0x').to.be.true;
+                    expect(utilities.isZeroHash(vertex.data.private[key]), 'Private value should not be empty hash').to.be.false;
+                    sumOfHashesLengths += (vertex.data.private[key]).length;
+                    randomHashLength = (vertex.data.private[key]).length;
+                });
+                expect(sumOfHashesLengths % randomHashLength, 'All hashes should be of same length').to.equal(0);
+            }
+        }
+    });
+});
+
