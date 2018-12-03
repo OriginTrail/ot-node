@@ -79,6 +79,6 @@ Feature: Data layer related features
     And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
-    And I use 2nd node as DC
+    And I use 2nd node as DH
     Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
     Then last consensus response should have 1 event with 1 match
