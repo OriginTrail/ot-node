@@ -46,6 +46,7 @@ After(function (testCase, done) {
     // Clean.
     const nodesWaits =
         [...this.state.nodes, ...this.state.bootstraps]
+            .filter(node => node.isRunning)
             .map(node => new Promise((accept, reject) => {
                 node.on('finished', (code) => {
                     if (code === 0) {
