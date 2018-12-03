@@ -186,7 +186,7 @@ class Utilities {
                 process.env.SEQUELIZEDB = `/ot-node/${version}/data/system.db`;
 
                 // eslint-disable-next-line
-                const Models = require(`../${version}/models`);
+                const Models = require(`../../${version}/models`);
 
                 const umzug_migrations = new Umzug({
 
@@ -209,9 +209,8 @@ class Utilities {
                 umzug_migrations.up().then((migrations) => {
                     logger.info('Database migrated.');
                     logger.info('Switching node version');
-                    process.send('complete');
                     execSync(`ln -sfn /ot-node/${version}/ /ot-node/current`);
-                    process.exit(0);
+                    resolve();
                 }).catch((err) => {
                     logger.error('Update failed');
                     process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
