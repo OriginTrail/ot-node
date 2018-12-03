@@ -173,10 +173,10 @@ class Utilities {
             });
         });
     }
-    runUpdate() {
+    static runUpdate() {
         return new Promise(async (resolve, reject) => {
             try {
-                const { version, configPath } = JSON.parse(fs.readFileSync('/ot-node/current/UPDATE', 'utf8'));
+                const { version, configPath } = JSON.parse(fs.readFileSync('./UPDATE', 'utf8'));
                 logger.info('Migrating node configuration');
 
                 execSync(`cp -r ${configPath} /ot-node/${version}/`);
@@ -220,8 +220,7 @@ class Utilities {
                     reject(err);
                 });
             } catch (err) {
-                logger.error('Update failed');
-                logger.error(err);
+                reject(err);
             }
         });
     }
