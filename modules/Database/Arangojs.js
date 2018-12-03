@@ -226,11 +226,6 @@ class ArangoJS {
      */
     async dataLocationQuery(inputQuery, encColor = null) {
         const params = {};
-        let encOp = '!=';
-
-        if (encColor) {
-            encOp = '==';
-        }
 
         let count = 1;
         let queryString = '';
@@ -255,7 +250,7 @@ class ArangoJS {
                                         OUTBOUND v${count}._id ot_edges
                                         FILTER e.edge_type == "IDENTIFIES"
                                         AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        AND v${count}.encrypted ${encOp} ${encColor}
+                                        AND v${count}.encrypted == ${encColor}
                                         RETURN w${count})
                              `;
 
@@ -264,14 +259,14 @@ class ArangoJS {
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
                                      AND v${count}.id_type == "${id_type}"
                                      AND v${count}.id_value == "${id_value}"
-                                     AND v${count}.encrypted ${encOp} ${encColor}
+                                     AND v${count}.encrypted == ${encColor}
                                      `;
                 break;
             case 'IN':
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
                                      AND v${count}.id_type == "${id_type}"
                                      AND "${id_value}" IN v${count}.id_value
-                                     AND v${count}.encrypted ${encOp} ${encColor}
+                                     AND v${count}.encrypted == ${encColor}
                                      `;
                 break;
             default:

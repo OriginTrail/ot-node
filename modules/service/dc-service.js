@@ -272,7 +272,7 @@ class DCService {
             distribution_root_hash: replication.distributionRootHash,
             distribution_epk: replication.distributionEpk,
             status: 'STARTED',
-            color: colorNumber,
+            color: colorNumber.toNumber(),
         });
 
         const toSign = [
@@ -300,7 +300,7 @@ class DCService {
             distribution_signature: distributionSignature.signature,
             transaction_hash: offer.transaction_hash,
             distributionSignature,
-            color: colorNumber,
+            color: colorNumber.toNumber(),
         };
 
         // send replication to DH
