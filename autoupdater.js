@@ -32,7 +32,6 @@ process.once('message', async ([options]) => {
                     execSync(`rm -rf ../${options.version}`);
 
                     let extractedFileName = options.autoUpdater.branch;
-                    logger.info(extractedFileName);
                     extractedFileName = `ot-node-${extractedFileName.replace('/', '-')}`;
                     execSync(`mv ../${extractedFileName} ../${options.version}`);
 
