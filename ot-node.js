@@ -287,7 +287,7 @@ class OTNode {
 
         // check for ready updates
         try {
-            fs.accessSync('./UPDATE', fs.F_OK);
+            fs.accessSync('/ot-node/current/UPDATE', fs.F_OK);
             log.info('Installing new update');
             updatesReady = true;
         } catch (err) {
@@ -298,12 +298,12 @@ class OTNode {
         if (updatesReady) {
             try {
                 await Utilities.runUpdate(config);
-                execSync('rm -rf ./UPDATE');
+                execSync('rm -rf /ot-node/current/UPDATE');
                 process.exit(0);
             } catch (err) {
                 log.error('Update installation failed, rolling back');
                 log.error(err);
-                execSync('rm -rf ./UPDATE');
+                execSync('rm -rf /ot-node/current/UPDATE');
             }
         }
 
