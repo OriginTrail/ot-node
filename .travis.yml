@@ -28,10 +28,10 @@ script:
   - if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then
       npm run test:bdd:dryrun;
     fi
-  - if [ "$TRAVIS_EVENT_TYPE" != "push" && "$BDD_SECTION" == "first" ]; then
+  - if [[ "$TRAVIS_EVENT_TYPE" != "push" && "$BDD_SECTION" == "first" ]]; then
       npm run test:bdd:first -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [ "$TRAVIS_EVENT_TYPE" != "push" && "$BDD_SECTION" == "second" ]; then
+  - if [[ "$TRAVIS_EVENT_TYPE" != "push" && "$BDD_SECTION" == "second" ]]; then
       npm run test:bdd:second -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   # checks for arangodb based solution
