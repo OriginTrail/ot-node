@@ -164,8 +164,8 @@ class ArangoJS {
      *
      * DataLocationQuery structure: [[path, value, opcode]*]
      *
-     * @param encColor - Encrypted color
-     * @param dataLocationQuery - Search query
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param {object} dataLocationQuery - Search query
      * @return {Promise}
      */
     async findImportIds(dataLocationQuery, encColor = null) {
@@ -221,7 +221,7 @@ class ArangoJS {
 
     /**
      * Finds vertices by query defined in DataLocationRequestObject
-     * @param encColor - Encrypted color
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
      * @param inputQuery - Search query
      */
     async dataLocationQuery(inputQuery, encColor = null) {
@@ -735,6 +735,12 @@ class ArangoJS {
         }
     }
 
+    /**
+     * Finds vertices by dataset ID
+     * @param {string} data_id - Dataset ID
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @return {Promise<*>}
+     */
     async findVerticesByImportId(data_id, encColor = null) {
         let queryString = '';
         if (encColor) {
@@ -776,6 +782,12 @@ class ArangoJS {
         return this.runQuery(queryString, {});
     }
 
+    /**
+     * Find edges by dataset ID
+     * @param {string} data_id - Dataset ID
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @return {Promise<void>}
+     */
     async findEdgesByImportId(data_id, encColor = null) {
         const queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
