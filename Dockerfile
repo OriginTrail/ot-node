@@ -25,7 +25,7 @@ RUN mkdir -p /var/log/supervisor
 COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Creating link
-RUN mkdir /ot-node && mkdir /ot-node/init
+RUN mkdir -p /ot-node/init
 RUN ln -s /ot-node/init /ot-node/current
 
 # Add files
