@@ -338,13 +338,6 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-            if (!appState.enoughFunds) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'Insufficient funds',
-                });
-                return;
-            }
 
             dvController.queryNetwork(data.query)
                 .then((queryId) => {
@@ -411,7 +404,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id, true);
+                    const vertices = await dhService.dataLocationQuery(id);
 
                     response.status(200);
                     response.send({
@@ -449,7 +442,10 @@ class EventEmitter {
                     message: error.message,
                 });
                 remoteControl.importFailed(error);
-                notifyError(error);
+
+                if (error.type !== 'ImporterError') {
+                    notifyError(error);
+                }
                 return;
             }
 
@@ -876,7 +872,8 @@ class EventEmitter {
                 logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
                 const challenge = message.payload;
 
-                let vertices = await this.graphStorage.findVerticesByImportId(challenge.import_id);
+                let vertices = await this.graphStorage
+                    .findVerticesByImportId(challenge.import_id); // TODO add encColor
                 ImportUtilities.unpackKeys(vertices, []);
                 ImportUtilities.sort(vertices);
                 // filter CLASS vertices

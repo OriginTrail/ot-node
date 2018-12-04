@@ -100,9 +100,8 @@ class DVService {
             throw errorMessage;
         }
 
-        let importResult;
         try {
-            importResult = await this.importer.importJSON({
+            await this.importer.importJSON({
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,

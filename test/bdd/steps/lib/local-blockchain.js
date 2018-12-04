@@ -7,6 +7,8 @@ const path = require('path');
 const EthWallet = require('ethereumjs-wallet');
 const assert = require('assert');
 
+const utilities = require('./utilities');
+
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
     '1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740',
@@ -184,6 +186,10 @@ class LocalBlockchain {
         this.holdingContractData = `0x${compileResult.contracts['Holding.sol:Holding'].bytecode}`;
         this.holdingContractAbi = JSON.parse(compileResult.contracts['Holding.sol:Holding'].interface);
         this.holdingContract = new this.web3.eth.Contract(this.holdingContractAbi);
+
+        this.identityContractData = `0x${compileResult.contracts['Identity.sol:Identity'].bytecode}`;
+        this.identityContractAbi = JSON.parse(compileResult.contracts['Identity.sol:Identity'].interface);
+        this.identityContract = new this.web3.eth.Contract(this.identityContractAbi);
     }
 
     async deployContracts() {
@@ -350,6 +356,18 @@ class LocalBlockchain {
 
     static wallets() {
         return wallets;
+    }
+
+    async getBalanceInEthers(wallet) {
+        return this.web3.eth.getBalance(wallet);
+    }
+
+    async createIdentity(wallet, walletKey) {
+        const [, identityInstance] = await this.deployContract(
+            this.web3, this.identityContract, this.identityContractData,
+            [wallet], wallet,
+        );
+        return identityInstance;
     }
 }
 

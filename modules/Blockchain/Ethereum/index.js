@@ -988,7 +988,7 @@ class Ethereum {
      * Check balances
      * @returns {Promise<boolean>}
      */
-    async getBalances() {
+    async hasEnoughFunds() {
         this.log.trace('Checking balances');
         let enoughETH = true;
         let enoughTRAC = true;

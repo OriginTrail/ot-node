@@ -31,7 +31,13 @@ class DHOfferHandleCommand extends Command {
         }, dcNodeId);
 
         if (response.status === 'fail') {
-            throw new Error(`Failed to receive replication from ${dcNodeId} for offer ${offerId}`);
+            if (response.message) {
+                throw new Error('Failed to receive replication ' +
+                    `from ${dcNodeId} for offer ${offerId}. ` +
+                    `Reason: ${response.message}`);
+            } else {
+                throw new Error(`Failed to receive replication from ${dcNodeId} for offer ${offerId}.`);
+            }
         }
 
         const bid = await Models.bids.findOne({
@@ -78,6 +84,7 @@ class DHOfferHandleCommand extends Command {
             distributionEpk: response.distribution_epk,
             distributionSignature: response.distribution_signature,
             transactionHash: response.transaction_hash,
+            encColor: response.color,
         };
     }
 

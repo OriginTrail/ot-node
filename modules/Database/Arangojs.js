@@ -1,7 +1,7 @@
 const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
-const { denormalizeGraph, normalizeGraph } = require('./graph-converter');
+const { normalizeGraph } = require('./graph-converter');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -160,11 +160,16 @@ class ArangoJS {
     }
 
     /**
-     * Finds vertices by query defined in DataLocationRequestObject
-     * @param inputQuery
+     * Finds imports IDs based on data location query
+     *
+     * DataLocationQuery structure: [[path, value, opcode]*]
+     *
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param {object} dataLocationQuery - Search query
+     * @return {Promise}
      */
-    async findImportIds(inputQuery, encrypted) {
-        const results = await this.dataLocationQuery(inputQuery, encrypted);
+    async findImportIds(dataLocationQuery, encColor = null) {
+        const results = await this.dataLocationQuery(dataLocationQuery, encColor);
         if (results.length > 0) {
             return results[0].datasets;
         }
@@ -175,7 +180,7 @@ class ArangoJS {
         const query = `FOR v IN ot_vertices
                        FILTER v.vertex_type == 'EVENT'
                        AND v.sender_id == @sender_id
-                       AND v.encrypted != true
+                       AND v.encrypted == null
                        RETURN v`;
 
         const res = await this.runQuery(query, {
@@ -216,15 +221,11 @@ class ArangoJS {
 
     /**
      * Finds vertices by query defined in DataLocationRequestObject
-     * @param inputQuery
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param inputQuery - Search query
      */
-    async dataLocationQuery(inputQuery, encrypted = false) {
+    async dataLocationQuery(inputQuery, encColor = null) {
         const params = {};
-        let encOp = '!=';
-
-        if (encrypted) {
-            encOp = '==';
-        }
 
         let count = 1;
         let queryString = '';
@@ -249,7 +250,7 @@ class ArangoJS {
                                         OUTBOUND v${count}._id ot_edges
                                         FILTER e.edge_type == "IDENTIFIES"
                                         AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        AND v${count}.encrypted ${encOp} true
+                                        AND v${count}.encrypted == ${encColor}
                                         RETURN w${count})
                              `;
 
@@ -258,14 +259,14 @@ class ArangoJS {
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
                                      AND v${count}.id_type == "${id_type}"
                                      AND v${count}.id_value == "${id_value}"
-                                     AND v${count}.encrypted ${encOp} true
+                                     AND v${count}.encrypted == ${encColor}
                                      `;
                 break;
             case 'IN':
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
                                      AND v${count}.id_type == "${id_type}"
                                      AND "${id_value}" IN v${count}.id_value
-                                     AND v${count}.encrypted ${encOp} true
+                                     AND v${count}.encrypted == ${encColor}
                                      `;
                 break;
             default:
@@ -734,19 +735,25 @@ class ArangoJS {
         }
     }
 
-    async findVerticesByImportId(data_id, encrypted = false) {
+    /**
+     * Finds vertices by dataset ID
+     * @param {string} data_id - Dataset ID
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @return {Promise<*>}
+     */
+    async findVerticesByImportId(data_id, encColor = null) {
         let queryString = '';
-        if (encrypted) {
+        if (encColor) {
             queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
                             AND POSITION(v.datasets, @importId, false)  != false 
-                            AND (v.encrypted == true)
+                            AND (v.encrypted == ${encColor})
                             SORT v._key RETURN v`;
         } else {
             queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
                             AND POSITION(v.datasets, @importId, false) != false 
-                            AND (v.encrypted != true)
+                            AND (v.encrypted == null)
                             SORT v._key RETURN v`;
         }
 
@@ -775,30 +782,23 @@ class ArangoJS {
         return this.runQuery(queryString, {});
     }
 
-    async findEdgesByImportId(data_id, encrypted = false) {
-        let queryString = '';
-
-        if (encrypted) {
-            queryString = 'FOR v IN ot_edges ' +
+    /**
+     * Find edges by dataset ID
+     * @param {string} data_id - Dataset ID
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @return {Promise<void>}
+     */
+    async findEdgesByImportId(data_id, encColor = null) {
+        const queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
                 'AND POSITION(v.datasets, @importId, false) != false ' +
-                'AND v.encrypted == true ' +
+                `AND v.encrypted == ${encColor} ` +
                 'SORT v._key ' +
                 'RETURN v';
-        } else {
-            queryString = 'FOR v IN ot_edges ' +
-                'FILTER v.datasets != null ' +
-                'AND POSITION(v.datasets, @importId, false) != false ' +
-                'AND v.encrypted != true ' +
-                'SORT v._key ' +
-                'RETURN v';
-        }
 
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);
-        const normalizedEdges = normalizeGraph(data_id, [], edges).edges;
-
-        return normalizedEdges;
+        return normalizeGraph(data_id, [], edges).edges;
     }
 
     /**
@@ -816,7 +816,7 @@ class ArangoJS {
         //  'RETURN v';
 
         const queryString = `FOR v IN ot_vertices
-            FILTER v.vertex_type == 'EVENT' and v.encrypted != true
+            FILTER v.vertex_type == 'EVENT' and v.encrypted == null
             RETURN v`;
         const params = {};
         const result = await this.runQuery(queryString, params);
