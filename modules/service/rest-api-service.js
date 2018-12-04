@@ -464,11 +464,11 @@ class RestAPIService {
 
                 res.status(200);
                 res.send(basicConfig);
-            } catch (e) {
-                this.logger.error('Failed to process /api/info route', e);
+            } catch (error) {
+                this.logger.error(`Failed to process /api/info route. ${error}`);
                 res.status(500);
                 res.send({
-                    message: `Failed to process /api/info route. Error ${e.message}`,
+                    message: error,
                 });
             }
         });
