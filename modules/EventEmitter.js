@@ -404,7 +404,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id, true);
+                    const vertices = await dhService.dataLocationQuery(id);
 
                     response.status(200);
                     response.send({
@@ -872,7 +872,8 @@ class EventEmitter {
                 logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
                 const challenge = message.payload;
 
-                let vertices = await this.graphStorage.findVerticesByImportId(challenge.import_id);
+                let vertices = await this.graphStorage
+                    .findVerticesByImportId(challenge.import_id); // TODO add encColor
                 ImportUtilities.unpackKeys(vertices, []);
                 ImportUtilities.sort(vertices);
                 // filter CLASS vertices
