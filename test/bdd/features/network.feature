@@ -14,8 +14,8 @@ Feature: Test basic network features
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
-    Then the last import's hash should be the same as one manually calculated
-    Given DC initiates the replication
+    Then DC's last import's hash should be the same as one manually calculated
+    Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
@@ -26,8 +26,8 @@ Feature: Test basic network features
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
-    Then the last import's hash should be the same as one manually calculated
-    Given DC initiates the replication
+    Then DC's last import's hash should be the same as one manually calculated
+    Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     Then the last import should be the same on all nodes that replicated data
     Given I additionally setup 1 node
@@ -37,6 +37,8 @@ Feature: Test basic network features
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases import from the last query from a DH
     Then the last import should be the same on DC and DV nodes
+    Then DV's last purchase's hash should be the same as one manually calculated
+
 
   Scenario: Smoke check /api/withdraw endpoint
     Given I setup 1 node
@@ -69,8 +71,8 @@ Feature: Test basic network features
     And I start the node
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
-    Then the last import's hash should be the same as one manually calculated
-    Given DC initiates the replication
+    Then DC's last import's hash should be the same as one manually calculated
+    Given DC initiates the replication for last imported dataset
     And DC waits for replication window to close
     Given I additionally setup 1 node
     And I start additional nodes
@@ -86,8 +88,8 @@ Feature: Test basic network features
     And I start the node
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
-    Then the last import's hash should be the same as one manually calculated
-    Given DC initiates the replication
+    Then DC's last import's hash should be the same as one manually calculated
+    Given DC initiates the replication for last imported dataset
     And DC waits for replication window to close
     Given I additionally setup 1 node
     And I start additional nodes
@@ -104,6 +106,19 @@ Feature: Test basic network features
     Given the DV2 purchases import from the last query from a DV
     Then the last import should be the same on DC and DV nodes
     Then the last import should be the same on DC and DV2 nodes
+
+  Scenario: DV should be able to publish network query regardless of the funds
+    # Start node and let it create own profile. It needs some ETH and TRAC for that.
+    Given I setup 1 node
+    And I start the node
+    And I stop the node
+    # Spend all the funds and try to query network.
+    When the 1st node's spend all the Tokens
+    And the 1st node's spend all the Ethers
+    And I start the node
+    And I use 1st node as DV
+    When DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
+    Then everything should be ok
 
   Scenario: API calls should be forbidden
     Given I setup 1 node

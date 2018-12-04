@@ -338,13 +338,6 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-            if (!appState.enoughFunds) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'Insufficient funds',
-                });
-                return;
-            }
 
             dvController.queryNetwork(data.query)
                 .then((queryId) => {

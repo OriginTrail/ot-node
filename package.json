@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "2.0.26",
+  "version": "2.0.27",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -16,8 +16,9 @@
     "test:api:nocov": "mocha --exit $(find test/api -name '*.js')",
     "test:protocol": "nyc mocha --exit $(find test/protocol -name '*.js')",
     "test:protocol:nocov": "mocha --exit $(find test/protocol -name '*.js')",
-    "test:bdd": "cucumber-js --fail-fast --format progress-bar --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
-    "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress-bar --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd:dryrun": "cucumber-js --dry-run test/bdd/ -r test/bdd/steps/",
+    "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:verbose": "cucumber-js --fail-fast --format event-protocol --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "start": "node node_version_check.js && node ot-node.js",
     "debug:start": "node --nolazy --inspect-brk ot-node.js",
@@ -31,7 +32,8 @@
     "setup:hard:all": "node ./scripts/setup.js --hard --all",
     "debug:test:unit": "mocha --inspect-brk --exit $(find test/modules -name '*.js')",
     "debug:test:api": "mocha --inspect-brk --exit $(find test/api -name '*.js')",
-    "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')"
+    "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')",
+    "ganache": "ganache-cli -i 5777 -p 8545 -l 10000000 >/dev/null & sleep 5 && tenderly proxy --proxy-port 7545"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
