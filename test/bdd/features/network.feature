@@ -43,34 +43,6 @@ Feature: Test basic network features
     Then DV's last purchase's hash should be the same as one manually calculated
 
   @first
-  Scenario: Smoke check /api/withdraw endpoint
-    Given I setup 1 node
-    And I start the node
-    And I use 1st node as DC
-    Given I attempt to withdraw 5 tokens from DC profile
-    Then DC wallet and DC profile balances should diff by 5 with rounding error of 0.1
-
-  @first
-  Scenario: Smoke check /api/deposit endpoint
-    Given I setup 1 node
-    And I start the node
-    And I use 1st node as DC
-    Given I attempt to deposit 50 tokens from DC wallet
-    Then DC wallet and DC profile balances should diff by 50 with rounding error of 0.1
-
-  @first
-  Scenario: Smoke check /api/consensus endpoint
-    Given I setup 1 node
-    And I start the node
-    And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
-    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1
-    Given DC calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
-    Then last consensus response should have 1 event with 1 match
-    Given DC calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
-    Then last consensus response should have 1 event with 1 match
-
-  @first
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
