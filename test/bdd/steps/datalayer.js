@@ -71,9 +71,9 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
     ).to.be.above(0);
 });
 
-Then(/^DC manually calculated (\d+) datasets data and root hashes matches ones from blockchain$/, async function (datasetsCount) {
+Then(/^DC's (\d+) dataset hashes should match blockchain values$/, async function (datasetsCount) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    expect(datasetsCount >= 1, 'Positive integer').to.be.true;
+    expect(datasetsCount >= 1, 'datasetsCount should be positive integer').to.be.true;
 
     const { dc } = this.state;
     const myApiImportsInfo = await httpApiHelper.apiImportsInfo(dc.state.node_rpc_url);

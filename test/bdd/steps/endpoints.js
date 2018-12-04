@@ -192,7 +192,7 @@ Given(/^I attempt to deposit (\d+) tokens from DC wallet[s]*$/, { timeout: 12000
 });
 
 Given(/^([DC|DH|DV]+) calls consensus endpoint for sender: "(\S+)"$/, async function (nodeType, senderId) {
-    expect(nodeType, 'Node type can only be DC, DH, DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+    expect(nodeType, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
 
     const host = this.state[nodeType.toLowerCase()].state.node_rpc_url;
 
