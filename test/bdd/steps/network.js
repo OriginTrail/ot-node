@@ -83,6 +83,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+
         },
         appDataBaseDir: this.parameters.appDataBaseDir,
     });
@@ -737,4 +738,17 @@ Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function
         this.logger.log(`Configuration updated for node ${node.id}`);
     }
     done();
+});
+
+Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3000000 }, async function (nodeIndex) {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.bootstraps.length);
+
+    const bootstrap = this.state.bootstraps[nodeIndex - 1];
+    const response = await httpApiHelper.apiNodeInfo(bootstrap.state.node_rpc_url);
+
+    expect(response, 'response should contain version, blockchain, network and is_bootstrap keys').to.have.keys([
+        'version', 'blockchain',
+        'network', 'is_bootstrap',
+    ]);
 });
