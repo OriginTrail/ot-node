@@ -176,7 +176,7 @@ class Utilities {
     static runUpdate() {
         return new Promise(async (resolve, reject) => {
             try {
-                const { version, configPath } = JSON.parse(fs.readFileSync('./UPDATE', 'utf8'));
+                const { version, configPath } = JSON.parse(fs.readFileSync('/ot-node/current/UPDATE', 'utf8'));
                 logger.info('Migrating node configuration');
                 logger.info(`running: execSync('cp -r ${configPath} /ot-node/${version}/');`);
                 execSync(`cp -r ${configPath} /ot-node/${version}/`);
