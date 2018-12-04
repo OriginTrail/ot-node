@@ -758,21 +758,9 @@ class Kademlia {
      * Returns basic network information
      */
     async getNetworkInfo() {
-        const peers = [];
-        const dump = this.node.router.getClosestContactsToKey(
-            this.node.identity,
-            kadence.constants.K * kadence.constants.B,
-        );
-
-        for (const peer of dump) {
-            peers.push(peer);
-        }
-
         return {
-            versions: pjson.version,
             identity: this.node.identity.toString('hex'),
             contact: this.node.contact,
-            peers,
         };
     }
 
