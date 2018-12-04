@@ -145,3 +145,7 @@ Feature: Test basic network features
     And I start the node
     And I use 1st node as DC
     Then API calls will not be authorized
+
+  @first
+  Scenario: Bootstraps should have /api/info route enabled
+    Then 1st bootstrap should reply on info route
