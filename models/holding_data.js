@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
         distribution_private_key: DataTypes.STRING,
         distribution_epk: DataTypes.STRING,
         transaction_hash: DataTypes.STRING(128),
+        color: DataTypes.INTEGER,
     }, {
         tableName: 'holding_data',
     });

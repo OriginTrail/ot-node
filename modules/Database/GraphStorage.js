@@ -89,15 +89,16 @@ class GraphStorage {
      *
      * DataLocationQuery structure: [[path, value, opcode]*]
      *
-     * @param dataLocationQuery
+     * @param encColor - Encrypted color
+     * @param dataLocationQuery - Search query
      * @return {Promise}
      */
-    findImportIds(dataLocationQuery, encrypted) {
+    findImportIds(dataLocationQuery, encColor = null) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findImportIds(dataLocationQuery, encrypted).then((result) => {
+                this.db.findImportIds(dataLocationQuery, encColor).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -108,10 +109,11 @@ class GraphStorage {
 
     /**
      * Finds vertices by query defined in DataLocationRequestObject
+     * @param encColor
      * @param inputQuery
      */
-    async dataLocationQuery(inputQuery) {
-        return this.db.dataLocationQuery(inputQuery);
+    async dataLocationQuery(inputQuery, encColor = null) {
+        return this.db.dataLocationQuery(inputQuery, encColor);
     }
 
     /**
@@ -270,15 +272,16 @@ class GraphStorage {
 
     /**
      * Get list of vertices by import ID
-     * @param importId   Import ID
+     * @param importId - Import ID
+     * @param encColor - Encrypted color
      * @return {Promise}
      */
-    findVerticesByImportId(importId, encrypted) {
+    findVerticesByImportId(importId, encColor = null) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findVerticesByImportId(importId, encrypted).then((result) => {
+                this.db.findVerticesByImportId(importId, encColor).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -289,15 +292,16 @@ class GraphStorage {
 
     /**
      * Gets edges by import ID from the underlying database
-     * @param import_id       Import ID
+     * @param datasetId - Dataset ID
+     * @param encColor - Encrypted color
      * @returns {Promise}
      */
-    findEdgesByImportId(import_id, encrypted) {
+    findEdgesByImportId(datasetId, encColor) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findEdgesByImportId(import_id, encrypted).then((result) => {
+                this.db.findEdgesByImportId(datasetId, encColor).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

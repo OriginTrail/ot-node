@@ -99,3 +99,25 @@ Feature: Test basic network features
     And I use 1st node as DV
     When DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then everything should be ok
+
+  @first
+  Scenario: API calls should be forbidden
+    Given I setup 1 node
+    And I override configuration for all nodes
+      | network.remoteWhitelist | 100.100.100.100 | 200.200.200.200 |
+    And I start the node
+    And I use 1st node as DC
+    Then API calls will be forbidden
+
+  @first
+  Scenario: API calls should not be authorized
+    Given I setup 1 node
+    And I override configuration for all nodes
+      | auth_token_enabled | true |
+    And I start the node
+    And I use 1st node as DC
+    Then API calls will not be authorized
+
+  @first
+  Scenario: Bootstraps should have /api/info route enabled
+    Then 1st bootstrap should reply on info route
