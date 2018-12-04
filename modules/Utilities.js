@@ -23,6 +23,9 @@ const Umzug = require('umzug');
 
 const logger = require('./logger');
 
+
+logger.important('KALEKS 1');
+
 class Utilities {
     /**
      * Creates new hash import ID.
