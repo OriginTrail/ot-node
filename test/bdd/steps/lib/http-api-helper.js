@@ -503,6 +503,37 @@ async function apiTrail(nodeRpcUrl, query) {
     });
 }
 
+/**
+ * @typedef {Object} InfoResponse
+ * @property {Object} Node information
+ */
+
+/**
+ * Fetch /api/info/ information
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @return {Promise.<InfoResponse>}
+ */
+async function apiNodeInfo(nodeRpcUrl) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/info`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
     apiImportContent,
@@ -519,4 +550,5 @@ module.exports = {
     apiDeposit,
     apiConsensus,
     apiTrail,
+    apiNodeInfo,
 };
