@@ -86,8 +86,6 @@ class DHDataReadRequestFreeCommand extends Command {
                     = this.graphStorage.findEdgesByImportId(importId, encColor);
 
                 [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
-                this.logger.important(JSON.stringify(vertices));
-                this.logger.important(JSON.stringify(edges));
                 ImportUtilities.unpackKeys(vertices, edges);
 
                 const holdingData = holdingDataModel.get({ plain: true });
