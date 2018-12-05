@@ -95,7 +95,7 @@ class RemoteControl {
             this.socket.initialize(socket);
             this.transport.getNetworkInfo().then((res) => {
                 socket.emit('system', { info: res });
-                socket.emit('config', this.config);
+                socket.emit('config', this.config); // TODO think about stripping some config values
             }).then((res) => {
                 this.updateImports();
             });

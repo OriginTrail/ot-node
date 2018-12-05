@@ -88,8 +88,7 @@ class DVDataReadResponseFreeCommand extends Command {
         ImportUtilities.sort(vertices);
         ImportUtilities.sort(edges);
 
-        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
         const rootHash = merkle.tree.getRoot();
 
         if (fingerprint !== rootHash) {
@@ -107,12 +106,6 @@ class DVDataReadResponseFreeCommand extends Command {
                 dataSetId,
                 wallet: dcWallet,
             }, false);
-            await this.importer.importJSON({
-                vertices: message.data.vertices,
-                edges: message.data.edges,
-                dataSetId,
-                wallet: dcWallet,
-            }, true);
         } catch (error) {
             this.logger.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);

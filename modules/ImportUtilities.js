@@ -17,14 +17,15 @@ class ImportUtilities {
      * Hides _key attributes
      * @param vertices
      * @param edges
+     * @param color
      */
-    static packKeys(vertices, edges) {
+    static packKeys(vertices, edges, color) {
         for (const vertex of vertices) {
             if (!vertex._dc_key) {
                 vertex._dc_key = vertex._key;
                 vertex._key = uuidv4();
             }
-            vertex.encrypted = true;
+            vertex.encrypted = color;
         }
         // map _from and _to
         const find = (key) => {
@@ -44,7 +45,7 @@ class ImportUtilities {
                 edge._to = to;
             }
 
-            edge.encrypted = true;
+            edge.encrypted = color;
         }
         for (const edge of edges) {
             if (!edge._dc_key) {
@@ -87,8 +88,9 @@ class ImportUtilities {
 
     /**
      * Normalizes import (use just necessary data)
-     * @param vertices  Import vertices
-     * @param edges     Import edges
+     * @param dataSetId - Dataset ID
+     * @param vertices - Import vertices
+     * @param edges - Import edges
      * @returns {{edges: *, vertices: *}}
      */
     static normalizeImport(dataSetId, vertices, edges) {

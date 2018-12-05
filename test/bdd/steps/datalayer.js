@@ -57,7 +57,7 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
         productionDate: '2017-31-12T00:01:54Z',
         quantities: {
             'urn:ot:object:actor:id:Company_Green:2018-01-01T01:00:00.000-04:00Z-04:00': {
-                PCS: '5d3381241af6b16260f680059e9042',
+                PCS: '11079ead57df77828224b3692c14118b993cb8199cfb5b8',
             },
         },
     };
@@ -71,11 +71,13 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
     ).to.be.above(0);
 });
 
-Then(/^DC manually calculated datasets data and root hashes matches ones from blockchain$/, async function () {
+Then(/^DC's (\d+) dataset hashes should match blockchain values$/, async function (datasetsCount) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(datasetsCount >= 1, 'datasetsCount should be positive integer').to.be.true;
 
     const { dc } = this.state;
     const myApiImportsInfo = await httpApiHelper.apiImportsInfo(dc.state.node_rpc_url);
+    expect(myApiImportsInfo.length, 'We should have preciselly this many datasets').to.be.equal(datasetsCount);
 
     for (const i in Array.from({ length: myApiImportsInfo.length })) {
         const myDataSetId = myApiImportsInfo[i].data_set_id;
@@ -90,10 +92,34 @@ Then(/^DC manually calculated datasets data and root hashes matches ones from bl
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         // vertices and edges are already sorted from the response
-        const myMerkle = await ImportUtilities.merkleStructure(myEdgesVertices.vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), myEdgesVertices.edges);
+        const myMerkle = await ImportUtilities.merkleStructure(myEdgesVertices.vertices, myEdgesVertices.edges);
 
         expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
     }
+});
+
+Then(/^([DC|DV]+)'s local query response should contain hashed private attributes$/, async function (nodeType) {
+    expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
+    expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
+
+    expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'Query response of last local imported data set id not defined').to.be.equal(true);
+
+    expect(this.state.apiQueryLocalImportByDataSetIdResponse, 'Response should contain two keys').to.have.keys(['edges', 'vertices']);
+
+    this.state.apiQueryLocalImportByDataSetIdResponse.vertices.forEach((vertex) => {
+        if (vertex.data) {
+            if (vertex.data.private) {
+                let sumOfHashesLengths = 0;
+                let randomHashLength;
+                Object.keys(vertex.data.private).forEach((key) => {
+                    expect((vertex.data.private[key]).startsWith('0x'), 'Private value should start with 0x').to.be.true;
+                    expect(utilities.isZeroHash(vertex.data.private[key]), 'Private value should not be empty hash').to.be.false;
+                    sumOfHashesLengths += (vertex.data.private[key]).length;
+                    randomHashLength = (vertex.data.private[key]).length;
+                });
+                expect(sumOfHashesLengths % randomHashLength, 'All hashes should be of same length').to.equal(0);
+            }
+        }
+    });
 });
 

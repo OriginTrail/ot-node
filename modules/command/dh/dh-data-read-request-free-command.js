@@ -66,33 +66,43 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
-            const encrypted = dataInfo.origin === 'HOLDING';
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, encrypted);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, encrypted);
+            let edges;
+            let vertices;
+            if (dataInfo.origin === 'HOLDING') { // DH has the data
+                // Get replication key and then encrypt data.
+                const holdingDataModels = await Models.holding_data.findAll({
+                    where: { data_set_id: importId },
+                });
 
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-            const vertices = values[0];
-            const edges = values[1];
+                let holdingDataModel = null;
+                if (holdingDataModels.length > 0) {
+                    [holdingDataModel] = holdingDataModels; // take the first one
+                }
 
-            ImportUtilities.unpackKeys(vertices, edges);
-            ImportUtilities.deleteInternal(edges);
-            ImportUtilities.deleteInternal(vertices);
+                const encColor = holdingDataModel !== null ? holdingDataModel.color : null;
+                const verticesPromise
+                    = this.graphStorage.findVerticesByImportId(importId, encColor);
+                const edgesPromise
+                    = this.graphStorage.findEdgesByImportId(importId, encColor);
 
-            // Get replication key and then encrypt data.
-            const holdingDataModel = await Models.holding_data.find({
-                where: { data_set_id: importId },
-            });
+                [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
+                ImportUtilities.unpackKeys(vertices, edges);
 
-            if (holdingDataModel) {
                 const holdingData = holdingDataModel.get({ plain: true });
                 const dataPublicKey = holdingData.litigation_public_key;
-                const replicationPrivateKey = holdingData.distribution_private_key;
 
                 Graph.decryptVertices(
                     vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
                     dataPublicKey,
                 );
+            } else { // DC or DV
+                const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+                const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+                [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
             }
+
+            ImportUtilities.deleteInternal(edges);
+            ImportUtilities.deleteInternal(vertices);
 
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);

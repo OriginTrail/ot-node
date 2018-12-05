@@ -13,7 +13,6 @@ const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
 const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-plugin-service');
-const restify = require('restify');
 const fs = require('fs');
 const path = require('path');
 const models = require('./models');
@@ -24,14 +23,11 @@ const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
-const corsMiddleware = require('restify-cors-middleware');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
-const mkdirp = require('mkdirp');
 const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
-const ip = require('ip');
 const argv = require('minimist')(process.argv.slice(2));
 
 const Graph = require('./modules/Graph');
@@ -44,8 +40,8 @@ const ApprovalService = require('./modules/service/approval-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
-const RestAPIValidator = require('./modules/validator/rest-api-validator');
 const APIUtilities = require('./modules/utility/api-utilities');
+const RestAPIService = require('./modules/service/rest-api-service');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -357,7 +353,7 @@ class OTNode {
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
@@ -369,6 +365,7 @@ class OTNode {
             importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
+            restAPIService: awilix.asClass(RestAPIService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -463,8 +460,15 @@ class OTNode {
         }
 
         // Initialise API
-        const apiUtilities = container.resolve('apiUtilities');
-        await this.startRPC(apiUtilities);
+        const restAPIService = container.resolve('restAPIService');
+        try {
+            await restAPIService.startRPC();
+        } catch (err) {
+            log.error('Failed to start RPC server');
+            console.log(err);
+            notifyBugsnag(err);
+            process.exit(1);
+        }
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
@@ -510,6 +514,7 @@ class OTNode {
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
+            restAPIService: awilix.asClass(RestAPIService).singleton(),
         });
 
         const transport = container.resolve('transport');
@@ -530,8 +535,15 @@ class OTNode {
             approvalService.handleApprovalEvent(eventData);
         });
 
-        const apiUtilities = container.resolve('apiUtilities');
-        await this.startRPC(apiUtilities);
+        const restAPIService = container.resolve('restAPIService');
+        try {
+            await restAPIService.startRPC();
+        } catch (err) {
+            log.error('Failed to start RPC server');
+            console.log(err);
+            notifyBugsnag(err);
+            process.exit(1);
+        }
     }
 
     /**
@@ -554,428 +566,6 @@ class OTNode {
                 working = false;
             }
         }, 5000);
-    }
-
-    /**
-     * Start RPC server
-     * @param apiUtilities - API utilities instance
-     */
-    async startRPC(apiUtilities) {
-        const options = {
-            name: 'RPC server',
-            version: pjson.version,
-            formatters: {
-                'application/json': (req, res, body) => {
-                    res.set('content-type', 'application/json; charset=utf-8');
-                    if (!body) {
-                        if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
-                            res.setHeader('Content-Length', 0);
-                        }
-                        return null;
-                    }
-
-                    if (body instanceof Error) {
-                        // snoop for RestError or HttpError, but don't rely on instanceof
-                        if ((body.restCode || body.httpCode) && body.body) {
-                            // eslint-disable-next-line
-                            body = body.body;
-                        } else {
-                            body = {
-                                message: body.message,
-                            };
-                        }
-                    }
-
-                    if (Buffer.isBuffer(body)) {
-                        body = body.toString('base64');
-                    }
-
-                    let ident = 2;
-                    if ('prettify-json' in req.headers) {
-                        if (req.headers['prettify-json'] === 'false') {
-                            ident = 0;
-                        }
-                    }
-                    const data = Utilities.stringify(body, ident);
-
-                    if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
-                        res.setHeader('Content-Length', Buffer.byteLength(data));
-                    }
-                    return data;
-                },
-            },
-        };
-
-        if (config.node_rpc_use_ssl) {
-            Object.assign(options, {
-                key: fs.readFileSync(config.node_rpc_ssl_key_path),
-                certificate: fs.readFileSync(config.node_rpc_ssl_cert_path),
-                rejectUnauthorized: true,
-            });
-        }
-
-        const server = restify.createServer(options);
-
-        server.use(restify.plugins.acceptParser(server.acceptable));
-        server.use(restify.plugins.queryParser());
-        server.use(restify.plugins.bodyParser());
-        const cors = corsMiddleware({
-            preflightMaxAge: 5, // Optional
-            origins: ['*'],
-            allowHeaders: ['API-Token', 'prettify-json', 'raw-data'],
-            exposeHeaders: ['API-Token-Expiry'],
-        });
-
-        server.pre(cors.preflight);
-        server.use(cors.actual);
-        server.use((request, response, next) => {
-            const result = apiUtilities.authorize(request);
-            if (result) {
-                response.status(result.status);
-                response.send({
-                    message: result.message,
-                });
-                return;
-            }
-            return next();
-        });
-
-        // TODO: Temp solution to listen all adapters in local net.
-        let serverListenAddress = config.node_rpc_ip;
-        if (ip.isLoopback(serverListenAddress)) {
-            serverListenAddress = '0.0.0.0';
-        }
-
-        // promisified server.listen()
-        const startServer = () => new Promise((resolve, reject) => {
-            server.listen(config.node_rpc_port, serverListenAddress, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
-
-        try {
-            await startServer(server, serverListenAddress);
-            log.notify(`API exposed at  ${server.url}`);
-        } catch (err) {
-            log.error('Failed to start RPC server');
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
-        if (!config.is_bootstrap_node) {
-            // register API routes only if the node is not bootstrap
-            this.exposeAPIRoutes(server, context);
-        }
-    }
-
-    /**
-     * API Routes
-     */
-    exposeAPIRoutes(server, ctx) {
-        const {
-            emitter, importController, apiUtilities, dcController,
-        } = ctx;
-
-        /**
-         * Data import route
-         * @param importfile - file or text data
-         * @param importtype - (GS1/WOT)
-         */
-        server.post('/api/import', async (req, res) => {
-            await importController.import(req, res);
-        });
-
-        /**
-         * Create offer route
-         */
-        server.post('/api/replication', async (req, res) => {
-            await dcController.createOffer(req, res);
-        });
-
-        server.get('/api/dump/rt', (req, res) => {
-            log.api('Dumping routing table');
-            const message = context.transport.dumpContacts();
-
-            res.status(200);
-            res.send({
-                message,
-            });
-        });
-
-        server.get('/api/network/get-contact/:node_id', async (req, res) => {
-            const nodeId = req.params.node_id;
-            log.api(`Get contact node ID ${nodeId}`);
-
-            const result = await context.transport.getContact(nodeId);
-            const body = {};
-
-            if (result) {
-                Object.assign(body, result);
-            }
-            res.status(200);
-            res.send(body);
-        });
-
-        server.get('/api/network/find/:node_id', async (req, res) => {
-            const nodeId = req.params.node_id;
-            log.api(`Find node ID ${nodeId}`);
-
-            const result = await context.transport.findNode(nodeId);
-            const body = {};
-
-            if (result) {
-                Object.assign(body, result);
-            }
-            res.status(200);
-            res.send(body);
-        });
-
-        server.get('/api/replication/:replication_id', (req, res) => {
-            log.api('GET: Replication status request received');
-
-            const replicationId = req.params.replication_id;
-            if (replicationId == null) {
-                log.error('Invalid request. You need to provide replication ID');
-                res.status = 400;
-                res.send({
-                    message: 'Replication ID is not provided',
-                });
-            } else {
-                const queryObject = {
-                    replicationId,
-                    response: res,
-                };
-                emitter.emit('api-offer-status', queryObject);
-            }
-        });
-
-        /**
-         * Get trail from database
-         * @param QueryObject - ex. {uid: abc:123}
-         */
-        server.get('/api/trail', (req, res, next) => {
-            log.api('GET: Trail request received.');
-
-            const error = RestAPIValidator.validateNotEmptyQuery(req.query);
-            if (error) {
-                return next(error);
-            }
-            const queryObject = req.query;
-            emitter.emit('api-trail', {
-                query: queryObject,
-                response: res,
-            });
-        });
-
-        /** Get root hash for provided data query
-         * @param Query params: data_set_id
-         */
-        server.get('/api/fingerprint', (req, res) => {
-            log.api('GET: Fingerprint request received.');
-
-            const queryObject = req.query;
-            emitter.emit('api-get_root_hash', {
-                query: queryObject,
-                response: res,
-            });
-        });
-
-        server.get('/api/query/network/:query_id', (req, res) => {
-            log.api('GET: Query for status request received.');
-
-            if (!req.params.query_id) {
-                res.status(400);
-                res.send({
-                    message: 'Param required.',
-                });
-                return;
-            }
-            emitter.emit('api-network-query-status', {
-                id: req.params.query_id,
-                response: res,
-            });
-        });
-
-        server.get('/api/query/:query_id/responses', (req, res) => {
-            log.api('GET: Local query responses request received.');
-
-            if (!req.params.query_id) {
-                res.status(400);
-                res.send({
-                    message: 'Param query_id is required.',
-                });
-                return;
-            }
-            emitter.emit('api-network-query-responses', {
-                query_id: req.params.query_id,
-                response: res,
-            });
-        });
-
-        server.post('/api/query/network', (req, res, next) => {
-            log.api('POST: Network query request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const { query } = req.body;
-            error = RestAPIValidator.validateSearchQuery(query);
-            if (error) {
-                return next(error);
-            }
-
-            emitter.emit('api-network-query', {
-                query,
-                response: res,
-            });
-        });
-
-        /**
-         * Get vertices by query
-         * @param queryObject
-         */
-        server.post('/api/query/local', (req, res, next) => {
-            log.api('POST: Local query request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const queryObject = req.body.query;
-            error = RestAPIValidator.validateSearchQuery(queryObject);
-            if (error) {
-                return next(error);
-            }
-
-            // TODO: Decrypt returned vertices
-            emitter.emit('api-query', {
-                query: queryObject,
-                response: res,
-            });
-        });
-
-        server.get('/api/query/local/import/:data_set_id', (req, res) => {
-            log.api('GET: Local import request received.');
-
-            if (!req.params.data_set_id) {
-                res.status(400);
-                res.send({
-                    message: 'Param required.',
-                });
-                return;
-            }
-
-            emitter.emit('api-query-local-import', {
-                data_set_id: req.params.data_set_id,
-                request: req,
-                response: res,
-            });
-        });
-
-        server.post('/api/read/network', (req, res) => {
-            log.api('POST: Network read request received.');
-
-            if (req.body == null || req.body.query_id == null || req.body.reply_id == null
-              || req.body.data_set_id == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-                return;
-            }
-            const { query_id, reply_id, data_set_id } = req.body;
-
-            emitter.emit('api-choose-offer', {
-                query_id,
-                reply_id,
-                data_set_id,
-                response: res,
-            });
-        });
-
-
-        server.post('/api/deposit', (req, res) => {
-            log.api('POST: Deposit tokens request received.');
-
-            if (req.body !== null && typeof req.body.trac_amount === 'number'
-                && req.body.trac_amount > 0) {
-                const { trac_amount } = req.body;
-                emitter.emit('api-deposit-tokens', {
-                    trac_amount,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-            }
-        });
-
-
-        server.post('/api/withdraw', (req, res) => {
-            log.api('POST: Withdraw tokens request received.');
-
-            if (req.body !== null && typeof req.body.trac_amount === 'number'
-                && req.body.trac_amount > 0) {
-                const { trac_amount } = req.body;
-                emitter.emit('api-withdraw-tokens', {
-                    trac_amount,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-            }
-        });
-
-        server.get('/api/import_info', async (req, res) => {
-            await importController.dataSetInfo(req, res);
-        });
-
-        server.get('/api/imports_info', (req, res) => {
-            log.api('GET: List imports request received.');
-
-            emitter.emit('api-imports-info', {
-                response: res,
-            });
-        });
-
-        server.get('/api/consensus/:sender_id', (req, res) => {
-            log.api('GET: Consensus check events request received.');
-
-            if (req.params.sender_id == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-            }
-
-            emitter.emit('api-consensus-events', {
-                sender_id: req.params.sender_id,
-                response: res,
-            });
-        });
-
-        server.get('/api/info', (req, res) => {
-            log.api('GET: Node information request received.');
-
-            emitter.emit('api-node-info', {
-                response: res,
-            });
-        });
-
-        /**
-         * Temporary route used for HTTP network prototype
-         */
-        server.post('/network/send', (req, res) => {
-            log.api('P2P request received');
-
-            const { type } = req.body;
-            emitter.emit(type, req, res);
-        });
     }
 }
 

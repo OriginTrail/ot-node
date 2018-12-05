@@ -134,7 +134,7 @@ describe('GS1 Importer tests', () => {
                 // eslint-disable-next-line no-loop-func
                 async () => {
                     const result = await gs1.parseGS1(await Utilities.fileContents(test.args[0]));
-                    const { response } = await importer.importJSON(result, true);
+                    const { response } = await importer.importJSON(result, true, 1);
 
                     const { vertices, edges } = response;
                     for (const doc of edges.concat(vertices)) {

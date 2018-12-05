@@ -51,11 +51,19 @@ class Importer {
         });
     }
 
-    async importJSON(json_document, packKeys = false) {
+    /**
+     * Import dataset in JSON format
+     * @param jsonDocument - Dataset document
+     * @param packKeys - Pack or not
+     * @param encColor - Encrypted color used when packing
+     * @return {Promise<*>}
+     */
+    async importJSON(jsonDocument, packKeys = false, encColor = null) {
         try {
             const result = await this._import('JSON', {
+                encColor,
                 packKeys,
-                json_document,
+                jsonDocument,
             });
             return {
                 response: await this.afterImport(result, packKeys),
@@ -77,25 +85,26 @@ class Importer {
         this.log.info('Entering importJSON');
         const {
             packKeys,
-            json_document,
+            encColor,
+            jsonDocument,
         } = data;
 
         let {
             vertices,
             edges,
-        } = json_document;
+        } = jsonDocument;
 
         const {
             dataSetId,
             wallet,
-        } = json_document;
+        } = jsonDocument;
 
         this.log.trace('Import vertices and edges');
         ImportUtilities.deleteInternal(edges);
         ImportUtilities.deleteInternal(vertices);
 
         if (packKeys) {
-            ImportUtilities.packKeys(vertices, edges);
+            ImportUtilities.packKeys(vertices, edges, encColor);
         }
 
         vertices = await Promise.all(vertices.map(async (vertex) => {
@@ -200,8 +209,7 @@ class Importer {
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
         this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
         this.log.info(`Data set ID: ${data_set_id}`);

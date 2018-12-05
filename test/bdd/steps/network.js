@@ -83,6 +83,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+
         },
         appDataBaseDir: this.parameters.appDataBaseDir,
     });
@@ -310,8 +311,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
     // vertices and edges are already sorted from the response
-    const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices.filter(vertex =>
-        vertex.vertex_type !== 'CLASS'), myApiImportInfo.import.edges);
+    const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices, myApiImportInfo.import.edges);
 
     expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
 });
@@ -405,8 +405,6 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                         this.state.lastImport.data_set_id,
                     );
                 expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
-                // TODO: fix different root hashes error.
-                dhImportInfo.root_hash = dcImportInfo.root_hash;
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
                     accept();
                 } else {
@@ -444,8 +442,6 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
     const dvImportInfo =
         await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data_set_id);
 
-    // TODO: fix different root hashes error.
-    dvImportInfo.root_hash = dcImportInfo.root_hash;
     if (!deepEqual(dcImportInfo, dvImportInfo)) {
         throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
     }
@@ -634,7 +630,6 @@ Then(/^DC wallet and DC profile balances should diff by (\d+) with rounding erro
 });
 
 Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, function (eventsCount, matchesCount) {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastConsensusResponse, 'lastConsensusResponse should be already defined').to.not.be.undefined;
     expect(this.state.lastConsensusResponse, 'Should have key called events').to.have.all.keys('events');
 
@@ -737,4 +732,17 @@ Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function
         this.logger.log(`Configuration updated for node ${node.id}`);
     }
     done();
+});
+
+Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3000000 }, async function (nodeIndex) {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.bootstraps.length);
+
+    const bootstrap = this.state.bootstraps[nodeIndex - 1];
+    const response = await httpApiHelper.apiNodeInfo(bootstrap.state.node_rpc_url);
+
+    expect(response, 'response should contain version, blockchain, network and is_bootstrap keys').to.have.keys([
+        'version', 'blockchain',
+        'network', 'is_bootstrap',
+    ]);
 });

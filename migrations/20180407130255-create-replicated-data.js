@@ -25,7 +25,7 @@ module.exports = {
         },
         color: {
             allowNull: false,
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
         },
         litigation_public_key: {
             allowNull: false,
