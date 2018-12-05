@@ -20,6 +20,16 @@ contract HoldingStorage {
         _;
     }
 
+    uint256 public difficultyOverride;
+    function getDifficultyOverride()
+    public view returns (uint256 difficultyOverride) {
+        return difficultyOverride;
+    }
+    function setDifficultyOverride(uint256 new_difficulty)
+    public onlyContracts {
+        difficultyOverride = new_difficulty;
+    }
+
     mapping(bytes32 => bytes32) public fingerprint;
 
     function setFingerprint(bytes32 dataSetId, bytes32 dataRootHash)

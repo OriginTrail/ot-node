@@ -17,8 +17,6 @@ contract Holding is Ownable {
     ProfileStorage public profileStorage;
     LitigationStorage public litigationStorage;
     Profile public profile;
-
-    uint256 public difficultyOverride;
     
     constructor(address hubAddress) public{
         hub = Hub(hubAddress);
@@ -28,7 +26,7 @@ contract Holding is Ownable {
         litigationStorage = LitigationStorage(hub.litigationStorageAddress());
         
         profile = Profile(hub.profileAddress());
-        difficultyOverride = 0;
+
     }
 
     function setHubAddress(address newHubAddress) public{
@@ -79,7 +77,7 @@ contract Holding is Ownable {
         //We calculate the task for the data creator to solve
             //Calculating task difficulty
         uint256 difficulty;
-        if(difficultyOverride != 0) difficulty = difficultyOverride;
+        if(holdingStorage.getDifficultyOverride() != 0) difficulty = holdingStorage.getDifficultyOverride();
         else {
             if(logs2(profileStorage.activeNodes()) <= 4) difficulty = 1;
             else {
@@ -225,11 +223,6 @@ contract Holding is Ownable {
             y := div(mload(add(m,sub(255,a))), shift)
             y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
         }
-    }
-
-    function setDifficulty(uint256 new_difficulty) 
-    public onlyOwner{
-        difficultyOverride = new_difficulty;
     }
 }
 
