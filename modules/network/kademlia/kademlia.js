@@ -652,13 +652,13 @@ class Kademlia {
                         if (err) {
                             reject(err);
                         } else {
-                            if (successfulPublishes.length === 0) {
+                            if (successfulPublishes === 0) {
                                 // Publish failed.
                                 reject(Error('Publish failed.'));
                                 return;
                             }
                             this.log.debug(`Published successfully to ${successfulPublishes} peers.`);
-                            resolve();
+                            resolve(successfulPublishes);
                         }
                     },
                 );
