@@ -122,7 +122,7 @@ contract MockLitigation {
 			// Set new offer parameters
 				// Calculate and set difficulty
 			
-			if(holding.difficultyOverride() != 0) parameters[2] = holding.difficultyOverride();
+			if(holdingStorage.difficultyOverride() != 0) parameters[2] = holdingStorage.difficultyOverride();
 			else {
 			    if(logs2(profileStorage.activeNodes()) <= 4) parameters[2] = 1;
 			    else {
@@ -152,7 +152,7 @@ contract MockLitigation {
 			litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
 			emit LitigationCompleted(offerId, holderIdentity, true);
-			emit ReplacementStarted(offerId, challengerIdentity, bytesParameters[3]);
+			emit ReplacementStarted(offerId, challengerIdentity, bytesParameters[2]);
 			return true;
 		}
 	}
