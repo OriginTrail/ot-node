@@ -72,6 +72,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             wotImporter: awilix.asClass(WOTImporter),
             product: awilix.asClass(Product),
             config: awilix.asValue(config),
+            notifyError: awilix.asValue(() => {}),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
