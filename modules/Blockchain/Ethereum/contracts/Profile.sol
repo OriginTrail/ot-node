@@ -150,6 +150,16 @@ contract Profile {
         );
     }
 
+    function setNodeId(address identity, bytes32 newNodeId)
+    public {
+         // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),
+            "Sender does not have action permission for submitted identity");
+        require(uint256(newNodeId) != 0, "Cannot set a blank nodeId");
+
+        profileStorage.setNodeId(identity, newNodeId);
+    }
+
     function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
     public onlyHolding {
         if(profileStorage.getWithdrawalPending(payer)) {
