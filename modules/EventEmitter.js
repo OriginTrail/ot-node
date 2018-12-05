@@ -334,9 +334,6 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
-            if (!appState.enoughFunds) {
-                return;
-            }
             const failFunction = (error) => {
                 logger.warn(error);
                 data.response.status(400);
