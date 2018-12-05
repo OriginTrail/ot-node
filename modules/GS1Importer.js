@@ -834,7 +834,7 @@ class GS1Importer {
             });
 
             return {
-                vertices: normalizedVertices,
+                vertices: normalizedVertices.concat(objectClasses),
                 edges: normalizedEdges,
                 data_set_id: dataSetId,
                 wallet: senderWallet,

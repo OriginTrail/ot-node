@@ -99,17 +99,17 @@ class DhReplicationImportCommand extends Command {
 
         await this.importer.importJSON({
             dataSetId,
-            vertices: decryptedVertices,
-            edges,
-            wallet: dcWallet,
-        }, false);
-
-        let importResult = await this.importer.importJSON({
-            dataSetId,
             vertices: litigationVertices,
             edges,
             wallet: dcWallet,
         }, true, encColor);
+
+        let importResult = await this.importer.importJSON({
+            dataSetId,
+            vertices: decryptedVertices,
+            edges,
+            wallet: dcWallet,
+        }, false);
 
         if (importResult.error) {
             throw Error(importResult.error);

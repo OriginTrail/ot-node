@@ -311,8 +311,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
     // vertices and edges are already sorted from the response
-    const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices.filter(vertex =>
-        vertex.vertex_type !== 'CLASS'), myApiImportInfo.import.edges);
+    const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices, myApiImportInfo.import.edges);
 
     expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
 });
@@ -406,8 +405,6 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                         this.state.lastImport.data_set_id,
                     );
                 expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
-                // TODO: fix different root hashes error.
-                dhImportInfo.root_hash = dcImportInfo.root_hash;
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
                     accept();
                 } else {
@@ -445,8 +442,6 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
     const dvImportInfo =
         await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data_set_id);
 
-    // TODO: fix different root hashes error.
-    dvImportInfo.root_hash = dcImportInfo.root_hash;
     if (!deepEqual(dcImportInfo, dvImportInfo)) {
         throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
     }
