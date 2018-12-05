@@ -743,7 +743,7 @@ class ArangoJS {
      */
     async findVerticesByImportId(data_id, encColor = null) {
         let queryString = '';
-        if (encColor) {
+        if (encColor != null) {
             queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
                             AND POSITION(v.datasets, @importId, false)  != false 
