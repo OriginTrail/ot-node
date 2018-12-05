@@ -209,8 +209,7 @@ class Importer {
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
         this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
         this.log.info(`Data set ID: ${data_set_id}`);

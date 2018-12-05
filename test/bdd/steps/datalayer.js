@@ -92,8 +92,7 @@ Then(/^DC's (\d+) dataset hashes should match blockchain values$/, async functio
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         // vertices and edges are already sorted from the response
-        const myMerkle = await ImportUtilities.merkleStructure(myEdgesVertices.vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), myEdgesVertices.edges);
+        const myMerkle = await ImportUtilities.merkleStructure(myEdgesVertices, myEdgesVertices.edges);
 
         expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
     }
