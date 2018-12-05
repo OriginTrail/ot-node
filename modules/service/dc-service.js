@@ -256,6 +256,7 @@ class DCService {
 
         const colors = ['red', 'green', 'blue'];
         const color = colors[Utilities.getRandomInt(2)];
+        const colorNumber = this.replicationService.castColorToNumber(color);
 
         const replication = await this.replicationService.loadReplication(offer.id, color);
         await models.replicated_data.create({
@@ -271,7 +272,7 @@ class DCService {
             distribution_root_hash: replication.distributionRootHash,
             distribution_epk: replication.distributionEpk,
             status: 'STARTED',
-            color,
+            color: colorNumber.toNumber(),
         });
 
         const toSign = [
@@ -299,6 +300,7 @@ class DCService {
             distribution_signature: distributionSignature.signature,
             transaction_hash: offer.transaction_hash,
             distributionSignature,
+            color: colorNumber.toNumber(),
         };
 
         // send replication to DH

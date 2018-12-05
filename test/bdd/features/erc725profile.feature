@@ -3,12 +3,14 @@ Feature: ERC725 Profile features
     Given the blockchain is set up
     And 1 bootstrap is running
 
+  @second
   Scenario: Expect node to create profile
     Given I setup 1 node
     And I start the node
     Then the 1st node should have a valid ERC725 identity
     And the 1st node should have a valid profile
 
+  @second
   Scenario: Expect node to create profile and stake only once
     Given I setup 1 node
     And I start the node
@@ -21,6 +23,7 @@ Feature: ERC725 Profile features
     And I start the node
     Then the 1st node should start normally
 
+  @second
   Scenario: Provide own ERC725 identity and expect node to create profile
     Given I setup 1 node
     When I manually create ERC725 identity for 1st node

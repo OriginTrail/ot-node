@@ -45,7 +45,7 @@ class DCOfferFinalizeCommand extends Command {
         const confirmations = [];
         for (const identity of nodeIdentifiers) {
             const replication = replications.find(r => identity.includes(r.dh_identity));
-            colors.push(this.replicationService.castColorToNumber(replication.color));
+            colors.push(replication.color);
             confirmations.push(replication.confirmation);
         }
 
