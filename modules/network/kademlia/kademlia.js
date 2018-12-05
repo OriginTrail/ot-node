@@ -185,7 +185,7 @@ class Kademlia {
                 const publicationId = uuidv4();
                 const neighbors = [...this.node.router.getClosestContactsToKey(
                     options.routingKey || this.node.identity.toString('hex'),
-                    kadence.constants.ALPHA * 3,
+                    this.node.router.size,
                 ).entries()];
 
                 const errors = [];
