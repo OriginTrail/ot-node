@@ -66,25 +66,6 @@ class GraphStorage {
     }
 
     /**
-     * Find set of vertices from Graph storage
-     * @param queryObject       Query for getting vertices
-     * @returns {Promise<any>}
-     */
-    findVertices(queryObject) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.findVertices(queryObject).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
      * Finds imports IDs based on data location query
      *
      * DataLocationQuery structure: [[path, value, opcode]*]
