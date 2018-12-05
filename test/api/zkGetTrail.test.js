@@ -62,7 +62,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        graphStorage = new GraphStorage(config.database, logger);
+        graphStorage = new GraphStorage(config.database, logger, () => {} )});
         container.register({
             logger: awilix.asValue(logger),
             gs1Importer: awilix.asClass(GS1Importer),
