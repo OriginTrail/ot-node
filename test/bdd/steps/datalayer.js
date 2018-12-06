@@ -57,7 +57,7 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
         productionDate: '2017-31-12T00:01:54Z',
         quantities: {
             'urn:ot:object:actor:id:Company_Green:2018-01-01T01:00:00.000-04:00Z-04:00': {
-                PCS: '5d3381241af6b16260f680059e9042',
+                PCS: '11079ead57df77828224b3692c14118b993cb8199cfb5b8',
             },
         },
     };
@@ -92,8 +92,7 @@ Then(/^DC's (\d+) dataset hashes should match blockchain values$/, async functio
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         // vertices and edges are already sorted from the response
-        const myMerkle = await ImportUtilities.merkleStructure(myEdgesVertices.vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), myEdgesVertices.edges);
+        const myMerkle = await ImportUtilities.merkleStructure(myEdgesVertices.vertices, myEdgesVertices.edges);
 
         expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
     }

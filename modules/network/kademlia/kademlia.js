@@ -185,7 +185,7 @@ class Kademlia {
                 const publicationId = uuidv4();
                 const neighbors = [...this.node.router.getClosestContactsToKey(
                     options.routingKey || this.node.identity.toString('hex'),
-                    kadence.constants.ALPHA * 3,
+                    this.node.router.size,
                 ).entries()];
 
                 const errors = [];
@@ -652,13 +652,13 @@ class Kademlia {
                         if (err) {
                             reject(err);
                         } else {
-                            if (successfulPublishes.length === 0) {
+                            if (successfulPublishes === 0) {
                                 // Publish failed.
                                 reject(Error('Publish failed.'));
                                 return;
                             }
                             this.log.debug(`Published successfully to ${successfulPublishes} peers.`);
-                            resolve();
+                            resolve(successfulPublishes);
                         }
                     },
                 );

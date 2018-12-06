@@ -659,20 +659,11 @@ class ArangoJS {
      * @return {Promise<*>}
      */
     async findVerticesByImportId(data_id, encColor = null) {
-        let queryString = '';
-        if (encColor) {
-            queryString = `FOR v IN ot_vertices 
+        const queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
                             AND POSITION(v.datasets, @importId, false)  != false 
                             AND (v.encrypted == ${encColor})
                             SORT v._key RETURN v`;
-        } else {
-            queryString = `FOR v IN ot_vertices 
-                            FILTER v.datasets != null 
-                            AND POSITION(v.datasets, @importId, false) != false 
-                            AND (v.encrypted == null)
-                            SORT v._key RETURN v`;
-        }
 
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);

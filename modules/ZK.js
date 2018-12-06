@@ -6,9 +6,7 @@ class ZK {
     constructor(ctx) {
         this.zero = new BN(0);
         this.one = new BN(1);
-        this.p = new BN(941078291);
-        this.q = new BN(941072309);
-        this.n = this.p.mul(this.q);
+        this.n = new BN('14fef784d91e20718aee8ef1', 16);
         this.nSquare = this.n.mul(this.n);
         this.red = BN.red(this.n);
         this.redSquare = BN.red(this.nSquare);
