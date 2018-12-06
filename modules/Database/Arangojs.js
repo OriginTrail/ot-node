@@ -685,8 +685,18 @@ class ArangoJS {
         return normalizedVertices.concat(objectClasses);
     }
 
+    /**
+     * Finds object vertices.
+     * TODO We need to change the query. This is not the appropriate way.
+     * @return {Promise<any>}
+     */
     async findObjectClassVertices() {
-        const queryString = 'FOR v IN ot_vertices FILTER v.vertex_type == "CLASS" AND v.datasets == null SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_vertices ' +
+            'FILTER v.vertex_type == "CLASS" ' +
+            'AND v.datasets == null ' +
+            'AND v._dc_key == null ' +
+            'SORT v._key ' +
+            'RETURN v';
         return this.runQuery(queryString, {});
     }
 
