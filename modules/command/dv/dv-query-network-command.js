@@ -71,7 +71,18 @@ class DVQueryNetworkCommand extends Command {
 
         await this.transport.publish('kad-data-location-request', dataLocationRequestObject);
         this.logger.info(`Published query to the network. Query ID ${queryId}.`);
-        return Command.empty();
+        return {
+            commands: [
+                {
+                    name: 'dvHandleNetworkQueryResponsesCommand',
+                    delay: 60000,
+                    data: {
+                        queryId,
+                    },
+                    transactional: false,
+                },
+            ],
+        };
     }
 
     /**
