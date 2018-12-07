@@ -22,7 +22,7 @@ var web3;
 var Ganache = require('ganache-core');
 
 // Global values
-const amountToDeposit = (new BN(10)).pow(new BN(20));
+const amountToDeposit = (new BN(10)).pow(new BN(21));
 const amountToWithdraw = (new BN(100));
 const nodeId = '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
 
