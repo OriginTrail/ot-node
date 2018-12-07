@@ -117,7 +117,7 @@ class DCOfferFinalizeCommand extends Command {
             };
         }
 
-        this.logger.notify(`Offer ${offerId} has not been finalized.`);
+        this.logger.error(`Offer ${offerId} has not been finalized.`);
 
         offer.status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized. ${err.message}`;
