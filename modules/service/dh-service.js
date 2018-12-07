@@ -290,7 +290,6 @@ class DHService {
                 msgNodeId,
                 msgWallet,
                 msgQuery,
-                encrypted: false,
             },
         });
     }
@@ -685,7 +684,7 @@ class DHService {
         await this.blockchain.answerLitigation(importId, answer);
     }
 
-    async dataLocationQuery(queryId, encrypted) {
+    async dataLocationQuery(queryId) {
         const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
         const validationError = ObjectValidator.validateSearchQueryObject(networkQuery);
         if (validationError) {
@@ -697,7 +696,7 @@ class DHService {
 
         // Fetch the results.
         const importIds =
-            await this.graphStorage.findImportIds(networkQuery.query, encrypted);
+            await this.graphStorage.findImportIds(networkQuery.query);
         const decryptKeys = {};
 
         // Get decode keys.
@@ -716,7 +715,7 @@ class DHService {
         }
 
         const encodedVertices =
-            await this.graphStorage.dataLocationQuery(networkQuery.query, encrypted);
+            await this.graphStorage.dataLocationQuery(networkQuery.query);
         const vertices = [];
 
         encodedVertices[0].objects.forEach((encodedVertex) => {
@@ -777,8 +776,8 @@ class DHService {
         const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
 
         if (dataInfo) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId, false);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId, false);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
 

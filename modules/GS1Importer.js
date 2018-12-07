@@ -17,6 +17,7 @@ class GS1Importer {
         this.helper = ctx.gs1Utilities;
         this.log = ctx.logger;
         this.config = ctx.config;
+        this.notifyError = ctx.notifyError;
     }
 
     async processXML(err, result) {
@@ -796,17 +797,17 @@ class GS1Importer {
 
             const dataInfo = await models.data_info.find({ where: { data_set_id: dataSetId } });
             if (dataInfo) {
-                throw new Error(`Data set ${dataSetId} has already been imported`);
+                throw new ImporterError(`Data set ${dataSetId} has already been imported`);
             }
             // eslint-disable-next-line
             const { vertices: newDenormalizedVertices, edges: newDenormalizedEdges } = denormalizeGraph(dataSetId, allVertices, allEdges);
 
-            allVertices.map((v) => {
+            newDenormalizedVertices.map((v) => {
                 v.inTransaction = true;
                 return v;
             });
             await Promise.all(newDenormalizedVertices.map(vertex => this.db.addVertex(vertex)));
-            allEdges.map((e) => {
+            newDenormalizedEdges.map((e) => {
                 e.inTransaction = true;
                 return e;
             });
@@ -824,8 +825,17 @@ class GS1Importer {
 
             await this.db.commit();
 
+            normalizedVertices.map((v) => {
+                delete v.inTransaction;
+                return v;
+            });
+            normalizedEdges.map((e) => {
+                delete e.inTransaction;
+                return e;
+            });
+
             return {
-                vertices: normalizedVertices,
+                vertices: normalizedVertices.concat(objectClasses),
                 edges: normalizedEdges,
                 data_set_id: dataSetId,
                 wallet: senderWallet,

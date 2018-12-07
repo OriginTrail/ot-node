@@ -3,7 +3,6 @@ const events = require('events');
 
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
-const Graph = require('./Graph');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
@@ -97,26 +96,7 @@ class EventEmitter {
             dcService,
             dvController,
             notifyError,
-            transport,
         } = this.ctx;
-
-        this._on('api-node-info', async (data) => {
-            try {
-                const system = await transport.getNetworkInfo();
-                data.response.status(200);
-                data.response.send({
-                    system,
-                    config,
-                });
-            } catch (err) {
-                logger.error('Failed to get node info');
-                notifyError(err);
-                data.response.status(500);
-                data.response.send({
-                    message: err,
-                });
-            }
-        });
 
         this._on('api-network-query-responses', async (data) => {
             const { query_id } = data;
@@ -338,13 +318,6 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-            if (!appState.enoughFunds) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'Insufficient funds',
-                });
-                return;
-            }
 
             dvController.queryNetwork(data.query)
                 .then((queryId) => {
@@ -353,7 +326,6 @@ class EventEmitter {
                         message: 'Query sent successfully.',
                         query_id: queryId,
                     });
-                    dvController.handleQuery(queryId, 60000);
                 }).catch((error) => {
                     logger.error(`Failed query network. ${error}.`);
                     notifyError(error);
@@ -361,9 +333,6 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
-            if (!appState.enoughFunds) {
-                return;
-            }
             const failFunction = (error) => {
                 logger.warn(error);
                 data.response.status(400);
@@ -411,7 +380,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id, true);
+                    const vertices = await dhService.dataLocationQuery(id);
 
                     response.status(200);
                     response.send({
@@ -879,7 +848,8 @@ class EventEmitter {
                 logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
                 const challenge = message.payload;
 
-                let vertices = await this.graphStorage.findVerticesByImportId(challenge.import_id);
+                let vertices = await this.graphStorage
+                    .findVerticesByImportId(challenge.import_id); // TODO add encColor
                 ImportUtilities.unpackKeys(vertices, []);
                 ImportUtilities.sort(vertices);
                 // filter CLASS vertices

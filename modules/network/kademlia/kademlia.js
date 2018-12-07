@@ -12,6 +12,8 @@ const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
 const PeerCache = require('./peer-cache');
 const ip = require('ip');
+const uuidv4 = require('uuid/v4');
+
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
 const { IncomingMessage, OutgoingMessage } = require('./logger');
 
@@ -173,6 +175,48 @@ class Kademlia {
             this.log.info('Starting OT Node...');
             this.node.eclipse = this.node.plugin(kadence.eclipse());
             this.node.quasar = this.node.plugin(kadence.quasar());
+
+            const quasarPublish = function (topic, contents, options = {}, callback = () => null) {
+                if (typeof options === 'function') {
+                    callback = options;
+                    options = {};
+                }
+
+                const publicationId = uuidv4();
+                const neighbors = [...this.node.router.getClosestContactsToKey(
+                    options.routingKey || this.node.identity.toString('hex'),
+                    this.node.router.size,
+                ).entries()];
+
+                const errors = [];
+                let sentSoFar = 0;
+                async.eachLimit(neighbors, kadence.constants.ALPHA, (contact, done) => {
+                    if (sentSoFar >= kadence.constants.ALPHA) {
+                        // Achieved desired publications.
+                        done();
+                        return;
+                    }
+                    this.node.send(kadence.quasar.QuasarPlugin.PUBLISH_METHOD, {
+                        uuid: publicationId,
+                        topic,
+                        contents,
+                        publishers: [this.node.identity.toString('hex')],
+                        ttl: kadence.constants.MAX_RELAY_HOPS,
+                    }, contact, (error) => {
+                        if (error) {
+                            errors.push(error);
+                        } else {
+                            sentSoFar += 1;
+                        }
+                        done();
+                    });
+                }, (error) => {
+                    callback(error, sentSoFar);
+                });
+            };
+
+            this.node.quasar.quasarPublish = quasarPublish.bind(this.node.quasar);
+
             this.log.info('Quasar initialised');
             this.node.peercache =
                 this.node.plugin(PeerCache(path.join(
@@ -190,7 +234,7 @@ class Kademlia {
 
             this.node.hashcash = this.node.plugin(kadence.hashcash({
                 methods: [
-                    'PUBLISH', 'SUBSCRIBE', 'kad-data-location-request',
+                    'kad-data-location-request',
                     'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-send-encrypted-key',
                     'kad-encrypted-key-process-result',
@@ -604,11 +648,17 @@ class Kademlia {
             node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
                 node.quasar.quasarPublish(
                     topic, message, opts,
-                    (err, res) => {
+                    (err, successfulPublishes) => {
                         if (err) {
                             reject(err);
                         } else {
-                            resolve(res);
+                            if (successfulPublishes === 0) {
+                                // Publish failed.
+                                reject(Error('Publish failed.'));
+                                return;
+                            }
+                            this.log.debug(`Published successfully to ${successfulPublishes} peers.`);
+                            resolve(successfulPublishes);
                         }
                     },
                 );
@@ -708,21 +758,9 @@ class Kademlia {
      * Returns basic network information
      */
     async getNetworkInfo() {
-        const peers = [];
-        const dump = this.node.router.getClosestContactsToKey(
-            this.node.identity,
-            kadence.constants.K * kadence.constants.B,
-        );
-
-        for (const peer of dump) {
-            peers.push(peer);
-        }
-
         return {
-            versions: pjson.version,
             identity: this.node.identity.toString('hex'),
             contact: this.node.contact,
-            peers,
         };
     }
 
