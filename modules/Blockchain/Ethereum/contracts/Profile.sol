@@ -11,7 +11,7 @@ contract Profile {
     Hub public hub;
     ProfileStorage public profileStorage;
 
-    uint256 public minimalStake = 10**20; // TODO Determine minimum stake
+    uint256 public minimalStake = 10**21;
     uint256 public withdrawalTime = 5 minutes;
 
     constructor(address hubAddress) public {
@@ -92,21 +92,7 @@ contract Profile {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
-        if(profileStorage.getWithdrawalPending(identity)){
-            if(block.timestamp < profileStorage.getWithdrawalTimestamp(identity)){
-                // Transfer already reserved tokens to user identity
-                profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
-                
-                uint256 balance = profileStorage.getStake(identity);
-                balance = balance.sub(profileStorage.getWithdrawalAmount(identity));
-                profileStorage.setStake(identity, balance);
-                
-                emit TokensWithdrawn(identity, profileStorage.getWithdrawalAmount(identity), balance);
-            }
-            else {
-                require(false, "Withrdrawal process already pending!");
-            }
-        }
+        require(profileStorage.getWithdrawalPending(identity) == false, "Withrdrawal process already pending!");
 
         uint256 availableBalance = profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity));
 
