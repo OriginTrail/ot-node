@@ -237,7 +237,7 @@ class ArangoJS {
             ot_edges
             OPTIONS {bfs: false, uniqueVertices: 'path'}
             FILTER edge.edge_type != 'IDENTIFIES'
-            AND edge.edge_type != 'IDENTIFIED_BY'2
+            AND edge.edge_type != 'IDENTIFIED_BY'
             AND edge._to != 'ot_vertices/Actor'
             AND edge._to != 'ot_vertices/Product'
             AND edge._to != 'ot_vertices/Location'
