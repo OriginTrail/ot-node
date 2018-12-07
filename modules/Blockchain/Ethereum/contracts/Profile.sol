@@ -10,7 +10,6 @@ import {ERC20} from './TracToken.sol';
 contract Profile {
     using SafeMath for uint256;
     Hub public hub;
-    ProfileStorage public profileStorage;
 
     uint256 public minimalStake = 10**21;
     uint256 public withdrawalTime = 5 minutes;
@@ -18,7 +17,6 @@ contract Profile {
     constructor(address hubAddress) public {
         require(hubAddress != address(0));
         hub = Hub(hubAddress);
-        profileStorage = ProfileStorage(hub.profileStorageAddress());
     }
 
     modifier onlyHolding(){
@@ -47,14 +45,14 @@ contract Profile {
         require(tokenContract.balanceOf(msg.sender) >= initialBalance, "Sender balance must be equal to or higher than initial balance!");
         require(uint256(profileNodeId) != 0, "Cannot create a profile without a nodeId submitted");
 
-        tokenContract.transferFrom(msg.sender, address(profileStorage), initialBalance);
+        tokenContract.transferFrom(msg.sender, hub.profileStorageAddress(), initialBalance);
 
         if(!senderHas725) {
             Identity newIdentity = new Identity(msg.sender);
             emit IdentityCreated(msg.sender, address(newIdentity));
 
-            profileStorage.setStake(address(newIdentity), initialBalance);
-            profileStorage.setNodeId(address(newIdentity), profileNodeId);
+            ProfileStorage(hub.profileStorageAddress()).setStake(address(newIdentity), initialBalance);
+            ProfileStorage(hub.profileStorageAddress()).setNodeId(address(newIdentity), profileNodeId);
 
             emit ProfileCreated(address(newIdentity), initialBalance);
         }
@@ -62,22 +60,24 @@ contract Profile {
             // Verify sender
             require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
-            profileStorage.setStake(identity, initialBalance);
-            profileStorage.setNodeId(identity, profileNodeId);
+            ProfileStorage(hub.profileStorageAddress()).setStake(identity, initialBalance);
+            ProfileStorage(hub.profileStorageAddress()).setNodeId(identity, profileNodeId);
 
             emit ProfileCreated(identity, initialBalance);
         }
 
         if(initialBalance > minimalStake) {
-            uint256 activeNodes = profileStorage.activeNodes();
+            uint256 activeNodes = ProfileStorage(hub.profileStorageAddress()).activeNodes();
             activeNodes += 1;
-            profileStorage.setActiveNodes(activeNodes);
+            ProfileStorage(hub.profileStorageAddress()).setActiveNodes(activeNodes);
         }
     }
 
     function depositTokens(address identity, uint256 amount) public {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= amount, "Sender allowance must be equal to or higher than chosen amount");
@@ -94,6 +94,8 @@ contract Profile {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+        
         require(profileStorage.getWithdrawalPending(identity) == false, "Withrdrawal process already pending!");
 
         uint256 availableBalance = profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity));
@@ -116,6 +118,8 @@ contract Profile {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
 
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+        
         require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
         require(profileStorage.getWithdrawalTimestamp(identity) < block.timestamp, "Cannot withdraw tokens before withdrawal timestamp!");
 
@@ -143,11 +147,13 @@ contract Profile {
             "Sender does not have action permission for submitted identity");
         require(uint256(newNodeId) != 0, "Cannot set a blank nodeId");
 
-        profileStorage.setNodeId(identity, newNodeId);
+        ProfileStorage(hub.profileStorageAddress()).setNodeId(identity, newNodeId);
     }
 
     function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
     public onlyHolding {
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+        
         if(profileStorage.getWithdrawalPending(payer)) {
             profileStorage.setWithdrawalPending(payer,false);
             emit TokenWithdrawalCancelled(payer);
@@ -199,6 +205,8 @@ contract Profile {
 
     function releaseTokens(address profile, uint256 amount)
     public onlyHolding {
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+
         require(profileStorage.getStakeReserved(profile) >= amount, "Cannot release more tokens than there are reserved");
 
         profileStorage.setStakeReserved(profile, profileStorage.getStakeReserved(profile).sub(amount));
@@ -208,6 +216,8 @@ contract Profile {
     
     function transferTokens(address sender, address receiver, uint256 amount)
     public onlyHolding {
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+        
         require(profileStorage.getStake(sender) >= amount, "Sender does not have enough tokens to transfer!");
         require(profileStorage.getStakeReserved(sender) >= amount, "Sender does not have enough tokens reserved to transfer!");
 
