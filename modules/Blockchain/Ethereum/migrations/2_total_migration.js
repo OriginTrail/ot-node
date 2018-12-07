@@ -197,7 +197,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
-        profile = await deployer.deploy(Profile, hub.address, { gas: 6000000, from: accounts[0] });
+        profile = await deployer.deploy(Profile, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
