@@ -116,6 +116,14 @@ class DCOfferFinalizeCommand extends Command {
                 commands: [depositToken],
             };
         }
+
+        this.logger.notify(`Offer ${offerId} has not been finalized.`);
+
+        offer.status = 'FAILED';
+        offer.message = `Offer for ${offerId} has not been finalized. ${err.message}`;
+        await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 
