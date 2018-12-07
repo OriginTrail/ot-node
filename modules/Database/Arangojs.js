@@ -236,6 +236,17 @@ class ArangoJS {
             OUTBOUND 'ot_vertices/${startVertex._key}'
             ot_edges
             OPTIONS {bfs: false, uniqueVertices: 'path'}
+            FILTER edge.edge_type != 'IDENTIFIES'
+            AND edge.edge_type != 'IDENTIFIED_BY'2
+            AND edge._to != 'ot_vertices/Actor'
+            AND edge._to != 'ot_vertices/Product'
+            AND edge._to != 'ot_vertices/Location'
+            AND edge._to != 'ot_vertices/Transport'
+            AND edge._to != 'ot_vertices/Transformation'
+            AND edge._to != 'ot_vertices/Observation'
+            AND edge._to != 'ot_vertices/Ownership'
+            AND vertex.vertex_type != 'CLASS'
+            AND vertex.vertex_type != 'IDENTIFIER'
             RETURN path`;
 
         const rawGraph = await this.runQuery(queryString);
