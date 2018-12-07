@@ -234,7 +234,7 @@ class Kademlia {
 
             this.node.hashcash = this.node.plugin(kadence.hashcash({
                 methods: [
-                    'PUBLISH', 'SUBSCRIBE', 'kad-data-location-request',
+                    'kad-data-location-request',
                     'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-send-encrypted-key',
                     'kad-encrypted-key-process-result',

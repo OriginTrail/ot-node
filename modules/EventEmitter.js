@@ -326,7 +326,6 @@ class EventEmitter {
                         message: 'Query sent successfully.',
                         query_id: queryId,
                     });
-                    dvController.handleQuery(queryId, 60000);
                 }).catch((error) => {
                     logger.error(`Failed query network. ${error}.`);
                     notifyError(error);
