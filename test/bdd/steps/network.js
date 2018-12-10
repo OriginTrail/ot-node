@@ -562,7 +562,7 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-Then(/^all nodes with last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
+Then(/^all nodes with second last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
@@ -602,6 +602,64 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
                 dv.nodeConfirmsForDataSetId(queryId, this.state.lastImport.data_set_id);
             if (Date.now() - startTime > 60000) {
                 clearTimeout(intervalHandler);
+                reject(Error('Not enough confirmations for query. ' +
+                    `Candidates: ${JSON.stringify(nodeCandidates)}, ` +
+                    `confirmations: ${JSON.stringify(confirmationsSoFar)}`));
+            }
+            if (confirmationsSoFar.length === nodeCandidates.length) {
+                clearTimeout(intervalHandler);
+                accept();
+            }
+        }, 3000);
+    });
+});
+
+Then(/^all nodes with last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+
+    const dv = this.state[whichDV.toLowerCase()];
+
+    // Check which node has last import.
+    const promises = [];
+    const nodeCandidates = [];
+    this.state.nodes.forEach((node) => {
+        promises.push(new Promise(async (accept) => {
+            const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
+            body.find((importInfo) => {
+                if (importInfo.data_set_id === this.state.secondLastImport.data_set_id) {
+                    nodeCandidates.push(node.state.identity);
+                    return true;
+                }
+                return false;
+            });
+            // TODO check that nodeCandidates [] elements are all unique values, there must not be dupes
+            accept();
+        }));
+    });
+
+    await Promise.all(promises);
+
+    expect(nodeCandidates.length).to.be.greaterThan(0);
+
+
+    // At this point all data location queries can be placed hence we wait.
+    const queryId = this.state.lastQueryNetworkId;
+
+    const startTime = Date.now();
+    return new Promise((accept, reject) => {
+        // const intervalHandler;
+        const intervalHandler = setInterval(async () => {
+            const confirmationsSoFar =
+                dv.nodeConfirmsForDataSetId(queryId, this.state.secondLastImport.data_set_id);
+            if (Date.now() - startTime > 60000) {
+                clearTimeout(intervalHandler);
+                console.log('START');
+                console.log(dv.state.dataLocationQueriesConfirmations);
+                console.log('END dataLocationQueriesConfirmations');
+                console.log('START');
+                console.log(dv.state.purchasedDatasets);
+                console.log('END purchasedDatasets');
                 reject(Error('Not enough confirmations for query. ' +
                     `Candidates: ${JSON.stringify(nodeCandidates)}, ` +
                     `confirmations: ${JSON.stringify(confirmationsSoFar)}`));
