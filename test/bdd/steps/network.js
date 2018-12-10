@@ -654,7 +654,7 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
                 dv.nodeConfirmsForDataSetId(queryId, this.state.secondLastImport.data_set_id);
             if (Date.now() - startTime > 60000) {
                 clearTimeout(intervalHandler);
-                console.log('START');
+                console.log('START dataLocationQueriesConfirmations');
                 console.log(dv.state.dataLocationQueriesConfirmations);
                 console.log('END dataLocationQueriesConfirmations');
                 console.log('START');
