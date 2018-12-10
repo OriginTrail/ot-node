@@ -562,8 +562,16 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-Then(/^all nodes with ([lastImport|secondLastImport]+) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
-    expect(whichImport, 'lastImport or secondLastImport are allowed values').to.be.oneOf(['lastImport', 'secondLastImport']);
+Then(/^all nodes with ([last import|second last import]+) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
+    expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
+    if (whichDV === 'last import') {
+        whichImport = 'lastImport';
+    } else if (whichDV === 'second last import') {
+        whichImport = 'secondLastImport';
+    } else {
+        throw Error('provided import is not valid');
+    }
+
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
     expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);

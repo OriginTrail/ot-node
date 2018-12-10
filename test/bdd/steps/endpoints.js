@@ -107,9 +107,16 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Given(/^the ([DV|DV2]+) purchases ([lastImport|secondLastImport]+) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
+Given(/^the ([DV|DV2]+) purchases ([last import|second last import]+) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
-    expect(whichImport, 'lastImport or secondLastImport are allowed values').to.be.oneOf(['lastImport', 'secondLastImport']);
+    expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
+    if (whichDV === 'last import') {
+        whichImport = 'lastImport';
+    } else if (whichDV === 'second last import') {
+        whichImport = 'secondLastImport';
+    } else {
+        throw Error('provided import is not valid');
+    }
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
