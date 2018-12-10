@@ -562,9 +562,19 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-Then(/^all nodes with last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
+Then(/^all nodes with ([last import|second last import]+) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
+    expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
+    if (whichImport === 'last import') {
+        whichImport = 'lastImport';
+    } else if (whichImport === 'second last import') {
+        whichImport = 'secondLastImport';
+    } else {
+        throw Error('provided import is not valid');
+    }
+
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+    expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
 
     const dv = this.state[whichDV.toLowerCase()];
 
@@ -575,7 +585,7 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
         promises.push(new Promise(async (accept) => {
             const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
             body.find((importInfo) => {
-                if (importInfo.data_set_id === this.state.lastImport.data_set_id) {
+                if (importInfo.data_set_id === this.state[whichImport].data_set_id) {
                     nodeCandidates.push(node.state.identity);
                     return true;
                 }
@@ -599,7 +609,7 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
         // const intervalHandler;
         const intervalHandler = setInterval(async () => {
             const confirmationsSoFar =
-                dv.nodeConfirmsForDataSetId(queryId, this.state.lastImport.data_set_id);
+                dv.nodeConfirmsForDataSetId(queryId, this.state[whichImport].data_set_id);
             if (Date.now() - startTime > 60000) {
                 clearTimeout(intervalHandler);
                 reject(Error('Not enough confirmations for query. ' +
