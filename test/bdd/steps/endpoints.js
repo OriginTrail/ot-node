@@ -110,9 +110,9 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
 Given(/^the ([DV|DV2]+) purchases ([last import|second last import]+) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
     expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
-    if (whichDV === 'last import') {
+    if (whichImport === 'last import') {
         whichImport = 'lastImport';
-    } else if (whichDV === 'second last import') {
+    } else if (whichImport === 'second last import') {
         whichImport = 'secondLastImport';
     } else {
         throw Error('provided import is not valid');

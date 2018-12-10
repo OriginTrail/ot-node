@@ -564,9 +564,9 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
 
 Then(/^all nodes with ([last import|second last import]+) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
     expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
-    if (whichDV === 'last import') {
+    if (whichImport === 'last import') {
         whichImport = 'lastImport';
-    } else if (whichDV === 'second last import') {
+    } else if (whichImport === 'second last import') {
         whichImport = 'secondLastImport';
     } else {
         throw Error('provided import is not valid');
