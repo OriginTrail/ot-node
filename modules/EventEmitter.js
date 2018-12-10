@@ -883,7 +883,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-location-response', async (request) => {
-            logger.info('DH confirms possesion of required data');
+            logger.info('DH confirms possession of required data');
             try {
                 const dataLocationResponseObject = transport.extractMessage(request);
                 const { message, messageSignature } = dataLocationResponseObject;

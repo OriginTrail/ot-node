@@ -34,7 +34,7 @@ class DCChallengeCommand extends Command {
         const numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
-        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id, false);
+        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
 
         const encryptedVertices = importUtilities.immutableEncryptVertices(
             vertices,
