@@ -1,6 +1,7 @@
 const Command = require('../command');
 const importUtilities = require('../../ImportUtilities');
 const utilities = require('../../Utilities');
+const models = require('../../../models/index');
 
 /**
  * Repeatable command that checks whether litigation is successfully initiated
@@ -26,7 +27,19 @@ class DHLitigationAnswerCommand extends Command {
             dataSetId,
         } = command.data;
 
-        const vertices = await this.graphStorage.findVerticesByImportId(dataSetId, true);
+        const holdingData = await models.holding_data.findAll({
+            where: {
+                data_set_id: dataSetId,
+            },
+        });
+
+        if (holdingData.length === 0) {
+            throw new Error(`Failed to find holding data for data set ${dataSetId}`);
+        }
+
+        const vertices = await this.graphStorage
+            .findVerticesByImportId(dataSetId, holdingData[0].color);
+
         importUtilities.unpackKeys(vertices, []);
         const answer = utilities.normalizeHex(Buffer.from(this.challengeService.answerChallengeQuestion(blockId, vertices), 'utf-8').toString('hex'));
         this.logger.important(`Answering litigation for offer ${offerId} and blockId ${blockId}. Answer: ${answer}`);
