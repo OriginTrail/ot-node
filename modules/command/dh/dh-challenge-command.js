@@ -1,5 +1,6 @@
 const Command = require('../command');
 const importUtilities = require('../../ImportUtilities');
+const models = require('../../../models/index');
 
 /**
  * Handles one data challenge
@@ -26,7 +27,18 @@ class DHChallengeCommand extends Command {
             litigatorNodeId,
         } = command.data;
 
-        const vertices = await this.graphStorage.findVerticesByImportId(datasetId, true);
+        const holdingData = await models.holding_data.findAll({
+            where: {
+                data_set_id: datasetId,
+            },
+        });
+
+        if (holdingData.length === 0) {
+            throw new Error(`Failed to find holding data for data set ${datasetId}`);
+        }
+
+        const vertices = await this.graphStorage
+            .findVerticesByImportId(datasetId, holdingData[0].color);
         importUtilities.unpackKeys(vertices, []);
         const answer = this.challengeService.answerChallengeQuestion(blockId, vertices);
         this.logger.trace(`Sending answer to question for data set ID ${datasetId}, block ID ${blockId}. Block ${answer}`);
