@@ -71,21 +71,22 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
     ).to.be.above(0);
 });
 
-Then(/^DC's (\d+) dataset hashes should match blockchain values$/, async function (datasetsCount) {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async function (nodeType, datasetsCount) {
+    expect(nodeType, 'Node type can only be DC or DH').to.be.oneOf(['DC', 'DH']);
+    expect(!!this.state[nodeType.toLowerCase()], 'DC/DH node not defined. Use other step to define it.').to.be.equal(true);
     expect(datasetsCount >= 1, 'datasetsCount should be positive integer').to.be.true;
 
-    const { dc } = this.state;
-    const myApiImportsInfo = await httpApiHelper.apiImportsInfo(dc.state.node_rpc_url);
+    const myNode = this.state[nodeType.toLowerCase()];
+    const myApiImportsInfo = await httpApiHelper.apiImportsInfo(myNode.state.node_rpc_url);
     expect(myApiImportsInfo.length, 'We should have preciselly this many datasets').to.be.equal(datasetsCount);
 
     for (const i in Array.from({ length: myApiImportsInfo.length })) {
         const myDataSetId = myApiImportsInfo[i].data_set_id;
-        const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, myDataSetId);
+        const myFingerprint = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
         expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
 
-        const myEdgesVertices = await httpApiHelper.apiQueryLocalImportByDataSetId(dc.state.node_rpc_url, myDataSetId);
+        const myEdgesVertices = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
         expect(myEdgesVertices, 'Should have corresponding keys').to.have.keys(['edges', 'vertices']);
 
         const calculatedImportHash = utilities.calculateImportHash(myEdgesVertices);
