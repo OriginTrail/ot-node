@@ -33,7 +33,7 @@ class DCLitigationInitiateCommand extends Command {
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
-        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id, false);
+        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
 
         const encryptedVertices = importUtilities.immutableEncryptVertices(
             vertices,
