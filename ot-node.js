@@ -56,7 +56,7 @@ global.__basedir = __dirname;
 let context;
 const defaultConfig = configjson[
     process.env.NODE_ENV &&
-    ['development', 'staging', 'stable', 'mariner', 'production', 'autoupdater'].indexOf(process.env.NODE_ENV) >= 0 ?
+    ['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
         process.env.NODE_ENV : 'development'];
 
 let config;
@@ -226,6 +226,22 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
+        // check for ready updates
+        if (fs.existsSync('/ot-node/UPDATE')) {
+            log.info('Installing new update');
+            try {
+                await Utilities.runUpdate();
+                execSync('rm -rf /ot-node/UPDATE');
+                process.exit(0);
+            } catch (err) {
+                log.error('Update installation failed, rolling back');
+                log.error(err);
+                execSync('rm -rf /ot-node/UPDATE');
+            }
+        } else {
+            log.info('No updates waiting');
+        }
+
         if (process.env.NODE_ENV !== 'development') {
             bugsnag.register(
                 pjson.config.bugsnagkey,
@@ -278,30 +294,6 @@ class OTNode {
         config.identity = '';
         config.erc725Identity = '';
         Object.seal(config);
-
-        let updatesReady;
-
-        // check for ready updates
-        try {
-            fs.accessSync('/ot-node/current/UPDATE', fs.F_OK);
-            log.info('Installing new update');
-            updatesReady = true;
-        } catch (err) {
-            log.info('No updates waiting');
-            updatesReady = false;
-        }
-
-        if (updatesReady) {
-            try {
-                await Utilities.runUpdate(config);
-                execSync('rm -rf /ot-node/current/UPDATE');
-                process.exit(0);
-            } catch (err) {
-                log.error('Update installation failed, rolling back');
-                log.error(err);
-                execSync('rm -rf /ot-node/current/UPDATE');
-            }
-        }
 
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));

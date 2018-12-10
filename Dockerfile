@@ -2,10 +2,10 @@
 FROM ubuntu:16.04
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
-ARG targetEnvironment=autoupdater
+ARG targetEnvironment=development
 
 ENV NODE_ENV=$targetEnvironment
-ENV SEQUELIZEDB=/ot-node/current/data/system.db
+ENV SEQUELIZEDB=/ot-node/data/system.db
 ENV GRANAX_USE_SYSTEM_TOR=1
 ENV OT_NODE_MODE=docker
 
@@ -30,7 +30,7 @@ RUN ln -s /ot-node/init /ot-node/current
 
 # Add files
 COPY . /ot-node/current
-RUN service arangodb3 start && cd /ot-node/current && npm install && npm run setup -- --configDir=/ot-node/current/data
+RUN service arangodb3 start && cd /ot-node/current && npm install && npm run setup -- --configDir=/ot-node/data
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin

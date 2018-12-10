@@ -179,14 +179,14 @@ class Utilities {
     static runUpdate() {
         return new Promise(async (resolve, reject) => {
             try {
-                const { version, configPath } = JSON.parse(fs.readFileSync('/ot-node/current/UPDATE', 'utf8'));
-                logger.info('Migrating node configuration');
-                logger.info(`running: execSync('cp -r ${configPath} /ot-node/${version}/');`);
-                execSync(`cp -r ${configPath} /ot-node/${version}/`);
-                logger.info('Configuration migration complete');
+                const { version, configPath } = JSON.parse(fs.readFileSync('/ot-node/UPDATE', 'utf8'));
+                // logger.info('Migrating node configuration');
+                // logger.info(`running: execSync('cp -r ${configPath} /ot-node/${version}/');`);
+                // execSync(`cp -r ${configPath} /ot-node/${version}/`);
+                // logger.info('Configuration migration complete');
 
-                const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
-                process.env.SEQUELIZEDB = `/ot-node/${version}/data/system.db`;
+                // const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
+                // process.env.SEQUELIZEDB = `/ot-node/data/system.db`;
 
                 // eslint-disable-next-line
                 const Models = require(`../../${version}/models`);
@@ -209,14 +209,14 @@ class Utilities {
                     },
                 });
 
-                umzug_migrations.up().then((migrations) => {
+                umzug_migrations.up().then(() => {
                     logger.info('Database migrated.');
                     logger.info('Switching node version');
                     execSync(`ln -sfn /ot-node/${version}/ /ot-node/current`);
                     resolve();
                 }).catch((err) => {
                     logger.error('Update failed');
-                    process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
+                    // process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
                     logger.error('Database migrations failed');
                     logger.error(err);
                     reject(err);
