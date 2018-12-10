@@ -88,8 +88,7 @@ class DVService {
             throw errorMessage;
         }
 
-        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
         const rootHash = merkle.tree.getRoot();
 
         if (escrow.distribution_root_hash !== rootHash) {
@@ -100,9 +99,8 @@ class DVService {
             throw errorMessage;
         }
 
-        let importResult;
         try {
-            importResult = await this.importer.importJSON({
+            await this.importer.importJSON({
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,

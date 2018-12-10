@@ -1,7 +1,7 @@
 const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
-const { denormalizeGraph, normalizeGraph } = require('./graph-converter');
+const { normalizeGraph } = require('./graph-converter');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -35,94 +35,6 @@ class ArangoJS {
             _key: className,
             vertex_type: 'CLASS',
         })));
-    }
-
-    /**
-     * Find set of vertices with _key, vertex_type and identifiers values
-     * @param queryObject       Query for getting vertices
-     * @returns {Promise<any>}
-     */
-    async findVertices(queryObject) {
-        let queryString = '';
-        const params = {};
-        const { query } = queryObject[0];
-        if (Utilities.isEmptyObject(queryObject) === false) {
-            let count = 1;
-            for (const key in query) {
-                if (key.match(/^[.\w\d]+$/g) !== null) {
-                    if (key === 'uid') {
-                        queryString += `
-                        LET v_res${count} = (
-                        FOR v${count} IN ot_vertices
-                            FILTER v${count}.uid == "@param${count}"
-                            RETURN {"datasets": v${count}.datasets, "objects": [v${count}]}
-                        )`;
-                    } else {
-                        queryString += `
-                            LET v_res${count} = (
-                                FOR v${count} IN ot_vertices
-                                    LET objects = (
-                                                    FOR w${count}, e IN 1..1
-                                                    OUTBOUND v${count}._id GRAPH "origintrail_graph"
-                                                    FILTER e.edge_type == "IDENTIFIES"
-                                                            AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                                    RETURN w${count}
-                                                )
-                                    FILTER v${count}.vertex_type == "IDENTIFIER"
-                                            AND v${count}.id_type == "${key}"
-                                            AND v${count}.id_value == "@param${count}"
-                                    RETURN {"datasets": v${count}.datasets, "objects": objects}
-                                )
-                        `;
-                    }
-                    const param = `param${count}`;
-
-                    count += 1;
-                    params[param] = query[key];
-                }
-            }
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                    FILTER LENGTH(v_res${i}) > 0
-                    `;
-            }
-
-            queryString += 'AND LENGTH(INTERSECTION(v_res1[0].datasets';
-
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                   , v_res${i}[0].datasets`;
-            }
-
-            queryString += ')) > 0 RETURN {datasets: INTERSECTION(v_res1[0].datasets';
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                   , v_res${i}[0].datasets`;
-            }
-
-            queryString += '), "objects": INTERSECTION(v_res1[0].objects';
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                   , v_res${i}[0].objects`;
-            }
-
-            queryString += '), ';
-
-            const results = [];
-
-            for (let i = 1; i <= count; i += 1) {
-                results.push(`"v${i}": v_res${i}[0].objects`);
-            }
-
-            queryString += results.join(',');
-            queryString += '}';
-
-            return this.runQuery(queryString, params);
-        }
     }
 
     /**
@@ -160,11 +72,16 @@ class ArangoJS {
     }
 
     /**
-     * Finds vertices by query defined in DataLocationRequestObject
-     * @param inputQuery
+     * Finds imports IDs based on data location query
+     *
+     * DataLocationQuery structure: [[path, value, opcode]*]
+     *
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param {object} dataLocationQuery - Search query
+     * @return {Promise}
      */
-    async findImportIds(inputQuery, encrypted) {
-        const results = await this.dataLocationQuery(inputQuery, encrypted);
+    async findImportIds(dataLocationQuery, encColor = null) {
+        const results = await this.dataLocationQuery(dataLocationQuery, encColor);
         if (results.length > 0) {
             return results[0].datasets;
         }
@@ -175,7 +92,7 @@ class ArangoJS {
         const query = `FOR v IN ot_vertices
                        FILTER v.vertex_type == 'EVENT'
                        AND v.sender_id == @sender_id
-                       AND v.encrypted != true
+                       AND v.encrypted == null
                        RETURN v`;
 
         const res = await this.runQuery(query, {
@@ -216,15 +133,11 @@ class ArangoJS {
 
     /**
      * Finds vertices by query defined in DataLocationRequestObject
-     * @param inputQuery
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param inputQuery - Search query
      */
-    async dataLocationQuery(inputQuery, encrypted = false) {
+    async dataLocationQuery(inputQuery, encColor = null) {
         const params = {};
-        let encOp = '!=';
-
-        if (encrypted) {
-            encOp = '==';
-        }
 
         let count = 1;
         let queryString = '';
@@ -249,24 +162,29 @@ class ArangoJS {
                                         OUTBOUND v${count}._id ot_edges
                                         FILTER e.edge_type == "IDENTIFIES"
                                         AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        AND v${count}.encrypted ${encOp} true
+                                        AND v${count}.encrypted == ${encColor}
                                         RETURN w${count})
                              `;
 
             switch (opcode) {
             case 'EQ':
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == "${id_type}"
-                                     AND v${count}.id_value == "${id_value}"
-                                     AND v${count}.encrypted ${encOp} true
+                                     AND v${count}.id_type == @id_type${count}
+                                     AND v${count}.id_value == @id_value${count}
+                                     AND v${count}.encrypted == ${encColor}
                                      `;
+                params[`id_type${count}`] = id_type;
+                params[`id_value${count}`] = id_value;
                 break;
             case 'IN':
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == "${id_type}"
-                                     AND "${id_value}" IN v${count}.id_value
-                                     AND v${count}.encrypted ${encOp} true
+                                     AND v${count}.id_type == @id_type${count}
+                                     AND  @id_value${count} IN v${count}.id_value
+                                     AND v${count}.encrypted == ${encColor}
                                      `;
+
+                params[`id_type${count}`] = id_type;
+                params[`id_value${count}`] = id_value;
                 break;
             default:
                 throw new Error(`OPCODE ${opcode} is not defined`);
@@ -318,6 +236,17 @@ class ArangoJS {
             OUTBOUND 'ot_vertices/${startVertex._key}'
             ot_edges
             OPTIONS {bfs: false, uniqueVertices: 'path'}
+            FILTER edge.edge_type != 'IDENTIFIES'
+            AND edge.edge_type != 'IDENTIFIED_BY'
+            AND edge._to != 'ot_vertices/Actor'
+            AND edge._to != 'ot_vertices/Product'
+            AND edge._to != 'ot_vertices/Location'
+            AND edge._to != 'ot_vertices/Transport'
+            AND edge._to != 'ot_vertices/Transformation'
+            AND edge._to != 'ot_vertices/Observation'
+            AND edge._to != 'ot_vertices/Ownership'
+            AND vertex.vertex_type != 'CLASS'
+            AND vertex.vertex_type != 'IDENTIFIER'
             RETURN path`;
 
         const rawGraph = await this.runQuery(queryString);
@@ -734,21 +663,18 @@ class ArangoJS {
         }
     }
 
-    async findVerticesByImportId(data_id, encrypted = false) {
-        let queryString = '';
-        if (encrypted) {
-            queryString = `FOR v IN ot_vertices 
+    /**
+     * Finds vertices by dataset ID
+     * @param {string} data_id - Dataset ID
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @return {Promise<*>}
+     */
+    async findVerticesByImportId(data_id, encColor = null) {
+        const queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
                             AND POSITION(v.datasets, @importId, false)  != false 
-                            AND (v.encrypted == true)
+                            AND (v.encrypted == ${encColor})
                             SORT v._key RETURN v`;
-        } else {
-            queryString = `FOR v IN ot_vertices 
-                            FILTER v.datasets != null 
-                            AND POSITION(v.datasets, @importId, false) != false 
-                            AND (v.encrypted != true)
-                            SORT v._key RETURN v`;
-        }
 
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
@@ -770,35 +696,38 @@ class ArangoJS {
         return normalizedVertices.concat(objectClasses);
     }
 
+    /**
+     * Finds object vertices.
+     * TODO We need to change the query. This is not the appropriate way.
+     * @return {Promise<any>}
+     */
     async findObjectClassVertices() {
-        const queryString = 'FOR v IN ot_vertices FILTER v.vertex_type == "CLASS" AND v.datasets == null SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_vertices ' +
+            'FILTER v.vertex_type == "CLASS" ' +
+            'AND v.datasets == null ' +
+            'AND v._dc_key == null ' +
+            'SORT v._key ' +
+            'RETURN v';
         return this.runQuery(queryString, {});
     }
 
-    async findEdgesByImportId(data_id, encrypted = false) {
-        let queryString = '';
-
-        if (encrypted) {
-            queryString = 'FOR v IN ot_edges ' +
+    /**
+     * Find edges by dataset ID
+     * @param {string} data_id - Dataset ID
+     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @return {Promise<void>}
+     */
+    async findEdgesByImportId(data_id, encColor = null) {
+        const queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
                 'AND POSITION(v.datasets, @importId, false) != false ' +
-                'AND v.encrypted == true ' +
+                `AND v.encrypted == ${encColor} ` +
                 'SORT v._key ' +
                 'RETURN v';
-        } else {
-            queryString = 'FOR v IN ot_edges ' +
-                'FILTER v.datasets != null ' +
-                'AND POSITION(v.datasets, @importId, false) != false ' +
-                'AND v.encrypted != true ' +
-                'SORT v._key ' +
-                'RETURN v';
-        }
 
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);
-        const normalizedEdges = normalizeGraph(data_id, [], edges).edges;
-
-        return normalizedEdges;
+        return normalizeGraph(data_id, [], edges).edges;
     }
 
     /**
@@ -816,7 +745,7 @@ class ArangoJS {
         //  'RETURN v';
 
         const queryString = `FOR v IN ot_vertices
-            FILTER v.vertex_type == 'EVENT' and v.encrypted != true
+            FILTER v.vertex_type == 'EVENT' and v.encrypted == null
             RETURN v`;
         const params = {};
         const result = await this.runQuery(queryString, params);

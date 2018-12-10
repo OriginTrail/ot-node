@@ -26,7 +26,7 @@ var errored = true;
 var DC_identity;
 var DC_wallet;
 var offerId;
-var tokensToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(20)));
+var tokensToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(21)));
 
 // Offer variables
 const dataSetId = '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
@@ -89,7 +89,7 @@ contract('Offer testing', async (accounts) => {
         for (var i = 0; i < accounts.length; i += 1) {
             promises[i] = trac.increaseApproval(
                 profile.address,
-                (new BN(5)).mul(new BN(10).pow(new BN(20))),
+                tokensToDeposit,
                 { from: accounts[i] },
             );
         }

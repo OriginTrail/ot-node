@@ -45,7 +45,7 @@ class DCOfferFinalizeCommand extends Command {
         const confirmations = [];
         for (const identity of nodeIdentifiers) {
             const replication = replications.find(r => identity.includes(r.dh_identity));
-            colors.push(this.replicationService.castColorToNumber(replication.color));
+            colors.push(replication.color);
             confirmations.push(replication.confirmation);
         }
 
@@ -116,6 +116,14 @@ class DCOfferFinalizeCommand extends Command {
                 commands: [depositToken],
             };
         }
+
+        this.logger.error(`Offer ${offerId} has not been finalized.`);
+
+        offer.status = 'FAILED';
+        offer.message = `Offer for ${offerId} has not been finalized. ${err.message}`;
+        await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 

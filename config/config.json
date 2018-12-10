@@ -89,7 +89,7 @@
       "branch": "develop"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 10080,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
@@ -175,7 +175,7 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "StagenetV1.0.0",
+      "id": "StagenetV1.0.1",
       "bootstraps": ["https://stagingbs.origintrial.me:5278/#1754b56ce26212eab45bc523c36e1d4bf57ea30e"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 14,
@@ -189,7 +189,7 @@
       "branch": "release/staging"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 1440,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "1",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 1440,
@@ -275,7 +275,7 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "StablenetV1.0.0",
+      "id": "StablenetV1.0.1",
       "bootstraps": ["https://82.196.10.12:5278/#e2f7ab11d0dd34595dfb2e71b4937ec8d790df84"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 14,
@@ -289,7 +289,7 @@
       "branch": "release/stable"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 10080,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
@@ -375,7 +375,7 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "TestnetV2.0.0b",
+      "id": "TestnetV2.0.1b",
       "bootstraps": [
         "https://46.101.233.127:5278/#41d7357b322ca75d1187b3163b510ff704e9a040",
         "https://82.196.6.215:5278/#9e7f1ec47d0da65b9f2e004510ae366519290dff"
@@ -392,7 +392,7 @@
       "branch": "master"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 10080,
+    "dc_holding_time_in_minutes": 60,
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
@@ -478,7 +478,7 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "MarinerV1.0.0",
+      "id": "MarinerV1.0.1",
       "bootstraps": [
         "https://35.159.51.107:5278/#3e3f9f62aa3e55c4bc2e307e2164357e538466a5",
         "https://142.93.13.94:5278/#6d3e620c2c4062e67ed16f86c2fd9c6fec739644"
@@ -499,7 +499,7 @@
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
-    "dh_min_token_price": "10000000000000000000",
+    "dh_min_token_price": "20000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
     "dc_choose_time": 600000,

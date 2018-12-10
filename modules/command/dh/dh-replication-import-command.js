@@ -46,6 +46,7 @@ class DhReplicationImportCommand extends Command {
             distributionRootHash,
             distributionSignature,
             transactionHash,
+            encColor,
         } = command.data;
         const decryptedVertices =
             await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
@@ -98,17 +99,17 @@ class DhReplicationImportCommand extends Command {
 
         await this.importer.importJSON({
             dataSetId,
+            vertices: litigationVertices,
+            edges,
+            wallet: dcWallet,
+        }, true, encColor);
+
+        let importResult = await this.importer.importJSON({
+            dataSetId,
             vertices: decryptedVertices,
             edges,
             wallet: dcWallet,
         }, false);
-
-        let importResult = await this.importer.importJSON({
-            dataSetId,
-            vertices: litigationVertices,
-            edges,
-            wallet: dcWallet,
-        }, true);
 
         if (importResult.error) {
             throw Error(importResult.error);
@@ -136,6 +137,7 @@ class DhReplicationImportCommand extends Command {
             distribution_private_key: distributionPrivateKey,
             distribution_epk: distributionEpk,
             transaction_hash: transactionHash,
+            color: encColor,
         });
 
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);

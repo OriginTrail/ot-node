@@ -4,7 +4,7 @@ function denormalizeGraph(importId, vertices, edges) {
     const denormalizedEdges = edges;
 
     vertices.forEach((vertex) => {
-        if (vertex.vertex_type !== 'IDENTIFIER') {
+        if (vertex.vertex_type !== 'IDENTIFIER' && vertex.vertex_type !== 'CLASS') {
             const denormalizedVertex = {
                 [importId]: {},
             };
@@ -43,7 +43,7 @@ function normalizeGraph(importId, vertices, edges) {
 
     vertices.forEach((vertex) => {
         const normalizedVertex = {};
-        if (vertex.vertex_type !== 'IDENTIFIER' && vertex[importId]) {
+        if (vertex.vertex_type !== 'IDENTIFIER' && vertex[importId] && vertex.vertex_type !== 'CLASS') {
             normalizedVertex.data = vertex[importId].data;
 
             if (vertex._dc_key) {
