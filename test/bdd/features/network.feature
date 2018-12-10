@@ -37,8 +37,8 @@ Feature: Test basic network features
     And I start additional nodes
     And I use 6th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    Then all nodes with last import should answer to last network query by DV
-    Given the DV purchases import from the last query from a DH
+    Then all nodes with lastImport should answer to last network query by DV
+    Given the DV purchases lastImport from the last query from a DH
     Then the last import should be the same on DC and DV nodes
     Then DV's last purchase's hash should be the same as one manually calculated
 
@@ -56,8 +56,8 @@ Feature: Test basic network features
     And I start additional nodes
     And I use 2nd node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    Then all nodes with last import should answer to last network query by DV
-    Given the DV purchases import from the last query from the DC
+    Then all nodes with lastImport should answer to last network query by DV
+    Given the DV purchases lastImport from the last query from the DC
     Then the last import should be the same on DC and DV nodes
 
   @first
@@ -74,15 +74,15 @@ Feature: Test basic network features
     And I start additional nodes
     And I use 2nd node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    Then all nodes with last import should answer to last network query by DV
-    Given the DV purchases import from the last query from the DC
+    Then all nodes with lastImport should answer to last network query by DV
+    Given the DV purchases lastImport from the last query from the DC
     Then the last import should be the same on DC and DV nodes
     Given I additionally setup 1 node
     And I start additional nodes
     And I use 3rd node as DV2
     Given DV2 publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    Then all nodes with last import should answer to last network query by DV2
-    Given the DV2 purchases import from the last query from a DV
+    Then all nodes with lastImport should answer to last network query by DV2
+    Given the DV2 purchases lastImport from the last query from a DV
     Then the last import should be the same on DC and DV nodes
     Then the last import should be the same on DC and DV2 nodes
 

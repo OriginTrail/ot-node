@@ -107,67 +107,17 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Given(/^the ([DV|DV2]+) purchases import from the last query from (a DH|the DC|a DV)$/, function (whichDV, fromWhom, done) {
+Given(/^the ([DV|DV2]+) purchases ([lastImport|secondLastImport]+) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
+    expect(whichImport, 'lastImport or secondLastImport are allowed values').to.be.oneOf(['lastImport', 'secondLastImport']);
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
     const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const queryId = this.state.lastQueryNetworkId;
-    const dataSetId = this.state.lastImport.data_set_id;
-    let sellerNode;
-
-    const confirmationsSoFar =
-        dv.nodeConfirmsForDataSetId(queryId, dataSetId);
-
-    expect(confirmationsSoFar).to.have.length.greaterThan(0);
-
-    if (fromWhom === 'a DH') {
-        // Find first DH that replicated last import.
-        sellerNode = this.state.nodes.find(node => (node !== dc && node !== dv));
-    } else if (fromWhom === 'the DC') {
-        sellerNode = dc;
-    } else if (fromWhom === 'a DV') {
-        if (whichDV === 'DV') {
-            console.log('DV cant buy from DV');
-            process.exit(-1);
-        }
-        sellerNode = this.state.dv;
-    }
-
-    expect(sellerNode, 'Didn\'t find seller node.').to.not.be.undefined;
-    const { replyId } =
-        dv.state.dataLocationQueriesConfirmations[queryId][sellerNode.state.identity];
-
-    expect(replyId).to.not.be.undefined;
-
-    // Wait for purchase to happened and then exit.
-    dv.once('dataset-purchase', (purchase) => {
-        if (purchase.queryId === queryId &&
-            purchase.replyId === replyId &&
-            purchase.dataSetId === dataSetId) {
-            this.logger.info(`${dv.state.identity} finished purchase for data-set ID ${dataSetId} from sellerNode ${sellerNode.state.identity}`);
-            done();
-        }
-    });
-
-    // Initiate actual purchase.
-    httpApiHelper.apiReadNetwork(dv.state.node_rpc_url, queryId, replyId, dataSetId)
-        .catch(error => done(error));
-});
-
-Given(/^the ([DV|DV2]+) purchases second last import from the last query from (a DH|the DC|a DV)$/, function (whichDV, fromWhom, done) {
-    expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
-    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.secondLastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
-
-    const { dc } = this.state;
-    const dv = this.state[whichDV.toLowerCase()];
-    const queryId = this.state.lastQueryNetworkId;
-    const dataSetId = this.state.secondLastImport.data_set_id;
+    const dataSetId = this.state[whichImport].data_set_id;
     let sellerNode;
 
     const confirmationsSoFar =
