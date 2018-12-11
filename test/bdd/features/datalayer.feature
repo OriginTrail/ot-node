@@ -77,12 +77,12 @@ Feature: Data layer related features
     And I use 2nd node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
-    Given the DV purchases import from the last query from the DC
+    Given the DV purchases last import from the last query from the DC
     Given I query DV node locally for last imported data set id
     Then DV's local query response should contain hashed private attributes
 
   @second
-  Scenario: Remote event connection on DH
+  Scenario: Remote event connection on DH and DV
     Given I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
@@ -96,4 +96,17 @@ Feature: Data layer related features
     Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
     Then last consensus response should have 1 event with 1 match
     Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
+    Then last consensus response should have 1 event with 1 match
+    Given I additionally setup 1 node
+    And I start additional nodes
+    And I use 6th node as DV
+    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
+    Then all nodes with last import should answer to last network query by DV
+    And the DV purchases last import from the last query from a DH
+    Given DV publishes query consisting of path: "uid", value: "urn:epc:id:sgln:Building_Green_V1" and opcode: "EQ" to the network
+    Then all nodes with second last import should answer to last network query by DV
+    And the DV purchases second last import from the last query from a DH
+    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
+    Then last consensus response should have 1 event with 1 match
+    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
     Then last consensus response should have 1 event with 1 match

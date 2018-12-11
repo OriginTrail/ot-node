@@ -6,12 +6,13 @@ import {Ownable, Hub} from './Hub.sol';
 import {Identity, ERC725} from './Identity.sol';
 import {ERC20} from './TracToken.sol';
 
+
 contract Profile {
     using SafeMath for uint256;
     Hub public hub;
     ProfileStorage public profileStorage;
 
-    uint256 public minimalStake = 10**20; // TODO Determine minimum stake
+    uint256 public minimalStake = 10**21;
     uint256 public withdrawalTime = 5 minutes;
 
     constructor(address hubAddress) public {
@@ -44,6 +45,7 @@ contract Profile {
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= initialBalance, "Sender allowance must be equal to or higher than initial balance");
         require(tokenContract.balanceOf(msg.sender) >= initialBalance, "Sender balance must be equal to or higher than initial balance!");
+        require(uint256(profileNodeId) != 0, "Cannot create a profile without a nodeId submitted");
 
         tokenContract.transferFrom(msg.sender, address(profileStorage), initialBalance);
 
@@ -92,21 +94,7 @@ contract Profile {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
-        if(profileStorage.getWithdrawalPending(identity)){
-            if(block.timestamp < profileStorage.getWithdrawalTimestamp(identity)){
-                // Transfer already reserved tokens to user identity
-                profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
-                
-                uint256 balance = profileStorage.getStake(identity);
-                balance = balance.sub(profileStorage.getWithdrawalAmount(identity));
-                profileStorage.setStake(identity, balance);
-                
-                emit TokensWithdrawn(identity, profileStorage.getWithdrawalAmount(identity), balance);
-            }
-            else {
-                require(false, "Withrdrawal process already pending!");
-            }
-        }
+        require(profileStorage.getWithdrawalPending(identity) == false, "Withrdrawal process already pending!");
 
         uint256 availableBalance = profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity));
 
@@ -147,7 +135,17 @@ contract Profile {
             profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
         );
     }
-    
+
+    function setNodeId(address identity, bytes32 newNodeId)
+    public {
+         // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),
+            "Sender does not have action permission for submitted identity");
+        require(uint256(newNodeId) != 0, "Cannot set a blank nodeId");
+
+        profileStorage.setNodeId(identity, newNodeId);
+    }
+
     function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
     public onlyHolding {
         if(profileStorage.getWithdrawalPending(payer)) {

@@ -38,94 +38,6 @@ class ArangoJS {
     }
 
     /**
-     * Find set of vertices with _key, vertex_type and identifiers values
-     * @param queryObject       Query for getting vertices
-     * @returns {Promise<any>}
-     */
-    async findVertices(queryObject) {
-        let queryString = '';
-        const params = {};
-        const { query } = queryObject[0];
-        if (Utilities.isEmptyObject(queryObject) === false) {
-            let count = 1;
-            for (const key in query) {
-                if (key.match(/^[.\w\d]+$/g) !== null) {
-                    if (key === 'uid') {
-                        queryString += `
-                        LET v_res${count} = (
-                        FOR v${count} IN ot_vertices
-                            FILTER v${count}.uid == "@param${count}"
-                            RETURN {"datasets": v${count}.datasets, "objects": [v${count}]}
-                        )`;
-                    } else {
-                        queryString += `
-                            LET v_res${count} = (
-                                FOR v${count} IN ot_vertices
-                                    LET objects = (
-                                                    FOR w${count}, e IN 1..1
-                                                    OUTBOUND v${count}._id GRAPH "origintrail_graph"
-                                                    FILTER e.edge_type == "IDENTIFIES"
-                                                            AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                                    RETURN w${count}
-                                                )
-                                    FILTER v${count}.vertex_type == "IDENTIFIER"
-                                            AND v${count}.id_type == "${key}"
-                                            AND v${count}.id_value == "@param${count}"
-                                    RETURN {"datasets": v${count}.datasets, "objects": objects}
-                                )
-                        `;
-                    }
-                    const param = `param${count}`;
-
-                    count += 1;
-                    params[param] = query[key];
-                }
-            }
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                    FILTER LENGTH(v_res${i}) > 0
-                    `;
-            }
-
-            queryString += 'AND LENGTH(INTERSECTION(v_res1[0].datasets';
-
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                   , v_res${i}[0].datasets`;
-            }
-
-            queryString += ')) > 0 RETURN {datasets: INTERSECTION(v_res1[0].datasets';
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                   , v_res${i}[0].datasets`;
-            }
-
-            queryString += '), "objects": INTERSECTION(v_res1[0].objects';
-
-            for (let i = 1; i <= count; i += 1) {
-                queryString += `
-                   , v_res${i}[0].objects`;
-            }
-
-            queryString += '), ';
-
-            const results = [];
-
-            for (let i = 1; i <= count; i += 1) {
-                results.push(`"v${i}": v_res${i}[0].objects`);
-            }
-
-            queryString += results.join(',');
-            queryString += '}';
-
-            return this.runQuery(queryString, params);
-        }
-    }
-
-    /**
      * Find set of documents with _key, vertex_type and identifiers values
      * @param queryObject       Query for getting documents
      * @returns {Promise<any>}
@@ -257,17 +169,22 @@ class ArangoJS {
             switch (opcode) {
             case 'EQ':
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == "${id_type}"
-                                     AND v${count}.id_value == "${id_value}"
+                                     AND v${count}.id_type == @id_type${count}
+                                     AND v${count}.id_value == @id_value${count}
                                      AND v${count}.encrypted == ${encColor}
                                      `;
+                params[`id_type${count}`] = id_type;
+                params[`id_value${count}`] = id_value;
                 break;
             case 'IN':
                 filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == "${id_type}"
-                                     AND "${id_value}" IN v${count}.id_value
+                                     AND v${count}.id_type == @id_type${count}
+                                     AND  @id_value${count} IN v${count}.id_value
                                      AND v${count}.encrypted == ${encColor}
                                      `;
+
+                params[`id_type${count}`] = id_type;
+                params[`id_value${count}`] = id_value;
                 break;
             default:
                 throw new Error(`OPCODE ${opcode} is not defined`);
@@ -319,6 +236,17 @@ class ArangoJS {
             OUTBOUND 'ot_vertices/${startVertex._key}'
             ot_edges
             OPTIONS {bfs: false, uniqueVertices: 'path'}
+            FILTER edge.edge_type != 'IDENTIFIES'
+            AND edge.edge_type != 'IDENTIFIED_BY'
+            AND edge._to != 'ot_vertices/Actor'
+            AND edge._to != 'ot_vertices/Product'
+            AND edge._to != 'ot_vertices/Location'
+            AND edge._to != 'ot_vertices/Transport'
+            AND edge._to != 'ot_vertices/Transformation'
+            AND edge._to != 'ot_vertices/Observation'
+            AND edge._to != 'ot_vertices/Ownership'
+            AND vertex.vertex_type != 'CLASS'
+            AND vertex.vertex_type != 'IDENTIFIER'
             RETURN path`;
 
         const rawGraph = await this.runQuery(queryString);
@@ -742,20 +670,11 @@ class ArangoJS {
      * @return {Promise<*>}
      */
     async findVerticesByImportId(data_id, encColor = null) {
-        let queryString = '';
-        if (encColor) {
-            queryString = `FOR v IN ot_vertices 
+        const queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
                             AND POSITION(v.datasets, @importId, false)  != false 
                             AND (v.encrypted == ${encColor})
                             SORT v._key RETURN v`;
-        } else {
-            queryString = `FOR v IN ot_vertices 
-                            FILTER v.datasets != null 
-                            AND POSITION(v.datasets, @importId, false) != false 
-                            AND (v.encrypted == null)
-                            SORT v._key RETURN v`;
-        }
 
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
@@ -777,8 +696,18 @@ class ArangoJS {
         return normalizedVertices.concat(objectClasses);
     }
 
+    /**
+     * Finds object vertices.
+     * TODO We need to change the query. This is not the appropriate way.
+     * @return {Promise<any>}
+     */
     async findObjectClassVertices() {
-        const queryString = 'FOR v IN ot_vertices FILTER v.vertex_type == "CLASS" AND v.datasets == null SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_vertices ' +
+            'FILTER v.vertex_type == "CLASS" ' +
+            'AND v.datasets == null ' +
+            'AND v._dc_key == null ' +
+            'SORT v._key ' +
+            'RETURN v';
         return this.runQuery(queryString, {});
     }
 

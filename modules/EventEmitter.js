@@ -326,7 +326,6 @@ class EventEmitter {
                         message: 'Query sent successfully.',
                         query_id: queryId,
                     });
-                    dvController.handleQuery(queryId, 60000);
                 }).catch((error) => {
                     logger.error(`Failed query network. ${error}.`);
                     notifyError(error);
@@ -334,9 +333,6 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
-            if (!appState.enoughFunds) {
-                return;
-            }
             const failFunction = (error) => {
                 logger.warn(error);
                 data.response.status(400);

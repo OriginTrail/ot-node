@@ -127,9 +127,19 @@ class Importer {
         // TODO: Use transaction here.
         await Promise.all(denormalizedVertices.map(vertex => this.graphStorage.addVertex(vertex))
             .concat(edges.map(edge => this.graphStorage.addEdge(edge))));
-        await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, dataSetId))
-            .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, dataSetId))));
 
+        if (encColor == null) {
+            // it's encrypted
+            await Promise.all(vertices
+                .filter(vertex => vertex.vertex_type !== 'CLASS')
+                .map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, dataSetId))
+                .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, dataSetId))));
+        } else {
+            // not encrypted
+            await Promise.all(vertices
+                .map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, dataSetId))
+                .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, dataSetId))));
+        }
         this.log.info('JSON import complete');
 
         if (!packKeys) {
@@ -209,8 +219,7 @@ class Importer {
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
         this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
         this.log.info(`Data set ID: ${data_set_id}`);

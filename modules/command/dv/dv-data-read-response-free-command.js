@@ -88,8 +88,7 @@ class DVDataReadResponseFreeCommand extends Command {
         ImportUtilities.sort(vertices);
         ImportUtilities.sort(edges);
 
-        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
-            vertex.vertex_type !== 'CLASS'), edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
         const rootHash = merkle.tree.getRoot();
 
         if (fingerprint !== rootHash) {

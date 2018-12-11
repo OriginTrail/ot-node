@@ -8,11 +8,12 @@ class GraphStorage {
      * @param logger
      * @param selectedDatabase Selected graph database
      */
-    constructor(selectedDatabase, logger) {
+    constructor(selectedDatabase, logger, notifyError) {
         this.logger = logger;
         this.selectedDatabase = selectedDatabase;
         this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
             'Transformation', 'Observation', 'Ownership'];
+        this.notifyError = notifyError;
     }
 
     /**
@@ -61,25 +62,6 @@ class GraphStorage {
                     this.logger.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
                 }
-            }
-        });
-    }
-
-    /**
-     * Find set of vertices from Graph storage
-     * @param queryObject       Query for getting vertices
-     * @returns {Promise<any>}
-     */
-    findVertices(queryObject) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.findVertices(queryObject).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
             }
         });
     }
@@ -266,8 +248,14 @@ class GraphStorage {
      * Finds all object classes
      * @return {Promise<*>}
      */
-    findObjectClassVertices() {
-        return this.db.findObjectClassVertices();
+    async findObjectClassVertices() {
+        const classes = await this.db.findObjectClassVertices();
+        if (classes.length === 0) {
+            this.notifyError(new Error('Missing class vertices'));
+            await this.__initDatabase__();
+            return this.db.findObjectClassVertices();
+        }
+        return classes;
     }
 
     /**

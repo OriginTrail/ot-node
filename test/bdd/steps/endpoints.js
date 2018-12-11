@@ -20,6 +20,11 @@ Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, 
     const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
 
     expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet']);
+
+    // sometimes there is a need to remember import before the last one
+    if (this.state.lastImport) {
+        this.state.secondLastImport = this.state.lastImport;
+    }
     this.state.lastImport = importResponse;
 });
 
@@ -102,16 +107,24 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Given(/^the ([DV|DV2]+) purchases import from the last query from (a DH|the DC|a DV)$/, function (whichDV, fromWhom, done) {
+Given(/^the ([DV|DV2]+) purchases ([last import|second last import]+) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
+    expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
+    if (whichImport === 'last import') {
+        whichImport = 'lastImport';
+    } else if (whichImport === 'second last import') {
+        whichImport = 'secondLastImport';
+    } else {
+        throw Error('provided import is not valid');
+    }
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
     const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const queryId = this.state.lastQueryNetworkId;
-    const dataSetId = this.state.lastImport.data_set_id;
+    const dataSetId = this.state[whichImport].data_set_id;
     let sellerNode;
 
     const confirmationsSoFar =
