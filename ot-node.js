@@ -226,22 +226,6 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
-        // check for ready updates
-        if (fs.existsSync('/ot-node/UPDATE')) {
-            log.info('Installing new update');
-            try {
-                await Utilities.runUpdate();
-                execSync('rm -rf /ot-node/UPDATE');
-                process.exit(0);
-            } catch (err) {
-                log.error('Update installation failed, rolling back');
-                log.error(err);
-                execSync('rm -rf /ot-node/UPDATE');
-            }
-        } else {
-            log.info('No updates waiting');
-        }
-
         if (process.env.NODE_ENV !== 'development') {
             bugsnag.register(
                 pjson.config.bugsnagkey,
@@ -294,6 +278,22 @@ class OTNode {
         config.identity = '';
         config.erc725Identity = '';
         Object.seal(config);
+
+        // check for ready updates
+        if (fs.existsSync('/ot-node/UPDATE')) {
+            log.info('Installing new update');
+            try {
+                await Utilities.runUpdate();
+                execSync('rm -rf /ot-node/UPDATE');
+                process.exit(0);
+            } catch (err) {
+                log.error('Update installation failed, rolling back');
+                log.error(err);
+                execSync('rm -rf /ot-node/UPDATE');
+            }
+        } else {
+            log.info('No updates waiting');
+        }
 
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
