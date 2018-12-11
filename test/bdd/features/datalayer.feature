@@ -121,7 +121,7 @@ Feature: Data layer related features
     And I start the node
     And I use 1st node as DC
     And DC imports "test/modules/test_xml/MultipleIdentifiers.xml" as GS1
-    Given I create json query with path: "uid", value: "urn:ot:object:product:id:P1" and opcode: "EQ"
-    And I append json query with path: "uid", value: "urn:ot:object:product:id:P1" and opcode: "EQ"
+    Given I create json query with path: "identifiers.uid", value: "urn:ot:object:product:id:P1" and opcode: "EQ"
+    And I append json query with path: "identifiers.ean13", value: "1234567890123" and opcode: "EQ"
     Given DC node makes local query with previous json query
     Then response should contain only last imported data set id

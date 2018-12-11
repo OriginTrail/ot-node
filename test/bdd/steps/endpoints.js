@@ -76,7 +76,6 @@ Given(/^I append json query with path: "(\S+)", value: "(\S+)" and opcode: "(\S+
     };
 
     this.state.jsonQuery.query.push(myAppendQueryObject);
-    console.log(this.state.jsonQuery);
 });
 
 Given(/^(DC|DH|DV) node makes local query with previous json query$/, async function (targetNode) {
