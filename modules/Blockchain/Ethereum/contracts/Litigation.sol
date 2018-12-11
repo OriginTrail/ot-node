@@ -36,13 +36,9 @@ contract Litigation {
     }
 
 	/*    ----------------------------- LITIGATION -----------------------------     */
-    event LitigationInitiated(bytes32 offerId, address holderIdentity, uint requestedDataIndex);
-    event LitigationAnswered(bytes32 offerId, address holderIdentity);
-    event LitigationTimedOut(bytes32 offerId, address holderIdentity);
-    event LitigationCompleted(bytes32 offerId, address holderIdentity, bool DH_was_penalized);
+    event LitigationStatusChanged(bytes32 offerId, address holderIdentity, LitigationStorage.LitigationStatus status);
 
     event ReplacementStarted(bytes32 offerId, address holderIdentity, address challengerIdentity, bytes32 litigationRootHash);
-    event ReplacementTask(bytes32 offerId, address holderIdentity, address challengerIdentity, uint256 difficulty, bytes32 task);
     event ReplacementCompleted(bytes32 offerId, address challengerIdentity, address chosenHolder);
 
     function initiateLitigation(bytes32 offerId, address holderIdentity, address challengerIdentity, uint requestedDataIndex, bytes32[] hashArray)
@@ -79,7 +75,7 @@ contract Litigation {
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-        emit LitigationInitiated(offerId, holderIdentity, requestedDataIndex);
+        emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
         return true;
     }
     
@@ -100,7 +96,7 @@ contract Litigation {
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.answered);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-        emit LitigationAnswered(offerId, msg.sender);
+        emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.answered);
         return true;
     }
 
@@ -129,7 +125,7 @@ contract Litigation {
         require(ERC725(litigatorIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)),2), "Sender does not have action purpose set!");
         require(litigationStorage.getLitigationLitigatorIdentity(offerId, holderIdentity) == litigatorIdentity, "Litigation can only be completed by the litigator who initiated the litigation!");
 
-        uint256[] memory parameters = new uint256[](5);
+        uint256[] memory parameters = new uint256[](3);
         bytes32[] memory bytesParameters = new bytes32[](3);
 
         // set parameters[0] as the last litigation timestamp
@@ -163,25 +159,36 @@ contract Litigation {
             require(parameters[0] + parameters[1] >= block.timestamp, 
                 "The time window for completing the answered litigation has passed!");
             // Pay the previous holder
-            parameters[3] = holdingStorage.getOfferTokenAmountPerHolder(offerId);
-            parameters[3] = parameters[3].mul(block.timestamp.sub(holdingStorage.getHolderPaymentTimestamp(offerId, holderIdentity)));
-            parameters[3] = parameters[3].div(holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60));
+            parameters[0] = holdingStorage.getOfferTokenAmountPerHolder(offerId);
+            parameters[0] = parameters[0].mul(block.timestamp.sub(holdingStorage.getHolderPaymentTimestamp(offerId, holderIdentity)));
+            parameters[0] = parameters[0].div(holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60));
 
-            require(holdingStorage.getHolderPaidAmount(offerId, holderIdentity).add(parameters[3]) < holdingStorage.getHolderStakedAmount(offerId, holderIdentity),
+            require(holdingStorage.getHolderPaidAmount(offerId, holderIdentity).add(parameters[0]) < holdingStorage.getHolderStakedAmount(offerId, holderIdentity),
                 "Holder considered to successfully completed offer, cannot complete litigation!");
 
-            profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).add(parameters[3]));
-            parameters[4] = profileStorage.getStake(holdingStorage.getOfferCreator(offerId));
-            profileStorage.setStake(holdingStorage.getOfferCreator(offerId), parameters[4].sub(parameters[3]));
-            parameters[4] = profileStorage.getStakeReserved(holdingStorage.getOfferCreator(offerId));
-            profileStorage.setStakeReserved(holdingStorage.getOfferCreator(offerId), parameters[4].sub(parameters[3])); 
-            parameters[4] = holdingStorage.getHolderPaidAmount(offerId, holderIdentity);
-            holdingStorage.setHolderPaidAmount(offerId, holderIdentity, parameters[4].add(parameters[3]));
+            profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).add(parameters[0]));
+            parameters[1] = profileStorage.getStake(holdingStorage.getOfferCreator(offerId));
+            profileStorage.setStake(holdingStorage.getOfferCreator(offerId), parameters[1].sub(parameters[0]));
+            parameters[1] = profileStorage.getStakeReserved(holdingStorage.getOfferCreator(offerId));
+            profileStorage.setStakeReserved(holdingStorage.getOfferCreator(offerId), parameters[1].sub(parameters[0])); 
+            parameters[1] = holdingStorage.getHolderPaidAmount(offerId, holderIdentity);
+            holdingStorage.setHolderPaidAmount(offerId, holderIdentity, parameters[1].add(parameters[0]));
 
             litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-            emit LitigationCompleted(offerId, holderIdentity, true);
+            if(holdingStorage.getDifficultyOverride() != 0) parameters[2] = holdingStorage.getDifficultyOverride();
+            else {
+                if(logs2(profileStorage.activeNodes()) <= 4) parameters[2] = 1;
+                else {
+                    parameters[2] = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
+                }
+            }
+            litigationStorage.setLitigationReplacementDifficulty(offerId, holderIdentity, parameters[2]);
+                // Calculate and set task
+            litigationStorage.setLitigationReplacementTask(offerId, holderIdentity, blockhash(block.number - 1) & bytes32(2 ** (parameters[2] * 4) - 1));
+
+            emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
             emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytesParameters[2]);
             return true;
         }
@@ -212,7 +219,8 @@ contract Litigation {
             litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
             
-            emit LitigationCompleted(offerId, holderIdentity, false);
+
+            emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
             return false;
         }
         else {
@@ -220,20 +228,20 @@ contract Litigation {
             //        -> Distribute tokens and send stake to DC
 
             // Pay the previous holder
-            parameters[3] = holdingStorage.getOfferTokenAmountPerHolder(offerId);
-            parameters[3] = parameters[3].mul(block.timestamp.sub(holdingStorage.getHolderPaymentTimestamp(offerId, holderIdentity)));
-            parameters[3] = parameters[3].div(holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60));
+            parameters[0] = holdingStorage.getOfferTokenAmountPerHolder(offerId);
+            parameters[0] = parameters[0].mul(block.timestamp.sub(holdingStorage.getHolderPaymentTimestamp(offerId, holderIdentity)));
+            parameters[0] = parameters[0].div(holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60));
 
-            require(holdingStorage.getHolderPaidAmount(offerId, holderIdentity).add(parameters[3]) < holdingStorage.getHolderStakedAmount(offerId, holderIdentity),
+            require(holdingStorage.getHolderPaidAmount(offerId, holderIdentity).add(parameters[0]) < holdingStorage.getHolderStakedAmount(offerId, holderIdentity),
                 "Holder considered to successfully completed offer, cannot complete litigation!");
 
-            profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).add(parameters[3]));
-            parameters[4] = profileStorage.getStake(holdingStorage.getOfferCreator(offerId));
-            profileStorage.setStake(holdingStorage.getOfferCreator(offerId), parameters[4].sub(parameters[3]));
-            parameters[4] = profileStorage.getStakeReserved(holdingStorage.getOfferCreator(offerId));
-            profileStorage.setStakeReserved(holdingStorage.getOfferCreator(offerId), parameters[4].sub(parameters[3])); 
-            parameters[4] = holdingStorage.getHolderPaidAmount(offerId, holderIdentity);
-            holdingStorage.setHolderPaidAmount(offerId, holderIdentity, parameters[4].add(parameters[3]));
+            profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).add(parameters[0]));
+            parameters[1] = profileStorage.getStake(holdingStorage.getOfferCreator(offerId));
+            profileStorage.setStake(holdingStorage.getOfferCreator(offerId), parameters[1].sub(parameters[0]));
+            parameters[1] = profileStorage.getStakeReserved(holdingStorage.getOfferCreator(offerId));
+            profileStorage.setStakeReserved(holdingStorage.getOfferCreator(offerId), parameters[1].sub(parameters[0])); 
+            parameters[1] = holdingStorage.getHolderPaidAmount(offerId, holderIdentity);
+            holdingStorage.setHolderPaidAmount(offerId, holderIdentity, parameters[1].add(parameters[0]));
 
             litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
@@ -253,8 +261,7 @@ contract Litigation {
                 // Calculate and set task
             litigationStorage.setLitigationReplacementTask(offerId, holderIdentity, blockhash(block.number - 1) & bytes32(2 ** (parameters[2] * 4) - 1));
 
-            emit LitigationCompleted(offerId, holderIdentity, true);
-            emit ReplacementTask(offerId, holderIdentity, litigatorIdentity, parameters[2], blockhash(block.number - 1) & bytes32(2 ** (parameters[2] * 4) - 1));
+            emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
             emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytesParameters[2]);
             return true;
         }
@@ -280,20 +287,19 @@ contract Litigation {
         require(((keccak256(abi.encodePacked(replacementHolderIdentity[0], replacementHolderIdentity[1], replacementHolderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1))
         == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
 
-        replacementHolderIdentity[0] = replacementHolderIdentity[block.timestamp % 3];
-        uint256 parameters = holdingStorage.getHolderLitigationEncryptionType(offerId, holderIdentity);
-        holdingStorage.setHolderLitigationEncryptionType(offerId, replacementHolderIdentity[0], parameters);
-        holdingStorage.setHolderLitigationEncryptionType(offerId, litigatorIdentity, parameters);
+        // parameter = litigationEncryptionType
+        uint256 parameter = holdingStorage.getHolderLitigationEncryptionType(offerId, holderIdentity);
+        holdingStorage.setHolderLitigationEncryptionType(offerId, replacementHolderIdentity[block.timestamp % 3], parameter);
+        holdingStorage.setHolderLitigationEncryptionType(offerId, litigatorIdentity, parameter);
 
-        // parameters = stakedAmount
-        parameters = holdingStorage.getHolderStakedAmount(offerId, holderIdentity).sub(holdingStorage.getHolderPaidAmount(offerId, holderIdentity));
+        // parameter = stakedAmount
+        parameter = holdingStorage.getHolderStakedAmount(offerId, holderIdentity).sub(holdingStorage.getHolderPaidAmount(offerId, holderIdentity));
         // Reserve new holder stakes in their profiles
-        profileStorage.setStakeReserved(replacementHolderIdentity[0], profileStorage.getStakeReserved(replacementHolderIdentity[0]).add(parameters));
-        profileStorage.setStakeReserved(litigatorIdentity, profileStorage.getStakeReserved(litigatorIdentity).add(parameters));
+        profileStorage.setStakeReserved(replacementHolderIdentity[block.timestamp % 3], profileStorage.getStakeReserved(replacementHolderIdentity[block.timestamp % 3]).add(parameter));
+        profileStorage.setStakeReserved(litigatorIdentity, profileStorage.getStakeReserved(litigatorIdentity).add(parameter));
         // Set new holder staked amounts
-        holdingStorage.setHolderStakedAmount(offerId, replacementHolderIdentity[0], parameters);
-        holdingStorage.setHolderStakedAmount(offerId, litigatorIdentity, parameters);
-
+        holdingStorage.setHolderStakedAmount(offerId, replacementHolderIdentity[block.timestamp % 3], parameter);
+        holdingStorage.setHolderStakedAmount(offerId, litigatorIdentity, parameter);
 
         // Pay the litigator
         profileStorage.setStake(litigatorIdentity, profileStorage.getStake(litigatorIdentity).add(holdingStorage.getHolderPaidAmount(offerId, holderIdentity)));
@@ -301,12 +307,13 @@ contract Litigation {
         profileStorage.setStakeReserved(holderIdentity, profileStorage.getStakeReserved(holderIdentity).sub(holdingStorage.getHolderPaidAmount(offerId, holderIdentity)));
 
         // Set payment timestamps for new holders
-        holdingStorage.setHolderPaymentTimestamp(offerId, replacementHolderIdentity[0], block.timestamp);
+        holdingStorage.setHolderPaymentTimestamp(offerId, replacementHolderIdentity[block.timestamp % 3], block.timestamp);
         holdingStorage.setHolderPaymentTimestamp(offerId, litigatorIdentity, block.timestamp);
 
         // Set litigation status
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
-        emit ReplacementCompleted(offerId, litigatorIdentity, replacementHolderIdentity[0]);
+        emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
+        emit ReplacementCompleted(offerId, litigatorIdentity, replacementHolderIdentity[block.timestamp % 3]);
     }
 
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
