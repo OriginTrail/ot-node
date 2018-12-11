@@ -2,12 +2,10 @@
 FROM ubuntu:16.04
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
-ARG targetEnvironment=autoupdater
+ARG targetEnvironment=production
 
 ENV NODE_ENV=$targetEnvironment
-ENV SEQUELIZEDB=/ot-node/current/data/system.db
 ENV GRANAX_USE_SYSTEM_TOR=1
-ENV OT_NODE_MODE=docker
 
 RUN apt-get -qq update && apt-get -qq -y install curl
 RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
