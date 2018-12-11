@@ -108,7 +108,7 @@ class CommandExecutor {
         const waitMs = (command.ready_at + command.delay) - now;
         if (waitMs > 0) {
             this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
-            await this.add(command, waitMs, false);
+            await this.add(command, Math.min(waitMs, MAX_DELAY_IN_MILLS), false);
             return;
         }
 
@@ -126,7 +126,7 @@ class CommandExecutor {
                     }, transaction);
 
                     command.data = handler.pack(command.data);
-                    await this.add(command, command.period, false, transaction);
+                    await this.add(command, command.period, false);
                     return Command.repeat();
                 }
 
@@ -192,26 +192,20 @@ class CommandExecutor {
      * @param command
      * @param delay
      * @param insert
-     * @param transaction
      */
-    async add(command, delay = 0, insert = true, transaction) {
+    async add(command, delay = 0, insert = true) {
         const now = Date.now();
 
-        let updateReadyAt = false;
         if (delay != null && delay > MAX_DELAY_IN_MILLS) {
-            if (command.ready_at == null || command.ready_at < now) {
-                updateReadyAt = true;
-                command.ready_at = now + delay;
+            if (command.ready_at == null) {
+                command.ready_at = now;
             }
+            command.ready_at += delay;
             delay = MAX_DELAY_IN_MILLS;
         }
 
         if (insert) {
             command = await this._insert(command);
-        } else if (updateReadyAt) {
-            await CommandExecutor._update(command, {
-                ready_at: command.ready_at,
-            }, transaction);
         }
         if (delay) {
             setTimeout(command => this.queue.push(command), delay, command);
@@ -261,11 +255,7 @@ class CommandExecutor {
             command.sequence = command.sequence.slice(1);
         }
         if (!command.ready_at) {
-            if (command.delay != null) {
-                command.ready_at = Date.now() + command.delay;
-            } else {
-                command.ready_at = Date.now();
-            }
+            command.ready_at = Date.now(); // take current time
         }
         if (command.delay == null) {
             command.delay = 0;
