@@ -31,6 +31,18 @@ class DCChallengeCommand extends Command {
             litigationPrivateKey,
         } = command.data;
 
+        await models.replicated_data.update(
+            {
+                status: 'CHALLENGING',
+            },
+            {
+                where: {
+                    offer_id: offerId,
+                    dh_identity: dhIdentity,
+                },
+            },
+        );
+
         const numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });

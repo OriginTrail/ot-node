@@ -24,7 +24,6 @@ class DCChallengeCommand extends Command {
             challengeId,
             offerId,
             dhIdentity,
-            blockId,
             litigationPrivateKey,
         } = command.data;
 
@@ -53,13 +52,29 @@ class DCChallengeCommand extends Command {
                     period: 5000,
                     data: {
                         offerId,
-                        blockId,
+                        blockId: challenge.block_id,
                         dhIdentity,
                         litigationPrivateKey,
                     },
                 },
             ],
         };
+    }
+
+    /**
+     * Builds default command
+     * @param map
+     * @returns {{add, data: *, delay: *, deadline: *}}
+     */
+    default(map) {
+        const command = {
+            data: {
+            },
+            name: 'dcChallengeCheckCommand',
+            transactional: false,
+        };
+        Object.assign(command, map);
+        return command;
     }
 }
 

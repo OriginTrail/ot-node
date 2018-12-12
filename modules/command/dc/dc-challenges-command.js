@@ -1,8 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models/index');
 
-const { Op } = models.Sequelize;
-
 /**
  * Challenge holders for active offers
  */
@@ -29,19 +27,6 @@ class DCChallengesCommand extends Command {
             },
             transactional: false,
         }));
-
-        await models.replicated_data.update(
-            {
-                status: 'CHALLENGING',
-            },
-            {
-                where: {
-                    dh_identity: {
-                        [Op.in]: litigationCandidates.map(lc => lc.dh_identity),
-                    },
-                },
-            },
-        );
 
         return {
             commands: challengeCommands.concat([this.default()]),

@@ -37,7 +37,7 @@ class DcOfferMiningCompletedCommand extends Command {
             );
             if (excludedDHs.length > 0) {
                 // send back to miner
-                this.logger.important(`DHs [${excludedDHs}] don't have enough funds for offer ${offer.offer_id}. Sending back to miner...`);
+                this.logger.important(`DHs [${excludedDHs}] don't have enough funds for offer ${offerId}. Sending back to miner...`);
                 const { data } = command;
 
                 if (command.data.excludedDHs != null) {

@@ -3,7 +3,7 @@ const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 
 /**
- * Initiates litigation completion from the DC side
+ * Completes litigation from the DC side
  */
 class DCLitigationCompleteCommand extends Command {
     constructor(ctx) {
@@ -40,7 +40,19 @@ class DCLitigationCompleteCommand extends Command {
 
         const answer = utilities.normalizeHex(Buffer.from(challenge.answer, 'utf-8').toString('hex'));
         await this.blockchain.completeLitigation(offerId, dhIdentity, dcIdentity, answer);
-        return Command.empty();
+        return {
+            commands: [
+                {
+                    name: 'dcLitigationCompletedCommand',
+                    data: {
+                        offerId,
+                        dhIdentity,
+                    },
+                    period: 5000,
+                    deadline_at: Date.now() + (5 * 60 * 1000),
+                },
+            ],
+        };
     }
 
     /**
