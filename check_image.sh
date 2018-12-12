@@ -6,7 +6,6 @@ docker ps -a
 docker build --file ./Dockerfile.development -t myimage:latest .
 docker images
 docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 -v $PWD/.origintrail_noderc.travis:/ot-node/.origintrail_noderc myimage:latest
-# docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 -v /Users/sebek/Documents/GitHub/ot-node/.origintrail_noderc.travis:/ot-node/.origintrail_noderc origintrail/ot-node:latest
 sleep 540
 docker exec mynode /bin/sh -c "ls logs/"
 docker exec mynode /bin/sh -c "cat logs/*.log"
