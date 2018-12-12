@@ -24,8 +24,7 @@ class DCOfferChooseCommand extends Command {
         const {
             internalOfferId,
             excludedDHs,
-            task,
-            difficulty,
+            isReplacement,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -56,12 +55,12 @@ class DCOfferChooseCommand extends Command {
             throw new Error('Failed to choose holders. Not enough DHs submitted.');
         }
 
-        await this.blockchain.getOfferDifficulty(offer.offer_id);
+        const difficulty = await this.blockchain.getOfferDifficulty(offer.offer_id);
         await this.minerService.sendToMiner(
-            task,
+            offer.task,
             difficulty,
             identities,
-            internalOfferId,
+            offer.offer_id,
         );
         return {
             commands: [
@@ -70,8 +69,9 @@ class DCOfferChooseCommand extends Command {
                     delay: 0,
                     period: 5000,
                     data: {
-                        internalOfferId,
+                        offerId: offer.offer_id,
                         excludedDHs,
+                        isReplacement,
                     },
                 },
             ],

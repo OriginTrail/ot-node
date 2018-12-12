@@ -47,13 +47,9 @@ module.exports = {
             allowNull: true,
             type: Sequelize.STRING,
         },
-        parent_id: {
-            allowNull: true,
+        global_status: {
+            allowNull: false,
             type: Sequelize.STRING,
-        },
-        is_replacement: {
-            allowNull: true,
-            type: Sequelize.BOOLEAN,
         },
     }),
     down: queryInterface => queryInterface.dropTable('offers'),

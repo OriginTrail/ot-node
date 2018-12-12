@@ -21,14 +21,15 @@ class DcOfferMiningCompletedCommand extends Command {
      */
     async execute(command) {
         const {
-            internalOfferId,
+            offerId,
             solution,
             success,
+            isReplacement,
         } = command.data;
 
-        const offer = await models.offers.findOne({ where: { id: internalOfferId } });
+        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (success) {
-            this.logger.important(`Miner found a solution of offer ${offer.offer_id}. Internal offer ID ${internalOfferId}.`);
+            this.logger.important(`Miner found a solution of offer ${offer.offer_id}.`);
 
             let excludedDHs = await this.dcService.checkDhFunds(
                 solution.nodeIdentifiers,
@@ -36,7 +37,7 @@ class DcOfferMiningCompletedCommand extends Command {
             );
             if (excludedDHs.length > 0) {
                 // send back to miner
-                this.logger.important(`DHs [${excludedDHs}] don't have enough funds for offer ${offer.offer_id}. Internal offer ID ${internalOfferId}. Sending back to miner...`);
+                this.logger.important(`DHs [${excludedDHs}] don't have enough funds for offer ${offer.offer_id}. Sending back to miner...`);
                 const { data } = command;
 
                 if (command.data.excludedDHs != null) {
@@ -50,7 +51,6 @@ class DcOfferMiningCompletedCommand extends Command {
                     commands: [{
                         name: 'dcOfferChooseCommand',
                         data,
-                        transactional: false,
                     }],
                 };
             }
@@ -59,15 +59,12 @@ class DcOfferMiningCompletedCommand extends Command {
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
 
-            if (offer.is_replacement) {
+            if (isReplacement) {
                 return {
                     commands: [
                         {
                             name: 'dcOfferReplaceCommand',
-                            data: {
-                                interalOfferId: offer.id,
-                                solution,
-                            },
+                            data: command.data,
                         },
                     ],
                 };
@@ -98,7 +95,7 @@ class DcOfferMiningCompletedCommand extends Command {
             };
         }
         // TODO found no solution, handle this case properly
-        this.logger.warn(`Offer ${offer.offer_id} has no solution. Internal offer ID ${internalOfferId}`);
+        this.logger.warn(`Offer ${offer.offer_id} has no solution.`);
 
         offer.status = 'FAILED';
         offer.message = 'Failed to find solution for DHs provided';

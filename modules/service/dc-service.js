@@ -35,6 +35,7 @@ class DCService {
             data_set_id: dataSetId,
             message: 'Offer is pending',
             status: 'PENDING',
+            global_status: 'PENDING',
         });
 
         if (!holdingTimeInMinutes) {
@@ -178,12 +179,12 @@ class DCService {
      * @returns {Promise<void>}
      */
     async miningSucceed(data) {
-        const { internalOfferId } = data;
+        const { offerId } = data;
         const mined = await models.miner_records.findOne({
-            where: { offer_id: internalOfferId },
+            where: { offer_id: offerId },
         });
         if (!mined) {
-            throw new Error(`Failed to find offer with internal ID ${internalOfferId}. Something fatal has occurred!`);
+            throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
         }
         mined.status = 'COMPLETED';
         mined.message = data.message;
@@ -199,12 +200,12 @@ class DCService {
      * @returns {Promise<void>}
      */
     async miningFailed(result) {
-        const { internalOfferId } = result;
+        const { offerId } = result;
         const mined = await models.miner_records.findOne({
-            where: { offer_id: internalOfferId },
+            where: { offer_id: offerId },
         });
         if (!mined) {
-            throw new Error(`Failed to find offer with internal ID ${internalOfferId}. Something fatal has occurred!`);
+            throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
         }
         mined.status = 'FAILED';
         mined.message = result.message;

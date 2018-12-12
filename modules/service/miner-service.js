@@ -15,17 +15,17 @@ class MinerService {
     /**
      * Call miner process
      * @param task
-     * @param difficulty
      * @param wallets
-     * @param internalOfferId
+     * @param difficulty
+     * @param offerId
      */
-    async sendToMiner(task, difficulty, wallets, internalOfferId) {
+    async sendToMiner(task, difficulty, wallets, offerId) {
         try {
             const forked = fork('modules/worker/miner-worker.js');
-            this.forks[internalOfferId] = forked;
+            this.forks[offerId] = forked;
 
             forked.send({
-                internalOfferId,
+                offerId,
                 wallets,
                 difficulty: DEFAULT_DIFFICULTY, // TODO take from configuration
                 task,
@@ -37,20 +37,20 @@ class MinerService {
                 if (parsed.success) {
                     this.emitter.emit('int-miner-solution', null, parsed);
                 } else {
-                    this.emitter.emit('int-miner-solution', new Error(`Cannot find a solution for offer with internal ID ${internalOfferId}`), null);
+                    this.emitter.emit('int-miner-solution', new Error(`Cannot find a solution for offer ${offerId}`), null);
                 }
             });
 
             await Models.miner_records.create({
-                offer_id: internalOfferId,
+                offer_id: offerId,
                 difficulty,
                 task,
                 status: 'STARTED',
             });
 
-            this.logger.important(`Miner started for offer with internal ID ${internalOfferId}.`);
+            this.logger.important(`Miner started for offer ${offerId}.`);
         } catch (e) {
-            this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer internal ID ${internalOfferId}`);
+            this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ${offerId}`);
         }
     }
 }

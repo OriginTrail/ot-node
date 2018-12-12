@@ -17,10 +17,9 @@ module.exports = (sequelize, DataTypes) => {
         green_litigation_hash: DataTypes.STRING,
         task: DataTypes.STRING,
         status: DataTypes.STRING,
+        global_status: DataTypes.STRING,
         message: DataTypes.STRING,
         transaction_hash: DataTypes.STRING(128),
-        parent_id: DataTypes.STRING,
-        is_replacement: DataTypes.BOOLEAN,
     }, {});
     offers.associate = (models) => {
     // associations can be defined here

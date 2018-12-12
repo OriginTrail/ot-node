@@ -5,7 +5,6 @@ const Models = require('../../../models/index');
 
 const { Op } = Models.Sequelize;
 
-
 /**
  * Replaces bad DH
  */

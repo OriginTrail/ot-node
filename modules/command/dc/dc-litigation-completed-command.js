@@ -70,27 +70,14 @@ class DCLitigationCompleted extends Command {
                         },
                     });
 
-                    const offer = models.offers.findOne({
-                        where: {
-                            offer_id: offerId,
-                        },
-                    });
-
-                    const replacementOffer = await models.offers.create({
-                        data_set_id: `${offer.data_set_id}_R`, // this is a replacement data_set_id
-                        message: 'Replacement offer is pending.',
-                        status: 'PENDING',
-                        parent_id: offer.id,
-                        is_replacement: true,
-                    });
-
                     this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);
                     return {
                         commands: [
                             {
                                 name: 'dcOfferChooseCommand',
                                 data: {
-                                    internalOfferId: replacementOffer.id,
+                                    offerId,
+                                    isReplacement: true,
                                 },
                                 delay: this.config.dc_choose_time,
                                 transactional: false,
