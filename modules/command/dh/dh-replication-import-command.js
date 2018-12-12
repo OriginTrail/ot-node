@@ -47,7 +47,6 @@ class DhReplicationImportCommand extends Command {
             distributionSignature,
             transactionHash,
             encColor,
-            isReplacement,
         } = command.data;
         const decryptedVertices =
             await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
@@ -98,45 +97,36 @@ class DhReplicationImportCommand extends Command {
         const calculatedDistPublicKey = Encryption.unpackEPK(distributionEpk);
         ImportUtilities.immutableDecryptVertices(distEncVertices, calculatedDistPublicKey);
 
-        if (isReplacement) {
-            // data set has already been imported
-            await this.importer.importJSON({
-                dataSetId,
-                vertices: litigationVertices,
-                edges,
-                wallet: dcWallet,
-            }, true, encColor);
-        } else {
-            // data set has not been previously imported
-            await this.importer.importJSON({
-                dataSetId,
-                vertices: litigationVertices,
-                edges,
-                wallet: dcWallet,
-            }, true, encColor);
+        await this.importer.importJSON({
+            dataSetId,
+            vertices: litigationVertices,
+            edges,
+            wallet: dcWallet,
+        }, true, encColor);
 
-            const importResult = await this.importer.importJSON({
-                dataSetId,
-                vertices: decryptedVertices,
-                edges,
-                wallet: dcWallet,
-            }, false);
+        let importResult = await this.importer.importJSON({
+            dataSetId,
+            vertices: decryptedVertices,
+            edges,
+            wallet: dcWallet,
+        }, false);
 
-            if (importResult.error) {
-                throw Error(importResult.error);
-            }
-
-            const dataSize = bytes(JSON.stringify(importResult.vertices));
-            await Models.data_info.create({
-                data_set_id: importResult.data_set_id,
-                total_documents: importResult.vertices.length,
-                root_hash: importResult.root_hash,
-                data_provider_wallet: importResult.wallet,
-                import_timestamp: new Date(),
-                data_size: dataSize,
-                origin: 'HOLDING',
-            });
+        if (importResult.error) {
+            throw Error(importResult.error);
         }
+
+        importResult = importResult.response;
+
+        const dataSize = bytes(JSON.stringify(importResult.vertices));
+        await Models.data_info.create({
+            data_set_id: importResult.data_set_id,
+            total_documents: importResult.vertices.length,
+            root_hash: importResult.root_hash,
+            data_provider_wallet: importResult.wallet,
+            import_timestamp: new Date(),
+            data_size: dataSize,
+            origin: 'HOLDING',
+        });
 
         // Store holding information and generate keys for eventual data replication.
         await Models.holding_data.create({
@@ -167,24 +157,6 @@ class DhReplicationImportCommand extends Command {
 
         await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);
         this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
-
-        if (isReplacement) {
-            // wait for REPLACEMENT_COMPLETED event
-            return {
-                commands: [
-                    {
-                        name: 'dhReplacementCompletedCommand',
-                        deadline_at: Date.now() + (60 * 60 * 1000), // One hour.
-                        period: 10 * 1000,
-                        data: {
-                            offerId,
-                        },
-                    },
-                ],
-            };
-        }
-
-        // wait for OFFER_FINALIZED event
         return {
             commands: [
                 {
