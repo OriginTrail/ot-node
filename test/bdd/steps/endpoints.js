@@ -20,6 +20,11 @@ Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, 
     const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
 
     expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet']);
+
+    // sometimes there is a need to remember import before the last one
+    if (this.state.lastImport) {
+        this.state.secondLastImport = this.state.lastImport;
+    }
     this.state.lastImport = importResponse;
 });
 
@@ -43,15 +48,10 @@ Given(/^DC initiates the replication for last imported dataset$/, { timeout: 600
     this.state.lastReplication = response;
 });
 
-Given(/^I query ([DC|DH|DV]+) node locally with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (targetNode, path, value, opcode) {
-    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+Given(/^I create json query with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (path, value, opcode) {
     expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
-    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
 
-
-    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
-
-    const jsonQuery = {
+    const myJsonQuery = {
         query:
             [
                 {
@@ -61,7 +61,31 @@ Given(/^I query ([DC|DH|DV]+) node locally with path: "(\S+)", value: "(\S+)" an
                 },
             ],
     };
-    const response = await httpApiHelper.apiQueryLocal(host, jsonQuery);
+
+    this.state.jsonQuery = myJsonQuery;
+});
+
+Given(/^I append json query with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (path, value, opcode) {
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    expect(!!this.state.jsonQuery, 'json query must exist').to.be.equal(true);
+
+    const myAppendQueryObject = {
+        path,
+        value,
+        opcode,
+    };
+
+    this.state.jsonQuery.query.push(myAppendQueryObject);
+});
+
+Given(/^(DC|DH|DV) node makes local query with previous json query$/, async function (targetNode) {
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
+
+
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
+
+    const response = await httpApiHelper.apiQueryLocal(host, this.state.jsonQuery);
     this.state.apiQueryLocalResponse = response;
 });
 
@@ -102,16 +126,18 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Given(/^the ([DV|DV2]+) purchases import from the last query from (a DH|the DC|a DV)$/, function (whichDV, fromWhom, done) {
+Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
+    expect(whichImport, 'last import or second last import are only allowed values').to.be.oneOf(['last import', 'second last import']);
+    whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
     const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const queryId = this.state.lastQueryNetworkId;
-    const dataSetId = this.state.lastImport.data_set_id;
+    const dataSetId = this.state[whichImport].data_set_id;
     let sellerNode;
 
     const confirmationsSoFar =
