@@ -23,5 +23,5 @@ Feature: Protocol related issues.
     And I start the 7th node
     And I use 7th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    And the DV purchases import from the last query from the DC
+    And the DV purchases last import from the last query from the DC
     Then the last import should be the same on DC and DV nodes

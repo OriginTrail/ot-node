@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "eb8e304f-5b3e-4272-b420-14ab73000f2f",
+		"_postman_id": "07bdc6bb-9620-41a9-b6b0-904949a48586",
 		"name": "OriginTrail",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -480,6 +480,28 @@
 					"path": [
 						"api",
 						"imports_info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api/info",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/info",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"info"
 					]
 				}
 			},
