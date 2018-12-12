@@ -195,7 +195,7 @@
     "dh_max_holding_time_in_minutes": 1440,
     "dh_min_token_price": "1",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false
   },
@@ -295,7 +295,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false
   },
@@ -398,7 +398,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false
   },
@@ -501,7 +501,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_min_token_price": "20000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": true
   }
