@@ -7,11 +7,17 @@ env:
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=second
 
 sudo: enabled
+services:
+  - docker
 addons:
   apt:
     packages:
     - s3cmd
 before_script:
+  - chmod +x check_image.sh
+  - if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      ./check_image.sh
+    fi
   - mkdir -p $ARTIFACTS_DIR
   - mkdir -p $CUCUMBER_ARTIFACTS_DIR
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
