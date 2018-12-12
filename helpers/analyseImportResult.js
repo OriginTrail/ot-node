@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+/* eslint-disable max-len import/no-unresolved */
 const importResult = require('./../importResult.json');
 const Utilities = require('./../modules/Utilities');
 require('dotenv').config();
