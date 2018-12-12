@@ -27,7 +27,6 @@ class DCChallengeCommand extends Command {
             dhId,
             dhIdentity,
             offerId,
-            dataSetId,
             litigationPrivateKey,
         } = command.data;
 
@@ -59,7 +58,7 @@ class DCChallengeCommand extends Command {
         );
         const challenge = challenges[utilities.getRandomInt(numberOfTests - 1)];
 
-        this.logger.trace(`Sending challenge to ${dhId}. Import ID ${dataSetId}, block ID ${challenge.block_id}.`);
+        this.logger.trace(`Sending challenge to ${dhId}. Dataset ID ${offer.data_set_id}, block ID ${challenge.block_id}.`);
 
         const currentTime = new Date().getTime();
         const challengeRecord = await models.challenges.create({
@@ -91,7 +90,7 @@ class DCChallengeCommand extends Command {
                         dhId,
                         dhIdentity,
                         offerId,
-                        dataSetId,
+                        dataSetId: offer.data_set_id,
                         litigationPrivateKey,
                         challengeId: challengeRecord.id,
                     },
