@@ -29,10 +29,6 @@ before_script:
   - npm install -g truffle@5.0.0-beta.1 &> /dev/null
 script:
   - npm run lint
-  - chmod +x check_image.sh
-  - chmod +x cleanup_image.sh
-  - if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "third" ]]; then ./check_image.sh; fi
-  - if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "third" ]]; then ./cleanup_image.sh; fi
   - if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
       npm run test:bdd:dryrun;
     fi
@@ -54,6 +50,10 @@ script:
   - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
       rm -rf build && truffle migrate --reset --compile-all --network ganache > $ARTIFACTS_DIR/truffle-migrate.log;
     fi
+  - chmod +x check_image.sh
+  - chmod +x cleanup_image.sh
+  - if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "third" ]]; then ./check_image.sh; fi
+  - if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "third" ]]; then ./cleanup_image.sh; fi
   - cd $TRAVIS_BUILD_DIR
   - jobs
   - kill -9 %1

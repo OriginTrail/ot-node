@@ -1,0 +1,36 @@
+{  
+   "node_wallet":"0xd6879c0a03add8cfc43825a42a3f3cf44db7d2b9",
+   "node_private_key":"02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+   "database":{  
+      "password":"root",
+      "provider":"arangodb",
+      "username":"root",
+      "port":8529,
+      "database":"origintrail-development",
+      "host":"localhost",
+      "max_path_length":1000
+   },
+   "traverse_nat_enabled":false,
+   "deposit_on_demand":true,
+   "local_network_only":true,
+   "blockchain":{  
+      "blockchain_title":"Ethereum",
+      "network_id":"rinkeby",
+      "gas_limit":"3000000",
+      "gas_price":"5000000000",
+      "hub_contract_address":"0xEf67BF6c88b334134C2a7AAd05B6310A7e738A13",
+      "rpc_node_host":"http://127.0.0.1",
+      "rpc_node_port":"7545"
+   },
+   "network":{  
+      "id":"Devnet",
+      "bootstraps":[  
+
+      ],
+      "hostname":"95.91.215.141",
+      "remoteWhitelist":[  
+         "95.91.215.141",
+         "127.0.0.1"
+      ]
+   }
+}
