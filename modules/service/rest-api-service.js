@@ -157,8 +157,7 @@ class RestAPIService {
                     false,
                 );
                 const profile = await blockchain.getProfile(config.erc725Identity);
-                // const profileStake = new BN(profile.stake, 10);
-                // const profileStakeReserved = new BN(profile.stakeReserved, 10);
+                const profileMinimalStake = await blockchain.getProfileMinimumStake();
 
                 const body = {
                     wallet: {
@@ -169,6 +168,7 @@ class RestAPIService {
                     profile: {
                         staked: humanReadable ? web3.utils.fromWei(profile.stake, 'ether') : profile.stake,
                         reserved: humanReadable ? web3.utils.fromWei(profile.stakeReserved, 'ether') : profile.stakeReserved,
+                        minimalStake: humanReadable ? web3.utils.fromWei(profileMinimalStake, 'ether') : profileMinimalStake,
                     },
                 };
 
