@@ -3,11 +3,12 @@ const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
 /**
- * Repeatable command that checks whether DH answered the litigation
+ * Imports data for replication
  */
-class DHLitigationAnsweredCommand extends Command {
+class DHReplacementCompleted extends Command {
     constructor(ctx) {
         super(ctx);
+        this.config = ctx.config;
         this.logger = ctx.logger;
     }
 
@@ -18,12 +19,12 @@ class DHLitigationAnsweredCommand extends Command {
     async execute(command) {
         const {
             offerId,
-            dhIdentity,
+            dcIdentity,
         } = command.data;
 
         const events = await Models.events.findAll({
             where: {
-                event: 'LitigationAnswered',
+                event: 'ReplacementCompleted',
                 finished: 0,
             },
         });
@@ -31,35 +32,34 @@ class DHLitigationAnsweredCommand extends Command {
             const event = events.find((e) => {
                 const {
                     offerId: eventOfferId,
-                    holderIdentity,
+                    challengerIdentity,
                 } = JSON.parse(e.data);
                 return Utilities.compareHexStrings(offerId, eventOfferId)
-                    && Utilities.compareHexStrings(dhIdentity, holderIdentity);
+                    && Utilities.compareHexStrings(challengerIdentity, dcIdentity);
             });
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                this.logger.important(`Litigation answered for offer ${offerId}.`);
+                // TODO handle
+
+                this.logger.important(`Replacement completed for offer ${offerId}.`);
                 return Command.empty();
             }
         }
         return Command.repeat();
     }
 
+
     /**
-     * Builds default AddCommand
+     * Builds default
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            data: {
-            },
-            name: 'dhLitigationAnsweredCommand',
+            name: 'dhReplacementCompleted',
             delay: 0,
-            period: 5000,
-            deadline_at: Date.now() + (5 * 60 * 1000),
             transactional: false,
         };
         Object.assign(command, map);
@@ -67,4 +67,4 @@ class DHLitigationAnsweredCommand extends Command {
     }
 }
 
-module.exports = DHLitigationAnsweredCommand;
+module.exports = DHReplacementCompleted;

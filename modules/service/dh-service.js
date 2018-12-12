@@ -278,6 +278,27 @@ class DHService {
     }
 
     /**
+     * Handles one offer replacement
+     * @param offerId - Offer ID
+     * @param litigatorIdentity - DC node ERC725 identity
+     * @param litigationRootHash - Litigation root hash
+     * @return {Promise<void>}
+     */
+    async handleReplacement(offerId, litigatorIdentity, litigationRootHash) {
+        // TODO check whether to apply
+
+        await this.commandExecutor.add({
+            name: 'dhReplacementHandleCommand',
+            delay: 15000,
+            data: {
+                offerId,
+                litigatorIdentity,
+                litigationRootHash,
+            },
+        });
+    }
+
+    /**
      * Handles one challenge
      * @param datasetId - Data set ID
      * @param blockId - Challenge block ID

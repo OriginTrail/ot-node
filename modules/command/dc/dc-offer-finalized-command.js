@@ -43,7 +43,7 @@ class DcOfferFinalizedCommand extends Command {
 
                 const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
                 offer.status = 'FINALIZED';
-                offer.message = 'Offer has been finalized';
+                offer.message = 'Offer has been finalized. Offer is now active.';
                 await offer.save({ fields: ['status', 'message'] });
 
                 await this.replicationService.cleanup(offer.id);

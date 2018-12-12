@@ -178,12 +178,12 @@ class DCService {
      * @returns {Promise<void>}
      */
     async miningSucceed(data) {
-        const { offerId } = data;
+        const { internalOfferId } = data;
         const mined = await models.miner_records.findOne({
-            where: { offer_id: offerId },
+            where: { offer_id: internalOfferId },
         });
         if (!mined) {
-            throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
+            throw new Error(`Failed to find offer with internal ID ${internalOfferId}. Something fatal has occurred!`);
         }
         mined.status = 'COMPLETED';
         mined.message = data.message;
@@ -199,12 +199,12 @@ class DCService {
      * @returns {Promise<void>}
      */
     async miningFailed(result) {
-        const { offerId } = result;
+        const { internalOfferId } = result;
         const mined = await models.miner_records.findOne({
-            where: { offer_id: offerId },
+            where: { offer_id: internalOfferId },
         });
         if (!mined) {
-            throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
+            throw new Error(`Failed to find offer with internal ID ${internalOfferId}. Something fatal has occurred!`);
         }
         mined.status = 'FAILED';
         mined.message = result.message;
@@ -215,11 +215,11 @@ class DCService {
 
     /**
      * Handles replication request from one DH
-     * @param offerId
-     * @param wallet
-     * @param identity
-     * @param dhIdentity
-     * @param response
+     * @param offerId - Offer ID
+     * @param wallet - DH wallet
+     * @param identity - Network identity
+     * @param dhIdentity - DH ERC725 identity
+     * @param response - Network response
      * @returns {Promise<void>}
      */
     async handleReplicationRequest(offerId, wallet, identity, dhIdentity, response) {
@@ -251,9 +251,83 @@ class DCService {
             const message = `Replication request for offer external ${offerId} that is not in STARTED state.`;
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
+        }
+
+        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+    }
+
+    /**
+     * Handles replication request from one DH
+     * @param offerId - Offer ID
+     * @param wallet - DH wallet
+     * @param identity - Network identity
+     * @param dhIdentity - DH ERC725 identity
+     * @param response - Network response
+     * @returns {Promise<void>}
+     */
+    async handleReplacementRequest(offerId, wallet, identity, dhIdentity, response) {
+        this.logger.info(`Replacement request for replication of offer ${offerId} received. Sender ${identity}`);
+
+        if (!offerId || !wallet) {
+            const message = 'Asked replication without providing offer ID or wallet.';
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
             return;
         }
 
+        const offerModel = await models.offers.findOne({
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
+        });
+        if (!offerModel) {
+            const message = `Replacement replication request for offer ID ${offerId} that I don't know.`;
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+            return;
+        }
+        const offer = offerModel.get({ plain: true });
+        if (offer.status !== 'REPLACEMENT_STARTED') {
+            const message = `Replication request for offer ${offerId} that is not in REPLACEMENT_STARTED state.`;
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+        }
+
+        const usedDH = models.replicated_data.findAll({
+            where: {
+                dh_id: identity,
+                dh_wallet: wallet,
+                dh_identity: dhIdentity,
+            },
+        });
+
+        if (usedDH != null) {
+            this.logger.notify(`Cannot send replication to DH with network ID ${identity}. DH status is ${usedDH.status}.`);
+
+            try {
+                await this.transport.sendResponse(response, {
+                    status: 'fail',
+                });
+            } catch (e) {
+                this.logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
+            }
+        }
+        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+    }
+
+    /**
+     * Handles replication request from one DH
+     * @param offer - Offer
+     * @param wallet - DH wallet
+     * @param identity - Network identity
+     * @param dhIdentity - DH ERC725 identity
+     * @param response - Network response
+     * @returns {Promise<void>}
+     */
+    async _sendReplication(offer, wallet, identity, dhIdentity, response) {
         const colors = ['red', 'green', 'blue'];
         const color = colors[Utilities.getRandomInt(2)];
         const colorNumber = this.replicationService.castColorToNumber(color);
@@ -286,7 +360,7 @@ class DCService {
         );
 
         const payload = {
-            offer_id: offerId,
+            offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
             edges: replication.edges,

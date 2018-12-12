@@ -19,6 +19,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        litigation_root_hash: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         distribution_public_key: {
             allowNull: false,
             type: Sequelize.STRING,

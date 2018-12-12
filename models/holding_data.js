@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
         data_set_id: DataTypes.STRING,
         source_wallet: DataTypes.STRING,
         litigation_public_key: DataTypes.STRING,
+        litigation_root_hash: DataTypes.STRING,
         distribution_public_key: DataTypes.STRING,
         distribution_private_key: DataTypes.STRING,
         distribution_epk: DataTypes.STRING,

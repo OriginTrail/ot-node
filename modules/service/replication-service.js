@@ -4,7 +4,6 @@ const path = require('path');
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const MerkleTree = require('../Merkle');
-const Challenge = require('../Challenge');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
 

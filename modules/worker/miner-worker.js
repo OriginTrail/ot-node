@@ -3,11 +3,11 @@ const miner = require('../miner');
 const utilities = require('../Utilities');
 
 process.once('message', (msg) => {
-    const { type, offerId } = msg;
+    const { type, internalOfferId } = msg;
 
     if (type === 'PING') {
         process.send(JSON.stringify({
-            offerId,
+            internalOfferId,
             type,
             result: 'PONG',
         }));
@@ -20,7 +20,7 @@ process.once('message', (msg) => {
         if (solution === false) {
             // failed to find a solution
             process.send(JSON.stringify({
-                offerId,
+                internalOfferId,
                 message: 'Failed to find a solution',
                 success: false,
                 type,
@@ -29,7 +29,7 @@ process.once('message', (msg) => {
         }
         // found a solution
         process.send(JSON.stringify({
-            offerId: msg.offerId,
+            internalOfferId: msg.internalOfferId,
             result: solution,
             message: 'Found a solution',
             success: true,
@@ -38,7 +38,7 @@ process.once('message', (msg) => {
         process.exit(0);
     } catch (e) {
         process.send(JSON.stringify({
-            offerId: msg.offerId,
+            internalOfferId: msg.internalOfferId,
             message: e.message,
             success: false,
             type,

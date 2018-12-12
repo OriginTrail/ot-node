@@ -1,7 +1,6 @@
 const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
-const importUtilities = require('../../ImportUtilities');
 
 /**
  * Initiates litigation completion from the DC side
