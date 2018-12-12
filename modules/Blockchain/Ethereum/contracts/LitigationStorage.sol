@@ -19,7 +19,7 @@ contract LitigationStorage {
 		_;
 	}
 	
-	enum LitigationStatus {completed, initiated, answered, timedOut, replacing, replaced}
+	enum LitigationStatus {completed, initiated, answered, replacing, replaced}
 
 	struct LitigationDefinition{
 		address litigatorIdentity;

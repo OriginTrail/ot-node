@@ -20,6 +20,16 @@ contract HoldingStorage {
         _;
     }
 
+    uint256 public difficultyOverride;
+    function getDifficultyOverride()
+    public view returns (uint256 difficultyOverride) {
+        return difficultyOverride;
+    }
+    function setDifficultyOverride(uint256 new_difficulty)
+    public onlyContracts {
+        difficultyOverride = new_difficulty;
+    }
+
     mapping(bytes32 => bytes32) public fingerprint;
 
     function setFingerprint(bytes32 dataSetId, bytes32 dataRootHash)
@@ -33,6 +43,7 @@ contract HoldingStorage {
 
         uint256 holdingTimeInMinutes;
         uint256 tokenAmountPerHolder;
+        uint256 litigationIntervalInMinutes;
 
         bytes32 task;
         uint256 difficulty;
@@ -60,6 +71,10 @@ contract HoldingStorage {
     function getOfferTokenAmountPerHolder (bytes32 offerId) 
     public view returns(uint256 tokenAmountPerHolder){
         return offer[offerId].tokenAmountPerHolder;
+    }
+    function getOfferLitigationIntervalInMinutes (bytes32 offerId)
+    public view returns(uint256 litigationIntervalInMinutes){
+        return offer[offerId].litigationIntervalInMinutes;
     }
     function getOfferTask (bytes32 offerId) 
     public view returns(bytes32 task){
@@ -102,6 +117,10 @@ contract HoldingStorage {
     public onlyContracts {
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
     }
+    function setOfferLitigationIntervalInMinutes (bytes32 offerId, uint256 litigationIntervalInMinutes)
+    public onlyContracts {
+        offer[offerId].litigationIntervalInMinutes = litigationIntervalInMinutes;
+    }
     function setOfferTask (bytes32 offerId, bytes32 task)
     public onlyContracts {
         offer[offerId].task = task;
@@ -132,6 +151,7 @@ contract HoldingStorage {
         bytes32 dataSetId,
         uint256 holdingTimeInMinutes,
         uint256 tokenAmountPerHolder,
+        uint256 litigationIntervalInMinutes,
         bytes32 task,
         uint256 difficulty)
     public onlyContracts {
@@ -139,6 +159,7 @@ contract HoldingStorage {
         offer[offerId].dataSetId = dataSetId;
         offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
+        offer[offerId].litigationIntervalInMinutes = litigationIntervalInMinutes;
         if(offer[offerId].task != task) offer[offerId].task = task;
         offer[offerId].difficulty = difficulty;
     }
