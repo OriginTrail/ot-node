@@ -41,11 +41,21 @@ class DHReplacementImportCommand extends Command {
         const dcNodeId = Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
 
         this.logger.trace(`Sending replacement request for offer ${offerId} to ${dcNodeId}.`);
-        const response = await this.transport.replicationRequest({
+        const response = await this.transport.replacementReplicationRequest({
             offerId,
             wallet: this.config.node_wallet,
             dhIdentity: this.config.erc725Identity,
         }, dcNodeId);
+
+        if (response.status === 'fail') {
+            if (response.message) {
+                throw new Error('Failed to receive replacement replication ' +
+                    `from ${dcNodeId} for offer ${offerId}. ` +
+                    `Reason: ${response.message}`);
+            } else {
+                throw new Error(`Failed to receive replacement replication from ${dcNodeId} for offer ${offerId}.`);
+            }
+        }
 
         const {
             data_set_id: dataSetId,
