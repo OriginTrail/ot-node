@@ -45,7 +45,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{baseUrl}}/api/import?",
+					"raw": "{{baseUrl}}/api/import",
 					"host": [
 						"{{baseUrl}}"
 					],
