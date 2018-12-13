@@ -57,29 +57,18 @@ class DCLitigationCompleted extends Command {
                 await replicatedData.save({ fields: ['status'] });
 
                 if (penalized) {
-                    const replacementEvent = await this._findReplacementEvent(offerId, dhIdentity);
-                    if (!replacementEvent) {
-                        throw new Error(`Failed to find replacement event from blockchain for DH ${dhIdentity} and offer ${offerId}.`);
-                    }
-
-                    // clear old replicated data
-                    await models.replicated_data.destroy({
-                        where: {
-                            offer_id: offerId,
-                            [Op.in]: ['STARTED', 'VERIFIED'],
-                        },
-                    });
-
                     this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);
                     return {
                         commands: [
                             {
-                                name: 'dcOfferChooseCommand',
                                 data: {
                                     offerId,
-                                    isReplacement: true,
+                                    dhIdentity,
                                 },
-                                delay: this.config.dc_choose_time,
+                                name: 'dcLitigationReplacementStartedCommand',
+                                delay: 0,
+                                period: 5000,
+                                deadline_at: Date.now() + (5 * 60 * 1000),
                                 transactional: false,
                             },
                         ],
@@ -91,33 +80,6 @@ class DCLitigationCompleted extends Command {
             }
         }
         return Command.repeat();
-    }
-
-    /**
-     * Finds replacement event for the DH
-     * @param offerId - Offer ID
-     * @param dhIdentity - Penalized node
-     * @return {Promise<*>}
-     * @private
-     */
-    async _findReplacementEvent(offerId, dhIdentity) {
-        const events = await models.events.findAll({
-            where: {
-                event: 'ReplacementCompleted',
-                finished: 0,
-            },
-        });
-        if (events) {
-            return events.find((e) => {
-                const {
-                    offerId: eventOfferId,
-                    holderIdentity,
-                } = JSON.parse(e.data);
-                return utilities.compareHexStrings(offerId, eventOfferId)
-                    && utilities.compareHexStrings(dhIdentity, holderIdentity);
-            });
-        }
-        return null;
     }
 
     /**
