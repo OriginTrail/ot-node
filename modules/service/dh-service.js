@@ -285,15 +285,26 @@ class DHService {
      * @return {Promise<void>}
      */
     async handleReplacement(offerId, litigatorIdentity, litigationRootHash) {
-        const holdingData = Models.holding_data.findOne({
+        const bid = Models.holding_data.findOne({
             where: {
                 offer_id: offerId,
                 status: 'HOLDING',
             },
         });
 
-        if (holdingData) {
+        if (bid) {
             this.logger.info(`I am already a holder for offer ${offerId}. Skipping replacement...`);
+            return;
+        }
+
+        const offer = Models.offers.findOne({
+            where: {
+                offer_id: offerId,
+            },
+        });
+
+        if (offer) {
+            this.logger.info(`I created offer ${offerId}. Skipping replacement...`);
             return;
         }
 
