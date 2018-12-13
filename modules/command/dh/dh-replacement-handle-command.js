@@ -32,12 +32,13 @@ class DHReplacementImportCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            litigatorIdentity,
             litigationRootHash,
         } = command.data;
 
         // Check if ERC725 has valid node ID.
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
-        const dcNodeId = Utilities.denormalizeHex(profile.nodeId.toLowerCase());
+        const profile = await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
+        const dcNodeId = Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
 
         this.logger.trace(`Sending replacement request for offer ${offerId} to ${dcNodeId}.`);
         const response = await this.transport.replicationRequest({
