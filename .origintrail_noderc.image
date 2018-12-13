@@ -19,7 +19,7 @@
       "gas_limit":"3000000",
       "gas_price":"5000000000",
       "hub_contract_address":"0xEf67BF6c88b334134C2a7AAd05B6310A7e738A13",
-      "rpc_node_host":"http://172.17.0.1",
+      "rpc_node_host":"http://127.0.0.1",
       "rpc_node_port":"7545"
    },
    "network":{  
