@@ -238,7 +238,7 @@ class Kademlia {
                     'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-send-encrypted-key',
                     'kad-encrypted-key-process-result',
-                    'kad-replication-request',
+                    'kad-replication-request', 'kad-replacement-replication-request',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
@@ -383,6 +383,12 @@ class Kademlia {
         this.node.use('kad-replication-request', (request, response, next) => {
             this.log.debug('kad-replication-request received');
             this.emitter.emit('kad-replication-request', request, response);
+        });
+
+        // sync
+        this.node.use('kad-replacement-replication-request', (request, response, next) => {
+            this.log.debug('kad-replacement-replication-request received');
+            this.emitter.emit('kad-replacement-replication-request', request, response);
         });
 
         // async
@@ -553,6 +559,19 @@ class Kademlia {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
                     node.send('kad-replication-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.replacementReplicationRequest = async (message, contactId) => {
+                const contact = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-replacement-replication-request', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {

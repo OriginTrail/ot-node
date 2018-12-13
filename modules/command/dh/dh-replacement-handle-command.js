@@ -32,22 +32,36 @@ class DHReplacementImportCommand extends Command {
     async execute(command) {
         const {
             offerId,
-            dataSetId,
-            edges,
-            litigationVertices,
-            litigationPublicKey,
-            distributionPublicKey,
-            distributionPrivateKey,
-            distributionEpk,
-            distributionEpkChecksum,
-            dcWallet,
-            dcNodeId,
             litigationRootHash,
-            distributionRootHash,
-            distributionSignature,
-            transactionHash,
-            encColor,
         } = command.data;
+
+        // Check if ERC725 has valid node ID.
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        const dcNodeId = Utilities.denormalizeHex(profile.nodeId.toLowerCase());
+
+        this.logger.trace(`Sending replacement request for offer ${offerId} to ${dcNodeId}.`);
+        const response = await this.transport.replicationRequest({
+            offerId,
+            wallet: this.config.node_wallet,
+            dhIdentity: this.config.erc725Identity,
+        }, dcNodeId);
+
+        const {
+            data_set_id: dataSetId,
+            edges,
+            litigation_vertices: litigationVertices,
+            dc_wallet: dcWallet,
+            litigation_public_key: litigationPublicKey,
+            distribution_public_key: distributionPublicKey,
+            distribution_private_key: distributionPrivateKey,
+            distribution_epk_checksum: distributionEpkChecksum,
+            distribution_root_hash: distributionRootHash,
+            distribution_epk: distributionEpk,
+            distribution_signature: distributionSignature,
+            transaction_hash: transactionHash,
+            color: encColor,
+        } = response;
+
         const decryptedVertices =
             await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
         const calculatedDataSetId =
@@ -168,6 +182,31 @@ class DHReplacementImportCommand extends Command {
                     },
                 },
             ],
+        };
+    }
+
+    /**
+     * Parse network response
+     * @param response  - Network response
+     * @private
+     */
+    static _stripResponse(response) {
+        return {
+            offerId: response.offer_id,
+            dataSetId: response.data_set_id,
+            edges: response.edges,
+            litigationVertices: response.litigation_vertices,
+            dcWallet: response.dc_wallet,
+            litigationPublicKey: response.litigation_public_key,
+            distributionPublicKey: response.distribution_public_key,
+            distributionPrivateKey: response.distribution_private_key,
+            distributionEpkChecksum: response.distribution_epk_checksum,
+            litigationRootHash: response.litigation_root_hash,
+            distributionRootHash: response.distribution_root_hash,
+            distributionEpk: response.distribution_epk,
+            distributionSignature: response.distribution_signature,
+            transactionHash: response.transaction_hash,
+            encColor: response.color,
         };
     }
 

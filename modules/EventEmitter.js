@@ -828,6 +828,37 @@ class EventEmitter {
             }
         });
 
+        // sync
+        this._on('kad-replacement-replication-request', async (request, response) => {
+            const message = transport.extractMessage(request);
+            const { offerId, wallet, dhIdentity } = message;
+            const { wallet: senderWallet } = transport.extractSenderInfo(request);
+            const identity = transport.extractSenderID(request);
+
+            if (senderWallet !== wallet) {
+                logger.warn(`Wallet in the message differs from replacement replication request for offer ID ${offerId}.`);
+            }
+
+            try {
+                await dcService.handleReplacementRequest(
+                    offerId, wallet, identity, dhIdentity,
+                    response,
+                );
+            } catch (error) {
+                const errorMessage = `Failed to handle replacement replication request. ${error}.`;
+                logger.warn(errorMessage);
+                notifyError(error);
+
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'fail',
+                    });
+                } catch (e) {
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
+                }
+            }
+        });
+
         // async
         this._on('kad-replication-finished', async (request) => {
             const dhNodeId = transport.extractSenderID(request);

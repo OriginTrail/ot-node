@@ -285,7 +285,17 @@ class DHService {
      * @return {Promise<void>}
      */
     async handleReplacement(offerId, litigatorIdentity, litigationRootHash) {
-        // TODO check whether to apply
+        const holdingData = Models.holding_data.findOne({
+            where: {
+                offer_id: offerId,
+                status: 'HOLDING',
+            },
+        });
+
+        if (holdingData) {
+            this.logger.info(`I am already a holder for offer ${offerId}. Skipping replacement...`);
+            return;
+        }
 
         await this.commandExecutor.add({
             name: 'dhReplacementHandleCommand',
