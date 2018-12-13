@@ -33,7 +33,6 @@ class DHReplacementImportCommand extends Command {
         const {
             offerId,
             litigatorIdentity,
-            litigationRootHash,
         } = command.data;
 
         // Check if ERC725 has valid node ID.
@@ -70,6 +69,7 @@ class DHReplacementImportCommand extends Command {
             distribution_epk: distributionEpk,
             distribution_signature: distributionSignature,
             transaction_hash: transactionHash,
+            litigation_root_hash: litigationRootHash,
             color: encColor,
         } = response;
 
