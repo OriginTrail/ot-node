@@ -285,7 +285,7 @@ class DHService {
      * @return {Promise<void>}
      */
     async handleReplacement(offerId, litigatorIdentity, litigationRootHash) {
-        const bid = Models.bids.findOne({
+        const bid = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
                 status: 'CHOSEN',
@@ -297,7 +297,7 @@ class DHService {
             return;
         }
 
-        const offer = Models.offers.findOne({
+        const offer = await Models.offers.findOne({
             where: {
                 offer_id: offerId,
             },
