@@ -142,16 +142,23 @@ class DHReplacementImportCommand extends Command {
 
         importResult = importResult.response;
 
-        const dataSize = bytes(JSON.stringify(importResult.vertices));
-        await Models.data_info.create({
-            data_set_id: importResult.data_set_id,
-            total_documents: importResult.vertices.length,
-            root_hash: importResult.root_hash,
-            data_provider_wallet: importResult.wallet,
-            import_timestamp: new Date(),
-            data_size: dataSize,
-            origin: 'HOLDING',
+        const dataInfo = await Models.data_info.findOne({
+            where: {
+                data_set_id: importResult.data_set_id,
+            },
         });
+        if (dataInfo == null) {
+            const dataSize = bytes(JSON.stringify(importResult.vertices));
+            await Models.data_info.create({
+                data_set_id: importResult.data_set_id,
+                total_documents: importResult.vertices.length,
+                root_hash: importResult.root_hash,
+                data_provider_wallet: importResult.wallet,
+                import_timestamp: new Date(),
+                data_size: dataSize,
+                origin: 'HOLDING',
+            });
+        }
 
         // Store holding information and generate keys for eventual data replication.
         await Models.holding_data.create({
