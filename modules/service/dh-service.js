@@ -288,7 +288,7 @@ class DHService {
         const bid = Models.bids.findOne({
             where: {
                 offer_id: offerId,
-                status: 'HOLDING',
+                status: 'CHOSEN',
             },
         });
 
