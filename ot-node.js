@@ -445,7 +445,7 @@ class OTNode {
             await profileService.initProfile();
         } catch (e) {
             log.error('Failed to create profile');
-            console.log(e);
+            console.log(e.stack);
             notifyBugsnag(e);
             process.exit(1);
         }
