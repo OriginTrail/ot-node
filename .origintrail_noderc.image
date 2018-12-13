@@ -16,8 +16,8 @@
    "blockchain":{  
       "blockchain_title":"Ethereum",
       "network_id":"rinkeby",
-      "gas_limit":"3000000",
-      "gas_price":"5000000000",
+      "gas_limit":"1500000",
+      "gas_price":"20000000000",
       "hub_contract_address":"0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a",
       "rpc_node_host":"http://127.0.0.1",
       "rpc_node_port":"7545"

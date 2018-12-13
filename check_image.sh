@@ -10,7 +10,7 @@ docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 --network hos
 cat $ARTIFACTS_DIR/truffle-migrate.log | grep "Hub contract address:"
 # TODO make sure that one of following wallet/keys is in .origintrail_noderc.image
 # cat $ARTIFACTS_DIR/acct-keys.log
-# GIve some time for node to start
+# Give some time for node to start
 sleep 180
 # docker container inspect mynode
 # docker network inspect host
