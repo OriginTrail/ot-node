@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "07bdc6bb-9620-41a9-b6b0-904949a48586",
+		"_postman_id": "027424ad-99d4-49c0-b091-ea2006d5624c",
 		"name": "OriginTrail",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -45,7 +45,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{baseUrl}}/api/import",
+					"raw": "{{baseUrl}}/api/import?",
 					"host": [
 						"{{baseUrl}}"
 					],
@@ -525,6 +525,34 @@
 						"api",
 						"consensus",
 						"{{sender_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/balance",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/balance?humanReadable=true",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"balance"
+					],
+					"query": [
+						{
+							"key": "humanReadable",
+							"value": "true"
+						}
 					]
 				}
 			},
