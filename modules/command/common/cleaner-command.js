@@ -34,7 +34,7 @@ class CleanerCommand extends Command {
             name: 'cleanerCommand',
             data: {
             },
-            period: 60 * 60 * 1000,
+            period: 4 * 24 * 60 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
