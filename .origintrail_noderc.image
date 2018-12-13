@@ -1,6 +1,6 @@
 {  
-   "node_wallet":"0xd6879c0a03add8cfc43825a42a3f3cf44db7d2b9",
-   "node_private_key":"02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e",
+   "node_wallet":"0xce81b24fedb116fac5a887ed7706b05a46060079",
+   "node_private_key":"63b854ff0d973dbd4808a6def4c6a7f65bebcaec07520fbf1c0056331af65a7b",
    "database":{  
       "password":"root",
       "provider":"arangodb",
