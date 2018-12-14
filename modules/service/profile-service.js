@@ -38,13 +38,20 @@ class ProfileService {
         const profileMinStake = await this.blockchain.getProfileMinimumStake();
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}`);
 
-        await this.blockchain.increaseProfileApproval(new BN(profileMinStake, 10));
+        let initialTokenAmount = null;
+        if (this.config.initial_deposit_amount) {
+            initialTokenAmount = new BN(this.config.initial_deposit_amount, 10);
+        } else {
+            initialTokenAmount = new BN(profileMinStake, 10);
+        }
+
+        await this.blockchain.increaseProfileApproval(initialTokenAmount);
 
         // set empty identity if there is none
         const identity = this.config.erc725Identity ? this.config.erc725Identity : new BN(0, 16);
         await this.blockchain.createProfile(
             this.config.identity,
-            new BN(profileMinStake, 10), identityExists, identity,
+            initialTokenAmount, identityExists, identity,
         );
         if (!identityExists) {
             const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet));
