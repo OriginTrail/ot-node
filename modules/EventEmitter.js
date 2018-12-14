@@ -599,30 +599,6 @@ class EventEmitter {
             }
         });
 
-        this._on('api-deposit-tokens', async (data) => {
-            const { trac_amount } = data;
-
-            try {
-                logger.info(`Deposit ${trac_amount} TRAC to profile triggered`);
-
-                await profileService.depositTokens(trac_amount);
-                remoteControl.tokenDepositSucceeded(`${trac_amount} TRAC deposited to your profile`);
-
-                data.response.status(200);
-                data.response.send({
-                    message: `Successfully deposited ${trac_amount} TRAC to profile`,
-                });
-            } catch (error) {
-                logger.error(`Failed to deposit tokens. ${error}.`);
-                notifyError(error);
-                data.response.status(400);
-                data.response.send({
-                    message: `Failed to deposit tokens. ${error}.`,
-                });
-                remoteControl.tokensDepositFailed(`Failed to deposit tokens. ${error}.`);
-            }
-        });
-
         this._on('api-withdraw-tokens', async (data) => {
             const { trac_amount } = data;
 
