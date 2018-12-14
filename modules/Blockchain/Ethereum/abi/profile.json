@@ -19,25 +19,27 @@
   },
   {
     "constant": false,
+    "inputs": [],
+    "name": "getVersion",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
     "inputs": [
       {
-        "name": "profileNodeId",
-        "type": "bytes32"
-      },
-      {
-        "name": "initialBalance",
-        "type": "uint256"
-      },
-      {
-        "name": "senderHas725",
-        "type": "bool"
-      },
-      {
-        "name": "identity",
+        "name": "oldIdentity",
         "type": "address"
       }
     ],
-    "name": "createProfile",
+    "name": "transferProfile",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -100,6 +102,20 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -112,6 +128,36 @@
       }
     ],
     "name": "depositTokens",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "managementWallet",
+        "type": "address"
+      },
+      {
+        "name": "profileNodeId",
+        "type": "bytes32"
+      },
+      {
+        "name": "initialBalance",
+        "type": "uint256"
+      },
+      {
+        "name": "senderHas725",
+        "type": "bool"
+      },
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "createProfile",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -290,6 +336,23 @@
       }
     ],
     "name": "IdentityCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "oldIdentity",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "newIdentity",
+        "type": "address"
+      }
+    ],
+    "name": "IdentityTransferred",
     "type": "event"
   },
   {
