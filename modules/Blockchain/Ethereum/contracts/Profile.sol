@@ -12,7 +12,7 @@ contract Profile {
     Hub public hub;
     ProfileStorage public profileStorage;
 
-    string public version = "1.0.0";
+    uint256 public version = 100;
 
     uint256 public minimalStake = 10**21;
     uint256 public withdrawalTime = 5 minutes;
@@ -78,7 +78,7 @@ contract Profile {
         }
     }
 
-    function transferProfile(address oldIdentity) public returns(address newIdentity){
+    function transferProfile(address oldIdentity) public returns(address){
         require(ERC725(oldIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
 
         Identity newIdentity = new Identity(msg.sender, msg.sender);
@@ -249,10 +249,5 @@ contract Profile {
     public {
         require (msg.sender == hub.owner(), "Function can only be called by hub owner!");
         if(withdrawalTime != newWithdrawalTime) withdrawalTime = newWithdrawalTime;
-    }
-
-    function getVersion()
-    public returns (string) {
-        return version;
     }
 }
