@@ -497,23 +497,24 @@ class OTNode {
         const migrationsStartedMills = Date.now();
         log.info('Initializing code migrations...');
 
-        const migrationFilePath = path.join(
-            config.appDataPath,
-            '_m1PayoutAllMigrationFile',
-        );
-        if (true) {
+        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
             const m1PayoutAllMigration = container.resolve('m1PayoutAllMigration');
 
             try {
                 await m1PayoutAllMigration.run();
-                log.info(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
-                fs.writeFileSync(migrationFilePath, JSON.stringify({
-                    status: 'COMPLETED',
-                }));
+                await Utilities.writeContentsToFile(
+                    migrationDir, m1PayoutAllMigrationFilename,
+                    JSON.stringify({
+                        status: 'COMPLETED',
+                    }),
+                );
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
-                console.log('');
             }
         }
 
