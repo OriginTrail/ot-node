@@ -25,7 +25,7 @@ before_script:
   - rm -rf ArangoDB-3.2.2.tar.gz
   - cp .origintrail_noderc.travis .origintrail_noderc
   - npm run bootstrap
-  - npm install -g ganache-cli@6.1.5 &> /dev/null
+  - npm install -g ganache-cli@6.2.3 &> /dev/null
   - npm install -g truffle@5.0.0-beta.1 &> /dev/null
 script:
   - npm run lint
