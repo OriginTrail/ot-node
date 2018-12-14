@@ -302,7 +302,7 @@ class LocalBlockchain {
                 data: contractData,
                 arguments: constructorArguments,
             })
-                .send({ from: deployerAddress, gas: 6000000 })
+                .send({ from: deployerAddress, gas: 6900000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
                 })
