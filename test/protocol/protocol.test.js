@@ -26,8 +26,6 @@ const sequelizeConfig = require('./../../config/sequelizeConfig').development;
 const CommandResolver = require('../../modules/command/command-resolver');
 const CommandExecutor = require('../../modules/command/command-executor');
 
-const DepositTokenCommand = require('../../modules/command/common/deposit-tokens-command');
-
 const DCService = require('../../modules/service/dc-service');
 
 // Thanks solc. At least this works!
@@ -451,7 +449,6 @@ describe.skip('Protocol tests', () => {
                 remoteControl: awilix.asClass(MockRemoteControl),
                 commandExecutor: awilix.asClass(CommandExecutor).singleton(),
                 commandResolver: awilix.asClass(CommandResolver).singleton(),
-                depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
                 dcService: awilix.asClass(DCService).singleton(),
                 notifyError: awilix.asFunction(() => (error) => { throw error; }),
             });

@@ -59,7 +59,8 @@ class DcOfferMiningCompletedCommand extends Command {
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
 
-            const hasFunds = await this.dcService.hasProfileBalanceForOffer(offer.token_amount_per_holder);
+            const hasFunds = await this.dcService
+                .hasProfileBalanceForOffer(offer.token_amount_per_holder);
             if (!hasFunds) {
                 throw new Error('Not enough tokens. To replicate data please deposit more tokens to your profile');
             }
