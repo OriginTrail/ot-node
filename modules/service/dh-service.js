@@ -87,7 +87,6 @@ class DHService {
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
         tokenAmountPerHolder, dataSetId,
     ) {
-
         if (dcNodeId === this.config.identity) {
             return; // the offer is mine
         }
