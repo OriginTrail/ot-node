@@ -212,7 +212,7 @@ contract('Profile contract testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should deposit tokens to profile', async () => {
+    it.skip('Should deposit tokens to profile', async () => {
         // Get contracts used in hook
         const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
