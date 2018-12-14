@@ -40,7 +40,12 @@
       }
     ],
     "name": "transferProfile",
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"

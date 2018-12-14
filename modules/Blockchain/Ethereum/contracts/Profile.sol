@@ -78,7 +78,7 @@ contract Profile {
         }
     }
 
-    function transferProfile(address oldIdentity) public {
+    function transferProfile(address oldIdentity) public returns(address newIdentity){
         require(ERC725(oldIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
 
         Identity newIdentity = new Identity(msg.sender, msg.sender);
@@ -93,6 +93,7 @@ contract Profile {
         profileStorage.setNodeId(oldIdentity, bytes32(0));
 
         emit IdentityTransferred(oldIdentity, newIdentity);
+        return address(newIdentity);
     }
 
     function depositTokens(address identity, uint256 amount) public {
