@@ -179,44 +179,6 @@ Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last
         .catch(error => done(error));
 });
 
-Given(/^I attempt to withdraw (\d+) tokens from DC profile[s]*$/, { timeout: 420000 }, async function (tokenCount) {
-    // TODO expect tokenCount < profileBalance
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-
-    const promises = [];
-    promises.push(new Promise((accept, reject) => {
-        dc.once('withdraw-initiated', () => accept());
-    }));
-    promises.push(new Promise((accept, reject) => {
-        dc.once('withdraw-completed', () => accept());
-    }));
-    promises.push(new Promise((accept, reject) => {
-        dc.once('withdraw-command-completed', () => accept());
-    }));
-    await httpApiHelper.apiWithdraw(host, tokenCount);
-    return Promise.all(promises);
-});
-
-Given(/^I attempt to deposit (\d+) tokens from DC wallet[s]*$/, { timeout: 120000 }, async function (tokenCount) {
-    // TODO expect tokenCount < walletBalance
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-
-    const promises = [];
-    promises.push(new Promise((accept, reject) => {
-        dc.once('deposit-approved', () => accept());
-    }));
-    promises.push(new Promise((accept, reject) => {
-        dc.once('deposit-command-completed', () => accept());
-    }));
-    await httpApiHelper.apiDeposit(host, tokenCount);
-    return Promise.all(promises);
-});
-
 Given(/^([DC|DH|DV]+) calls consensus endpoint for sender: "(\S+)"$/, async function (nodeType, senderId) {
     expect(nodeType, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
 
