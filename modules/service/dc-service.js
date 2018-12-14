@@ -31,7 +31,7 @@ class DCService {
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
         dataSizeInBytes, litigationIntervalInMinutes,
     ) {
-        const hasFunds = await this.hasProfileBalance(tokenAmountPerHolder);
+        const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
         if (!hasFunds) {
             const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile.';
             this.logger.warn(message);
@@ -116,11 +116,11 @@ class DCService {
     }
 
     /**
-     * Has enough balance on profile?
-     * @param tokenAmountPerHolder
+     * Has enough balance on profile for creating an offer
+     * @param tokenAmountPerHolder - Tokens per DH
      * @return {Promise<*>}
      */
-    async hasProfileBalance(tokenAmountPerHolder) {
+    async hasProfileBalanceForOffer(tokenAmountPerHolder) {
         const profile = await this.blockchain.getProfile(this.config.erc725Identity);
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
