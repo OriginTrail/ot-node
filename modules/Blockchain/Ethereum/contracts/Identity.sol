@@ -57,6 +57,7 @@ contract Identity is ERC725 {
 
     function addKey(bytes32 _key, uint256[] _purposes, uint256 _type) external returns (bool success) {
         require(keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1));
+        require(_key != bytes32(0));
         require(keys[_key].key != _key);
 
         keys[_key].key = _key;
@@ -125,6 +126,8 @@ contract Identity is ERC725 {
 
     function removeKey(bytes32 _key) external returns (bool success) {
         require(keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1));
+        require(_key != bytes32(0));
+
         require(keys[_key].key == _key);
 
         require(!(keysByPurpose[1].length == 1 && keyHasPurpose(_key, 1)), "Cannot delete only management key!");
