@@ -53,7 +53,7 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "1500000",
+      "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0xa13635b8D91BCdEC59067eE2Da7A17292578bB08",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
@@ -153,7 +153,7 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "1500000",
+      "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0x0A0253150F35D9a766e450D6F749fFFD2B21eEC6",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
@@ -195,7 +195,7 @@
     "dh_max_holding_time_in_minutes": 1440,
     "dh_min_token_price": "1",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false
   },
@@ -253,7 +253,7 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "1500000",
+      "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0x6C314872A7e97A6F1dC7De2dc43D28500dd36f22",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
@@ -295,7 +295,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false
   },
@@ -353,7 +353,7 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "1500000",
+      "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0xE2726Bc7c82d45601eF68DB9EED92af18D0C4E0f",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
@@ -398,7 +398,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false
   },
@@ -456,7 +456,7 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "mainnet",
-      "gas_limit": "1500000",
+      "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0xa287d7134fb40bef071c932286bd2cd01efccf30",
       "rpc_node_host": "https://mainnet.infura.io/7c072f60df864d22884e705c5bf3d83f",
@@ -499,9 +499,9 @@
     "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
-    "dh_min_token_price": "10000000000000000000",
+    "dh_min_token_price": "20000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
-    "deposit_on_demand": true,
+    "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": true
   }
