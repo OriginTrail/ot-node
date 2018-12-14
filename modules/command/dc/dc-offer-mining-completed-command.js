@@ -61,7 +61,7 @@ class DcOfferMiningCompletedCommand extends Command {
 
             const hasFunds = await this.dcService.hasProfileBalance(offer.token_amount_per_holder);
             if (!hasFunds) {
-                throw new Error('Not enough tokens. To replicate data please deposit more tokens to your profile.');
+                throw new Error('Not enough tokens. To replicate data please deposit more tokens to your profile');
             }
 
             const commandData = { offerId, solution };
