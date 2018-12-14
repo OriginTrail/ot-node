@@ -1008,7 +1008,8 @@ class Ethereum {
                 this.tokenContractAddress,
             );
             this.log.info(`Balance of TRAC: ${tracBalance}`);
-            if (tracBalance < 1000) {
+            const minStake = await this.getProfileMinimumStake();
+            if (tracBalance < minStake) {
                 enoughTRAC = false;
             }
         } catch (error) {
