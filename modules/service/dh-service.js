@@ -166,14 +166,13 @@ class DHService {
 
         if (remainder) {
             throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
-        } else {
-            await this.commandExecutor.add({
-                name: 'dhOfferHandleCommand',
-                delay: 15000,
-                data,
-                transactional: false,
-            });
         }
+        await this.commandExecutor.add({
+            name: 'dhOfferHandleCommand',
+            delay: 15000,
+            data,
+            transactional: false,
+        });
     }
 
     /**
