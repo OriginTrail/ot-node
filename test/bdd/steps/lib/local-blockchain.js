@@ -99,6 +99,7 @@ class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger || console;
         this.server = Ganache.server({
+            gasLimit: 7000000,
             accounts:
                 accountPrivateKeys.map(account => ({
                     secretKey: `0x${account}`,
