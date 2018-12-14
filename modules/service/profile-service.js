@@ -38,6 +38,17 @@ class ProfileService {
         const profileMinStake = await this.blockchain.getProfileMinimumStake();
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}`);
 
+        try {
+            const hasFunds = this.blockchain.hasEnoughFunds();
+            if (!hasFunds) {
+                this.logger.warn('Insufficient funds to create profile');
+                process.exit(1);
+            }
+        } catch (err) {
+            this.logger.error(`Failed to check for funds. ${err.message}.`);
+            process.exit(1);
+        }
+
         await this.blockchain.increaseProfileApproval(new BN(profileMinStake, 10));
 
         // set empty identity if there is none
@@ -180,6 +191,18 @@ class ProfileService {
             },
         });
         this.logger.info(`Token withdrawal started for amount ${amount}.`);
+    }
+
+    async hasWalletBalanceForTransaction() {
+        const balance = this.web3.eth.getBalance(this.config.wallet_address);
+
+        let enough = true;
+        const gasLimit = new BN(this.config.gas_limit);
+        const gasPrice = new BN(this.config.gas_price);
+        if (new BN(balance).lt(gasLimit.mul(gasPrice))) {
+            enough = false;
+        }
+        return enough;
     }
 }
 

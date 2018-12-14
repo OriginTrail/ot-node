@@ -26,6 +26,7 @@ class DHService {
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+        this.profileService = ctx.profileService;
 
         const that = this;
         this.queue = new Queue((async (args, cb) => {
@@ -87,6 +88,11 @@ class DHService {
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
         tokenAmountPerHolder, dataSetId,
     ) {
+        const hasFunds = this.profileService.hasWalletBalanceForTransaction();
+        if (!hasFunds) {
+            throw new Error('Insufficient ETH to make transaction');
+        }
+
         if (dcNodeId === this.config.identity) {
             return; // the offer is mine
         }
