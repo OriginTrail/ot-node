@@ -400,40 +400,6 @@ class RestAPIService {
             });
         });
 
-
-        server.post('/api/deposit', (req, res) => {
-            this.logger.api('POST: Deposit tokens request received.');
-
-            if (req.body !== null && typeof req.body.trac_amount === 'number'
-                && req.body.trac_amount > 0) {
-                const { trac_amount } = req.body;
-                emitter.emit('api-deposit-tokens', {
-                    trac_amount,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-            }
-        });
-
-
-        server.post('/api/withdraw', (req, res) => {
-            this.logger.api('POST: Withdraw tokens request received.');
-
-            if (req.body !== null && typeof req.body.trac_amount === 'number'
-                && req.body.trac_amount > 0) {
-                const { trac_amount } = req.body;
-                emitter.emit('api-withdraw-tokens', {
-                    trac_amount,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-            }
-        });
-
         server.get('/api/import_info', async (req, res) => {
             await importController.dataSetInfo(req, res);
         });
