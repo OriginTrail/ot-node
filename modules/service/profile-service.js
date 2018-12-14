@@ -138,48 +138,21 @@ class ProfileService {
     /**
      * Deposit token to profile
      * @param amount
+     * @deprecated
      * @returns {Promise<void>}
      */
     async depositTokens(amount) {
-        const walletBalance = await Utilities.getTracTokenBalance(
-            this.web3,
-            this.config.node_wallet,
-            this.blockchain.getTokenContractAddress(),
-        );
-
-        if (amount > parseFloat(walletBalance)) {
-            throw new Error(`Wallet balance: ${walletBalance} TRAC`);
-        }
-
-        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
-        await this.commandExecutor.add({
-            name: 'profileApprovalIncreaseCommand',
-            sequence: [
-                'depositTokensCommand',
-            ],
-            delay: 0,
-            data: {
-                amount: mTRAC,
-            },
-            transactional: false,
-        });
-        this.logger.notify(`Deposit for amount ${amount} initiated.`);
+        throw new Error('OT Node does not support deposit functionality anymore');
     }
 
     /**
      * Withdraw tokens from profile to identity
      * @param amount
+     * @deprecated
      * @return {Promise<void>}
      */
     async withdrawTokens(amount) {
-        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
-        await this.commandExecutor.add({
-            name: 'tokenWithdrawalStartCommand',
-            data: {
-                amount: mTRAC,
-            },
-        });
-        this.logger.info(`Token withdrawal started for amount ${amount}.`);
+        throw new Error('OT Node does not support withdrawal functionality anymore');
     }
 }
 

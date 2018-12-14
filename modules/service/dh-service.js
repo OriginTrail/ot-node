@@ -165,25 +165,7 @@ class DHService {
         };
 
         if (remainder) {
-            if (!this.config.deposit_on_demand) {
-                throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
-            }
-
-            bid.deposit = remainder.toString();
-            await bid.save({ fields: ['deposit'] });
-
-            this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
-
-            Object.assign(data, {
-                amount: remainder.toString(),
-            });
-            await this.commandExecutor.add({
-                name: 'profileApprovalIncreaseCommand',
-                sequence: ['depositTokensCommand', 'dhOfferHandleCommand'],
-                delay: 15000,
-                data,
-                transactional: false,
-            });
+            throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
         } else {
             await this.commandExecutor.add({
                 name: 'dhOfferHandleCommand',
