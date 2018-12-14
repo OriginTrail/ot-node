@@ -327,7 +327,7 @@ class OTNode {
 
         context = container.cradle;
 
-        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -475,11 +475,49 @@ class OTNode {
             await remoteControl.connect();
         }
 
+        await this._runMigration(container);
+
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
         await commandExecutor.start();
         appState.started = true;
+    }
+
+    /**
+     * Run one time migration
+     * Note: implement migration service
+     * @param container
+     * @deprecated
+     * @private
+     */
+    async _runMigration(container) {
+        const config = container.resolve('config');
+
+        const migrationsStartedMills = Date.now();
+        log.info('Initializing code migrations...');
+
+        const migrationFilePath = path.join(
+            config.appDataPath,
+            '_m1PayoutAllMigrationFile',
+        );
+        if (!fs.existsSync(migrationFilePath)) {
+            const m1PayoutAllMigration = container.resolve('m1PayoutAllMigration');
+
+            try {
+                await m1PayoutAllMigration.run();
+                log.info(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                fs.writeFileSync(migrationFilePath, JSON.stringify({
+                    status: 'COMPLETED',
+                }));
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log('');
+            }
+        }
+
+        log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
 
     /**
@@ -491,7 +529,7 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js'], {
+        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
