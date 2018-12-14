@@ -39,7 +39,7 @@ class ProfileService {
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}`);
 
         try {
-            const hasFunds = this.blockchain.hasEnoughFunds();
+            const hasFunds = await this.blockchain.hasEnoughFunds();
             if (!hasFunds) {
                 this.logger.warn('Insufficient funds to create profile');
                 process.exit(1);
@@ -191,18 +191,6 @@ class ProfileService {
             },
         });
         this.logger.info(`Token withdrawal started for amount ${amount}.`);
-    }
-
-    async hasWalletBalanceForTransaction() {
-        const balance = this.web3.eth.getBalance(this.config.wallet_address);
-
-        let enough = true;
-        const gasLimit = new BN(this.config.gas_limit);
-        const gasPrice = new BN(this.config.gas_price);
-        if (new BN(balance).lt(gasLimit.mul(gasPrice))) {
-            enough = false;
-        }
-        return enough;
     }
 }
 

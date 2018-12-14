@@ -15,7 +15,6 @@ class DCService {
         this.blockchain = ctx.blockchain;
         this.commandExecutor = ctx.commandExecutor;
         this.replicationService = ctx.replicationService;
-        this.profileService = ctx.profileService;
     }
 
     /**
@@ -32,11 +31,6 @@ class DCService {
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
         dataSizeInBytes, litigationIntervalInMinutes,
     ) {
-        const hasFunds = this.profileService.hasWalletBalanceForTransaction();
-        if (!hasFunds) {
-            throw new Error('Insufficient ETH to make transaction');
-        }
-
         const offer = await models.offers.create({
             data_set_id: dataSetId,
             message: 'Offer is pending',
