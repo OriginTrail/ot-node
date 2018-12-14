@@ -502,13 +502,6 @@ class EventEmitter {
         });
 
         this._on('api-create-offer', async (data) => {
-            if (!appState.enoughFunds) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'Insufficient funds',
-                });
-                return;
-            }
             const {
                 dataSetId,
                 holdingTimeInMinutes,
@@ -665,9 +658,6 @@ class EventEmitter {
         });
 
         this._on('eth-OfferCreated', async (eventData) => {
-            if (!appState.enoughFunds) {
-                return;
-            }
             let {
                 dcNodeId,
             } = eventData;

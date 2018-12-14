@@ -379,35 +379,6 @@ class OTNode {
 
         emitter.initialize();
 
-        // check does node_wallet has sufficient funds
-        try {
-            appState.enoughFunds = await blockchain.hasEnoughFunds();
-            const identityFilePath = path.join(
-                config.appDataPath,
-                config.erc725_identity_filepath,
-            );
-            // If ERC725 exist assume profile is created. No need to check for the funds
-            if (!fs.existsSync(identityFilePath)) {
-                // Profile does not exists. Check if we have enough funds.
-                appState.enoughFunds = await blockchain.hasEnoughFunds();
-                if (!appState.enoughFunds) {
-                    log.warn('Insufficient funds to create profile');
-                    process.exit(1);
-                }
-            }
-        } catch (err) {
-            notifyBugsnag(err);
-            log.error(`Failed to check for funds. ${err.message}.`);
-            process.exit(1);
-        }
-        setInterval(async () => {
-            try {
-                appState.enoughFunds = await blockchain.hasEnoughFunds();
-            } catch (err) {
-                notifyBugsnag(err);
-            }
-        }, 1800000);
-
         // Connecting to graph database
         const graphStorage = container.resolve('graphStorage');
         try {

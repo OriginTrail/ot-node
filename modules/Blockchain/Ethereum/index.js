@@ -1001,39 +1001,6 @@ class Ethereum {
     }
 
     /**
-     * Check balances
-     * @returns {Promise<boolean>}
-     */
-    async hasEnoughFunds() {
-        this.log.trace('Checking balances');
-        let enoughETH = true;
-        let enoughTRAC = true;
-        try {
-            const etherBalance = await Utilities.getBalanceInEthers(
-                this.web3,
-                this.config.wallet_address,
-            );
-            this.log.info(`Balance of ETH: ${etherBalance}`);
-            if (etherBalance < 0.01) {
-                enoughETH = false;
-            }
-
-            const tracBalance = await Utilities.getTracTokenBalance(
-                this.web3,
-                this.config.wallet_address,
-                this.tokenContractAddress,
-            );
-            this.log.info(`Balance of TRAC: ${tracBalance}`);
-            if (tracBalance < 100) {
-                enoughTRAC = false;
-            }
-        } catch (error) {
-            throw new Error(error);
-        }
-        return enoughETH && enoughTRAC;
-    }
-
-    /**
      * Token contract address getter
      * @return {any|*}
      */
