@@ -51,7 +51,7 @@ contract('Profile contract testing', async (accounts) => {
         var identities = [];
         for (var i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            identities[i] = await Identity.new(accounts[i], { from: accounts[i] });
+            identities[i] = await Identity.new(accounts[i], accounts[i], { from: accounts[i] });
         }
 
         var initialBalances = [];
