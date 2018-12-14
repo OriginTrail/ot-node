@@ -421,10 +421,6 @@ class Blockchain {
         return this.blockchain.nodeHasApproval(nodeId);
     }
 
-    async hasEnoughFunds() {
-        return this.blockchain.hasEnoughFunds();
-    }
-
     /**
      * Token contract address getter
      * @return {any|*}
