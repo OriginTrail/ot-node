@@ -24,12 +24,15 @@ class M1PayoutAllMigration {
         for (const pendingPayOut of pendingPayOuts) {
             const data = this.payOutHandler.unpack(pendingPayOut.data);
 
-            let retries = 2;
+            let retries = 3;
             while (retries > 0) {
                 try {
                     // eslint-disable-next-line
                     await this.payOutHandler.execute({ data }); // run payout
-                    this.logger.info(`Payout migration for offer ${data.offerId} completed.`);
+                    pendingPayOut.status = 'COMPLETED';
+                    pendingPayOut.save({
+                        fields: ['status'],
+                    });
                     break;
                 } catch (e) {
                     retries -= 1;
@@ -41,19 +44,6 @@ class M1PayoutAllMigration {
                 }
             }
         }
-
-        // complete all pending payouts
-        await models.commands.update(
-            {
-                status: 'COMPLETED',
-            },
-            {
-                where: {
-                    status: 'PENDING',
-                    name: 'dhPayOutCommand',
-                },
-            },
-        );
     }
 }
 

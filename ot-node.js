@@ -501,7 +501,7 @@ class OTNode {
             config.appDataPath,
             '_m1PayoutAllMigrationFile',
         );
-        if (!fs.existsSync(migrationFilePath)) {
+        if (true) {
             const m1PayoutAllMigration = container.resolve('m1PayoutAllMigration');
 
             try {
