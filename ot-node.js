@@ -443,6 +443,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
+            await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);

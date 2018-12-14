@@ -22,16 +22,42 @@ contract Identity is ERC725 {
     mapping (uint256 => bytes32[]) keysByPurpose;
     mapping (uint256 => Execution) executions;
 
-    constructor(address sender) public {
-        bytes32 _key = keccak256(abi.encodePacked(sender));
-        keys[_key].key = _key;
-        keys[_key].purposes = [1,2,3,4];
-        keys[_key].keyType = 1;
-        keysByPurpose[1].push(_key);
-        emit KeyAdded(_key, keys[_key].purposes, 1);
+    constructor(address operational, address management) public {
+        require(operational != address(0) && management != address(0));
+
+        bytes32 _management_key = keccak256(abi.encodePacked(management));
+        
+        keys[_management_key].key = _management_key;
+        
+        keys[_management_key].keyType = 1;
+
+        keys[_management_key].purposes = [1,2,3,4];
+
+        keysByPurpose[1].push(_management_key);
+        keysByPurpose[2].push(_management_key);
+        keysByPurpose[3].push(_management_key);
+        keysByPurpose[4].push(_management_key);
+        emit KeyAdded(_management_key, keys[_management_key].purposes, 1);
+
+        if(operational != management){
+            bytes32 _operational_key = keccak256(abi.encodePacked(operational));
+
+            keys[_operational_key].key = _operational_key;
+
+            keys[_operational_key].keyType = 1;
+
+            keys[_operational_key].purposes = [2,4];
+
+            keysByPurpose[2].push(_operational_key);
+            keysByPurpose[4].push(_operational_key);
+
+            emit KeyAdded(_operational_key, keys[_operational_key].purposes, 1);
+        }
     }
 
     function addKey(bytes32 _key, uint256[] _purposes, uint256 _type) external returns (bool success) {
+        require(keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1));
+        require(_key != bytes32(0));
         require(keys[_key].key != _key);
 
         keys[_key].key = _key;
@@ -99,7 +125,13 @@ contract Identity is ERC725 {
     }
 
     function removeKey(bytes32 _key) external returns (bool success) {
+        require(keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1));
+        require(_key != bytes32(0));
+
         require(keys[_key].key == _key);
+
+        require(!(keysByPurpose[1].length == 1 && keyHasPurpose(_key, 1)), "Cannot delete only management key!");
+
         emit KeyRemoved(keys[_key].key, keys[_key].purposes, keys[_key].keyType);
 
         for (uint i = 0; i < keys[_key].purposes.length; i++) {

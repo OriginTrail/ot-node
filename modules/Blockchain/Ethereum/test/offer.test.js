@@ -101,6 +101,7 @@ contract('Offer testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             res = await profile.createProfile(
+                accounts[i],
                 '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde',
                 tokensToDeposit,
                 false,
