@@ -73,6 +73,7 @@ contract('Profile contract testing', async (accounts) => {
         promises = [];
         for (i = 0; i < accounts.length; i += 1) {
             promises[i] = profile.createProfile(
+                accounts[i],
                 nodeId,
                 amountToDeposit,
                 true,
@@ -154,6 +155,7 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             const res = await profile.createProfile(
+                accounts[i],
                 nodeId,
                 amountToDeposit,
                 false,
