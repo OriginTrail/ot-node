@@ -166,7 +166,7 @@ class DHService {
 
         if (remainder) {
             if (!this.config.deposit_on_demand) {
-                throw new Error('Not enough tokens. Deposit on demand feature is disabled. Please, enable it in your configuration.');
+                throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
             }
 
             bid.deposit = remainder.toString();

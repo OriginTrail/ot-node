@@ -148,7 +148,7 @@ class DCService {
         let depositCommand = null;
         if (remainder) {
             if (!this.config.deposit_on_demand) {
-                const message = 'Not enough tokens. Deposit on demand feature is disabled. Please, enable it in your configuration.';
+                const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile.';
                 this.logger.warn(message);
                 throw new Error(message);
             }
