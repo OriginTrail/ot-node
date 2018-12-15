@@ -42,6 +42,7 @@ const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/utility/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
+const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -414,6 +415,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
+            await this._runMigration(blockchain);
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -447,8 +449,6 @@ class OTNode {
             await remoteControl.connect();
         }
 
-        await this._runMigration(container);
-
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
@@ -459,13 +459,10 @@ class OTNode {
     /**
      * Run one time migration
      * Note: implement migration service
-     * @param container
      * @deprecated
      * @private
      */
-    async _runMigration(container) {
-        const config = container.resolve('config');
-
+    async _runMigration(blockchain) {
         const migrationsStartedMills = Date.now();
         log.info('Initializing code migrations...');
 
@@ -473,10 +470,10 @@ class OTNode {
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
-            const m1PayoutAllMigration = container.resolve('m1PayoutAllMigration');
+            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
 
             try {
-                await m1PayoutAllMigration.run();
+                await migration.run();
                 log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
                 await Utilities.writeContentsToFile(
