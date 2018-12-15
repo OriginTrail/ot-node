@@ -1,12 +1,14 @@
 const models = require('../../models');
+const Models = require('../../models/index');
+const Utilities = require('../Utilities');
 
 /**
  * Runs all pending payout commands
  */
 class M1PayoutAllMigration {
-    constructor(ctx) {
-        this.logger = ctx.logger;
-        this.payOutHandler = ctx.dhPayOutCommand;
+    constructor({ logger, blockchain }) {
+        this.logger = logger;
+        this.blockchain = blockchain;
     }
 
     /**
@@ -22,13 +24,13 @@ class M1PayoutAllMigration {
         });
 
         for (const pendingPayOut of pendingPayOuts) {
-            const data = this.payOutHandler.unpack(pendingPayOut.data);
+            const { data } = pendingPayOut;
 
             let retries = 3;
             while (retries > 0) {
                 try {
                     // eslint-disable-next-line
-                    await this.payOutHandler.execute({ data }); // run payout
+                    await this._payOut(data.offerId);
                     pendingPayOut.status = 'COMPLETED';
                     pendingPayOut.save({
                         fields: ['status'],
@@ -44,6 +46,19 @@ class M1PayoutAllMigration {
                 }
             }
         }
+    }
+
+    async _payOut(offerId) {
+        const bid = await Models.bids.findOne({
+            where: { offer_id: offerId, status: 'CHOSEN' },
+        });
+        if (!bid) {
+            this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
+            return;
+        }
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        await this.blockchain.payOut(blockchainIdentity, offerId);
+        this.logger.important(`Payout for offer ${offerId} successfully completed.`);
     }
 }
 
