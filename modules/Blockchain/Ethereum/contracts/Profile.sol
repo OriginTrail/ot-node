@@ -82,6 +82,8 @@ contract Profile {
         Identity newIdentity = new Identity(msg.sender, msg.sender);
         emit IdentityCreated(msg.sender, address(newIdentity));
 
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+
         profileStorage.setStake(address(newIdentity), profileStorage.getStake(oldIdentity));
         profileStorage.setStakeReserved(address(newIdentity), profileStorage.getStakeReserved(oldIdentity));
         profileStorage.setNodeId(address(newIdentity), profileStorage.getNodeId(oldIdentity));
@@ -169,59 +171,6 @@ contract Profile {
         require(uint256(newNodeId) != 0, "Cannot set a blank nodeId");
 
         ProfileStorage(hub.profileStorageAddress()).setNodeId(identity, newNodeId);
-    }
-
-    function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
-    public onlyHolding {
-        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
-        
-        if(profileStorage.getWithdrawalPending(payer)) {
-            profileStorage.setWithdrawalPending(payer,false);
-            emit TokenWithdrawalCancelled(payer);
-        }
-        if(profileStorage.getWithdrawalPending(identity1)) {
-            profileStorage.setWithdrawalPending(identity1,false);
-            emit TokenWithdrawalCancelled(identity1);
-        }
-        if(profileStorage.getWithdrawalPending(identity2)) {
-            profileStorage.setWithdrawalPending(identity2,false);
-            emit TokenWithdrawalCancelled(identity2);
-        }
-        if(profileStorage.getWithdrawalPending(identity3)) {
-            profileStorage.setWithdrawalPending(identity3,false);
-            emit TokenWithdrawalCancelled(identity3);
-        }
-
-        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
-            "Data creator does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)),
-            "First profile does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)),
-            "Second profile does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)),
-            "Third profile does not have enough stake to take new jobs!");
-        
-        require(profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)) >= amount.mul(3), 
-            "Data creator does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)) >= amount, 
-            "First profile does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)) >= amount, 
-            "Second profile does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount, 
-            "Third profile does not have enough stake for reserving!");
-
-
-        profileStorage.increaseStakesReserved(
-            payer,
-            identity1,
-            identity2,
-            identity3,
-            amount
-        );
-        emit TokensReserved(payer, amount.mul(3));
-        emit TokensReserved(identity1, amount);
-        emit TokensReserved(identity2, amount);
-        emit TokensReserved(identity3, amount);
     }
 
     function releaseTokens(address profile, uint256 amount)

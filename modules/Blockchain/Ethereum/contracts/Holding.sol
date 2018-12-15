@@ -106,7 +106,7 @@ contract Holding is Ownable {
         == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
 
         // Secure funds from all parties
-        Profile(hub.profileAddress()).reserveTokens(
+        reserveTokens(
             identity,
             holderIdentity[0],
             holderIdentity[1],
@@ -118,6 +118,53 @@ contract Holding is Ownable {
         holdingStorage.setHolders(bytes32(offerId), holderIdentity, encryptionType);
 
         emit OfferFinalized(bytes32(offerId), holderIdentity[0], holderIdentity[1], holderIdentity[2]);
+    }
+
+    function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
+    internal {
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+
+        if(profileStorage.getWithdrawalPending(payer)) {
+            profileStorage.setWithdrawalPending(payer,false);
+        }
+        if(profileStorage.getWithdrawalPending(identity1)) {
+            profileStorage.setWithdrawalPending(identity1,false);
+        }
+        if(profileStorage.getWithdrawalPending(identity2)) {
+            profileStorage.setWithdrawalPending(identity2,false);
+        }
+        if(profileStorage.getWithdrawalPending(identity3)) {
+            profileStorage.setWithdrawalPending(identity3,false);
+        }
+
+        uint256 minimalStake = Profile(hub.profileAddress()).minimalStake();
+
+        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
+            "Data creator does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)),
+            "First profile does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)),
+            "Second profile does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)),
+            "Third profile does not have enough stake to take new jobs!");
+
+        require(profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)) >= amount.mul(3),
+            "Data creator does not have enough stake for reserving!");
+        require(profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)) >= amount,
+            "First profile does not have enough stake for reserving!");
+        require(profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)) >= amount,
+            "Second profile does not have enough stake for reserving!");
+        require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount,
+            "Third profile does not have enough stake for reserving!");
+
+
+        profileStorage.increaseStakesReserved(
+            payer,
+            identity1,
+            identity2,
+            identity3,
+            amount
+        );
     }
 
     function payOut(address identity, uint256 offerId)
