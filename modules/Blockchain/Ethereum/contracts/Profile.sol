@@ -43,6 +43,7 @@ contract Profile {
     event TokensTransferred(address sender, address receiver, uint256 amount);
     
     function createProfile(address managementWallet, bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
+        require(managementWallet!=address(0) && identity!=address(0));
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= initialBalance, "Sender allowance must be equal to or higher than initial balance");
         require(tokenContract.balanceOf(msg.sender) >= initialBalance, "Sender balance must be equal to or higher than initial balance!");
@@ -175,6 +176,7 @@ contract Profile {
 
     function releaseTokens(address profile, uint256 amount)
     public onlyHolding {
+        require(profile!=address(0));
         ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
         require(profileStorage.getStakeReserved(profile) >= amount, "Cannot release more tokens than there are reserved");
@@ -186,6 +188,7 @@ contract Profile {
     
     function transferTokens(address sender, address receiver, uint256 amount)
     public onlyHolding {
+        require(sender!=address(0) && receiver!=address(0));
         ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
         require(profileStorage.getStake(sender) >= amount, "Sender does not have enough tokens to transfer!");
