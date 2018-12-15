@@ -20,7 +20,7 @@ contract Profile {
         require(hubAddress != address(0));
         hub = Hub(hubAddress);
     }
- 
+
     modifier onlyHolding(){
         require(msg.sender == hub.holdingAddress(),
         "Function can only be called by Holding contract!");
@@ -34,14 +34,14 @@ contract Profile {
 
     event TokensDeposited(address profile, uint256 amountDeposited, uint256 newBalance);
     event TokensReserved(address profile, uint256 amountReserved);
-    
+
     event WithdrawalInitiated(address profile, uint256 amount, uint256 withdrawalDelayInSeconds);
     event TokenWithdrawalCancelled(address profile);
     event TokensWithdrawn(address profile, uint256 amountWithdrawn, uint256 newBalance);
 
     event TokensReleased(address profile, uint256 amount);
     event TokensTransferred(address sender, address receiver, uint256 amount);
-    
+
     function createProfile(address managementWallet, bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
         require(managementWallet!=address(0) && identity!=address(0));
         ERC20 tokenContract = ERC20(hub.tokenAddress());
