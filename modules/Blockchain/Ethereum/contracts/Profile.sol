@@ -87,10 +87,17 @@ contract Profile {
         profileStorage.setStake(address(newIdentity), profileStorage.getStake(oldIdentity));
         profileStorage.setStakeReserved(address(newIdentity), profileStorage.getStakeReserved(oldIdentity));
         profileStorage.setNodeId(address(newIdentity), profileStorage.getNodeId(oldIdentity));
+        profileStorage.setReputation(address(newIdentity), profileStorage.getReputation(oldIdentity));
+
+        if(profileStorage.getWithdrawalPending(oldIdentity)){
+            emit TokenWithdrawalCancelled(oldIdentity);
+            profileStorage.setWithdrawalPending(oldIdentity, false);
+        }
 
         profileStorage.setStake(oldIdentity, 0);
         profileStorage.setStakeReserved(oldIdentity, 0);
         profileStorage.setNodeId(oldIdentity, bytes32(0));
+        profileStorage.setReputation(oldIdentity, 0);
 
         emit IdentityTransferred(oldIdentity, newIdentity);
         return address(newIdentity);
