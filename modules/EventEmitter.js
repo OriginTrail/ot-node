@@ -96,6 +96,7 @@ class EventEmitter {
             dcService,
             dvController,
             notifyError,
+            commandExecutor,
         } = this.ctx;
 
         this._on('api-network-query-responses', async (data) => {
@@ -497,6 +498,33 @@ class EventEmitter {
                 data.response.status(404);
                 data.response.send({
                     message: 'Replication not found',
+                });
+            }
+        });
+
+        this._on('api-payout', async (data) => {
+            const { offerId } = data;
+
+            logger.info(`Payout called for offer ${offerId}.`);
+            const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+            if (bid) {
+                await commandExecutor.add({
+                    name: 'dhPayOutCommand',
+                    delay: 0,
+                    data: {
+                        offerId,
+                    },
+                });
+
+                data.response.status(200);
+                data.response.send({
+                    message: `Payout for offer ${offerId} called. It should be completed shortly.`,
+                });
+            } else {
+                logger.error(`There is no offer for ID ${offerId}`);
+                data.response.status(404);
+                data.response.send({
+                    message: 'Offer not found',
                 });
             }
         });
