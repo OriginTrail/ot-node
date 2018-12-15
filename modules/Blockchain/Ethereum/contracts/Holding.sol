@@ -16,6 +16,7 @@ contract Holding is Ownable {
     uint256 public difficultyOverride;
     
     constructor(address hubAddress) public{
+        require(hubAddress!=address(0));
         hub = Hub(hubAddress);
         difficultyOverride = 0;
     }
