@@ -20,7 +20,7 @@ contract Profile {
         require(hubAddress != address(0));
         hub = Hub(hubAddress);
     }
-
+ 
     modifier onlyHolding(){
         require(msg.sender == hub.holdingAddress(),
         "Function can only be called by Holding contract!");
