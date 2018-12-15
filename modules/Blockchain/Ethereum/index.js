@@ -5,9 +5,6 @@ const Models = require('../../../models');
 const Op = require('sequelize/lib/operators');
 const uuidv4 = require('uuid/v4');
 const ethereumAbi = require('ethereumjs-abi');
-const md5 = require('md5');
-
-const oldErc725codeMd5 = '4fbb9cd89fa6b148d1f0c3b96fdadcfc';
 
 class Ethereum {
     /**
@@ -1048,7 +1045,20 @@ class Ethereum {
      * @return {Promise<boolean>}
      */
     async isErc725IdentityOld(address) {
-        return oldErc725codeMd5 === md5(await this.web3.eth.getCode(address));
+        const erc725IdentityContract = new this.web3.eth.Contract(
+            this.erc725IdentityContractAbi,
+            address,
+        );
+
+        try {
+            await erc725IdentityContract.methods.otVersion().call();
+            return false;
+        } catch (error) {
+            if (error.toString().includes('Couldn\'t decode uint256 from ABI: 0x')) {
+                return true;
+            }
+            throw error;
+        }
     }
 }
 
