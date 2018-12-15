@@ -31,13 +31,6 @@ class DCService {
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
         dataSizeInBytes, litigationIntervalInMinutes,
     ) {
-        const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
-        if (!hasFunds) {
-            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile.';
-            this.logger.warn(message);
-            throw new Error(message);
-        }
-
         const offer = await models.offers.create({
             data_set_id: dataSetId,
             message: 'Offer is pending',
@@ -54,6 +47,13 @@ class DCService {
 
         if (!litigationIntervalInMinutes) {
             litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);
+        }
+
+        const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
+        if (!hasFunds) {
+            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile.';
+            this.logger.warn(message);
+            throw new Error(message);
         }
 
         const commandData = {
@@ -134,7 +134,7 @@ class DCService {
         }
 
         const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
-        if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
+        if (profileStake.sub(profileStakeReserved).sub(offerStake).lt(profileMinStake)) {
             const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
             if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
                 remainder = stakeRemainder;
