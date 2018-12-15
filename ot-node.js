@@ -413,10 +413,9 @@ class OTNode {
         this.listenBlockchainEvents(blockchain);
         dhService.listenToBlockchainEvents();
 
-        await this._runMigration(blockchain);
-
         try {
             await profileService.initProfile();
+            await this._runMigration(blockchain);
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -471,7 +470,7 @@ class OTNode {
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M1PayoutAllMigration({ logger: log, blockchain });
+            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
 
             try {
                 await migration.run();

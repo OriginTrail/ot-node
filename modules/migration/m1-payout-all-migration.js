@@ -6,8 +6,9 @@ const Utilities = require('../Utilities');
  * Runs all pending payout commands
  */
 class M1PayoutAllMigration {
-    constructor({ logger, blockchain }) {
+    constructor({ logger, blockchain, config }) {
         this.logger = logger;
+        this.config = config;
         this.blockchain = blockchain;
     }
 
