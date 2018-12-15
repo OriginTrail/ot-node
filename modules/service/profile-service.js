@@ -32,20 +32,56 @@ class ProfileService {
 
         if (identityExists && await this.isProfileCreated()) {
             this.logger.notify(`Profile has already been created for node ${this.config.identity}`);
+            let walletToCheck;
+            if (this.config.management_wallet) {
+                walletToCheck = this.config.management_wallet;
+            } else {
+                this.logger.important('Management wallet not set. Please set one.');
+                walletToCheck = this.config.node_wallet;
+            }
+
+            // Check financial wallet permissions.
+            const permissions = await this.blockchain.getWalletPurposes(
+                this.config.erc725Identity,
+                walletToCheck,
+            );
+
+            if (!permissions.includes('1')) {
+                throw Error(`Management wallet ${walletToCheck} doesn't have enough permissions.`);
+            }
             return;
         }
 
         const profileMinStake = await this.blockchain.getProfileMinimumStake();
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}`);
 
-        await this.blockchain.increaseProfileApproval(new BN(profileMinStake, 10));
+        let initialTokenAmount = null;
+        if (this.config.initial_deposit_amount) {
+            initialTokenAmount = new BN(this.config.initial_deposit_amount, 10);
+        } else {
+            initialTokenAmount = new BN(profileMinStake, 10);
+        }
+
+        await this.blockchain.increaseProfileApproval(initialTokenAmount);
 
         // set empty identity if there is none
         const identity = this.config.erc725Identity ? this.config.erc725Identity : new BN(0, 16);
-        await this.blockchain.createProfile(
-            this.config.identity,
-            new BN(profileMinStake, 10), identityExists, identity,
-        );
+
+        if (this.config.management_wallet) {
+            await this.blockchain.createProfile(
+                this.config.management_wallet,
+                this.config.identity,
+                initialTokenAmount, identityExists, identity,
+            );
+        } else {
+            this.logger.important('Management wallet not set. Creating profile with operating wallet only.' +
+                    ' Please set management one.');
+            await this.blockchain.createProfile(
+                this.config.node_wallet,
+                this.config.identity,
+                initialTokenAmount, identityExists, identity,
+            );
+        }
         if (!identityExists) {
             const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet));
             if (event) {
@@ -138,48 +174,48 @@ class ProfileService {
     /**
      * Deposit token to profile
      * @param amount
+     * @deprecated
      * @returns {Promise<void>}
      */
     async depositTokens(amount) {
-        const walletBalance = await Utilities.getTracTokenBalance(
-            this.web3,
-            this.config.node_wallet,
-            this.blockchain.getTokenContractAddress(),
-        );
-
-        if (amount > parseFloat(walletBalance)) {
-            throw new Error(`Wallet balance: ${walletBalance} TRAC`);
-        }
-
-        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
-        await this.commandExecutor.add({
-            name: 'profileApprovalIncreaseCommand',
-            sequence: [
-                'depositTokensCommand',
-            ],
-            delay: 0,
-            data: {
-                amount: mTRAC,
-            },
-            transactional: false,
-        });
-        this.logger.notify(`Deposit for amount ${amount} initiated.`);
+        throw new Error('OT Node does not support deposit functionality anymore');
     }
 
     /**
      * Withdraw tokens from profile to identity
      * @param amount
+     * @deprecated
      * @return {Promise<void>}
      */
     async withdrawTokens(amount) {
-        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
-        await this.commandExecutor.add({
-            name: 'tokenWithdrawalStartCommand',
-            data: {
-                amount: mTRAC,
-            },
-        });
-        this.logger.info(`Token withdrawal started for amount ${amount}.`);
+        throw new Error('OT Node does not support withdrawal functionality anymore');
+    }
+
+    /**
+     * Check for ERC725 identity version and executes upgrade of the profile.
+     * @return {Promise<void>}
+     */
+    async upgradeProfile() {
+        if (await this.blockchain.isErc725IdentityOld(this.config.erc725Identity)) {
+            this.logger.important('Old profile detected. Upgrading to new one.');
+            try {
+                const result = await this.blockchain.transferProfile(this.config.erc725Identity);
+                const newErc725Identity =
+                    Utilities.normalizeHex(result.logs[1].data.substr(
+                        result.logs[1].data.length - 40,
+                        40,
+                    ));
+
+                this.logger.important('**************************************************************************');
+                this.logger.important(`Your ERC725 profile has been upgraded and now has the new address: ${newErc725Identity}`);
+                this.logger.important('Please backup your ERC725 identity file.');
+                this.logger.important('**************************************************************************');
+                this.config.erc725Identity = newErc725Identity;
+                this._saveIdentity(newErc725Identity);
+            } catch (transferError) {
+                throw Error(`Failed to transfer profile. ${transferError}. ${transferError.stack}`);
+            }
+        }
     }
 }
 

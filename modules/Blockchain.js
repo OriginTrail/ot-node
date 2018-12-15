@@ -61,14 +61,22 @@ class Blockchain {
 
     /**
      * Creates node profile on the Bidding contract
+     * @param managementWallet - Management wallet
      * @param profileNodeId - Network node ID
      * @param initialBalance - Initial profile balance
      * @param isSender725 - Is sender ERC 725?
      * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @return {Promise<any>}
      */
-    createProfile(profileNodeId, initialBalance, isSender725, blockchainIdentity) {
+    createProfile(
+        managementWallet,
+        profileNodeId,
+        initialBalance,
+        isSender725,
+        blockchainIdentity,
+    ) {
         return this.blockchain.createProfile(
+            managementWallet,
             profileNodeId, initialBalance, isSender725,
             blockchainIdentity,
         );
@@ -204,13 +212,13 @@ class Blockchain {
     }
 
     /**
-    * Subscribe to a particular event
-    * @param event
-    * @param importId
-    * @param endMs
-    * @param endCallback
-    * @param filterFn
-    */
+     * Subscribe to a particular event
+     * @param event
+     * @param importId
+     * @param endMs
+     * @param endCallback
+     * @param filterFn
+     */
     subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn) {
         return this.blockchain
             .subscribeToEvent(event, importId, endMs, endCallback, filterFn);
@@ -282,10 +290,10 @@ class Blockchain {
     }
 
     /**
-    * Gets status of the offer
-    * @param importId
-    * @return {Promise<any>}
-    */
+     * Gets status of the offer
+     * @param importId
+     * @return {Promise<any>}
+     */
     getOfferStatus(importId) {
         return this.blockchain.getOfferStatus(importId);
     }
@@ -345,6 +353,7 @@ class Blockchain {
     async confirmPurchase(importId, dhWallet) {
         return this.blockchain.confirmPurchase(importId, dhWallet);
     }
+
     async cancelPurchase(importId, correspondentWallet, senderIsDh) {
         return this.blockchain.cancelPurchase(importId, correspondentWallet, senderIsDh);
     }
@@ -421,16 +430,39 @@ class Blockchain {
         return this.blockchain.nodeHasApproval(nodeId);
     }
 
-    async hasEnoughFunds() {
-        return this.blockchain.hasEnoughFunds();
-    }
-
     /**
      * Token contract address getter
      * @return {any|*}
      */
     getTokenContractAddress() {
         return this.blockchain.getTokenContractAddress();
+    }
+
+    /**
+     * Returns purposes of the wallet.
+     * @param {string} - erc725Identity
+     * @param {string} - wallet
+     * @return {Promise<[]>}
+     */
+    getWalletPurposes(erc725Identity, wallet) {
+        return this.blockchain.getWalletPurposes(erc725Identity, wallet);
+    }
+
+    /**
+     * Transfers identity to new address.
+     * @param {string} - erc725identity
+     */
+    transferProfile(erc725identity) {
+        return this.blockchain.transferProfile(erc725identity);
+    }
+
+    /**
+     * Returns true if ERC725 contract is older version.
+     * @param {string} - address of ERC 725 identity.
+     * @return {Promise<boolean>}
+     */
+    async isErc725IdentityOld(address) {
+        return this.blockchain.isErc725IdentityOld(address);
     }
 }
 

@@ -99,6 +99,7 @@ class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger || console;
         this.server = Ganache.server({
+            gasLimit: 7000000,
             accounts:
                 accountPrivateKeys.map(account => ({
                     secretKey: `0x${account}`,
@@ -302,7 +303,7 @@ class LocalBlockchain {
                 data: contractData,
                 arguments: constructorArguments,
             })
-                .send({ from: deployerAddress, gas: 6000000 })
+                .send({ from: deployerAddress, gas: 6900000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
                 })

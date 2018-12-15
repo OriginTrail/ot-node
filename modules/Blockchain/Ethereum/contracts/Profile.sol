@@ -12,6 +12,8 @@ contract Profile {
     Hub public hub;
     ProfileStorage public profileStorage;
 
+    uint256 public version = 100;
+
     uint256 public minimalStake = 10**21;
     uint256 public withdrawalTime = 5 minutes;
 
@@ -26,9 +28,10 @@ contract Profile {
         "Function can only be called by Holding contract!");
         _;
     }
-    
+
     event ProfileCreated(address profile, uint256 initialBalance);
     event IdentityCreated(address profile, address newIdentity);
+    event IdentityTransferred(address oldIdentity, address newIdentity);
     event TokenDeposit(address profile, uint256 amount);
 
     event TokensDeposited(address profile, uint256 amountDeposited, uint256 newBalance);
@@ -41,7 +44,7 @@ contract Profile {
     event TokensReleased(address profile, uint256 amount);
     event TokensTransferred(address sender, address receiver, uint256 amount);
     
-    function createProfile(bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
+    function createProfile(address managementWallet, bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= initialBalance, "Sender allowance must be equal to or higher than initial balance");
         require(tokenContract.balanceOf(msg.sender) >= initialBalance, "Sender balance must be equal to or higher than initial balance!");
@@ -50,7 +53,7 @@ contract Profile {
         tokenContract.transferFrom(msg.sender, address(profileStorage), initialBalance);
 
         if(!senderHas725) {
-            Identity newIdentity = new Identity(msg.sender);
+            Identity newIdentity = new Identity(msg.sender, managementWallet);
             emit IdentityCreated(msg.sender, address(newIdentity));
 
             profileStorage.setStake(address(newIdentity), initialBalance);
@@ -60,7 +63,7 @@ contract Profile {
         }
         else {
             // Verify sender
-            require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+            require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
 
             profileStorage.setStake(identity, initialBalance);
             profileStorage.setNodeId(identity, profileNodeId);
@@ -75,9 +78,27 @@ contract Profile {
         }
     }
 
+    function transferProfile(address oldIdentity) public returns(address){
+        require(ERC725(oldIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
+
+        Identity newIdentity = new Identity(msg.sender, msg.sender);
+        emit IdentityCreated(msg.sender, address(newIdentity));
+
+        profileStorage.setStake(address(newIdentity), profileStorage.getStake(oldIdentity));
+        profileStorage.setStakeReserved(address(newIdentity), profileStorage.getStakeReserved(oldIdentity));
+        profileStorage.setNodeId(address(newIdentity), profileStorage.getNodeId(oldIdentity));
+
+        profileStorage.setStake(oldIdentity, 0);
+        profileStorage.setStakeReserved(oldIdentity, 0);
+        profileStorage.setNodeId(oldIdentity, bytes32(0));
+
+        emit IdentityTransferred(oldIdentity, newIdentity);
+        return address(newIdentity);
+    }
+
     function depositTokens(address identity, uint256 amount) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
 
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= amount, "Sender allowance must be equal to or higher than chosen amount");
@@ -92,7 +113,7 @@ contract Profile {
 
     function startTokenWithdrawal(address identity, uint256 amount) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
 
         require(profileStorage.getWithdrawalPending(identity) == false, "Withrdrawal process already pending!");
 
@@ -114,7 +135,7 @@ contract Profile {
 
     function withdrawTokens(address identity) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
 
         require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
         require(profileStorage.getWithdrawalTimestamp(identity) < block.timestamp, "Cannot withdraw tokens before withdrawal timestamp!");

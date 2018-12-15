@@ -155,6 +155,10 @@ class DHService {
             tokenAmountPerHolder,
         );
 
+        if (remainder) {
+            throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
+        }
+
         const data = {
             offerId,
             dcNodeId,
@@ -164,34 +168,12 @@ class DHService {
             tokenAmountPerHolder,
         };
 
-        if (remainder) {
-            if (!this.config.deposit_on_demand) {
-                throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
-            }
-
-            bid.deposit = remainder.toString();
-            await bid.save({ fields: ['deposit'] });
-
-            this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
-
-            Object.assign(data, {
-                amount: remainder.toString(),
-            });
-            await this.commandExecutor.add({
-                name: 'profileApprovalIncreaseCommand',
-                sequence: ['depositTokensCommand', 'dhOfferHandleCommand'],
-                delay: 15000,
-                data,
-                transactional: false,
-            });
-        } else {
-            await this.commandExecutor.add({
-                name: 'dhOfferHandleCommand',
-                delay: 15000,
-                data,
-                transactional: false,
-            });
-        }
+        await this.commandExecutor.add({
+            name: 'dhOfferHandleCommand',
+            delay: 15000,
+            data,
+            transactional: false,
+        });
     }
 
     /**
@@ -246,31 +228,7 @@ class DHService {
                 remainder = stakeRemainder;
             }
         }
-
-        if (remainder) {
-            const depositSum = remainder.add(currentDeposits);
-            const canDeposit = await this._canDeposit(depositSum);
-            if (!canDeposit) {
-                throw new Error('Not enough tokens. Insufficient funds.');
-            }
-        }
         return remainder;
-    }
-
-    /**
-     * Can deposit or not?
-     * @param amount {BN} amount to be deposited in mTRAC
-     * @return {Promise<Boolean>}
-     * @private
-     */
-    async _canDeposit(amount) {
-        const walletBalance = await Utilities.getTracTokenBalance(
-            this.web3,
-            this.config.node_wallet,
-            this.blockchain.getTokenContractAddress(),
-        );
-        const walletBalanceBN = new BN(this.web3.utils.toWei(parseFloat(walletBalance).toString(), 'ether'), 10);
-        return amount.lt(walletBalanceBN);
     }
 
     /**
@@ -385,8 +343,7 @@ class DHService {
                 new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
 
             if (profileBalance.lt(condition)) {
-                await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-                await this.blockchain.depositTokens(condition.sub(profileBalance));
+                throw new Error('Not enough funds to handle data read request');
             }
 
             /*

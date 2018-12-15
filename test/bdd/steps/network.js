@@ -83,6 +83,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+            initial_deposit_amount: '10000000000000000000000',
 
         },
         appDataBaseDir: this.parameters.appDataBaseDir,
@@ -121,6 +122,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
+            initial_deposit_amount: '10000000000000000000000',
         };
 
         const newNode = new OtNode({
@@ -534,6 +536,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                     rpc_node_port: 7545,
                 },
                 local_network_only: true,
+                initial_deposit_amount: '10000000000000000000000',
             },
             appDataBaseDir: this.parameters.appDataBaseDir,
         });

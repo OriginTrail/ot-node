@@ -4,7 +4,7 @@ const Encryption = require('../Encryption');
 
 const models = require('../../models');
 
-const DEFAILT_NUMBER_OF_HOLDERS = 3;
+const DEFAULT_NUMBER_OF_HOLDERS = 3;
 
 class DCService {
     constructor(ctx) {
@@ -31,6 +31,13 @@ class DCService {
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
         dataSizeInBytes, litigationIntervalInMinutes,
     ) {
+        const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
+        if (!hasFunds) {
+            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile.';
+            this.logger.warn(message);
+            throw new Error(message);
+        }
+
         const offer = await models.offers.create({
             data_set_id: dataSetId,
             message: 'Offer is pending',
@@ -64,23 +71,14 @@ class DCService {
             'dcOfferCreateBcCommand',
             'dcOfferTaskCommand',
             'dcOfferChooseCommand'];
-        const depositCommand = await this.chainDepositCommandIfNeeded(
-            tokenAmountPerHolder,
-            commandData,
-            commandSequence,
-        );
 
-        if (depositCommand) {
-            await this.commandExecutor.add(depositCommand);
-        } else {
-            await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
-                delay: 0,
-                data: commandData,
-                transactional: false,
-            });
-        }
+        await this.commandExecutor.add({
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
+            data: commandData,
+            transactional: false,
+        });
         return offer.id;
     }
 
@@ -118,19 +116,17 @@ class DCService {
     }
 
     /**
-     * Creates commands needed for token deposit if there is a need for that
-     * @param tokenAmountPerHolder
-     * @param commandData
-     * @param commandSequence
+     * Has enough balance on profile for creating an offer
+     * @param tokenAmountPerHolder - Tokens per DH
      * @return {Promise<*>}
      */
-    async chainDepositCommandIfNeeded(tokenAmountPerHolder, commandData, commandSequence) {
+    async hasProfileBalanceForOffer(tokenAmountPerHolder) {
         const profile = await this.blockchain.getProfile(this.config.erc725Identity);
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
         const offerStake = new BN(tokenAmountPerHolder, 10)
-            .mul(new BN(DEFAILT_NUMBER_OF_HOLDERS, 10));
+            .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
         if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
@@ -144,32 +140,7 @@ class DCService {
                 remainder = stakeRemainder;
             }
         }
-
-        let depositCommand = null;
-        if (remainder) {
-            if (!this.config.deposit_on_demand) {
-                const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile.';
-                this.logger.warn(message);
-                throw new Error(message);
-            }
-
-            // deposit tokens
-            depositCommand = {
-                name: 'profileApprovalIncreaseCommand',
-                sequence: [
-                    'depositTokensCommand',
-                ],
-                delay: 0,
-                data: {
-                    amount: remainder.toString(),
-                },
-                transactional: false,
-            };
-
-            Object.assign(depositCommand.data, commandData);
-            depositCommand.sequence = depositCommand.sequence.concat(commandSequence);
-        }
-        return depositCommand;
+        return !remainder;
     }
 
     /**
