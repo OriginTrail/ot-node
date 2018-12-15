@@ -311,7 +311,7 @@ contract('Profile contract testing', async (accounts) => {
         await hub.setHoldingAddress(accounts[0]);
 
         const amountToReserve = new BN(100);
-        await profile.reserveTokens(
+        await profileStorage.increaseStakesReserved(
             identities[0],
             identities[1],
             identities[2],
