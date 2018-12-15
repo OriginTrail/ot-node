@@ -25,6 +25,8 @@ contract Identity is ERC725 {
     constructor(address operational, address management) public {
         require(operational != address(0) && management != address(0));
 
+        otVersion = 1;
+
         bytes32 _management_key = keccak256(abi.encodePacked(management));
         
         keys[_management_key].key = _management_key;
