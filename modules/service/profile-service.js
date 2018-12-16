@@ -207,7 +207,7 @@ class ProfileService {
                     ));
 
                 this.logger.important('**************************************************************************');
-                this.logger.important(`Your ERC725 profile has been upgraded and now has the new address: ${newErc725Identity}`);
+                this.logger.important(`Your ERC725 identity has been upgraded and now has the new address: ${newErc725Identity}`);
                 this.logger.important('Please backup your ERC725 identity file.');
                 this.logger.important('**************************************************************************');
                 this.config.erc725Identity = newErc725Identity;
