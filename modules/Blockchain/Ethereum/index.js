@@ -1060,6 +1060,30 @@ class Ethereum {
             throw error;
         }
     }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: 5000000,
+            to: this.holdingContractAddress,
+        };
+        this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
+        return this.transactions.queueTransaction(
+            this.holdingContractAbi, 'payOutMultiple',
+            [
+                blockchainIdentity,
+                offerIds,
+            ],
+            options,
+        );
+    }
 }
 
 module.exports = Ethereum;

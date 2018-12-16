@@ -477,13 +477,13 @@ class OTNode {
                 log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
                 await Utilities.writeContentsToFile(
-                    migrationDir, m1PayoutAllMigrationFilename,
-                    JSON.stringify({
-                        status: 'COMPLETED',
-                    }),
+                    migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED',
                 );
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
             }
         }
 
