@@ -269,7 +269,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.profileContractAddress,
         };
-        this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725})`);
+        this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'createProfile',
             [
