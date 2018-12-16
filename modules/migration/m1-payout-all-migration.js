@@ -29,7 +29,7 @@ class M1PayoutAllMigration {
         const offerIds = pendingPayOuts.map(payoutCommand => payoutCommand.data.offerId);
 
         if (offerIds.length === 0) {
-            this.logger.trace('No pending offers.');
+            this.logger.warn('No pending payouts.');
             return;
         }
 
