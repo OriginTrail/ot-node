@@ -285,7 +285,11 @@ contract('Offer testing', async (accounts) => {
         }
         const array = [];
         array.push(offerId);
-        res = await holding.payOutMultiple(identities[2], array, { from: accounts[2], gas: 200000 });
+        res = await holding.payOutMultiple(
+            identities[2],
+            array,
+            { from: accounts[2], gas: 200000 },
+        );
         console.log(`\tGasUsed: ${res.receipt.gasUsed}`);
 
         for (i = 0; i < 3; i += 1) {
