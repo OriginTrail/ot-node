@@ -363,10 +363,10 @@ class LocalBlockchain {
         return this.web3.eth.getBalance(wallet);
     }
 
-    async createIdentity(wallet, walletKey) {
+    async createIdentity(wallet, walletKey, managementWallet) {
         const [, identityInstance] = await this.deployContract(
             this.web3, this.identityContract, this.identityContractData,
-            [wallet], wallet,
+            [wallet, managementWallet], wallet,
         );
         return identityInstance;
     }
