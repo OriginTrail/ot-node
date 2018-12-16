@@ -51,7 +51,7 @@ class DCService {
 
         const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
         if (!hasFunds) {
-            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile.';
+            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
             this.logger.warn(message);
             throw new Error(message);
         }

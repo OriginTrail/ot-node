@@ -464,6 +464,20 @@ class Blockchain {
     async isErc725IdentityOld(address) {
         return this.blockchain.isErc725IdentityOld(address);
     }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        return this.blockchain.payOutMultiple(
+            blockchainIdentity,
+            offerIds,
+        );
+    }
 }
 
 module.exports = Blockchain;

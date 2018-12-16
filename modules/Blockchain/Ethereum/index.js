@@ -269,7 +269,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.profileContractAddress,
         };
-        this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725})`);
+        this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'createProfile',
             [
@@ -1059,6 +1059,31 @@ class Ethereum {
             }
             throw error;
         }
+    }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        const gasLimit = (offerIds.length * 100000) + 5000;
+        const options = {
+            gasLimit,
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.holdingContractAddress,
+        };
+        this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
+        return this.transactions.queueTransaction(
+            this.holdingContractAbi, 'payOutMultiple',
+            [
+                blockchainIdentity,
+                offerIds,
+            ],
+            options,
+        );
     }
 }
 
