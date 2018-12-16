@@ -27,9 +27,8 @@ class M1PayoutAllMigration {
         });
 
         const offerIds = pendingPayOuts.map(payoutCommand => payoutCommand.data.offerId);
-
         if (offerIds.length === 0) {
-            this.logger.trace('No pending offers.');
+            this.logger.warn('No pending payouts.');
             return;
         }
 
@@ -45,7 +44,9 @@ class M1PayoutAllMigration {
         let message;
         try {
             await this.blockchain.payOutMultiple(erc725Identity, offerIds);
-            this.logger.warn(`Payout successfully completed for ${offerIds.length} offer(s).`);
+            for (const offerId of offerIds) {
+                this.logger.warn(`Payout successfully completed for offer ${offerId}.`);
+            }
         } catch (e) {
             message = `Failed to complete payout for offers [${offerIds}]. Please make sure that you have enough ETH. ${e.message}`;
             this.logger.error(message);
