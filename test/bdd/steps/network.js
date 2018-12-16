@@ -68,6 +68,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
         nodeConfiguration: {
             node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             node_private_key: LocalBlockchain.wallets()[walletCount - 1].privateKey,
+            management_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
@@ -104,6 +105,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
         const nodeConfiguration = {
             node_wallet: LocalBlockchain.wallets()[i].address,
             node_private_key: LocalBlockchain.wallets()[i].privateKey,
+            management_wallet: LocalBlockchain.wallets()[i].address,
             node_port: 6000 + i,
             node_rpc_port: 9000 + i,
             node_remote_control_port: 4000 + i,
