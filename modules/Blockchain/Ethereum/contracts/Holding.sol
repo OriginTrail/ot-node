@@ -125,16 +125,16 @@ contract Holding is Ownable {
     internal {
         ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
-        if(profileStorage.getWithdrawalPending(payer)) {
+        if(profileStorage.getWithdrawalPending(payer) && profileStorage.getWithdrawalAmount(payer).add(amount.mul(3)) > profileStorage.getStake(payer) - profileStorage.getStakeReserved(payer)) {
             profileStorage.setWithdrawalPending(payer,false);
         }
-        if(profileStorage.getWithdrawalPending(identity1)) {
+        if(profileStorage.getWithdrawalPending(identity1) && profileStorage.getWithdrawalAmount(identity1).add(amount) > profileStorage.getStake(identity1) - profileStorage.getStakeReserved(identity1)) {
             profileStorage.setWithdrawalPending(identity1,false);
         }
-        if(profileStorage.getWithdrawalPending(identity2)) {
+        if(profileStorage.getWithdrawalPending(identity2) && profileStorage.getWithdrawalAmount(identity2).add(amount) > profileStorage.getStake(identity2) - profileStorage.getStakeReserved(identity2)) {
             profileStorage.setWithdrawalPending(identity2,false);
         }
-        if(profileStorage.getWithdrawalPending(identity3)) {
+        if(profileStorage.getWithdrawalPending(identity3) && profileStorage.getWithdrawalAmount(identity3).add(amount) > profileStorage.getStake(identity3) - profileStorage.getStakeReserved(identity3)) {
             profileStorage.setWithdrawalPending(identity3,false);
         }
 
@@ -188,6 +188,8 @@ contract Holding is Ownable {
         // Release tokens staked by holder and transfer tokens from data creator to holder
         Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
         Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
+
+        holdingStorage.setHolderPaidAmount(bytes32(offerId), identity, amountToTransfer);
     }
 
     function payOutMultiple(address identity, bytes32[] offerIds)
@@ -197,7 +199,6 @@ contract Holding is Ownable {
         require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
 
         HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-
 
         for (uint i = 0; i < offerIds.length; i = i + 1){
             // Verify holder
@@ -212,6 +213,8 @@ contract Holding is Ownable {
             // Release tokens staked by holder and transfer tokens from data creator to holder
             Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
             Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerIds[i]), identity, amountToTransfer);
+
+            holdingStorage.setHolderPaidAmount(bytes32(offerIds[i]), identity, amountToTransfer);
         }
     }
     
