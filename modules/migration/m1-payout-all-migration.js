@@ -32,6 +32,14 @@ class M1PayoutAllMigration {
             this.logger.trace('No pending offers.');
             return;
         }
+
+        const offerLimit = 60;
+        if (offerIds.length > offerLimit) {
+            const message = `Failed to complete payout for more that ${offerLimit}. Please contact support.`;
+            this.logger.error(message);
+            throw new Error(message);
+        }
+
         const erc725Identity = Utilities.normalizeHex(this.config.erc725Identity);
 
         let message;
