@@ -1069,7 +1069,7 @@ class Ethereum {
         blockchainIdentity,
         offerIds,
     ) {
-        const gasLimit = (offerIds.length * 100000) + 5000;
+        const gasLimit = offerIds.length * 200000;
         const options = {
             gasLimit,
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
