@@ -100,24 +100,6 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "identity",
-				"type": "address"
-			},
-			{
-				"name": "offerIds",
-				"type": "uint256[]"
-			}
-		],
-		"name": "payOutMultiple",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [],
 		"name": "difficultyOverride",
@@ -182,6 +164,24 @@
 			}
 		],
 		"name": "finalizeOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "offerIds",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "payOutMultiple",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
