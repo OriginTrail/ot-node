@@ -279,11 +279,14 @@ contract('Offer testing', async (accounts) => {
         res = await profileStorage.profile.call(DC_identity);
         const initialStakeDC = res.stake;
 
-        for (i = 0; i < 3; i += 1) {
+        for (i = 0; i < 2; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             await holding.payOut(identities[i], offerId, { from: accounts[i] });
         }
-
+        const array = [];
+        array.push(offerId);
+        res = await holding.payOutMultiple(identities[2], array, { from: accounts[2], gas: 200000 });
+        console.log(`\tGasUsed: ${res.receipt.gasUsed}`);
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
@@ -299,7 +302,7 @@ contract('Offer testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should test payOutMultiple function', async () => {
         // Set up multiple offers to for a single holder
-        const numOffers = new BN(1);
+        const numOffers = new BN(20);
         const DH_index = 4;
         const DH_identity = identities[DH_index];
         const DH_account = accounts[DH_index];
@@ -335,7 +338,7 @@ contract('Offer testing', async (accounts) => {
         const res = await holding.payOutMultiple(
             DH_identity,
             offerIds,
-            { from: DH_account, gasLimit: 5000000 },
+            { from: DH_account, gas: 4000000 },
         );
 
         const finalStakeDH = await profileStorage.getStake.call(DH_identity);
