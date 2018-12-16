@@ -1069,9 +1069,10 @@ class Ethereum {
         blockchainIdentity,
         offerIds,
     ) {
+        const gasPrice = (offerIds.length * 100000) + 5000;
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: 5000000, // it's hardcoded for now
+            gasPrice, // it's hardcoded for now
             to: this.holdingContractAddress,
         };
         this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
