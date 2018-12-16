@@ -521,6 +521,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
             nodeConfiguration: {
                 node_wallet: LocalBlockchain.wallets()[i].address,
                 node_private_key: LocalBlockchain.wallets()[i].privateKey,
+                management_wallet: LocalBlockchain.wallets()[i].address,
                 node_port: 6000 + i,
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
