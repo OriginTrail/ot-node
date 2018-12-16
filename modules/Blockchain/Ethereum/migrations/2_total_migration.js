@@ -158,9 +158,6 @@ module.exports = async (deployer, network, accounts) => {
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
 
-        // reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
-        // await hub.setReadingAddress(reading.address);
-
         // for (let i = 0; i < 10; i += 1) {
         //     amounts.push(amountToMint);
         //     recepients.push(accounts[i]);
