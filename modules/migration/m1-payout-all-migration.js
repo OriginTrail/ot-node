@@ -45,7 +45,7 @@ class M1PayoutAllMigration {
         let message;
         try {
             await this.blockchain.payOutMultiple(erc725Identity, offerIds);
-            this.logger.warn(`Payout successfully completed for ${offerIds.length} offer(s).`);
+            this.logger.warn(`Payout successfully completed for offers [${offerIds}].`);
         } catch (e) {
             message = `Failed to complete payout for offers [${offerIds}]. Please make sure that you have enough ETH. ${e.message}`;
             this.logger.error(message);
