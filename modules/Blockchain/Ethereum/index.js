@@ -1071,7 +1071,7 @@ class Ethereum {
     ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: 5000000,
+            gasPrice: 5000000, // it's hardcoded for now
             to: this.holdingContractAddress,
         };
         this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
