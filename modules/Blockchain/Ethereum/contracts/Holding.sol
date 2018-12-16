@@ -171,7 +171,7 @@ contract Holding is Ownable {
     function payOut(address identity, uint256 offerId)
     public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
         require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
 
         HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
@@ -188,6 +188,31 @@ contract Holding is Ownable {
         // Release tokens staked by holder and transfer tokens from data creator to holder
         Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
         Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
+    }
+
+    function payOutMultiple(address identity, bytes32[] offerIds)
+    public {
+        require(identity != address(0), "Identity cannot be zero!");
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
+        require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
+
+        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
+
+
+        for (uint i = 0; i < offerIds.length; i = i + 1){
+            // Verify holder
+            uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerIds[i], identity);
+            if (amountToTransfer == 0) continue;
+
+            // Verify that holding time expired
+            require(holdingStorage.getOfferStartTime(offerIds[i]) +
+                holdingStorage.getOfferHoldingTimeInMinutes(offerIds[i]).mul(60) < block.timestamp,
+                "Holding time not yet expired!");
+
+            // Release tokens staked by holder and transfer tokens from data creator to holder
+            Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
+            Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerIds[i]), identity, amountToTransfer);
+        }
     }
     
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
