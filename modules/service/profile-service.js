@@ -32,23 +32,6 @@ class ProfileService {
 
         if (identityExists && await this.isProfileCreated()) {
             this.logger.notify(`Profile has already been created for node ${this.config.identity}`);
-            let walletToCheck;
-            if (this.config.management_wallet) {
-                walletToCheck = this.config.management_wallet;
-            } else {
-                this.logger.important('Management wallet not set. Please set one.');
-                walletToCheck = this.config.node_wallet;
-            }
-
-            // Check financial wallet permissions.
-            const permissions = await this.blockchain.getWalletPurposes(
-                this.config.erc725Identity,
-                walletToCheck,
-            );
-
-            if (!permissions.includes('1')) {
-                throw Error(`Management wallet ${walletToCheck} doesn't have enough permissions.`);
-            }
             return;
         }
 
