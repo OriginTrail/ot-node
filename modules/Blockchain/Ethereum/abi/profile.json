@@ -294,6 +294,11 @@
     "inputs": [
       {
         "indexed": false,
+        "name": "nodeId",
+        "type": "bytes20"
+      },
+      {
+        "indexed": false,
         "name": "oldIdentity",
         "type": "address"
       },
