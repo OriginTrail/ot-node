@@ -26,6 +26,8 @@ contract Holding is Ownable {
     event OfferCreated(bytes32 offerId, bytes32 dataSetId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
     event OfferFinalized(bytes32 offerId, address holder1, address holder2, address holder3);
 
+    event PaidOut(bytes32 offerId, address holder, uint256 amount);
+
     function createOffer(address identity, uint256 dataSetId,
     uint256 dataRootHash, uint256 redLitigationHash, uint256 greenLitigationHash, uint256 blueLitigationHash, uint256 dcNodeId,
     uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
@@ -190,6 +192,7 @@ contract Holding is Ownable {
         Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
 
         holdingStorage.setHolderPaidAmount(bytes32(offerId), identity, amountToTransfer);
+        emit PaidOut(bytes32(offerId), identity, amountToTransfer);
     }
 
     function payOutMultiple(address identity, bytes32[] offerIds)
@@ -215,6 +218,7 @@ contract Holding is Ownable {
             Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerIds[i]), identity, amountToTransfer);
 
             holdingStorage.setHolderPaidAmount(bytes32(offerIds[i]), identity, amountToTransfer);
+            emit PaidOut(bytes32(offerIds[i]), identity, amountToTransfer);
         }
     }
     
