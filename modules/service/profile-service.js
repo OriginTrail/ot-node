@@ -182,7 +182,10 @@ class ProfileService {
         if (await this.blockchain.isErc725IdentityOld(this.config.erc725Identity)) {
             this.logger.important('Old profile detected. Upgrading to new one.');
             try {
-                const result = await this.blockchain.transferProfile(this.config.erc725Identity);
+                const result = await this.blockchain.transferProfile(
+                    this.config.erc725Identity,
+                    this.config.management_wallet,
+                );
                 const newErc725Identity =
                     Utilities.normalizeHex(result.logs[1].data.substr(
                         result.logs[1].data.length - 40,

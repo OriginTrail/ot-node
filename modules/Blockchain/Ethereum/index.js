@@ -1024,18 +1024,19 @@ class Ethereum {
     /**
      * Transfers identity to new address.
      * @param {string} - erc725identity
+     * @param {string} - managementWallet
      */
-    transferProfile(erc725identity) {
+    transferProfile(erc725identity, managementWallet) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.profileContractAddress,
         };
 
-        this.log.trace(`transferProfile (${erc725identity})`);
+        this.log.trace(`transferProfile (${erc725identity}, ${managementWallet})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'transferProfile',
-            [erc725identity], options,
+            [erc725identity, managementWallet], options,
         );
     }
 
