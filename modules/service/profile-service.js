@@ -187,8 +187,8 @@ class ProfileService {
                     this.config.management_wallet,
                 );
                 const newErc725Identity =
-                    Utilities.normalizeHex(result.logs[1].data.substr(
-                        result.logs[1].data.length - 40,
+                    Utilities.normalizeHex(result.logs[result.logs.length - 1].data.substr(
+                        result.logs[result.logs.length - 1].data.length - 40,
                         40,
                     ));
 
