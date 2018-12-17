@@ -29,7 +29,7 @@ contract Profile {
 
     event ProfileCreated(address profile, uint256 initialBalance);
     event IdentityCreated(address profile, address newIdentity);
-    event IdentityTransferred(address oldIdentity, address newIdentity);
+    event IdentityTransferred(bytes20 nodeId, address oldIdentity, address newIdentity);
     event TokenDeposit(address profile, uint256 amount);
 
     event TokensDeposited(address profile, uint256 amountDeposited, uint256 newBalance);
@@ -101,7 +101,7 @@ contract Profile {
         profileStorage.setNodeId(oldIdentity, bytes32(0));
         profileStorage.setReputation(oldIdentity, 0);
 
-        emit IdentityTransferred(oldIdentity, newIdentity);
+        emit IdentityTransferred(bytes20(profileStorage.getNodeId(address(newIdentity))), oldIdentity, address(newIdentity));
         return address(newIdentity);
     }
 
