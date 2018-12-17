@@ -77,10 +77,11 @@ contract Profile {
         }
     }
 
-    function transferProfile(address oldIdentity) public returns(address){
+    function transferProfile(address oldIdentity, address managementWallet) public returns(address){
         require(ERC725(oldIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
+        require(managementWallet != address(0));
 
-        Identity newIdentity = new Identity(msg.sender, msg.sender);
+        Identity newIdentity = new Identity(msg.sender, managementWallet);
         emit IdentityCreated(msg.sender, address(newIdentity));
 
         ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
