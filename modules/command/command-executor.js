@@ -50,7 +50,7 @@ class CommandExecutor {
             } catch (e) {
                 this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
                 this.notifyError(e);
-                process.exit(-1);
+                process.exit(1);
             }
 
             callback();

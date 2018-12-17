@@ -177,31 +177,38 @@ contract HoldingStorage {
     }
     function setHolderStakedAmount (bytes32 offerId, address identity, uint256 stakedAmount)
     public onlyContracts {
+        require(identity!=address(0));
         holder[offerId][identity].stakedAmount = stakedAmount;
     }
     function setHolderPaidAmount (bytes32 offerId, address identity, uint256 paidAmount)
     public onlyContracts {
+        require(identity!=address(0));
         holder[offerId][identity].paidAmount = paidAmount;
     }
     function setHolderLitigationEncryptionType(bytes32 offerId, address identity, uint256 litigationEncryptionType)
     public onlyContracts {
+        require(identity!=address(0));
         holder[offerId][identity].litigationEncryptionType = litigationEncryptionType;
     }
 
     function getHolderStakedAmount (bytes32 offerId, address identity)
     public view returns(uint256 stakedAmount) {
+        require(identity!=address(0));
         return holder[offerId][identity].stakedAmount;
     }
     function getHolderPaidAmount (bytes32 offerId, address identity)
     public view returns(uint256 paidAmount) {
+        require(identity!=address(0));
         return holder[offerId][identity].paidAmount;
     }
     function getHolderLitigationEncryptionType(bytes32 offerId, address identity)
     public view returns(uint256 litigationEncryptionType) {
+        require(identity!=address(0));
         return holder[offerId][identity].litigationEncryptionType;
     }
     function setHubAddress(address newHubAddress)
     public onlyContracts {
+        require(newHubAddress!=address(0));
         hub = Hub(newHubAddress);
     }
 }
