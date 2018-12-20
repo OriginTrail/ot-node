@@ -15,6 +15,7 @@ keys
 data
 modules/blockchain_interface/ethereum/build/*
 modules/Blockchain/Ethereum/test/development.test.js
+modules/Blockchain/Ethereum/approval-identities.json
 modules/Blockchain/Ethereum/build/
 hidden_service
 !*.gitkeep

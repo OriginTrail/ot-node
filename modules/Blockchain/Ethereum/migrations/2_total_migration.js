@@ -1,4 +1,5 @@
 var BN = require('bn.js');
+const fs = require('fs');
 
 var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 
@@ -47,7 +48,9 @@ module.exports = async (deployer, network, accounts) => {
     var temp;
     var i;
 
-    var nasFajl;
+    var filepath = '';
+    var file;
+    var data;
 
     console.log('Ulazim u switch');
     switch (network) {
@@ -202,14 +205,24 @@ module.exports = async (deployer, network, accounts) => {
         temp = await approval.owner.call();
         multiApproval = await MultiApproval.at(temp);
 
-        indexes = [];
-
-        nodeIds = [];
+        nodeIds = [
+            '0733c8b65e56109c0fd9a007b8912b2f2481acf0',
+            'af73c840164cc940f0bf5f640106604ca0d1129f',
+            'e6695c3da59b7e8aea12182667729983889789fe',
+            'a3e74f3c901eebc3d355d34051ed6334379c8d84',
+            '956aa09e11e20cb5652caa6c8116d5b61928b0d8',
+        ];
         for (i = 0; i < nodeIds.length; i += 1) {
             nodeIds[i] = `0x${nodeIds[i]}`;
+            indexes[i] = new BN(0);
         }
-
-        identities = [];
+        identities = [
+            '0x92493435B12FAe94ffbb42F53a5DA951c71aAA2B',
+            '0xec09437Af40519164F1F611cB313B4A1C02B4B8b',
+            '0x3dee184cA5755C7ddDDC832a926B7C8d6C293c68',
+            '0x5e39225b745342f49251Eac493ab82AecDE96035',
+            '0xdaF4E22177cf2f62C0258417b4A7404598b13149',
+        ];
 
         console.log('Adding nodeID and ERC725 approval...');
         temp = await multiApproval.approveManyNodeIDs(identities, nodeIds, indexes);
@@ -226,13 +239,20 @@ module.exports = async (deployer, network, accounts) => {
         temp = await approval.owner.call();
         multiApproval = await MultiApproval.at(temp);
 
-        indexes = [];
-        nodeIds = [];
-        oldIdentities = [];
-        identities = [];
+        filepath = '../approval-identities.json';
+        file = fs.readFileSync(filepath, 'utf8');
+        data = JSON.parse(file);
+
+        for (i = 0; i < data.length; i += 1) {
+            indexes[i] = new BN(0);
+            nodeIds[i] = data[i].nodeId;
+            identities[i] = data[i].newIdentity;
+            oldIdentities[i] = data[i].oldIdentity;
+        }
 
         console.log(nodeIds.length);
         console.log('Transfering ERC725 and adding nodeID approval...');
+        await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes);
         break;
     case 'rinkeby':
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
