@@ -51,7 +51,7 @@ contract('Profile contract testing', async (accounts) => {
         var identities = [];
         for (var i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            identities[i] = await Identity.new(accounts[i], { from: accounts[i] });
+            identities[i] = await Identity.new(accounts[i], accounts[i], { from: accounts[i] });
         }
 
         var initialBalances = [];
@@ -73,6 +73,7 @@ contract('Profile contract testing', async (accounts) => {
         promises = [];
         for (i = 0; i < accounts.length; i += 1) {
             promises[i] = profile.createProfile(
+                accounts[i],
                 nodeId,
                 amountToDeposit,
                 true,
@@ -154,6 +155,7 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             const res = await profile.createProfile(
+                accounts[i],
                 nodeId,
                 amountToDeposit,
                 false,
@@ -309,7 +311,7 @@ contract('Profile contract testing', async (accounts) => {
         await hub.setHoldingAddress(accounts[0]);
 
         const amountToReserve = new BN(100);
-        await profile.reserveTokens(
+        await profileStorage.increaseStakesReserved(
             identities[0],
             identities[1],
             identities[2],

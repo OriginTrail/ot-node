@@ -99,6 +99,7 @@ class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger || console;
         this.server = Ganache.server({
+            gasLimit: 7000000,
             accounts:
                 accountPrivateKeys.map(account => ({
                     secretKey: `0x${account}`,
@@ -302,7 +303,7 @@ class LocalBlockchain {
                 data: contractData,
                 arguments: constructorArguments,
             })
-                .send({ from: deployerAddress, gas: 6000000 })
+                .send({ from: deployerAddress, gas: 6900000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
                 })
@@ -362,10 +363,10 @@ class LocalBlockchain {
         return this.web3.eth.getBalance(wallet);
     }
 
-    async createIdentity(wallet, walletKey) {
+    async createIdentity(wallet, walletKey, managementWallet) {
         const [, identityInstance] = await this.deployContract(
             this.web3, this.identityContract, this.identityContractData,
-            [wallet], wallet,
+            [wallet, managementWallet], wallet,
         );
         return identityInstance;
     }

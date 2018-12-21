@@ -10,7 +10,8 @@ import {ERC20} from './TracToken.sol';
 contract Profile {
     using SafeMath for uint256;
     Hub public hub;
-    ProfileStorage public profileStorage;
+
+    uint256 public version = 100;
 
     uint256 public minimalStake = 10**21;
     uint256 public withdrawalTime = 5 minutes;
@@ -18,7 +19,6 @@ contract Profile {
     constructor(address hubAddress) public {
         require(hubAddress != address(0));
         hub = Hub(hubAddress);
-        profileStorage = ProfileStorage(hub.profileStorageAddress());
     }
 
     modifier onlyHolding(){
@@ -26,58 +26,90 @@ contract Profile {
         "Function can only be called by Holding contract!");
         _;
     }
-    
+
     event ProfileCreated(address profile, uint256 initialBalance);
     event IdentityCreated(address profile, address newIdentity);
+    event IdentityTransferred(bytes20 nodeId, address oldIdentity, address newIdentity);
     event TokenDeposit(address profile, uint256 amount);
 
     event TokensDeposited(address profile, uint256 amountDeposited, uint256 newBalance);
     event TokensReserved(address profile, uint256 amountReserved);
-    
+
     event WithdrawalInitiated(address profile, uint256 amount, uint256 withdrawalDelayInSeconds);
     event TokenWithdrawalCancelled(address profile);
     event TokensWithdrawn(address profile, uint256 amountWithdrawn, uint256 newBalance);
 
     event TokensReleased(address profile, uint256 amount);
     event TokensTransferred(address sender, address receiver, uint256 amount);
-    
-    function createProfile(bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
+
+    function createProfile(address managementWallet, bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
+        require(managementWallet!=address(0));
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= initialBalance, "Sender allowance must be equal to or higher than initial balance");
         require(tokenContract.balanceOf(msg.sender) >= initialBalance, "Sender balance must be equal to or higher than initial balance!");
         require(uint256(profileNodeId) != 0, "Cannot create a profile without a nodeId submitted");
 
-        tokenContract.transferFrom(msg.sender, address(profileStorage), initialBalance);
+        tokenContract.transferFrom(msg.sender, hub.profileStorageAddress(), initialBalance);
 
         if(!senderHas725) {
-            Identity newIdentity = new Identity(msg.sender);
+            Identity newIdentity = new Identity(msg.sender, managementWallet);
             emit IdentityCreated(msg.sender, address(newIdentity));
 
-            profileStorage.setStake(address(newIdentity), initialBalance);
-            profileStorage.setNodeId(address(newIdentity), profileNodeId);
+            ProfileStorage(hub.profileStorageAddress()).setStake(address(newIdentity), initialBalance);
+            ProfileStorage(hub.profileStorageAddress()).setNodeId(address(newIdentity), profileNodeId);
 
             emit ProfileCreated(address(newIdentity), initialBalance);
         }
         else {
             // Verify sender
-            require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+            require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
 
-            profileStorage.setStake(identity, initialBalance);
-            profileStorage.setNodeId(identity, profileNodeId);
+            ProfileStorage(hub.profileStorageAddress()).setStake(identity, initialBalance);
+            ProfileStorage(hub.profileStorageAddress()).setNodeId(identity, profileNodeId);
 
             emit ProfileCreated(identity, initialBalance);
         }
 
         if(initialBalance > minimalStake) {
-            uint256 activeNodes = profileStorage.activeNodes();
+            uint256 activeNodes = ProfileStorage(hub.profileStorageAddress()).activeNodes();
             activeNodes += 1;
-            profileStorage.setActiveNodes(activeNodes);
+            ProfileStorage(hub.profileStorageAddress()).setActiveNodes(activeNodes);
         }
+    }
+
+    function transferProfile(address oldIdentity, address managementWallet) public returns(address){
+        require(ERC725(oldIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
+        require(managementWallet != address(0));
+
+        Identity newIdentity = new Identity(msg.sender, managementWallet);
+        emit IdentityCreated(msg.sender, address(newIdentity));
+
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+
+        profileStorage.setStake(address(newIdentity), profileStorage.getStake(oldIdentity));
+        profileStorage.setStakeReserved(address(newIdentity), profileStorage.getStakeReserved(oldIdentity));
+        profileStorage.setNodeId(address(newIdentity), profileStorage.getNodeId(oldIdentity));
+        profileStorage.setReputation(address(newIdentity), profileStorage.getReputation(oldIdentity));
+
+        if(profileStorage.getWithdrawalPending(oldIdentity)){
+            emit TokenWithdrawalCancelled(oldIdentity);
+            profileStorage.setWithdrawalPending(oldIdentity, false);
+        }
+
+        profileStorage.setStake(oldIdentity, 0);
+        profileStorage.setStakeReserved(oldIdentity, 0);
+        profileStorage.setNodeId(oldIdentity, bytes32(0));
+        profileStorage.setReputation(oldIdentity, 0);
+
+        emit IdentityTransferred(bytes20(profileStorage.getNodeId(address(newIdentity))), oldIdentity, address(newIdentity));
+        return address(newIdentity);
     }
 
     function depositTokens(address identity, uint256 amount) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
+
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= amount, "Sender allowance must be equal to or higher than chosen amount");
@@ -92,7 +124,9 @@ contract Profile {
 
     function startTokenWithdrawal(address identity, uint256 amount) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
+
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
         require(profileStorage.getWithdrawalPending(identity) == false, "Withrdrawal process already pending!");
 
@@ -114,7 +148,9 @@ contract Profile {
 
     function withdrawTokens(address identity) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
+
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
         require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
         require(profileStorage.getWithdrawalTimestamp(identity) < block.timestamp, "Cannot withdraw tokens before withdrawal timestamp!");
@@ -143,62 +179,14 @@ contract Profile {
             "Sender does not have action permission for submitted identity");
         require(uint256(newNodeId) != 0, "Cannot set a blank nodeId");
 
-        profileStorage.setNodeId(identity, newNodeId);
-    }
-
-    function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
-    public onlyHolding {
-        if(profileStorage.getWithdrawalPending(payer)) {
-            profileStorage.setWithdrawalPending(payer,false);
-            emit TokenWithdrawalCancelled(payer);
-        }
-        if(profileStorage.getWithdrawalPending(identity1)) {
-            profileStorage.setWithdrawalPending(identity1,false);
-            emit TokenWithdrawalCancelled(identity1);
-        }
-        if(profileStorage.getWithdrawalPending(identity2)) {
-            profileStorage.setWithdrawalPending(identity2,false);
-            emit TokenWithdrawalCancelled(identity2);
-        }
-        if(profileStorage.getWithdrawalPending(identity3)) {
-            profileStorage.setWithdrawalPending(identity3,false);
-            emit TokenWithdrawalCancelled(identity3);
-        }
-
-        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
-            "Data creator does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)),
-            "First profile does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)),
-            "Second profile does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)),
-            "Third profile does not have enough stake to take new jobs!");
-        
-        require(profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)) >= amount.mul(3), 
-            "Data creator does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)) >= amount, 
-            "First profile does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)) >= amount, 
-            "Second profile does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount, 
-            "Third profile does not have enough stake for reserving!");
-
-
-        profileStorage.increaseStakesReserved(
-            payer,
-            identity1,
-            identity2,
-            identity3,
-            amount
-        );
-        emit TokensReserved(payer, amount.mul(3));
-        emit TokensReserved(identity1, amount);
-        emit TokensReserved(identity2, amount);
-        emit TokensReserved(identity3, amount);
+        ProfileStorage(hub.profileStorageAddress()).setNodeId(identity, newNodeId);
     }
 
     function releaseTokens(address profile, uint256 amount)
     public onlyHolding {
+        require(profile!=address(0));
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+
         require(profileStorage.getStakeReserved(profile) >= amount, "Cannot release more tokens than there are reserved");
 
         profileStorage.setStakeReserved(profile, profileStorage.getStakeReserved(profile).sub(amount));
@@ -208,6 +196,9 @@ contract Profile {
     
     function transferTokens(address sender, address receiver, uint256 amount)
     public onlyHolding {
+        require(sender!=address(0) && receiver!=address(0));
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+
         require(profileStorage.getStake(sender) >= amount, "Sender does not have enough tokens to transfer!");
         require(profileStorage.getStakeReserved(sender) >= amount, "Sender does not have enough tokens reserved to transfer!");
 
