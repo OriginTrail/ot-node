@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "027424ad-99d4-49c0-b091-ea2006d5624c",
+		"_postman_id": "9157b7b4-d4f4-4620-8dbd-3168d51af754",
 		"name": "OriginTrail",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -406,60 +406,6 @@
 					]
 				},
 				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-local-import-import-id-get"
-			},
-			"response": []
-		},
-		{
-			"name": "/api/deposit",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"trac_amount\": 30\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/deposit",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"deposit"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/withdraw",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{ \n\t\"trac_amount\": 20\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/withdraw",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"withdraw"
-					]
-				}
 			},
 			"response": []
 		},
