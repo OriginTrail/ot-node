@@ -13,6 +13,7 @@
    },
    "traverse_nat_enabled":false,
    "deposit_on_demand":true,
+   "initial_deposit_amount": "10000000000000000000000",
    "local_network_only":true,
    "blockchain":{  
       "blockchain_title":"Ethereum",
