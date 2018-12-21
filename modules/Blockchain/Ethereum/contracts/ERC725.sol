@@ -14,6 +14,8 @@ contract ERC725 {
         bytes32 key;
     }
 
+    uint256 public otVersion;
+
     // Events
     event KeyAdded(bytes32 indexed key, uint256[] purposes, uint256 indexed keyType);
     event KeyRemoved(bytes32 indexed key, uint256[] purposes, uint256 indexed keyType);
