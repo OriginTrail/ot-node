@@ -58,6 +58,7 @@ class DhOfferFinalizedCommand extends Command {
                             {
                                 name: 'dhPayOutCommand',
                                 delay: scheduledTime,
+                                retries: 3,
                                 transactional: false,
                                 data: {
                                     offerId,

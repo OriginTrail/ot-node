@@ -12,17 +12,12 @@ contract Holding is Ownable {
     using SafeMath for uint256;
 
     Hub public hub;
-    HoldingStorage public holdingStorage;
-    ProfileStorage public profileStorage;
-    Profile public profile;
 
     uint256 public difficultyOverride;
     
     constructor(address hubAddress) public{
+        require(hubAddress!=address(0));
         hub = Hub(hubAddress);
-        holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-        profileStorage = ProfileStorage(hub.profileStorageAddress());
-        profile = Profile(hub.profileAddress());
         difficultyOverride = 0;
     }
 
@@ -30,6 +25,8 @@ contract Holding is Ownable {
     event OfferTask(bytes32 dataSetId, bytes32 dcNodeId, bytes32 offerId, bytes32 task);
     event OfferCreated(bytes32 offerId, bytes32 dataSetId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
     event OfferFinalized(bytes32 offerId, address holder1, address holder2, address holder3);
+
+    event PaidOut(bytes32 offerId, address holder, uint256 amount);
 
     function createOffer(address identity, uint256 dataSetId,
     uint256 dataRootHash, uint256 redLitigationHash, uint256 greenLitigationHash, uint256 blueLitigationHash, uint256 dcNodeId,
@@ -48,10 +45,10 @@ contract Holding is Ownable {
         require(litigationIntervalInMinutes > 0, "Litigation time cannot be zero");
 
         // Writing data root hash if it wasn't previously set
-        if(holdingStorage.fingerprint(bytes32(dataSetId)) == bytes32(0)){
-            holdingStorage.setFingerprint(bytes32(dataSetId), bytes32(dataRootHash));
+        if(HoldingStorage(hub.holdingStorageAddress()).fingerprint(bytes32(dataSetId)) == bytes32(0)){
+            HoldingStorage(hub.holdingStorageAddress()).setFingerprint(bytes32(dataSetId), bytes32(dataRootHash));
         } else {
-            require(bytes32(dataRootHash) == holdingStorage.fingerprint(bytes32(dataSetId)),
+            require(bytes32(dataRootHash) == HoldingStorage(hub.holdingStorageAddress()).fingerprint(bytes32(dataSetId)),
                 "Cannot create offer with different data root hash!");
         }
 
@@ -59,20 +56,19 @@ contract Holding is Ownable {
         // We consider a pair of dataSet and identity unique within one block, hence the formula for offerId
         bytes32 offerId = keccak256(abi.encodePacked(bytes32(dataSetId), identity, blockhash(block.number - 1)));
 
-
         //We calculate the task for the data creator to solve
             //Calculating task difficulty
         uint256 difficulty;
         if(difficultyOverride != 0) difficulty = difficultyOverride;
         else {
-            if(logs2(profileStorage.activeNodes()) <= 4) difficulty = 1;
+            if(logs2(ProfileStorage(hub.profileStorageAddress()).activeNodes()) <= 4) difficulty = 1;
             else {
-                difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
+                difficulty = 4 + (((logs2(ProfileStorage(hub.profileStorageAddress()).activeNodes()) - 4) * 10000) / 13219);
             }
         }
         
         // Writing variables into storage
-        holdingStorage.setOfferParameters(
+        HoldingStorage(hub.holdingStorageAddress()).setOfferParameters(
             offerId,
             identity,
             bytes32(dataSetId),
@@ -82,7 +78,7 @@ contract Holding is Ownable {
             difficulty
         );
 
-        holdingStorage.setOfferLitigationHashes(
+        HoldingStorage(hub.holdingStorageAddress()).setOfferLitigationHashes(
             offerId,
             bytes32(redLitigationHash),
             bytes32(greenLitigationHash),
@@ -97,6 +93,8 @@ contract Holding is Ownable {
         bytes confirmation1, bytes confirmation2, bytes confirmation3,
         uint8[] encryptionType, address[] holderIdentity) 
     public {
+        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
+
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
         require(identity == holdingStorage.getOfferCreator(bytes32(offerId)), "Offer can only be finalized by its creator!");
@@ -111,7 +109,7 @@ contract Holding is Ownable {
         == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
 
         // Secure funds from all parties
-        profile.reserveTokens(
+        reserveTokens(
             identity,
             holderIdentity[0],
             holderIdentity[1],
@@ -125,11 +123,60 @@ contract Holding is Ownable {
         emit OfferFinalized(bytes32(offerId), holderIdentity[0], holderIdentity[1], holderIdentity[2]);
     }
 
+    function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
+    internal {
+        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+
+        if(profileStorage.getWithdrawalPending(payer) && profileStorage.getWithdrawalAmount(payer).add(amount.mul(3)) > profileStorage.getStake(payer) - profileStorage.getStakeReserved(payer)) {
+            profileStorage.setWithdrawalPending(payer,false);
+        }
+        if(profileStorage.getWithdrawalPending(identity1) && profileStorage.getWithdrawalAmount(identity1).add(amount) > profileStorage.getStake(identity1) - profileStorage.getStakeReserved(identity1)) {
+            profileStorage.setWithdrawalPending(identity1,false);
+        }
+        if(profileStorage.getWithdrawalPending(identity2) && profileStorage.getWithdrawalAmount(identity2).add(amount) > profileStorage.getStake(identity2) - profileStorage.getStakeReserved(identity2)) {
+            profileStorage.setWithdrawalPending(identity2,false);
+        }
+        if(profileStorage.getWithdrawalPending(identity3) && profileStorage.getWithdrawalAmount(identity3).add(amount) > profileStorage.getStake(identity3) - profileStorage.getStakeReserved(identity3)) {
+            profileStorage.setWithdrawalPending(identity3,false);
+        }
+
+        uint256 minimalStake = Profile(hub.profileAddress()).minimalStake();
+
+        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
+            "Data creator does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)),
+            "First profile does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)),
+            "Second profile does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)),
+            "Third profile does not have enough stake to take new jobs!");
+
+        require(profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)) >= amount.mul(3),
+            "Data creator does not have enough stake for reserving!");
+        require(profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)) >= amount,
+            "First profile does not have enough stake for reserving!");
+        require(profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)) >= amount,
+            "Second profile does not have enough stake for reserving!");
+        require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount,
+            "Third profile does not have enough stake for reserving!");
+
+
+        profileStorage.increaseStakesReserved(
+            payer,
+            identity1,
+            identity2,
+            identity3,
+            amount
+        );
+    }
+
     function payOut(address identity, uint256 offerId)
     public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
         require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
+
+        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
 
         // Verify holder
         uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(bytes32(offerId), identity);
@@ -143,6 +190,36 @@ contract Holding is Ownable {
         // Release tokens staked by holder and transfer tokens from data creator to holder
         Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
         Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
+
+        holdingStorage.setHolderPaidAmount(bytes32(offerId), identity, amountToTransfer);
+        emit PaidOut(bytes32(offerId), identity, amountToTransfer);
+    }
+
+    function payOutMultiple(address identity, bytes32[] offerIds)
+    public {
+        require(identity != address(0), "Identity cannot be zero!");
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
+        require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
+
+        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
+
+        for (uint i = 0; i < offerIds.length; i = i + 1){
+            // Verify holder
+            uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerIds[i], identity);
+            if (amountToTransfer == 0) continue;
+
+            // Verify that holding time expired
+            require(holdingStorage.getOfferStartTime(offerIds[i]) +
+                holdingStorage.getOfferHoldingTimeInMinutes(offerIds[i]).mul(60) < block.timestamp,
+                "Holding time not yet expired!");
+
+            // Release tokens staked by holder and transfer tokens from data creator to holder
+            Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
+            Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerIds[i]), identity, amountToTransfer);
+
+            holdingStorage.setHolderPaidAmount(bytes32(offerIds[i]), identity, amountToTransfer);
+            emit PaidOut(bytes32(offerIds[i]), identity, amountToTransfer);
+        }
     }
     
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
