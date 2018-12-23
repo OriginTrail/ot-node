@@ -755,3 +755,25 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
         'network', 'is_bootstrap',
     ]);
 });
+
+Given(/^selected DHes should be payed out after holding times is up*$/, { timeout: 180000 }, async function () {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const myPromises = [];
+
+    this.state.nodes.slice(1).forEach((node) => {
+        myPromises.push(new Promise((accept) => {
+            if (node.state.takenBids.length === 1) {
+                node.once('dh-pay-out-finalized', async () => {
+                    const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
+                    expect(Number(myBalance.profile.staked) - Number(node.options.nodeConfiguration.initial_deposit_amount)).to.be.closeTo(Number(node.options.nodeConfiguration.dc_token_amount_per_holder), 1000000);
+                    accept();
+                });
+            } else {
+                accept();
+            }
+        }));
+    });
+
+    return Promise.all(myPromises);
+});
