@@ -481,7 +481,7 @@ async function apiBalance(nodeRpcUrl, humanReadable) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/balance?data_set_id=${humanReadable}`,
+                uri: `${nodeRpcUrl}/api/balance?humanReadable=${humanReadable}`,
                 json: true,
             },
             (err, res, body) => {

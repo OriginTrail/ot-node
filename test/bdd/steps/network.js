@@ -761,8 +761,10 @@ Given(/^selected DHes should be payed out after holding times is up*$/, { timeou
 
     const myPromises = [];
 
+    // slice(1) to exlude DC node
     this.state.nodes.slice(1).forEach((node) => {
         myPromises.push(new Promise((accept) => {
+            // node.state.takenBids gets populated only for choosen DH nodes
             if (node.state.takenBids.length === 1) {
                 node.once('dh-pay-out-finalized', async () => {
                     const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
