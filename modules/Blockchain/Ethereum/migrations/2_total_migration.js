@@ -52,7 +52,6 @@ module.exports = async (deployer, network, accounts) => {
     var file;
     var data;
 
-    console.log('Ulazim u switch');
     switch (network) {
     case 'test':
         await deployer.deploy(TestingUtilities);
@@ -169,28 +168,14 @@ module.exports = async (deployer, network, accounts) => {
     case 'update':
         hub = await Hub.at('0xa287d7134fb40bef071c932286bd2cd01efccf30');
 
-        token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
-        await hub.setTokenAddress(token.address);
-
         profile = await deployer.deploy(Profile, hub.address, { gas: 6500000, from: accounts[0] });
         console.log('Adding profile address to hub...');
         await hub.setProfileAddress(profile.address);
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
-        console.log('Transfering hub ownership...');
-        await hub.transferOwnership('0x599C59081d9B673BBDdAfbc933B669aA84eA3eE1');
-
-        for (let i = 0; i < 10; i += 1) {
-            amounts.push(amountToMint);
-            recepients.push(accounts[i]);
-        }
-        await token.mintMany(recepients, amounts, { from: accounts[0] });
-        await token.finishMinting({ from: accounts[0] });
 
         console.log('\n\n \t Contract adressess on mainnet:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
-        console.log(`\t Approval contract address: \t\t${approval.address}`);
-        console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         break;
@@ -239,20 +224,23 @@ module.exports = async (deployer, network, accounts) => {
         temp = await approval.owner.call();
         multiApproval = await MultiApproval.at(temp);
 
-        filepath = '../approval-identities.json';
+        filepath = './approval-identities.json';
         file = fs.readFileSync(filepath, 'utf8');
         data = JSON.parse(file);
 
         for (i = 0; i < data.length; i += 1) {
             indexes[i] = new BN(0);
             nodeIds[i] = data[i].nodeId;
+            if (nodeIds[i].length === 40) nodeIds[i] = `0x${nodeIds[i]}`;
             identities[i] = data[i].newIdentity;
             oldIdentities[i] = data[i].oldIdentity;
+
+            console.log(`Node ${i + 1}\t id:${nodeIds[i]}\tOld identity:${identities[i]}\tNew identity:${identities[i]}`);
         }
 
-        console.log(nodeIds.length);
+        console.log(`Number of entries: ${nodeIds.length}`);
         console.log('Transfering ERC725 and adding nodeID approval...');
-        await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes);
+        // await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes);
         break;
     case 'rinkeby':
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
