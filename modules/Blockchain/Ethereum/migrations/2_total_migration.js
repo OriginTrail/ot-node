@@ -16,7 +16,6 @@ var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line
 var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
 var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-var OfferFinsiher = artifacts.require('OfferFinsiher'); // eslint-disable-line no-undef
 
 
 const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
