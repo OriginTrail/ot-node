@@ -5,32 +5,29 @@ const models = require('../../../models/index');
  * Challenge holders for active offers
  */
 class DCChallengesCommand extends Command {
+    constructor(ctx) {
+        super(ctx);
+        this.logger = ctx.logger;
+        this.dcService = ctx.dcService;
+    }
+
     /**
      * Executes command and produces one or more events
      * @param command - Command object
      * @param [transaction] - Optional database transaction
      */
     async execute(command, transaction) {
-        const litigationCandidates = await DCChallengesCommand._getLitigationCandidates();
-        if (litigationCandidates.length === 0) {
-            return Command.repeat();
+        try {
+            const litigationCandidates = await DCChallengesCommand._getLitigationCandidates();
+            if (litigationCandidates.length === 0) {
+                return Command.repeat();
+            }
+
+            await this.dcService.handleChallenges(litigationCandidates);
+        } catch (e) {
+            this.logger.error(`Failed to process ChallengesCommand. ${e}`);
         }
-
-        const challengeCommands = litigationCandidates.map(candidate => ({
-            name: 'dcChallengeCommand',
-            delay: 0,
-            data: {
-                dhId: candidate.dh_id,
-                dhIdentity: candidate.dh_identity,
-                offerId: candidate.offer_id,
-                litigationPrivateKey: candidate.litigation_private_key,
-            },
-            transactional: false,
-        }));
-
-        return {
-            commands: challengeCommands.concat([this.default()]),
-        };
+        return Command.repeat();
     }
 
     /**

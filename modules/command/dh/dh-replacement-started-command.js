@@ -17,31 +17,36 @@ class DHReplacementStartedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const event = await models.events.findOne({
-            limit: 1,
-            where: {
-                event: 'ReplacementStarted',
-                finished: 0,
-            },
-        });
+        try {
+            const event = await models.events.findOne({
+                limit: 1,
+                where: {
+                    event: 'ReplacementStarted',
+                    finished: 0,
+                },
+            });
 
-        if (event) {
             if (event) {
-                event.finished = true;
-                await event.save({ fields: ['finished'] });
+                if (event) {
+                    event.finished = true;
+                    await event.save({ fields: ['finished'] });
 
-                const {
-                    offerId,
-                    challengerIdentity,
-                    litigationRootHash,
-                } = JSON.parse(event.data);
+                    const {
+                        offerId,
+                        challengerIdentity,
+                        litigationRootHash,
+                    } = JSON.parse(event.data);
 
-                await this.dhService.handleReplacement(
-                    offerId, challengerIdentity,
-                    litigationRootHash,
-                );
+                    await this.dhService.handleReplacement(
+                        offerId, challengerIdentity,
+                        litigationRootHash,
+                    );
+                }
             }
+        } catch (e) {
+            this.logger.error(`Failed to process ReplacementStartedCommand command. ${e}`);
         }
+
         return Command.repeat();
     }
 

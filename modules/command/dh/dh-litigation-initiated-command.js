@@ -18,31 +18,36 @@ class DHLitigationInitiatedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const events = await Models.events.findAll({
-            where: {
-                event: 'LitigationInitiated',
-                finished: 0,
-            },
-        });
-        if (events) {
-            const event = events.find((e) => {
-                const {
-                    holderIdentity,
-                } = JSON.parse(e.data);
-                return Utilities.compareHexStrings(holderIdentity, this.config.erc725Identity);
+        try {
+            const events = await Models.events.findAll({
+                where: {
+                    event: 'LitigationInitiated',
+                    finished: 0,
+                },
             });
-            if (event) {
-                event.finished = true;
-                await event.save({ fields: ['finished'] });
+            if (events) {
+                const event = events.find((e) => {
+                    const {
+                        holderIdentity,
+                    } = JSON.parse(e.data);
+                    return Utilities.compareHexStrings(holderIdentity, this.config.erc725Identity);
+                });
+                if (event) {
+                    event.finished = true;
+                    await event.save({ fields: ['finished'] });
 
-                const {
-                    offerId,
-                    requestedDataIndex,
-                } = JSON.parse(event.data);
+                    const {
+                        offerId,
+                        requestedDataIndex,
+                    } = JSON.parse(event.data);
 
-                await this.dhService.handleLitigation(offerId, requestedDataIndex);
+                    await this.dhService.handleLitigation(offerId, requestedDataIndex);
+                }
             }
+        } catch (e) {
+            this.logger.error(`Failed to process LitigationInitiatedCommand. ${e}`);
         }
+
         return Command.repeat();
     }
 
