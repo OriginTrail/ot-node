@@ -872,6 +872,18 @@ class EventEmitter {
         });
 
         // async
+        this._on('kad-replacement-replication-finished', async (request) => {
+            const dhNodeId = transport.extractSenderID(request);
+            const replicationFinishedMessage = transport.extractMessage(request);
+            const { wallet } = transport.extractSenderInfo(request);
+            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+            await dcService.verifyDHReplication(
+                offerId, messageSignature,
+                dhNodeId, dhIdentity, wallet,
+            );
+        });
+
+        // async
         this._on('kad-challenge-request', async (request) => {
             try {
                 const message = transport.extractMessage(request);
