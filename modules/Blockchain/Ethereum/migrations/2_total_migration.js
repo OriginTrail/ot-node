@@ -230,7 +230,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
-        profile = await deployer.deploy(Profile, hub.address, { gas: 6000000, from: accounts[0] });
+        profile = await deployer.deploy(Profile, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
@@ -250,6 +250,7 @@ module.exports = async (deployer, network, accounts) => {
 
         break;
     case 'live':
+        /*
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
             .then((result) => {
                 hub = result;
@@ -289,6 +290,15 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
 
+        */
+
+        hub = await Hub.at('0xa287d7134fb40bef071c932286bd2cd01efccf30');
+        console.log(JSON.stringify(hub));
+        // profile = await deployer.deploy(
+        //     Profile,
+        //     hub.address,
+        //     { gas: 6000000, gasPrice: 8000000000 },
+        // );
         break;
     default:
         console.warn('Please use one of the following network identifiers: ganache, mock, test, or rinkeby');

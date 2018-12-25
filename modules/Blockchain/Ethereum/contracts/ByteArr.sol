@@ -24,6 +24,7 @@ library ByteArr {
 
         self[index] = self[self.length-1];
         delete self[self.length-1];
+        self.length = self.length - 1;
 
         return self;
     }
@@ -33,6 +34,7 @@ library ByteArr {
 
         self[index] = self[self.length-1];
         delete self[self.length-1];
+        self.length = self.length - 1;
 
         return self;
     }

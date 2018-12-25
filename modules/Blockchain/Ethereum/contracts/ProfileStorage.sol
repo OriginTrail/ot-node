@@ -13,6 +13,7 @@ contract ProfileStorage {
 
     function setHubAddress(address newHubAddress)
     public onlyContracts {
+        require(newHubAddress != address(0));
         hub = Hub(newHubAddress);
     }
     
@@ -105,6 +106,7 @@ contract ProfileStorage {
         address identity3,
         uint256 amount)
     public onlyContracts {
+        require(identity1!=address(0) && identity2!=address(0) && identity3!=address(0));
         profile[payer].stakeReserved += (amount * 3);
         profile[identity1].stakeReserved += amount;
         profile[identity2].stakeReserved += amount;
