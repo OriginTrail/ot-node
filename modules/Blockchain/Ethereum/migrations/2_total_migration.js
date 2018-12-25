@@ -172,6 +172,8 @@ module.exports = async (deployer, network, accounts) => {
         await hub.setProfileAddress(profile.address);
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
+        console.log('Adding holding address to hub...');
+        await hub.setHoldingAddress(holding.address);
 
         console.log('\n\n \t Contract adressess on mainnet:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
@@ -189,24 +191,12 @@ module.exports = async (deployer, network, accounts) => {
         temp = await approval.owner.call();
         multiApproval = await MultiApproval.at(temp);
 
-        nodeIds = [
-            '0733c8b65e56109c0fd9a007b8912b2f2481acf0',
-            'af73c840164cc940f0bf5f640106604ca0d1129f',
-            'e6695c3da59b7e8aea12182667729983889789fe',
-            'a3e74f3c901eebc3d355d34051ed6334379c8d84',
-            '956aa09e11e20cb5652caa6c8116d5b61928b0d8',
-        ];
+        nodeIds = [];
         for (i = 0; i < nodeIds.length; i += 1) {
             nodeIds[i] = `0x${nodeIds[i]}`;
             indexes[i] = new BN(0);
         }
-        identities = [
-            '0x92493435B12FAe94ffbb42F53a5DA951c71aAA2B',
-            '0xec09437Af40519164F1F611cB313B4A1C02B4B8b',
-            '0x3dee184cA5755C7ddDDC832a926B7C8d6C293c68',
-            '0x5e39225b745342f49251Eac493ab82AecDE96035',
-            '0xdaF4E22177cf2f62C0258417b4A7404598b13149',
-        ];
+        identities = [];
 
         console.log('Adding nodeID and ERC725 approval...');
         temp = await multiApproval.approveManyNodeIDs(identities, nodeIds, indexes);
