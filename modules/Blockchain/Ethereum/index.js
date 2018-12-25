@@ -4,6 +4,7 @@ const Utilities = require('../../Utilities');
 const Models = require('../../../models');
 const Op = require('sequelize/lib/operators');
 const uuidv4 = require('uuid/v4');
+const ethereumAbi = require('ethereumjs-abi');
 
 class Ethereum {
     /**
@@ -128,6 +129,10 @@ class Ethereum {
             this.litigationStorageContractAbi,
             this.litigationStorageContractAddress,
         );
+
+        // ERC725 identity contract data. Every user has own instance.
+        const erc725IdentityAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/erc725.json');
+        this.erc725IdentityContractAbi = JSON.parse(erc725IdentityAbiFile);
 
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
@@ -292,22 +297,30 @@ class Ethereum {
 
     /**
      * Creates node profile on the Bidding contract
+     * @param managementWallet - Management wallet
      * @param profileNodeId - Network node ID
      * @param initialBalance - Initial profile balance
      * @param isSender725 - Is sender ERC 725?
      * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @return {Promise<any>}
      */
-    createProfile(profileNodeId, initialBalance, isSender725, blockchainIdentity) {
+    createProfile(
+        managementWallet,
+        profileNodeId,
+        initialBalance,
+        isSender725,
+        blockchainIdentity,
+    ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.profileContractAddress,
         };
-        this.log.trace(`CreateProfile(${profileNodeId}, ${initialBalance}, ${isSender725})`);
+        this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'createProfile',
             [
+                managementWallet,
                 Utilities.normalizeHex(profileNodeId),
                 initialBalance, isSender725, blockchainIdentity,
             ], options,
@@ -1006,44 +1019,93 @@ class Ethereum {
     }
 
     /**
-     * Check balances
-     * @returns {Promise<boolean>}
-     */
-    async hasEnoughFunds() {
-        this.log.trace('Checking balances');
-        let enoughETH = true;
-        let enoughTRAC = true;
-        try {
-            const etherBalance = await Utilities.getBalanceInEthers(
-                this.web3,
-                this.config.wallet_address,
-            );
-            this.log.info(`Balance of ETH: ${etherBalance}`);
-            if (etherBalance < 0.01) {
-                enoughETH = false;
-            }
-
-            const tracBalance = await Utilities.getTracTokenBalance(
-                this.web3,
-                this.config.wallet_address,
-                this.tokenContractAddress,
-            );
-            this.log.info(`Balance of TRAC: ${tracBalance}`);
-            if (tracBalance < 100) {
-                enoughTRAC = false;
-            }
-        } catch (error) {
-            throw new Error(error);
-        }
-        return enoughETH && enoughTRAC;
-    }
-
-    /**
      * Token contract address getter
      * @return {any|*}
      */
     getTokenContractAddress() {
         return this.tokenContractAddress;
+    }
+
+    /**
+     * Returns purposes of the wallet.
+     * @param {string} - erc725Identity
+     * @param {string} - wallet
+     * @return {Promise<[]>}
+     */
+    getWalletPurposes(erc725Identity, wallet) {
+        const erc725IdentityContract = new this.web3.eth.Contract(
+            this.erc725IdentityContractAbi,
+            erc725Identity,
+        );
+
+        const key = ethereumAbi.soliditySHA3(['address'], [wallet]).toString('hex');
+        return erc725IdentityContract.methods.getKeyPurposes(Utilities.normalizeHex(key)).call();
+    }
+
+    /**
+     * Transfers identity to new address.
+     * @param {string} - erc725identity
+     * @param {string} - managementWallet
+     */
+    transferProfile(erc725identity, managementWallet) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.profileContractAddress,
+        };
+
+        this.log.trace(`transferProfile (${erc725identity}, ${managementWallet})`);
+        return this.transactions.queueTransaction(
+            this.profileContractAbi, 'transferProfile',
+            [erc725identity, managementWallet], options,
+        );
+    }
+
+    /**
+     * Returns true if ERC725 contract is older version.
+     * @param {string} - address of ERC 725 identity.
+     * @return {Promise<boolean>}
+     */
+    async isErc725IdentityOld(address) {
+        const erc725IdentityContract = new this.web3.eth.Contract(
+            this.erc725IdentityContractAbi,
+            address,
+        );
+
+        try {
+            await erc725IdentityContract.methods.otVersion().call();
+            return false;
+        } catch (error) {
+            if (error.toString().includes('Couldn\'t decode uint256 from ABI: 0x')) {
+                return true;
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        const gasLimit = offerIds.length * 200000;
+        const options = {
+            gasLimit,
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.holdingContractAddress,
+        };
+        this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
+        return this.transactions.queueTransaction(
+            this.holdingContractAbi, 'payOutMultiple',
+            [
+                blockchainIdentity,
+                offerIds,
+            ],
+            options,
+        );
     }
 
     /**

@@ -29,7 +29,7 @@ class DcOfferMiningCompletedCommand extends Command {
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (success) {
-            this.logger.important(`Miner found a solution of offer ${offer.offer_id}.`);
+            this.logger.important(`Miner found a solution of offer ${offerId}.`);
 
             let excludedDHs = await this.dcService.checkDhFunds(
                 solution.nodeIdentifiers,
@@ -70,21 +70,14 @@ class DcOfferMiningCompletedCommand extends Command {
                 };
             }
 
-            const commandData = {
-                offerId: offer.offer_id,
-                solution,
-            };
-            const commandSequence = ['dcOfferFinalizeCommand'];
-            const depositCommand = await this.dcService.chainDepositCommandIfNeeded(
-                offer.token_amount_per_holder,
-                commandData,
-                commandSequence,
-            );
-            if (depositCommand) {
-                return {
-                    commands: [depositCommand],
-                };
+            const hasFunds = await this.dcService
+                .hasProfileBalanceForOffer(offer.token_amount_per_holder);
+            if (!hasFunds) {
+                throw new Error('Not enough tokens. To replicate data please deposit more tokens to your profile');
             }
+
+            const commandData = { offerId, solution };
+            const commandSequence = ['dcOfferFinalizeCommand'];
             return {
                 commands: [
                     {

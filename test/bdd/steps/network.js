@@ -68,6 +68,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
         nodeConfiguration: {
             node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             node_private_key: LocalBlockchain.wallets()[walletCount - 1].privateKey,
+            management_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
@@ -83,6 +84,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+            initial_deposit_amount: '10000000000000000000000',
 
         },
         appDataBaseDir: this.parameters.appDataBaseDir,
@@ -103,6 +105,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
         const nodeConfiguration = {
             node_wallet: LocalBlockchain.wallets()[i].address,
             node_private_key: LocalBlockchain.wallets()[i].privateKey,
+            management_wallet: LocalBlockchain.wallets()[i].address,
             node_port: 6000 + i,
             node_rpc_port: 9000 + i,
             node_remote_control_port: 4000 + i,
@@ -121,6 +124,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
+            initial_deposit_amount: '10000000000000000000000',
         };
 
         const newNode = new OtNode({
@@ -517,6 +521,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
             nodeConfiguration: {
                 node_wallet: LocalBlockchain.wallets()[i].address,
                 node_private_key: LocalBlockchain.wallets()[i].privateKey,
+                management_wallet: LocalBlockchain.wallets()[i].address,
                 node_port: 6000 + i,
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
@@ -534,6 +539,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                     rpc_node_port: 7545,
                 },
                 local_network_only: true,
+                initial_deposit_amount: '10000000000000000000000',
             },
             appDataBaseDir: this.parameters.appDataBaseDir,
         });

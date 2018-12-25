@@ -150,8 +150,7 @@ class DVService {
             .add(stakeAmount);
 
         if (profileBalance.lt(condition)) {
-            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-            await this.blockchain.depositTokens(condition.sub(profileBalance));
+            throw new Error('Not enough funds to handle data read response');
         }
 
         // Sign escrow.

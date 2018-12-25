@@ -95,6 +95,7 @@ class EventEmitter {
             dcService,
             dvController,
             notifyError,
+            commandExecutor,
         } = this.ctx;
 
         this._on('api-network-query-responses', async (data) => {
@@ -500,14 +501,34 @@ class EventEmitter {
             }
         });
 
-        this._on('api-create-offer', async (data) => {
-            if (!appState.enoughFunds) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'Insufficient funds',
+        this._on('api-payout', async (data) => {
+            const { offerId } = data;
+
+            logger.info(`Payout called for offer ${offerId}.`);
+            const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+            if (bid) {
+                await commandExecutor.add({
+                    name: 'dhPayOutCommand',
+                    delay: 0,
+                    data: {
+                        offerId,
+                    },
                 });
-                return;
+
+                data.response.status(200);
+                data.response.send({
+                    message: `Payout for offer ${offerId} called. It should be completed shortly.`,
+                });
+            } else {
+                logger.error(`There is no offer for ID ${offerId}`);
+                data.response.status(404);
+                data.response.send({
+                    message: 'Offer not found',
+                });
             }
+        });
+
+        this._on('api-create-offer', async (data) => {
             const {
                 dataSetId,
                 holdingTimeInMinutes,
@@ -598,30 +619,6 @@ class EventEmitter {
             }
         });
 
-        this._on('api-deposit-tokens', async (data) => {
-            const { trac_amount } = data;
-
-            try {
-                logger.info(`Deposit ${trac_amount} TRAC to profile triggered`);
-
-                await profileService.depositTokens(trac_amount);
-                remoteControl.tokenDepositSucceeded(`${trac_amount} TRAC deposited to your profile`);
-
-                data.response.status(200);
-                data.response.send({
-                    message: `Successfully deposited ${trac_amount} TRAC to profile`,
-                });
-            } catch (error) {
-                logger.error(`Failed to deposit tokens. ${error}.`);
-                notifyError(error);
-                data.response.status(400);
-                data.response.send({
-                    message: `Failed to deposit tokens. ${error}.`,
-                });
-                remoteControl.tokensDepositFailed(`Failed to deposit tokens. ${error}.`);
-            }
-        });
-
         this._on('api-withdraw-tokens', async (data) => {
             const { trac_amount } = data;
 
@@ -688,9 +685,6 @@ class EventEmitter {
         });
 
         this._on('eth-OfferCreated', async (eventData) => {
-            if (!appState.enoughFunds) {
-                return;
-            }
             let {
                 dcNodeId,
             } = eventData;
