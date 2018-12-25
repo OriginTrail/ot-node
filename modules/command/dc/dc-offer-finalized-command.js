@@ -68,7 +68,19 @@ class DcOfferFinalizedCommand extends Command {
                         },
                     },
                 );
-                return Command.empty();
+
+                const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
+                return {
+                    commands: [
+                        {
+                            name: 'dcOfferCleanupCommand',
+                            data: {
+                                offerId,
+                            },
+                            delay: scheduledTime,
+                        },
+                    ],
+                };
             }
         }
         return Command.repeat();
