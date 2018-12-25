@@ -145,7 +145,7 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
     setTimeout(accept, waitTime * 1000);
 }));
 
-Given(/^DC waits for overriden holding time*$/, { timeout: 120000 }, async function () {
+Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 

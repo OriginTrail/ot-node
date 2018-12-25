@@ -133,5 +133,5 @@ Feature: Test basic network features
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
-    And DC waits for overriden holding time
+    And DC waits for holding time
     Then selected DHes should be payed out
