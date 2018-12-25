@@ -28,6 +28,7 @@ class DCOfferCleanupCommand extends Command {
 
         this.replicationService.cleanup(offer.id);
         this.logger.info(`Offer ${offerId} replication data cleanup successful`);
+        return Command.empty();
     }
 
     /**
