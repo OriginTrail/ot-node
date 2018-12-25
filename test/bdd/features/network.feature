@@ -121,3 +121,17 @@ Feature: Test basic network features
   @first
   Scenario: Bootstraps should have /api/info route enabled
     Then 1st bootstrap should reply on info route
+
+  @first
+  Scenario: DH payout scenario
+    Given the replication difficulty is 0
+    And I setup 5 nodes
+    And I override configuration for all nodes
+      | dc_holding_time_in_minutes | 1 |
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And DC waits for holding time
+    Then selected DHes should be payed out

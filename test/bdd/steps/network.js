@@ -5,6 +5,8 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
+const BN = require('bn.js');
+const sleep = require('sleep-async')().Promise;
 const request = require('request');
 const { deepEqual } = require('jsprim');
 
@@ -142,6 +144,15 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
 }));
+
+Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    const waitTime = Number(dc.options.nodeConfiguration.dc_holding_time_in_minutes) * 60 * 1000;
+    expect(waitTime, 'waiting time in BDD tests should be less then step timeout').to.be.lessThan(120000);
+    await sleep.sleep(waitTime);
+});
 
 Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -754,4 +765,31 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
         'version', 'blockchain',
         'network', 'is_bootstrap',
     ]);
+});
+
+Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const myPromises = [];
+
+    // slice(1) to exlude DC node
+    this.state.nodes.slice(1).forEach((node) => {
+        myPromises.push(new Promise((accept) => {
+            // node.state.takenBids gets populated only for choosen DH nodes
+            if (node.state.takenBids.length === 1) {
+                node.once('dh-pay-out-finalized', async () => {
+                    const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
+                    const a = new BN(myBalance.profile.staked);
+                    const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
+                    const c = new BN(node.options.nodeConfiguration.dc_token_amount_per_holder);
+                    expect(a.sub(b).toString()).to.be.equal(c.toString());
+                    accept();
+                });
+            } else {
+                accept();
+            }
+        }));
+    });
+
+    return Promise.all(myPromises);
 });
