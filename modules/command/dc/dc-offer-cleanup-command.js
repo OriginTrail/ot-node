@@ -21,7 +21,7 @@ class DCOfferCleanupCommand extends Command {
             offerId,
         } = command.data;
 
-        const offer = models.offers.findOne({ where: { offer_id: offerId } });
+        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (offer == null) {
             throw new Error(`Failed to find offer ${offerId}`);
         }
