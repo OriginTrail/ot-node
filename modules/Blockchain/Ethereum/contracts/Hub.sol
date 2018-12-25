@@ -42,14 +42,12 @@ contract Hub is Ownable{
     address public tokenAddress;
     address public profileAddress;
     address public holdingAddress;
-    address public litigationAddress;
     address public readingAddress;
     address public approvalAddress;
 
     address public profileStorageAddress;
     address public holdingStorageAddress;
     address public readingStorageAddress;
-    address public litigationStorageAddress;
 
     event ContractsChanged();
 
