@@ -49,6 +49,9 @@ contract Hub is Ownable{
     address public holdingStorageAddress;
     address public readingStorageAddress;
 
+    address public litigationAddress;
+    address public litigationStorageAddress;
+
     event ContractsChanged();
 
     function setTokenAddress(address newTokenAddress)

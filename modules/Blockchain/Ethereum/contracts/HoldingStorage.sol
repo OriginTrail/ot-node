@@ -237,6 +237,10 @@ contract HoldingStorage {
         require(identity!=address(0));
         return holder[offerId][identity].litigationEncryptionType;
     }
+    function getHolderPaymentTimestamp(bytes32 offerId, address identity)
+    public view returns(uint256 paymentTimestamp) {
+        return holder[offerId][identity].paymentTimestamp;
+    }
     function setHubAddress(address newHubAddress)
     public onlyContracts {
         require(newHubAddress!=address(0));

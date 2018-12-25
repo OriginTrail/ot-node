@@ -132,7 +132,7 @@ module.exports = async (deployer, network, accounts) => {
         profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
-        holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
+        holding = await deployer.deploy(Holding, hub.address, { gas: 8000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
 
         litigation = await deployer.deploy(

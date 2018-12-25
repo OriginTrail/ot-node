@@ -13,6 +13,10 @@ contract Holding is Ownable {
     using SafeMath for uint256;
 
     Hub public hub;
+    HoldingStorage public holdingStorage;
+    ProfileStorage public profileStorage;
+    LitigationStorage public litigationStorage;
+    Profile public profile;
 
     uint256 public difficultyOverride;
     
