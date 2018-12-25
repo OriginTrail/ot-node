@@ -28,6 +28,19 @@ class DCOfferCleanupCommand extends Command {
 
         this.replicationService.cleanup(offer.id);
         this.logger.info(`Offer ${offerId} replication data cleanup successful`);
+
+        await models.replicated_data.update(
+            {
+                status: 'COMPLETED',
+            },
+            {
+                where: {
+                    offer_id: offer.offer_id,
+                    status: 'HOLDING',
+                },
+            },
+        );
+        this.logger.info(`Holders for offer ${offerId} has completed the task.`);
         return Command.empty();
     }
 
