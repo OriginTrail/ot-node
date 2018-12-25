@@ -158,9 +158,11 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
+        console.log(`\t Litigation contract address: \t\t${litigation.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
+        console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
 
         break;
     case 'mock':
