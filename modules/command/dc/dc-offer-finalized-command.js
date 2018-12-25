@@ -46,8 +46,6 @@ class DcOfferFinalizedCommand extends Command {
                 offer.message = 'Offer has been finalized. Offer is now active.';
                 await offer.save({ fields: ['status', 'message'] });
 
-                await this.replicationService.cleanup(offer.id);
-
                 const {
                     holder1,
                     holder2,
