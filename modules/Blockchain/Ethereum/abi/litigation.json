@@ -1,121 +1,5 @@
 [
     {
-        "constant": true,
-        "inputs": [],
-        "name": "hub",
-        "outputs": [
-            {
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function",
-        "signature": "0x365a86fc"
-    },
-    {
-        "inputs": [
-            {
-                "name": "hubAddress",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor",
-        "signature": "constructor"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "offerId",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "holderIdentity",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "name": "status",
-                "type": "uint8"
-            }
-        ],
-        "name": "LitigationStatusChanged",
-        "type": "event",
-        "signature": "0xd8565786ab1a0a1c2167f32e0d4f53fada24590d1e796f837e30ead1ca794747"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "offerId",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "holderIdentity",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "name": "challengerIdentity",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "name": "litigationRootHash",
-                "type": "bytes32"
-            }
-        ],
-        "name": "ReplacementStarted",
-        "type": "event",
-        "signature": "0x2e76005412feee116fc9f06ec08f34201e1f54a156f831abba5084f1fca59510"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "offerId",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "challengerIdentity",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "name": "chosenHolder",
-                "type": "address"
-            }
-        ],
-        "name": "ReplacementCompleted",
-        "type": "event",
-        "signature": "0x1cd15ea0fd5fd6b6f560ec5688d3b159b93ad46ab229a3e4936baf5c98bb9454"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newHubAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setHubAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function",
-        "signature": "0xc7eb4522"
-    },
-    {
         "constant": false,
         "inputs": [
             {
@@ -127,7 +11,7 @@
                 "type": "address"
             },
             {
-                "name": "challengerIdentity",
+                "name": "litigatorIdentity",
                 "type": "address"
             },
             {
@@ -148,68 +32,35 @@
         ],
         "payable": false,
         "stateMutability": "nonpayable",
-        "type": "function",
-        "signature": "0x0ed31032"
+        "type": "function"
     },
     {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "offerId",
-                "type": "bytes32"
-            },
-            {
-                "name": "holderIdentity",
-                "type": "address"
-            },
-            {
-                "name": "requestedData",
-                "type": "bytes32"
-            }
-        ],
-        "name": "answerLitigation",
+        "constant": true,
+        "inputs": [],
+        "name": "holding",
         "outputs": [
             {
-                "name": "answer_accepted",
-                "type": "bool"
+                "name": "",
+                "type": "address"
             }
         ],
         "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function",
-        "signature": "0xe07031a9"
+        "stateMutability": "view",
+        "type": "function"
     },
     {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "offerId",
-                "type": "bytes32"
-            },
-            {
-                "name": "holderIdentity",
-                "type": "address"
-            },
-            {
-                "name": "litigatorIdentity",
-                "type": "address"
-            },
-            {
-                "name": "proofData",
-                "type": "bytes32"
-            }
-        ],
-        "name": "completeLitigation",
+        "constant": true,
+        "inputs": [],
+        "name": "hub",
         "outputs": [
             {
-                "name": "DH_was_penalized",
-                "type": "bool"
+                "name": "",
+                "type": "address"
             }
         ],
         "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function",
-        "signature": "0xdd112c82"
+        "stateMutability": "view",
+        "type": "function"
     },
     {
         "constant": false,
@@ -251,7 +102,253 @@
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
-        "type": "function",
-        "signature": "0x3c736155"
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newHubAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setHubAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "name": "holderIdentity",
+                "type": "address"
+            },
+            {
+                "name": "challengerIdentity",
+                "type": "address"
+            },
+            {
+                "name": "proof_data",
+                "type": "bytes32"
+            }
+        ],
+        "name": "completeLitigation",
+        "outputs": [
+            {
+                "name": "DH_was_penalized",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "name": "holderIdentity",
+                "type": "address"
+            },
+            {
+                "name": "requestedData",
+                "type": "bytes32"
+            }
+        ],
+        "name": "answerLitigation",
+        "outputs": [
+            {
+                "name": "answer_accepted",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "profileStorage",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "holdingStorage",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "litigationStorage",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "hubAddress",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "holderIdentity",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "requestedDataIndex",
+                "type": "uint256"
+            }
+        ],
+        "name": "LitigationInitiated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "holderIdentity",
+                "type": "address"
+            }
+        ],
+        "name": "LitigationAnswered",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "holderIdentity",
+                "type": "address"
+            }
+        ],
+        "name": "LitigationTimedOut",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "holderIdentity",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "DH_was_penalized",
+                "type": "bool"
+            }
+        ],
+        "name": "LitigationCompleted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "challengerIdentity",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "litigationRootHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "ReplacementStarted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "name": "challengerIdentity",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "chosenHolder",
+                "type": "address"
+            }
+        ],
+        "name": "ReplacementCompleted",
+        "type": "event"
     }
 ]
