@@ -5,6 +5,8 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
+const BN = require('bn.js');
+const sleep = require('sleep-async')().Promise;
 const request = require('request');
 const { deepEqual } = require('jsprim');
 
@@ -142,6 +144,15 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
 }));
+
+Given(/^DC waits for overriden holding time*$/, { timeout: 120000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    const waitTime = Number(dc.options.nodeConfiguration.dc_holding_time_in_minutes) * 60 * 1000;
+    expect(waitTime, 'waiting time in BDD tests should be less then step timeout').to.be.lessThan(120000);
+    await sleep.sleep(waitTime);
+});
 
 Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -768,7 +779,10 @@ Given(/^selected DHes should be payed out after holding times is up*$/, { timeou
             if (node.state.takenBids.length === 1) {
                 node.once('dh-pay-out-finalized', async () => {
                     const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
-                    expect(Number(myBalance.profile.staked) - Number(node.options.nodeConfiguration.initial_deposit_amount)).to.be.closeTo(Number(node.options.nodeConfiguration.dc_token_amount_per_holder), 1000000);
+                    const a = new BN(myBalance.profile.staked);
+                    const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
+                    const c = new BN(node.options.nodeConfiguration.dc_token_amount_per_holder);
+                    expect(a.sub(b).toString()).to.be.equal(c.toString());
                     accept();
                 });
             } else {

@@ -465,7 +465,13 @@ async function apiNodeInfo(nodeRpcUrl) {
 /**
  * @typedef {Object} ApiBalanceInfo
  * @property {Object} profile info about profile balance
+ * @property {Number} profile.minimalStake minimal stake
+ * @property {Number} profile.reserved reserved
+ * @property {Number} profile.staked staked
  * @property {Object} wallet info about wallet balance
+ * @property {String} wallet.address node's wallet address
+ * @property {Number} wallet.ethBalance wallet balance in ethers
+ * @property {Number} wallet.tokenBalance wallet balance in tokens
  */
 
 /**
