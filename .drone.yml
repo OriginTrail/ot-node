@@ -1,0 +1,80 @@
+pipeline:
+  basicTests:
+    image: node:9
+    environment:
+      NODE_ENV: development
+    when:
+      event:
+        - push
+        - pull_request
+    commands:
+      - npm install
+      - echo arangodb3 arangodb/password password root | debconf-set-selections  # set username 'root'
+      - echo arangodb3 arangodb/password_again password root | debconf-set-selections  # set password 'root'
+      - chmod +x setup_arangodb.sh
+      - ./setup_arangodb.sh
+      - rm -rf ArangoDB-3.2.2.tar.gz
+      - cp .origintrail_noderc.travis .origintrail_noderc
+      - npm run bootstrap
+      - npm install -g ganache-cli@6.1.5
+      - npm install -g truffle@5.0.0-beta.1
+      - npm run lint
+      - npm test
+      - kill -9 $(pgrep arangod)
+
+  bddTestsFirst:
+    image: node:9
+    environment:
+      NODE_ENV: development
+    when:
+      event:
+        - pull_request
+    commands:
+      - npm install
+      - echo arangodb3 arangodb/password password root | debconf-set-selections  # set username 'root'
+      - echo arangodb3 arangodb/password_again password root | debconf-set-selections  # set password 'root'
+      - chmod +x setup_arangodb.sh
+      - ./setup_arangodb.sh
+      - rm -rf ArangoDB-3.2.2.tar.gz
+      - cp .origintrail_noderc.travis .origintrail_noderc
+      - npm run bootstrap
+      - npm run test:bdd:dryrun
+      - npm run test:bdd:first
+      - kill -9 $(pgrep arangod)
+
+  bddTestsSecond:
+    image: node:9
+    environment:
+      NODE_ENV: development
+    when:
+      event:
+        - pull_request
+    commands:
+      - npm install
+      - echo arangodb3 arangodb/password password root | debconf-set-selections  # set username 'root'
+      - echo arangodb3 arangodb/password_again password root | debconf-set-selections  # set password 'root'
+      - chmod +x setup_arangodb.sh
+      - ./setup_arangodb.sh
+      - rm -rf ArangoDB-3.2.2.tar.gz
+      - cp .origintrail_noderc.travis .origintrail_noderc
+      - npm run bootstrap
+      - npm run test:bdd:dryrun
+      - npm run test:bdd:second
+      - kill -9 $(pgrep arangod)
+
+  smartContractsTests:
+    image: node:9
+    environment:
+      NODE_ENV: development
+    when:
+      event:
+        - push
+        - pull_request
+    commands:
+      - npm install
+      - npm install -g ganache-cli@6.1.5
+      - npm install -g truffle@5.0.0-beta.1
+      - ganache-cli -i 5777 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief" &
+      - cd modules/Blockchain/Ethereum
+      - truffle test --network test
+      - rm -rf build && truffle migrate --reset --compile-all --network ganache
