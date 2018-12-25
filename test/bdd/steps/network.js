@@ -767,7 +767,7 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
     ]);
 });
 
-Given(/^selected DHes should be payed out after holding times is up*$/, { timeout: 180000 }, async function () {
+Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
 
     const myPromises = [];
