@@ -46,6 +46,8 @@ class DHReplacementImportCommand extends Command {
             dhIdentity: this.config.erc725Identity,
         }, dcNodeId);
 
+        this.logger.info(`Replacement replication  request for ${offerId} sent to ${dcNodeId}`);
+
         if (response.status === 'fail') {
             if (response.message) {
                 throw new Error('Failed to receive replacement replication ' +
@@ -122,32 +124,57 @@ class DHReplacementImportCommand extends Command {
         const calculatedDistPublicKey = Encryption.unpackEPK(distributionEpk);
         ImportUtilities.immutableDecryptVertices(distEncVertices, calculatedDistPublicKey);
 
-        await this.importer.importJSON({
-            dataSetId,
-            vertices: litigationVertices,
-            edges,
-            wallet: dcWallet,
-        }, true, encColor);
+        const holdingData = await Models.holding_data.findOne({
+            where: {
+                data_set_id: dataSetId,
+                color: encColor,
+            },
+        });
 
-        let importResult = await this.importer.importJSON({
-            dataSetId,
-            vertices: decryptedVertices,
-            edges,
-            wallet: dcWallet,
-        }, false);
+        if (holdingData == null) {
+            // import already exists
 
-        if (importResult.error) {
-            throw Error(importResult.error);
+            await this.importer.importJSON({
+                dataSetId,
+                vertices: litigationVertices,
+                edges,
+                wallet: dcWallet,
+            }, true, encColor);
+
+            // Store holding information and generate keys for eventual data replication.
+            await Models.holding_data.create({
+                data_set_id: dataSetId,
+                source_wallet: dcWallet,
+                litigation_public_key: litigationPublicKey,
+                litigation_root_hash: litigationRootHash,
+                distribution_public_key: distributionPublicKey,
+                distribution_private_key: distributionPrivateKey,
+                distribution_epk: distributionEpk,
+                transaction_hash: transactionHash,
+                color: encColor,
+            });
         }
-
-        importResult = importResult.response;
 
         const dataInfo = await Models.data_info.findOne({
             where: {
-                data_set_id: importResult.data_set_id,
+                data_set_id: dataSetId,
             },
         });
+
         if (dataInfo == null) {
+            let importResult = await this.importer.importJSON({
+                dataSetId,
+                vertices: decryptedVertices,
+                edges,
+                wallet: dcWallet,
+            }, false);
+
+            if (importResult.error) {
+                throw Error(importResult.error);
+            }
+
+            importResult = importResult.response;
+
             const dataSize = bytes(JSON.stringify(importResult.vertices));
             await Models.data_info.create({
                 data_set_id: importResult.data_set_id,
@@ -159,19 +186,6 @@ class DHReplacementImportCommand extends Command {
                 origin: 'HOLDING',
             });
         }
-
-        // Store holding information and generate keys for eventual data replication.
-        await Models.holding_data.create({
-            data_set_id: dataSetId,
-            source_wallet: dcWallet,
-            litigation_public_key: litigationPublicKey,
-            litigation_root_hash: litigationRootHash,
-            distribution_public_key: distributionPublicKey,
-            distribution_private_key: distributionPrivateKey,
-            distribution_epk: distributionEpk,
-            transaction_hash: transactionHash,
-            color: encColor,
-        });
 
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
@@ -187,12 +201,11 @@ class DHReplacementImportCommand extends Command {
             messageSignature: messageSignature.signature,
         };
 
-        await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);
-        this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
+        await this.transport.replacementReplicationFinished(replicationFinishedMessage, dcNodeId);
         return {
             commands: [
                 {
-                    name: 'dhOfferFinalizedCommand',
+                    name: 'dhReplacementCompletedCommand',
                     deadline_at: Date.now() + (60 * 60 * 1000), // One hour.
                     period: 10 * 1000,
                     data: {
