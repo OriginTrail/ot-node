@@ -152,7 +152,13 @@ class DCService {
     async miningSucceed(data) {
         const { offerId } = data;
         const mined = await models.miner_records.findOne({
-            where: { offer_id: offerId },
+            limit: 1,
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
@@ -173,7 +179,13 @@ class DCService {
     async miningFailed(result) {
         const { offerId } = result;
         const mined = await models.miner_records.findOne({
-            where: { offer_id: offerId },
+            limit: 1,
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);

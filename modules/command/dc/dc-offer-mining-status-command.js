@@ -19,10 +19,18 @@ class DcOfferMiningStatusCommand extends Command {
         const {
             offerId,
             isReplacement,
-            dhIdentity
+            dhIdentity,
         } = command.data;
 
-        const mined = await Models.miner_records.findOne({ where: { offer_id: offerId } });
+        const mined = await Models.miner_records.findOne({
+            limit: 1,
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
+        });
         if (mined) {
             switch (mined.status) {
             case 'STARTED':

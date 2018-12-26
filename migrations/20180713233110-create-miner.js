@@ -3,8 +3,9 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('miner_records', {
         id: {
             allowNull: false,
+            autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
         },
         offer_id: {
             allowNull: false,

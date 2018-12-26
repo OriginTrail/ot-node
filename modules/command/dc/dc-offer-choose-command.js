@@ -36,17 +36,17 @@ class DCOfferChooseCommand extends Command {
         const replications = await models.replicated_data.findAll({
             where: {
                 offer_id: offer.offer_id,
-                status: 'VERIFIED',
             },
         });
 
-        const verifiedReplications = replications.map(r => r.status === 'VERIFIED');
+        const verifiedReplications = replications.filter(r => r.status === 'VERIFIED');
         if (excludedDHs == null) {
             this.logger.notify(`Replication window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
         }
 
-        let identities = replications
+        let identities = verifiedReplications
             .map(r => Utilities.denormalizeHex(r.dh_identity).toLowerCase());
+
         if (excludedDHs) {
             const normalizedExcludedDHs = excludedDHs
                 .map(excludedDH => Utilities.denormalizeHex(excludedDH).toLowerCase());

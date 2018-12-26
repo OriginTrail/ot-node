@@ -9,7 +9,6 @@ class MinerService {
         this.dcService = ctx.dcService;
         this.emitter = ctx.emitter;
         this.blockchain = ctx.blockchain;
-        this.forks = {};
     }
 
     /**
@@ -22,7 +21,6 @@ class MinerService {
     async sendToMiner(task, difficulty, wallets, offerId) {
         try {
             const forked = fork('modules/worker/miner-worker.js');
-            this.forks[offerId] = forked;
 
             forked.send({
                 offerId,

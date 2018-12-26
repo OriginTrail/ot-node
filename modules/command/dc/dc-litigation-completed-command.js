@@ -40,10 +40,8 @@ class DCLitigationCompleted extends Command {
                 await event.save({ fields: ['finished'] });
 
                 const {
-                    DH_was_penalized,
+                    DH_was_penalized: penalized,
                 } = JSON.parse(event.data);
-
-                const penalized = true;
 
                 this.logger.notify(`Litigation completed for DH ${dhIdentity} and offer ${offerId}. ${penalized ? 'DH was penalized' : 'DH was not penalized'}`);
 

@@ -27,18 +27,23 @@ class DHChallengeCommand extends Command {
             litigatorNodeId,
         } = command.data;
 
-        const holdingData = await models.holding_data.findAll({
+        const holdingData = await models.holding_data.findOne({
+            limit: 1,
             where: {
                 data_set_id: datasetId,
+
             },
+            order: [
+                ['id', 'DESC'],
+            ],
         });
 
-        if (holdingData.length === 0) {
+        if (holdingData.length == null) {
             throw new Error(`Failed to find holding data for data set ${datasetId}`);
         }
 
         const vertices = await this.graphStorage
-            .findVerticesByImportId(datasetId, holdingData[0].color);
+            .findVerticesByImportId(datasetId, holdingData.color);
         importUtilities.unpackKeys(vertices, []);
         const answer = this.challengeService.answerChallengeQuestion(blockId, vertices);
         this.logger.trace(`Sending answer to question for data set ID ${datasetId}, block ID ${blockId}. Block ${answer}`);
