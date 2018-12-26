@@ -2,13 +2,15 @@ const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 
-const { Op } = models.Sequelize;
-
-class DCLitigationReplacementStartedCommand extends Command {
+/**
+ * Repeatable command that checks whether holder is replaced
+ */
+class DCOfferReplacementCompletedCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.config = ctx.config;
         this.logger = ctx.logger;
+        this.config = ctx.config;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -23,7 +25,7 @@ class DCLitigationReplacementStartedCommand extends Command {
 
         const events = await models.events.findAll({
             where: {
-                event: 'ReplacementStarted',
+                event: 'ReplacementCompleted',
                 finished: 0,
             },
         });
@@ -40,51 +42,34 @@ class DCLitigationReplacementStartedCommand extends Command {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                // clear old replicated data
-                await models.replicated_data.destroy({
+                const {
+                    chosenHolder,
+                } = JSON.parse(event.data);
+
+                const holder = await models.replicated_data.findOne({
                     where: {
-                        offer_id: offerId,
-                        status: {
-                            [Op.in]: ['STARTED', 'VERIFIED'],
-                        },
+                        dh_identity: utilities.normalizeHex(chosenHolder),
                     },
                 });
 
-                const offer = await models.offers.findOne({
-                    where: {
-                        offer_id: offerId,
-                    },
-                });
+                holder.status = 'HOLDING';
+                await holder.save({ fields: ['status'] });
 
-                return {
-                    commands: [
-                        {
-                            name: 'dcOfferChooseCommand',
-                            data: {
-                                internalOfferId: offer.id,
-                                isReplacement: true,
-                                dhIdentity,
-                            },
-                            delay: this.config.dc_choose_time,
-                            transactional: false,
-                        },
-                    ],
-                };
+                this.logger.important(`Successfully replaced DH ${dhIdentity} with DH ${chosenHolder} for offer ${offerId}`);
+                return Command.empty();
             }
         }
         return Command.repeat();
     }
 
     /**
-     * Builds default DCLitigationReplacementStartedCommand
+     * Builds default
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            data: {
-            },
-            name: 'dcLitigationReplacementStartedCommand',
+            name: 'dcOfferReplacementCompletedCommand',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
@@ -95,4 +80,4 @@ class DCLitigationReplacementStartedCommand extends Command {
     }
 }
 
-module.exports = DCLitigationReplacementStartedCommand;
+module.exports = DCOfferReplacementCompletedCommand;

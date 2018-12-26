@@ -536,6 +536,43 @@ class Ethereum {
     }
 
     /**
+     * Replaces holder
+     * @returns {Promise<any>}
+     */
+    replaceHolder(
+        offerId,
+        holderIdentity,
+        litigatorIdentity,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        holders,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.litigationContractAddress,
+        };
+
+        this.log.trace(`replaceHolder (${offerId}, ${holderIdentity}, ${litigatorIdentity}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${holders})`);
+        return this.transactions.queueTransaction(
+            this.litigationContractAbi, 'replaceHolder',
+            [
+                offerId,
+                holderIdentity,
+                litigatorIdentity,
+                shift,
+                confirmation1,
+                confirmation2,
+                confirmation3,
+                holders,
+            ],
+            options,
+        );
+    }
+
+    /**
      * Gets all past events for the contract
      * @param contractName
      */

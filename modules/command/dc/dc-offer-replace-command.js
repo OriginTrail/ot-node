@@ -1,3 +1,4 @@
+const BN = require('bn.js');
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 
@@ -27,6 +28,7 @@ class DCOfferReplaceCommand extends Command {
         const {
             offerId,
             solution,
+            dhIdentity,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -46,8 +48,31 @@ class DCOfferReplaceCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        this.logger.important('Implement replacement command');
-        return Command.empty();
+        await this.blockchain.replaceHolder(
+            offerId,
+            dhIdentity,
+            this.config.erc725Identity,
+            new BN(solution.shift, 10),
+            confirmations[0],
+            confirmations[1],
+            confirmations[2],
+            nodeIdentifiers,
+        );
+
+        return {
+            commands: [
+                {
+                    name: 'dcOfferReplacementCompletedCommand',
+                    data: {
+                        offerId,
+                        dhIdentity,
+                    },
+                    delay: 0,
+                    period: 5000,
+                    deadline_at: Date.now() + (5 * 60 * 1000),
+                }
+            ]
+        };
     }
 
     /**

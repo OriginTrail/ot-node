@@ -521,6 +521,32 @@ class Blockchain {
     async getHolder(offerId, holderIdentity) {
         return this.blockchain.getHolder(offerId, holderIdentity);
     }
+
+    /**
+     * Replaces holder
+     * @returns {Promise<any>}
+     */
+    replaceHolder(
+        offerId,
+        holderIdentity,
+        litigatorIdentity,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        holders,
+    ) {
+        return this.blockchain.replaceHolder(
+            offerId,
+            holderIdentity,
+            litigatorIdentity,
+            shift,
+            confirmation1,
+            confirmation2,
+            confirmation3,
+            holders,
+        );
+    }
 }
 
 module.exports = Blockchain;
