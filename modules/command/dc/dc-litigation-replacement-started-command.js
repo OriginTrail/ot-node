@@ -7,6 +7,7 @@ const { Op } = models.Sequelize;
 class DCLitigationReplacementStartedCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.config = ctx.config;
         this.logger = ctx.logger;
     }
 
@@ -26,14 +27,14 @@ class DCLitigationReplacementStartedCommand extends Command {
                 finished: 0,
             },
         });
-        if (events) {
+        if (events.length > 0) {
             const event = events.find((e) => {
                 const {
                     offerId: eventOfferId,
-                    holderIdentity,
+                    challengerIdentity,
                 } = JSON.parse(e.data);
                 return utilities.compareHexStrings(offerId, eventOfferId)
-                    && utilities.compareHexStrings(dhIdentity, holderIdentity);
+                    && utilities.compareHexStrings(this.config.erc725Identity, challengerIdentity);
             });
             if (event) {
                 event.finished = true;
@@ -43,17 +44,24 @@ class DCLitigationReplacementStartedCommand extends Command {
                 await models.replicated_data.destroy({
                     where: {
                         offer_id: offerId,
-                        [Op.in]: ['STARTED', 'VERIFIED'],
+                        status: {
+                            [Op.in]: ['STARTED', 'VERIFIED'],
+                        },
                     },
                 });
 
-                this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);
+                const offer = await models.offers.findOne({
+                    where: {
+                        offer_id: offerId,
+                    },
+                });
+
                 return {
                     commands: [
                         {
                             name: 'dcOfferChooseCommand',
                             data: {
-                                offerId,
+                                internalOfferId: offer.id,
                                 isReplacement: true,
                             },
                             delay: this.config.dc_choose_time,

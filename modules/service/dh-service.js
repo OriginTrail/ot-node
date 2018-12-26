@@ -841,9 +841,7 @@ class DHService {
 
     async listenToBlockchainEvents() {
         this.blockchain.subscribeToEventPermanent([
-            'AddedPredeterminedBid',
             'OfferCreated',
-            'EscrowVerified',
             'NodeApproved',
             'NodeRemoved',
         ]);

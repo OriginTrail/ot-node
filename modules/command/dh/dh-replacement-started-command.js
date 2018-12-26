@@ -1,5 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models/index');
+const utilities = require('../../Utilities');
 
 /**
  * Listens indefinitely for REPLACEMENT_STARTED event from blockchain
@@ -27,14 +28,18 @@ class DHReplacementStartedCommand extends Command {
             });
 
             if (event) {
-                event.finished = true;
-                await event.save({ fields: ['finished'] });
-
                 const {
                     offerId,
                     challengerIdentity,
                     litigationRootHash,
                 } = JSON.parse(event.data);
+
+                if (utilities.compareHexStrings(this.config.erc725Identity, challengerIdentity)) {
+                    return Command.repeat();
+                }
+
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
 
                 await this.dhService.handleReplacement(
                     offerId, challengerIdentity,

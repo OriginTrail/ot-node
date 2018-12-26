@@ -29,7 +29,7 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
-
+const { Op } = models.Sequelize;
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
