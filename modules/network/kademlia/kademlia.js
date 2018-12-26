@@ -391,10 +391,11 @@ class Kademlia {
             this.emitter.emit('kad-replacement-replication-request', request, response);
         });
 
-        // sync
+        // async
         this.node.use('kad-replacement-replication-finished', (request, response, next) => {
             this.log.debug('kad-replacement-replication-finished received');
             this.emitter.emit('kad-replacement-replication-finished', request, response);
+            response.send([]);
         });
 
         // async

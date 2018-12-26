@@ -297,13 +297,13 @@ class DCService {
             return;
         }
         const offer = offerModel.get({ plain: true });
-        if (offer.status !== 'REPLACEMENT_STARTED') {
+        if (offer.global_status !== 'REPLACEMENT_STARTED') {
             const message = `Replication request for offer ${offerId} that is not in REPLACEMENT_STARTED state.`;
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
         }
 
-        const usedDH = models.replicated_data.findAll({
+        const usedDH = await models.replicated_data.findOne({
             where: {
                 dh_id: identity,
                 dh_wallet: wallet,

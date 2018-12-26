@@ -56,6 +56,14 @@ class DCLitigationCompleted extends Command {
                 }
                 await replicatedData.save({ fields: ['status'] });
 
+                const offer = await models.offers.findOne({
+                    where: {
+                        offer_id: offerId,
+                    },
+                });
+
+                offer.global_status = 'REPLACEMENT_STARTED';
+                offer.save({ fields: ['global_status'] });
                 if (penalized) {
                     this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);
                     return {
