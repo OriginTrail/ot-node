@@ -42,10 +42,10 @@ class DHLitigationAnswerCommand extends Command {
 
         importUtilities.unpackKeys(vertices, []);
         const answer = utilities.normalizeHex(Buffer.from(this.challengeService.answerChallengeQuestion(blockId, vertices), 'utf-8').toString('hex'));
-        this.logger.important(`Answering litigation for offer ${offerId} and blockId ${blockId}. Answer: ${answer}`);
 
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
         await this.blockchain.answerLitigation(offerId, dhIdentity, answer);
+        this.logger.important(`Litigation answered for offer ${offerId} and blockId ${blockId}. Answer ${answer}`);
         return {
             commands: [
                 {

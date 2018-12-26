@@ -27,21 +27,19 @@ class DHReplacementStartedCommand extends Command {
             });
 
             if (event) {
-                if (event) {
-                    event.finished = true;
-                    await event.save({ fields: ['finished'] });
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
 
-                    const {
-                        offerId,
-                        challengerIdentity,
-                        litigationRootHash,
-                    } = JSON.parse(event.data);
+                const {
+                    offerId,
+                    challengerIdentity,
+                    litigationRootHash,
+                } = JSON.parse(event.data);
 
-                    await this.dhService.handleReplacement(
-                        offerId, challengerIdentity,
-                        litigationRootHash,
-                    );
-                }
+                await this.dhService.handleReplacement(
+                    offerId, challengerIdentity,
+                    litigationRootHash,
+                );
             }
         } catch (e) {
             this.logger.error(`Failed to process ReplacementStartedCommand command. ${e}`);
