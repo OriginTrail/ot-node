@@ -19,7 +19,6 @@ class DHReplacementCompleted extends Command {
     async execute(command) {
         const {
             offerId,
-            dcIdentity,
         } = command.data;
 
         const events = await Models.events.findAll({
@@ -35,15 +34,22 @@ class DHReplacementCompleted extends Command {
                     challengerIdentity,
                 } = JSON.parse(e.data);
                 return Utilities.compareHexStrings(offerId, eventOfferId)
-                    && Utilities.compareHexStrings(challengerIdentity, dcIdentity);
+                    && !Utilities.compareHexStrings(challengerIdentity, this.config.erc725Identity);
             });
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                // TODO handle
+                const {
+                    chosenHolder,
+                } = JSON.parse(event.data);
 
-                this.logger.important(`Replacement completed for offer ${offerId}.`);
+                if (Utilities.compareHexStrings(chosenHolder, this.config.erc725Identity)) {
+                    this.logger.important(`Chosen as a replacement for offer ${offerId}.`);
+                } else {
+                    this.logger.important(`Not chosen as a replacement for offer ${offerId}.`);
+                }
+
                 return Command.empty();
             }
         }
