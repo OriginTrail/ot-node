@@ -2,6 +2,8 @@ const Command = require('../command');
 const models = require('../../../models/index');
 const Utilities = require('../../Utilities');
 
+const { Op } = models.Sequelize;
+
 /**
  * Creates offer on blockchain
  */
@@ -36,6 +38,9 @@ class DCOfferChooseCommand extends Command {
         const replications = await models.replicated_data.findAll({
             where: {
                 offer_id: offer.offer_id,
+                status: {
+                    [Op.in]: ['STARTED', 'VERIFIED'],
+                },
             },
         });
 

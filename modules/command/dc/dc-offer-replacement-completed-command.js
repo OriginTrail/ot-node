@@ -42,6 +42,15 @@ class DCOfferReplacementCompletedCommand extends Command {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
+                const offer = await models.offers.findOne({
+                    where: {
+                        offer_id: offerId,
+                    },
+                });
+
+                offer.global_status = 'ACTIVE';
+                await offer.save({ fields: ['status'] });
+
                 const {
                     chosenHolder,
                 } = JSON.parse(event.data);
