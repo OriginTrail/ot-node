@@ -70,23 +70,6 @@ class Utilities {
     }
 
     /**
-     * @param branch
-     * @returns {Promise<any>}
-     */
-    static async getVersion(branch) {
-        return new Promise((resolve, reject) => {
-            request.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/${branch}/package.json`).then((res, err) => {
-                const response = res.res.text;
-                const package_json = JSON.parse(response);
-                const { version } = package_json;
-                resolve(version);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
-    }
-
-    /**
      * Check if origintrail database exists, in case of arangoDB create one
      * @returns {Promise<any>}
      */

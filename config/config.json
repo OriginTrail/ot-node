@@ -85,8 +85,9 @@
       "releaseStage": "development"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "develop"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/develop/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/develop.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -185,8 +186,9 @@
       "releaseStage": "staging"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "release/staging"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/release/staging/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/release/staging.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -285,8 +287,9 @@
       "releaseStage": "stable"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "release/stable"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/release/stable/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/release/stable.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -388,8 +391,9 @@
       "releaseStage": "testnet"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "master"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/master/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/master.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -491,8 +495,9 @@
       "releaseStage": "mariner"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "release/mariner"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/release/mariner/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/release/mariner.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 10080,

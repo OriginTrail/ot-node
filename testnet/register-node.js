@@ -1,6 +1,5 @@
 require('dotenv').config({ path: '../.env' });
 
-const ip = require('ip');
 const fs = require('fs');
 const rc = require('rc');
 const path = require('path');
@@ -8,22 +7,99 @@ const homedir = require('os').homedir();
 const Web3 = require('web3');
 const deepExtend = require('deep-extend');
 const pjson = require('../package.json');
-const configjson = require('../config/config.json');
 const argv = require('minimist')(process.argv.slice(2));
+const { execSync } = require('child_process');
+
+const logger = require('../modules/logger');
+const configjson = require('../config/config.json');
 
 const defaultConfig = configjson[process.env.NODE_ENV];
 const localConfiguration = rc(pjson.name, defaultConfig);
 const web3 = new Web3(new Web3.providers.HttpProvider(`${localConfiguration.blockchain.rpc_node_host}`));
+const otNodeRootPath = path.resolve(__dirname, '..');
 
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
-    console.log(`configDir given as param '${argv.configDir}'.`);
+    logger.trace(`configDir given as param '${argv.configDir}'.`);
 } else {
     localConfiguration.appDataPath = path.join(
         homedir,
         `.${pjson.name}rc`,
         process.env.NODE_ENV,
     );
+}
+
+function checkForUpdate() {
+    try {
+        // Important: this file is running in the context of older version so
+        // all the migrations has to be run in the context of updated version
+        // of the node. This particularly means that newer version may have
+        // completely different node modules and all scripts has to be run
+        // there.
+        const updateFilePath = path.join(otNodeRootPath, 'UPDATE');
+        if (!fs.existsSync(updateFilePath)) {
+            logger.trace('No update found.');
+            return;
+        }
+
+        const updateInfo = JSON.parse(fs.readFileSync(updateFilePath, 'utf8'));
+        const configDir = localConfiguration.appDataPath;
+        /*
+            Expected content:
+            {
+                version: '1.1.1',
+                path: '/ot-node/1.1.1',
+                configPath: config.appDataPath,
+            }
+         */
+
+        // Remove UPDATE file before proceeding to avoid loop in case of error.
+        execSync(`rm ${updateFilePath}`);
+
+        // Run pre-update script if available.
+        const preupdateScriptPath = path.join(updateInfo.path, 'testnet', 'preupdate.js');
+        if (fs.existsSync(preupdateScriptPath)) {
+            execSync(`node ${preupdateScriptPath} --configDir=${configDir}`, { cwd: updateInfo.path });
+        }
+
+        // Copy app data and merge configs
+        execSync(`cp -r ${configDir} ${updateInfo.path}`);
+
+        // Run migrations
+        let output = execSync(
+            './node_modules/.bin/sequelize db:migrate --config config/sequelizeConfig.js',
+            { cwd: updateInfo.path },
+        );
+        logger.trace(output);
+
+        output = execSync(
+            './node_modules/.bin/sequelize db:seed:all --config config/sequelizeConfig.js',
+            { cwd: updateInfo.path },
+        );
+        logger.trace(output);
+
+        // Run post-update script if available.
+        const postupdateScriptPath = path.join(updateInfo.path, 'testnet', 'postupdate.js');
+        if (fs.existsSync(postupdateScriptPath)) {
+            execSync(`node ${postupdateScriptPath} --configDir=${configDir}`, { cwd: updateInfo.path });
+        }
+
+        // Copy all the logs if any.
+        execSync(`cp -r ${path.join(otNodeRootPath, 'logs')} ${updateInfo.path} || true`);
+
+        // Just replace current link.
+        execSync(`ln -fns ${updateInfo.path} /ot-node/current`);
+
+        // TODO: Remove old version dir.
+
+        logger.important(`OT Node updated to ${updateInfo.version}. Resetting...`);
+        process.exit(2);
+    } catch (error) {
+        logger.error(`Failed to run update. ${error}.\n${error.stack}`);
+    }
+    // Potential problems:
+    // * If Supervisor's config was changed then docker container has to
+    //   be restarted to take all the effects.
 }
 
 function main() {
@@ -46,7 +122,7 @@ function main() {
     if (!externalConfig.node_wallet ||
         !externalConfig.node_private_key ||
         !web3.utils.isAddress(externalConfig.node_wallet)) {
-        console.error('Wallet not provided! Please provide valid wallet.');
+        logger.error('Wallet not provided! Please provide valid wallet.');
         process.exit(1);
         return;
     }
@@ -56,7 +132,7 @@ function main() {
             path.join(localConfiguration.appDataPath, localConfiguration.erc725_identity_filepath);
         const content = { identity: process.env.ERC_725_IDENTITY };
         fs.writeFileSync(erc725IdentityFilePath, JSON.stringify(content, null, 4));
-        console.log('Identity given: ', process.env.ERC_725_IDENTITY);
+        logger.info('Identity given: ', process.env.ERC_725_IDENTITY);
     }
 
     if (process.env.KAD_IDENTITY && process.env.KAD_IDENTITY_CHILD_INDEX) {
@@ -67,7 +143,7 @@ function main() {
             index: parseInt(process.env.KAD_IDENTITY_CHILD_INDEX, 10),
         };
         fs.writeFileSync(identityFilePath, JSON.stringify(content, null, 4));
-        console.log('Kademlia identity given: ', process.env.KAD_IDENTITY);
+        logger.info('Kademlia identity given: ', process.env.KAD_IDENTITY);
     }
 
     if (process.env.IMPORT_WHITELIST) {
@@ -78,11 +154,11 @@ function main() {
     }
 
     deepExtend(localConfiguration, externalConfig);
-    console.log('Configuration:');
+    logger.info('Configuration:');
     // Mask private key before printing it.
     const externalConfigClean = Object.assign({}, externalConfig);
     externalConfigClean.node_private_key = '*** MASKED ***';
-    console.log(JSON.stringify(externalConfigClean, null, 4));
+    logger.info(JSON.stringify(externalConfigClean, null, 4));
 
     fs.writeFileSync(`.${pjson.name}rc`, JSON.stringify(externalConfig, null, 4));
 
@@ -90,4 +166,5 @@ function main() {
     require('../ot-node');
 }
 
+checkForUpdate();
 main();

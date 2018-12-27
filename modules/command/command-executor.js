@@ -61,7 +61,10 @@ class CommandExecutor {
      */
     async init() {
         await this.startCleaner();
-        await this.startAutoupdater();
+        if (this.ctx.config.autoupdater.enabled) {
+
+            await this.startAutoupdater();
+        }
         this.logger.trace('Command executor has been initialized...');
     }
 
@@ -187,11 +190,9 @@ class CommandExecutor {
     }
 
     async startAutoupdater() {
-        if (process.env.OT_NODE_MODE === 'docker') {
-            await CommandExecutor._delete('autoupdaterCommand');
-            const handler = this.commandResolver.resolve('autoupdaterCommand');
-            await this.add(handler.default(), 0, true);
-        }
+        await CommandExecutor._delete('autoupdaterCommand');
+        const handler = this.commandResolver.resolve('autoupdaterCommand');
+        await this.add(handler.default(), 0, true);
     }
 
     /**

@@ -279,30 +279,6 @@ class OTNode {
         config.erc725Identity = '';
         Object.seal(config);
 
-        let updatesReady;
-
-        // check for ready updates
-        try {
-            fs.accessSync('/ot-node/current/UPDATE', fs.F_OK);
-            log.info('Installing new update');
-            updatesReady = true;
-        } catch (err) {
-            log.info('No updates waiting');
-            updatesReady = false;
-        }
-
-        if (updatesReady) {
-            try {
-                await Utilities.runUpdate(config);
-                execSync('rm -rf /ot-node/current/UPDATE');
-                process.exit(0);
-            } catch (err) {
-                log.error('Update installation failed, rolling back');
-                log.error(err);
-                execSync('rm -rf /ot-node/current/UPDATE');
-            }
-        }
-
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
