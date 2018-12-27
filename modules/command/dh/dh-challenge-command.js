@@ -38,7 +38,7 @@ class DHChallengeCommand extends Command {
             ],
         });
 
-        if (holdingData.length == null) {
+        if (holdingData == null) {
             throw new Error(`Failed to find holding data for data set ${datasetId}`);
         }
 
