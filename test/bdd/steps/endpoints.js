@@ -3,6 +3,7 @@
 const {
     Then, Given,
 } = require('cucumber');
+const BN = require('bn.js');
 const { expect } = require('chai');
 
 const httpApiHelper = require('./lib/http-api-helper');
@@ -187,4 +188,14 @@ Given(/^([DC|DH|DV]+) calls consensus endpoint for sender: "(\S+)"$/, async func
     const consensusResponse = await httpApiHelper.apiConsensus(host, senderId);
     expect(consensusResponse, 'Should have key called events').to.have.all.keys('events');
     this.state.lastConsensusResponse = consensusResponse;
+});
+
+Given(/^default initial token amount should be deposited on (\d+)[st|nd|rd|th]+ node's profile$/, async function (nodeIndex) {
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const balance = await httpApiHelper.apiBalance(this.state.nodes[nodeIndex - 1].state.node_rpc_url, false);
+    const staked = new BN(balance.profile.staked);
+    const initialDepositAmount = new BN(this.state.nodes[nodeIndex - 1].options.nodeConfiguration.initial_deposit_amount);
+
+    expect(staked.toString()).to.be.equal(initialDepositAmount.toString());
 });

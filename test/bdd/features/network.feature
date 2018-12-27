@@ -135,3 +135,10 @@ Feature: Test basic network features
     And I wait for replications to finish
     And DC waits for holding time
     Then selected DHes should be payed out
+
+  @first
+  Scenario: Node with diff management and operational wallet should successfully start
+    Given I setup 1 node
+    And I set 1st node's management wallet to be different then operational wallet
+    And I start the node
+    Then default initial token amount should be deposited on 1st node's profile

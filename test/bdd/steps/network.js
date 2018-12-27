@@ -8,6 +8,7 @@ const uuidv4 = require('uuid/v4');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
 const request = require('request');
+const _ = require('lodash');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
@@ -792,4 +793,23 @@ Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async functio
     });
 
     return Promise.all(myPromises);
+});
+
+Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then operational wallet$/, { timeout: 3000000 }, function (nodeIndex) {
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const wallets = LocalBlockchain.wallets();
+    const walletCount = LocalBlockchain.wallets().length;
+
+    const operationalWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.node_wallet;
+    let managementWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.management_wallet;
+    let randomIndex;
+    expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
+
+    while (managementWallet === operationalWallet) {
+        // position walletCount-1 is reserved for bootstrap node
+        randomIndex = _.random(0, walletCount - 2);
+        managementWallet = wallets[randomIndex].address;
+    }
+    expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
 });
