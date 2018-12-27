@@ -246,13 +246,16 @@ class DHService {
         const bid = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
-                status: 'CHOSEN',
             },
         });
 
         if (bid) {
-            this.logger.info(`I am already a holder for offer ${offerId}. Skipping replacement...`);
-            return;
+            if (bid.status === 'CHOSEN') {
+                this.logger.info(`I am already a holder for offer ${offerId}. Skipping replacement...`);
+                return;
+            }
+        } else {
+            // TODO create bid
         }
 
         const offer = await Models.offers.findOne({

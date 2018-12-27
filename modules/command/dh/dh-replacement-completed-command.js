@@ -46,6 +46,11 @@ class DHReplacementCompleted extends Command {
 
                 if (Utilities.compareHexStrings(chosenHolder, this.config.erc725Identity)) {
                     this.logger.important(`Chosen as a replacement for offer ${offerId}.`);
+
+                    const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+
+                    bid.status = 'CHOSEN';
+                    await bid.save({ fields: ['status'] });
                 } else {
                     this.logger.important(`Not chosen as a replacement for offer ${offerId}.`);
                 }
