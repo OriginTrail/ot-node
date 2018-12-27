@@ -51,11 +51,8 @@ script:
       rm -rf build && truffle migrate --reset --compile-all --network ganache > $ARTIFACTS_DIR/truffle-migrate.log;
     fi
   - cd $TRAVIS_BUILD_DIR
-  - chmod +x check_image.sh
-  - chmod +x cleanup_image.sh
-  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ]]; then ./check_image.sh; fi
-  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ]]; then ./cleanup_image.sh; fi
-  - cd $TRAVIS_BUILD_DIR
+  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ]]; then ./test/docker/check_image.sh; fi
+  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ]]; then ./test/docker/cleanup_image.sh; fi
   - jobs
   - kill -9 %1
 after_script:
