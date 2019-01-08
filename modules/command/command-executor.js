@@ -4,6 +4,8 @@ const Command = require('./command');
 
 const sleep = require('sleep-async')().Promise;
 
+const MAX_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
+
 /**
  * Command statuses
  * @type {{failed: string, expired: string, started: string, pending: string, completed: string}}
@@ -48,7 +50,7 @@ class CommandExecutor {
             } catch (e) {
                 this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
                 this.notifyError(e);
-                process.exit(-1);
+                process.exit(1);
             }
 
             callback();
@@ -110,7 +112,7 @@ class CommandExecutor {
         const waitMs = (command.ready_at + command.delay) - now;
         if (waitMs > 0) {
             this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
-            await this.add(command, waitMs, false);
+            await this.add(command, Math.min(waitMs, MAX_DELAY_IN_MILLS), false);
             return;
         }
 
@@ -202,6 +204,16 @@ class CommandExecutor {
      * @param insert
      */
     async add(command, delay = 0, insert = true) {
+        const now = Date.now();
+
+        if (delay != null && delay > MAX_DELAY_IN_MILLS) {
+            if (command.ready_at == null) {
+                command.ready_at = now;
+            }
+            command.ready_at += delay;
+            delay = MAX_DELAY_IN_MILLS;
+        }
+
         if (insert) {
             command = await this._insert(command);
         }
@@ -253,9 +265,9 @@ class CommandExecutor {
             command.sequence = command.sequence.slice(1);
         }
         if (!command.ready_at) {
-            command.ready_at = Date.now();
+            command.ready_at = Date.now(); // take current time
         }
-        if (!command.delay) {
+        if (command.delay == null) {
             command.delay = 0;
         }
         if (!command.transactional) {

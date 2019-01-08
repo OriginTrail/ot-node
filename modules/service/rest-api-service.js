@@ -138,9 +138,49 @@ class RestAPIService {
     _exposeAPIRoutes(server) {
         const {
             importController, dcController, transport, emitter,
+            blockchain, web3, config,
         } = this.ctx;
 
         this._registerNodeInfoRoute(server, false);
+
+        server.get('/api/balance', async (req, res) => {
+            this.logger.api('Get balance.');
+
+            try {
+                const humanReadable = req.query.humanReadable === 'true';
+
+                const walletEthBalance = await web3.eth.getBalance(config.node_wallet);
+                const walletTokenBalance = await Utilities.getTracTokenBalance(
+                    web3,
+                    config.node_wallet,
+                    blockchain.getTokenContractAddress(),
+                    false,
+                );
+                const profile = await blockchain.getProfile(config.erc725Identity);
+                const profileMinimalStake = await blockchain.getProfileMinimumStake();
+
+                const body = {
+                    wallet: {
+                        address: config.node_wallet,
+                        ethBalance: humanReadable ? web3.utils.fromWei(walletEthBalance, 'ether') : walletEthBalance,
+                        tokenBalance: humanReadable ? web3.utils.fromWei(walletTokenBalance, 'ether') : walletTokenBalance,
+                    },
+                    profile: {
+                        staked: humanReadable ? web3.utils.fromWei(profile.stake, 'ether') : profile.stake,
+                        reserved: humanReadable ? web3.utils.fromWei(profile.stakeReserved, 'ether') : profile.stakeReserved,
+                        minimalStake: humanReadable ? web3.utils.fromWei(profileMinimalStake, 'ether') : profileMinimalStake,
+                    },
+                };
+
+                res.status(200);
+                res.send(body);
+            } catch (error) {
+                this.logger.error(`Failed to get balance. ${error.message}.`);
+                res.status(503);
+                res.send({});
+            }
+        });
+
 
         /**
          * Data import route
@@ -360,40 +400,6 @@ class RestAPIService {
             });
         });
 
-
-        server.post('/api/deposit', (req, res) => {
-            this.logger.api('POST: Deposit tokens request received.');
-
-            if (req.body !== null && typeof req.body.trac_amount === 'number'
-                && req.body.trac_amount > 0) {
-                const { trac_amount } = req.body;
-                emitter.emit('api-deposit-tokens', {
-                    trac_amount,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-            }
-        });
-
-
-        server.post('/api/withdraw', (req, res) => {
-            this.logger.api('POST: Withdraw tokens request received.');
-
-            if (req.body !== null && typeof req.body.trac_amount === 'number'
-                && req.body.trac_amount > 0) {
-                const { trac_amount } = req.body;
-                emitter.emit('api-withdraw-tokens', {
-                    trac_amount,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-            }
-        });
-
         server.get('/api/import_info', async (req, res) => {
             await importController.dataSetInfo(req, res);
         });
@@ -428,6 +434,27 @@ class RestAPIService {
 
             const { type } = req.body;
             emitter.emit(type, req, res);
+        });
+
+        /**
+         * Payout route
+         * @param Query params: data_set_id
+         */
+        server.get('/api/payout', (req, res) => {
+            this.logger.api('GET: Payout request received.');
+
+            if (!req.query.offer_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param offer_id is required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-payout', {
+                offerId: req.query.offer_id,
+                response: res,
+            });
         });
     }
 

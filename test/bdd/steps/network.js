@@ -5,6 +5,8 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
+const BN = require('bn.js');
+const sleep = require('sleep-async')().Promise;
 const request = require('request');
 const { deepEqual } = require('jsprim');
 
@@ -68,6 +70,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
         nodeConfiguration: {
             node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             node_private_key: LocalBlockchain.wallets()[walletCount - 1].privateKey,
+            management_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
@@ -83,6 +86,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+            initial_deposit_amount: '10000000000000000000000',
 
         },
         appDataBaseDir: this.parameters.appDataBaseDir,
@@ -103,6 +107,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
         const nodeConfiguration = {
             node_wallet: LocalBlockchain.wallets()[i].address,
             node_private_key: LocalBlockchain.wallets()[i].privateKey,
+            management_wallet: LocalBlockchain.wallets()[i].address,
             node_port: 6000 + i,
             node_rpc_port: 9000 + i,
             node_remote_control_port: 4000 + i,
@@ -121,6 +126,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
+            initial_deposit_amount: '10000000000000000000000',
         };
 
         const newNode = new OtNode({
@@ -138,6 +144,15 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
 }));
+
+Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    const waitTime = Number(dc.options.nodeConfiguration.dc_holding_time_in_minutes) * 60 * 1000;
+    expect(waitTime, 'waiting time in BDD tests should be less then step timeout').to.be.lessThan(120000);
+    await sleep.sleep(waitTime);
+});
 
 Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -517,6 +532,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
             nodeConfiguration: {
                 node_wallet: LocalBlockchain.wallets()[i].address,
                 node_private_key: LocalBlockchain.wallets()[i].privateKey,
+                management_wallet: LocalBlockchain.wallets()[i].address,
                 node_port: 6000 + i,
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
@@ -534,6 +550,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                     rpc_node_port: 7545,
                 },
                 local_network_only: true,
+                initial_deposit_amount: '10000000000000000000000',
             },
             appDataBaseDir: this.parameters.appDataBaseDir,
         });
@@ -562,16 +579,9 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-Then(/^all nodes with ([last import|second last import]+) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
+Then(/^all nodes with (last import|second last import) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
     expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
-    if (whichImport === 'last import') {
-        whichImport = 'lastImport';
-    } else if (whichImport === 'second last import') {
-        whichImport = 'secondLastImport';
-    } else {
-        throw Error('provided import is not valid');
-    }
-
+    whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
     expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
@@ -755,4 +765,31 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
         'version', 'blockchain',
         'network', 'is_bootstrap',
     ]);
+});
+
+Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const myPromises = [];
+
+    // slice(1) to exlude DC node
+    this.state.nodes.slice(1).forEach((node) => {
+        myPromises.push(new Promise((accept) => {
+            // node.state.takenBids gets populated only for choosen DH nodes
+            if (node.state.takenBids.length === 1) {
+                node.once('dh-pay-out-finalized', async () => {
+                    const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
+                    const a = new BN(myBalance.profile.staked);
+                    const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
+                    const c = new BN(node.options.nodeConfiguration.dc_token_amount_per_holder);
+                    expect(a.sub(b).toString()).to.be.equal(c.toString());
+                    accept();
+                });
+            } else {
+                accept();
+            }
+        }));
+    });
+
+    return Promise.all(myPromises);
 });
