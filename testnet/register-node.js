@@ -63,7 +63,12 @@ function checkForUpdate() {
         }
 
         // Copy app data and merge configs
-        execSync(`cp -r ${configDir} ${updateInfo.path}`);
+        const appMigrationDirName = 'data-migration';
+        const appMigrationDirPath = path.join(updateInfo.path, appMigrationDirName);
+        execSync(`mkdir -p ${appMigrationDirPath} && cp -r ${configDir}/ ${appMigrationDirPath}`);
+
+        // Point Sequelize to the right path.
+        process.env.SEQUELIZEDB = path.join(appMigrationDirPath, 'system.db');
 
         // Run migrations
         let output = execSync(
@@ -86,6 +91,11 @@ function checkForUpdate() {
 
         // Copy all the logs if any.
         execSync(`cp -r ${path.join(otNodeRootPath, 'logs')} ${updateInfo.path} || true`);
+
+        // Return back migrated 'application-data'.
+        execSync(`cp -rf ${appMigrationDirPath}/ ${configDir}`);
+
+        // Potential risk of race condition here. Coping and linking has to be atomic operation.
 
         // Just replace current link.
         execSync(`ln -fns ${updateInfo.path} /ot-node/current`);
