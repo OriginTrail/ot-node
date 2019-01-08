@@ -284,16 +284,6 @@ class OTNode {
         config.erc725Identity = '';
         Object.seal(config);
 
-        // check for Updates
-        try {
-            log.info('Checking for updates');
-            await Utilities.checkForUpdates(config.autoUpdater);
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
