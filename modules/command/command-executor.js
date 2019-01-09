@@ -63,8 +63,7 @@ class CommandExecutor {
      */
     async init() {
         await this.startCleaner();
-        if (this.ctx.config.autoupdater.enabled) {
-
+        if (this.ctx.config.autoUpdater.enabled) {
             await this.startAutoupdater();
         }
         this.logger.trace('Command executor has been initialized...');
