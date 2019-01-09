@@ -150,10 +150,16 @@ process.on('warning', (warning) => {
 });
 
 process.on('exit', (code) => {
-    if (code !== 0) {
-        log.error(`Whoops, terminating with code: ${code}`);
-    } else {
+    switch (code) {
+    case 0:
         log.debug(`Normal exiting with code: ${code}`);
+        break;
+    case 4:
+        log.trace('Exiting because of update.');
+        break;
+    default:
+        log.error(`Whoops, terminating with code: ${code}`);
+        break;
     }
 });
 

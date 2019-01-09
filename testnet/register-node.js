@@ -75,13 +75,13 @@ function checkForUpdate() {
             './node_modules/.bin/sequelize db:migrate --config config/sequelizeConfig.js',
             { cwd: updateInfo.path },
         );
-        logger.trace(output);
+        logger.trace(output.toString('utf8'));
 
         output = execSync(
             './node_modules/.bin/sequelize db:seed:all --config config/sequelizeConfig.js',
             { cwd: updateInfo.path },
         );
-        logger.trace(output);
+        logger.trace(output.toString('utf8'));
 
         // Run post-update script if available.
         const postupdateScriptPath = path.join(updateInfo.path, 'testnet', 'postupdate.js');
