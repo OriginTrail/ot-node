@@ -82,7 +82,7 @@ class AutoupdaterCommand extends Command {
                 destinationBaseDir: '/ot-node/',
             };
 
-            updater.send([options]);
+            updater.send(options);
             await updaterPromise;
             return Command.repeat();
         }
