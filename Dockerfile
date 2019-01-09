@@ -29,7 +29,7 @@ RUN ln -s /ot-node/init /ot-node/current
 
 # Add files
 COPY . /ot-node/current
-RUN service arangodb3 start && cd /ot-node/current && npm install && npm run setup -- --configDir=/ot-node/current/data
+RUN service arangodb3 start && cd /ot-node/current && npm install && npm run setup -- --configDir=/ot-node/data
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
@@ -40,4 +40,4 @@ RUN chmod 400 testnet/start.sh
 
 VOLUME /ot-node /var/lib/arangodb
 EXPOSE 5278 8900 3000 3010
-CMD ["sh", "/ot-node/current/testnet/start.sh"]
+CMD ["sh", "/usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf"]
