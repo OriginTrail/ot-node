@@ -39,4 +39,4 @@ WORKDIR /ot-node/current
 
 VOLUME /ot-node /var/lib/arangodb
 EXPOSE 5278 8900 3000 3010
-CMD ["sh", "/usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/testnet/supervisord.conf"]
