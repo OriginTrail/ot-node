@@ -36,7 +36,6 @@ RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remot
 ADD testnet/papertrail.yml /etc/log_files.yml
 
 WORKDIR /ot-node/current
-RUN chmod 400 testnet/start.sh
 
 VOLUME /ot-node /var/lib/arangodb
 EXPOSE 5278 8900 3000 3010
