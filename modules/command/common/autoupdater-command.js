@@ -78,7 +78,7 @@ class AutoupdaterCommand extends Command {
             const options = {
                 appDataPath: config.appDataPath,
                 version: remoteVersion,
-                archiveUrl: config.archiveUrl,
+                archiveUrl: config.autoUpdater.archiveUrl,
                 destinationBaseDir: '/ot-node/',
             };
 
