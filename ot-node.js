@@ -74,16 +74,9 @@ try {
             process.env.NODE_ENV,
         );
     }
-console.log('DEBUG', argv.configDir);
-console.log('DEBUG', models.sequelize.options.storage);
-console.log('DEBUG', config.appDataPath);
-console.log('DEBUG - SEQUELIZEDB', process.env.SEQUELIZEDB);
-if (fs.existsSync(models.sequelize.options.storage)) {
-    console.log('DEBUG', 'db exists');
-}
-if (fs.accessSync(models.sequelize.options.storage, fs.constants.W_OK | fs.constants.R_OK)) {
-    console.log('DEBUG', 'RW rights');
-}
+console.log('DEBUG1', argv.configDir);
+console.log('DEBUG2', models.sequelize.options.storage);
+console.log('DEBUG3', config.appDataPath);
     if (!config.node_wallet || !config.node_private_key) {
         console.error('Please provide valid wallet.');
         process.abort();
