@@ -9,6 +9,7 @@ var env = process.env.NODE_ENV || 'production';
 
 process.env.NODE_ENV = env; // Set for child processes.
 
+console.log('DEBUG __dirname', __dirname);
 // eslint-disable-next-line import/no-dynamic-require
 var config = require(`${__dirname}/../config/sequelizeConfig`)[env];
 var db = {};
