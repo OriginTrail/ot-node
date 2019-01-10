@@ -74,9 +74,7 @@ try {
             process.env.NODE_ENV,
         );
     }
-console.log('DEBUG1', argv.configDir);
-console.log('DEBUG2', models.sequelize.options.storage);
-console.log('DEBUG3', config.appDataPath);
+
     if (!config.node_wallet || !config.node_private_key) {
         console.error('Please provide valid wallet.');
         process.abort();
