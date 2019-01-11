@@ -547,6 +547,16 @@ class Blockchain {
             holders,
         );
     }
+
+    /**
+     * Gets last litigation timestamp for the holder
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationTimestamp(offerId, holderIdentity) {
+        return this.blockchain.getLitigationTimestamp(offerId, holderIdentity);
+    }
 }
 
 module.exports = Blockchain;

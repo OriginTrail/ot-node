@@ -1,3 +1,5 @@
+const { filter } = require('p-iteration');
+
 const Command = require('../command');
 const models = require('../../../models/index');
 
@@ -9,6 +11,7 @@ class DCChallengesCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.dcService = ctx.dcService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -18,14 +21,14 @@ class DCChallengesCommand extends Command {
      */
     async execute(command, transaction) {
         try {
-            const litigationCandidates = await DCChallengesCommand._getLitigationCandidates();
+            const litigationCandidates = await this._getLitigationCandidates();
             if (litigationCandidates.length === 0) {
                 return Command.repeat();
             }
 
             await this.dcService.handleChallenges(litigationCandidates);
         } catch (e) {
-            this.logger.error(`Failed to process ChallengesCommand. ${e}`);
+            this.logger.error(`Failed to process dcChallengesCommand. ${e}`);
         }
         return Command.repeat();
     }
@@ -35,11 +38,32 @@ class DCChallengesCommand extends Command {
      * @return {Promise<Array<Model>>}
      * @private
      */
-    static async _getLitigationCandidates() {
-        return models.replicated_data.findAll({
+    async _getLitigationCandidates() {
+        const potentialCandidates = await models.replicated_data.findAll({
             where: {
                 status: 'HOLDING',
             },
+        });
+
+        return filter(potentialCandidates, async (candidate) => {
+            const offer = await models.offers.findOne({
+                where: {
+                    offer_id: candidate.offer_id,
+                },
+            });
+
+            if (offer == null) {
+                this.logger.warn(`Failed to find offer ${candidate.offer_id}`);
+                return false;
+            }
+
+            const litigationIntervalMills = offer.litigation_interval_in_minutes * 60 * 1000;
+            const litigationTimestampMills = await this.blockchain.getLitigationTimestamp(
+                offer.offer_id,
+                candidate.dh_identity,
+            ) * 1000;
+
+            return Date.now() + litigationIntervalMills > litigationTimestampMills;
         });
     }
 
