@@ -38,10 +38,24 @@ process.once('message', async (options) => {
 
     logger.info(`Downloading update: ${archiveUrl}...`);
     const requestArchive = await request(archiveUrl);
+
+    let status = 0;
+    requestArchive.on('response', (response) => {
+        status = response.statusCode;
+    });
+
     const filestream = fs.createWriteStream(localUpdateFilepath);
     requestArchive.pipe(filestream);
 
     filestream.on('finish', () => {
+        if (status !== 200) {
+            logger.warn(`Failed to download update file. Server replied with ${status}.`);
+            process.send({
+                status: 'failed',
+            });
+            process.exit(0);
+            return; // Needed for tests.
+        }
         logger.info('Download complete');
         logger.info('Extracting update...');
 
@@ -51,7 +65,10 @@ process.once('message', async (options) => {
         }).exec({
             error(err) {
                 logger.error(err);
-                process.exit(1);
+                process.send({
+                    status: 'failed',
+                });
+                process.exit(0);
             },
 
             success() {
@@ -79,7 +96,7 @@ process.once('message', async (options) => {
                     logger.info(`Update has been moved to directory ${installDir}`);
                     logger.info('Installing node modules...');
 
-                    execSync('npm install', { cwd: installDir });
+                    execSync('bash -l -c "npm install"', { cwd: installDir });
                     logger.info('Node modules installed');
                     process.send({
                         status: 'completed',
@@ -90,7 +107,10 @@ process.once('message', async (options) => {
                 } catch (err) {
                     logger.error(`Update failed. ${err}. ${err.stack}`);
                     logger.error(err);
-                    process.exit(-2);
+                    process.send({
+                        status: 'failed',
+                    });
+                    process.exit(0);
                 }
             },
         });
