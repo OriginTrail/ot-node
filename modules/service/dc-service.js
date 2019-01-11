@@ -198,41 +198,6 @@ class DCService {
     }
 
     /**
-     * Creates challenge commands for litigation candidates
-     *
-     * @param candidates - DHs replicated data
-     * @return {Promise<void>}
-     */
-    async handleChallenges(candidates) {
-        await models.replicated_data.update(
-            {
-                status: 'CHALLENGING',
-            },
-            {
-                where: {
-                    id: {
-                        [models.Sequelize.Op.in]: candidates.map(c => c.id),
-                    },
-                },
-            },
-        );
-
-        const adds = candidates.map(candidate => ({
-            name: 'dcChallengeCommand',
-            delay: 0,
-            data: {
-                dhId: candidate.dh_id,
-                dhIdentity: candidate.dh_identity,
-                offerId: candidate.offer_id,
-                litigationPrivateKey: candidate.litigation_private_key,
-            },
-            transactional: false,
-        })).map(command => this.commandExecutor.add(command));
-
-        await Promise.all(adds);
-    }
-
-    /**
      * Handles replication request from one DH
      * @param offerId - Offer ID
      * @param wallet - DH wallet

@@ -1,4 +1,4 @@
-const { filter } = require('p-iteration');
+const { forEach, filter } = require('p-iteration');
 
 const Command = require('../command');
 const models = require('../../../models/index');
@@ -12,6 +12,7 @@ class DCChallengesCommand extends Command {
         this.logger = ctx.logger;
         this.dcService = ctx.dcService;
         this.blockchain = ctx.blockchain;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -21,12 +22,24 @@ class DCChallengesCommand extends Command {
      */
     async execute(command, transaction) {
         try {
-            const litigationCandidates = await this._getLitigationCandidates();
-            if (litigationCandidates.length === 0) {
-                return Command.repeat();
-            }
+            const candidates = await this._getLitigationCandidates();
 
-            await this.dcService.handleChallenges(litigationCandidates);
+            forEach(candidates, async (candidate) => {
+                candidate.status = 'CHALLENGING';
+                await candidate.save({ fields: ['status'] });
+
+                this.commandExecutor.add({
+                    name: 'dcChallengeCommand',
+                    delay: 0,
+                    data: {
+                        dhId: candidate.dh_id,
+                        dhIdentity: candidate.dh_identity,
+                        offerId: candidate.offer_id,
+                        litigationPrivateKey: candidate.litigation_private_key,
+                    },
+                    transactional: false,
+                });
+            });
         } catch (e) {
             this.logger.error(`Failed to process dcChallengesCommand. ${e}`);
         }
@@ -53,7 +66,7 @@ class DCChallengesCommand extends Command {
             });
 
             if (offer == null) {
-                this.logger.warn(`Failed to find offer ${candidate.offer_id}`);
+                this.logger.warn(`Failed to find offer ${candidate.offer_id}. Possible database corruption.`);
                 return false;
             }
 
