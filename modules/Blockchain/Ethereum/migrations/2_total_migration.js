@@ -224,12 +224,12 @@ module.exports = async (deployer, network, accounts) => {
             identities[i] = data[i].newIdentity;
             oldIdentities[i] = data[i].oldIdentity;
 
-            console.log(`Node ${i + 1}\t id:${nodeIds[i]}\tOld identity:${identities[i]}\tNew identity:${identities[i]}`);
+            console.log(`Node ${i + 1}\t id:${nodeIds[i]}\tOld identity:${oldIdentities[i]}\tNew identity:${identities[i]}`);
         }
 
         console.log(`Number of entries: ${nodeIds.length}`);
         console.log('Transfering ERC725 and adding nodeID approval...');
-        // await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes);
+        await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes);
         break;
     case 'rinkeby':
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
