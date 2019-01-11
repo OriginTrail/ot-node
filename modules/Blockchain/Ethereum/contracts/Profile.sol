@@ -11,7 +11,7 @@ contract Profile {
     using SafeMath for uint256;
     Hub public hub;
 
-    uint256 public version = 100;
+    uint256 public version = 101;
 
     uint256 public minimalStake = 10**21;
     uint256 public withdrawalTime = 5 minutes;
@@ -119,7 +119,7 @@ contract Profile {
 
         profileStorage.setStake(identity, profileStorage.getStake(identity).add(amount));
 
-        emit TokensDeposited(identity, amount, profileStorage.getStake(identity).add(amount));
+        emit TokensDeposited(identity, amount, profileStorage.getStake(identity));
     }
 
     function startTokenWithdrawal(address identity, uint256 amount) public {
@@ -168,7 +168,7 @@ contract Profile {
         emit TokensWithdrawn(
             identity,
             profileStorage.getWithdrawalAmount(identity),
-            profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
+            profileStorage.getStake(identity)
         );
     }
 
