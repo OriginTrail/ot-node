@@ -21,7 +21,6 @@ const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
 const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
-const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -29,7 +28,6 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
-const { Op } = models.Sequelize;
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
@@ -362,7 +360,6 @@ class OTNode {
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
-            challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
