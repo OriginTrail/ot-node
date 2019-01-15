@@ -6,6 +6,10 @@ const models = require('../../models/index');
 
 const logger = require('../../modules/logger');
 
+/**
+ * Recreate SQL database from scratch
+ * @return {Promise<any>}
+ */
 function recreateDatabase() {
     fs.closeSync(fs.openSync(sequelizeConfig.storage, 'w'));
 
