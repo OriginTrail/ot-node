@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         data_set_id: DataTypes.STRING,
         start_time: DataTypes.INTEGER,
         end_time: DataTypes.INTEGER,
+        status: DataTypes.STRING,
     }, {});
     challenges.associate = (models) => {
         // associations can be defined here

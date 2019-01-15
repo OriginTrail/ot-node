@@ -1,8 +1,6 @@
 const Command = require('../command');
-const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 const constants = require('../../utility/constants');
-const importUtilities = require('../../ImportUtilities');
 
 /**
  *  Challenges one DH
@@ -24,62 +22,28 @@ class DCChallengeCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            dhId,
-            dhIdentity,
-            offerId,
+            challenge_id,
             litigationPrivateKey,
         } = command.data;
 
-        await models.replicated_data.update(
-            {
-                status: 'CHALLENGING',
+        const challenge = await models.challenges.findOne({
+            where: {
+                id: challenge_id,
             },
-            {
-                where: {
-                    offer_id: offerId,
-                    dh_identity: dhIdentity,
-                },
-            },
-        );
-
-        const numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS;
-
-        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
-        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
-
-        const encryptedVertices = importUtilities.immutableEncryptVertices(
-            vertices,
-            litigationPrivateKey,
-        );
-        const challenges = this.challengeService.generateChallenges(
-            numberOfTests,
-            constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
-            encryptedVertices,
-        );
-        const challenge = challenges[utilities.getRandomInt(numberOfTests - 1)];
-
-        this.logger.trace(`Sending challenge to ${dhId}. Dataset ID ${offer.data_set_id}, block ID ${challenge.block_id}.`);
-
-        const currentTime = new Date().getTime();
-        const challengeRecord = await models.challenges.create({
-            dh_id: dhId,
-            dh_identity: dhIdentity,
-            data_set_id: offer.data_set_id,
-            block_id: challenge.block_id,
-            expected_answer: challenge.answer,
-            start_time: currentTime,
-            offer_id: offerId,
-            end_time: currentTime + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS,
         });
+
+        this.logger.trace(`Sending challenge to ${challenge.dh_id}. Offer ID ${challenge.offer_id}, block ID ${challenge.block_id}.`);
+
+        challenge.end_time = new Date().getTime() + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
 
         await this.transport.challengeRequest({
             payload: {
-                data_set_id: offer.data_set_id,
+                data_set_id: challenge.data_set_id,
                 block_id: challenge.block_id,
-                challenge_id: challengeRecord.id,
+                challenge_id: challenge.id,
                 litigator_id: this.config.identity,
             },
-        }, dhId);
+        }, challenge.dh_id);
 
         return {
             commands: [
@@ -87,12 +51,12 @@ class DCChallengeCommand extends Command {
                     name: 'dcChallengeCheckCommand',
                     delay: constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS,
                     data: {
-                        dhId,
-                        dhIdentity,
-                        offerId,
-                        dataSetId: offer.data_set_id,
+                        dhId: challenge.dh_id,
+                        dhIdentity: challenge.dh_identity,
+                        offerId: challenge.offer_id,
+                        dataSetId: challenge.data_set_id,
                         litigationPrivateKey,
-                        challengeId: challengeRecord.id,
+                        challengeId: challenge.id,
                     },
                     transactional: false,
                 },

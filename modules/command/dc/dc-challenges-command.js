@@ -22,20 +22,33 @@ class DCChallengesCommand extends Command {
      */
     async execute(command, transaction) {
         try {
-            const candidates = await this._getLitigationCandidates();
+            const challenges = await this._getChallenges();
 
-            forEach(candidates, async (candidate) => {
-                candidate.status = 'CHALLENGING';
-                await candidate.save({ fields: ['status'] });
+            forEach(challenges, async (challenge) => {
+                const challenged = await models.replicated_data.findOne({
+                    where: {
+                        dh_id: challenge.dh_id,
+                        offer_id: challenge.offer_id,
+                    },
+                });
+
+                if (challenged.status !== 'HOLDING') {
+                    return;
+                }
+
+                challenge.status = 'IN_PROGRESS';
+                await challenge.save({ fields: ['status'] });
+
+
+                challenged.status = 'CHALLENGING';
+                await challenged.save({ fields: ['status'] });
 
                 this.commandExecutor.add({
                     name: 'dcChallengeCommand',
                     delay: 0,
                     data: {
-                        dhId: candidate.dh_id,
-                        dhIdentity: candidate.dh_identity,
-                        offerId: candidate.offer_id,
-                        litigationPrivateKey: candidate.litigation_private_key,
+                        challenge_id: challenge.id,
+                        litigationPrivateKey: challenged.litigation_private_key,
                     },
                     transactional: false,
                 });
@@ -47,33 +60,34 @@ class DCChallengesCommand extends Command {
     }
 
     /**
-     * Get holders that can be litigated
+     * Get challenges for holding nodes
      * @return {Promise<Array<Model>>}
      * @private
      */
-    async _getLitigationCandidates() {
-        const potentialCandidates = await models.replicated_data.findAll({
+    async _getChallenges() {
+        const challenges = await models.challenges.findAll({
             where: {
-                status: 'HOLDING',
+                status: 'PENDING',
+                start_time: { [models.Sequelize.Op.gte]: Date.now() },
             },
         });
 
-        return filter(potentialCandidates, async (candidate) => {
+        return filter(challenges, async (challenge) => {
             const offer = await models.offers.findOne({
                 where: {
-                    offer_id: candidate.offer_id,
+                    offer_id: challenge.offer_id,
                 },
             });
 
             if (offer == null) {
-                this.logger.warn(`Failed to find offer ${candidate.offer_id}. Possible database corruption.`);
+                this.logger.error(`Failed to find offer ${challenge.offer_id}. Possible database corruption.`);
                 return false;
             }
 
             const litigationIntervalMills = offer.litigation_interval_in_minutes * 60 * 1000;
             const litigationTimestampMills = await this.blockchain.getLitigationTimestamp(
                 offer.offer_id,
-                candidate.dh_identity,
+                challenge.dh_identity,
             ) * 1000;
 
             return Date.now() + litigationIntervalMills > litigationTimestampMills;

@@ -1,6 +1,10 @@
+const { forEach } = require('p-iteration');
+
 const Command = require('../command');
 const Utilities = require('../../Utilities');
+const importUtilitites = require('../../ImportUtilities');
 const Models = require('../../../models/index');
+const constants = require('../../utility/constants');
 
 const { Op } = Models.Sequelize;
 
@@ -11,6 +15,7 @@ class DcOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
     }
@@ -47,26 +52,7 @@ class DcOfferFinalizedCommand extends Command {
                 offer.message = 'Offer has been finalized. Offer is now active.';
                 await offer.save({ fields: ['status', 'message', 'global_status'] });
 
-                const {
-                    holder1,
-                    holder2,
-                    holder3,
-                } = JSON.parse(event.data);
-
-                const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
-                await Models.replicated_data.update(
-                    {
-                        status: 'HOLDING',
-                    },
-                    {
-                        where: {
-                            offer_id: offer.offer_id,
-                            dh_identity: {
-                                [Op.in]: holders,
-                            },
-                        },
-                    },
-                );
+                await this._setHolders(offer, event);
 
                 const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
                 return {
@@ -83,6 +69,59 @@ class DcOfferFinalizedCommand extends Command {
             }
         }
         return Command.repeat();
+    }
+
+    /**
+     * Update DHs to Holders
+     * @param offer - Offer
+     * @param event - OfferFinalized event
+     * @return {Promise<void>}
+     * @private
+     */
+    async _setHolders(offer, event) {
+        const {
+            holder1,
+            holder2,
+            holder3,
+        } = JSON.parse(event.data);
+
+        const startTime = Date.now();
+        const endTime = startTime + (offer.holding_time_in_minutes * 60 * 1000);
+        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
+        const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
+        forEach(holders, async (holder) => {
+            const replicatedData = await Models.replicated_data.findOne({
+                where: {
+                    offer_id: offer.offer_id,
+                    dh_identity: holder,
+                },
+            });
+            replicatedData.status = 'HOLDING';
+            await replicatedData.save({ fields: ['status'] });
+
+            const encryptedVertices = importUtilitites.immutableEncryptVertices(
+                vertices,
+                replicatedData.litigation_private_key,
+            );
+
+            const challenges = this.challengeService.generateChallenges(
+                constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
+                constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
+                encryptedVertices, startTime, endTime,
+            );
+
+            forEach(challenges, async challenge =>
+                Models.challenges.create({
+                    dh_id: replicatedData.dh_id,
+                    dh_identity: replicatedData.dh_identity,
+                    data_set_id: offer.data_set_id,
+                    block_id: challenge.block_id,
+                    expected_answer: challenge.answer,
+                    start_time: challenge.time,
+                    offer_id: offer.offer_id,
+                    status: 'PENDING',
+                }));
+        });
     }
 
     /**

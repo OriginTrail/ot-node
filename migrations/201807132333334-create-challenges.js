@@ -31,17 +31,21 @@ module.exports = {
             type: Sequelize.STRING,
         },
         expected_answer: {
-            allowNull: true,
+            allowNull: false,
             type: Sequelize.STRING,
         },
         start_time: {
-            allowNull: true,
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
         end_time: {
             allowNull: true,
             type: Sequelize.INTEGER,
         },
+        status: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        }
     }),
     down: queryInterface => queryInterface.dropTable('challenges'),
 };

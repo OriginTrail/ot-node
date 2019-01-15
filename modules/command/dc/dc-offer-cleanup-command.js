@@ -40,8 +40,24 @@ class DCOfferCleanupCommand extends Command {
                 },
             },
         );
-        this.logger.info(`Holders for offer ${offerId} has completed the task.`);
+        this.logger.info(`Holders for offer ${offerId} have completed the task.`);
+        await this._cleanupChallenges(offerId);
         return Command.empty();
+    }
+
+    /**
+     * Cleanup offer challenges
+     * @param offerId
+     * @return {Promise<void>}
+     * @private
+     */
+    async _cleanupChallenges(offerId) {
+        await models.challenges.destroy({
+            where: {
+                offer_id: offerId,
+            },
+        });
+        this.logger.info(`Remove challenges for offer ${offerId}`);
     }
 
     /**

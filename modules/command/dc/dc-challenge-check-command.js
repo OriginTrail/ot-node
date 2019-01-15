@@ -41,6 +41,9 @@ class DCChallengeCommand extends Command {
 
             replicatedData.status = 'HOLDING';
             await replicatedData.save({ fields: ['status'] });
+
+            challenge.status = 'SUCCESSFUL';
+            await challenge.save({ fields: ['status'] });
             return Command.empty();
         }
 
