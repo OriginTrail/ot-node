@@ -1,10 +1,10 @@
 const async = require('async');
 const Models = require('../../models');
 const Command = require('./command');
+const constants = require('../utility/constants');
 
 const sleep = require('sleep-async')().Promise;
-
-const MAX_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
+const { forEach } = require('p-iteration');
 
 /**
  * Command statuses
@@ -62,10 +62,7 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async init() {
-        await this.startCleaner();
-        await this.startChallenger();
-        await this.startLitigationListener();
-        await this.startReplacementListener();
+        forEach(constants.PERMANENT_COMMANDS, async command => this._startDefaultCommand(command));
         this.logger.trace('Command executor has been initialized...');
     }
 
@@ -111,7 +108,7 @@ class CommandExecutor {
         const waitMs = (command.ready_at + command.delay) - now;
         if (waitMs > 0) {
             this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
-            await this.add(command, Math.min(waitMs, MAX_DELAY_IN_MILLS), false);
+            await this.add(command, Math.min(waitMs, constants.MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
         }
 
@@ -181,43 +178,16 @@ class CommandExecutor {
     }
 
     /**
-     * Start cleaner command
-     * @returns {Promise<void>}
-     */
-    async startCleaner() {
-        await CommandExecutor._delete('cleanerCommand');
-        const handler = this.commandResolver.resolve('cleanerCommand');
-        await this.add(handler.default(), 0, true);
-    }
-
-    /**
-     * Start challenger command
+     * Starts the default command by name
+     * @param name - Command name
      * @return {Promise<void>}
+     * @private
      */
-    async startChallenger() {
-        await CommandExecutor._delete('dcChallengesCommand');
-        const handler = this.commandResolver.resolve('dcChallengesCommand');
+    async _startDefaultCommand(name) {
+        await CommandExecutor._delete(name);
+        const handler = this.commandResolver.resolve(name);
         await this.add(handler.default(), 0, true);
-    }
-
-    /**
-     * Start litigation listener command
-     * @return {Promise<void>}
-     */
-    async startLitigationListener() {
-        await CommandExecutor._delete('dhLitigationInitiatedCommand');
-        const handler = this.commandResolver.resolve('dhLitigationInitiatedCommand');
-        await this.add(handler.default(), 0, true);
-    }
-
-    /**
-     * Start replacement listener command
-     * @return {Promise<void>}
-     */
-    async startReplacementListener() {
-        await CommandExecutor._delete('dhReplacementStartedCommand');
-        const handler = this.commandResolver.resolve('dhReplacementStartedCommand');
-        await this.add(handler.default(), 0, true);
+        this.logger.trace(`Permanent command ${name} created.`);
     }
 
     /**
@@ -229,12 +199,12 @@ class CommandExecutor {
     async add(command, delay = 0, insert = true) {
         const now = Date.now();
 
-        if (delay != null && delay > MAX_DELAY_IN_MILLS) {
+        if (delay != null && delay > constants.MAX_COMMAND_DELAY_IN_MILLS) {
             if (command.ready_at == null) {
                 command.ready_at = now;
             }
             command.ready_at += delay;
-            delay = MAX_DELAY_IN_MILLS;
+            delay = constants.MAX_COMMAND_DELAY_IN_MILLS;
         }
 
         if (insert) {
