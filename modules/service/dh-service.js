@@ -717,29 +717,6 @@ class DHService {
         }
     }
 
-    /**
-     * Handles litigation initiation from DC side
-     * @param importId
-     * @param dhWallet
-     * @param blockId
-     * @return {Promise<void>}
-     */
-    async litigationInitiated(importId, dhWallet, blockId) {
-        if (dhWallet !== this.config.node_wallet) {
-            return;
-        }
-        this.logger.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
-
-        let vertices = await this.graphStorage.findVerticesByImportId(importId);
-        ImportUtilities.sort(vertices, '_dc_key');
-        // filter CLASS vertices
-        vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
-        const answer = Challenge.answerTestQuestion(blockId, vertices, 32);
-
-        this.logger.debug(`Answer litigation for import ${importId}. Answer for block ${blockId} is ${answer}`);
-        await this.blockchain.answerLitigation(importId, answer);
-    }
-
     async dataLocationQuery(queryId) {
         const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
         const validationError = ObjectValidator.validateSearchQueryObject(networkQuery);

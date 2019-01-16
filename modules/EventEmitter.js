@@ -655,9 +655,6 @@ class EventEmitter {
             dhService,
             approvalService,
             logger,
-            config,
-            appState,
-            notifyError,
         } = this.ctx;
 
         this._on('eth-NodeApproved', (eventData) => {
@@ -709,38 +706,6 @@ class EventEmitter {
                 logger.warn(e.message);
             }
         });
-
-        this._on('eth-LitigationInitiated', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                requested_data_index,
-            } = eventData;
-
-            try {
-                await dhService.litigationInitiated(
-                    import_id,
-                    DH_wallet,
-                    requested_data_index,
-                );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-                notifyError(error);
-            }
-        });
-
-        this._on('eth-LitigationCompleted', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                DH_was_penalized,
-            } = eventData;
-
-            if (config.node_wallet === DH_wallet) {
-                // the node is DH
-                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
-            }
-        });
     }
 
     /**
@@ -756,7 +721,6 @@ class EventEmitter {
             dcService,
             dvController,
             notifyError,
-            challengeService,
         } = this.ctx;
 
         // sync
