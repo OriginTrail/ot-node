@@ -152,6 +152,7 @@ class DHService {
             holding_time_in_minutes: holdingTimeInMinutes,
             deposited: false,
             status: 'PENDING',
+            message: 'Bid is still pending',
         });
 
         const remainder = await this._calculatePessimisticMinimumDeposit(

@@ -58,7 +58,7 @@ class DHReplacementImportCommand extends Command {
             bid.status = 'FAILED';
             let message = `Failed to receive replacement replication from ${dcNodeId} for offer ${offerId}.`;
             if (response.message != null) {
-                message = `${message}. Data creator reason: ${response.message}`;
+                message = `${message} Data creator reason: ${response.message}`;
             }
 
             bid.message = message;
