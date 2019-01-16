@@ -4,9 +4,6 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const importUtilitites = require('../../ImportUtilities');
 const Models = require('../../../models/index');
-const constants = require('../../utility/constants');
-
-const { Op } = Models.Sequelize;
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -105,8 +102,6 @@ class DcOfferFinalizedCommand extends Command {
             );
 
             const challenges = this.challengeService.generateChallenges(
-                constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
-                constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
                 encryptedVertices, startTime, endTime,
             );
 

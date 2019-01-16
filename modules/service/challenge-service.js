@@ -4,10 +4,6 @@ const importUtilities = require('../ImportUtilities');
 class ChallengeService {
     constructor(ctx) {
         this.logger = ctx.logger;
-        this.transport = ctx.transport;
-        this.blockchain = ctx.blockchain;
-        this.graphStorage = ctx.graphStorage;
-        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -20,16 +16,15 @@ class ChallengeService {
      * @returns {Array}
      */
     generateChallenges(
-        numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
+        vertexData, startTime, endTime, numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
         blockSizeBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
-        vertexData, startTime, endTime,
     ) {
         if (numberOfTests <= 0) {
-            throw new Error('Number of tests cannot be nonpositive');
+            throw new Error('Number of challenges cannot be nonpositive');
         }
 
         if (blockSizeBytes < 1) {
-            throw new Error('Block size must be greater than 0.');
+            throw new Error('Block size must be greater than 0');
         }
 
         if (startTime >= endTime) {
