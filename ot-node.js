@@ -39,7 +39,7 @@ const ChallengeService = require('./modules/service/challenge-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
-const APIUtilities = require('./modules/utility/api-utilities');
+const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 

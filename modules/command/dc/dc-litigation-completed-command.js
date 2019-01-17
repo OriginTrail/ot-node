@@ -49,22 +49,28 @@ class DCLitigationCompleted extends Command {
                     where: { offer_id: offerId, dh_identity: dhIdentity },
                 });
 
-                if (penalized === true) {
-                    replicatedData.status = 'PENALIZED';
-                } else {
-                    replicatedData.status = 'HOLDING';
-                }
+                replicatedData.status = penalized === true ? 'PENALIZED' : 'HOLDING';
                 await replicatedData.save({ fields: ['status'] });
 
-                const offer = await models.offers.findOne({
-                    where: {
-                        offer_id: offerId,
-                    },
-                });
+                if (penalized === true) {
+                    // remove challenges
+                    await models.challenges.destroy({
+                        where: {
+                            dh_identity: dhIdentity,
+                            offer_id: offerId,
+                        },
+                    });
+                    this.logger.info(`Challenges removed for DH with identity ${dhIdentity} and offer ${offerId}`);
 
-                offer.global_status = 'REPLACEMENT_STARTED';
-                offer.save({ fields: ['global_status'] });
-                if (penalized) {
+                    const offer = await models.offers.findOne({
+                        where: {
+                            offer_id: offerId,
+                        },
+                    });
+
+                    offer.global_status = 'REPLACEMENT_STARTED';
+                    await offer.save({ fields: ['global_status'] });
+
                     this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);
                     return {
                         commands: [

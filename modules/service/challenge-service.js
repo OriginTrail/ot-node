@@ -1,4 +1,4 @@
-const constants = require('../utility/constants');
+const constants = require('../constants');
 const importUtilities = require('../ImportUtilities');
 
 class ChallengeService {
