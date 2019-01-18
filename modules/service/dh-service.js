@@ -9,7 +9,6 @@ const Models = require('../../models');
 const Utilities = require('../Utilities');
 
 const Graph = require('../Graph');
-const Challenge = require('../Challenge');
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const ObjectValidator = require('../validator/object-validator');

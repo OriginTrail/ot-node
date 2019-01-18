@@ -2,6 +2,7 @@ const { forEach, filter } = require('p-iteration');
 
 const Command = require('../command');
 const models = require('../../../models/index');
+const utilities = require('../../Utilities');
 
 /**
  * Challenge holders for active offers
@@ -61,7 +62,7 @@ class DCChallengesCommand extends Command {
 
     /**
      * Get challenges for holding nodes
-     * @return {Promise<Array<Model>>}
+     * @return {Promise<Map<Model>>}
      * @private
      */
     async _getChallenges() {
@@ -72,7 +73,16 @@ class DCChallengesCommand extends Command {
             },
         });
 
-        return filter(challenges, async (challenge) => {
+        const groupedByDhId = utilities.groupBy(challenges, challenge => challenge.dh_id);
+
+        const unique = [];
+        groupedByDhId.forEach((value) => {
+            if (value.length > 0) {
+                unique.push(value[0]);
+            }
+        });
+
+        return filter(unique, async (challenge) => {
             const offer = await models.offers.findOne({
                 where: {
                     offer_id: challenge.offer_id,

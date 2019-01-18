@@ -46,14 +46,16 @@ class DHChallengeCommand extends Command {
             .findVerticesByImportId(datasetId, holdingData.color);
         importUtilities.unpackKeys(vertices, []);
         const answer = this.challengeService.answerChallengeQuestion(blockId, vertices);
-        this.logger.trace(`Sending answer to question for data set ID ${datasetId}, block ID ${blockId}. Block ${answer}`);
 
+        this.logger.info(`Calculated answer for dataset ${datasetId}, color ${holdingData.color} and block ${blockId} is ${answer}`);
         await this.transport.challengeResponse({
             payload: {
                 answer,
                 challenge_id: challengeId,
             },
         }, litigatorNodeId);
+
+        this.logger.info(`Challenge answer ${answer} sent to ${litigatorNodeId}.`);
         return Command.empty();
     }
 

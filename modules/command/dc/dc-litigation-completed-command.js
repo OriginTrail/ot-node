@@ -2,8 +2,6 @@ const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 
-const { Op } = models.Sequelize;
-
 class DCLitigationCompleted extends Command {
     constructor(ctx) {
         super(ctx);

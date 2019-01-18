@@ -398,7 +398,7 @@ class DCService {
      * @return {Promise<void>}
      */
     async handleChallengeResponse(challengeId, answer) {
-        this.logger.info(`Challenge response arrived for challenge ${challengeId}.`);
+        this.logger.info(`Challenge response arrived for challenge ${challengeId}. Answer ${answer}`);
 
         const challenge = await models.challenges.findOne({
             where: { id: challengeId },

@@ -149,6 +149,7 @@ class OtNode extends EventEmitter {
     stop() {
         this.logger.log(`Stopping node ${this.id}.`);
         assert(this.isRunning);
+        this.started = false;
         this.process.kill('SIGINT');
     }
 
@@ -294,6 +295,9 @@ class OtNode extends EventEmitter {
             this.emit('dh-pay-out-finalized');
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
+        } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {
+            const [ dhId, offerId ] = line.match(offerIdRegex)[0];
+            this.emit('dc-litigation-initiated', { dhId, offerId });
         }
     }
 
