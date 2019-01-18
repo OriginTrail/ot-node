@@ -296,7 +296,7 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
         } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {
-            const [ dhId, offerId ] = line.match(offerIdRegex)[0];
+            const [dhId, offerId] = line.match(offerIdRegex)[0];
             this.emit('dc-litigation-initiated', { dhId, offerId });
         }
     }

@@ -47,7 +47,7 @@ class DCChallengeCommand extends Command {
             return Command.empty();
         }
 
-        this.logger.info(`Wrong answer to challenge '${challenge.answer}' for DH ID ${challenge.dh_id}. Got ${challenge.answer} for expected answer ${challenge.expected_answer}.`);
+        this.logger.info(`Wrong answer to challenge '${challenge.id}' for DH ID ${challenge.dh_id}. Got ${challenge.answer} for expected answer ${challenge.expected_answer}.`);
         return {
             commands: [
                 {

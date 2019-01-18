@@ -71,34 +71,30 @@ class DCChallengeCommand extends Command {
      */
     async recover(command, err) {
         const {
-            dhId,
-            dhIdentity,
-            offerId,
+            challenge_id,
             litigationPrivateKey,
         } = command.data;
 
         const challenge = await models.challenges.findOne({
             where: {
-                dh_id: dhId,
-                offer_id: offerId,
+                id: challenge_id,
             },
         });
 
         if (challenge == null) {
-            this.logger.warn(`Failed to create challenge for DH ${dhId} and offer ${offerId}`);
-            return Command.empty();
+            throw new Error(`Failed to find challenge ${challenge_id}`);
         }
 
-        this.logger.info(`Failed to send challenge '${challenge.answer} to DH ${challenge.dh_id}.'`);
+        this.logger.info(`Failed to send challenge for block '${challenge.block_id} to DH ${challenge.dh_id}.'`);
         return {
             commands: [
                 {
                     name: 'dcLitigationInitiateCommand',
                     period: 5000,
                     data: {
-                        offerId,
+                        offerId: challenge.offer_id,
                         blockId: challenge.block_id,
-                        dhIdentity,
+                        dhIdentity: challenge.dh_identity,
                         litigationPrivateKey,
                     },
                 },

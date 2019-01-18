@@ -801,7 +801,7 @@ Given(/^I stop (\d+) holder[s]*$/, { timeout: 3000000 }, function (holdersToStop
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const nodesStops = [];
-    this.state.nodes.filter(node => node.state.takenBids.length > 0).slice(holdersToStop).forEach((node) => {
+    this.state.nodes.filter(node => node.state.takenBids.length > 0).slice(0, holdersToStop).forEach((node) => {
         nodesStops.push(new Promise((accept, reject) => {
             node.once('finished', () => accept());
             node.once('error', reject);
