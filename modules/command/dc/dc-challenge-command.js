@@ -85,7 +85,7 @@ class DCChallengeCommand extends Command {
             throw new Error(`Failed to find challenge ${challenge_id}`);
         }
 
-        this.logger.info(`Failed to send challenge for block '${challenge.block_id} to DH ${challenge.dh_id}.'`);
+        this.logger.info(`Failed to send challenge for block ${challenge.block_id} to DH ${challenge.dh_id}.`);
         return {
             commands: [
                 {

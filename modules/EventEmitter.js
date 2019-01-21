@@ -825,7 +825,7 @@ class EventEmitter {
             const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
             await dcService.verifyDHReplication(
                 offerId, messageSignature,
-                dhNodeId, dhIdentity, wallet,
+                dhNodeId, dhIdentity, wallet, false,
             );
         });
 
@@ -837,7 +837,7 @@ class EventEmitter {
             const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
             await dcService.verifyDHReplication(
                 offerId, messageSignature,
-                dhNodeId, dhIdentity, wallet,
+                dhNodeId, dhIdentity, wallet, true,
             );
         });
 

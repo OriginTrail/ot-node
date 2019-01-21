@@ -2,8 +2,6 @@ const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 
-const { Op } = models.Sequelize;
-
 class DCLitigationReplacementStartedCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -40,15 +38,7 @@ class DCLitigationReplacementStartedCommand extends Command {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                // clear old replicated data
-                await models.replicated_data.destroy({
-                    where: {
-                        offer_id: offerId,
-                        status: {
-                            [Op.in]: ['STARTED', 'VERIFIED'],
-                        },
-                    },
-                });
+                this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);
 
                 const offer = await models.offers.findOne({
                     where: {

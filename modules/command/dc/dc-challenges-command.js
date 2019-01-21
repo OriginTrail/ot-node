@@ -25,7 +25,7 @@ class DCChallengesCommand extends Command {
         try {
             const challenges = await this._getChallenges();
 
-            forEach(challenges, async (challenge) => {
+            await forEach(challenges, async (challenge) => {
                 const challenged = await models.replicated_data.findOne({
                     where: {
                         dh_id: challenge.dh_id,

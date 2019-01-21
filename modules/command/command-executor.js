@@ -62,7 +62,10 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async init() {
-        forEach(constants.PERMANENT_COMMANDS, async command => this._startDefaultCommand(command));
+        await forEach(
+            constants.PERMANENT_COMMANDS,
+            async command => this._startDefaultCommand(command),
+        );
         this.logger.trace('Command executor has been initialized...');
     }
 

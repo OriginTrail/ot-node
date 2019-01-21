@@ -45,7 +45,6 @@ class DHLitigationAnswerCommand extends Command {
 
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
         await this.blockchain.answerLitigation(offerId, dhIdentity, answer);
-        this.logger.important(`Litigation answered for offer ${offerId} and blockId ${blockId}. Answer ${answer}`);
         return {
             commands: [
                 {

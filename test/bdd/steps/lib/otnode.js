@@ -62,9 +62,12 @@ class OtNode extends EventEmitter {
         this.state = {};
         this.state.addedBids = []; // List of offer IDs (DH side).
         this.state.takenBids = []; // List of offer IDs (DH side).
+        this.state.takenReplacements = []; // List of replacement offer IDs (DH side).
         // Valid replications (DH side). List of internal offer IDs and their replications DH IDs
         // in pairs. { internalOfferId, dhId }.
         this.state.replications = [];
+        // Array of replacement offer IDs
+        this.state.replacements = [];
         // Valid replications (DC side). List of objects { importId, dhWallet }.
         this.state.holdingData = [];
         // Offers finalized. List of offer IDs.
@@ -296,8 +299,27 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
         } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {
-            const [dhId, offerId] = line.match(offerIdRegex)[0];
-            this.emit('dc-litigation-initiated', { dhId, offerId });
+            this.emit('dc-litigation-initiated');
+        } else if (line.match(/Litigation answered for offer .+\./gi)) {
+            this.emit('dh-litigation-answered');
+        } else if (line.match(/Litigation completed for DH .+ and offer .+\./gi)) {
+            this.emit('dc-litigation-completed');
+        } else if (line.match(/DH .+ was penalized for the offer .+\./gi)) {
+            this.emit('dc-litigation-completed-dh-penalized');
+        } else if (line.match(/DH .+ was not penalized for the offer .+\./gi)) {
+            this.emit('dc-litigation-completed-dh-not-penalized');
+        } else if (line.match(/Replacement for DH .+ and offer .+ has been successfully started. Waiting for DHs\.\.\./gi)) {
+            this.emit('dc-litigation-replacement-started');
+        } else if (line.match(/Replacement triggered for offer .+\. Litigator .+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            this.state.replacements.push(offerId);
+        } else if (line.match(/\[DH] Replacement replication finished for offer ID .+/gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            assert(offerId);
+            this.state.takenReplacements.push(offerId);
+            this.emit('dh-litigation-replacement-received');
+        } else if (line.match(/Successfully replaced DH .+ with DH .+ for offer .+/gi)) {
+            this.emit('dc-litigation-replacement-completed');
         }
     }
 

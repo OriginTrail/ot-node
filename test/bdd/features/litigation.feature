@@ -1,10 +1,10 @@
-Feature: Test basic network features
+Feature: Test various litigation scenarios
   Background: Setup local blockchain and bootstraps
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @itworks
-  Scenario: Test replication DC -> DH
+  @first
+  Scenario: Test litigation for one holder which is not responding
     Given the replication difficulty is 0
     And I setup 8 nodes
     And I start the nodes
@@ -16,5 +16,13 @@ Feature: Test basic network features
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
     And I stop 1 holder
+    And I remember stopped holder
     And I wait for litigation initiation
     And I start stopped holder
+    Then 1 holder should answer litigation
+    Then Litigator node should have completed litigation
+    Then Stopped holder should have been penalized
+    Then Litigator should have started replacement for penalized holder
+    Then I wait for 4 replacement replications to finish
+    Then I wait for replacement to be completed
+

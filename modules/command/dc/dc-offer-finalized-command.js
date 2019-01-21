@@ -5,6 +5,8 @@ const Utilities = require('../../Utilities');
 const importUtilitites = require('../../ImportUtilities');
 const Models = require('../../../models/index');
 
+const { Op } = Models.Sequelize;
+
 /**
  * Repeatable command that checks whether offer is ready or not
  */
@@ -51,6 +53,16 @@ class DcOfferFinalizedCommand extends Command {
 
                 await this._setHolders(offer, event);
 
+                // clear old replicated data
+                await Models.replicated_data.destroy({
+                    where: {
+                        offer_id: offerId,
+                        status: {
+                            [Op.in]: ['STARTED', 'VERIFIED'],
+                        },
+                    },
+                });
+
                 const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
                 return {
                     commands: [
@@ -86,7 +98,7 @@ class DcOfferFinalizedCommand extends Command {
         const endTime = startTime + (offer.holding_time_in_minutes * 60 * 1000);
         const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
         const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
-        forEach(holders, async (holder) => {
+        await forEach(holders, async (holder) => {
             const replicatedData = await Models.replicated_data.findOne({
                 where: {
                     offer_id: offer.offer_id,
@@ -101,9 +113,7 @@ class DcOfferFinalizedCommand extends Command {
                 replicatedData.litigation_private_key,
             );
 
-            const challenges = this.challengeService.generateChallenges(
-                encryptedVertices, startTime, endTime,
-            );
+            const challenges = this.challengeService.generateChallenges(encryptedVertices, startTime, endTime);
 
             forEach(challenges, async challenge =>
                 Models.challenges.create({

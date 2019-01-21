@@ -38,7 +38,7 @@ class DCLitigationCompleteCommand extends Command {
                 },
         });
 
-        const answer = utilities.normalizeHex(Buffer.from(challenge.answer, 'utf-8').toString('hex'));
+        const answer = utilities.normalizeHex(Buffer.from(challenge.expected_answer, 'utf-8').toString('hex').padStart(64, '0'));
         await this.blockchain.completeLitigation(offerId, dhIdentity, dcIdentity, answer);
         return {
             commands: [
@@ -65,6 +65,7 @@ class DCLitigationCompleteCommand extends Command {
             data: {
             },
             name: 'dcLitigationCompleteCommand',
+            retries: 3,
             transactional: false,
         };
         Object.assign(command, map);

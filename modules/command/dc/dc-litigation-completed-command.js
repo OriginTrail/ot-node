@@ -41,7 +41,12 @@ class DCLitigationCompleted extends Command {
                     DH_was_penalized: penalized,
                 } = JSON.parse(event.data);
 
-                this.logger.notify(`Litigation completed for DH ${dhIdentity} and offer ${offerId}. ${penalized ? 'DH was penalized' : 'DH was not penalized'}`);
+                this.logger.notify(`Litigation completed for DH ${dhIdentity} and offer ${offerId}.`);
+                if (penalized === true) {
+                    this.logger.notify(`DH ${dhIdentity} was penalized for the offer ${offerId}.`);
+                } else {
+                    this.logger.notify(`DH ${dhIdentity} was not penalized for the offer ${offerId}.`);
+                }
 
                 const replicatedData = await models.replicated_data.findOne({
                     where: { offer_id: offerId, dh_identity: dhIdentity },
@@ -58,7 +63,7 @@ class DCLitigationCompleted extends Command {
                             offer_id: offerId,
                         },
                     });
-                    this.logger.info(`Challenges removed for DH with identity ${dhIdentity} and offer ${offerId}`);
+                    this.logger.info(`Challenges removed for DH with identity ${dhIdentity} and offer ${offerId}.`);
 
                     const offer = await models.offers.findOne({
                         where: {
@@ -68,8 +73,6 @@ class DCLitigationCompleted extends Command {
 
                     offer.global_status = 'REPLACEMENT_STARTED';
                     await offer.save({ fields: ['global_status'] });
-
-                    this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);
                     return {
                         commands: [
                             {

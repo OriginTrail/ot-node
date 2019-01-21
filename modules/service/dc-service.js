@@ -374,9 +374,10 @@ class DCService {
      * @param dhNodeId
      * @param dhWallet
      * @param dhIdentity
+     * @param isReplacement
      * @returns {Promise<void>}
      */
-    async verifyDHReplication(offerId, signature, dhNodeId, dhIdentity, dhWallet) {
+    async verifyDHReplication(offerId, signature, dhNodeId, dhIdentity, dhWallet, isReplacement) {
         await this.commandExecutor.add({
             name: 'dcReplicationCompletedCommand',
             delay: 0,
@@ -386,6 +387,7 @@ class DCService {
                 dhNodeId,
                 dhWallet,
                 dhIdentity,
+                isReplacement,
             },
             transactional: false,
         });

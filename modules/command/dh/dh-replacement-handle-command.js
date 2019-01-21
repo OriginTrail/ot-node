@@ -46,7 +46,7 @@ class DHReplacementImportCommand extends Command {
             dhIdentity: this.config.erc725Identity,
         }, dcNodeId);
 
-        this.logger.info(`Replacement replication  request for ${offerId} sent to ${dcNodeId}`);
+        this.logger.info(`Replacement replication request for ${offerId} sent to ${dcNodeId}`);
 
         if (response.status === 'fail') {
             const bid = await Models.bids.findOne({
@@ -196,7 +196,7 @@ class DHReplacementImportCommand extends Command {
             });
         }
 
-        this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
+        this.logger.important(`[DH] Replacement replication finished for offer ID ${offerId}`);
 
         const toSign = [
             Utilities.denormalizeHex(offerId),
@@ -274,8 +274,8 @@ class DHReplacementImportCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhReplicationImportCommand',
-            delay: 0,
+            name: 'dhReplacementImportCommand',
+            delay: 10000,
             transactional: false,
         };
         Object.assign(command, map);
