@@ -10,8 +10,8 @@ const utilities = require('../../Utilities');
 class DCChallengesCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.config = ctx.config;
         this.logger = ctx.logger;
-        this.dcService = ctx.dcService;
         this.blockchain = ctx.blockchain;
         this.commandExecutor = ctx.commandExecutor;
     }
@@ -23,6 +23,12 @@ class DCChallengesCommand extends Command {
      */
     async execute(command, transaction) {
         try {
+            const { litigationEnabled } = this.config;
+            if (litigationEnabled === false) {
+                // skip challenges - return repeat for potential config live update
+                return Command.repeat();
+            }
+
             const challenges = await this._getChallenges();
 
             await forEach(challenges, async (challenge) => {
