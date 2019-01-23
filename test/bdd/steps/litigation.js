@@ -142,3 +142,17 @@ Then(/^I wait for replacement to be completed$/, { timeout: 3000000 }, function 
     });
 });
 
+Given(/^I wait for challenges to start$/, { timeout: 3000000 }, async function () {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const challenges = [];
+    this.state.nodes.filter(node => node.state.takenBids.length > 0)
+        .forEach((node) => {
+            challenges.push(new Promise((accept, reject) => {
+                node.once('dh-challenge-sent', () => accept());
+                node.once('error', reject);
+            }));
+        });
+    return Promise.all(challenges);
+});

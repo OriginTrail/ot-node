@@ -321,6 +321,8 @@ class OtNode extends EventEmitter {
             this.emit('dh-litigation-replacement-received');
         } else if (line.match(/Successfully replaced DH .+ with DH .+ for offer .+/gi)) {
             this.emit('dc-litigation-replacement-completed');
+        } else if (line.match(/Challenge answer .+ sent to .+\./gi)) {
+            this.emit('dh-challenge-sent');
         }
     }
 

@@ -18,6 +18,7 @@ Feature: Test various litigation scenarios
     And I wait for replications to finish
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
+    And I wait for challenges to start
     And I stop 1 holder
     And I remember stopped holder
     And I wait for litigation initiation
