@@ -34,7 +34,8 @@ class OtNode extends EventEmitter {
         this.options.configDir = path.join(appDataBaseDir || tmpdir, this.id);
         this.options.nodeConfiguration = nodeConfiguration || {};
         this.options.nodeConfiguration = deepExtend(
-            Object.assign({}, defaultConfiguration), // deepExtend changes original object.
+            {},
+            defaultConfiguration,
             this.options.nodeConfiguration,
         );
         this.logger = logger || console;

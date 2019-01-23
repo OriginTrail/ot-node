@@ -6,7 +6,10 @@ Feature: Test various litigation scenarios
   @first
   Scenario: Test litigation for one holder which is not responding
     Given the replication difficulty is 0
-    And I setup 8 nodes
+    And I setup 8 node
+    And I override configuration for all nodes
+      | dc_holding_time_in_minutes | 5 |
+      | numberOfChallenges | 100 |
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1

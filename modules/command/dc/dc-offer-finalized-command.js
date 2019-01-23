@@ -14,6 +14,7 @@ class DcOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
@@ -113,9 +114,12 @@ class DcOfferFinalizedCommand extends Command {
                 replicatedData.litigation_private_key,
             );
 
-            const challenges = this.challengeService.generateChallenges(encryptedVertices, startTime, endTime);
+            const challenges = this.challengeService.generateChallenges(
+                encryptedVertices, startTime,
+                endTime, this.config.numberOfChallenges,
+            );
 
-            forEach(challenges, async challenge =>
+            await forEach(challenges, async challenge =>
                 Models.challenges.create({
                     dh_id: replicatedData.dh_id,
                     dh_identity: replicatedData.dh_identity,

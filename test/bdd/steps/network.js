@@ -33,10 +33,12 @@ function unpackRawTable(rawTable) {
     if (rawTable) {
         for (const row of rawTable.rawTable) {
             let value;
-            if (row.length > 1) {
+            if (row.length > 2) {
                 value = [];
                 for (let index = 1; index < row.length; index += 1) {
-                    value.push(row[index]);
+                    if (!row[index] != null && row[index] !== '') {
+                        value.push(row[index]);
+                    }
                 }
             } else {
                 [, value] = row;
