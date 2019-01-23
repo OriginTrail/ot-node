@@ -45,7 +45,7 @@ module.exports = {
         status: {
             allowNull: false,
             type: Sequelize.STRING,
-        }
+        },
     }),
     down: queryInterface => queryInterface.dropTable('challenges'),
 };

@@ -898,7 +898,6 @@ class Utilities {
         });
         return map;
     }
-
 }
 
 module.exports = Utilities;

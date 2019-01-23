@@ -272,7 +272,7 @@ contract('Offer testing', async (accounts) => {
 
         console.log(JSON.stringify(res));
 
-        //console.log(res.receipt.gasUsed);
+        // console.log(res.receipt.gasUsed);
 
 
         // Get task and calculate solution

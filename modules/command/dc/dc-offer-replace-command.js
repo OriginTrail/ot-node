@@ -70,8 +70,8 @@ class DCOfferReplaceCommand extends Command {
                     delay: 0,
                     period: 5000,
                     deadline_at: Date.now() + (5 * 60 * 1000),
-                }
-            ]
+                },
+            ],
         };
     }
 
