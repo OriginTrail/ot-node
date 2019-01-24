@@ -1,6 +1,5 @@
 #!/bin/bash
 
-export DEBIAN_FRONTEND=noninteractive
 export ARANGODB_DEFAULT_ROOT_PASSWORD=root
 
 echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
@@ -31,7 +30,5 @@ then
     echo "Could not start ArangoDB. Timeout reached."
     exit 1
 fi
-
-curl -H 'Authorization:Basic cm9vdDo=' -s http://127.0.0.1:8529/_api/version
 
 echo "ArangoDB is up"
