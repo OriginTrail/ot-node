@@ -33,4 +33,6 @@ then
     exit 1
 fi
 
+curl -H 'Authorization:Basic cm9vdDo=' -s http://127.0.0.1:8529/_api/version
+
 echo "ArangoDB is up"
