@@ -20,7 +20,7 @@ before_script:
   - mkdir -p $CUCUMBER_ARTIFACTS_DIR
   - ./setup_arangodb.sh
   - cp .origintrail_noderc.travis .origintrail_noderc
-  - curl -I -v -H 'Authorization:Basic cm9vdDo=' -s http://127.0.0.1:8529/_api/version
+  - curl -v -H 'Authorization:Basic cm9vdDo=' -s http://127.0.0.1:8529/_api/version
   - npm run bootstrap
   - npm install -g ganache-cli@6.2.3 &> /dev/null
   - npm install -g truffle@5.0.0-beta.1 &> /dev/null
