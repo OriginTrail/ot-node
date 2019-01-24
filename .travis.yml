@@ -18,17 +18,7 @@ addons:
 before_script:
   - mkdir -p $ARTIFACTS_DIR
   - mkdir -p $CUCUMBER_ARTIFACTS_DIR
-  - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
-  - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
-  - curl -OL https://download.arangodb.com/arangodb34/DEBIAN/Release.key
-  - sudo apt-key add - < Release.key
-  - echo 'deb https://download.arangodb.com/arangodb34/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
-  - sudo apt-get install apt-transport-https
-  - sudo apt-get update
-  - sudo apt-get install arangodb3=3.4.1-1
-  - sudo sed -i 's/authentication = true/authentication = false/g' /etc/arangodb3/arangod.conf
-  - cat /etc/arangodb3/arangod.conf
-  - sudo systemctl start arangodb3
+  - sh setup_arango.sh
   - cp .origintrail_noderc.travis .origintrail_noderc
   - npm run bootstrap
   - npm install -g ganache-cli@6.2.3 &> /dev/null
