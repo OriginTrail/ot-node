@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export DEBIAN_FRONTEND=noninteractive
+export ARANGODB_DEFAULT_ROOT_PASSWORD=root
 
 echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
 echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
