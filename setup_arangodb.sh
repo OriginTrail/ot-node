@@ -2,8 +2,8 @@
 
 export ARANGODB_DEFAULT_ROOT_PASSWORD=root
 
-echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
-echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
+echo arangodb3 arangodb3/password password root | sudo debconf-set-selections  # set username 'root'
+echo arangodb3 arangodb3/password_again password root | sudo debconf-set-selections  # set password 'root'
 curl -OL https://download.arangodb.com/arangodb34/DEBIAN/Release.key
 sudo apt-key add - < Release.key
 echo 'deb https://download.arangodb.com/arangodb34/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
