@@ -18,7 +18,7 @@ addons:
 before_script:
   - mkdir -p $ARTIFACTS_DIR
   - mkdir -p $CUCUMBER_ARTIFACTS_DIR
-  - sh setup_arango.sh
+  - sh setup_arangodb.sh
   - cp .origintrail_noderc.travis .origintrail_noderc
   - npm run bootstrap
   - npm install -g ganache-cli@6.2.3 &> /dev/null
