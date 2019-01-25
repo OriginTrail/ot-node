@@ -18,7 +18,7 @@ addons:
 before_script:
   - mkdir -p $ARTIFACTS_DIR
   - mkdir -p $CUCUMBER_ARTIFACTS_DIR
-  - sudo sh ./setup_arangodb.sh
+  - sudo ./setup_arangodb.sh
   - cp .origintrail_noderc.travis .origintrail_noderc
   - curl -v -H 'Authorization:Basic cm9vdDo=' -s http://127.0.0.1:8529/_api/version
   - npm run bootstrap
