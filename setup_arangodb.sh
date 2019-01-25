@@ -2,13 +2,13 @@
 
 export ARANGODB_DEFAULT_ROOT_PASSWORD=root
 
-echo arangodb3 arangodb3/password password root | sudo debconf-set-selections  # set username 'root'
-echo arangodb3 arangodb3/password_again password root | sudo debconf-set-selections  # set password 'root'
 curl -OL https://download.arangodb.com/arangodb34/DEBIAN/Release.key
 sudo apt-key add - < Release.key
 echo 'deb https://download.arangodb.com/arangodb34/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
 sudo apt-get install apt-transport-https
 sudo apt-get update
+echo arangodb3 arangodb3/password password root | sudo debconf-set-selections  # set username 'root'
+echo arangodb3 arangodb3/password_again password root | sudo debconf-set-selections  # set password 'root'
 sudo apt-get install arangodb3=3.4.1-1
 sudo sed -i 's/authentication = true/authentication = false/g' /etc/arangodb3/arangod.conf
 sudo systemctl start arangodb3
