@@ -129,7 +129,10 @@ class CommandExecutor {
                     }, transaction);
 
                     command.data = handler.pack(command.data);
-                    await this.add(command, command.period, false);
+
+                    const period = command.period ?
+                        command.period : constants.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                    await this.add(command, period, false);
                     return Command.repeat();
                 }
 

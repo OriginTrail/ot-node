@@ -1,6 +1,11 @@
+const { forEach } = require('p-iteration');
+
 const Command = require('../command');
 const utilities = require('../../Utilities');
+const importUtilities = require('../../ImportUtilities');
 const models = require('../../../models/index');
+
+const { Op } = models.Sequelize;
 
 /**
  * Repeatable command that checks whether holder is replaced
@@ -10,6 +15,8 @@ class DCOfferReplacementCompletedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.graphStorage = ctx.graphStorage;
+        this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
     }
 
@@ -48,9 +55,6 @@ class DCOfferReplacementCompletedCommand extends Command {
                     },
                 });
 
-                offer.global_status = 'ACTIVE';
-                await offer.save({ fields: ['status'] });
-
                 const {
                     chosenHolder,
                 } = JSON.parse(event.data);
@@ -61,8 +65,48 @@ class DCOfferReplacementCompletedCommand extends Command {
                     },
                 });
 
+                const startTime = Date.now();
+                const endTime = startTime +
+                    (offer.holding_time_in_minutes * 60 * 1000); // TODO fix end time
+                const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
+
+                const encryptedVertices = importUtilities.immutableEncryptVertices(
+                    vertices,
+                    holder.litigation_private_key,
+                );
+
+                const challenges = this.challengeService.generateChallenges(
+                    encryptedVertices, startTime,
+                    endTime, this.config.numberOfChallenges,
+                );
+
+                await forEach(challenges, async challenge =>
+                    models.challenges.create({
+                        dh_id: holder.dh_id,
+                        dh_identity: holder.dh_identity,
+                        data_set_id: offer.data_set_id,
+                        block_id: challenge.block_id,
+                        expected_answer: challenge.answer,
+                        start_time: challenge.time,
+                        offer_id: offer.offer_id,
+                        status: 'PENDING',
+                    }));
+
                 holder.status = 'HOLDING';
                 await holder.save({ fields: ['status'] });
+
+                // clear old replicated data
+                await models.replicated_data.destroy({
+                    where: {
+                        offer_id: offerId,
+                        status: {
+                            [Op.in]: ['STARTED', 'VERIFIED'],
+                        },
+                    },
+                });
+
+                offer.global_status = 'ACTIVE';
+                await offer.save({ fields: ['global_status'] });
 
                 this.logger.important(`Successfully replaced DH ${dhIdentity} with DH ${chosenHolder} for offer ${offerId}`);
                 return Command.empty();

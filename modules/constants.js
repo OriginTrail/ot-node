@@ -28,3 +28,9 @@ exports.PERMANENT_COMMANDS = ['cleanerCommand', 'dcChallengesCommand', 'dhLitiga
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
  */
 exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
+
+
+/**
+ * @constant {number} DEFAULT_COMMAND_REPEAT_IN_MILLS - Default repeat interval
+ */
+exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds

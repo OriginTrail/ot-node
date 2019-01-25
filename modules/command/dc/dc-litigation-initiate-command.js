@@ -30,9 +30,16 @@ class DCLitigationInitiateCommand extends Command {
             litigationPrivateKey,
         } = command.data;
 
-        const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
-
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
+        if (offer.global_status !== 'ACTIVE') {
+            this.logger.trace(`Litigation already in progress... It needs to be completed in order to litigate ${dhIdentity} for offer ${offerId}`);
+            return Command.repeat(); // wait for offer to be active
+        }
+
+        offer.global_status = 'LITIGATION_INITIATED';
+        await offer.save(({ fields: ['global_status'] }));
+
+        const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
 
         const encryptedVertices = importUtilities.immutableEncryptVertices(
