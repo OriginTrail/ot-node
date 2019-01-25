@@ -11,7 +11,6 @@ sudo apt-get install apt-transport-https
 sudo apt-get update
 sudo apt-get install arangodb3=3.4.1-1
 sudo sed -i 's/authentication = true/authentication = false/g' /etc/arangodb3/arangod.conf
-sudo arango-secure-installation
 sudo systemctl start arangodb3
 
 echo "Waiting until ArangoDB is ready on port 8529"
