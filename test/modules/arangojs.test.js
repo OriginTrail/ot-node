@@ -268,8 +268,10 @@ describe('Arangojs module ', async () => {
         try {
             await testDb.getDocument(edgeCollectionName, edgeOne._key);
         } catch (error) {
-            expect(error.toString()).to.equal('kurac');
-            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+            expect(error.toString()).to.be.oneOf([
+                'ArangoError: collection or view not found: ot_edges',
+                'ArangoError: collection not found: ot_edges',
+            ]);
         }
     });
 
