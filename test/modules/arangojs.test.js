@@ -14,7 +14,7 @@ const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
 const myUserName = 'root';
-const myPassword = '';
+const myPassword = 'root';
 const myDatabaseName = 'testDb';
 
 const documentCollectionName = 'ot_vertices';
