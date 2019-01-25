@@ -13,8 +13,8 @@ const databaseData = require('./test_data/arangodb-data.js');
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
-const myUserName = 'otuser';
-const myPassword = 'otpass';
+const myUserName = 'root';
+const myPassword = 'root';
 const myDatabaseName = 'testDb';
 
 const documentCollectionName = 'ot_vertices';
