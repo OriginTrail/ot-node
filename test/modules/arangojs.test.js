@@ -14,7 +14,7 @@ const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
 const myUserName = 'root';
-const myPassword = 'root';
+const myPassword = '';
 const myDatabaseName = 'testDb';
 
 const documentCollectionName = 'ot_vertices';
@@ -76,7 +76,7 @@ describe('Arangojs module ', async () => {
     it('should see at least one system and one custom database', async () => {
         expect(testDb.db.name).to.be.equal('testDb');
         expect(systemDb).to.be.an.instanceof(Database);
-        const listOfDatabases = await testDb.db.listDatabases();
+        const listOfDatabases = await systemDb.listDatabases();
         assert.isTrue(listOfDatabases.includes('_system'));
         assert.isTrue(listOfDatabases.includes('testDb'));
     });
@@ -268,6 +268,7 @@ describe('Arangojs module ', async () => {
         try {
             await testDb.getDocument(edgeCollectionName, edgeOne._key);
         } catch (error) {
+            console.log(error.toString());
             assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
         }
     });
