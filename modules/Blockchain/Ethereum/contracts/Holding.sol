@@ -75,8 +75,8 @@ contract Holding is Ownable {
         //We calculate the task for the data creator to solve
             //Calculating task difficulty
         uint256 difficulty;
-        if(HoldingStorage(hub.holdingStorageAddress()).difficultyOverride() != 0) {
-            difficulty = HoldingStorage(hub.holdingStorageAddress()).difficultyOverride();
+        if(HoldingStorage(hub.holdingStorageAddress()).getDifficultyOverride() != 0) {
+            difficulty = HoldingStorage(hub.holdingStorageAddress()).getDifficultyOverride();
         }
         else {
             if(logs2(ProfileStorage(hub.profileStorageAddress()).activeNodes()) <= 4) difficulty = 1;
