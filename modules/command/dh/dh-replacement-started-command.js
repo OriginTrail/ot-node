@@ -41,6 +41,11 @@ class DHReplacementStartedCommand extends Command {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
+                const mine = await this._checkIfMineReplacement(offerId);
+                if (mine) {
+                    return Command.repeat();
+                }
+
                 await this.dhService.handleReplacement(
                     offerId, challengerIdentity,
                     litigationRootHash,
@@ -51,6 +56,57 @@ class DHReplacementStartedCommand extends Command {
         }
 
         return Command.repeat();
+    }
+
+    /**
+     * Check if I've been penalized
+     * @param offerId
+     * @return {Promise<Boolean>}
+     * @private
+     */
+    async _checkIfMineReplacement(offerId) {
+        const events = await models.events.findAll({
+            where: {
+                event: 'LitigationCompleted',
+                finished: 0,
+            },
+        });
+        if (events) {
+            const event = events.find((e) => {
+                const {
+                    offerId: eventOfferId,
+                    holderIdentity,
+                } = JSON.parse(e.data);
+                return utilities.compareHexStrings(offerId, eventOfferId)
+                    && utilities.compareHexStrings(this.config.erc725Identity, holderIdentity);
+            });
+
+            if (event != null) {
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
+
+                const {
+                    DH_was_penalized: penalized,
+                } = JSON.parse(event.data);
+
+                const bid = await models.bids.findOne({
+                    where: {
+                        offer_id: offerId,
+                    },
+                });
+
+                if (penalized) {
+                    this.logger.warn(`I've been penalized for offer ${offerId}`);
+                    bid.status = 'PENALIZED';
+                } else {
+                    this.logger.warn(`I haven't been penalized for offer ${offerId}`);
+                    bid.status = 'CHOSEN';
+                }
+                await event.save({ fields: ['status'] });
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
