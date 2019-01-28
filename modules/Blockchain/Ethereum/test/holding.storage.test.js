@@ -129,6 +129,28 @@ contract('Holding storage testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
+    it('Should set and get offer litigation interval', async () => {
+        const initialLitigationInterval =
+            await holdingStorage.getOfferLitigationIntervalInMinutes.call(offerId);
+
+        assert(initialLitigationInterval.isZero(), 'Initial litigationIntervalInMinutes in Holding storage must be 0!');
+
+        // Execute tested function
+        await holdingStorage.setOfferLitigationIntervalInMinutes(
+            offerId,
+            litigationIntervalInMinutes,
+        );
+
+        const newLitigationInterval =
+            await holdingStorage.getOfferLitigationIntervalInMinutes.call(offerId);
+
+        assert(
+            newLitigationInterval.eq(litigationIntervalInMinutes),
+            `Incorrect token amount per holder written in Holding storage, got ${newLitigationInterval} instead of ${litigationIntervalInMinutes}!`,
+        );
+    });
+
+    // eslint-disable-next-line no-undef
     it('Should set and get offer task', async () => {
         const initialTask =
             await holdingStorage.getOfferTask.call(offerId);
@@ -242,6 +264,10 @@ contract('Holding storage testing', async (accounts) => {
             initialOffer.tokenAmountPerHolder.eq(tokenAmountPerHolder),
             `Incorrect token amount per holder written in Holding storage, got ${initialOffer.tokenAmountPerHolder.toString()} instead of ${tokenAmountPerHolder.toString()}!`,
         );
+        assert(
+            initialOffer.litigationIntervalInMinutes.eq(litigationIntervalInMinutes),
+            `Incorrect litigation interval written in Holding storage, got ${initialOffer.litigationIntervalInMinutes.toString()} instead of ${litigationIntervalInMinutes.toString()}!`,
+        );
         assert.equal(initialOffer.task, task, 'Incorrect task written in Holding storage!');
         assert(
             initialOffer.difficulty.eq(difficulty),
@@ -262,6 +288,7 @@ contract('Holding storage testing', async (accounts) => {
             emptyHash, // dataSetId
             new BN(0), // holdingTimeInMinutes
             new BN(0), // tokenAmountPerHolder
+            new BN(0), // litigationIntervalInMinutes
             emptyHash, // task
             new BN(0), // difficulty
         );
