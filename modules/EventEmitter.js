@@ -788,16 +788,16 @@ class EventEmitter {
 
         // sync
         this._on('kad-replacement-replication-request', async (request, response) => {
-            const message = transport.extractMessage(request);
-            const { offerId, wallet, dhIdentity } = message;
-            const { wallet: senderWallet } = transport.extractSenderInfo(request);
-            const identity = transport.extractSenderID(request);
-
-            if (senderWallet !== wallet) {
-                logger.warn(`Wallet in the message differs from replacement replication request for offer ID ${offerId}.`);
-            }
-
             try {
+                const message = transport.extractMessage(request);
+                const { offerId, wallet, dhIdentity } = message;
+                const { wallet: senderWallet } = transport.extractSenderInfo(request);
+                const identity = transport.extractSenderID(request);
+
+                if (senderWallet !== wallet) {
+                    logger.warn(`Wallet in the message differs from replacement replication request for offer ID ${offerId}.`);
+                }
+
                 await dcService.handleReplacementRequest(
                     offerId, wallet, identity, dhIdentity,
                     response,
@@ -819,26 +819,38 @@ class EventEmitter {
 
         // async
         this._on('kad-replication-finished', async (request) => {
-            const dhNodeId = transport.extractSenderID(request);
-            const replicationFinishedMessage = transport.extractMessage(request);
-            const { wallet } = transport.extractSenderInfo(request);
-            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
-            await dcService.verifyDHReplication(
-                offerId, messageSignature,
-                dhNodeId, dhIdentity, wallet, false,
-            );
+            try {
+                const dhNodeId = transport.extractSenderID(request);
+                const replicationFinishedMessage = transport.extractMessage(request);
+                const { wallet } = transport.extractSenderInfo(request);
+                const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+                await dcService.verifyDHReplication(
+                    offerId, messageSignature,
+                    dhNodeId, dhIdentity, wallet, false,
+                );
+            } catch (e) {
+                const errorMessage = `Failed to handle replication finished request. ${e}.`;
+                logger.warn(errorMessage);
+                notifyError(e);
+            }
         });
 
         // async
         this._on('kad-replacement-replication-finished', async (request) => {
-            const dhNodeId = transport.extractSenderID(request);
-            const replicationFinishedMessage = transport.extractMessage(request);
-            const { wallet } = transport.extractSenderInfo(request);
-            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
-            await dcService.verifyDHReplication(
-                offerId, messageSignature,
-                dhNodeId, dhIdentity, wallet, true,
-            );
+            try {
+                const dhNodeId = transport.extractSenderID(request);
+                const replicationFinishedMessage = transport.extractMessage(request);
+                const { wallet } = transport.extractSenderInfo(request);
+                const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+                await dcService.verifyDHReplication(
+                    offerId, messageSignature,
+                    dhNodeId, dhIdentity, wallet, true,
+                );
+            } catch (e) {
+                const errorMessage = `Failed to handle replacement replication finished request. ${e}.`;
+                logger.warn(errorMessage);
+                notifyError(e);
+            }
         });
 
         // async

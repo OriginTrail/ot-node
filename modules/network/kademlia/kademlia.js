@@ -401,7 +401,7 @@ class Kademlia {
         // async
         this.node.use('kad-replication-finished', (request, response, next) => {
             this.log.debug('kad-replication-finished received');
-            this.emitter.emit('kad-replication-finished', request);
+            this.emitter.emit('kad-replication-finished', request, response);
             response.send([]);
         });
 
