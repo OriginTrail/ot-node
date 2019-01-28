@@ -386,9 +386,6 @@ contract('Offer testing', async (accounts) => {
         res = await holdingStorage.setDifficultyOverride(difficultyToSet, { from: accounts[0] });
 
         res = await holdingStorage.getDifficultyOverride.call();
-        console.log(res.toString());
-        res = await holdingStorage.difficultyOverride.call();
-        console.log(res.toString());
         assert(
             difficultyToSet.eq(res),
             `Initial difficulty ovverride incorrect, got ${res.toString()} instead of ${difficultyToSet.toString()}!`,
