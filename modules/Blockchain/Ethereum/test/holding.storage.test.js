@@ -129,6 +129,25 @@ contract('Holding storage testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
+    it('Should set and get offer litigation interval', async () => {
+        const initialLitigationInterval =
+            await holdingStorage.getOfferLitigationIntervalInMinutes.call(offerId);
+
+        assert(initialLitigationInterval.isZero(), 'Initial litigationIntervalInMinutes in Holding storage must be 0!');
+
+        // Execute tested function
+        await holdingStorage.setOfferTokenAmountPerHolder(offerId, litigationIntervalInMinutes);
+
+        const newLitigationInterval =
+            await holdingStorage.setOfferLitigationIntervalInMinutes.call(offerId);
+
+        assert(
+            newLitigationInterval.eq(litigationIntervalInMinutes),
+            `Incorrect token amount per holder written in Holding storage, got ${newLitigationInterval} instead of ${litigationIntervalInMinutes}!`,
+        );
+    });
+
+    // eslint-disable-next-line no-undef
     it('Should set and get offer task', async () => {
         const initialTask =
             await holdingStorage.getOfferTask.call(offerId);
@@ -262,6 +281,7 @@ contract('Holding storage testing', async (accounts) => {
             emptyHash, // dataSetId
             new BN(0), // holdingTimeInMinutes
             new BN(0), // tokenAmountPerHolder
+            new BN(0), // litigationIntervalInMinutes
             emptyHash, // task
             new BN(0), // difficulty
         );
