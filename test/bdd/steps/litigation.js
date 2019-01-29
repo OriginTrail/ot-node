@@ -127,8 +127,6 @@ Then(/^I wait for (\d+) replacement replication[s] to finish$/, { timeout: 30000
         }));
     });
     await Promise.all(replacements);
-    this.state.nodes.filter(node => node.id !== dc.id)
-        .forEach(node => expect(node.state.replacements.length).to.be.equal(1));
 });
 
 Then(/^I wait for replacement to be completed$/, { timeout: 3000000 }, function (done) {
