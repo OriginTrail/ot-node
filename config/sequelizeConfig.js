@@ -25,5 +25,12 @@ module.exports = {
             underscored: true,
             timestamps: false,
         },
+        retry: {
+            match: [
+                /SQLITE_BUSY/,
+            ],
+            name: 'query',
+            max: 5,
+        },
     },
 };
