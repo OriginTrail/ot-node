@@ -21,7 +21,7 @@ before_script:
   - sudo ./setup_arangodb.sh
   - cp .origintrail_noderc.travis .origintrail_noderc
   - npm run bootstrap
-  - npm install -g ganache-cli@6.2.3 &> /dev/null
+  - npm install -g ganache-cli@6.2.5 &> /dev/null
   - npm install -g truffle@5.0.0-beta.1 &> /dev/null
 script:
   - npm run lint
