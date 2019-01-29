@@ -1,5 +1,5 @@
 const Command = require('../command');
-const models = require('../../../models/index');
+const models = require('../../../models');
 
 /**
  *  Challenges one DH

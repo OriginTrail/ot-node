@@ -136,10 +136,13 @@ contract('Holding storage testing', async (accounts) => {
         assert(initialLitigationInterval.isZero(), 'Initial litigationIntervalInMinutes in Holding storage must be 0!');
 
         // Execute tested function
-        await holdingStorage.setOfferTokenAmountPerHolder(offerId, litigationIntervalInMinutes);
+        await holdingStorage.setOfferLitigationIntervalInMinutes(
+            offerId,
+            litigationIntervalInMinutes,
+        );
 
         const newLitigationInterval =
-            await holdingStorage.setOfferLitigationIntervalInMinutes.call(offerId);
+            await holdingStorage.getOfferLitigationIntervalInMinutes.call(offerId);
 
         assert(
             newLitigationInterval.eq(litigationIntervalInMinutes),
@@ -260,6 +263,10 @@ contract('Holding storage testing', async (accounts) => {
         assert(
             initialOffer.tokenAmountPerHolder.eq(tokenAmountPerHolder),
             `Incorrect token amount per holder written in Holding storage, got ${initialOffer.tokenAmountPerHolder.toString()} instead of ${tokenAmountPerHolder.toString()}!`,
+        );
+        assert(
+            initialOffer.litigationIntervalInMinutes.eq(litigationIntervalInMinutes),
+            `Incorrect litigation interval written in Holding storage, got ${initialOffer.litigationIntervalInMinutes.toString()} instead of ${litigationIntervalInMinutes.toString()}!`,
         );
         assert.equal(initialOffer.task, task, 'Incorrect task written in Holding storage!');
         assert(

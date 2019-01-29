@@ -141,7 +141,7 @@ class DHReplacementImportCommand extends Command {
         });
 
         if (holdingData == null) {
-            // import already exists
+            // import does not exist
 
             await this.importer.importJSON({
                 dataSetId,
@@ -149,20 +149,20 @@ class DHReplacementImportCommand extends Command {
                 edges,
                 wallet: dcWallet,
             }, true, encColor);
-
-            // Store holding information and generate keys for eventual data replication.
-            await Models.holding_data.create({
-                data_set_id: dataSetId,
-                source_wallet: dcWallet,
-                litigation_public_key: litigationPublicKey,
-                litigation_root_hash: litigationRootHash,
-                distribution_public_key: distributionPublicKey,
-                distribution_private_key: distributionPrivateKey,
-                distribution_epk: distributionEpk,
-                transaction_hash: transactionHash,
-                color: encColor,
-            });
         }
+
+        // Store holding information and generate keys for eventual data replication.
+        await Models.holding_data.create({
+            data_set_id: dataSetId,
+            source_wallet: dcWallet,
+            litigation_public_key: litigationPublicKey,
+            litigation_root_hash: litigationRootHash,
+            distribution_public_key: distributionPublicKey,
+            distribution_private_key: distributionPrivateKey,
+            distribution_epk: distributionEpk,
+            transaction_hash: transactionHash,
+            color: encColor,
+        });
 
         const dataInfo = await Models.data_info.findOne({
             where: {

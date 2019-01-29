@@ -17,7 +17,7 @@ contract HoldingStorage {
 
     uint256 public difficultyOverride;
     function getDifficultyOverride()
-    public view returns (uint256 difficultyOverride) {
+    public view returns (uint256) {
         return difficultyOverride;
     }
     function setDifficultyOverride(uint256 new_difficulty)

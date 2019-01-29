@@ -62,7 +62,8 @@ contract('Offer testing', async (accounts) => {
         trac = await TracToken.deployed();
         profile = await Profile.deployed();
         holding = await Holding.deployed();
-        holdingStorage = await HoldingStorage.deployed();
+        const holdingStorageAddress = await hub.holdingStorageAddress.call();
+        holdingStorage = await HoldingStorage.at(holdingStorageAddress);
         profileStorage = await ProfileStorage.deployed();
         util = await TestingUtilities.deployed();
 
@@ -129,7 +130,6 @@ contract('Offer testing', async (accounts) => {
             dcNodeId,
             holdingTimeInMinutes,
             tokenAmountPerHolder,
-            litigationIntervalInMinutes,
             dataSetSizeInBytes,
             litigationIntervalInMinutes,
             { from: DC_wallet },
@@ -375,17 +375,17 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should test difficulty override', async () => {
-        let res = await holdingStorage.difficultyOverride.call();
+        let res = await holdingStorage.getDifficultyOverride.call();
         assert(
             res.isZero(),
             `Initial difficulty ovverride incorrect, got ${res.toString()} instead of 0!`,
         );
 
-        const difficultyToSet = new BN(100);
+        const difficultyToSet = new BN(10);
         // Execute tested function
-        await holdingStorage.setDifficultyOverride(difficultyToSet, { from: accounts[0] });
+        res = await holdingStorage.setDifficultyOverride(difficultyToSet, { from: accounts[0] });
 
-        res = await holdingStorage.difficultyOverride.call();
+        res = await holdingStorage.getDifficultyOverride.call();
         assert(
             difficultyToSet.eq(res),
             `Initial difficulty ovverride incorrect, got ${res.toString()} instead of ${difficultyToSet.toString()}!`,
