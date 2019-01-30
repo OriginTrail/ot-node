@@ -38,6 +38,8 @@ class DHReplacementStartedCommand extends Command {
                     return Command.repeat();
                 }
 
+                this.logger.info(`Replacement triggered for offer ${offerId}. Litigator ${challengerIdentity}.`);
+
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 

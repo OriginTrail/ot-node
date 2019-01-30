@@ -16,6 +16,7 @@ const defaultConfiguration = require('../../../../config/config.json').developme
 const uuidRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const walletRegex = /\b0x[0-9A-F]{40}\b/gi;
 const identityRegex = /\b[0-9A-F]{40}\b/gi;
+const identityWithPrefixRegex = /\b0x[0-9A-F]{40}\b/gi;
 const offerIdRegex = /\b0x[0-9A-F]{64}\b/gi;
 const dataSetRegex = /\b0x[0-9A-F]{64}\b/gi;
 const walletAmountRegex = /\b\d+\b/g;
@@ -63,6 +64,7 @@ class OtNode extends EventEmitter {
         this.state = {};
         this.state.addedBids = []; // List of offer IDs (DH side).
         this.state.takenBids = []; // List of offer IDs (DH side).
+        this.state.pendingLitigationDhIdentities = []; // List of pending litigations (DHs)
         this.state.takenReplacements = []; // List of replacement offer IDs (DH side).
         // Valid replications (DH side). List of internal offer IDs and their replications DH IDs
         // in pairs. { internalOfferId, dhId }.
@@ -301,10 +303,14 @@ class OtNode extends EventEmitter {
             this.emit('dh-offer-finalized');
         } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {
             this.emit('dc-litigation-initiated');
-        } else if (line.match(/Litigation answered for offer .+\./gi)) {
+        } else if (line.match(/Litigation answered for offer .+\. DH identity .+/gi)) {
             this.emit('dh-litigation-answered');
         } else if (line.match(/Litigation completed for DH .+ and offer .+\./gi)) {
             this.emit('dc-litigation-completed');
+        } else if (line.match(/Litigation already in progress\.\.\. It needs to be completed in order to litigate .+ for offer .+/gi)) {
+            const dhIdentity = line.match(identityWithPrefixRegex)[0];
+            this.state.pendingLitigationDhIdentities.push(dhIdentity);
+            this.emit('dc-litigation-pending');
         } else if (line.match(/DH .+ was penalized for the offer .+\./gi)) {
             this.emit('dc-litigation-completed-dh-penalized');
         } else if (line.match(/DH .+ was not penalized for the offer .+\./gi)) {
@@ -323,6 +329,12 @@ class OtNode extends EventEmitter {
             this.emit('dc-litigation-replacement-completed');
         } else if (line.match(/Challenge answer .+ sent to .+\./gi)) {
             this.emit('dh-challenge-sent');
+        } else if (line.match(/Not chosen as a replacement for offer .+\./gi)) {
+            this.emit('dh-not-chosen-as-replacement');
+        } else if (line.match(/Chosen as a replacement for offer .+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            this.state.takenBids.push(offerId);
+            this.emit('dh-chosen-as-replacement');
         }
     }
 

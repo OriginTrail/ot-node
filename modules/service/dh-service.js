@@ -243,8 +243,6 @@ class DHService {
      * @return {Promise<void>}
      */
     async handleReplacement(offerId, litigatorIdentity, litigationRootHash) {
-        this.logger.info(`Replacement triggered for offer ${offerId}. Litigator ${litigatorIdentity}.`);
-
         const bid = await Models.bids.findOne({
             where: {
                 offer_id: offerId,

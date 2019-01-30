@@ -20,13 +20,21 @@ Feature: Test various litigation scenarios
     Then the last import should be the same on all nodes that replicated data
     And I wait for challenges to start
     And I stop 1 holder
-    And I remember stopped holder
     And I wait for litigation initiation
-    And I start stopped holder
-    Then 1 holder should answer litigation
+    And I stop 1 holder
+    And I remember stopped holders
+    Then Litigator should delay other litigations while one is running
+    And I start 1st stopped holder
+    Then 1st started holder should answer litigation
     Then Litigator node should have completed litigation
-    Then Stopped holder should have been penalized
+    Then 1st started holder should have been penalized
     Then Litigator should have started replacement for penalized holder
     Then I wait for 4 replacement replications to finish
     Then I wait for replacement to be completed
-
+    And I start 2nd stopped holder
+    Then 2nd started holder should answer litigation
+    Then Litigator node should have completed litigation
+    Then 2nd started holder should have been penalized
+    Then Litigator should have started replacement for penalized holder
+    Then I wait for 3 replacement replications to finish
+    Then I wait for replacement to be completed

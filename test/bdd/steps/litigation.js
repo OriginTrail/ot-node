@@ -10,7 +10,8 @@ Given(/^I stop (\d+) holder[s]*$/, { timeout: 3000000 }, function (holdersToStop
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const nodesStops = [];
-    this.state.nodes.filter(node => node.state.takenBids.length > 0).slice(0, holdersToStop)
+    this.state.nodes.filter(node => node.state.takenBids.length > 0 && node.started === true)
+        .slice(0, holdersToStop)
         .forEach((node) => {
             nodesStops.push(new Promise((accept, reject) => {
                 node.once('finished', () => accept());
@@ -28,6 +29,8 @@ Given(/^I remember stopped holder[s]*$/, async function () {
     this.state.lastStoppedNodeIds = this.state.nodes
         .filter(node => node.state.takenBids.length > 0 && node.started === false)
         .map(node => node.id);
+
+    this.logger.log(`Stopped holders [${this.state.lastStoppedNodeIds}]`);
 });
 
 Given(/^I wait for litigation initiation$/, { timeout: 3000000 }, function (done) {
@@ -41,13 +44,14 @@ Given(/^I wait for litigation initiation$/, { timeout: 3000000 }, function (done
     });
 });
 
-Given(/^I start stopped holder[s]*$/, { timeout: 3000000 }, function () {
+Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 3000000 }, function (nodeIndex) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const nodeStarts = [];
-    this.state.nodes.filter(node => node.state.takenBids.length > 0 && node.started === false)
+    this.state.nodes.filter(node => node.id === this.state.lastStoppedNodeIds[nodeIndex - 1])
         .forEach((node) => {
+            this.logger.log(`Starting node ${node.id}`);
             nodeStarts.push(new Promise((accept, reject) => {
                 node.once('initialized', () => accept());
                 node.once('error', reject);
@@ -57,15 +61,14 @@ Given(/^I start stopped holder[s]*$/, { timeout: 3000000 }, function () {
     return Promise.all(nodeStarts);
 });
 
-Then(/^(\d+) holder[s]* should answer litigation$/, { timeout: 3000000 }, async function (holderCount) {
-    expect(holderCount).to.be.greaterThan(0);
-    expect(holderCount).to.be.lessThan(4);
+Then(/^(\d+)[st|nd|rd|th]+ started holder should answer litigation$/, { timeout: 3000000 }, async function (nodeIndex) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const answers = [];
-    this.state.nodes.filter(node => this.state.lastStoppedNodeIds.includes(node.id))
+    this.state.nodes.filter(node => node.id === this.state.lastStoppedNodeIds[nodeIndex - 1])
         .forEach((node) => {
+            this.logger.log(`Node ${node.id} should answer litigation`);
             answers.push(new Promise((accept, reject) => {
                 node.once('dh-litigation-answered', () => accept());
                 node.once('error', reject);
@@ -75,6 +78,8 @@ Then(/^(\d+) holder[s]* should answer litigation$/, { timeout: 3000000 }, async 
 });
 
 Then(/^Litigator node should have completed litigation$/, { timeout: 3000000 }, function (done) {
+    this.logger.log('Litigator node should have completed litigation');
+
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -85,7 +90,7 @@ Then(/^Litigator node should have completed litigation$/, { timeout: 3000000 }, 
     });
 });
 
-Then(/^Stopped holder[s]* should have been penalized$/, { timeout: 3000000 }, function (done) {
+Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeout: 3000000 }, function (nodeIndex, done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -130,6 +135,7 @@ Then(/^I wait for (\d+) replacement replication[s] to finish$/, { timeout: 30000
 });
 
 Then(/^I wait for replacement to be completed$/, { timeout: 3000000 }, function (done) {
+    this.logger.log('I wait for replacement to be completed...');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -153,4 +159,17 @@ Given(/^I wait for challenges to start$/, { timeout: 3000000 }, async function (
             }));
         });
     return Promise.all(challenges);
+});
+
+Then(/^Litigator should delay other litigations while one is running$/, { timeout: 3000000 }, function (done) {
+    this.logger.log('Litigator should delay other litigations while one is running');
+
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const { dc } = this.state;
+
+    dc.once('dc-litigation-pending', () => {
+        done();
+    });
 });

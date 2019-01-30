@@ -40,7 +40,7 @@ class DHLitigationAnsweredCommand extends Command {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                this.logger.important(`Litigation answered for offer ${offerId}.`);
+                this.logger.important(`Litigation answered for offer ${offerId}. DH identity ${dhIdentity}`);
                 return Command.empty();
             }
         }
