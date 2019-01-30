@@ -183,7 +183,7 @@ describe('Challenge tests', () => {
         });
     });
 
-    describe('Adding to and manipulating challenges from db', () => {
+    describe.skip('Adding to and manipulating challenges from db', () => {
         const numberOfChallengesToGenerate = 10;
         const numberOfChallengesToAnswer = 5;
         const byteSize = 32;
