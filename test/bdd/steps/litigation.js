@@ -2,6 +2,7 @@ const {
     Given, Then,
 } = require('cucumber');
 const { expect } = require('chai');
+const Database = require('arangojs');
 
 Given(/^I stop (\d+) holder[s]*$/, { timeout: 3000000 }, function (holdersToStop) {
     expect(holdersToStop).to.be.greaterThan(0);
@@ -26,11 +27,11 @@ Given(/^I remember stopped holder[s]*$/, async function () {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
-    this.state.lastStoppedNodeIds = this.state.nodes
+    this.state.holdersToLitigate = this.state.nodes
         .filter(node => node.state.takenBids.length > 0 && node.started === false)
         .map(node => node.id);
 
-    this.logger.log(`Stopped holders [${this.state.lastStoppedNodeIds}]`);
+    this.logger.log(`Stopped holders [${this.state.holdersToLitigate}]`);
 });
 
 Given(/^I wait for litigation initiation$/, { timeout: 3000000 }, function (done) {
@@ -49,7 +50,7 @@ Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 3000000 }, fun
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const nodeStarts = [];
-    this.state.nodes.filter(node => node.id === this.state.lastStoppedNodeIds[nodeIndex - 1])
+    this.state.nodes.filter(node => node.id === this.state.holdersToLitigate[nodeIndex - 1])
         .forEach((node) => {
             this.logger.log(`Starting node ${node.id}`);
             nodeStarts.push(new Promise((accept, reject) => {
@@ -61,14 +62,31 @@ Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 3000000 }, fun
     return Promise.all(nodeStarts);
 });
 
-Then(/^(\d+)[st|nd|rd|th]+ started holder should answer litigation$/, { timeout: 3000000 }, async function (nodeIndex) {
+Then(/^(\d+)[st|nd|rd|th]+ holder to litigate should answer litigation$/, { timeout: 3000000 }, async function (nodeIndex) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const answers = [];
-    this.state.nodes.filter(node => node.id === this.state.lastStoppedNodeIds[nodeIndex - 1])
+    this.state.nodes.filter(node => node.id === this.state.holdersToLitigate[nodeIndex - 1])
         .forEach((node) => {
             this.logger.log(`Node ${node.id} should answer litigation`);
+            answers.push(new Promise((accept, reject) => {
+                node.once('dh-litigation-answered', () => accept());
+                node.once('error', reject);
+            }));
+        });
+    return Promise.all(answers);
+});
+
+Then(/^(\d+) holder[s]* should answer litigation$/, { timeout: 3000000 }, async function (holderCount) {
+    expect(holderCount).to.be.greaterThan(0);
+    expect(holderCount).to.be.lessThan(4);
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const answers = [];
+    this.state.nodes.filter(node => this.state.holdersToLitigate.includes(node.id))
+        .forEach((node) => {
             answers.push(new Promise((accept, reject) => {
                 node.once('dh-litigation-answered', () => accept());
                 node.once('error', reject);
@@ -172,4 +190,38 @@ Then(/^Litigator should delay other litigations while one is running$/, { timeou
     dc.once('dc-litigation-pending', () => {
         done();
     });
+});
+
+Given(/^I corrupt (\d+) holder's database ot_vertices collection$/, { timeout: 3000000 }, function (holdersToDrop) {
+    console.log('I corrupt 1 holder\'s database ot_vertices collection');
+    expect(holdersToDrop).to.be.greaterThan(0);
+    expect(holdersToDrop).to.be.lessThan(4);
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const droppedNodes = [];
+    this.state.nodes.filter(node => node.state.takenBids.length > 0).slice(0, holdersToDrop)
+        .forEach(async (node) => {
+            droppedNodes.push(node);
+
+            const {
+                database: databaseName,
+                username,
+                password,
+            } = node.options.nodeConfiguration.database;
+
+            const systemDb = new Database();
+            systemDb.useBasicAuth(username, password);
+            systemDb.useDatabase(databaseName);
+
+            await systemDb.query(`FOR v IN ot_vertices
+            UPDATE { _key: v._key, 
+                '${this.state.lastImport.data_set_id}': {
+                    data:
+                        REVERSE(v['${this.state.lastImport.data_set_id}'].data)
+                       } 
+            } IN ot_vertices`);
+        });
+
+    this.state.holdersToLitigate = droppedNodes;
 });
