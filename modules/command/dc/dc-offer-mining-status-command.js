@@ -22,7 +22,7 @@ class DcOfferMiningStatusCommand extends Command {
             dhIdentity,
         } = command.data;
 
-        const mined = await Models.miner_records.findOne({
+        const mined = await Models.miner_tasks.findOne({
             limit: 1,
             where: {
                 offer_id: offerId,

@@ -24,5 +24,5 @@ module.exports = {
         },
 
     }),
-    down: queryInterface => queryInterface.dropTable('network_replies'),
+    down: (queryInterface, Sequelize) => queryInterface.dropTable('network_replies'),
 };

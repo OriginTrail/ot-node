@@ -151,7 +151,7 @@ class DCService {
      */
     async miningSucceed(data) {
         const { offerId } = data;
-        const mined = await models.miner_records.findOne({
+        const mined = await models.miner_tasks.findOne({
             where: {
                 offer_id: offerId,
             },
@@ -177,7 +177,7 @@ class DCService {
      */
     async miningFailed(result) {
         const { offerId } = result;
-        const mined = await models.miner_records.findOne({
+        const mined = await models.miner_tasks.findOne({
             where: {
                 offer_id: offerId,
             },

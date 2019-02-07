@@ -39,7 +39,7 @@ class MinerService {
                 }
             });
 
-            await Models.miner_records.create({
+            await Models.miner_tasks.create({
                 offer_id: offerId,
                 difficulty,
                 task,
