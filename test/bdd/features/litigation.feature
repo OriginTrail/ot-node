@@ -58,5 +58,5 @@ Feature: Test various litigation scenarios
     And I corrupt 1 holder's database ot_vertices collection
     And I wait for litigation initiation
     Then 1st holder to litigate should answer litigation
-    Then I wait for 4 replacement replications to finish
+    Then I wait for 3 replacement replications to finish
     Then I wait for replacement to be completed
