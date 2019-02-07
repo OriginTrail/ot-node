@@ -23,7 +23,7 @@ def main():
         data = sys.stdin.read(int(headers['len']))
         payload = dict([ x.split(':') for x in data.split() ])
         if headers['eventname'] == 'PROCESS_STATE_EXITED' and 'processname' in payload and payload['processname'] == 'otnode':
-            if payload['expected'] == '1'
+            if payload['expected'] == '1':
                 # OT Node exited normally. Exit from container.
                 # write_stderr('HEADERS ' + line)
                 # write_stderr(data)
