@@ -548,6 +548,26 @@ class Blockchain {
     async getLitigationTimestamp(offerId, holderIdentity) {
         return this.blockchain.getLitigationTimestamp(offerId, holderIdentity);
     }
+
+    /**
+     * Gets last litigation difficulty
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationDifficulty(offerId, holderIdentity) {
+        return this.blockchain.getLitigationDifficulty(offerId, holderIdentity);
+    }
+
+    /**
+     * Gets last litigation replacement task
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationReplacementTask(offerId, holderIdentity) {
+        return this.blockchain.getLitigationReplacementTask(offerId, holderIdentity);
+    }
 }
 
 module.exports = Blockchain;

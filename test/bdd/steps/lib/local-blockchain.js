@@ -147,7 +147,7 @@ class LocalBlockchain {
         const safeMathSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/SafeMath.sol'), 'utf8');
         const identitySource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Identity.sol'), 'utf8');
         const byteArrSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ByteArr.sol'), 'utf8');
-        const litigationSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/MockLitigation.sol'), 'utf8');
+        const litigationSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Litigation.sol'), 'utf8');
         const litigationStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/LitigationStorage.sol'), 'utf8');
 
         let compileResult = solc.compile({ sources: { 'Hub.sol': hubSource } }, 1);
@@ -169,7 +169,7 @@ class LocalBlockchain {
                 'SafeMath.sol': safeMathSource,
                 'Identity.sol': identitySource,
                 'ByteArr.sol': byteArrSource,
-                'MockLitigation.sol': litigationSource,
+                'Litigation.sol': litigationSource,
                 'LitigationStorage.sol': litigationStorageSource,
             },
         }, 1);
@@ -210,8 +210,8 @@ class LocalBlockchain {
         this.litigationStorageContractAbi = JSON.parse(compileResult.contracts['LitigationStorage.sol:LitigationStorage'].interface);
         this.litigationStorageContract = new this.web3.eth.Contract(this.litigationStorageContractAbi);
 
-        this.litigationContractData = `0x${compileResult.contracts['MockLitigation.sol:MockLitigation'].bytecode}`;
-        this.litigationContractAbi = JSON.parse(compileResult.contracts['MockLitigation.sol:MockLitigation'].interface);
+        this.litigationContractData = `0x${compileResult.contracts['Litigation.sol:Litigation'].bytecode}`;
+        this.litigationContractAbi = JSON.parse(compileResult.contracts['Litigation.sol:Litigation'].interface);
         this.litigationContract = new this.web3.eth.Contract(this.litigationContractAbi);
     }
 

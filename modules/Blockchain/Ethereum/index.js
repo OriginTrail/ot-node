@@ -1214,6 +1214,34 @@ class Ethereum {
                 from: this.config.wallet_address,
             });
     }
+
+    /**
+     * Gets last litigation difficulty
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationDifficulty(offerId, holderIdentity) {
+        this.log.trace(`getLitigationDifficulty(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.litigationStorageContract
+            .methods.getLitigationReplacementDifficulty(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    /**
+     * Gets last litigation replacement task
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationReplacementTask(offerId, holderIdentity) {
+        this.log.trace(`getLitigationReplacementTask(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.litigationStorageContract
+            .methods.getLitigationReplacementTask(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
 }
 
 module.exports = Ethereum;

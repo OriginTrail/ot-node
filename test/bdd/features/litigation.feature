@@ -3,7 +3,6 @@ Feature: Test various litigation scenarios
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
   Scenario: Test litigation for one holder which is not responding
     Given the replication difficulty is 0
     And I setup 8 node

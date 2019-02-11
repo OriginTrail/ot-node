@@ -61,9 +61,19 @@ class DCOfferChooseCommand extends Command {
             throw new Error('Failed to choose holders. Not enough DHs submitted.');
         }
 
-        const difficulty = await this.blockchain.getOfferDifficulty(offer.offer_id);
+        let task = null;
+        let difficulty = null;
+        if (isReplacement) {
+            task = await this.blockchain.getLitigationReplacementTask(offer.offer_id, dhIdentity);
+            difficulty = await this.blockchain.getLitigationDifficulty(offer.offer_id, dhIdentity);
+        } else {
+            // eslint-disable-next-line
+            task = offer.task;
+            difficulty = await this.blockchain.getOfferDifficulty(offer.offer_id);
+        }
+
         await this.minerService.sendToMiner(
-            offer.task,
+            task,
             difficulty,
             identities,
             offer.offer_id,
