@@ -155,6 +155,8 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should test finalizing offer', async () => {
+        await holdingStorage.setDifficultyOverride(new BN(1));
+
         let res = await holding.createOffer(
             DC_identity,
             dataSetId,
@@ -263,6 +265,8 @@ contract('Offer testing', async (accounts) => {
         console.log(`Total gas used for creating the first offer: ${firstOfferGasUsage + finalizeOfferGasUsage}`);
         console.log(`Total gas used for creating a second offer: ${secondOfferGasUsage + finalizeOfferGasUsage}`);
 
+        await holdingStorage.setDifficultyOverride(new BN(0));
+
         errored = false;
     });
 
@@ -270,7 +274,10 @@ contract('Offer testing', async (accounts) => {
     it('Should test token transfers for holding', async () => {
         // wait for holding job to expire
         if (errored) assert(false, 'Test cannot run without previous test succeeding');
-        await new Promise(resolve => setTimeout(resolve, 65000));
+
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(new BN(80));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
 
         var initialStake = [];
         for (var i = 0; i < 3; i += 1) {
@@ -414,5 +421,6 @@ contract('Offer testing', async (accounts) => {
             difficultyToSet.eq(res.difficulty),
             `Written difficulty ovverride incorrect, got ${res.difficulty.toString()} instead of ${difficultyToSet.toString()}!`,
         );
+        await holdingStorage.setDifficultyOverride(new BN(0));
     });
 });

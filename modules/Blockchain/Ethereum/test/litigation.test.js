@@ -54,7 +54,7 @@ const dcNodeId = '0x5cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c30
 const holdingTimeInMinutes = new BN(1);
 const tokenAmountPerHolder = new BN(120);
 const dataSetSizeInBytes = new BN(1024);
-const litigationIntervalInMinutes = new BN(10);
+const litigationIntervalInMinutes = new BN(1);
 
 // Profile variables
 var privateKeys = [];
@@ -132,7 +132,10 @@ contract('Litigation testing', async (accounts) => {
 
         DC_wallet = accounts[accounts.length - 1];
         DC_identity = identities[identities.length - 1];
+    });
 
+    // eslint-disable-next-line no-undef
+    beforeEach(async () => {
         // Create an offer used for testing the litigation process
 
         // Calculate litigation root hash
@@ -148,7 +151,7 @@ contract('Litigation testing', async (accounts) => {
         A  B C  D E  F G  H  */
 
         // Calculating hashes of requested data
-        promises = [];
+        let promises = [];
         for (let i = 0; i < 8; i += 1) {
             promises[i] = util.keccakString.call(letters[i]);
         }
@@ -172,7 +175,7 @@ contract('Litigation testing', async (accounts) => {
 
 
         // Creating offer used for litigation
-        res = await holding.createOffer(
+        const res = await holding.createOffer(
             DC_identity,
             dataSetId,
             dataRootHash,
@@ -234,9 +237,12 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should test initiating a litigation', async () => {
-        // Complete litigation
-        const res = await litigation.initiateLitigation(
+    it('Challenge and replace an unresponsive DH', async () => {
+        // Get initial litigation values
+        let res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Initiate litigation
+        res = await litigation.initiateLitigation(
             offerId,
             identities[0],
             DC_identity,
@@ -245,29 +251,73 @@ contract('Litigation testing', async (accounts) => {
             { from: DC_wallet },
         );
         console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
-    });
 
-    // eslint-disable-next-line no-undef
-    it('Should test answering a litigation', async () => {
-        // Complete litigation
-        const res = await litigation.answerLitigation(
-            offerId,
-            identities[0],
-            hashes[1],
-            { from: accounts[0] },
-        );
-        console.log(`\t Gas used for answering litigation: ${res.receipt.gasUsed}`);
-    });
+        // Instead of answering litigation
+        // move the litigation timestamp in order to simulate lack of answer
+        let timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
+        timestamp = timestamp.sub(new BN(100));
+        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
 
-    // eslint-disable-next-line no-undef
-    it('Should test completing litigation and replacing a holder', async () => {
         // Complete litigation
-        const res = await litigation.completeLitigation(
+        res = await litigation.completeLitigation(
             offerId,
             identities[0],
             DC_identity,
             hashes[0],
             { from: DC_wallet, gasLimit: 6000000 },
+        );
+
+        const task = await litigationStorage.litigation.call(offerId, identities[0]);
+        const solution = await util.keccakAddressAddressAddress.call(
+            identities[3],
+            identities[4],
+            identities[5],
+        );
+
+        let i = 0;
+        // Calculate task solution
+        for (i = 65; i >= 2; i -= 1) {
+            if (task.replacementTask.charAt(task.replacementTask.length - 1)
+                === solution.charAt(i)) break;
+        }
+        if (i === 2) {
+            assert(false, 'Could not find solution for offer challenge!');
+        }
+        const shift = 65 - i;
+
+        // Calculating confirmations to be signed by DH's
+        var confirmations = [];
+        let promises = [];
+        for (let i = 3; i < 6; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            promises[i] = await util.keccakBytesAddress.call(offerId, identities[i]);
+        }
+        confirmations = await Promise.all(promises);
+
+        // Signing calculated confirmations
+        promises = [];
+        for (let i = 3; i < 6; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            promises[i] = await web3.eth.accounts.sign(confirmations[i], privateKeys[i]);
+        }
+        const signedConfirmations = await Promise.all(promises);
+
+        const replacementHolderIdentities = [
+            identities[3],
+            identities[4],
+            identities[5],
+        ];
+
+        res = await litigation.replaceHolder(
+            offerId,
+            identities[0],
+            DC_identity,
+            shift,
+            signedConfirmations[3].signature,
+            signedConfirmations[4].signature,
+            signedConfirmations[5].signature,
+            replacementHolderIdentities,
+            { from: DC_wallet },
         );
     });
 });
