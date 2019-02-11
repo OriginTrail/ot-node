@@ -812,23 +812,6 @@ class Ethereum {
     }
 
     /**
-    * Gets status of the offer
-    * @param importId
-    * @return {Promise<any>}
-    */
-    getOfferStatus(importId) {
-        return new Promise((resolve, reject) => {
-            this.log.trace(`Asking for ${importId} offer status`);
-            this.biddingContract.methods.getOfferStatus(importId).call()
-                .then((res) => {
-                    resolve(res);
-                }).catch((e) => {
-                    reject(e);
-                });
-        });
-    }
-
-    /**
      * Deposit tokens to profile
      * @param blockchainIdentity
      * @param amount

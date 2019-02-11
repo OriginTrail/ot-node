@@ -26,6 +26,10 @@ class DCOfferCleanupCommand extends Command {
             throw new Error(`Failed to find offer ${offerId}`);
         }
 
+        offer.status = 'COMPLETED';
+        offer.global_status = 'COMPLETED';
+        await offer.save({ fields: ['status', 'global_status'] });
+
         this.replicationService.cleanup(offer.id);
         this.logger.info(`Offer ${offerId} replication data cleanup successful`);
 
@@ -52,9 +56,11 @@ class DCOfferCleanupCommand extends Command {
      * @private
      */
     async _cleanupChallenges(offerId) {
+        // delete pending challenges
         await models.challenges.destroy({
             where: {
                 offer_id: offerId,
+                status: 'PENDING',
             },
         });
         this.logger.info(`Remove challenges for offer ${offerId}`);

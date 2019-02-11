@@ -36,6 +36,12 @@ class DCLitigationInitiateCommand extends Command {
             return Command.repeat(); // wait for offer to be active
         }
 
+        if (offer.global_status === 'COMPLETED') {
+            // offer has already been completed
+            this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            return Command.empty();
+        }
+
         offer.global_status = 'LITIGATION_INITIATED';
         await offer.save(({ fields: ['global_status'] }));
 

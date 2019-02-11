@@ -313,15 +313,6 @@ class Blockchain {
     }
 
     /**
-     * Gets status of the offer
-     * @param importId
-     * @return {Promise<any>}
-     */
-    getOfferStatus(importId) {
-        return this.blockchain.getOfferStatus(importId);
-    }
-
-    /**
      * Gets balance from the profile
      * @param wallet
      * @returns {Promise}

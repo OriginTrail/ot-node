@@ -27,6 +27,13 @@ class DCLitigationCompleteCommand extends Command {
             blockId,
         } = command.data;
 
+        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
+        if (offer.global_status === 'COMPLETED') {
+            // offer has already been completed
+            this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            return Command.empty();
+        }
+
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
 
         const challenge = await models.challenges.findOne({
