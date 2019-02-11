@@ -47,11 +47,19 @@ class DVQueryNetworkCommand extends Command {
              }
          */
 
-        await Models.network_queries.findOrCreate({
+        let networkQuery = await Models.network_queries.findOne({
             where: { id: queryId },
-            defaults: { id: queryId, query },
-            transaction,
         });
+
+        if (!networkQuery) {
+            networkQuery = await Models.network_queries.create({
+                id: queryId,
+                query,
+            });
+            if (!networkQuery) {
+                throw Error('Failed to store network query.');
+            }
+        }
 
         const dataLocationRequestObject = {
             message: {

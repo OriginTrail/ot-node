@@ -62,7 +62,8 @@ contract('Offer testing', async (accounts) => {
         trac = await TracToken.deployed();
         profile = await Profile.deployed();
         holding = await Holding.deployed();
-        holdingStorage = await HoldingStorage.deployed();
+        const holdingStorageAddress = await hub.holdingStorageAddress.call();
+        holdingStorage = await HoldingStorage.at(holdingStorageAddress);
         profileStorage = await ProfileStorage.deployed();
         util = await TestingUtilities.deployed();
 
@@ -104,7 +105,7 @@ contract('Offer testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             res = await profile.createProfile(
                 accounts[i],
-                '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde',
+                accounts[i],
                 tokensToDeposit,
                 false,
                 '0x7e9f99b7971cb3de779690a82fec5e2ceec74dd0',
@@ -144,6 +145,7 @@ contract('Offer testing', async (accounts) => {
         assert.equal(res.dataSetId, dataSetId, 'Data set ID not matching!');
         assert(holdingTimeInMinutes.eq(res.holdingTimeInMinutes), 'Holding time not matching!');
         assert(tokenAmountPerHolder.eq(res.tokenAmountPerHolder), 'Token amount not matching!');
+        assert(litigationIntervalInMinutes.eq(res.litigationIntervalInMinutes), 'Litigation interval not matching!');
         assert.equal(res.redLitigationHash, redLitigationHash, 'Red litigation hash not matching!');
         assert.equal(res.greenLitigationHash, greenLitigationHash, 'Green litigation hash not matching!');
         assert.equal(res.blueLitigationHash, blueLitigationHash, 'Blue litigation hash not matching!');
@@ -153,6 +155,8 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should test finalizing offer', async () => {
+        await holdingStorage.setDifficultyOverride(new BN(1));
+
         let res = await holding.createOffer(
             DC_identity,
             dataSetId,
@@ -261,6 +265,8 @@ contract('Offer testing', async (accounts) => {
         console.log(`Total gas used for creating the first offer: ${firstOfferGasUsage + finalizeOfferGasUsage}`);
         console.log(`Total gas used for creating a second offer: ${secondOfferGasUsage + finalizeOfferGasUsage}`);
 
+        await holdingStorage.setDifficultyOverride(new BN(0));
+
         errored = false;
     });
 
@@ -268,7 +274,10 @@ contract('Offer testing', async (accounts) => {
     it('Should test token transfers for holding', async () => {
         // wait for holding job to expire
         if (errored) assert(false, 'Test cannot run without previous test succeeding');
-        await new Promise(resolve => setTimeout(resolve, 65000));
+
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(new BN(80));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
 
         var initialStake = [];
         for (var i = 0; i < 3; i += 1) {
@@ -373,17 +382,17 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should test difficulty override', async () => {
-        let res = await holding.difficultyOverride.call();
+        let res = await holdingStorage.getDifficultyOverride.call();
         assert(
             res.isZero(),
             `Initial difficulty ovverride incorrect, got ${res.toString()} instead of 0!`,
         );
 
-        const difficultyToSet = new BN(100);
+        const difficultyToSet = new BN(10);
         // Execute tested function
-        await holding.setDifficulty(difficultyToSet, { from: accounts[0] });
+        res = await holdingStorage.setDifficultyOverride(difficultyToSet, { from: accounts[0] });
 
-        res = await holding.difficultyOverride.call();
+        res = await holdingStorage.getDifficultyOverride.call();
         assert(
             difficultyToSet.eq(res),
             `Initial difficulty ovverride incorrect, got ${res.toString()} instead of ${difficultyToSet.toString()}!`,
@@ -412,5 +421,6 @@ contract('Offer testing', async (accounts) => {
             difficultyToSet.eq(res.difficulty),
             `Written difficulty ovverride incorrect, got ${res.difficulty.toString()} instead of ${difficultyToSet.toString()}!`,
         );
+        await holdingStorage.setDifficultyOverride(new BN(0));
     });
 });

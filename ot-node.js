@@ -21,7 +21,6 @@ const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
 const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
-const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -29,7 +28,6 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
-
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
@@ -37,10 +35,11 @@ const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
 const ApprovalService = require('./modules/service/approval-service');
+const ChallengeService = require('./modules/service/challenge-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
-const APIUtilities = require('./modules/utility/api-utilities');
+const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 
@@ -361,7 +360,6 @@ class OTNode {
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
-            challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
@@ -372,6 +370,7 @@ class OTNode {
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            challengeService: awilix.asClass(ChallengeService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -573,6 +572,7 @@ class OTNode {
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                blockchain.getAllPastEvents('LITIGATION_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }

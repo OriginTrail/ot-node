@@ -4,6 +4,7 @@ import './Hub.sol';
 import {ERC725} from './ERC725.sol';
 import {HoldingStorage} from './HoldingStorage.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
+import {LitigationStorage} from './LitigationStorage.sol';
 import {Profile} from './Profile.sol';
 import {Approval} from './Approval.sol';
 import {SafeMath} from './SafeMath.sol';
@@ -12,15 +13,29 @@ contract Holding is Ownable {
     using SafeMath for uint256;
 
     Hub public hub;
+    HoldingStorage public holdingStorage;
+    ProfileStorage public profileStorage;
+    LitigationStorage public litigationStorage;
+    Profile public profile;
 
     uint256 public difficultyOverride;
     
     constructor(address hubAddress) public{
         require(hubAddress!=address(0));
         hub = Hub(hubAddress);
-        difficultyOverride = 0;
     }
 
+    function setHubAddress(address newHubAddress) public{
+        require(hub.isContract(msg.sender), "This function can only be called by contracts or their creator!");
+
+        hub = Hub(newHubAddress);
+
+        holdingStorage = HoldingStorage(hub.holdingStorageAddress());
+        profileStorage = ProfileStorage(hub.profileStorageAddress());
+        litigationStorage = LitigationStorage(hub.litigationStorageAddress());
+
+        profile = Profile(hub.profileAddress());
+    }
 
     event OfferTask(bytes32 dataSetId, bytes32 dcNodeId, bytes32 offerId, bytes32 task);
     event OfferCreated(bytes32 offerId, bytes32 dataSetId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
@@ -42,7 +57,7 @@ contract Holding is Ownable {
         require(holdingTimeInMinutes > 0, "Holding time cannot be zero");
         require(dataSetSizeInBytes > 0, "Data size cannot be zero");
         require(tokenAmountPerHolder > 0, "Token amount per holder cannot be zero");
-        require(litigationIntervalInMinutes > 0, "Litigation time cannot be zero");
+        require(litigationIntervalInMinutes > 0, "Litigation interval cannot be zero");
 
         // Writing data root hash if it wasn't previously set
         if(HoldingStorage(hub.holdingStorageAddress()).fingerprint(bytes32(dataSetId)) == bytes32(0)){
@@ -56,10 +71,13 @@ contract Holding is Ownable {
         // We consider a pair of dataSet and identity unique within one block, hence the formula for offerId
         bytes32 offerId = keccak256(abi.encodePacked(bytes32(dataSetId), identity, blockhash(block.number - 1)));
 
+
         //We calculate the task for the data creator to solve
             //Calculating task difficulty
         uint256 difficulty;
-        if(difficultyOverride != 0) difficulty = difficultyOverride;
+        if(HoldingStorage(hub.holdingStorageAddress()).getDifficultyOverride() != 0) {
+            difficulty = HoldingStorage(hub.holdingStorageAddress()).getDifficultyOverride();
+        }
         else {
             if(logs2(ProfileStorage(hub.profileStorageAddress()).activeNodes()) <= 4) difficulty = 1;
             else {
@@ -74,6 +92,7 @@ contract Holding is Ownable {
             bytes32(dataSetId),
             holdingTimeInMinutes,
             tokenAmountPerHolder,
+            litigationIntervalInMinutes,
             blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1),
             difficulty
         );
@@ -221,7 +240,7 @@ contract Holding is Ownable {
             emit PaidOut(bytes32(offerIds[i]), identity, amountToTransfer);
         }
     }
-    
+
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
         bytes32 r;
         bytes32 s;
@@ -285,11 +304,6 @@ contract Holding is Ownable {
             y := div(mload(add(m,sub(255,a))), shift)
             y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
         }
-    }
-
-    function setDifficulty(uint256 new_difficulty) 
-    public onlyOwner{
-        difficultyOverride = new_difficulty;
     }
 }
 

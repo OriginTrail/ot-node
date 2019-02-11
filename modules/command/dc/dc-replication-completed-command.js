@@ -21,7 +21,9 @@ class DcReplicationCompletedCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId, dhNodeId, dhWallet, dhIdentity, signature,
+            offerId, dhNodeId,
+            dhWallet, dhIdentity,
+            signature, isReplacement,
         } = command.data;
 
         const toValidate = [
@@ -45,7 +47,12 @@ class DcReplicationCompletedCommand extends Command {
         replicatedData.confirmation = signature;
         replicatedData.status = 'VERIFIED';
         await replicatedData.save({ fields: ['status', 'confirmation'] });
-        this.logger.notify(`Replication finished for DH node ${dhNodeId}`);
+
+        if (isReplacement === false) {
+            this.logger.notify(`Replication finished for DH node ${dhNodeId}`);
+        } else {
+            this.logger.notify(`Replacement replication finished for DH node ${dhNodeId}`);
+        }
         return Command.empty();
     }
 
