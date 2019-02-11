@@ -26,6 +26,11 @@ contract Litigation {
 	/*    ----------------------------- LITIGATION -----------------------------     */
     event LitigationStatusChanged(bytes32 offerId, address holderIdentity, LitigationStorage.LitigationStatus status);
 
+    event LitigationInitiated(bytes32 offerId, address holderIdentity, uint requestedDataIndex);
+    event LitigationAnswered(bytes32 offerId, address holderIdentity);
+    event LitigationTimedOut(bytes32 offerId, address holderIdentity);
+    event LitigationCompleted(bytes32 offerId, address holderIdentity, bool DH_was_penalized);
+
     event ReplacementStarted(bytes32 offerId, address holderIdentity, address challengerIdentity, bytes32 litigationRootHash);
     event ReplacementCompleted(bytes32 offerId, address challengerIdentity, address chosenHolder);
 
@@ -65,7 +70,7 @@ contract Litigation {
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-        emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
+        emit LitigationInitiated(offerId, holderIdentity, requestedDataIndex);
         return true;
     }
     
@@ -88,7 +93,7 @@ contract Litigation {
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.answered);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-        emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.answered);
+        emit LitigationAnswered(offerId, holderIdentity);
         return true;
     }
 
@@ -185,7 +190,7 @@ contract Litigation {
                 // Calculate and set task
             litigationStorage.setLitigationReplacementTask(offerId, holderIdentity, blockhash(block.number - 1) & bytes32(2 ** (parameters[2] * 4) - 1));
 
-            emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
+            emit LitigationCompleted(offerId, holderIdentity, true);
             emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytes32(parameters[3]));
             return true;
         } 
@@ -201,7 +206,7 @@ contract Litigation {
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
             
 
-            emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
+            emit LitigationCompleted(offerId, holderIdentity, false);
             return false;
         }
         else {
@@ -241,7 +246,7 @@ contract Litigation {
                 // Calculate and set task
             litigationStorage.setLitigationReplacementTask(offerId, holderIdentity, blockhash(block.number - 1) & bytes32(2 ** (parameters[2] * 4) - 1));
 
-            emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
+            emit LitigationCompleted(offerId, holderIdentity, true);
             emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytes32(parameters[3]));
             return true;
         }
