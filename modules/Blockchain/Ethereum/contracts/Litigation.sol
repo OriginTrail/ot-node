@@ -24,8 +24,6 @@ contract Litigation {
     }
 
 	/*    ----------------------------- LITIGATION -----------------------------     */
-    event LitigationStatusChanged(bytes32 offerId, address holderIdentity, LitigationStorage.LitigationStatus status);
-
     event LitigationInitiated(bytes32 offerId, address holderIdentity, uint requestedDataIndex);
     event LitigationAnswered(bytes32 offerId, address holderIdentity);
     event LitigationTimedOut(bytes32 offerId, address holderIdentity);
@@ -303,7 +301,6 @@ contract Litigation {
 
         // Set litigation status
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
-        emit LitigationStatusChanged(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
         emit ReplacementCompleted(offerId, litigatorIdentity, replacementHolderIdentity[block.timestamp % 3]);
     }
 
