@@ -74,7 +74,7 @@ const wallets = accountPrivateKeys.map(privateKey => ({
     privateKey,
 }));
 
-describe('Transactions class objet tests', () => {
+describe('Transactions class object tests', () => {
     let server;
     let web3;
     before('Setup blockchain', (done) => {
@@ -104,7 +104,8 @@ describe('Transactions class objet tests', () => {
     });
 
     it('Should initialize normally', () => {
-        transactions = new Transactions(web3, wallets[0].address, wallets[0].privateKey);
+        const transactions = new Transactions(web3, wallets[0].address, wallets[0].privateKey);
+        expect(transactions).to.not.be.undefined;
     });
 
     it('Should fail with warning for transactions if wallet has less than 300k * gasPrice', async () => {
