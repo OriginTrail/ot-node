@@ -320,4 +320,44 @@ contract('Litigation testing', async (accounts) => {
             { from: DC_wallet },
         );
     });
+    // eslint-disable-next-line no-undef
+    it('Litigation completion should block DH from payout', async () => {
+        // Get initial litigation values
+        let res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Initiate litigation
+        res = await litigation.initiateLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            new BN(0),
+            [hashes[1], hash_CD, hash_EFGH],
+            { from: DC_wallet },
+        );
+        console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
+
+        // Instead of answering litigation
+        // move the litigation timestamp in order to simulate lack of answer
+        let timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
+        timestamp = timestamp.sub(new BN(100));
+        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
+
+        // Complete litigation
+        await litigation.completeLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            hashes[0],
+            { from: DC_wallet, gasLimit: 6000000 },
+        );
+
+        let failed = false;
+        try {
+            await holding.payOut(identities[0], offerId);
+        } catch (err) {
+            failed = true;
+        } finally {
+            assert(failed, 'Expected payout to fail');
+        }
+    });
 });
