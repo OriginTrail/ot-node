@@ -454,12 +454,7 @@ contract('Litigation testing', async (accounts) => {
 
         const requestedData = requested_data[0];
 
-        // // Answer litigation
-        // res = await litigation.answerLitigation(offerId, identities[0], requestedData);
-        // let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
-        // const offerData = await holdingStorage.offer.call(offerId);
-        // const { holdingTimeInMinutes } = offerData;
-
+        // DH does not answer
         // DC is inactive,
         // Expire offer holding period
         // Expire litigation period
