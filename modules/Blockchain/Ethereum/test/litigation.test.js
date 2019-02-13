@@ -437,7 +437,7 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('DH answered correctly, DC inactive', async () => {
+    it('DH did not answer, DC inactive', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -454,20 +454,21 @@ contract('Litigation testing', async (accounts) => {
 
         const requestedData = requested_data[0];
 
-        // Answer litigation
-        res = await litigation.answerLitigation(offerId, identities[0], requestedData);
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
-        const offerData = await holdingStorage.offer.call(offerId);
-        const { holdingTimeInMinutes } = offerData;
+        // // Answer litigation
+        // res = await litigation.answerLitigation(offerId, identities[0], requestedData);
+        // let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        // const offerData = await holdingStorage.offer.call(offerId);
+        // const { holdingTimeInMinutes } = offerData;
 
         // DC is inactive,
         // Expire offer holding period
         // Expire litigation period
 
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
         timestamp = timestamp.sub(new BN((parseInt(holdingTimeInMinutes, 10) * 60) + 1));
         await holdingStorage.setOfferStartTime(offerId, timestamp);
         timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
-        timestamp = timestamp.sub(new BN(80));
+        timestamp = timestamp.sub(new BN(1000));
         await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
 
         try {
