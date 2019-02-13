@@ -49,6 +49,11 @@ contract Litigation {
         require(litigationStatus != LitigationStorage.LitigationStatus.replaced,
             "The selected holder is already replaced, cannot initiate litigation!");
 
+        require(HoldingStorage(hub.holdingStorageAddress()).getOfferStartTime(offerId)
+            + HoldingStorage(hub.holdingStorageAddress()).getOfferHoldingTimeInMinutes(offerId).mul(60)
+            > block.timestamp
+            ,"Cannot initate litigation for a completed offer!");
+
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
             require(timestamp + litigationIntervalInSeconds.mul(3) < block.timestamp, 
                 "The litigation is initiated and awaiting holder response, cannot initiate another litigation!");
