@@ -253,9 +253,10 @@ class Utilities {
      * @param web3 Instance of Web3
      * @param wallet Address of the wallet.
      * @param tokenContractAddress Contract address.
+     * @param humanReadable format result in floating point TRAC value or not i.e. 0.3.
      * @returns {Promise<string |  | Object>}
      */
-    static async getTracTokenBalance(web3, wallet, tokenContractAddress) {
+    static async getTracTokenBalance(web3, wallet, tokenContractAddress, humanReadable = true) {
         const walletDenormalized = this.denormalizeHex(wallet);
         // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
         const contractData = (`0x70a08231000000000000000000000000${walletDenormalized}`);
@@ -264,7 +265,11 @@ class Utilities {
             data: contractData,
         });
         const tokensInWei = web3.utils.toBN(result).toString();
-        return web3.utils.fromWei(tokensInWei, 'ether');
+        if (humanReadable) {
+            return web3.utils.fromWei(tokensInWei, 'ether');
+        }
+
+        return tokensInWei;
     }
 
     /**
@@ -872,6 +877,26 @@ class Utilities {
         const stripped = {};
         properties.forEach(prop => stripped[prop] = config[prop]);
         return stripped;
+    }
+
+    /**
+     * Groups array by some criteria
+     * @param list - Array of items
+     * @param keyGetter - Group criteria
+     * @return {Map<any, any>}
+     */
+    static groupBy(list, keyGetter) {
+        const map = new Map();
+        list.forEach((item) => {
+            const key = keyGetter(item);
+            const collection = map.get(key);
+            if (!collection) {
+                map.set(key, [item]);
+            } else {
+                collection.push(item);
+            }
+        });
+        return map;
     }
 }
 

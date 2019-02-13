@@ -19,9 +19,14 @@ Given(/^I manually create ERC725 identity for (\d+)[st|nd|rd|th]+ node$/, async 
     const node = this.state.nodes[nodeIndex - 1];
     const nodeWallet = node.options.nodeConfiguration.node_wallet;
     const nodeWalletKey = node.options.nodeConfiguration.node_private_key;
+    const nodeManagementWallet = node.options.nodeConfiguration.management_wallet;
 
     const identityContractInstance =
-        await this.state.localBlockchain.createIdentity(nodeWallet, nodeWalletKey);
+        await this.state.localBlockchain.createIdentity(
+            nodeWallet,
+            nodeWalletKey,
+            nodeManagementWallet,
+        );
     expect(identityContractInstance._address).to.not.be.undefined;
     this.state.manualStuff.erc725Identity = identityContractInstance._address;
 });

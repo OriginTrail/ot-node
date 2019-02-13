@@ -4,7 +4,6 @@ const bytes = require('utf8-length');
 const Command = require('../command');
 const MerkleTree = require('../../Merkle');
 const Encryption = require('../../Encryption');
-const Challenge = require('../../Challenge');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');
@@ -23,6 +22,7 @@ class DhReplicationImportCommand extends Command {
         this.logger = ctx.logger;
         this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
+        this.challengeService = ctx.challengeService;
     }
 
     /**
@@ -58,7 +58,7 @@ class DhReplicationImportCommand extends Command {
         }
 
         ImportUtilities.sort(litigationVertices);
-        const litigationBlocks = Challenge.getBlocks(litigationVertices, 32);
+        const litigationBlocks = this.challengeService.getBlocks(litigationVertices);
         const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
         const calculatedLitigationRootHash = litigationBlocksMerkleTree.getRoot();
 
@@ -133,6 +133,7 @@ class DhReplicationImportCommand extends Command {
             data_set_id: dataSetId,
             source_wallet: dcWallet,
             litigation_public_key: litigationPublicKey,
+            litigation_root_hash: litigationRootHash,
             distribution_public_key: distributionPublicKey,
             distribution_private_key: distributionPrivateKey,
             distribution_epk: distributionEpk,

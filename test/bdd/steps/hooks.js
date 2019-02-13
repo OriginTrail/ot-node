@@ -3,6 +3,8 @@ require('dotenv').config();
 const { Database } = require('arangojs');
 const rc = require('rc');
 const rimraf = require('rimraf');
+const { forEach } = require('p-iteration');
+
 const defaultConfig = require('../../../config/config.json').development;
 const pjson = require('../../../package.json');
 
@@ -87,17 +89,19 @@ AfterAll(async function () {
 
     const listOfDatabases = await systemDb.listDatabases();
 
-    const that = this;
-    listOfDatabases.forEach(async function (databaseItem) {
-        if (databaseItem !== '_system' && databaseItem !== 'origintrail' && databaseItem !== 'origintrail-develop' && databaseItem !== 'origintrail-staging' && databaseItem !== 'origintrail-stable') {
+    const logger = this;
+    const skipDbs = ['_system', 'origintrail', 'origintrail-develop', 'origintrail-staging', 'origintrail-stable'];
+    await forEach(
+        listOfDatabases.filter((dbName => !skipDbs.includes(dbName))),
+        async (databaseItem) => {
             try {
                 await systemDb.dropDatabase(databaseItem);
             } catch (error) {
-                that.logger.log(`Oops, failed to delete database: ${databaseItem}`);
-                that.logger.log(error);
+                logger.log(`Oops, failed to delete database: ${databaseItem}`);
+                logger.log(error);
             }
-        }
-    });
+        },
+    );
 
     // TODO: Drop all data to artifacts.
 });

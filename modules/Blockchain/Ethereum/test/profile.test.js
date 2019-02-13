@@ -51,7 +51,7 @@ contract('Profile contract testing', async (accounts) => {
         var identities = [];
         for (var i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            identities[i] = await Identity.new(accounts[i], { from: accounts[i] });
+            identities[i] = await Identity.new(accounts[i], accounts[i], { from: accounts[i] });
         }
 
         var initialBalances = [];
@@ -73,6 +73,7 @@ contract('Profile contract testing', async (accounts) => {
         promises = [];
         for (i = 0; i < accounts.length; i += 1) {
             promises[i] = profile.createProfile(
+                accounts[i],
                 nodeId,
                 amountToDeposit,
                 true,
@@ -154,6 +155,7 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             const res = await profile.createProfile(
+                accounts[i],
                 nodeId,
                 amountToDeposit,
                 false,
@@ -309,7 +311,7 @@ contract('Profile contract testing', async (accounts) => {
         await hub.setHoldingAddress(accounts[0]);
 
         const amountToReserve = new BN(100);
-        await profile.reserveTokens(
+        await profileStorage.increaseStakesReserved(
             identities[0],
             identities[1],
             identities[2],
@@ -457,7 +459,7 @@ contract('Profile contract testing', async (accounts) => {
         const util = await TestingUtilities.deployed();
 
         // Set withdrawal time to 10 seconds for faster testing
-        await profile.setWithdrawalTime(new BN(10));
+        await profile.setWithdrawalTime(new BN(1));
 
         // Get initial balances
         var initialStakes = [];
@@ -530,7 +532,7 @@ contract('Profile contract testing', async (accounts) => {
 
         if (errored) assert(false, 'No use of running a test after previous test failed');
         // Wait other half of the withdrawal delay
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Get initial balances
         var initialBalances = [];
@@ -576,5 +578,60 @@ contract('Profile contract testing', async (accounts) => {
                 `Withdrawal flag not reset for account ${i}!`,
             );
         }
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should test withdrawal of entire balance', async () => {
+        // Get contracts used in hook
+        const trac = await TracToken.deployed();
+        const profile = await Profile.deployed();
+        const profileStorage = await ProfileStorage.deployed();
+        const util = await TestingUtilities.deployed();
+
+        // Set withdrawal time to 10 seconds for faster testing
+        await profile.setWithdrawalTime(new BN(1));
+
+        // Get initial balances
+        let res = await profileStorage.profile.call(identities[0]);
+        const initialStake = res.stake;
+        const initialStakeReserved = res.stakeReserved;
+        const initialBalance = await trac.balanceOf.call(accounts[0]);
+        const availableForWithdrawal = initialStake.sub(initialStakeReserved);
+
+        res = await profile.startTokenWithdrawal(
+            identities[0],
+            availableForWithdrawal,
+            { from: accounts[0] },
+        );
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        await profile.withdrawTokens(identities[0], { from: accounts[0] });
+
+        // eslint-disable-next-line no-await-in-loop
+        const newBalance = await trac.balanceOf.call(accounts[0]);
+        // eslint-disable-next-line no-await-in-loop
+        res = await profileStorage.profile.call(identities[0]);
+        assert(
+            newBalance.eq(initialBalance.add(availableForWithdrawal)),
+            `Account balance does not match, expected ${initialBalance.add(availableForWithdrawal).toString()}, got ${newBalance.toString()}`,
+        );
+        assert(
+            initialStake.sub(availableForWithdrawal).eq(res.stake),
+            `Stake not matching, expected ${initialStake.sub(availableForWithdrawal).toString()}, got ${res.stake.toString()}!`,
+        );
+        assert(
+            (res.stake.sub(res.stakeReserved)).isZero(),
+            `Entire available balance not withdrawn! ${res.stake.sub(res.stakeReserved)} Abrashkins still available!`,
+        );
+        assert(
+            initialStakeReserved.eq(res.stakeReserved),
+            `Stake not matching, expected ${initialStakeReserved.toString()}, got ${res.stakeReserved.toString()}!`,
+        );
+        assert.equal(
+            res.withdrawalPending,
+            false,
+            'Withdrawal flag not reset!',
+        );
     });
 });

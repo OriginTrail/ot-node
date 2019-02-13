@@ -5,7 +5,10 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
+const BN = require('bn.js');
+const sleep = require('sleep-async')().Promise;
 const request = require('request');
+const _ = require('lodash');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
@@ -31,10 +34,12 @@ function unpackRawTable(rawTable) {
     if (rawTable) {
         for (const row of rawTable.rawTable) {
             let value;
-            if (row.length > 1) {
+            if (row.length > 2) {
                 value = [];
                 for (let index = 1; index < row.length; index += 1) {
-                    value.push(row[index]);
+                    if (!row[index] != null && row[index] !== '') {
+                        value.push(row[index]);
+                    }
                 }
             } else {
                 [, value] = row;
@@ -68,6 +73,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
         nodeConfiguration: {
             node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             node_private_key: LocalBlockchain.wallets()[walletCount - 1].privateKey,
+            management_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
@@ -83,6 +89,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+            initial_deposit_amount: '10000000000000000000000',
 
         },
         appDataBaseDir: this.parameters.appDataBaseDir,
@@ -103,6 +110,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
         const nodeConfiguration = {
             node_wallet: LocalBlockchain.wallets()[i].address,
             node_private_key: LocalBlockchain.wallets()[i].privateKey,
+            management_wallet: LocalBlockchain.wallets()[i].address,
             node_port: 6000 + i,
             node_rpc_port: 9000 + i,
             node_remote_control_port: 4000 + i,
@@ -121,6 +129,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
+            initial_deposit_amount: '10000000000000000000000',
         };
 
         const newNode = new OtNode({
@@ -138,6 +147,15 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
 }));
+
+Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    const waitTime = Number(dc.options.nodeConfiguration.dc_holding_time_in_minutes) * 60 * 1000;
+    expect(waitTime, 'waiting time in BDD tests should be less then step timeout').to.be.lessThan(120000);
+    await sleep.sleep(waitTime);
+});
 
 Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -517,6 +535,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
             nodeConfiguration: {
                 node_wallet: LocalBlockchain.wallets()[i].address,
                 node_private_key: LocalBlockchain.wallets()[i].privateKey,
+                management_wallet: LocalBlockchain.wallets()[i].address,
                 node_port: 6000 + i,
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
@@ -534,6 +553,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                     rpc_node_port: 7545,
                 },
                 local_network_only: true,
+                initial_deposit_amount: '10000000000000000000000',
             },
             appDataBaseDir: this.parameters.appDataBaseDir,
         });
@@ -562,9 +582,12 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-Then(/^all nodes with last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
+Then(/^all nodes with (last import|second last import) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
+    expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
+    whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+    expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
 
     const dv = this.state[whichDV.toLowerCase()];
 
@@ -575,7 +598,7 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
         promises.push(new Promise(async (accept) => {
             const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
             body.find((importInfo) => {
-                if (importInfo.data_set_id === this.state.lastImport.data_set_id) {
+                if (importInfo.data_set_id === this.state[whichImport].data_set_id) {
                     nodeCandidates.push(node.state.identity);
                     return true;
                 }
@@ -599,7 +622,7 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
         // const intervalHandler;
         const intervalHandler = setInterval(async () => {
             const confirmationsSoFar =
-                dv.nodeConfirmsForDataSetId(queryId, this.state.lastImport.data_set_id);
+                dv.nodeConfirmsForDataSetId(queryId, this.state[whichImport].data_set_id);
             if (Date.now() - startTime > 60000) {
                 clearTimeout(intervalHandler);
                 reject(Error('Not enough confirmations for query. ' +
@@ -745,4 +768,50 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
         'version', 'blockchain',
         'network', 'is_bootstrap',
     ]);
+});
+
+Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const myPromises = [];
+
+    // slice(1) to exlude DC node
+    this.state.nodes.slice(1).forEach((node) => {
+        myPromises.push(new Promise((accept) => {
+            // node.state.takenBids gets populated only for choosen DH nodes
+            if (node.state.takenBids.length === 1) {
+                node.once('dh-pay-out-finalized', async () => {
+                    const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
+                    const a = new BN(myBalance.profile.staked);
+                    const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
+                    const c = new BN(node.options.nodeConfiguration.dc_token_amount_per_holder);
+                    expect(a.sub(b).toString()).to.be.equal(c.toString());
+                    accept();
+                });
+            } else {
+                accept();
+            }
+        }));
+    });
+
+    return Promise.all(myPromises);
+});
+
+Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then operational wallet$/, { timeout: 3000000 }, function (nodeIndex) {
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const wallets = LocalBlockchain.wallets();
+    const walletCount = LocalBlockchain.wallets().length;
+
+    const operationalWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.node_wallet;
+    let managementWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.management_wallet;
+    let randomIndex;
+    expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
+
+    while (managementWallet === operationalWallet) {
+        // position walletCount-1 is reserved for bootstrap node
+        randomIndex = _.random(0, walletCount - 2);
+        managementWallet = wallets[randomIndex].address;
+    }
+    expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
 });

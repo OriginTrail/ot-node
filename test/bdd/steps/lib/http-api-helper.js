@@ -367,78 +367,6 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
 }
 
 /**
- * @typedef {Object} WithdrawResponse
- * @property {string} message informing that withdraw process was initiated.
- */
-
-/**
- * Fetch /api/withdraw response
- *
- * @param {string} nodeRpcUrl URL in following format http://host:port
- * @param {number} tokenCount
- * @return {Promise.<WithdrawResponse>}
- */
-async function apiWithdraw(nodeRpcUrl, tokenCount) {
-    return new Promise((accept, reject) => {
-        const jsonQuery = {
-            trac_amount: tokenCount,
-        };
-        request(
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/withdraw`,
-                json: true,
-                body: jsonQuery,
-            },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            },
-        );
-    });
-}
-
-/**
- * @typedef {Object} DepositResponse
- * @property {string} message informing that deposit process went fine.
- */
-
-/**
- * Fetch /api/deposit response
- *
- * @param {string} nodeRpcUrl URL in following format http://host:port
- * @param {number} tokenCount
- * @return {Promise.<DepositResponse>}
- */
-async function apiDeposit(nodeRpcUrl, tokenCount) {
-    return new Promise((accept, reject) => {
-        const jsonQuery = {
-            trac_amount: tokenCount,
-        };
-        request(
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/deposit`,
-                json: true,
-                body: jsonQuery,
-            },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            },
-        );
-    });
-}
-
-/**
  * @typedef {Object} ConsensusResponse
  * @property {Object} events an array of events with side1 and/or side2 objects.
  */
@@ -534,6 +462,45 @@ async function apiNodeInfo(nodeRpcUrl) {
     });
 }
 
+/**
+ * @typedef {Object} ApiBalanceInfo
+ * @property {Object} profile info about profile balance
+ * @property {string} profile.minimalStake minimal stake
+ * @property {string} profile.reserved reserved
+ * @property {string} profile.staked staked
+ * @property {Object} wallet info about wallet balance
+ * @property {string} wallet.address node's wallet address
+ * @property {string} wallet.ethBalance wallet balance in ethers
+ * @property {string} wallet.tokenBalance wallet balance in tokens
+ */
+
+/**
+ * Fetch api/balance?humanReadable={{humanReadable}}
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {boolean} humanReadable friendly format of response
+ * @return {Promise.<ApiBalanceInfo>}
+ */
+async function apiBalance(nodeRpcUrl, humanReadable) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/balance?humanReadable=${humanReadable}`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
     apiImportContent,
@@ -546,9 +513,8 @@ module.exports = {
     apiQueryNetwork,
     apiQueryNetworkResponses,
     apiReadNetwork,
-    apiWithdraw,
-    apiDeposit,
     apiConsensus,
     apiTrail,
     apiNodeInfo,
+    apiBalance,
 };

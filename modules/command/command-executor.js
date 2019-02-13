@@ -1,8 +1,10 @@
 const async = require('async');
 const Models = require('../../models');
 const Command = require('./command');
+const constants = require('../constants');
 
 const sleep = require('sleep-async')().Promise;
+const { forEach } = require('p-iteration');
 
 /**
  * Command statuses
@@ -48,7 +50,7 @@ class CommandExecutor {
             } catch (e) {
                 this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
                 this.notifyError(e);
-                process.exit(-1);
+                process.exit(1);
             }
 
             callback();
@@ -60,7 +62,10 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async init() {
-        await this.startCleaner();
+        await forEach(
+            constants.PERMANENT_COMMANDS,
+            async command => this._startDefaultCommand(command),
+        );
         this.logger.trace('Command executor has been initialized...');
     }
 
@@ -106,7 +111,7 @@ class CommandExecutor {
         const waitMs = (command.ready_at + command.delay) - now;
         if (waitMs > 0) {
             this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
-            await this.add(command, waitMs, false);
+            await this.add(command, Math.min(waitMs, constants.MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
         }
 
@@ -124,7 +129,10 @@ class CommandExecutor {
                     }, transaction);
 
                     command.data = handler.pack(command.data);
-                    await this.add(command, command.period, false);
+
+                    const period = command.period ?
+                        command.period : constants.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                    await this.add(command, period, false);
                     return Command.repeat();
                 }
 
@@ -176,13 +184,16 @@ class CommandExecutor {
     }
 
     /**
-     * Start cleaner command
-     * @returns {Promise<void>}
+     * Starts the default command by name
+     * @param name - Command name
+     * @return {Promise<void>}
+     * @private
      */
-    async startCleaner() {
-        await CommandExecutor._delete('cleanerCommand');
-        const handler = this.commandResolver.resolve('cleanerCommand');
+    async _startDefaultCommand(name) {
+        await CommandExecutor._delete(name);
+        const handler = this.commandResolver.resolve(name);
         await this.add(handler.default(), 0, true);
+        this.logger.trace(`Permanent command ${name} created.`);
     }
 
     /**
@@ -192,6 +203,16 @@ class CommandExecutor {
      * @param insert
      */
     async add(command, delay = 0, insert = true) {
+        const now = Date.now();
+
+        if (delay != null && delay > constants.MAX_COMMAND_DELAY_IN_MILLS) {
+            if (command.ready_at == null) {
+                command.ready_at = now;
+            }
+            command.ready_at += delay;
+            delay = constants.MAX_COMMAND_DELAY_IN_MILLS;
+        }
+
         if (insert) {
             command = await this._insert(command);
         }
@@ -243,9 +264,9 @@ class CommandExecutor {
             command.sequence = command.sequence.slice(1);
         }
         if (!command.ready_at) {
-            command.ready_at = Date.now();
+            command.ready_at = Date.now(); // take current time
         }
-        if (!command.delay) {
+        if (command.delay == null) {
             command.delay = 0;
         }
         if (!command.transactional) {

@@ -105,17 +105,19 @@ class DCOfferFinalizeCommand extends Command {
             };
         }
 
-        const depositToken = await this.dcService.chainDepositCommandIfNeeded(
-            offer.token_amount_per_holder,
-            command.data,
-            ['dcOfferFinalizeCommand'],
-        );
-        if (depositToken) {
-            this.logger.warn(`Failed to finalize offer ${offerId} because DC didn't have enough funds. Trying again...`);
-            return {
-                commands: [depositToken],
-            };
+        let errorMessage = err.message;
+        const hasFunds = await this.dcService
+            .hasProfileBalanceForOffer(offer.token_amount_per_holder);
+        if (!hasFunds) {
+            errorMessage = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
         }
+        this.logger.error(`Offer ${offerId} has not been finalized. ${errorMessage}`);
+
+        offer.status = 'FAILED';
+        offer.message = `Offer for ${offerId} has not been finalized. ${errorMessage}`;
+        await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 

@@ -49,6 +49,9 @@ contract Hub is Ownable{
     address public holdingStorageAddress;
     address public readingStorageAddress;
 
+    address public litigationAddress;
+    address public litigationStorageAddress;
+
     event ContractsChanged();
 
     function setTokenAddress(address newTokenAddress)
@@ -66,6 +69,12 @@ contract Hub is Ownable{
     function setHoldingAddress(address newHoldingAddress)
     public onlyOwner {
         holdingAddress = newHoldingAddress;
+        emit ContractsChanged();
+    }
+
+    function setLitigationAddress(address newLitigationAddress)
+    public onlyOwner {
+        litigationAddress = newLitigationAddress;
         emit ContractsChanged();
     }
 
@@ -100,6 +109,12 @@ contract Hub is Ownable{
         emit ContractsChanged();
     }
 
+    function setLitigationStorageAddress(address newLitigationStorageAddress)
+    public onlyOwner {
+        litigationStorageAddress = newLitigationStorageAddress;
+        emit ContractsChanged();
+    }
+
     function isContract(address sender) 
     public view returns (bool) {
         if(sender == owner ||
@@ -110,7 +125,9 @@ contract Hub is Ownable{
            sender == approvalAddress ||
            sender == profileStorageAddress ||
            sender == holdingStorageAddress ||
-           sender == readingStorageAddress) {
+           sender == readingStorageAddress ||
+           sender == litigationAddress ||
+           sender == litigationStorageAddress) {
             return true;
         }
         return false;

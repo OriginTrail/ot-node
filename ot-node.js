@@ -21,7 +21,6 @@ const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
 const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
-const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -29,7 +28,6 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
-
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
@@ -37,11 +35,13 @@ const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
 const ApprovalService = require('./modules/service/approval-service');
+const ChallengeService = require('./modules/service/challenge-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
-const APIUtilities = require('./modules/utility/api-utilities');
+const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
+const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -76,6 +76,11 @@ try {
 
     if (!config.node_wallet || !config.node_private_key) {
         console.error('Please provide valid wallet.');
+        process.abort();
+    }
+
+    if (!config.management_wallet) {
+        console.error('Please provide a valid management wallet.');
         process.abort();
     }
 } catch (error) {
@@ -327,7 +332,7 @@ class OTNode {
 
         context = container.cradle;
 
-        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -355,7 +360,6 @@ class OTNode {
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
-            challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
@@ -366,6 +370,7 @@ class OTNode {
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            challengeService: awilix.asClass(ChallengeService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -378,35 +383,6 @@ class OTNode {
         await approvalService.initialize();
 
         emitter.initialize();
-
-        // check does node_wallet has sufficient funds
-        try {
-            appState.enoughFunds = await blockchain.hasEnoughFunds();
-            const identityFilePath = path.join(
-                config.appDataPath,
-                config.erc725_identity_filepath,
-            );
-            // If ERC725 exist assume profile is created. No need to check for the funds
-            if (!fs.existsSync(identityFilePath)) {
-                // Profile does not exists. Check if we have enough funds.
-                appState.enoughFunds = await blockchain.hasEnoughFunds();
-                if (!appState.enoughFunds) {
-                    log.warn('Insufficient funds to create profile');
-                    process.exit(1);
-                }
-            }
-        } catch (err) {
-            notifyBugsnag(err);
-            log.error(`Failed to check for funds. ${err.message}.`);
-            process.exit(1);
-        }
-        setInterval(async () => {
-            try {
-                appState.enoughFunds = await blockchain.hasEnoughFunds();
-            } catch (err) {
-                notifyBugsnag(err);
-            }
-        }, 1800000);
 
         // Connecting to graph database
         const graphStorage = container.resolve('graphStorage');
@@ -443,6 +419,8 @@ class OTNode {
 
         try {
             await profileService.initProfile();
+            await this._runMigration(blockchain);
+            await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
@@ -483,6 +461,38 @@ class OTNode {
     }
 
     /**
+     * Run one time migration
+     * Note: implement migration service
+     * @deprecated
+     * @private
+     */
+    async _runMigration(blockchain) {
+        const migrationsStartedMills = Date.now();
+        log.info('Initializing code migrations...');
+
+        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
+
+            try {
+                await migration.run();
+                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
+
+        log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
+    }
+
+    /**
      * Starts bootstrap node
      * @return {Promise<void>}
      */
@@ -491,7 +501,7 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js'], {
+        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -562,6 +572,7 @@ class OTNode {
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                blockchain.getAllPastEvents('LITIGATION_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }

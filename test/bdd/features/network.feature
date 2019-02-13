@@ -38,7 +38,7 @@ Feature: Test basic network features
     And I use 6th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
-    Given the DV purchases import from the last query from a DH
+    Given the DV purchases last import from the last query from a DH
     Then the last import should be the same on DC and DV nodes
     Then DV's last purchase's hash should be the same as one manually calculated
 
@@ -57,7 +57,7 @@ Feature: Test basic network features
     And I use 2nd node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
-    Given the DV purchases import from the last query from the DC
+    Given the DV purchases last import from the last query from the DC
     Then the last import should be the same on DC and DV nodes
 
   @first
@@ -75,14 +75,14 @@ Feature: Test basic network features
     And I use 2nd node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
-    Given the DV purchases import from the last query from the DC
+    Given the DV purchases last import from the last query from the DC
     Then the last import should be the same on DC and DV nodes
     Given I additionally setup 1 node
     And I start additional nodes
     And I use 3rd node as DV2
     Given DV2 publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV2
-    Given the DV2 purchases import from the last query from a DV
+    Given the DV2 purchases last import from the last query from a DV
     Then the last import should be the same on DC and DV nodes
     Then the last import should be the same on DC and DV2 nodes
 
@@ -121,3 +121,24 @@ Feature: Test basic network features
   @first
   Scenario: Bootstraps should have /api/info route enabled
     Then 1st bootstrap should reply on info route
+
+  @first
+  Scenario: DH payout scenario
+    Given the replication difficulty is 0
+    And I setup 5 nodes
+    And I override configuration for all nodes
+      | dc_holding_time_in_minutes | 1 |
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And DC waits for holding time
+    Then selected DHes should be payed out
+
+  @first
+  Scenario: Node with diff management and operational wallet should successfully start
+    Given I setup 1 node
+    And I set 1st node's management wallet to be different then operational wallet
+    And I start the node
+    Then default initial token amount should be deposited on 1st node's profile

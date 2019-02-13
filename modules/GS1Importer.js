@@ -112,10 +112,10 @@ class GS1Importer {
                 }
             }
 
-            if (eventListElement.extension && eventListElement.extension.TransformationEvent) {
-                for (const transformationEvent of
-                    this.helper.arrayze(eventListElement.extension.TransformationEvent)) {
-                    events.push(transformationEvent);
+            if (eventListElement.extension) {
+                const extensions = this.helper.arrayze(eventListElement.extension);
+                for (const currentExtension of extensions) {
+                    events.push(currentExtension.TransformationEvent);
                 }
             }
         }

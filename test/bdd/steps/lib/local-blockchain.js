@@ -99,6 +99,7 @@ class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger || console;
         this.server = Ganache.server({
+            gasLimit: 7000000,
             accounts:
                 accountPrivateKeys.map(account => ({
                     secretKey: `0x${account}`,
@@ -146,7 +147,8 @@ class LocalBlockchain {
         const safeMathSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/SafeMath.sol'), 'utf8');
         const identitySource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Identity.sol'), 'utf8');
         const byteArrSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ByteArr.sol'), 'utf8');
-
+        const litigationSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Litigation.sol'), 'utf8');
+        const litigationStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/LitigationStorage.sol'), 'utf8');
 
         let compileResult = solc.compile({ sources: { 'Hub.sol': hubSource } }, 1);
         this.hubContractData = `0x${compileResult.contracts['Hub.sol:Hub'].bytecode}`;
@@ -155,7 +157,20 @@ class LocalBlockchain {
 
         compileResult = solc.compile({
             sources: {
-                'Approval.sol': approvalSource, 'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource,
+                'Approval.sol': approvalSource,
+                'ProfileStorage.sol': profileStorageSource,
+                'TracToken.sol': tokenSource,
+                'Hub.sol': hubSource,
+                'HoldingStorage.sol': holdingStorageSource,
+                'Reading.sol': readingSource,
+                'Profile.sol': profileSource,
+                'Holding.sol': holdingSource,
+                'ERC725.sol': eRC725Source,
+                'SafeMath.sol': safeMathSource,
+                'Identity.sol': identitySource,
+                'ByteArr.sol': byteArrSource,
+                'Litigation.sol': litigationSource,
+                'LitigationStorage.sol': litigationStorageSource,
             },
         }, 1);
 
@@ -190,6 +205,14 @@ class LocalBlockchain {
         this.identityContractData = `0x${compileResult.contracts['Identity.sol:Identity'].bytecode}`;
         this.identityContractAbi = JSON.parse(compileResult.contracts['Identity.sol:Identity'].interface);
         this.identityContract = new this.web3.eth.Contract(this.identityContractAbi);
+
+        this.litigationStorageContractData = `0x${compileResult.contracts['LitigationStorage.sol:LitigationStorage'].bytecode}`;
+        this.litigationStorageContractAbi = JSON.parse(compileResult.contracts['LitigationStorage.sol:LitigationStorage'].interface);
+        this.litigationStorageContract = new this.web3.eth.Contract(this.litigationStorageContractAbi);
+
+        this.litigationContractData = `0x${compileResult.contracts['Litigation.sol:Litigation'].bytecode}`;
+        this.litigationContractAbi = JSON.parse(compileResult.contracts['Litigation.sol:Litigation'].interface);
+        this.litigationContract = new this.web3.eth.Contract(this.litigationContractAbi);
     }
 
     async deployContracts() {
@@ -269,6 +292,26 @@ class LocalBlockchain {
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
+        this.logger.log('Deploying litigationStorageContract');
+        [this.litigationStorageDeploymentReceipt, this.litigationStorageInstance] = await this.deployContract(
+            this.web3, this.litigationStorageContract, this.litigationStorageContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setLitigationStorageAddress(this.litigationStorageInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        this.logger.log('Deploying litigationContract');
+        [this.litigationDeploymentReceipt, this.litigationInstance] = await this.deployContract(
+            this.web3, this.litigationContract, this.litigationContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setLitigationAddress(this.litigationInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
         // Deploy tokens.
         const amountToMint = '50000000000000000000000000'; // 5e25
         const amounts = [];
@@ -302,7 +345,7 @@ class LocalBlockchain {
                 data: contractData,
                 arguments: constructorArguments,
             })
-                .send({ from: deployerAddress, gas: 6000000 })
+                .send({ from: deployerAddress, gas: 6900000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
                 })
@@ -362,10 +405,10 @@ class LocalBlockchain {
         return this.web3.eth.getBalance(wallet);
     }
 
-    async createIdentity(wallet, walletKey) {
+    async createIdentity(wallet, walletKey, managementWallet) {
         const [, identityInstance] = await this.deployContract(
             this.web3, this.identityContract, this.identityContractData,
-            [wallet], wallet,
+            [wallet, managementWallet], wallet,
         );
         return identityInstance;
     }
