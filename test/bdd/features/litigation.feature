@@ -3,6 +3,7 @@ Feature: Test various litigation scenarios
     Given the blockchain is set up
     And 1 bootstrap is running
 
+  @first
   Scenario: Test litigation for one holder which is not responding
     Given the replication difficulty is 0
     And I setup 8 node
@@ -18,19 +19,16 @@ Feature: Test various litigation scenarios
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
     And I wait for challenges to start
-    And I stop 1 holder
+    And I corrupt 1st holder's database ot_vertices collection
     And I wait for litigation initiation
-    And I stop 1 holder
-    And I remember stopped holders
+    And I corrupt 2nd holder's database ot_vertices collection
     Then Litigator should delay other litigations while one is running
-    And I start 1st stopped holder
     Then 1st holder to litigate should answer litigation
     Then Litigator node should have completed litigation
     Then 1st started holder should have been penalized
     Then Litigator should have started replacement for penalized holder
     Then I wait for 4 replacement replications to finish
     Then I wait for replacement to be completed
-    And I start 2nd stopped holder
     Then 2nd holder to litigate should answer litigation
     Then Litigator node should have completed litigation
     Then 2nd started holder should have been penalized
@@ -54,7 +52,7 @@ Feature: Test various litigation scenarios
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
     And I wait for challenges to start
-    And I corrupt 1 holder's database ot_vertices collection
+    And I corrupt 1st holder's database ot_vertices collection
     And I wait for litigation initiation
     Then 1st holder to litigate should answer litigation
     Then I wait for 3 replacement replications to finish

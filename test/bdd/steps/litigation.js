@@ -192,36 +192,31 @@ Then(/^Litigator should delay other litigations while one is running$/, { timeou
     });
 });
 
-Given(/^I corrupt (\d+) holder's database ot_vertices collection$/, { timeout: 3000000 }, function (holdersToDrop) {
-    console.log('I corrupt 1 holder\'s database ot_vertices collection');
-    expect(holdersToDrop).to.be.greaterThan(0);
-    expect(holdersToDrop).to.be.lessThan(4);
+Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/, { timeout: 3000000 }, async function (nodeIndex) {
+    this.logger.log(`I corrupt holder ${nodeIndex} database ot_vertices collection`);
+    expect(nodeIndex).to.be.greaterThan(0);
+    expect(nodeIndex).to.be.lessThan(4);
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
-    const droppedNodes = [];
-    this.state.nodes.filter(node => node.state.takenBids.length > 0).slice(0, holdersToDrop)
-        .forEach(async (node) => {
-            droppedNodes.push(node);
+    const node = this.state.nodes.filter(node => node.state.takenBids.length > 0)[nodeIndex - 1];
+    const {
+        database: databaseName,
+        username,
+        password,
+    } = node.options.nodeConfiguration.database;
 
-            const {
-                database: databaseName,
-                username,
-                password,
-            } = node.options.nodeConfiguration.database;
+    const systemDb = new Database();
+    systemDb.useBasicAuth(username, password);
+    systemDb.useDatabase(databaseName);
 
-            const systemDb = new Database();
-            systemDb.useBasicAuth(username, password);
-            systemDb.useDatabase(databaseName);
-
-            await systemDb.query(`FOR v IN ot_vertices
+    await systemDb.query(`FOR v IN ot_vertices
             UPDATE { _key: v._key, 
                 '${this.state.lastImport.data_set_id}': {
                     data:
                         REVERSE(v['${this.state.lastImport.data_set_id}'].data)
                        } 
             } IN ot_vertices`);
-        });
 
-    this.state.holdersToLitigate = droppedNodes;
+    this.state.holdersToLitigate.push(node);
 });
