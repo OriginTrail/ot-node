@@ -19,9 +19,9 @@ Feature: Test various litigation scenarios
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
     And I wait for challenges to start
-    And I corrupt 1 holder's database ot_vertices collection
+    And I corrupt 1st holder's database ot_vertices collection
     And I wait for litigation initiation
-    And I corrupt 2 holder's database ot_vertices collection
+    And I corrupt 2nd holder's database ot_vertices collection
     Then Litigator should delay other litigations while one is running
     Then 1st holder to litigate should answer litigation
     Then Litigator node should have completed litigation
@@ -52,7 +52,7 @@ Feature: Test various litigation scenarios
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
     And I wait for challenges to start
-    And I corrupt 1 holder's database ot_vertices collection
+    And I corrupt 1st holder's database ot_vertices collection
     And I wait for litigation initiation
     Then 1st holder to litigate should answer litigation
     Then I wait for 3 replacement replications to finish
