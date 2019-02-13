@@ -250,7 +250,6 @@ contract('Litigation testing', async (accounts) => {
             [hashes[1], hash_CD, hash_EFGH],
             { from: DC_wallet },
         );
-        console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
 
         // Instead of answering litigation
         // move the litigation timestamp in order to simulate lack of answer
@@ -320,12 +319,9 @@ contract('Litigation testing', async (accounts) => {
             { from: DC_wallet },
         );
     });
+
     // eslint-disable-next-line no-undef
     it('Litigation completion should block DH from payout', async () => {
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
-        timestamp = timestamp.sub(new BN(80));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
-
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -338,7 +334,10 @@ contract('Litigation testing', async (accounts) => {
             [hashes[1], hash_CD, hash_EFGH],
             { from: DC_wallet },
         );
-        console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
+
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(new BN(80));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
 
         // Instead of answering litigation
         // move the litigation timestamp in order to simulate lack of answer
@@ -351,7 +350,7 @@ contract('Litigation testing', async (accounts) => {
             offerId,
             identities[0],
             DC_identity,
-            hashes[0],
+            requested_data[0],
             { from: DC_wallet, gasLimit: 6000000 },
         );
 
@@ -366,11 +365,7 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Inactive DC should enable DH to payout', async () => {
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
-        timestamp = timestamp.sub(new BN(80));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
-
+    it('Inactive DC should enable DH to payout some time after answering', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -383,18 +378,28 @@ contract('Litigation testing', async (accounts) => {
             [hashes[1], hash_CD, hash_EFGH],
             { from: DC_wallet },
         );
-        console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
+
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(new BN(80));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
 
         // answerLitigation(bytes32 offerId, address holderIdentity, bytes32 requestedData)
         await litigation.answerLitigation(offerId, identities[0], hashes[0]);
+
+        res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
+        timestamp = timestamp.sub(new BN(80));
+        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
 
         let failed = false;
         try {
             await holding.payOut(identities[0], offerId);
         } catch (err) {
+            console.log(err);
             failed = true;
         } finally {
-            assert(!failed, 'Expected payout passed');
+            assert(!failed, 'Expected payout failed');
         }
     });
 });
