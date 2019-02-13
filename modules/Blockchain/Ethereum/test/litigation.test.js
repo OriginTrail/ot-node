@@ -404,7 +404,7 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it.skip('DH answered correctly, DC Completes', async () => {
+    it('DH answered correctly, DC Completes', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -459,16 +459,22 @@ contract('Litigation testing', async (accounts) => {
         let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
         const offerData = await holdingStorage.offer.call(offerId);
         const { holdingTimeInMinutes } = offerData;
+
         // DC is inactive,
         // Expire offer holding period
-        timestamp = timestamp.sub(new BN(parseInt(holdingTimeInMinutes, 10) * 60));
+        // Expire litigation period
+
+        timestamp = timestamp.sub((new BN(parseInt(holdingTimeInMinutes, 10) * 60) + 1));
         await holdingStorage.setOfferStartTime(offerId, timestamp);
+        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
+        timestamp = timestamp.sub(new BN(80));
+        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
 
         try {
             await holding.payOut(identities[0], offerId);
         } catch (err) {
             console.log(err);
-            assert(false, 'DH should successfuly complete the payout');
+            assert(false, 'DH should successfully complete the payout');
         }
     });
 });
