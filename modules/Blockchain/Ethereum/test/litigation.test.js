@@ -464,7 +464,7 @@ contract('Litigation testing', async (accounts) => {
         // Expire offer holding period
         // Expire litigation period
 
-        timestamp = timestamp.sub((new BN(parseInt(holdingTimeInMinutes, 10) * 60) + 1));
+        timestamp = timestamp.sub(new BN((parseInt(holdingTimeInMinutes, 10) * 60) + 1));
         await holdingStorage.setOfferStartTime(offerId, timestamp);
         timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
         timestamp = timestamp.sub(new BN(80));
