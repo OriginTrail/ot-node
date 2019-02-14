@@ -302,10 +302,12 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
         } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {
+            this.state.litigationStatus = 'LITIGATION_STARTED';
             this.emit('dc-litigation-initiated');
         } else if (line.match(/Litigation answered for offer .+\. DH identity .+/gi)) {
             this.emit('dh-litigation-answered');
         } else if (line.match(/Litigation completed for DH .+ and offer .+\./gi)) {
+            this.state.litigationStatus = 'LITIGATION_COMPLETED';
             this.emit('dc-litigation-completed');
         } else if (line.match(/Litigation already in progress\.\.\. It needs to be completed in order to litigate .+ for offer .+/gi)) {
             const dhIdentity = line.match(identityWithPrefixRegex)[0];

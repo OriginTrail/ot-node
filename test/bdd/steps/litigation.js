@@ -103,6 +103,11 @@ Then(/^Litigator node should have completed litigation$/, { timeout: 3000000 }, 
 
     const { dc } = this.state;
 
+    if (dc.state.litigationStatus === 'LITIGATION_COMPLETED') {
+        done();
+        return;
+    }
+
     dc.once('dc-litigation-completed', () => {
         done();
     });
@@ -115,6 +120,17 @@ Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeou
     const { dc } = this.state;
 
     dc.once('dc-litigation-completed-dh-penalized', () => {
+        done();
+    });
+});
+
+Then(/^(\d+)[st|nd|rd|th]+ started holder should not have been penalized$/, { timeout: 3000000 }, function (nodeIndex, done) {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const { dc } = this.state;
+
+    dc.once('dc-litigation-completed-dh-not-penalized', () => {
         done();
     });
 });
