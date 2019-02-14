@@ -507,13 +507,7 @@ class EventEmitter {
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await commandExecutor.add({
-                    name: 'dhPayOutCommand',
-                    delay: 0,
-                    data: {
-                        offerId,
-                    },
-                });
+                await profileService.payOut(offerId);
 
                 data.response.status(200);
                 data.response.send({
