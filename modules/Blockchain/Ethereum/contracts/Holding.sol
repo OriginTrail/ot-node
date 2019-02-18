@@ -195,6 +195,24 @@ contract Holding is Ownable {
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
         require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
 
+        // Verify that the litigation is not in progress
+        LitigationStorage.LitigationStatus status = LitigationStorage(hub.litigationStorageAddress()).getLitigationStatus(bytes32(offerId), identity);
+        uint256 litigationTimestamp = LitigationStorage(hub.litigationStorageAddress()).getLitigationTimestamp(bytes32(offerId), identity);
+        uint256 litigationInterval = HoldingStorage(hub.holdingStorageAddress()).getOfferLitigationIntervalInMinutes(bytes32(offerId)).mul(60);
+
+        if(status == LitigationStorage.LitigationStatus.initiated) {
+            require(litigationTimestamp + litigationInterval.mul(2) < block.timestamp,
+                "Unanswered litigation in progress, cannot pay out");
+        }
+        else if(status == LitigationStorage.LitigationStatus.answered){
+            require(litigationTimestamp + litigationInterval < block.timestamp,
+                "Unanswered litigation in progress, cannot pay out");
+        }
+        else {
+            require(status == LitigationStorage.LitigationStatus.completed,
+                "Data holder is replaced or being replaced, cannot payout!");
+        }
+
         HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
 
         // Verify holder

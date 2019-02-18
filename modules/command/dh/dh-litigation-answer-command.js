@@ -41,7 +41,8 @@ class DHLitigationAnswerCommand extends Command {
             .findVerticesByImportId(dataSetId, holdingData[0].color);
 
         importUtilities.unpackKeys(vertices, []);
-        const answer = utilities.normalizeHex(Buffer.from(this.challengeService.answerChallengeQuestion(blockId, vertices), 'utf-8').toString('hex'));
+        const rawAnswer = this.challengeService.answerChallengeQuestion(blockId, vertices);
+        const answer = utilities.normalizeHex(Buffer.from(rawAnswer, 'utf-8').toString('hex').padStart(64, '0'));
 
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
         await this.blockchain.answerLitigation(offerId, dhIdentity, answer);
