@@ -33,6 +33,7 @@ Before(function (testCase, done) {
     this.state.nodes = [];
     this.state.bootstraps = [];
     this.state.manualStuff = {};
+    this.state.holdersToLitigate = [];
     done();
 });
 
