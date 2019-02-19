@@ -15,6 +15,20 @@
     },
     {
         "constant": true,
+        "inputs": [],
+        "name": "difficultyOverride",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
         "inputs": [
             {
                 "name": "",
@@ -57,6 +71,10 @@
             {
                 "name": "litigationEncryptionType",
                 "type": "uint256"
+            },
+            {
+                "name": "paymentTimestamp",
+                "type": "uint256"
             }
         ],
         "payable": false,
@@ -87,6 +105,10 @@
             },
             {
                 "name": "tokenAmountPerHolder",
+                "type": "uint256"
+            },
+            {
+                "name": "litigationIntervalInMinutes",
                 "type": "uint256"
             },
             {
@@ -128,6 +150,34 @@
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "constructor"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "getDifficultyOverride",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "new_difficulty",
+                "type": "uint256"
+            }
+        ],
+        "name": "setDifficultyOverride",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "constant": false,
@@ -216,6 +266,25 @@
         "outputs": [
             {
                 "name": "tokenAmountPerHolder",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "offerId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getOfferLitigationIntervalInMinutes",
+        "outputs": [
+            {
+                "name": "litigationIntervalInMinutes",
                 "type": "uint256"
             }
         ],
@@ -417,6 +486,24 @@
                 "type": "bytes32"
             },
             {
+                "name": "litigationIntervalInMinutes",
+                "type": "uint256"
+            }
+        ],
+        "name": "setOfferLitigationIntervalInMinutes",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
                 "name": "task",
                 "type": "bytes32"
             }
@@ -538,6 +625,10 @@
             },
             {
                 "name": "tokenAmountPerHolder",
+                "type": "uint256"
+            },
+            {
+                "name": "litigationIntervalInMinutes",
                 "type": "uint256"
             },
             {
@@ -670,6 +761,28 @@
         "type": "function"
     },
     {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "name": "identity",
+                "type": "address"
+            },
+            {
+                "name": "paymentTimestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "setHolderPaymentTimestamp",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "constant": true,
         "inputs": [
             {
@@ -731,6 +844,29 @@
         "outputs": [
             {
                 "name": "litigationEncryptionType",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "offerId",
+                "type": "bytes32"
+            },
+            {
+                "name": "identity",
+                "type": "address"
+            }
+        ],
+        "name": "getHolderPaymentTimestamp",
+        "outputs": [
+            {
+                "name": "paymentTimestamp",
                 "type": "uint256"
             }
         ],
