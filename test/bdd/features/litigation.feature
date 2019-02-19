@@ -3,7 +3,7 @@ Feature: Test various litigation scenarios
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
+  @second
   Scenario: Test litigation for one holder which is not responding
     Given the replication difficulty is 0
     And I setup 8 node
@@ -36,7 +36,7 @@ Feature: Test various litigation scenarios
     Then I wait for 3 replacement replications to finish
     Then I wait for replacement to be completed
 
-  @first
+  @second
   Scenario: Test litigation for one holder which has failed to answer challenge but succeeded to answer litigation (wrongly)
     Given the replication difficulty is 0
     And I setup 7 node
@@ -58,7 +58,7 @@ Feature: Test various litigation scenarios
     Then I wait for 3 replacement replications to finish
     Then I wait for replacement to be completed
 
-  @first
+  @second
   Scenario: Test litigation for one holder which has failed to answer challenge but succeeded to answer litigation (correctly)
     Given the replication difficulty is 0
     And I setup 7 node
