@@ -47,7 +47,7 @@ script:
   - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
       truffle test --network test > $ARTIFACTS_DIR/truffle-test.log;
     fi
-  - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) ]]; then
+  - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) || ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ) ]]; then
       rm -rf build && truffle migrate --reset --compile-all --network ganache > $ARTIFACTS_DIR/truffle-migrate.log;
     fi
   - cd $TRAVIS_BUILD_DIR
