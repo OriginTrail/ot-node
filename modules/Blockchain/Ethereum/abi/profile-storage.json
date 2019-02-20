@@ -85,6 +85,20 @@
         "constant": false,
         "inputs": [
             {
+                "name": "newHubAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setHubAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
                 "name": "newActiveNodes",
                 "type": "uint256"
             }
@@ -397,20 +411,6 @@
             }
         ],
         "name": "transferTokens",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newHubAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setHubAddress",
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
