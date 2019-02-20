@@ -255,7 +255,25 @@ class DHService {
                 return;
             }
         } else {
-            // TODO create bid
+            // Get the offer.
+            this.logger.info(`Not holding offer's data (${offerId}). Preparing for replacement...`);
+            const offerBc = await this.blockchain.getOffer(offerId);
+            const profile =
+                await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
+            const dcNodeId =
+                Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
+            await Models.bids.create({
+                offer_id: offerId,
+                data_set_id: offerBc.dataSetId,
+                dc_node_id: dcNodeId,
+                data_size_in_bytes: '0',
+                litigation_interval_in_minutes: offerBc.litigationIntervalInMinutes,
+                token_amount: offerBc.tokenAmountPerHolder,
+                holding_time_in_minutes: offerBc.holdingTimeInMinutes,
+                deposited: false,
+                status: 'PENDING',
+                message: 'Bid created for replacement',
+            });
         }
 
         const offer = await Models.offers.findOne({
