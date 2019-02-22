@@ -4,7 +4,7 @@ const {
 const { expect } = require('chai');
 const Database = require('arangojs');
 
-Given(/^I stop (\d+) holder[s]*$/, { timeout: 3000000 }, function (holdersToStop) {
+Given(/^I stop (\d+) holder[s]*$/, { timeout: 300000 }, function (holdersToStop) {
     expect(holdersToStop).to.be.greaterThan(0);
     expect(holdersToStop).to.be.lessThan(4);
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -45,7 +45,7 @@ Given(/^I wait for litigation initiation$/, { timeout: 300000 }, function (done)
     });
 });
 
-Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 3000000 }, function (nodeIndex) {
+Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 300000 }, function (nodeIndex) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -62,7 +62,7 @@ Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 3000000 }, fun
     return Promise.all(nodeStarts);
 });
 
-Then(/^(\d+)[st|nd|rd|th]+ holder to litigate should answer litigation$/, { timeout: 3000000 }, async function (nodeIndex) {
+Then(/^(\d+)[st|nd|rd|th]+ holder to litigate should answer litigation$/, { timeout: 300000 }, async function (nodeIndex) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -78,7 +78,7 @@ Then(/^(\d+)[st|nd|rd|th]+ holder to litigate should answer litigation$/, { time
     return Promise.all(answers);
 });
 
-Then(/^(\d+) holder[s]* should answer litigation$/, { timeout: 3000000 }, async function (holderCount) {
+Then(/^(\d+) holder[s]* should answer litigation$/, { timeout: 300000 }, async function (holderCount) {
     expect(holderCount).to.be.greaterThan(0);
     expect(holderCount).to.be.lessThan(4);
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -95,7 +95,7 @@ Then(/^(\d+) holder[s]* should answer litigation$/, { timeout: 3000000 }, async 
     return Promise.all(answers);
 });
 
-Then(/^Litigator node should have completed litigation$/, { timeout: 3000000 }, function (done) {
+Then(/^Litigator node should have completed litigation$/, { timeout: 300000 }, function (done) {
     this.logger.log('Litigator node should have completed litigation');
 
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -113,7 +113,7 @@ Then(/^Litigator node should have completed litigation$/, { timeout: 3000000 }, 
     });
 });
 
-Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeout: 3000000 }, function (nodeIndex, done) {
+Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -124,7 +124,7 @@ Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeou
     });
 });
 
-Then(/^(\d+)[st|nd|rd|th]+ started holder should not have been penalized$/, { timeout: 3000000 }, function (nodeIndex, done) {
+Then(/^(\d+)[st|nd|rd|th]+ started holder should not have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -135,7 +135,7 @@ Then(/^(\d+)[st|nd|rd|th]+ started holder should not have been penalized$/, { ti
     });
 });
 
-Then(/^Litigator should have started replacement for penalized holder[s]*$/, { timeout: 3000000 }, function (done) {
+Then(/^Litigator should have started replacement for penalized holder[s]*$/, { timeout: 300000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -146,7 +146,7 @@ Then(/^Litigator should have started replacement for penalized holder[s]*$/, { t
     });
 });
 
-Then(/^I wait for (\d+) replacement replication[s] to finish$/, { timeout: 3000000 }, async function (numberOfReplications) {
+Then(/^I wait for (\d+) replacement replication[s] to finish$/, { timeout: 300000 }, async function (numberOfReplications) {
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(numberOfReplications).to.be.greaterThan(0);
@@ -168,7 +168,7 @@ Then(/^I wait for (\d+) replacement replication[s] to finish$/, { timeout: 30000
     await Promise.all(replacements);
 });
 
-Then(/^I wait for replacement to be completed$/, { timeout: 3000000 }, function (done) {
+Then(/^I wait for replacement to be completed$/, { timeout: 300000 }, function (done) {
     this.logger.log('I wait for replacement to be completed...');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
@@ -180,7 +180,7 @@ Then(/^I wait for replacement to be completed$/, { timeout: 3000000 }, function 
     });
 });
 
-Given(/^I wait for challenges to start$/, { timeout: 3000000 }, async function () {
+Given(/^I wait for challenges to start$/, { timeout: 300000 }, async function () {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -195,7 +195,7 @@ Given(/^I wait for challenges to start$/, { timeout: 3000000 }, async function (
     return Promise.all(challenges);
 });
 
-Then(/^Litigator should delay other litigations while one is running$/, { timeout: 3000000 }, function (done) {
+Then(/^Litigator should delay other litigations while one is running$/, { timeout: 300000 }, function (done) {
     this.logger.log('Litigator should delay other litigations while one is running');
 
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -208,7 +208,7 @@ Then(/^Litigator should delay other litigations while one is running$/, { timeou
     });
 });
 
-Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/, { timeout: 3000000 }, async function (nodeIndex) {
+Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/, { timeout: 300000 }, async function (nodeIndex) {
     this.logger.log(`I corrupt holder ${nodeIndex} database ot_vertices collection`);
     expect(nodeIndex).to.be.greaterThan(0);
     expect(nodeIndex).to.be.lessThan(4);
