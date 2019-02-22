@@ -14,11 +14,7 @@ addons:
 before_script:
   - mkdir -p $ARTIFACTS_DIR
   - mkdir -p $CUCUMBER_ARTIFACTS_DIR
-  - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
-  - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
-  - chmod +x setup_arangodb.sh
-  - ./setup_arangodb.sh &> /dev/null
-  - rm -rf ArangoDB-3.2.2.tar.gz
+  - sudo ./setup_arangodb.sh
   - cp .origintrail_noderc.travis .origintrail_noderc
   - npm run bootstrap
   - npm install -g ganache-cli@6.1.5 &> /dev/null
