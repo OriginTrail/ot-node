@@ -53,7 +53,7 @@ class Logger {
                     new (winston.transports.DailyRotateFile)({
                         filename: 'otnode-%DATE%.log',
                         datePattern: 'YYYY-MM-DD-HH',
-                        zippedArchive: true,
+                        zippedArchive: false,
                         maxSize: '20m',
                         maxFiles: '14d',
                         json: false,
