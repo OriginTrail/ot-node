@@ -6,6 +6,7 @@ var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
 var Litigation = artifacts.require('Litigation'); // eslint-disable-line no-undef
+var Replacement = artifacts.require('Replacement'); // eslint-disable-line no-undef
 var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
 var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
 
@@ -28,6 +29,7 @@ module.exports = async (deployer, network, accounts) => {
     let profile;
     let holding;
     let litigation;
+    let replacement;
     let reading;
     let approval;
 
@@ -82,9 +84,16 @@ module.exports = async (deployer, network, accounts) => {
         litigation = await deployer.deploy(
             Litigation,
             hub.address,
-            { gas: 9000000, from: accounts[0] },
+            { gas: 7000000, from: accounts[0] },
         );
         await hub.setLitigationAddress(litigation.address);
+
+        replacement = await deployer.deploy(
+            Replacement,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setReplacementAddress(replacement.address);
 
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);
