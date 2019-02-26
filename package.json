@@ -37,10 +37,10 @@
     "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')",
     "ganache:tenderly": "ganache-cli -i 5777 -p 8545 -l 10000000 >/dev/null & sleep 5 && tenderly proxy --proxy-port 7545",
     "ganache": "ganache-cli -i 5777 -p 7545 -l 10000000 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
-    "truffle:compile":"cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle compile",
-    "truffle:test":"cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test --network test",
-    "truffle:test:litigation":"cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test ./test/litigation.test.js --network test",
-    "truffle:test:offer":"cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test ./test/offer.test.js --network test"
+    "truffle:compile": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle compile",
+    "truffle:test": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test --network test",
+    "truffle:test:litigation": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test ./test/litigation.test.js --network test",
+    "truffle:test:offer": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test ./test/offer.test.js --network test"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
