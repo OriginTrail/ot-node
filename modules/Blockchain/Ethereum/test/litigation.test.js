@@ -417,14 +417,6 @@ contract('Litigation testing', async (accounts) => {
             finalDhHolderState.stakedAmount.eq(initialOfferState.tokenAmountPerHolder),
             `Initial holder staked amount differs from expected! Got ${finalDhHolderState.stakedAmount.toString()} but expected ${initialOfferState.tokenAmountPerHolder.toString()}!`,
         );
-        // assert(
-        //     finalDhHolderState.paidAmount.isZero(),
-        //     `Initial litigation status differs from expected! Got ${finalDhHolderState.paidAmount.toString()} but expected 0!`,
-        // );
-        // assert(
-        //     finalDhHolderState.paymentTimestamp.eq(initialOfferState.startTime),
-        //     `Initial payment timestamp differs from expected! Got ${finalDhHolderState.paymentTimestamp.toString()} but expected ${initialOfferState.startTime.toString()}!`,
-        // );
     });
 
     // eslint-disable-next-line no-undef
