@@ -34,6 +34,7 @@ Before(function (testCase, done) {
     this.state.bootstraps = [];
     this.state.manualStuff = {};
     this.state.holdersToLitigate = [];
+    this.state.litigationStatus = 'NO_LITIGATION';
     done();
 });
 
