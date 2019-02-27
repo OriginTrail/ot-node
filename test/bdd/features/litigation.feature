@@ -73,7 +73,7 @@ Feature: Test various litigation scenarios
     Given I additionally setup 3 nodes
     And I start additional nodes
     # Stop the 3rd node who got the deal and and produce litigation
-    When I stop the 4th node
+    When I corrupt 1st holder's database ot_vertices collection
     And I wait for litigation initiation
     Then I wait for 3 replacement replications to finish
     Then I wait for replacement to be completed
