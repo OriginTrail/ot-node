@@ -402,4 +402,106 @@ contract('Litigation testing', async (accounts) => {
             assert(!failed, 'Expected payout failed');
         }
     });
+
+    // eslint-disable-next-line no-undef
+    it('should replace 3 new DHs when DC completes and replaces', async () => {
+        // Scenario 3.1:
+        // DC Completes and replaces DH (result should be 3 new DHs))
+        const litigationStatus = {
+            completed: '0',
+            initiated: '1',
+            answered: '2',
+            replacing: '3',
+            replaced: '4',
+        };
+        const wrongAnswer = '0xe4805086a97028f6dc0c544612d99b8791131396c62a8a543ee8aa3940f7318a';
+        // Get initial litigation values
+        await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Initiate litigation
+        await litigation.initiateLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            new BN(0),
+            [hashes[1], hash_CD, hash_EFGH],
+            { from: DC_wallet },
+        );
+
+        let litigationStruct = await litigationStorage.litigation.call(offerId, identities[0]);
+        expect(litigationStruct.status.toString()).to.equal(litigationStatus.initiated);
+
+        // Let the DH answer wrongly.
+        await litigation.answerLitigation(offerId, identities[0], wrongAnswer);
+
+        litigationStruct = await litigationStorage.litigation.call(offerId, identities[0]);
+        expect(litigationStruct.status.toString()).to.equal(litigationStatus.answered);
+
+        // Complete litigation
+        await litigation.completeLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            requested_data[0],
+            { from: DC_wallet, gasLimit: 6000000 },
+        );
+
+        litigationStruct = await litigationStorage.litigation.call(offerId, identities[0]);
+        expect(litigationStruct.status.toString()).to.equal(litigationStatus.replacing);
+
+        // Start replacement.
+        const task = await litigationStorage.litigation.call(offerId, identities[0]);
+        const solution = await util.keccakAddressAddressAddress.call(
+            identities[3],
+            identities[4],
+            identities[5],
+        );
+
+        // Calculate task solution
+        let i;
+        for (i = 65; i >= 2; i -= 1) {
+            if (task.replacementTask.charAt(task.replacementTask.length - 1)
+                    === solution.charAt(i)) {
+                break;
+            }
+        }
+        assert(i !== 2, 'Could not find solution for offer challenge!');
+        const shift = 65 - i;
+
+        // Calculating confirmations to be signed by DHs
+        let promises = [];
+        for (let i = 3; i < 6; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            promises[i] = util.keccakBytesAddress.call(offerId, identities[i]);
+        }
+        const confirmations = await Promise.all(promises);
+
+        // Signing calculated confirmations
+        promises = [];
+        for (let i = 3; i < 6; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            promises[i] = web3.eth.accounts.sign(confirmations[i], privateKeys[i]);
+        }
+        const signedConfirmations = await Promise.all(promises);
+
+        const replacementHolderIdentities = [
+            identities[3],
+            identities[4],
+            identities[5],
+        ];
+        await litigation.replaceHolder(
+            offerId,
+            identities[0],
+            DC_identity,
+            shift,
+            signedConfirmations[3].signature,
+            signedConfirmations[4].signature,
+            signedConfirmations[5].signature,
+            replacementHolderIdentities,
+            { from: DC_wallet },
+        );
+
+        litigationStruct = await litigationStorage.litigation.call(offerId, identities[0]);
+        expect(litigationStruct.status.toString()).to.equal(litigationStatus.replaced);
+    });
 });
