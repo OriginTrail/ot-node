@@ -84,8 +84,9 @@ class DcOfferMiningStatusCommand extends Command {
         const { offerId } = command.data;
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
@@ -101,8 +102,9 @@ class DcOfferMiningStatusCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

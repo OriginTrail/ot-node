@@ -143,8 +143,9 @@ class DcOfferFinalizedCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
