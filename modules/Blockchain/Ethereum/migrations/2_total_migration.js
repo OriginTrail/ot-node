@@ -246,7 +246,7 @@ module.exports = async (deployer, network, accounts) => {
         await hub.setApprovalAddress(approval.address);
 
         litigation = await deployer.deploy(
-            MockLitigation,
+            Litigation,
             hub.address,
             { gas: 6000000, from: accounts[0] },
         );
