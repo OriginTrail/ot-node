@@ -526,7 +526,7 @@ Then(/^response hash should match last imported data set id$/, function () {
     expect(this.state.lastImport.data_set_id, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
 
-Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done) {
+Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nodeCount, done) {
     const nodeCountSoFar = this.state.nodes.length;
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - nodeCountSoFar);
 
