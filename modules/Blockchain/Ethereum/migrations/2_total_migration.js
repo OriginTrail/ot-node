@@ -151,6 +151,13 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setLitigationAddress(litigation.address);
 
+        replacement = await deployer.deploy(
+            Replacement,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setReplacementAddress(replacement.address);
+
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);
 
@@ -168,6 +175,7 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
+        console.log(`\t Replacement contract address: \t\t${replacement.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);

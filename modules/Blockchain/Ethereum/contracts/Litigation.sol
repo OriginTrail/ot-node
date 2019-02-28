@@ -124,7 +124,7 @@ contract Litigation {
         require(litigationStatus != LitigationStorage.LitigationStatus.replaced,
             "The selected holder is already replaced, cannot call this function!");
         require(litigationStatus != LitigationStorage.LitigationStatus.completed,
-            "Cannot complete a comlpeted litigation that is not initiated or answered!");
+            "Cannot complete a completed litigation that is not initiated or answered!");
 
         if(holdingStorage.getHolderLitigationEncryptionType(offerId, holderIdentity) == 0){
             parameters[3] = uint256(holdingStorage.getOfferRedLitigationHash(offerId));
@@ -153,7 +153,7 @@ contract Litigation {
         
 
         if(calculateMerkleTrees(offerId, holderIdentity, proofData, bytes32(parameters[3]))) {
-            // DH has the requested data -> Set litigation as completed, no transfer of tokens
+            // DH has the reRquested data -> Set litigation as completed, no transfer of tokens
             litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
@@ -162,7 +162,7 @@ contract Litigation {
         }
         else {
             // DH didn't have the requested data, and the litigation was valid
-            // startReplacement(offerId, holderIdentity, litigatorIdentity, parameters[3]);
+            startReplacement(offerId, holderIdentity, litigatorIdentity, parameters[3]);
             return true;
         }
     }
