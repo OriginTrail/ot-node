@@ -97,36 +97,23 @@ class DhReplicationImportCommand extends Command {
         const calculatedDistPublicKey = Encryption.unpackEPK(distributionEpk);
         ImportUtilities.immutableDecryptVertices(distEncVertices, calculatedDistPublicKey);
 
-        await this.importer.importJSON({
-            dataSetId,
-            vertices: litigationVertices,
-            edges,
-            wallet: dcWallet,
-        }, true, encColor);
-
-        let importResult = await this.importer.importJSON({
-            dataSetId,
-            vertices: decryptedVertices,
-            edges,
-            wallet: dcWallet,
-        }, false);
-
-        if (importResult.error) {
-            throw Error(importResult.error);
-        }
-
-        importResult = importResult.response;
-
-        const dataSize = bytes(JSON.stringify(importResult.vertices));
-        await Models.data_info.create({
-            data_set_id: importResult.data_set_id,
-            total_documents: importResult.vertices.length,
-            root_hash: importResult.root_hash,
-            data_provider_wallet: importResult.wallet,
-            import_timestamp: new Date(),
-            data_size: dataSize,
-            origin: 'HOLDING',
+        const holdingData = await Models.holding_data.findOne({
+            where: {
+                data_set_id: dataSetId,
+                color: encColor,
+            },
         });
+
+        if (holdingData == null) {
+            // import does not exist
+
+            await this.importer.importJSON({
+                dataSetId,
+                vertices: litigationVertices,
+                edges,
+                wallet: dcWallet,
+            }, true, encColor);
+        }
 
         // Store holding information and generate keys for eventual data replication.
         await Models.holding_data.create({
@@ -141,6 +128,37 @@ class DhReplicationImportCommand extends Command {
             color: encColor,
         });
 
+        const dataInfo = await Models.data_info.findOne({
+            where: {
+                data_set_id: dataSetId,
+            },
+        });
+
+        if (dataInfo == null) {
+            let importResult = await this.importer.importJSON({
+                dataSetId,
+                vertices: decryptedVertices,
+                edges,
+                wallet: dcWallet,
+            }, false);
+
+            if (importResult.error) {
+                throw Error(importResult.error);
+            }
+
+            importResult = importResult.response;
+
+            const dataSize = bytes(JSON.stringify(importResult.vertices));
+            await Models.data_info.create({
+                data_set_id: importResult.data_set_id,
+                total_documents: importResult.vertices.length,
+                root_hash: importResult.root_hash,
+                data_provider_wallet: importResult.wallet,
+                import_timestamp: new Date(),
+                data_size: dataSize,
+                origin: 'HOLDING',
+            });
+        }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
         const toSign = [

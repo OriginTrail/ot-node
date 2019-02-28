@@ -99,22 +99,6 @@ class DHService {
 
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
 
-        const dataInfo = await Models.data_info.findOne({
-            where: { data_set_id: dataSetId },
-        });
-        if (dataInfo) {
-            this.logger.info(`I've already stored data for data set ${dataSetId}. Ignoring.`);
-            return;
-        }
-
-        let bid = await Models.bids.findOne({
-            where: { offer_id: offerId },
-        });
-        if (bid) {
-            this.logger.info(`I've already added bid for offer ${offerId}. Ignoring.`);
-            return;
-        }
-
         const format = d3.formatPrefix(',.6~s', 1e6);
         const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
         const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
@@ -141,7 +125,7 @@ class DHService {
             return;
         }
 
-        bid = await Models.bids.create({
+        const bid = await Models.bids.create({
             offer_id: offerId,
             data_set_id: dataSetId,
             dc_node_id: dcNodeId,
