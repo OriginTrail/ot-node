@@ -15,6 +15,7 @@ const umzug_migrations = new Umzug({
 
     storageOptions: {
         sequelize: Models.sequelize,
+        tableName: 'sequelize_meta',
     },
 
     migrations: {
