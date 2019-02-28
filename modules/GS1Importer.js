@@ -788,6 +788,9 @@ class GS1Importer {
             );
 
             const objectClasses = await this.db.findObjectClassVertices();
+            if (objectClasses.length === 0) {
+                throw Error('Missing class vertices');
+            }
 
             const dataSetId = ImportUtilities.importHash(
                 importId,
