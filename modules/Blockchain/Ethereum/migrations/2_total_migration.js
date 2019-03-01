@@ -229,6 +229,13 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
+        litigationStorage = await deployer.deploy(
+            LitigationStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setLitigationStorageAddress(litigationStorage.address);
+
         profile = await deployer.deploy(Profile, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
@@ -238,14 +245,23 @@ module.exports = async (deployer, network, accounts) => {
         approval = await deployer.deploy(Approval, { gas: 6000000, from: accounts[0] });
         await hub.setApprovalAddress(approval.address);
 
+        litigation = await deployer.deploy(
+            Litigation,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setLitigationAddress(litigation.address);
+
         console.log('\n\n \t Contract adressess on rinkeby:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
+        console.log(`\t Litigation contract address: \t\t${litigation.address}`);
         console.log(`\t Approval contract address: \t\t${approval.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
+        console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
 
         break;
     case 'live':

@@ -120,8 +120,9 @@ class DCOfferReplaceCommand extends Command {
         this.logger.error(`Offer ${offerId} has not been finalized.`);
 
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized. ${err.message}`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
         return Command.empty();
     }
 
