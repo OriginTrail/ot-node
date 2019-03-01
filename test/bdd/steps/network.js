@@ -815,3 +815,15 @@ Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then 
     }
     expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
 });
+
+
+Given('I wait for DC to fail to finalize last offer', { timeout: 600000 }, function (done) {
+    const promises = [];
+    promises.push(new Promise((acc) => {
+        this.state.dc.once('not-enough-dhs', () => {
+            acc();
+        });
+    }));
+
+    Promise.all(promises).then(() => done());
+});
