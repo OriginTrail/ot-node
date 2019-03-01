@@ -157,7 +157,6 @@ contract Litigation {
             litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-            // emit LitigationCompleted(offerId, holderIdentity, false);
             return false;
         }
         else {
