@@ -104,7 +104,7 @@ class DHReplacementStartedCommand extends Command {
                     this.logger.warn(`I haven't been penalized for offer ${offerId}`);
                     bid.status = 'CHOSEN';
                 }
-                await event.save({ fields: ['status'] });
+                await bid.save({ fields: ['status'] });
                 return true;
             }
         }
