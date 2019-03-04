@@ -65,6 +65,9 @@ class DCOfferReplacementCompletedCommand extends Command {
                     },
                 });
 
+                holder.status = 'HOLDING';
+                await holder.save({ fields: ['status'] });
+
                 const startTime = Date.now();
                 const endTime = startTime +
                     (offer.holding_time_in_minutes * 60 * 1000); // TODO fix end time
@@ -91,9 +94,6 @@ class DCOfferReplacementCompletedCommand extends Command {
                         offer_id: offer.offer_id,
                         status: 'PENDING',
                     }));
-
-                holder.status = 'HOLDING';
-                await holder.save({ fields: ['status'] });
 
                 // clear old replicated data
                 await models.replicated_data.destroy({
