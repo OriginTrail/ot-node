@@ -100,3 +100,20 @@ Feature: Test various litigation scenarios
     And I wait for litigation initiation
     Then I wait for 3 replacement replications to finish
     Then I wait for replacement to be completed
+
+  Scenario: Test litigation case
+    Given the replication difficulty is 0
+    And I setup 4 nodes
+    When I override configuration for all nodes
+      | dc_holding_time_in_minutes | 5 |
+      | numberOfChallenges | 1 |
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Given DC initiates the replication for last imported dataset
+    And I wait for 4th node to verify replication
+    And I stop the 4th node
+    And I wait for replications to finish
+    When I wait for litigation initiation
+    And I simulate true litigation answer for 4th node
+    Then the last offer's status for 4th node should be active

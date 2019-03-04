@@ -129,6 +129,7 @@ class LocalBlockchain {
                 assert(this.profileContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.holdingContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.readingContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.litigationContractAddress !== '0x0000000000000000000000000000000000000000');
                 accept();
             });
         });
@@ -391,6 +392,10 @@ class LocalBlockchain {
 
     get readingContractAddress() {
         return this.readingInstance._address;
+    }
+
+    get litigationContractAddress() {
+        return this.litigationInstance._address;
     }
 
     get isInitialized() {

@@ -344,18 +344,38 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     const promises = [];
 
     // All nodes including DC emit offer-finalized.
-    this.state.nodes.forEach((node) => {
-        if (node.isRunning) {
-            promises.push(new Promise((acc) => {
-                node.once('offer-finalized', (offerId) => {
-                    // TODO: Change API to connect internal offer ID and external offer ID.
-                    acc();
-                });
-            }));
-        }
+    this.state.nodes.filter(node => node.isRunning).forEach((node) => {
+        promises.push(new Promise((acc) => {
+            node.once('offer-finalized', (offerId) => {
+                // TODO: Change API to connect internal offer ID and external offer ID.
+                acc();
+            });
+        }));
     });
 
     return Promise.all(promises);
+});
+
+Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 1200000 }, function (nodeIndex) {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const node = this.state.nodes[nodeIndex - 1];
+    const { dc } = this.state;
+
+    expect(node.isRunning).to.be.true;
+    expect(dc, 'DC not defined.').not.to.be.undefined;
+
+    return new Promise((accept) => {
+        dc.on('dh-replication-verified', (nodeId) => {
+            if (nodeId === node.state.identity) {
+                accept();
+            }
+        });
+    });
 });
 
 Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
