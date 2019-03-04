@@ -90,6 +90,14 @@ class DCLitigationCompleted extends Command {
                     };
                 }
 
+                const offer = await models.offers.findOne({
+                    where: {
+                        offer_id: offerId,
+                    },
+                });
+
+                offer.global_status = 'ACTIVE';
+                await offer.save({ fields: ['global_status'] });
                 this.logger.important(`DH ${dhIdentity} has successfully answered litigation.`);
                 return Command.empty();
             }

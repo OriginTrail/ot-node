@@ -1,8 +1,11 @@
+/* eslint-disable no-unused-expressions */
 const {
     Given, Then,
 } = require('cucumber');
 const { expect } = require('chai');
 const Database = require('arangojs');
+
+const Models = require('../../../models');
 
 Given(/^I stop (\d+) holder[s]*$/, { timeout: 300000 }, function (holdersToStop) {
     expect(holdersToStop).to.be.greaterThan(0);
@@ -236,3 +239,148 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
 
     this.state.holdersToLitigate.push(node);
 });
+
+Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeout: 300000 }, async function (nodeIndex) {
+    expect(nodeIndex, 'Invalid node index').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid node index').to.be.lessThan(this.state.nodes.length + 1);
+    expect(this.state.bootstraps.length, 'No running bootstraps').to.be.greaterThan(0);
+    expect(this.state.nodes.length, 'No running nodes').to.be.greaterThan(0);
+    expect(this.state.dc).not.to.be.undefined;
+
+    const { localBlockchain } = this.state;
+    const node = this.state.nodes[nodeIndex - 1];
+    const { dc } = this.state;
+
+    // Check if litigation started.
+    // First check if event is already fired...
+    let events = await localBlockchain.litigationInstance
+        .getPastEvents('LitigationInitiated', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+
+    async function answerLitigation(event) {
+        /*
+            Example:
+            {
+                "0":"0xdd1e8e815acbef54fca35f61332e9e3391e00df5ed5e40e7a80b6670e41dca63",
+                "1":"0xD5dDAf0d5686ACe0735256333eeddf7EB637Fe67",
+                "2":"203",
+                "offerId":"0xdd1e8e815acbef54fca35f61332e9e3391e00df5ed5e40e7a80b6670e41dca63",
+                "holderIdentity":"0xD5dDAf0d5686ACe0735256333eeddf7EB637Fe67",
+                "requestedDataIndex":"203"
+            }
+         */
+        expect(event).to.have.keys(['0', '1', '2', 'offerId', 'holderIdentity', 'requestedDataIndex']);
+
+        // Find node
+        Models.sequelize.options.storage = dc.systemDbPath;
+        await Models.sequelize.sync();
+        const challenge = await Models.sequelize.models.challenges.findOne({
+            where: {
+                dh_id: node.state.identity,
+                block_id: Number(event.requestedDataIndex),
+                offer_id: event.offerId,
+            },
+        });
+
+        expect(challenge).not.to.be.null;
+        expect(event.holderIdentity).to.equal(node.erc725Identity);
+
+        let result = await localBlockchain.litigationStorageInstance.methods
+            .litigation(event.offerId, event.holderIdentity).call();
+        expect(result.status).to.equal('1');
+
+        const answer = Buffer.from(challenge.expected_answer, 'utf-8')
+            .toString('hex')
+            .padStart(64, '0');
+
+        // Before answering, prepare DC side to catch DC's acknowledgement.
+        const dcPromise = new Promise((accept) => {
+            dc.once('dc-litigation-completed', () => accept());
+        });
+
+        await localBlockchain.litigationInstance.methods.answerLitigation(
+            event.offerId,
+            event.holderIdentity,
+            `0x${answer}`,
+        ).send({
+            from: node.options.nodeConfiguration.node_wallet,
+            gasPrice: '10000000000000',
+            gas: 1000000,
+        });
+
+        result = await localBlockchain.litigationStorageInstance.methods
+            .litigation(event.offerId, event.holderIdentity).call();
+        expect(result.status).to.equal('2');
+
+        return dcPromise; // Wait for litigation to complete.
+    }
+
+    if (events.length === 0) {
+        // ...and if not wait for event.
+        return new Promise((accept) => {
+            const handle = setInterval(async () => {
+                events = await localBlockchain.litigationStorageInstance
+                    .getPastEvents('LitigationInitiated', {
+                        fromBlock: 0,
+                        toBlock: 'latest',
+                    });
+                if (events.length !== 0) {
+                    clearInterval(handle);
+                    expect(events, 'More than one LitigationInitiated received.').to.have.lengthOf(1);
+                    await answerLitigation(events[0].returnValues);
+                    accept();
+                }
+            }, 2000);
+        });
+    }
+
+    expect(events, 'More than one LitigationInitiated received.').to.have.lengthOf(1);
+    return answerLitigation(events[0].returnValues);
+});
+
+Then(
+    /^the last offer's status for (\d+)[st|nd|rd|th]+ node should be active$/,
+    { timeout: 300000 },
+    async function (nodeIndex) {
+        expect(nodeIndex, 'Invalid node index').to.be.greaterThan(0);
+        expect(nodeIndex, 'Invalid node index').to.be.lessThan(this.state.nodes.length + 1);
+        expect(this.state.bootstraps.length, 'No running bootstraps').to.be.greaterThan(0);
+        expect(this.state.nodes.length, 'No running nodes').to.be.greaterThan(0);
+
+        const { dc } = this.state;
+
+        expect(dc).not.to.be.undefined;
+        expect(dc.state.offers).not.to.be.undefined;
+        expect(dc.state.offers.internalIDs).not.to.be.undefined;
+        expect(this.state.lastReplication, 'Nothing replicated.').not.to.be.undefined;
+
+        const node = this.state.nodes[nodeIndex - 1];
+
+        const lastOfferId =
+            dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
+
+        Models.sequelize.options.storage = dc.systemDbPath;
+        await Models.sequelize.sync();
+
+        const replicated_data = await Models.sequelize.models.replicated_data.findOne({
+            where: {
+                dh_id: node.state.identity,
+                dh_identity: node.erc725Identity.toLocaleLowerCase(),
+                offer_id: lastOfferId,
+            },
+        });
+
+        expect(replicated_data.status).to.equal('HOLDING');
+
+        const offer = await Models.sequelize.models.offers.findOne({
+            where: {
+                offer_id: lastOfferId,
+                data_set_id: this.state.lastImport.data_set_id,
+            },
+        });
+
+        expect(offer.global_status).to.equal('ACTIVE');
+    },
+);

@@ -306,6 +306,8 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {
             this.state.litigationStatus = 'LITIGATION_STARTED';
             this.emit('dc-litigation-initiated');
+        } else if (line.match(/Litigation answered for DH .+ and offer .+\./gi)) {
+            this.emit('dc-litigation-answered');
         } else if (line.match(/Litigation answered for offer .+\. DH identity .+/gi)) {
             this.emit('dh-litigation-answered');
         } else if (line.match(/Litigation completed for DH .+ and offer .+\./gi)) {
@@ -339,6 +341,9 @@ class OtNode extends EventEmitter {
             const offerId = line.match(offerIdRegex)[0];
             this.state.takenBids.push(offerId);
             this.emit('dh-chosen-as-replacement');
+        } else if (line.match(/Replication finished for DH node .+/gi)) {
+            const nodeId = line.match(identityRegex)[0];
+            this.emit('dh-replication-verified', nodeId);
         }
     }
 
@@ -348,6 +353,21 @@ class OtNode extends EventEmitter {
      */
     get isRunning() {
         return this.initialized && this.started && !!this.process;
+    }
+
+    /**
+     * Retruns path to the system.db.
+     * @return {string} Path.
+     */
+    get systemDbPath() {
+        return path.join(this.options.configDir, 'system.db');
+    }
+
+    get erc725Identity() {
+        return JSON.parse(fs.readFileSync(path.join(
+            this.options.configDir,
+            'erc725_identity.json',
+        ))).identity;
     }
 
     /**
