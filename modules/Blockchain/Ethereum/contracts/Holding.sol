@@ -124,8 +124,10 @@ contract Holding is Ownable {
         require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
         // Verify task answer
-        require(((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1))
-        == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
+        bytes32 answer = keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2]));
+        answer = answer >> (shift * 4);
+        answer = answer & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1);
+        require(answer == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
 
         // Secure funds from all parties
         reserveTokens(
@@ -141,6 +143,7 @@ contract Holding is Ownable {
 
         emit OfferFinalized(bytes32(offerId), holderIdentity[0], holderIdentity[1], holderIdentity[2]);
     }
+
 
     function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
     internal {
@@ -240,7 +243,7 @@ contract Holding is Ownable {
 
         HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
 
-        for (uint i = 0; i < offerIds.length; i = i + 1){
+        for (uint i = 0; i < offerIds.length; i++) {
             // Verify holder
             uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerIds[i], identity);
             if (amountToTransfer == 0) continue;
@@ -292,7 +295,7 @@ contract Holding is Ownable {
         return ecrecover(prefixedHash, v, r, s);
     }
 
-    function logs2(uint x) internal pure returns (uint y){
+    function logs2(uint x) internal pure returns (uint y) {
         require(x > 0, "log(0) not allowed");
         assembly {
             let arg := x

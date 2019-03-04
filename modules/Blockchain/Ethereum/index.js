@@ -130,6 +130,15 @@ class Ethereum {
             this.litigationStorageContractAddress,
         );
 
+        // Litigation contract data
+        const replacementAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/replacement.json');
+        this.replacementContractAddress = await this._getReplacementContractAddress();
+        this.replacementContractAbi = JSON.parse(replacementAbiFile);
+        this.replacementContract = new this.web3.eth.Contract(
+            this.replacementContractAbi,
+            this.replacementContractAddress,
+        );
+
         // ERC725 identity contract data. Every user has own instance.
         const erc725IdentityAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/erc725.json');
         this.erc725IdentityContractAbi = JSON.parse(erc725IdentityAbiFile);
@@ -139,6 +148,7 @@ class Ethereum {
             PROFILE_CONTRACT: this.profileContract,
             APPROVAL_CONTRACT: this.approvalContract,
             LITIGATION_CONTRACT: this.litigationContract,
+            REPLACEMENT_CONTRACT: this.replacementContract,
         };
     }
 
@@ -251,6 +261,20 @@ class Ethereum {
             from: this.config.wallet_address,
         });
         this.log.trace(`Litigation contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Replacement contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getReplacementContractAddress() {
+        this.log.trace('Asking Hub for Replacement contract address...');
+        const address = await this.hubContract.methods.replacementAddress().call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`Replacement contract address is ${address}`);
         return address;
     }
 
@@ -552,12 +576,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.litigationContractAddress,
+            to: this.replacementContractAddress,
         };
 
         this.log.trace(`replaceHolder (${offerId}, ${holderIdentity}, ${litigatorIdentity}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${holders})`);
         return this.transactions.queueTransaction(
-            this.litigationContractAbi, 'replaceHolder',
+            this.replacementContractAbi, 'replaceHolder',
             [
                 offerId,
                 holderIdentity,

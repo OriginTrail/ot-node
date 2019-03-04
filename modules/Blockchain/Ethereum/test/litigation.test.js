@@ -9,6 +9,7 @@ const Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 const Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 const Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
 const Litigation = artifacts.require('Litigation'); // eslint-disable-line no-undef
+const Replacement = artifacts.require('Replacement'); // eslint-disable-line no-undef
 const MockLitigation = artifacts.require('MockLitigation'); // eslint-disable-line no-undef
 
 const ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
@@ -27,7 +28,9 @@ var Ganache = require('ganache-core');
 // Helper variables
 var errored = true;
 var DC_identity;
+var DH_identity;
 var DC_wallet;
+var DH_wallet;
 var offerId;
 var tokensToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(21)));
 
@@ -65,6 +68,7 @@ var trac;
 var profile;
 var holding;
 var litigation;
+var replacement;
 var holdingStorage;
 var profileStorage;
 var litigationStorage;
@@ -79,6 +83,7 @@ contract('Litigation testing', async (accounts) => {
         profile = await Profile.deployed();
         holding = await Holding.deployed();
         litigation = await Litigation.deployed();
+        replacement = await Replacement.deployed();
         holdingStorage = await HoldingStorage.deployed();
         profileStorage = await ProfileStorage.deployed();
         litigationStorage = await LitigationStorage.deployed();
@@ -132,6 +137,11 @@ contract('Litigation testing', async (accounts) => {
 
         DC_wallet = accounts[accounts.length - 1];
         DC_identity = identities[identities.length - 1];
+
+        // eslint-disable-next-line prefer-destructuring
+        DH_wallet = accounts[0];
+        // eslint-disable-next-line prefer-destructuring
+        DH_identity = identities[0];
     });
 
     // eslint-disable-next-line no-undef
@@ -230,21 +240,54 @@ contract('Litigation testing', async (accounts) => {
             signedConfirmations[0].signature,
             signedConfirmations[1].signature,
             signedConfirmations[2].signature,
-            [new BN(0), new BN(1), new BN(2)],
+            [new BN(2), new BN(2), new BN(2)],
             [identities[0], identities[1], identities[2]],
             { from: DC_wallet },
         );
     });
 
+
     // eslint-disable-next-line no-undef
     it('Challenge and replace an unresponsive DH', async () => {
         // Get initial litigation values
-        let res = await litigationStorage.litigation.call(offerId, identities[0]);
+        const initialLitigationState =
+            await litigationStorage.litigation.call(offerId, DH_identity);
+        const initialOfferState = await holdingStorage.offer.call(offerId);
+        const initialDhProfileState = await profileStorage.profile.call(DH_identity);
+        const initialDhHolderState = await holdingStorage.holder.call(offerId, DH_identity);
+        const initialDcState = await profileStorage.profile.call(DC_identity);
+
+        assert(
+            initialLitigationState.status.isZero(),
+            `Initial litigation status differs from expected! Got ${initialLitigationState.status.toString()} but expected 0!`,
+        );
+        assert(
+            initialLitigationState.timestamp.isZero(),
+            `Initial litigation timestamp differs from expected! Got ${initialLitigationState.timestamp.toString()} but expected 0!`,
+        );
+        assert(
+            initialDhHolderState.stakedAmount.eq(initialOfferState.tokenAmountPerHolder),
+            `Initial holder staked amount differs from expected! Got ${initialDhHolderState.stakedAmount.toString()} but expected ${initialOfferState.tokenAmountPerHolder.toString()}!`,
+        );
+        assert(
+            initialDhHolderState.paidAmount.isZero(),
+            `Initial litigation status differs from expected! Got ${initialDhHolderState.paidAmount.toString()} but expected 0!`,
+        );
+        assert(
+            initialDhHolderState.paymentTimestamp.eq(initialOfferState.startTime),
+            `Initial payment timestamp differs from expected! Got ${initialDhHolderState.paymentTimestamp.toString()} but expected ${initialOfferState.startTime.toString()}!`,
+        );
+
+        // Move offer half way through
+        let timestamp = initialOfferState.startTime;
+        timestamp = timestamp.sub(holdingTimeInMinutes.muln(60).divn(2));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         // Initiate litigation
-        res = await litigation.initiateLitigation(
+        let res = await litigation.initiateLitigation(
             offerId,
-            identities[0],
+            DH_identity,
             DC_identity,
             new BN(0),
             [hashes[1], hash_CD, hash_EFGH],
@@ -253,20 +296,34 @@ contract('Litigation testing', async (accounts) => {
 
         // Instead of answering litigation
         // move the litigation timestamp in order to simulate lack of answer
-        let timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
-        timestamp = timestamp.sub(new BN(100));
-        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
+        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, DH_identity);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
+        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         // Complete litigation
         res = await litigation.completeLitigation(
             offerId,
-            identities[0],
+            DH_identity,
             DC_identity,
             hashes[0],
             { from: DC_wallet, gasLimit: 6000000 },
         );
 
-        const task = await litigationStorage.litigation.call(offerId, identities[0]);
+        // Get holder paid amount
+        const holderPaidAmount =
+            await holdingStorage.getHolderPaidAmount.call(offerId, DH_identity);
+        assert(
+            holderPaidAmount.gt(tokenAmountPerHolder.divn(2).subn(5)) &&
+                holderPaidAmount.lt(tokenAmountPerHolder.divn(2).addn(5)),
+            'Incorrect paid amount for DH after litigation completion!' +
+            ` Got ${res.toString()} but expected ${tokenAmountPerHolder.divn(2).toString()}`,
+        );
+
+        const task = await litigationStorage.litigation.call(offerId, DH_identity);
         const solution = await util.keccakAddressAddressAddress.call(
             identities[3],
             identities[4],
@@ -307,9 +364,9 @@ contract('Litigation testing', async (accounts) => {
             identities[5],
         ];
 
-        res = await litigation.replaceHolder(
+        res = await replacement.replaceHolder(
             offerId,
-            identities[0],
+            DH_identity,
             DC_identity,
             shift,
             signedConfirmations[3].signature,
@@ -318,10 +375,98 @@ contract('Litigation testing', async (accounts) => {
             replacementHolderIdentities,
             { from: DC_wallet },
         );
+
+        // eslint-disable-next-line arrow-body-style
+        const replacementDH = res.logs.find((element) => {
+            return element.event === 'ReplacementCompleted';
+        }).args.chosenHolder;
+
+        const replacementDHState = await holdingStorage.holder(offerId, replacementDH);
+        assert(
+            replacementDHState.stakedAmount.eq(tokenAmountPerHolder.sub(holderPaidAmount)),
+            'Replacement holder staked amount not matching! ' +
+            `Got ${replacementDHState.stakedAmount.toString()} ` +
+            `but expected ${tokenAmountPerHolder.sub(holderPaidAmount).toString()}`,
+        );
+
+        const finalLitigationState = await litigationStorage.litigation.call(offerId, DH_identity);
+        const replacementLitigationState =
+            await litigationStorage.litigation.call(offerId, replacementDH);
+        const finalOfferState = await holdingStorage.offer.call(offerId);
+        const finalDhProfileState = await profileStorage.profile.call(DH_identity);
+        const finalDhHolderState = await holdingStorage.holder.call(offerId, DH_identity);
+        const finalDcState = await profileStorage.profile.call(DC_identity);
+
+        assert(
+            replacementLitigationState.status.eq(new BN(0)),
+            `Final litigation status differs from expected! Got ${replacementLitigationState.status.toString()} but expected 0!`,
+        );
+        assert(
+            finalLitigationState.status.eq(new BN(4)),
+            `Final litigation status differs from expected! Got ${finalLitigationState.status.toString()} but expected 4!`,
+        );
+        assert(
+            replacementLitigationState.timestamp.isZero(),
+            `Replacement litigation timestamp differs from expected! Got ${replacementLitigationState.timestamp.toString()} but expected 0!`,
+        );
+        assert(
+            finalDhHolderState.stakedAmount.eq(initialOfferState.tokenAmountPerHolder),
+            `Initial holder staked amount differs from expected! Got ${finalDhHolderState.stakedAmount.toString()} but expected ${initialOfferState.tokenAmountPerHolder.toString()}!`,
+        );
     });
 
     // eslint-disable-next-line no-undef
     it('Litigation completion should block DH from payout', async () => {
+        // Get initial litigation values
+        let res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Move offer half way through
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(holdingTimeInMinutes.muln(60).divn(2));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
+
+        // Initiate litigation
+        res = await litigation.initiateLitigation(
+            offerId,
+            DH_identity,
+            DC_identity,
+            new BN(0),
+            [hashes[1], hash_CD, hash_EFGH],
+            { from: DC_wallet },
+        );
+
+        // Instead of answering litigation
+        // move the litigation timestamp in order to simulate lack of answer
+        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, DH_identity);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
+        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
+
+        // Complete litigation
+        await litigation.completeLitigation(
+            offerId,
+            DH_identity,
+            DC_identity,
+            hashes[0],
+            { from: DC_wallet, gasLimit: 6000000 },
+        );
+
+        let failed = false;
+        try {
+            await holding.payOut(identities[0], offerId);
+        } catch (err) {
+            failed = true;
+        } finally {
+            assert(failed, 'Expected payout to fail');
+        }
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Inactive DC should enable DH to payout some time after answering', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -339,28 +484,29 @@ contract('Litigation testing', async (accounts) => {
         timestamp = timestamp.sub(new BN(80));
         await holdingStorage.setOfferStartTime(offerId, timestamp);
 
-        // Instead of answering litigation
-        // move the litigation timestamp in order to simulate lack of answer
-        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
-        timestamp = timestamp.sub(new BN(100));
-        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
+        // answerLitigation(bytes32 offerId, address holderIdentity, bytes32 requestedData)
+        await litigation.answerLitigation(offerId, identities[0], hashes[0]);
 
-        // Complete litigation
-        await litigation.completeLitigation(
-            offerId,
-            identities[0],
-            DC_identity,
-            requested_data[0],
-            { from: DC_wallet, gasLimit: 6000000 },
-        );
+        res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Instead of completing litigation
+        // move the litigation timestamp in order to simulate lack of answer
+        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, DH_identity);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
+        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         let failed = false;
         try {
             await holding.payOut(identities[0], offerId);
         } catch (err) {
+            console.log(err);
             failed = true;
         } finally {
-            assert(failed, 'Expected payout to fail');
+            assert(!failed, 'Expected payout failed');
         }
     });
 
@@ -489,7 +635,7 @@ contract('Litigation testing', async (accounts) => {
             identities[4],
             identities[5],
         ];
-        await litigation.replaceHolder(
+        await replacement.replaceHolder(
             offerId,
             identities[0],
             DC_identity,
