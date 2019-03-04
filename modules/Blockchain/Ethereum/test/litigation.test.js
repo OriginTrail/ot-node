@@ -380,7 +380,6 @@ contract('Litigation testing', async (accounts) => {
         const replacementDH = res.logs.find((element) => {
             return element.event === 'ReplacementCompleted';
         }).args.chosenHolder;
-        console.log(replacementDH);
 
         const replacementDHState = await holdingStorage.holder(offerId, replacementDH);
         assert(
@@ -390,8 +389,6 @@ contract('Litigation testing', async (accounts) => {
             `but expected ${tokenAmountPerHolder.sub(holderPaidAmount).toString()}`,
         );
 
-        console.log(JSON.stringify(replacementDHState, null, 4));
-
         const finalLitigationState = await litigationStorage.litigation.call(offerId, DH_identity);
         const replacementLitigationState =
             await litigationStorage.litigation.call(offerId, replacementDH);
@@ -400,7 +397,6 @@ contract('Litigation testing', async (accounts) => {
         const finalDhHolderState = await holdingStorage.holder.call(offerId, DH_identity);
         const finalDcState = await profileStorage.profile.call(DC_identity);
 
-        console.log(JSON.stringify(finalDhHolderState, null, 4));
         assert(
             replacementLitigationState.status.eq(new BN(0)),
             `Final litigation status differs from expected! Got ${replacementLitigationState.status.toString()} but expected 0!`,
@@ -493,9 +489,15 @@ contract('Litigation testing', async (accounts) => {
 
         res = await litigationStorage.litigation.call(offerId, identities[0]);
 
-        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
-        timestamp = timestamp.sub(new BN(80));
-        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
+        // Instead of completing litigation
+        // move the litigation timestamp in order to simulate lack of answer
+        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, DH_identity);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
+        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         let failed = false;
         try {
@@ -505,50 +507,6 @@ contract('Litigation testing', async (accounts) => {
             failed = true;
         } finally {
             assert(!failed, 'Expected payout failed');
-        }
-    });
-
-    // eslint-disable-next-line no-undef
-    it.skip('Litigation completion should block DH from payout', async () => {
-        // Get initial litigation values
-        let res = await litigationStorage.litigation.call(offerId, identities[0]);
-
-        // Initiate litigation
-        res = await litigation.initiateLitigation(
-            offerId,
-            identities[0],
-            DC_identity,
-            new BN(0),
-            [hashes[1], hash_CD, hash_EFGH],
-            { from: DC_wallet },
-        );
-
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
-        timestamp = timestamp.sub(new BN(80));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
-
-        // Instead of answering litigation
-        // move the litigation timestamp in order to simulate lack of answer
-        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
-        timestamp = timestamp.sub(new BN(100));
-        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
-
-        // Complete litigation
-        await litigation.completeLitigation(
-            offerId,
-            identities[0],
-            DC_identity,
-            requested_data[0],
-            { from: DC_wallet, gasLimit: 6000000 },
-        );
-
-        let failed = false;
-        try {
-            await holding.payOut(identities[0], offerId);
-        } catch (err) {
-            failed = true;
-        } finally {
-            assert(failed, 'Expected payout to fail');
         }
     });
 
