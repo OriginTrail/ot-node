@@ -332,7 +332,7 @@ class CommandExecutor {
      */
     async replay() {
         this.logger.notify('Replay pending/started commands from the database...');
-        const pendingCommands = await Models.commands.findAll({
+        const pendingCommands = (await Models.commands.findAll({
             where: {
                 status: {
                     [Models.Sequelize.Op.in]: [
@@ -342,7 +342,7 @@ class CommandExecutor {
                 },
                 name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand'] },
             },
-        });
+        })).filter(command => !constants.PERMANENT_COMMANDS.includes(command.name));
 
         // TODO consider JOIN instead
         const commands = pendingCommands.filter(async (pc) => {
