@@ -1005,7 +1005,7 @@ class EventEmitter {
 
         this._on('int-miner-solution', async (err, data) => {
             if (err) {
-                await dcService.miningFailed(data.offerId);
+                await dcService.miningFailed(err);
             } else {
                 await dcService.miningSucceed(data);
             }
