@@ -420,7 +420,7 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it.only('Litigation completion should block DH from payout', async () => {
+    it('Litigation completion should block DH from payout', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -509,7 +509,7 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Litigation completion should block DH from payout', async () => {
+    it.skip('Litigation completion should block DH from payout', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -677,7 +677,7 @@ contract('Litigation testing', async (accounts) => {
             identities[4],
             identities[5],
         ];
-        await litigation.replaceHolder(
+        await replacement.replaceHolder(
             offerId,
             identities[0],
             DC_identity,

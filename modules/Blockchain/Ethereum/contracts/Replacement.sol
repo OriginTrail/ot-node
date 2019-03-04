@@ -23,6 +23,7 @@ contract Replacement {
 	}
 
 	event ReplacementCompleted(bytes32 offerId, address challengerIdentity, address chosenHolder);
+
     function replaceHolder(bytes32 offerId, address holderIdentity, address litigatorIdentity, uint256 shift,
         bytes confirmation1, bytes confirmation2, bytes confirmation3, address[] replacementHolderIdentity)
     public {
@@ -42,26 +43,24 @@ contract Replacement {
         require(ERC725(replacementHolderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(replacementHolderIdentity[0]))), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
         require(ERC725(replacementHolderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(replacementHolderIdentity[1]))), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
         require(ERC725(replacementHolderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(replacementHolderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
+        
+        // Verify task answer
+        require(((keccak256(abi.encodePacked(replacementHolderIdentity[0], replacementHolderIdentity[1], replacementHolderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * litigationStorage.getLitigationReplacementDifficulty(bytes32(offerId), holderIdentity))) - 1)) == litigationStorage.getLitigationReplacementTask(bytes32(offerId), holderIdentity), "Submitted identities do not answer the task correctly!");
 
         // Set new holders
-        replacementHolderIdentity[0] = replacementHolderIdentity[block.timestamp % 3];
-        require(profileStorage.getStake(replacementHolderIdentity[0]).sub(profileStorage.getStakeReserved(replacementHolderIdentity[0])) 
+        require(profileStorage.getStake(replacementHolderIdentity[block.timestamp % 3]).sub(profileStorage.getStakeReserved(replacementHolderIdentity[block.timestamp % 3])) 
             >= holdingStorage.getHolderStakedAmount(offerId, holderIdentity).sub(holdingStorage.getHolderPaidAmount(offerId, holderIdentity)),
             "Replacement holder does not have stake available to take this job!");
-        require(profileStorage.getStake(replacementHolderIdentity[0]) >= Profile(hub.profileAddress()).minimalStake(),
+        require(profileStorage.getStake(replacementHolderIdentity[block.timestamp % 3]) >= Profile(hub.profileAddress()).minimalStake(),
             "Replacement holder does not have the minimal required stake available to take any new job!");
-    
-        require(holdingStorage.getHolderPaidAmount(offerId, replacementHolderIdentity[0]) == 0
-            && holdingStorage.getHolderStakedAmount(offerId, replacementHolderIdentity[0]) == 0, 
+        
+        require(holdingStorage.getHolderStakedAmount(offerId, replacementHolderIdentity[block.timestamp % 3]) == 0, 
             "Replacement holder was or is already a holder for this data, cannot be set as a new holder!");
     
-        setUpHolders(offerId, holderIdentity, litigatorIdentity, replacementHolderIdentity[0]);
+        setUpHolders(offerId, holderIdentity, litigatorIdentity, replacementHolderIdentity[block.timestamp % 3]);
         // Set litigation status
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
         emit ReplacementCompleted(offerId, litigatorIdentity, replacementHolderIdentity[block.timestamp % 3]);
-		
-		// Verify task answer
-        require(((keccak256(abi.encodePacked(replacementHolderIdentity[0], replacementHolderIdentity[1], replacementHolderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * litigationStorage.getLitigationReplacementDifficulty(bytes32(offerId), holderIdentity))) - 1)) == litigationStorage.getLitigationReplacementTask(bytes32(offerId), holderIdentity), "Submitted identities do not answer the task correctly!");
     }
 
     function setUpHolders(bytes32 offerId, address holderIdentity, address litigatorIdentity, address replacementHolderIdentity)
