@@ -15,7 +15,6 @@ var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line
 var LitigationStorage = artifacts.require('LitigationStorage'); // eslint-disable-line no-undef
 
 var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
-var MockLitigation = artifacts.require('MockLitigation'); // eslint-disable-line no-undef
 var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
@@ -145,7 +144,7 @@ module.exports = async (deployer, network, accounts) => {
         await hub.setHoldingAddress(holding.address);
 
         litigation = await deployer.deploy(
-            MockLitigation,
+            Litigation,
             hub.address,
             { gas: 6000000, from: accounts[0] },
         );
@@ -263,9 +262,9 @@ module.exports = async (deployer, network, accounts) => {
         await hub.setHoldingAddress(holding.address);
 
         litigation = await deployer.deploy(
-            MockLitigation,
+            Litigation,
             hub.address,
-            { gas: 6000000, from: accounts[0] },
+            { gas: 7000000, from: accounts[0] },
         );
         await hub.setLitigationAddress(litigation.address);
 
