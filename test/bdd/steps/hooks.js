@@ -91,7 +91,7 @@ AfterAll(async function () {
 
     const listOfDatabases = await systemDb.listDatabases();
 
-    const logger = this;
+    const { logger } = this;
     const skipDbs = ['_system', 'origintrail', 'origintrail-develop', 'origintrail-staging', 'origintrail-stable'];
     await forEach(
         listOfDatabases.filter((dbName => !skipDbs.includes(dbName))),
