@@ -64,7 +64,8 @@ class DcOfferFinalizedCommand extends Command {
                     },
                 });
 
-                const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
+                const delayOnComplete = 5 * 60 * 1000; // 5 minutes
+                const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + delayOnComplete;
                 return {
                     commands: [
                         {
