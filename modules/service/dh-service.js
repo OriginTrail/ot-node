@@ -280,7 +280,7 @@ class DHService {
 
         const dhMinLitigationIntervalInMinutes =
             new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
-        if (dhMinLitigationIntervalInMinutes.gt(new BN(offerBc.litigationIntervalInMinutes, 10))) {
+        if (dhMinLitigationIntervalInMinutes.gtn(offerBc.litigationIntervalInMinutes)) {
             this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
             return;
         }
