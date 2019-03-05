@@ -61,6 +61,7 @@ class DCOfferReplacementCompletedCommand extends Command {
 
                 const holder = await models.replicated_data.findOne({
                     where: {
+                        offer_id: offerId,
                         dh_identity: utilities.normalizeHex(chosenHolder),
                     },
                 });
