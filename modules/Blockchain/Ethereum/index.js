@@ -1266,6 +1266,28 @@ class Ethereum {
                 from: this.config.wallet_address,
             });
     }
+
+    /**
+     * Get staked amount for the holder
+     */
+    async getHolderStakedAmount(offerId, holderIdentity) {
+        this.log.trace(`getHolderStakedAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderStakedAmount(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    /**
+     * Get paid amount for the holder
+     */
+    async getHolderPaidAmount(offerId, holderIdentity) {
+        this.log.trace(`getHolderPaidAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderPaidAmount(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
 }
 
 module.exports = Ethereum;

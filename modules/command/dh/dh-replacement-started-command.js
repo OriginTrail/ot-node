@@ -30,6 +30,7 @@ class DHReplacementStartedCommand extends Command {
             if (event) {
                 const {
                     offerId,
+                    holderIdentity,
                     challengerIdentity,
                     litigationRootHash,
                 } = JSON.parse(event.data);
@@ -49,7 +50,7 @@ class DHReplacementStartedCommand extends Command {
                 }
 
                 await this.dhService.handleReplacement(
-                    offerId, challengerIdentity,
+                    offerId, challengerIdentity, holderIdentity,
                     litigationRootHash,
                 );
             }
