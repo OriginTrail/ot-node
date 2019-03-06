@@ -55,7 +55,7 @@ class DHReplacementStartedCommand extends Command {
                 );
             }
         } catch (e) {
-            this.logger.error(`Failed to process ReplacementStartedCommand command. ${e}`);
+            this.logger.error(`Failed to process ReplacementStartedCommand command. ${e.stack}`);
         }
 
         return Command.repeat();
