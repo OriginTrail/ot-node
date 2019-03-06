@@ -61,7 +61,7 @@ class DCChallengesCommand extends Command {
                 });
             });
         } catch (e) {
-            this.logger.error(`Failed to process dcChallengesCommand. ${e}`);
+            this.logger.error(`Failed to process dcChallengesCommand. ${e.stack}`);
         }
         return Command.repeat();
     }

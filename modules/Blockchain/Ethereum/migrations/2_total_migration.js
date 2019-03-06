@@ -6,6 +6,7 @@ var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
 var Litigation = artifacts.require('Litigation'); // eslint-disable-line no-undef
+var Replacement = artifacts.require('Replacement'); // eslint-disable-line no-undef
 var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
 var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
 
@@ -14,7 +15,6 @@ var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line
 var LitigationStorage = artifacts.require('LitigationStorage'); // eslint-disable-line no-undef
 
 var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
-var MockLitigation = artifacts.require('MockLitigation'); // eslint-disable-line no-undef
 var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
@@ -28,6 +28,7 @@ module.exports = async (deployer, network, accounts) => {
     let profile;
     let holding;
     let litigation;
+    let replacement;
     let reading;
     let approval;
 
@@ -73,18 +74,25 @@ module.exports = async (deployer, network, accounts) => {
         token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
         await hub.setTokenAddress(token.address);
 
-        profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
+        profile = await deployer.deploy(Profile, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
-        holding = await deployer.deploy(Holding, hub.address, { gas: 8000000, from: accounts[0] });
+        holding = await deployer.deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
 
         litigation = await deployer.deploy(
             Litigation,
             hub.address,
-            { gas: 9000000, from: accounts[0] },
+            { gas: 7000000, from: accounts[0] },
         );
         await hub.setLitigationAddress(litigation.address);
+
+        replacement = await deployer.deploy(
+            Replacement,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setReplacementAddress(replacement.address);
 
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);
@@ -136,11 +144,18 @@ module.exports = async (deployer, network, accounts) => {
         await hub.setHoldingAddress(holding.address);
 
         litigation = await deployer.deploy(
-            MockLitigation,
+            Litigation,
             hub.address,
             { gas: 6000000, from: accounts[0] },
         );
         await hub.setLitigationAddress(litigation.address);
+
+        replacement = await deployer.deploy(
+            Replacement,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setReplacementAddress(replacement.address);
 
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);
@@ -159,6 +174,7 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
+        console.log(`\t Replacement contract address: \t\t${replacement.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
@@ -213,8 +229,6 @@ module.exports = async (deployer, network, accounts) => {
                 hub = result;
             });
 
-        await hub.setTokenAddress('0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882');
-
         profileStorage = await deployer.deploy(
             ProfileStorage,
             hub.address,
@@ -229,23 +243,52 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
+        litigationStorage = await deployer.deploy(
+            LitigationStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setLitigationStorageAddress(litigationStorage.address);
+
+        approval = await deployer.deploy(Approval);
+        await hub.setApprovalAddress(approval.address);
+
+        await hub.setTokenAddress('0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882');
+
         profile = await deployer.deploy(Profile, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
 
-        approval = await deployer.deploy(Approval, { gas: 6000000, from: accounts[0] });
-        await hub.setApprovalAddress(approval.address);
+        litigation = await deployer.deploy(
+            Litigation,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setLitigationAddress(litigation.address);
 
-        console.log('\n\n \t Contract adressess on rinkeby:');
+        replacement = await deployer.deploy(
+            Replacement,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setReplacementAddress(replacement.address);
+
+        reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
+        await hub.setReadingAddress(reading.address);
+
+        console.log('\n\n \t Contract adressess on ganache:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
-        console.log(`\t Approval contract address: \t\t${approval.address}`);
+        console.log(`\t Litigation contract address: \t\t${litigation.address}`);
+        console.log(`\t Replacement contract address: \t\t${replacement.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
+        console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
 
         break;
     case 'live':

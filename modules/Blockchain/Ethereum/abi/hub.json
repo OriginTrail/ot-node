@@ -2,6 +2,53 @@
     {
         "constant": true,
         "inputs": [],
+        "name": "replacementAddress",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "sender",
+                "type": "address"
+            }
+        ],
+        "name": "isContract",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newTokenAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setTokenAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
         "name": "readingStorageAddress",
         "outputs": [
             {
@@ -28,6 +75,20 @@
         "type": "function"
     },
     {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newReadingAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setReadingAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "constant": true,
         "inputs": [],
         "name": "readingAddress",
@@ -39,6 +100,48 @@
         ],
         "payable": false,
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newReadingStorageAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setReadingStorageAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newProfileAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setProfileAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newHoldingStorageAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setHoldingStorageAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -56,6 +159,20 @@
         "type": "function"
     },
     {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newReplacementAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setReplacementAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "constant": true,
         "inputs": [],
         "name": "owner",
@@ -67,6 +184,34 @@
         ],
         "payable": false,
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newLitigationStorageAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setLitigationStorageAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newpPofileStorageAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setProfileStorageAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -112,6 +257,20 @@
         "type": "function"
     },
     {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newApprovalAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setApprovalAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "constant": true,
         "inputs": [],
         "name": "holdingAddress",
@@ -123,6 +282,20 @@
         ],
         "payable": false,
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newLitigationAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setLitigationAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -168,6 +341,20 @@
         "type": "function"
     },
     {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "newHoldingAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setHoldingAddress",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "anonymous": false,
         "inputs": [],
         "name": "ContractsChanged",
@@ -189,164 +376,5 @@
         ],
         "name": "OwnershipTransferred",
         "type": "event"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newTokenAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setTokenAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newProfileAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setProfileAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newHoldingAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setHoldingAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newLitigationAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setLitigationAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newReadingAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setReadingAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newApprovalAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setApprovalAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newpPofileStorageAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setProfileStorageAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newHoldingStorageAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setHoldingStorageAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newReadingStorageAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setReadingStorageAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "newLitigationStorageAddress",
-                "type": "address"
-            }
-        ],
-        "name": "setLitigationStorageAddress",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "sender",
-                "type": "address"
-            }
-        ],
-        "name": "isContract",
-        "outputs": [
-            {
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
     }
 ]

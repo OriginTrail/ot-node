@@ -64,7 +64,8 @@ class DcOfferFinalizedCommand extends Command {
                     },
                 });
 
-                const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
+                const delayOnComplete = 5 * 60 * 1000; // 5 minutes
+                const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + delayOnComplete;
                 return {
                     commands: [
                         {
@@ -143,8 +144,9 @@ class DcOfferFinalizedCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

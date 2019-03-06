@@ -42,6 +42,7 @@ const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
+const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -489,6 +490,9 @@ class OTNode {
             }
         }
 
+        const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
+        await migrationSequelizeMeta.run();
+
         log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
 
@@ -573,6 +577,7 @@ class OTNode {
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 blockchain.getAllPastEvents('LITIGATION_CONTRACT');
+                blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }

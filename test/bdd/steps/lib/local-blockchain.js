@@ -129,6 +129,7 @@ class LocalBlockchain {
                 assert(this.profileContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.holdingContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.readingContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.litigationContractAddress !== '0x0000000000000000000000000000000000000000');
                 accept();
             });
         });
@@ -149,6 +150,7 @@ class LocalBlockchain {
         const byteArrSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ByteArr.sol'), 'utf8');
         const litigationSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Litigation.sol'), 'utf8');
         const litigationStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/LitigationStorage.sol'), 'utf8');
+        const replacementSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Replacement.sol'), 'utf8');
 
         let compileResult = solc.compile({ sources: { 'Hub.sol': hubSource } }, 1);
         this.hubContractData = `0x${compileResult.contracts['Hub.sol:Hub'].bytecode}`;
@@ -171,6 +173,7 @@ class LocalBlockchain {
                 'ByteArr.sol': byteArrSource,
                 'Litigation.sol': litigationSource,
                 'LitigationStorage.sol': litigationStorageSource,
+                'Replacement.sol': replacementSource,
             },
         }, 1);
 
@@ -213,6 +216,10 @@ class LocalBlockchain {
         this.litigationContractData = `0x${compileResult.contracts['Litigation.sol:Litigation'].bytecode}`;
         this.litigationContractAbi = JSON.parse(compileResult.contracts['Litigation.sol:Litigation'].interface);
         this.litigationContract = new this.web3.eth.Contract(this.litigationContractAbi);
+
+        this.replacementContractData = `0x${compileResult.contracts['Replacement.sol:Replacement'].bytecode}`;
+        this.replacementContractAbi = JSON.parse(compileResult.contracts['Replacement.sol:Replacement'].interface);
+        this.replacementContract = new this.web3.eth.Contract(this.replacementContractAbi);
     }
 
     async deployContracts() {
@@ -312,6 +319,16 @@ class LocalBlockchain {
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
+        this.logger.log('Deploying replacementContract');
+        [this.replacementDeploymentReceipt, this.replacementInstance] = await this.deployContract(
+            this.web3, this.replacementContract, this.replacementContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setReplacementAddress(this.replacementInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
         // Deploy tokens.
         const amountToMint = '50000000000000000000000000'; // 5e25
         const amounts = [];
@@ -391,6 +408,10 @@ class LocalBlockchain {
 
     get readingContractAddress() {
         return this.readingInstance._address;
+    }
+
+    get litigationContractAddress() {
+        return this.litigationInstance._address;
     }
 
     get isInitialized() {

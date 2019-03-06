@@ -1,5 +1,6 @@
 const { fork } = require('child_process');
 const Models = require('../../models/index');
+const { MinerError } = require('../errors');
 
 const DEFAULT_DIFFICULTY = 1;
 
@@ -35,7 +36,7 @@ class MinerService {
                 if (parsed.success) {
                     this.emitter.emit('int-miner-solution', null, parsed);
                 } else {
-                    this.emitter.emit('int-miner-solution', new Error(`Cannot find a solution for offer ${offerId}`), null);
+                    this.emitter.emit('int-miner-solution', new MinerError(`Cannot find a solution for offer ${offerId}`, offerId), null);
                 }
             });
 

@@ -172,11 +172,11 @@ class DCService {
 
     /**
      * Fails offer
-     * @param result - Miner result
+     * @param err - Miner error
      * @returns {Promise<void>}
      */
-    async miningFailed(result) {
-        const { offerId } = result;
+    async miningFailed(err) {
+        const { offerId, message } = err;
         const mined = await models.miner_tasks.findOne({
             where: {
                 offer_id: offerId,
@@ -189,7 +189,7 @@ class DCService {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
         }
         mined.status = 'FAILED';
-        mined.message = result.message;
+        mined.message = message;
         await mined.save({
             fields: ['message', 'status'],
         });
