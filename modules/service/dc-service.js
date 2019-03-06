@@ -283,6 +283,7 @@ class DCService {
                 dh_id: identity,
                 dh_wallet: wallet,
                 dh_identity: dhIdentity,
+                offer_id: offerId,
             },
         });
 
