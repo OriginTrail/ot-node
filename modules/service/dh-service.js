@@ -231,7 +231,7 @@ class DHService {
         offerId, litigatorIdentity,
         penalizedHolderIdentity, litigationRootHash,
     ) {
-        const bid = await Models.bids.findOne({
+        let bid = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
             },
@@ -254,16 +254,6 @@ class DHService {
         ));
 
         const stakeAmount = penalizedStakedAmount.sub(penalizedPaidAmount);
-        const remainder = await this._calculatePessimisticMinimumDeposit(
-            bid.id,
-            stakeAmount.toString(),
-        );
-
-        if (remainder) {
-            throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
-        }
-
-        this.logger.info(`Not holding offer's data (${offerId}). Preparing for replacement...`);
 
         const offerBc = await this.blockchain.getOffer(offerId);
 
@@ -273,24 +263,12 @@ class DHService {
         const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
 
         const replacementDurationInMinutes = offerHoldingTimeInMinutes.sub(offerSoFarInMinutes);
-        if (dhMaxHoldingTimeInMinutes.lt(replacementDurationInMinutes)) {
-            this.logger.info(`Replacement duration time for the offer ${offerId} is greater than my holding time defined.`);
-            return;
-        }
-
-        const dhMinLitigationIntervalInMinutes =
-            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
-        if (dhMinLitigationIntervalInMinutes.gt(new BN(offerBc.litigationIntervalInMinutes, 10))) {
-            this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
-            return;
-        }
-
         if (bid == null) {
             const profile =
                 await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
             const dcNodeId =
                 Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
-            await Models.bids.create({
+            bid = await Models.bids.create({
                 offer_id: offerId,
                 data_set_id: offerBc.dataSetId,
                 dc_node_id: dcNodeId,
@@ -308,6 +286,30 @@ class DHService {
             bid.status = 'PENDING';
             bid.message = 'Bid created for replacement';
             await bid.save({ fields: ['token_amount', 'holding_time_in_minutes', 'status', 'message'] });
+        }
+
+        const remainder = await this._calculatePessimisticMinimumDeposit(
+            bid.id,
+            stakeAmount.toString(),
+        );
+
+        if (remainder) {
+            bid.status = 'FAILED';
+            bid.message = 'Not enough tokens';
+            await bid.save({ fields: ['status', 'message'] });
+            throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
+        }
+
+        if (dhMaxHoldingTimeInMinutes.lt(replacementDurationInMinutes)) {
+            this.logger.info(`Replacement duration time for the offer ${offerId} is greater than my holding time defined.`);
+            return;
+        }
+
+        const dhMinLitigationIntervalInMinutes =
+            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
+        if (dhMinLitigationIntervalInMinutes.gt(new BN(offerBc.litigationIntervalInMinutes, 10))) {
+            this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
+            return;
         }
 
         const offer = await Models.offers.findOne({
