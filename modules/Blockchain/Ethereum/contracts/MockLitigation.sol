@@ -21,11 +21,11 @@ contract MockLitigation {
 	constructor (address hubAddress) public {
 		hub = Hub(hubAddress);
 
-		holding = Holding(hub.holdingAddress());
+		holding = Holding(hub.getContractAddress("Holding"));
 
-		litigationStorage = LitigationStorage(hub.litigationStorageAddress());
-		holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-		profileStorage = ProfileStorage(hub.profileStorageAddress());
+		litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
+		holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+		profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
 	}
 
 	function setHubAddress(address newHubAddress) public {
@@ -33,11 +33,11 @@ contract MockLitigation {
 
 		hub = Hub(newHubAddress);
 
-		holding = Holding(hub.holdingAddress());
+		holding = Holding(hub.getContractAddress("Holding"));
 
-		litigationStorage = LitigationStorage(hub.litigationStorageAddress());
-		holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-		profileStorage = ProfileStorage(hub.profileStorageAddress());
+		litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
+		holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+		profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
 	}
 
 	/*    ----------------------------- LITIGATION -----------------------------     */

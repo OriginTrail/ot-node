@@ -34,8 +34,8 @@ contract Litigation {
 
     function initiateLitigation(bytes32 offerId, address holderIdentity, address challengerIdentity, uint requestedDataIndex, bytes32[] hashArray)
     public returns (bool newLitigationInitiated){
-        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-        LitigationStorage litigationStorage = LitigationStorage(hub.litigationStorageAddress());
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
         require(holdingStorage.getOfferCreator(offerId) == challengerIdentity, "Challenger identity not equal to offer creator identity!");
         require(ERC725(challengerIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)),2), "Sender does not have action purpose set!");
 
@@ -49,8 +49,8 @@ contract Litigation {
         require(litigationStatus != LitigationStorage.LitigationStatus.replaced,
             "The selected holder is already replaced, cannot initiate litigation!");
 
-        require(HoldingStorage(hub.holdingStorageAddress()).getOfferStartTime(offerId)
-            + HoldingStorage(hub.holdingStorageAddress()).getOfferHoldingTimeInMinutes(offerId).mul(60)
+        require(HoldingStorage(hub.getContractAddress("HoldingStorage")).getOfferStartTime(offerId)
+            + HoldingStorage(hub.getContractAddress("HoldingStorage")).getOfferHoldingTimeInMinutes(offerId).mul(60)
             > block.timestamp
             ,"Cannot initate litigation for a completed offer!");
 
@@ -79,8 +79,8 @@ contract Litigation {
     
     function answerLitigation(bytes32 offerId, address holderIdentity, bytes32 requestedData)
     public returns (bool answer_accepted){
-        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-        LitigationStorage litigationStorage = LitigationStorage(hub.litigationStorageAddress());
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
         require(ERC725(holderIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)),2), "Sender does not have action purpose set!");
 
         LitigationStorage.LitigationStatus litigationStatus = litigationStorage.getLitigationStatus(offerId, holderIdentity);
@@ -102,9 +102,9 @@ contract Litigation {
 
     function completeLitigation(bytes32 offerId, address holderIdentity, address litigatorIdentity, bytes32 proofData)
     public returns (bool DH_was_penalized){
-        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-        LitigationStorage litigationStorage = LitigationStorage(hub.litigationStorageAddress());
-        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
+        ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
         
         require(holdingStorage.getOfferCreator(offerId) == litigatorIdentity, "Challenger identity not equal to offer creator identity!");
         require(ERC725(litigatorIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)),2), "Sender does not have action purpose set!");
@@ -168,9 +168,9 @@ contract Litigation {
     }
 
     function startReplacement(bytes32 offerId, address holderIdentity, address litigatorIdentity, uint256 litigationRootHash) internal {
-        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-        LitigationStorage litigationStorage = LitigationStorage(hub.litigationStorageAddress());
-        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
+        ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
  
         // Pay the previous holder
         uint256 amountToTransfer = holdingStorage.getOfferTokenAmountPerHolder(offerId);
@@ -218,7 +218,7 @@ contract Litigation {
 
     function calculateMerkleTrees(bytes32 offerId, address holderIdentity, bytes32 proofData, bytes32 litigationRootHash)
     internal returns (bool DHAnsweredCorrectly) {
-        LitigationStorage litigationStorage = LitigationStorage(hub.litigationStorageAddress());
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
         
         uint256 i = 0;
         uint256 mask = 1;
