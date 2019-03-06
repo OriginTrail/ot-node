@@ -159,7 +159,7 @@ class Ethereum {
      */
     async _getHoldingContractAddress() {
         this.log.trace('Asking Hub for Holding contract address...');
-        const address = await this.hubContract.methods.holdingAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('Holding').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`Holding contract address is ${address}`);
@@ -173,7 +173,7 @@ class Ethereum {
      */
     async _getTokenContractAddress() {
         this.log.trace('Asking Hub for Token contract address...');
-        const address = await this.hubContract.methods.tokenAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('Token').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`Token contract address is ${address}`);
@@ -187,7 +187,7 @@ class Ethereum {
      */
     async _getReadingContractAddress() {
         this.log.trace('Asking Hub for Reading contract address...');
-        const address = await this.hubContract.methods.readingAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('Reading').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`Reading contract address is ${address}`);
@@ -201,7 +201,7 @@ class Ethereum {
      */
     async _getProfileContractAddress() {
         this.log.trace('Asking Hub for Profile contract address...');
-        const address = await this.hubContract.methods.profileAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('Profile').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`Profile contract address is ${address}`);
@@ -215,7 +215,7 @@ class Ethereum {
      */
     async _getApprovalContractAddress() {
         this.log.trace('Asking Hub for Approval contract address...');
-        const address = await this.hubContract.methods.approvalAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('Approval').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`Approval contract address is ${address}`);
@@ -229,7 +229,7 @@ class Ethereum {
      */
     async _getProfileStorageContractAddress() {
         this.log.trace('Asking Hub for ProfileStorage contract address...');
-        const address = await this.hubContract.methods.profileStorageAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('ProfileStorage').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`ProfileStorage contract address is ${address}`);
@@ -243,7 +243,7 @@ class Ethereum {
      */
     async _getHoldingStorageContractAddress() {
         this.log.trace('Asking Hub for HoldingStorage contract address...');
-        const address = await this.hubContract.methods.holdingStorageAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('HoldingStorage').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`HoldingStorage contract address is ${address}`);
@@ -257,7 +257,7 @@ class Ethereum {
      */
     async _getLitigationContractAddress() {
         this.log.trace('Asking Hub for Litigation contract address...');
-        const address = await this.hubContract.methods.litigationAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('Litigation').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`Litigation contract address is ${address}`);
@@ -271,7 +271,7 @@ class Ethereum {
      */
     async _getReplacementContractAddress() {
         this.log.trace('Asking Hub for Replacement contract address...');
-        const address = await this.hubContract.methods.replacementAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('Replacement').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`Replacement contract address is ${address}`);
@@ -285,7 +285,7 @@ class Ethereum {
      */
     async _getLitigationStorageContractAddress() {
         this.log.trace('Asking Hub for LitigationStorage contract address...');
-        const address = await this.hubContract.methods.litigationStorageAddress().call({
+        const address = await this.hubContract.methods.getContractAddress('LitigationStorage').call({
             from: this.config.wallet_address,
         });
         this.log.trace(`LitigationStorage contract address is ${address}`);
