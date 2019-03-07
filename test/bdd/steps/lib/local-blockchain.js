@@ -235,7 +235,7 @@ class LocalBlockchain {
             [], accounts[7],
         );
 
-        await this.hubInstance.methods.setApprovalAddress(this.approvalInstance._address)
+        await this.hubInstance.methods.setContractAddress('Approval', this.approvalInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -245,7 +245,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setProfileStorageAddress(this.profileStorageInstance._address)
+        await this.hubInstance.methods.setContractAddress('ProfileStorage', this.profileStorageInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -255,7 +255,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setHoldingStorageAddress(this.holdingStorageInstance._address)
+        await this.hubInstance.methods.setContractAddress('HoldingStorage', this.holdingStorageInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -265,7 +265,7 @@ class LocalBlockchain {
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
 
-        await this.hubInstance.methods.setTokenAddress(this.tokenInstance._address)
+        await this.hubInstance.methods.setContractAddress('Token', this.tokenInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -275,7 +275,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setProfileAddress(this.profileInstance._address)
+        await this.hubInstance.methods.setContractAddress('Profile', this.profileInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -285,7 +285,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setHoldingAddress(this.holdingInstance._address)
+        await this.hubInstance.methods.setContractAddress('Holding', this.holdingInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -295,7 +295,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setReadingAddress(this.readingInstance._address)
+        await this.hubInstance.methods.setContractAddress('Reading', this.readingInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -305,7 +305,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setLitigationStorageAddress(this.litigationStorageInstance._address)
+        await this.hubInstance.methods.setContractAddress('LitigationStorage', this.litigationStorageInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -315,7 +315,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setLitigationAddress(this.litigationInstance._address)
+        await this.hubInstance.methods.setContractAddress('Litigation', this.litigationInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -325,7 +325,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setReplacementAddress(this.replacementInstance._address)
+        await this.hubInstance.methods.setContractAddress('Replacement', this.replacementInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
