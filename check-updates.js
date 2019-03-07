@@ -146,7 +146,6 @@ class AutoUpdate {
             });
             autoupdater.on('end', () => {
                 log.warn('The app is ready to function');
-                resolve(true);
             });
             autoupdater.on('error', (name, e) => {
                 log.error(name, e);
