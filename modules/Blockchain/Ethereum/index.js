@@ -522,7 +522,7 @@ class Ethereum {
 
         const offer = await this.getOffer(offerId);
         if (Utilities.isZeroHash(offer['0'])) {
-            contractAddress = this.oldHoldingContract;
+            contractAddress = this.oldHoldingContractAddress;
         }
 
         const options = {
@@ -594,7 +594,7 @@ class Ethereum {
 
         const offer = await this.getOffer(offerId);
         if (Utilities.isZeroHash(offer['0'])) {
-            contractAddress = this.oldHoldingContract;
+            contractAddress = this.oldHoldingContractAddress;
         }
 
         const options = {
