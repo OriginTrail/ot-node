@@ -481,9 +481,6 @@ class OTNode {
             }
         }
 
-        const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
-        await migrationSequelizeMeta.run();
-
         log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
 
@@ -591,7 +588,7 @@ log.info('');
 
 async function checkIfUpdateAvailable() {
     if (await Update.isUpdateAvailable(config.autoUpdater)) {
-        log.imprtant('Restarting node due to scheduled update.');
+        log.important('Restarting node due to scheduled update.');
         Update.restartNode();
         return;
     }
@@ -606,10 +603,15 @@ function main() {
         log.info('OT Node started');
     });
 }
-Update.update(config.autoUpdater)
-    .then(main)
-    .catch((error) => {
-        log.error(`Failed to check update. ${error}.`);
-        main();
-    });
 
+const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
+
+migrationSequelizeMeta.run()
+    .then(() => {
+        Update.update(config.autoUpdater)
+            .then(main)
+            .catch((error) => {
+                log.error(`Failed to check update. ${error}.`);
+                main();
+            });
+    });
