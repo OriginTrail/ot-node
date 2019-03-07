@@ -42,6 +42,8 @@ contract Hub is Ownable{
     mapping(bytes32 => address) contractAddress;
     mapping(address => bool) contractList;
 
+    event ContractsChanged();
+
     function setContractAddress(string contractName, address newContractAddress)
     public onlyOwner {
         bytes32 index = keccak256(abi.encodePacked(contractName));
@@ -55,6 +57,8 @@ contract Hub is Ownable{
         if(newContractAddress != address(0)){
             contractList[newContractAddress] = true;
         }
+
+        emit ContractsChanged();
     }
 
     function getContractAddress(string contractName)  public view returns(address selectedContractAddress) {
