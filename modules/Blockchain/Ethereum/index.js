@@ -345,8 +345,9 @@ class Ethereum {
         this.log.trace(`Fetching root hash for data set ${dataSetId}`);
         const rootHash = await this.holdingStorageContract.methods.fingerprint(dataSetId).call();
         if (Utilities.isZeroHash(rootHash)) {
-            return this.oldHoldingStorageContract.methods.fingerprint(dataSetId).call();
+            return rootHash;
         }
+        return this.oldHoldingStorageContract.methods.fingerprint(dataSetId).call();
     }
 
     /**
