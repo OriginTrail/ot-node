@@ -112,11 +112,16 @@ contract Holding is Ownable {
         require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[1]))), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
         require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
-        // Verify task answer
+        // Prepare answer
         bytes32 answer = keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2]));
         answer = answer >> (shift * 4);
         answer = answer & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1);
+
+        // Verify task answer
         require(answer == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
+
+        // Write data into storage
+        holdingStorage.setHolders(bytes32(offerId), holderIdentity, encryptionType);
 
         // Secure funds from all parties
         reserveTokens(
@@ -126,9 +131,6 @@ contract Holding is Ownable {
             holderIdentity[2],
             holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId))
         );
-
-        // Write data into storage
-        holdingStorage.setHolders(bytes32(offerId), holderIdentity, encryptionType);
 
         emit OfferFinalized(bytes32(offerId), holderIdentity[0], holderIdentity[1], holderIdentity[2]);
     }
@@ -171,7 +173,6 @@ contract Holding is Ownable {
         require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount,
             "Third profile does not have enough stake for reserving!");
 
-
         profileStorage.increaseStakesReserved(
             payer,
             identity1,
@@ -183,10 +184,12 @@ contract Holding is Ownable {
 
     function payOut(address identity, uint256 offerId)
     public {
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
         require(Approval(hub.getContractAddress("Approval")).identityHasApproval(identity), "Identity does not have approval for using the contract");
-
+       
         // Verify that the litigation is not in progress
         LitigationStorage.LitigationStatus status = LitigationStorage(hub.getContractAddress("LitigationStorage")).getLitigationStatus(bytes32(offerId), identity);
         uint256 litigationTimestamp = LitigationStorage(hub.getContractAddress("LitigationStorage")).getLitigationTimestamp(bytes32(offerId), identity);
@@ -205,26 +208,36 @@ contract Holding is Ownable {
                 "Data holder is replaced or being replaced, cannot payout!");
         }
 
-        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
-
         // Verify holder
-        uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(bytes32(offerId), identity);
-        require(amountToTransfer > 0, "Sender is not holding this data set!");
+        require(holdingStorage.getHolderStakedAmount(bytes32(offerId), identity) > 0, "Sender is not holding this data set!");
 
-        // Verify that holding time expired
-        require(holdingStorage.getOfferStartTime(bytes32(offerId)) +
-            holdingStorage.getOfferHoldingTimeInMinutes(bytes32(offerId)).mul(60) < block.timestamp,
-            "Holding time not yet expired!");
+        // Calculate amount to send
+        uint256 amountToTransfer = holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId));
+        // Multiply the tokenAmountPerHolder by the time the the holder held the data
+        amountToTransfer = amountToTransfer.mul((block.timestamp).sub(holdingStorage.getHolderPaymentTimestamp(bytes32(offerId), identity)));
+        // Divide the tokenAmountPerHolder by the total time
+        amountToTransfer = amountToTransfer.div(holdingStorage.getOfferHoldingTimeInMinutes(bytes32(offerId)).mul(60));
+
+        if(amountToTransfer >= holdingStorage.getHolderStakedAmount(bytes32(offerId), identity)) {
+            amountToTransfer = holdingStorage.getHolderStakedAmount(bytes32(offerId), identity);
+
+            // Offer is completed, release holder stake
+            Profile(hub.getContractAddress("Profile")).releaseTokens(identity, holdingStorage.getHolderStakedAmount(bytes32(offerId), identity));
+        }
 
         // Release tokens staked by holder and transfer tokens from data creator to holder
-        Profile(hub.getContractAddress("Profile")).releaseTokens(identity, amountToTransfer);
         Profile(hub.getContractAddress("Profile")).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
 
-        holdingStorage.setHolderPaidAmount(bytes32(offerId), identity, amountToTransfer);
+        holdingStorage.setHolderPaymentTimestamp(bytes32(offerId), identity, block.timestamp);
+
+        uint256 holderPaidAmount = holdingStorage.getHolderPaidAmount(bytes32(offerId), identity);
+        holderPaidAmount = holderPaidAmount.add(amountToTransfer);
+        holdingStorage.setHolderPaidAmount(bytes32(offerId), identity, holderPaidAmount);
+        
         emit PaidOut(bytes32(offerId), identity, amountToTransfer);
     }
 
-    function payOutMultiple(address identity, bytes32[] offerIds)
+    function payOutMultiple(address identity, uint256[] offerIds)
     public {
         require(identity != address(0), "Identity cannot be zero!");
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
@@ -233,21 +246,7 @@ contract Holding is Ownable {
         HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
 
         for (uint i = 0; i < offerIds.length; i++) {
-            // Verify holder
-            uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerIds[i], identity);
-            if (amountToTransfer == 0) continue;
-
-            // Verify that holding time expired
-            require(holdingStorage.getOfferStartTime(offerIds[i]) +
-                holdingStorage.getOfferHoldingTimeInMinutes(offerIds[i]).mul(60) < block.timestamp,
-                "Holding time not yet expired!");
-
-            // Release tokens staked by holder and transfer tokens from data creator to holder
-            Profile(hub.getContractAddress("Profile")).releaseTokens(identity, amountToTransfer);
-            Profile(hub.getContractAddress("Profile")).transferTokens(holdingStorage.getOfferCreator(offerIds[i]), identity, amountToTransfer);
-
-            holdingStorage.setHolderPaidAmount(bytes32(offerIds[i]), identity, amountToTransfer);
-            emit PaidOut(bytes32(offerIds[i]), identity, amountToTransfer);
+            payOut(identity, offerIds[i]);
         }
     }
 
