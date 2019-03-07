@@ -588,7 +588,7 @@ log.info('');
 
 async function checkIfUpdateAvailable() {
     if (await Update.isUpdateAvailable(config.autoUpdater)) {
-        log.imprtant('Restarting node due to scheduled update.');
+        log.important('Restarting node due to scheduled update.');
         Update.restartNode();
         return;
     }
