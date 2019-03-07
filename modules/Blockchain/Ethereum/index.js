@@ -344,7 +344,7 @@ class Ethereum {
     async getRootHash(dataSetId) {
         this.log.trace(`Fetching root hash for data set ${dataSetId}`);
         const rootHash = await this.holdingStorageContract.methods.fingerprint(dataSetId).call();
-        if (rootHash) {
+        if (Utilities.isZeroHash(rootHash)) {
             return this.oldHoldingStorageContract.methods.fingerprint(dataSetId).call();
         }
     }
@@ -521,7 +521,7 @@ class Ethereum {
         let contractAddress = this.holdingContractAddress;
 
         const offer = await this.getOffer(offerId);
-        if (offer == null) {
+        if (Utilities.isZeroHash(offer['0'])) {
             contractAddress = this.oldHoldingContract;
         }
 
@@ -593,7 +593,7 @@ class Ethereum {
         let contractAddress = this.holdingContractAddress;
 
         const offer = await this.getOffer(offerId);
-        if (offer == null) {
+        if (Utilities.isZeroHash(offer['0'])) {
             contractAddress = this.oldHoldingContract;
         }
 
