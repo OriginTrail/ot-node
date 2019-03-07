@@ -91,7 +91,7 @@ contract Litigation {
             "The interval for answering has passed, cannot answer litigation!");
 
         // Write answer data into the hash
-        litigationStorage.setLitigationRequestedData(offerId, holderIdentity, keccak256(requestedData, litigationStorage.getLitigationRequestedDataIndex(offerId, holderIdentity)));
+        litigationStorage.setLitigationRequestedData(offerId, holderIdentity, keccak256(abi.encodePacked(requestedData, litigationStorage.getLitigationRequestedDataIndex(offerId, holderIdentity))));
 
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.answered);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
