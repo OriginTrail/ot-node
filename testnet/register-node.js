@@ -41,6 +41,7 @@ function main() {
             '   "blockchain": {\n' +
             '       "rpc_server_url": "http://your.server.url/"\n' +
             '   }');
+        console.error(externalConfig);
         process.exit(1);
         return;
     }
