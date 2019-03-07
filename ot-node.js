@@ -607,7 +607,7 @@ function main() {
     });
 }
 Update.update(config.autoUpdater)
-    .then(main())
+    .then(main)
     .catch((error) => {
         log.error(`Failed to check update. ${error}.`);
         main();
