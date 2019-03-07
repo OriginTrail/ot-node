@@ -237,19 +237,6 @@ contract Holding is Ownable {
         emit PaidOut(bytes32(offerId), identity, amountToTransfer);
     }
 
-    function payOutMultiple(address identity, uint256[] offerIds)
-    public {
-        require(identity != address(0), "Identity cannot be zero!");
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
-        require(Approval(hub.getContractAddress("Approval")).identityHasApproval(identity), "Identity does not have approval for using the contract");
-
-        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
-
-        for (uint i = 0; i < offerIds.length; i++) {
-            payOut(identity, offerIds[i]);
-        }
-    }
-
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
         bytes32 r;
         bytes32 s;
