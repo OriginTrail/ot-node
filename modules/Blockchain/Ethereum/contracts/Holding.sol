@@ -26,6 +26,8 @@ contract Holding is Ownable {
     event OfferCreated(bytes32 offerId, bytes32 dataSetId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
     event OfferFinalized(bytes32 offerId, address holder1, address holder2, address holder3);
 
+    event PaidOut(bytes32 offerId, address holder, uint256 amount);
+
     function createOffer(address identity, uint256 dataSetId,
     uint256 dataRootHash, uint256 redLitigationHash, uint256 greenLitigationHash, uint256 blueLitigationHash, uint256 dcNodeId,
     uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
@@ -125,16 +127,16 @@ contract Holding is Ownable {
     internal {
         ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
 
-        if(profileStorage.getWithdrawalPending(payer)) {
+        if(profileStorage.getWithdrawalPending(payer) && profileStorage.getWithdrawalAmount(payer).add(amount.mul(3)) > profileStorage.getStake(payer) - profileStorage.getStakeReserved(payer)) {
             profileStorage.setWithdrawalPending(payer,false);
         }
-        if(profileStorage.getWithdrawalPending(identity1)) {
+        if(profileStorage.getWithdrawalPending(identity1) && profileStorage.getWithdrawalAmount(identity1).add(amount) > profileStorage.getStake(identity1) - profileStorage.getStakeReserved(identity1)) {
             profileStorage.setWithdrawalPending(identity1,false);
         }
-        if(profileStorage.getWithdrawalPending(identity2)) {
+        if(profileStorage.getWithdrawalPending(identity2) && profileStorage.getWithdrawalAmount(identity2).add(amount) > profileStorage.getStake(identity2) - profileStorage.getStakeReserved(identity2)) {
             profileStorage.setWithdrawalPending(identity2,false);
         }
-        if(profileStorage.getWithdrawalPending(identity3)) {
+        if(profileStorage.getWithdrawalPending(identity3) && profileStorage.getWithdrawalAmount(identity3).add(amount) > profileStorage.getStake(identity3) - profileStorage.getStakeReserved(identity3)) {
             profileStorage.setWithdrawalPending(identity3,false);
         }
 
@@ -171,7 +173,7 @@ contract Holding is Ownable {
     function payOut(address identity, uint256 offerId)
     public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
         require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
 
         HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
@@ -188,6 +190,36 @@ contract Holding is Ownable {
         // Release tokens staked by holder and transfer tokens from data creator to holder
         Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
         Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
+
+        holdingStorage.setHolderPaidAmount(bytes32(offerId), identity, amountToTransfer);
+        emit PaidOut(bytes32(offerId), identity, amountToTransfer);
+    }
+
+    function payOutMultiple(address identity, bytes32[] offerIds)
+    public {
+        require(identity != address(0), "Identity cannot be zero!");
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
+        require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
+
+        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
+
+        for (uint i = 0; i < offerIds.length; i = i + 1){
+            // Verify holder
+            uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerIds[i], identity);
+            if (amountToTransfer == 0) continue;
+
+            // Verify that holding time expired
+            require(holdingStorage.getOfferStartTime(offerIds[i]) +
+                holdingStorage.getOfferHoldingTimeInMinutes(offerIds[i]).mul(60) < block.timestamp,
+                "Holding time not yet expired!");
+
+            // Release tokens staked by holder and transfer tokens from data creator to holder
+            Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
+            Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerIds[i]), identity, amountToTransfer);
+
+            holdingStorage.setHolderPaidAmount(bytes32(offerIds[i]), identity, amountToTransfer);
+            emit PaidOut(bytes32(offerIds[i]), identity, amountToTransfer);
+        }
     }
     
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {

@@ -3,6 +3,135 @@
     "constant": false,
     "inputs": [
       {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "startTokenWithdrawal",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "hub",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "withdrawalTime",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newMinimalStake",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMinimalStake",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawTokens",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "oldIdentity",
+        "type": "address"
+      },
+      {
+        "name": "managementWallet",
+        "type": "address"
+      }
+    ],
+    "name": "transferProfile",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "depositTokens",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "managementWallet",
         "type": "address"
       },
@@ -37,11 +166,61 @@
         "type": "address"
       },
       {
+        "name": "newNodeId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setNodeId",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "minimalStake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "name": "receiver",
+        "type": "address"
+      },
+      {
         "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "depositTokens",
+    "name": "transferTokens",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newWithdrawalTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "setWithdrawalTime",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -66,80 +245,15 @@
     "type": "function"
   },
   {
-    "constant": false,
     "inputs": [
       {
-        "name": "payer",
+        "name": "hubAddress",
         "type": "address"
-      },
-      {
-        "name": "identity1",
-        "type": "address"
-      },
-      {
-        "name": "identity2",
-        "type": "address"
-      },
-      {
-        "name": "identity3",
-        "type": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256"
       }
     ],
-    "name": "reserveTokens",
-    "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "newMinimalStake",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMinimalStake",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "newNodeId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setNodeId",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "newWithdrawalTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "setWithdrawalTime",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "type": "constructor"
   },
   {
     "anonymous": false,
@@ -151,11 +265,11 @@
       },
       {
         "indexed": false,
-        "name": "amount",
+        "name": "initialBalance",
         "type": "uint256"
       }
     ],
-    "name": "TokensReleased",
+    "name": "ProfileCreated",
     "type": "event"
   },
   {
@@ -168,35 +282,34 @@
       },
       {
         "indexed": false,
-        "name": "amountWithdrawn",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "newBalance",
-        "type": "uint256"
+        "name": "newIdentity",
+        "type": "address"
       }
     ],
-    "name": "TokensWithdrawn",
+    "name": "IdentityCreated",
     "type": "event"
   },
   {
-    "constant": false,
+    "anonymous": false,
     "inputs": [
       {
-        "name": "identity",
+        "indexed": false,
+        "name": "nodeId",
+        "type": "bytes20"
+      },
+      {
+        "indexed": false,
+        "name": "oldIdentity",
         "type": "address"
       },
       {
-        "name": "amount",
-        "type": "uint256"
+        "indexed": false,
+        "name": "newIdentity",
+        "type": "address"
       }
     ],
-    "name": "startTokenWithdrawal",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "name": "IdentityTransferred",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -208,11 +321,11 @@
       },
       {
         "indexed": false,
-        "name": "amountReserved",
+        "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "TokensReserved",
+    "name": "TokenDeposit",
     "type": "event"
   },
   {
@@ -244,9 +357,14 @@
         "indexed": false,
         "name": "profile",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amountReserved",
+        "type": "uint256"
       }
     ],
-    "name": "TokenWithdrawalCancelled",
+    "name": "TokensReserved",
     "type": "event"
   },
   {
@@ -278,6 +396,40 @@
         "indexed": false,
         "name": "profile",
         "type": "address"
+      }
+    ],
+    "name": "TokenWithdrawalCancelled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "profile",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amountWithdrawn",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "newBalance",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokensWithdrawn",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "profile",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -285,58 +437,7 @@
         "type": "uint256"
       }
     ],
-    "name": "TokenDeposit",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "oldIdentity",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "newIdentity",
-        "type": "address"
-      }
-    ],
-    "name": "IdentityTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "profile",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "newIdentity",
-        "type": "address"
-      }
-    ],
-    "name": "IdentityCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "profile",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "initialBalance",
-        "type": "uint256"
-      }
-    ],
-    "name": "ProfileCreated",
+    "name": "TokensReleased",
     "type": "event"
   },
   {
@@ -360,141 +461,5 @@
     ],
     "name": "TokensTransferred",
     "type": "event"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "oldIdentity",
-        "type": "address"
-      }
-    ],
-    "name": "transferProfile",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "name": "receiver",
-        "type": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "transferTokens",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawTokens",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "name": "hubAddress",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "hub",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "minimalStake",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "profileStorage",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "version",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "withdrawalTime",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
   }
 ]

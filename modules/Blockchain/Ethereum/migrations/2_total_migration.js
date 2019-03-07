@@ -147,31 +147,28 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Escrow contract address: \t${holding.address}`);
         break;
     case 'update':
-        hub = await Hub.deployed();
+        hub = await Hub.at('0x54985ef4EF2d3d04df7B026DA98d9f356b418626');
 
-        token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
-        await hub.setTokenAddress(token.address);
+        // token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
+        // await hub.setTokenAddress(token.address);
 
-        profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
+        profile = await deployer.deploy(Profile, hub.address, { gas: 6500000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
 
-        reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
-        await hub.setReadingAddress(reading.address);
-
-        for (let i = 0; i < 10; i += 1) {
-            amounts.push(amountToMint);
-            recepients.push(accounts[i]);
-        }
-        await token.mintMany(recepients, amounts, { from: accounts[0] });
-        await token.finishMinting({ from: accounts[0] });
+        // for (let i = 0; i < 10; i += 1) {
+        //     amounts.push(amountToMint);
+        //     recepients.push(accounts[i]);
+        // }
+        // await token.mintMany(recepients, amounts, { from: accounts[0] });
+        // await token.finishMinting({ from: accounts[0] });
 
         console.log('\n\n \t Contract adressess on ganache:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
-        console.log(`\t Approval contract address: \t\t${approval.address}`);
-        console.log(`\t Token contract address: \t\t${token.address}`);
+        // console.log(`\t Approval contract address: \t\t${approval.address}`);
+        // console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         break;

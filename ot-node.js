@@ -79,6 +79,11 @@ try {
         console.error('Please provide valid wallet.');
         process.abort();
     }
+
+    if (!config.management_wallet) {
+        console.error('Please provide a valid management wallet.');
+        process.abort();
+    }
 } catch (error) {
     console.error(`Failed to read configuration. ${error}.`);
     console.error(error.stack);
@@ -476,14 +481,12 @@ class OTNode {
                 await migration.run();
                 log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
-                await Utilities.writeContentsToFile(
-                    migrationDir, m1PayoutAllMigrationFilename,
-                    JSON.stringify({
-                        status: 'COMPLETED',
-                    }),
-                );
+                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
             }
         }
 

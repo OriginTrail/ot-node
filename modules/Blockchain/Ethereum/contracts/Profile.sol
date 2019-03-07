@@ -29,7 +29,7 @@ contract Profile {
 
     event ProfileCreated(address profile, uint256 initialBalance);
     event IdentityCreated(address profile, address newIdentity);
-    event IdentityTransferred(address oldIdentity, address newIdentity);
+    event IdentityTransferred(bytes20 nodeId, address oldIdentity, address newIdentity);
     event TokenDeposit(address profile, uint256 amount);
 
     event TokensDeposited(address profile, uint256 amountDeposited, uint256 newBalance);
@@ -43,7 +43,7 @@ contract Profile {
     event TokensTransferred(address sender, address receiver, uint256 amount);
 
     function createProfile(address managementWallet, bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
-        require(managementWallet!=address(0) && identity!=address(0));
+        require(managementWallet!=address(0));
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= initialBalance, "Sender allowance must be equal to or higher than initial balance");
         require(tokenContract.balanceOf(msg.sender) >= initialBalance, "Sender balance must be equal to or higher than initial balance!");
@@ -77,10 +77,11 @@ contract Profile {
         }
     }
 
-    function transferProfile(address oldIdentity) public returns(address){
+    function transferProfile(address oldIdentity, address managementWallet) public returns(address){
         require(ERC725(oldIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1),  "Sender does not have management permission for identity!");
+        require(managementWallet != address(0));
 
-        Identity newIdentity = new Identity(msg.sender, msg.sender);
+        Identity newIdentity = new Identity(msg.sender, managementWallet);
         emit IdentityCreated(msg.sender, address(newIdentity));
 
         ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
@@ -100,7 +101,7 @@ contract Profile {
         profileStorage.setNodeId(oldIdentity, bytes32(0));
         profileStorage.setReputation(oldIdentity, 0);
 
-        emit IdentityTransferred(oldIdentity, newIdentity);
+        emit IdentityTransferred(bytes20(profileStorage.getNodeId(address(newIdentity))), oldIdentity, address(newIdentity));
         return address(newIdentity);
     }
 

@@ -32,23 +32,6 @@ class ProfileService {
 
         if (identityExists && await this.isProfileCreated()) {
             this.logger.notify(`Profile has already been created for node ${this.config.identity}`);
-            let walletToCheck;
-            if (this.config.management_wallet) {
-                walletToCheck = this.config.management_wallet;
-            } else {
-                this.logger.important('Management wallet not set. Please set one.');
-                walletToCheck = this.config.node_wallet;
-            }
-
-            // Check financial wallet permissions.
-            const permissions = await this.blockchain.getWalletPurposes(
-                this.config.erc725Identity,
-                walletToCheck,
-            );
-
-            if (!permissions.includes('1')) {
-                throw Error(`Management wallet ${walletToCheck} doesn't have enough permissions.`);
-            }
             return;
         }
 
@@ -199,15 +182,18 @@ class ProfileService {
         if (await this.blockchain.isErc725IdentityOld(this.config.erc725Identity)) {
             this.logger.important('Old profile detected. Upgrading to new one.');
             try {
-                const result = await this.blockchain.transferProfile(this.config.erc725Identity);
+                const result = await this.blockchain.transferProfile(
+                    this.config.erc725Identity,
+                    this.config.management_wallet,
+                );
                 const newErc725Identity =
-                    Utilities.normalizeHex(result.logs[1].data.substr(
-                        result.logs[1].data.length - 40,
+                    Utilities.normalizeHex(result.logs[result.logs.length - 1].data.substr(
+                        result.logs[result.logs.length - 1].data.length - 40,
                         40,
                     ));
 
                 this.logger.important('**************************************************************************');
-                this.logger.important(`Your ERC725 profile has been upgraded and now has the new address: ${newErc725Identity}`);
+                this.logger.important(`Your ERC725 identity has been upgraded and now has the new address: ${newErc725Identity}`);
                 this.logger.important('Please backup your ERC725 identity file.');
                 this.logger.important('**************************************************************************');
                 this.config.erc725Identity = newErc725Identity;

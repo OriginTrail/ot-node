@@ -26,7 +26,7 @@ var errored = true;
 var DC_identity;
 var DC_wallet;
 var offerId;
-var tokensToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(21)));
+var tokensToDeposit = (new BN(100)).mul(new BN(10).pow(new BN(21)));
 
 // Offer variables
 const dataSetId = '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
@@ -45,6 +45,7 @@ var privateKeys = [];
 var identities = [];
 
 // Contracts used in test
+var hub;
 var trac;
 var profile;
 var holding;
@@ -57,6 +58,7 @@ contract('Offer testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     before(async () => {
         // Get contracts used in hook
+        hub = await Hub.deployed();
         trac = await TracToken.deployed();
         profile = await Profile.deployed();
         holding = await Holding.deployed();
@@ -277,11 +279,18 @@ contract('Offer testing', async (accounts) => {
         res = await profileStorage.profile.call(DC_identity);
         const initialStakeDC = res.stake;
 
-        for (i = 0; i < 3; i += 1) {
+        for (i = 0; i < 2; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             await holding.payOut(identities[i], offerId, { from: accounts[i] });
         }
-
+        const array = [];
+        array.push(offerId);
+        res = await holding.payOutMultiple(
+            identities[2],
+            array,
+            { from: accounts[2], gas: 200000 },
+        );
+        console.log(`\tGasUsed: ${res.receipt.gasUsed}`);
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
@@ -292,6 +301,74 @@ contract('Offer testing', async (accounts) => {
         res = await profileStorage.profile.call(DC_identity);
         assert(initialStakeDC.sub(tokenAmountPerHolder.mul(new BN(3))).eq(res.stake), 'Stake amount incorrect for DC');
         assert((new BN(0)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC');
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should test payOutMultiple function', async () => {
+        // Set up multiple offers to for a single holder
+        const numOffers = new BN(20);
+        const DH_index = 4;
+        const DH_identity = identities[DH_index];
+        const DH_account = accounts[DH_index];
+        const dcProfile = await profileStorage.profile.call(DC_identity);
+        const dhProfile = await profileStorage.profile.call(DH_identity);
+
+        await profileStorage.setStakeReserved(DC_identity, dcProfile.stakeReserved
+            .add(tokenAmountPerHolder.mul(numOffers)));
+        await profileStorage.setStakeReserved(DH_identity, dhProfile.stakeReserved
+            .add(tokenAmountPerHolder.mul(numOffers)));
+
+        const initialStakeDH = await profileStorage.getStake.call(DH_identity);
+        const initialStakeDC = await profileStorage.getStake.call(DC_identity);
+        const initialStakeReservedDH = await profileStorage.getStakeReserved.call(DH_identity);
+        const initialStakeReservedDC = await profileStorage.getStakeReserved.call(DC_identity);
+
+        const promises = [];
+        const offerIds = [];
+        for (let i = 0; i < numOffers; i += 1) {
+            offerIds[i] = `0x00000000000000000000000000000000000000000000000000000000000000${i < 10 ? '0' : ''}${i}`;
+            promises.push(holdingStorage.setHolderStakedAmount(
+                offerIds[i],
+                DH_identity,
+                tokenAmountPerHolder,
+            ));
+            promises.push(holdingStorage.setOfferCreator(
+                offerIds[i],
+                DC_identity,
+            ));
+        }
+        await Promise.all(promises);
+
+        const res = await holding.payOutMultiple(
+            DH_identity,
+            offerIds,
+            { from: DH_account, gas: 4000000 },
+        );
+
+        const finalStakeDH = await profileStorage.getStake.call(DH_identity);
+        const finalStakeDC = await profileStorage.getStake.call(DC_identity);
+        const finalStakeReservedDH = await profileStorage.getStakeReserved.call(DH_identity);
+        const finalStakeReservedDC = await profileStorage.getStakeReserved.call(DC_identity);
+
+        assert(
+            initialStakeDH.add(tokenAmountPerHolder.mul(numOffers)).eq(finalStakeDH),
+            `Stake reserved amount incorrect for DH, got ${finalStakeDH.toString()} but expected ${initialStakeDH.add(tokenAmountPerHolder.mul(numOffers)).toString()}`,
+        );
+        assert(
+            initialStakeDC.sub(tokenAmountPerHolder.mul(numOffers)).eq(finalStakeDC),
+            `Stake reserved amount incorrect for DH, got ${finalStakeDC.toString()} but expected ${initialStakeDC.sub(tokenAmountPerHolder.mul(numOffers)).toString()}`,
+        );
+
+        assert(
+            initialStakeReservedDH
+                .sub(tokenAmountPerHolder.mul(numOffers)).eq(finalStakeReservedDH),
+            `Stake reserved amount incorrect for DH, got ${finalStakeReservedDH.toString()} but expected ${initialStakeReservedDH.sub(tokenAmountPerHolder.mul(numOffers)).toString()}`,
+        );
+        assert(
+            initialStakeReservedDC
+                .sub(tokenAmountPerHolder.mul(numOffers)).eq(finalStakeReservedDC),
+            `Stake reserved amount incorrect for DH, got ${finalStakeReservedDC.toString()} but expected ${initialStakeReservedDC.sub(tokenAmountPerHolder.mul(numOffers)).toString()}`,
+        );
     });
 
     // eslint-disable-next-line no-undef

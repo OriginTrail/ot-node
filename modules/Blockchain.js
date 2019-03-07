@@ -451,9 +451,10 @@ class Blockchain {
     /**
      * Transfers identity to new address.
      * @param {string} - erc725identity
+     * @param {string} - managementWallet
      */
-    transferProfile(erc725identity) {
-        return this.blockchain.transferProfile(erc725identity);
+    transferProfile(erc725identity, managementWallet) {
+        return this.blockchain.transferProfile(erc725identity, managementWallet);
     }
 
     /**
@@ -463,6 +464,20 @@ class Blockchain {
      */
     async isErc725IdentityOld(address) {
         return this.blockchain.isErc725IdentityOld(address);
+    }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        return this.blockchain.payOutMultiple(
+            blockchainIdentity,
+            offerIds,
+        );
     }
 }
 
