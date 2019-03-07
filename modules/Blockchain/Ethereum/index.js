@@ -58,6 +58,13 @@ class Ethereum {
         this.holdingContract = new this.web3.eth
             .Contract(this.holdingContractAbi, this.holdingContractAddress);
 
+        // Old Holding contract data
+        const oldHoldingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding.json');
+        this.oldHoldingContractAddress = await this._getOldHoldingContractAddress();
+        this.oldHoldingContractAbi = JSON.parse(oldHoldingAbiFile);
+        this.oldHoldingContract = new this.web3.eth
+            .Contract(this.oldHoldingContractAbi, this.oldHoldingContractAddress);
+
         // Token contract data
         const tokenAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/token.json');
         this.tokenContractAddress = await this._getTokenContractAddress();
@@ -112,6 +119,15 @@ class Ethereum {
             this.holdingStorageContractAddress,
         );
 
+        // Old Holding storage contract data
+        const oldHoldingStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding-storage.json');
+        this.oldHoldingStorageContractAddress = await this._getOldHoldingStorageContractAddress();
+        this.oldHoldingStorageContractAbi = JSON.parse(oldHoldingStorageAbiFile);
+        this.oldHoldingStorageContract = new this.web3.eth.Contract(
+            this.oldHoldingStorageContractAbi,
+            this.oldHoldingStorageContractAddress,
+        );
+
         // Litigation contract data
         const litigationAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/litigation.json');
         this.litigationContractAddress = await this._getLitigationContractAddress();
@@ -163,6 +179,20 @@ class Ethereum {
             from: this.config.wallet_address,
         });
         this.log.trace(`Holding contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets old Holding contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getOldHoldingContractAddress() {
+        this.log.trace('Asking Hub for old Holding contract address...');
+        const address = await this.hubContract.methods.getContractAddress('OldHolding').call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`Old Holding contract address is ${address}`);
         return address;
     }
 
@@ -251,6 +281,20 @@ class Ethereum {
     }
 
     /**
+     * Gets old Holding storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getOldHoldingStorageContractAddress() {
+        this.log.trace('Asking Hub for old HoldingStorage contract address...');
+        const address = await this.hubContract.methods.getContractAddress('OldHoldingStorage').call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`Old HoldingStorage contract address is ${address}`);
+        return address;
+    }
+
+    /**
      * Gets Litigation contract address from Hub
      * @returns {Promise<any>}
      * @private
@@ -299,7 +343,10 @@ class Ethereum {
      */
     async getRootHash(dataSetId) {
         this.log.trace(`Fetching root hash for data set ${dataSetId}`);
-        return this.holdingStorageContract.methods.fingerprint(dataSetId).call();
+        const rootHash = await this.holdingStorageContract.methods.fingerprint(dataSetId).call();
+        if (rootHash) {
+            return this.oldHoldingStorageContract.methods.fingerprint(dataSetId).call();
+        }
     }
 
     /**
@@ -470,11 +517,18 @@ class Ethereum {
      * @param offerId
      * @returns {Promise}
      */
-    payOut(blockchainIdentity, offerId) {
+    async payOut(blockchainIdentity, offerId) {
+        let contractAddress = this.holdingContractAddress;
+
+        const offer = await this.getOffer(offerId);
+        if (offer == null) {
+            contractAddress = this.oldHoldingContract;
+        }
+
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.holdingContractAddress,
+            to: contractAddress,
         };
         this.log.trace(`payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
         return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', [blockchainIdentity, offerId], options);
@@ -526,7 +580,7 @@ class Ethereum {
      * Finalizes offer on Blockchain
      * @returns {Promise<any>}
      */
-    finalizeOffer(
+    async finalizeOffer(
         blockchainIdentity,
         offerId,
         shift,
@@ -536,10 +590,17 @@ class Ethereum {
         encryptionType,
         holders,
     ) {
+        let contractAddress = this.holdingContractAddress;
+
+        const offer = await this.getOffer(offerId);
+        if (offer == null) {
+            contractAddress = this.oldHoldingContract;
+        }
+
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.holdingContractAddress,
+            to: contractAddress,
         };
 
         this.log.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders})`);
