@@ -1190,31 +1190,6 @@ class Ethereum {
     }
 
     /**
-     * PayOut for multiple offers.
-     * @returns {Promise<any>}
-     */
-    payOutMultiple(
-        blockchainIdentity,
-        offerIds,
-    ) {
-        const gasLimit = offerIds.length * 200000;
-        const options = {
-            gasLimit,
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.holdingContractAddress,
-        };
-        this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
-        return this.transactions.queueTransaction(
-            this.holdingContractAbi, 'payOutMultiple',
-            [
-                blockchainIdentity,
-                offerIds,
-            ],
-            options,
-        );
-    }
-
-    /**
      * Get offer by offer ID
      * @param offerId - Offer ID
      * @return {Promise<any>}
