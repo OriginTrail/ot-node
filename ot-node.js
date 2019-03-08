@@ -41,7 +41,6 @@ const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
-const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 const Update = require('./check-updates');
 
@@ -411,7 +410,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runMigration(blockchain);
+            await this._runMigration();
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -458,28 +457,11 @@ class OTNode {
      * @deprecated
      * @private
      */
-    async _runMigration(blockchain) {
+    async _runMigration() {
         const migrationsStartedMills = Date.now();
         log.info('Initializing code migrations...');
 
-        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
-        const migrationDir = path.join(config.appDataPath, 'migrations');
-        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
-        if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
-
-            try {
-                await migration.run();
-                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
-
-                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
-            } catch (e) {
-                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
-                console.log(e);
-                notifyBugsnag(e);
-                process.exit(1);
-            }
-        }
+        // Note: add migrations here
 
         log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }

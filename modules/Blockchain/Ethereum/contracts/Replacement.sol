@@ -27,9 +27,9 @@ contract Replacement {
     function replaceHolder(bytes32 offerId, address holderIdentity, address litigatorIdentity, uint256 shift,
         bytes confirmation1, bytes confirmation2, bytes confirmation3, address[] replacementHolderIdentity)
     public {
-        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
-        LitigationStorage litigationStorage = LitigationStorage(hub.litigationStorageAddress());
-        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
+        ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
         
         require(holdingStorage.getOfferCreator(offerId) == litigatorIdentity, "Challenger identity not equal to offer creator identity!");
         require(ERC725(litigatorIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2), "Sender does not have action purpose set!");
@@ -51,7 +51,7 @@ contract Replacement {
         require(profileStorage.getStake(replacementHolderIdentity[block.timestamp % 3]).sub(profileStorage.getStakeReserved(replacementHolderIdentity[block.timestamp % 3])) 
             >= holdingStorage.getHolderStakedAmount(offerId, holderIdentity).sub(holdingStorage.getHolderPaidAmount(offerId, holderIdentity)),
             "Replacement holder does not have stake available to take this job!");
-        require(profileStorage.getStake(replacementHolderIdentity[block.timestamp % 3]) >= Profile(hub.profileAddress()).minimalStake(),
+        require(profileStorage.getStake(replacementHolderIdentity[block.timestamp % 3]) >= Profile(hub.getContractAddress("Profile")).minimalStake(),
             "Replacement holder does not have the minimal required stake available to take any new job!");
         
         require(holdingStorage.getHolderStakedAmount(offerId, replacementHolderIdentity[block.timestamp % 3]) == 0, 
@@ -65,8 +65,8 @@ contract Replacement {
 
     function setUpHolders(bytes32 offerId, address holderIdentity, address litigatorIdentity, address replacementHolderIdentity)
     internal {
-        ProfileStorage profileStorage = ProfileStorage(hub.profileStorageAddress());
-        HoldingStorage holdingStorage = HoldingStorage(hub.holdingStorageAddress());
+        ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
 
         holdingStorage.setHolderLitigationEncryptionType(offerId, replacementHolderIdentity, holdingStorage.getHolderLitigationEncryptionType(offerId, holderIdentity));
 

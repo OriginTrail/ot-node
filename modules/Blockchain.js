@@ -481,20 +481,6 @@ class Blockchain {
     }
 
     /**
-     * PayOut for multiple offers.
-     * @returns {Promise<any>}
-     */
-    payOutMultiple(
-        blockchainIdentity,
-        offerIds,
-    ) {
-        return this.blockchain.payOutMultiple(
-            blockchainIdentity,
-            offerIds,
-        );
-    }
-
-    /**
      * Get offer by ID
      * @param offerId - offer ID
      * @return {Promise<*>}
