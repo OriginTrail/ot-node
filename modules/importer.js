@@ -3,6 +3,7 @@ const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const Queue = require('better-queue');
 const graphConverter = require('./Database/graph-converter');
+const Utilities = require('./Utilities');
 
 class Importer {
     constructor(ctx) {
@@ -89,7 +90,7 @@ class Importer {
             jsonDocument,
         } = data;
 
-        let {
+        const {
             vertices,
             edges,
         } = jsonDocument;
@@ -107,12 +108,15 @@ class Importer {
             ImportUtilities.packKeys(vertices, edges, encColor);
         }
 
-        vertices = await Promise.all(vertices.map(async (vertex) => {
-            const inserted = await this.graphStorage.addVertex(vertex);
+        await Promise.all(vertices.map(async (vertex) => {
+            const truncatedVertex = Utilities.copyObject(vertex);
+            delete truncatedVertex.data;
+            const inserted = await this.graphStorage.addVertex(truncatedVertex);
             vertex._key = inserted._key;
             return vertex;
         }));
-        edges = await Promise.all(edges.map(async (edge) => {
+
+        await Promise.all(edges.map(async (edge) => {
             const inserted = await this.graphStorage.addEdge(edge);
             edge._key = inserted._key;
             return edge;
