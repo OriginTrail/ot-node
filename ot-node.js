@@ -42,6 +42,7 @@ const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
+const Update = require('./check-updates');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -283,16 +284,6 @@ class OTNode {
         config.erc725Identity = '';
         Object.seal(config);
 
-        // check for Updates
-        try {
-            log.info('Checking for updates');
-            await Utilities.checkForUpdates(config.autoUpdater);
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
@@ -470,8 +461,7 @@ class OTNode {
         const migrationsStartedMills = Date.now();
         log.info('Initializing code migrations...');
 
-        const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
-        await migrationSequelizeMeta.run();
+        // Note: add migrations here
 
         log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
@@ -566,19 +556,44 @@ class OTNode {
 }
 
 
-console.log(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
-console.log('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
-console.log('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
-console.log('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
-console.log('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
-console.log(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
+log.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
+log.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
+log.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
+log.info('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
+log.info('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
+log.info(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
 
-console.log('======================================================');
-console.log(`             OriginTrail Node v${pjson.version}`);
-console.log('======================================================');
-console.log('');
+log.info('======================================================');
+log.info(`             OriginTrail Node v${pjson.version}`);
+log.info('======================================================');
+log.info('');
 
-const otNode = new OTNode();
-otNode.bootstrap().then(() => {
-    log.info('OT Node started');
-});
+async function checkIfUpdateAvailable() {
+    if (await Update.isUpdateAvailable(config.autoUpdater)) {
+        log.important('Restarting node due to scheduled update.');
+        Update.restartNode();
+        return;
+    }
+
+    setTimeout(checkIfUpdateAvailable, 43200000);
+}
+
+function main() {
+    setTimeout(checkIfUpdateAvailable, 43200000);
+    const otNode = new OTNode();
+    otNode.bootstrap().then(() => {
+        log.info('OT Node started');
+    });
+}
+
+const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
+
+migrationSequelizeMeta.run()
+    .then(() => {
+        Update.update(config.autoUpdater)
+            .then(main)
+            .catch((error) => {
+                log.error(`Failed to check update. ${error}.`);
+                main();
+            });
+    });

@@ -61,6 +61,7 @@ class DCOfferReplacementCompletedCommand extends Command {
 
                 const holder = await models.replicated_data.findOne({
                     where: {
+                        offer_id: offerId,
                         dh_identity: utilities.normalizeHex(chosenHolder),
                     },
                 });
@@ -70,7 +71,7 @@ class DCOfferReplacementCompletedCommand extends Command {
 
                 const startTime = Date.now();
                 const endTime = startTime +
-                    (offer.holding_time_in_minutes * 60 * 1000); // TODO fix end time
+                    (offer.holding_time_in_minutes * 60 * 1000);
                 const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
 
                 const encryptedVertices = importUtilities.immutableEncryptVertices(

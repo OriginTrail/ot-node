@@ -30,6 +30,7 @@ class DHReplacementStartedCommand extends Command {
             if (event) {
                 const {
                     offerId,
+                    holderIdentity,
                     challengerIdentity,
                     litigationRootHash,
                 } = JSON.parse(event.data);
@@ -49,12 +50,12 @@ class DHReplacementStartedCommand extends Command {
                 }
 
                 await this.dhService.handleReplacement(
-                    offerId, challengerIdentity,
+                    offerId, challengerIdentity, holderIdentity,
                     litigationRootHash,
                 );
             }
         } catch (e) {
-            this.logger.error(`Failed to process ReplacementStartedCommand command. ${e}`);
+            this.logger.error(`Failed to process ReplacementStartedCommand command. ${e.message}.\n${e.stack}`);
         }
 
         return Command.repeat();
