@@ -13,7 +13,7 @@ const argv = require('minimist')(process.argv.slice(2));
 
 const defaultConfig = configjson[process.env.NODE_ENV];
 const localConfiguration = rc(pjson.name, defaultConfig);
-const web3 = new Web3(new Web3.providers.HttpProvider(`${localConfiguration.blockchain.rpc_node_host}`));
+const web3 = new Web3();
 
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
@@ -34,6 +34,18 @@ function main() {
     if (fs.existsSync(localConfigPath)) {
         externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
     }
+
+    if (!externalConfig.blockchain || !externalConfig.blockchain.rpc_server_url) {
+        console.error('Please provide a valid RPC server URL.\n' +
+            'Add it to the blockchain section. For example:\n' +
+            '   "blockchain": {\n' +
+            '       "rpc_server_url": "http://your.server.url/"\n' +
+            '   }');
+        process.exit(1);
+        return;
+    }
+
+    web3.setProvider(new Web3.providers.HttpProvider(externalConfig.blockchain.rpc_server_url));
 
     // Check for old env variables for the sake of compatibility.
     if (process.env.NODE_WALLET) {

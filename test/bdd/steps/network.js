@@ -81,8 +81,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             },
             blockchain: {
                 hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_node_host: 'http://localhost', // TODO use from instance
-                rpc_node_port: 7545,
+                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
             },
             network: {
                 // TODO: Connect other if using multiple.
@@ -124,8 +123,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             blockchain: {
                 hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_node_host: 'http://localhost', // TODO use from instance
-                rpc_node_port: 7545,
+                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
             },
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
@@ -569,8 +567,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                 },
                 blockchain: {
                     hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                    rpc_node_host: 'http://localhost', // TODO use from instance
-                    rpc_node_port: 7545,
+                    rpc_server_url: 'http://localhost:7545/', // TODO use from instance
                 },
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',

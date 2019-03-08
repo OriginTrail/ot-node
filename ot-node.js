@@ -84,6 +84,11 @@ try {
         console.error('Please provide a valid management wallet.');
         process.abort();
     }
+
+    if (!config.blockchain.rpc_server_url) {
+        console.error('Please provide a valid RPC server URL.');
+        process.abort();
+    }
 } catch (error) {
     console.error(`Failed to read configuration. ${error}.`);
     console.error(error.stack);
@@ -285,7 +290,7 @@ class OTNode {
         Object.seal(config);
 
         const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+            new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
 
         const appState = {};
         if (config.is_bootstrap_node) {
