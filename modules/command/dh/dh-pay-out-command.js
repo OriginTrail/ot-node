@@ -3,6 +3,8 @@ const Utilities = require('../../Utilities');
 
 const Models = require('../../../models/index');
 
+const DELAY_ON_FAIL_IN_MILLS = 5 * 60 * 1000;
+
 /**
  * Starts token withdrawal operation
  */
@@ -37,6 +39,32 @@ class DhPayOutCommand extends Command {
         await this.blockchain.payOut(blockchainIdentity, offerId);
         this.logger.important(`Payout for offer ${offerId} successfully completed.`);
         await this._printBalances(blockchainIdentity);
+        return Command.empty();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            viaAPI,
+        } = command.data;
+
+        if (!viaAPI) {
+            this.logger.warn(`Rescheduling failed payout for offer ${offerId}. Schedule delay ${DELAY_ON_FAIL_IN_MILLS} milliseconds`);
+            return {
+                commands: [
+                    {
+                        name: 'dhPayOutCommand',
+                        data: command.data,
+                        delay: DELAY_ON_FAIL_IN_MILLS,
+                    },
+                ],
+            };
+        }
         return Command.empty();
     }
 

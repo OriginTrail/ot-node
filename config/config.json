@@ -97,7 +97,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "litigationEnabled": true
   },
   "staging": {
     "identity": null,
@@ -155,7 +156,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x22D17358152d330c7969a116061407927735851e",
+      "hub_contract_address": "0x16d553B9765b6Aa9fE7C45Dfa1a1839fD88DD7bc",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -176,7 +177,7 @@
     "network": {
       "hostname": "127.0.0.1",
       "id": "StagenetV1.0.1",
-      "bootstraps": ["https://104.248.251.93:5278/#7b25c061e394888f7a7fe5d733954d2958dfe510"],
+      "bootstraps": ["https://stagingbs.origintrial.me:5278/#1754b56ce26212eab45bc523c36e1d4bf57ea30e"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 14,
       "identityDifficulty": 12
@@ -197,7 +198,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "litigationEnabled": false
   },
   "stable": {
     "identity": null,
@@ -297,7 +299,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "litigationEnabled": false
   },
   "production": {
     "identity": null,
@@ -400,7 +403,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "litigationEnabled": false
   },
   "mariner": {
     "identity": null,
@@ -503,6 +507,7 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": true
+    "requireApproval": true,
+    "litigationEnabled": false
   }
 }

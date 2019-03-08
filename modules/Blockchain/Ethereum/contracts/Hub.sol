@@ -39,80 +39,42 @@ contract Ownable {
 }
 
 contract Hub is Ownable{
-    address public tokenAddress;
-    address public profileAddress;
-    address public holdingAddress;
-    address public readingAddress;
-    address public approvalAddress;
-
-    address public profileStorageAddress;
-    address public holdingStorageAddress;
-    address public readingStorageAddress;
+    mapping(bytes32 => address) contractAddress;
+    mapping(address => bool) contractList;
 
     event ContractsChanged();
 
-    function setTokenAddress(address newTokenAddress)
+    function setContractAddress(string contractName, address newContractAddress)
     public onlyOwner {
-        tokenAddress = newTokenAddress;
+        bytes32 index = keccak256(abi.encodePacked(contractName));
+
+        if(contractAddress[index] != address(0)) {
+            address oldContractAddress = contractAddress[index];
+            contractList[oldContractAddress] = false;
+        }
+        contractAddress[index] = newContractAddress;
+
+        if(newContractAddress != address(0)){
+            contractList[newContractAddress] = true;
+        }
+
         emit ContractsChanged();
     }
 
-    function setProfileAddress(address newProfileAddress)
-    public onlyOwner {
-        profileAddress = newProfileAddress;
-        emit ContractsChanged();
-    }
-
-    function setHoldingAddress(address newHoldingAddress)
-    public onlyOwner {
-        holdingAddress = newHoldingAddress;
-        emit ContractsChanged();
-    }
-
-    function setReadingAddress(address newReadingAddress)
-    public onlyOwner {
-        readingAddress = newReadingAddress;
-        emit ContractsChanged();
-    }
-
-    function setApprovalAddress(address newApprovalAddress)
-    public onlyOwner {
-        approvalAddress = newApprovalAddress;
-        emit ContractsChanged();
-    }
-
-
-    function setProfileStorageAddress(address newpPofileStorageAddress)
-    public onlyOwner {
-        profileStorageAddress = newpPofileStorageAddress;
-        emit ContractsChanged();
-    }
-
-    function setHoldingStorageAddress(address newHoldingStorageAddress)
-    public onlyOwner {
-        holdingStorageAddress = newHoldingStorageAddress;
-        emit ContractsChanged();
+    function getContractAddress(string contractName)  public view returns(address selectedContractAddress) {
+        bytes32 index = keccak256(abi.encodePacked(contractName));
+        return contractAddress[index];
     }
     
-    function setReadingStorageAddress(address newReadingStorageAddress)
-    public onlyOwner {
-        readingStorageAddress = newReadingStorageAddress;
-        emit ContractsChanged();
+    function isContract(address selectedContractAddress) public view returns (bool) {
+        return contractList[selectedContractAddress];
     }
 
-    function isContract(address sender) 
-    public view returns (bool) {
-        if(sender == owner ||
-           sender == tokenAddress ||
-           sender == profileAddress ||
-           sender == holdingAddress ||
-           sender == readingAddress ||
-           sender == approvalAddress ||
-           sender == profileStorageAddress ||
-           sender == holdingStorageAddress ||
-           sender == readingStorageAddress) {
-            return true;
-        }
-        return false;
+    /**
+    * @dev Legacy function for getting token contract address
+    */
+    function tokenAddress() public view returns(address) {
+        return getContractAddress("Token");
     }
 }
+

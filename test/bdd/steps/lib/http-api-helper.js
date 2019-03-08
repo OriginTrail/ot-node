@@ -462,6 +462,45 @@ async function apiNodeInfo(nodeRpcUrl) {
     });
 }
 
+/**
+ * @typedef {Object} ApiBalanceInfo
+ * @property {Object} profile info about profile balance
+ * @property {string} profile.minimalStake minimal stake
+ * @property {string} profile.reserved reserved
+ * @property {string} profile.staked staked
+ * @property {Object} wallet info about wallet balance
+ * @property {string} wallet.address node's wallet address
+ * @property {string} wallet.ethBalance wallet balance in ethers
+ * @property {string} wallet.tokenBalance wallet balance in tokens
+ */
+
+/**
+ * Fetch api/balance?humanReadable={{humanReadable}}
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {boolean} humanReadable friendly format of response
+ * @return {Promise.<ApiBalanceInfo>}
+ */
+async function apiBalance(nodeRpcUrl, humanReadable) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/balance?humanReadable=${humanReadable}`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
     apiImportContent,
@@ -477,4 +516,5 @@ module.exports = {
     apiConsensus,
     apiTrail,
     apiNodeInfo,
+    apiBalance,
 };

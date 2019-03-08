@@ -9,7 +9,6 @@ const rc = require('rc');
 
 const DCOfferCreateBlockchainCommand = require('../../../../modules/command/dc/dc-offer-create-bc-command');
 const models = require('../../../../models');
-const Storage = require('../../../../modules/Storage');
 const Utilities = require('../../../../modules/Utilities');
 const GraphStorage = require('../../../../modules/Database/GraphStorage');
 
@@ -20,6 +19,8 @@ const defaultConfig = require('../../../../config/config.json').development;
 const pjson = require('../../../../package.json');
 
 const logger = require('../../../../modules/logger');
+
+const testUtilities = require('../../test-utilities');
 
 describe.skip('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
     this.timeout(5000);
@@ -105,8 +106,7 @@ describe.skip('Checks DCOfferCreateBlockchainCommand execute() logic', function 
         selectedDatabase = config.database;
         selectedDatabase.database = databaseName;
 
-        Storage.models = (await models.sequelize.sync()).models;
-        Storage.db = models.sequelize;
+        await testUtilities.recreateDatabase();
 
         // make sure offers table is cleaned up
         await models.offers.destroy({

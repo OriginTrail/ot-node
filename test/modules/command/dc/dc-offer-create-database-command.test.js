@@ -3,14 +3,12 @@ const {
 } = require('mocha');
 const { assert } = require('chai');
 
-const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
 const awilix = require('awilix');
 const rc = require('rc');
 const { Database } = require('arangojs');
 
 const models = require('../../../../models/index');
-const Storage = require('../../../../modules/Storage');
 const Utilities = require('../.././../../modules/Utilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
@@ -21,12 +19,14 @@ const pjson = require('../../../../package.json');
 
 const logger = require('../../../../modules/logger');
 
+const testUtilities = require('../../test-utilities');
+
 describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
     this.timeout(5000);
     let config;
-    let selectedDatabase;
+    let selectedArangoDatabase;
     let graphStorage;
-    let systemDb;
+    let arangoDb;
     let myConfig;
     let myGraphStorage;
     let container;
@@ -36,11 +36,7 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
 
     before('Setup preconditions and call DCOfferCreateDatabaseCommand execute function', async () => {
         config = rc(pjson.name, defaultConfig);
-        selectedDatabase = config.database;
-        selectedDatabase.database = databaseName;
-
-        Storage.models = (await models.sequelize.sync()).models;
-        Storage.db = models.sequelize;
+        await testUtilities.recreateDatabase();
 
         // make sure offers table is cleaned up
 
@@ -49,16 +45,16 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             truncate: true,
         });
 
-        systemDb = new Database();
-        systemDb.useBasicAuth(config.database.username, config.database.password);
+        arangoDb = new Database();
+        arangoDb.useBasicAuth(config.database.username, config.database.password);
 
         // Drop test database if exist.
-        const listOfDatabases = await systemDb.listDatabases();
+        const listOfDatabases = await arangoDb.listDatabases();
         if (listOfDatabases.includes(databaseName)) {
-            await systemDb.dropDatabase(databaseName);
+            await arangoDb.dropDatabase(databaseName);
         }
 
-        await systemDb.createDatabase(
+        await arangoDb.createDatabase(
             databaseName,
             [{
                 username: config.database.username,
@@ -72,7 +68,9 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        graphStorage = new GraphStorage(selectedDatabase, logger);
+        selectedArangoDatabase = config.database;
+        selectedArangoDatabase.database = databaseName;
+        graphStorage = new GraphStorage(selectedArangoDatabase, logger);
 
         container.register({
             logger: awilix.asValue(logger),
@@ -90,6 +88,7 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             data_set_id: dataSetId,
             message: 'Offer is pending',
             status: 'PENDING',
+            global_status: 'PENDING',
         });
 
         myCommand = {
@@ -132,10 +131,10 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
     });
 
     after('Drop DB', async () => {
-        if (systemDb) {
-            const listOfDatabases = await systemDb.listDatabases();
+        if (arangoDb) {
+            const listOfDatabases = await arangoDb.listDatabases();
             if (listOfDatabases.includes(databaseName)) {
-                await systemDb.dropDatabase(databaseName);
+                await arangoDb.dropDatabase(databaseName);
             }
         }
     });
