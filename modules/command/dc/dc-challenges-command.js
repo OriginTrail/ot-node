@@ -75,7 +75,7 @@ class DCChallengesCommand extends Command {
         const challenges = await models.challenges.findAll({
             where: {
                 status: 'PENDING',
-                start_time: { [models.Sequelize.Op.gte]: Date.now() },
+                start_time: { [models.Sequelize.Op.lte]: Date.now() },
             },
         });
 

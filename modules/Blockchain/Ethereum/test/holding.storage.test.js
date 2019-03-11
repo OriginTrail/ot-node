@@ -54,7 +54,7 @@ contract('Holding storage testing', async (accounts) => {
         holdingStorage = await HoldingStorage.deployed();
 
         // Set accounts[0] as holding contract so it can execute functions
-        await hub.setHoldingAddress(accounts[0]);
+        await hub.setContractAddress('Holding', accounts[0]);
 
         DC_wallet = accounts[accounts.length - 1];
     });
@@ -62,7 +62,7 @@ contract('Holding storage testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     after(async () => {
         // Revert Holding contract address in hub contract
-        await hub.setHoldingAddress(holding.address);
+        await hub.setContractAddress('Holding', holding.address);
     });
 
     // eslint-disable-next-line no-undef

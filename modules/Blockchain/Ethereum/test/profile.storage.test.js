@@ -45,13 +45,13 @@ contract('Profile storage testing', async (accounts) => {
         profileStorage = await ProfileStorage.deployed();
 
         // Set accounts[0] as profile contract so it can execute functions
-        await hub.setProfileAddress(accounts[0]);
+        await hub.setContractAddress('Profile', accounts[0]);
     });
 
     // eslint-disable-next-line no-undef
     after(async () => {
         // Revert Holding contract address in hub contract
-        await hub.setProfileAddress(profile.address);
+        await hub.setContractAddress('Profile', profile.address);
     });
 
     // eslint-disable-next-line no-undef

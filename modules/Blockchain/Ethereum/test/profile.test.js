@@ -308,7 +308,7 @@ contract('Profile contract testing', async (accounts) => {
             initialStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
         }
 
-        await hub.setHoldingAddress(accounts[0]);
+        await hub.setContractAddress('Holding', accounts[0]);
 
         const amountToReserve = new BN(100);
         await profileStorage.increaseStakesReserved(
@@ -343,7 +343,7 @@ contract('Profile contract testing', async (accounts) => {
             );
         }
 
-        await hub.setHoldingAddress(holding.address);
+        await hub.setContractAddress('Holding', holding.address);
     });
 
     // eslint-disable-next-line no-undef
@@ -365,7 +365,7 @@ contract('Profile contract testing', async (accounts) => {
             initialStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
         }
 
-        await hub.setHoldingAddress(accounts[0]);
+        await hub.setContractAddress('Holding', accounts[0]);
 
         const amountToRelease = new BN(100);
         for (i = 1; i < 4; i += 1) {
@@ -392,7 +392,7 @@ contract('Profile contract testing', async (accounts) => {
             );
         }
 
-        await hub.setHoldingAddress(holding.address);
+        await hub.setContractAddress('Holding', holding.address);
     });
 
     // eslint-disable-next-line no-undef
@@ -414,7 +414,7 @@ contract('Profile contract testing', async (accounts) => {
             initialStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
         }
 
-        await hub.setHoldingAddress(accounts[0]);
+        await hub.setContractAddress('Holding', accounts[0]);
         const amountToTransfer = new BN(100);
 
         // Execute tested function
@@ -448,7 +448,7 @@ contract('Profile contract testing', async (accounts) => {
             );
         }
 
-        await hub.setHoldingAddress(holding.address);
+        await hub.setContractAddress('Holding', holding.address);
     });
 
     // eslint-disable-next-line no-undef

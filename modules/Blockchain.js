@@ -481,20 +481,6 @@ class Blockchain {
     }
 
     /**
-     * PayOut for multiple offers.
-     * @returns {Promise<any>}
-     */
-    payOutMultiple(
-        blockchainIdentity,
-        offerIds,
-    ) {
-        return this.blockchain.payOutMultiple(
-            blockchainIdentity,
-            offerIds,
-        );
-    }
-
-    /**
      * Get offer by ID
      * @param offerId - offer ID
      * @return {Promise<*>}
@@ -567,6 +553,20 @@ class Blockchain {
      */
     async getLitigationReplacementTask(offerId, holderIdentity) {
         return this.blockchain.getLitigationReplacementTask(offerId, holderIdentity);
+    }
+
+    /**
+     * Get staked amount for the holder
+     */
+    async getHolderStakedAmount(offerId, holderIdentity) {
+        return this.blockchain.getHolderStakedAmount(offerId, holderIdentity);
+    }
+
+    /**
+     * Get paid amount for the holder
+     */
+    async getHolderPaidAmount(offerId, holderIdentity) {
+        return this.blockchain.getHolderPaidAmount(offerId, holderIdentity);
     }
 }
 
