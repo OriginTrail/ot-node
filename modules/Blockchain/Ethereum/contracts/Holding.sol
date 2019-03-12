@@ -108,7 +108,7 @@ contract Holding is Ownable {
         bytes32 h2 = keccak256(abi.encodePacked(holderIdentity[1], task));
         bytes32 h3 = keccak256(abi.encodePacked(holderIdentity[2], task));
 
-        require(h1 < h2 && h2 < h3, "Solution hashes are not sorted!");
+        require(uint256(h1) < uint256(h2) && uint256(h2) < uint256(h3), "Solution hashes are not sorted!");
 
         // Verify task answer
         require(((keccak256(abi.encodePacked(h1, h2, h3)) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1))
