@@ -61,7 +61,7 @@ contract Holding is Ownable {
         uint256 difficulty;
         if(difficultyOverride != 0) difficulty = difficultyOverride;
         else {
-            if(logs2(ProfileStorage(hub.profileStorageAddress()).activeNodes()) <= 4) difficulty = 0;
+            if(logs2(ProfileStorage(hub.profileStorageAddress()).activeNodes()) <= 4) difficulty = 1;
             else {
                 difficulty = 4 + (((logs2(ProfileStorage(hub.profileStorageAddress()).activeNodes()) - 4) * 10000) / 13219);
             }
