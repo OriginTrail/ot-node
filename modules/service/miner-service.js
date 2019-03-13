@@ -2,8 +2,6 @@ const { fork } = require('child_process');
 const Models = require('../../models/index');
 const { MinerError } = require('../errors');
 
-const DEFAULT_DIFFICULTY = 1;
-
 class MinerService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -26,7 +24,7 @@ class MinerService {
             forked.send({
                 offerId,
                 wallets,
-                difficulty: DEFAULT_DIFFICULTY, // TODO take from configuration
+                difficulty,
                 task,
                 type: 'TASK',
             });
