@@ -50,11 +50,20 @@ function _findSolution(wallets, candidates, i, k, task) {
     }
 
     let j = 0;
+    let n = wallets.length - 2;
+
     if (i > 0) {
         j = candidates[i - 1] + 1;
+
+        if (i === 1) {
+            n += 1;
+        } else {
+            n += 2;
+        }
     }
 
-    for (; j < (wallets.length - k) + 3; j += 1) {
+
+    for (; j < n; j += 1) {
         candidates[i] = j;
         const result = _findSolution(wallets, candidates, i + 1, k, task);
         if (result) {
@@ -72,7 +81,7 @@ function _findSolution(wallets, candidates, i, k, task) {
  * @private
  */
 function _solve(wallets, task) {
-    return _findSolution(wallets, [], 0, 3, task, 0);
+    return _findSolution(wallets, [], 0, 3, task);
 }
 
 /**
