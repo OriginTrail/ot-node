@@ -174,10 +174,34 @@ contract('Offer testing', async (accounts) => {
         offerId = res.logs[0].args.offerId;
 
         const task = await holdingStorage.getOfferTask.call(offerId);
-        const solution = await util.keccakAddressAddressAddress.call(
-            identities[0],
-            identities[1],
-            identities[2],
+        console.log(`Task created: ${task}`);
+
+        const hash1 = await util.keccakAddressBytes(identities[0], task);
+        const hash2 = await util.keccakAddressBytes(identities[1], task);
+        const hash3 = await util.keccakAddressBytes(identities[2], task);
+
+        const sortedIdentities = [
+            {
+                identity: identities[0],
+                privateKey: privateKeys[0],
+                hash: hash1,
+            },
+            {
+                identity: identities[1],
+                privateKey: privateKeys[1],
+                hash: hash2,
+            },
+            {
+                identity: identities[2],
+                privateKey: privateKeys[2],
+                hash: hash3,
+            },
+        ].sort((x, y) => x.hash.localeCompare(y.hash));
+
+        const solution = await util.keccakBytesBytesBytes.call(
+            sortedIdentities[0].hash,
+            sortedIdentities[1].hash,
+            sortedIdentities[2].hash,
         );
 
         for (var i = 65; i >= 2; i -= 1) {
@@ -192,14 +216,17 @@ contract('Offer testing', async (accounts) => {
         var hashes = [];
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            hashes[i] = await util.keccakBytesAddress.call(offerId, identities[i]);
+            hashes[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
         }
 
         // Getting confirmations
         var confimations = [];
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            confimations[i] = await web3.eth.accounts.sign(hashes[i], privateKeys[i]);
+            confimations[i] = await web3.eth.accounts.sign(
+                hashes[i],
+                sortedIdentities[i].privateKey,
+            );
         }
 
         res = await holding.finalizeOffer(
@@ -210,7 +237,11 @@ contract('Offer testing', async (accounts) => {
             confimations[1].signature,
             confimations[2].signature,
             [new BN(0), new BN(1), new BN(2)],
-            [identities[0], identities[1], identities[2]],
+            [
+                sortedIdentities[0].identity,
+                sortedIdentities[1].identity,
+                sortedIdentities[2].identity,
+            ],
             { from: DC_wallet },
         );
         const finalizeOfferGasUsage = res.receipt.gasUsed;
@@ -218,7 +249,7 @@ contract('Offer testing', async (accounts) => {
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            res = await profileStorage.profile.call(identities[i]);
+            res = await profileStorage.profile.call(sortedIdentities[i].identity);
             assert(tokenAmountPerHolder.eq(res.stakeReserved), `Reserved stake amount incorrect for account ${i}!`);
         }
         res = await profileStorage.profile.call(DC_identity);
@@ -226,7 +257,7 @@ contract('Offer testing', async (accounts) => {
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            res = await holdingStorage.holder.call(offerId, identities[i]);
+            res = await holdingStorage.holder.call(offerId, sortedIdentities[i].identity);
 
             assert(tokenAmountPerHolder.eq(res.stakedAmount), 'Token amount not matching!');
             assert.equal(res.litigationEncryptionType, i, 'Red litigation hash not matching!');
@@ -234,7 +265,7 @@ contract('Offer testing', async (accounts) => {
 
         for (i = 0; i < confimations.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            res = await profileStorage.getStakeReserved.call(identities[i]);
+            res = await profileStorage.getStakeReserved.call(sortedIdentities[i].identity);
             assert(tokenAmountPerHolder.eq(res), 'Tokens reserved not matching');
         }
         res = await profileStorage.getStakeReserved.call(DC_identity);
