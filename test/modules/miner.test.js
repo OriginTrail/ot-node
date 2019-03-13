@@ -105,7 +105,7 @@ describe('PoW MinerTest, generating random wallets and trying to find task solut
         const hashes = wallets.map(w => abi.soliditySHA3(['address', 'uint256'], [w, task]).toString('hex')).sort((h1, h2) => h1.localeCompare(h2));
         const realHash = abi.soliditySHA3(['uint256', 'uint256', 'uint256'], hashes.map(h => new BN(h, 16))).toString('hex');
 
-        const difficulty = 0;
+        const difficulty = 1;
 
         const res = miner.solve(wallets, task, difficulty);
 
