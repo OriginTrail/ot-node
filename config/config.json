@@ -355,7 +355,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x77659a327FEC19751a241143a67118Ab54F6F57B",
+      "hub_contract_address": "0xE2726Bc7c82d45601eF68DB9EED92af18D0C4E0f",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -375,20 +375,21 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "Staging",
+      "id": "TestnetV2.0.1b",
       "bootstraps": [
-        "https://104.248.251.93:5278/#7b25c061e394888f7a7fe5d733954d2958dfe510"
+        "https://46.101.233.127:5278/#41d7357b322ca75d1187b3163b510ff704e9a040",
+        "https://82.196.6.215:5278/#9e7f1ec47d0da65b9f2e004510ae366519290dff"
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
-      "releaseStage": "staging"
+      "releaseStage": "testnet"
     },
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
-      "branch": "feature/staging-v2"
+      "branch": "master"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
