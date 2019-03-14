@@ -104,9 +104,17 @@ contract Holding is Ownable {
         require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[1]))), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
         require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
+        bytes32[3] memory hashes;
+
+        hashes[0] = keccak256(abi.encodePacked(holderIdentity[0], holdingStorage.getOfferTask(bytes32(offerId))));
+        hashes[1] = keccak256(abi.encodePacked(holderIdentity[1], holdingStorage.getOfferTask(bytes32(offerId))));
+        hashes[2] = keccak256(abi.encodePacked(holderIdentity[2], holdingStorage.getOfferTask(bytes32(offerId))));
+
+        require(uint256(hashes[0]) < uint256(hashes[1]) && uint256(hashes[1]) < uint256(hashes[2]), "Solution hashes are not sorted!");
+
         // Verify task answer
-        require(((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1))
-        == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
+        require(((keccak256(abi.encodePacked(hashes[0], hashes[1], hashes[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1))
+            == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
 
         // Secure funds from all parties
         reserveTokens(
@@ -186,6 +194,8 @@ contract Holding is Ownable {
         require(holdingStorage.getOfferStartTime(bytes32(offerId)) +
             holdingStorage.getOfferHoldingTimeInMinutes(bytes32(offerId)).mul(60) < block.timestamp,
             "Holding time not yet expired!");
+
+        require(holdingStorage.getHolderPaidAmount(bytes32(offerId), identity) == 0, "Holder already paid out for this offer!");
 
         // Release tokens staked by holder and transfer tokens from data creator to holder
         Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
