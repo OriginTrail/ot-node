@@ -195,6 +195,8 @@ contract Holding is Ownable {
             holdingStorage.getOfferHoldingTimeInMinutes(bytes32(offerId)).mul(60) < block.timestamp,
             "Holding time not yet expired!");
 
+        require(holdingStorage.getHolderPaidAmount(bytes32(offerId), identity) == 0, "Holder already paid out for this offer!");
+
         // Release tokens staked by holder and transfer tokens from data creator to holder
         Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
         Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
