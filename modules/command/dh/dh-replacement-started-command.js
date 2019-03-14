@@ -69,7 +69,6 @@ class DHReplacementStartedCommand extends Command {
      */
     async _checkIfMineReplacement(offerId) {
         const events = await models.events.findAll({
-            limit: 1,
             where: {
                 event: 'LitigationCompleted',
                 finished: 0,
