@@ -344,6 +344,214 @@ contract('Offer testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
+    it('Should test paid amount assertion for holding', async () => {
+        let res = await holding.createOffer(
+            DC_identity,
+            dataSetId,
+            dataRootHash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
+            dcNodeId,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSetSizeInBytes,
+            litigationIntervalInMinutes,
+            { from: DC_wallet },
+        );
+
+        // eslint-disable-next-line prefer-destructuring
+        offerId = res.logs[0].args.offerId;
+
+        let task = await holdingStorage.getOfferTask.call(offerId);
+
+        let hash1 = await util.keccakAddressBytes(identities[0], task);
+        let hash2 = await util.keccakAddressBytes(identities[1], task);
+        let hash3 = await util.keccakAddressBytes(identities[2], task);
+
+        let sortedIdentities = [
+            {
+                identity: identities[0],
+                privateKey: privateKeys[0],
+                hash: hash1,
+            },
+            {
+                identity: identities[1],
+                privateKey: privateKeys[1],
+                hash: hash2,
+            },
+            {
+                identity: identities[2],
+                privateKey: privateKeys[2],
+                hash: hash3,
+            },
+        ].sort((x, y) => x.hash.localeCompare(y.hash));
+
+        let solution = await util.keccakBytesBytesBytes.call(
+            sortedIdentities[0].hash,
+            sortedIdentities[1].hash,
+            sortedIdentities[2].hash,
+        );
+
+        for (var i = 65; i >= 2; i -= 1) {
+            if (task.charAt(task.length - 1) === solution.charAt(i)) break;
+        }
+        if (i === 2) {
+            assert(false, 'Could not find solution for offer challenge!');
+        }
+        let shift = 65 - i;
+
+        // Getting hashes
+        var hashes = [];
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            hashes[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+        }
+
+        // Getting confirmations
+        var confimations = [];
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            confimations[i] = await web3.eth.accounts.sign(
+                hashes[i],
+                sortedIdentities[i].privateKey,
+            );
+        }
+
+        res = await holding.finalizeOffer(
+            DC_identity,
+            offerId,
+            shift,
+            confimations[0].signature,
+            confimations[1].signature,
+            confimations[2].signature,
+            [new BN(0), new BN(1), new BN(2)],
+            [
+                sortedIdentities[0].identity,
+                sortedIdentities[1].identity,
+                sortedIdentities[2].identity,
+            ],
+            { from: DC_wallet },
+        );
+
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(holdingTimeInMinutes.addn(1).muln(60));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+
+        res = await holding.createOffer(
+            DC_identity,
+            dataSetId,
+            dataRootHash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
+            dcNodeId,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSetSizeInBytes,
+            litigationIntervalInMinutes,
+            { from: DC_wallet },
+        );
+
+        // eslint-disable-next-line prefer-destructuring
+        offerId = res.logs[0].args.offerId;
+
+        task = await holdingStorage.getOfferTask.call(offerId);
+
+        hash1 = await util.keccakAddressBytes(identities[0], task);
+        hash2 = await util.keccakAddressBytes(identities[1], task);
+        hash3 = await util.keccakAddressBytes(identities[2], task);
+
+        sortedIdentities = [
+            {
+                identity: identities[0],
+                privateKey: privateKeys[0],
+                hash: hash1,
+            },
+            {
+                identity: identities[1],
+                privateKey: privateKeys[1],
+                hash: hash2,
+            },
+            {
+                identity: identities[2],
+                privateKey: privateKeys[2],
+                hash: hash3,
+            },
+        ].sort((x, y) => x.hash.localeCompare(y.hash));
+
+        solution = await util.keccakBytesBytesBytes.call(
+            sortedIdentities[0].hash,
+            sortedIdentities[1].hash,
+            sortedIdentities[2].hash,
+        );
+
+        for (i = 65; i >= 2; i -= 1) {
+            if (task.charAt(task.length - 1) === solution.charAt(i)) break;
+        }
+        if (i === 2) {
+            assert(false, 'Could not find solution for offer challenge!');
+        }
+        shift = 65 - i;
+
+        // Getting hashes
+        hashes = [];
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            hashes[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+        }
+
+        // Getting confirmations
+        confimations = [];
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            confimations[i] = await web3.eth.accounts.sign(
+                hashes[i],
+                sortedIdentities[i].privateKey,
+            );
+        }
+
+        res = await holding.finalizeOffer(
+            DC_identity,
+            offerId,
+            shift,
+            confimations[0].signature,
+            confimations[1].signature,
+            confimations[2].signature,
+            [new BN(0), new BN(1), new BN(2)],
+            [
+                sortedIdentities[0].identity,
+                sortedIdentities[1].identity,
+                sortedIdentities[2].identity,
+            ],
+            { from: DC_wallet },
+        );
+
+        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(holdingTimeInMinutes.addn(1).muln(60));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+
+        var initialStake = [];
+        const promises = [];
+        for (i = 0; i < 3; i += 1) {
+            promises[i] = profileStorage.getStake.call(identities[i]);
+        }
+        initialStake = await Promise.all(promises);
+        res = await profileStorage.profile.call(DC_identity);
+        const initialStakeDC = res.stake;
+
+        await holding.payOut(identities[0], offerId, { from: accounts[0] });
+        errored = false;
+
+        try {
+            await holding.payOut(identities[0], offerId, { from: accounts[0] });
+        } catch (error) {
+            errored = true;
+        }
+        assert(errored === true, 'Second payOut function did not fail!');
+    });
+
+    // eslint-disable-next-line no-undef
     it('Should test difficulty override', async () => {
         let res = await holdingStorage.getDifficultyOverride.call();
         assert(
