@@ -135,7 +135,7 @@ class AutoUpdate {
                 log.warn(`Starting downloading: ${name}`);
             });
             autoupdater.on('download.progress', (name, perc) => {
-                process.stdout.write(`Downloading ${perc}% \x1B[0G`);
+                // skip logging for now
             });
             autoupdater.on('download.end', (name) => {
                 log.warn(`Downloaded ${name}`);
