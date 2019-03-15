@@ -43,9 +43,8 @@ contract Replacement {
         require(ERC725(replacementHolderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(replacementHolderIdentity[0]))), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
         require(ERC725(replacementHolderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(replacementHolderIdentity[1]))), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
         require(ERC725(replacementHolderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(replacementHolderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
-        
-        // Verify task answer
-        require(((keccak256(abi.encodePacked(replacementHolderIdentity[0], replacementHolderIdentity[1], replacementHolderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * litigationStorage.getLitigationReplacementDifficulty(bytes32(offerId), holderIdentity))) - 1)) == litigationStorage.getLitigationReplacementTask(bytes32(offerId), holderIdentity), "Submitted identities do not answer the task correctly!");
+
+        checkTask(offerId, replacementHolderIdentity, holderIdentity, shift);
 
         // Set new holders
         require(profileStorage.getStake(replacementHolderIdentity[block.timestamp % 3]).sub(profileStorage.getStakeReserved(replacementHolderIdentity[block.timestamp % 3])) 
@@ -61,6 +60,24 @@ contract Replacement {
         // Set litigation status
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
         emit ReplacementCompleted(offerId, litigatorIdentity, replacementHolderIdentity[block.timestamp % 3]);
+    }
+
+    function checkTask(bytes32 offerId, address[] replacementHolderIdentity, address holderIdentity, uint256 shift)
+    internal {
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
+        ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
+
+        bytes32[3] memory hashes;
+
+        hashes[0] = keccak256(abi.encodePacked(replacementHolderIdentity[0], litigationStorage.getLitigationReplacementTask(bytes32(offerId), holderIdentity)));
+        hashes[1] = keccak256(abi.encodePacked(replacementHolderIdentity[1], litigationStorage.getLitigationReplacementTask(bytes32(offerId), holderIdentity)));
+        hashes[2] = keccak256(abi.encodePacked(replacementHolderIdentity[2], litigationStorage.getLitigationReplacementTask(bytes32(offerId), holderIdentity)));
+
+        require(uint256(hashes[0]) < uint256(hashes[1]) && uint256(hashes[1]) < uint256(hashes[2]), "Solution hashes are not sorted!");
+
+        // Verify task answer
+        require(((keccak256(abi.encodePacked(hashes[0], hashes[1], hashes[2])) >> (shift * 4)) & bytes32((2 ** (4 * litigationStorage.getLitigationReplacementDifficulty(bytes32(offerId), holderIdentity))) - 1)) == litigationStorage.getLitigationReplacementTask(bytes32(offerId), holderIdentity), "Submitted identities do not answer the task correctly!");
     }
 
     function setUpHolders(bytes32 offerId, address holderIdentity, address litigatorIdentity, address replacementHolderIdentity)

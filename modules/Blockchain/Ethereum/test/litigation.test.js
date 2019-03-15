@@ -202,11 +202,35 @@ contract('Litigation testing', async (accounts) => {
         // eslint-disable-next-line prefer-destructuring
         offerId = res.logs[0].args.offerId;
         const task = await holdingStorage.getOfferTask.call(offerId);
-        const solution = await util.keccakAddressAddressAddress.call(
-            identities[0],
-            identities[1],
-            identities[2],
+
+        const hash1 = await util.keccakAddressBytes(identities[0], task);
+        const hash2 = await util.keccakAddressBytes(identities[1], task);
+        const hash3 = await util.keccakAddressBytes(identities[2], task);
+
+        const sortedIdentities = [
+            {
+                identity: identities[0],
+                privateKey: privateKeys[0],
+                hash: hash1,
+            },
+            {
+                identity: identities[1],
+                privateKey: privateKeys[1],
+                hash: hash2,
+            },
+            {
+                identity: identities[2],
+                privateKey: privateKeys[2],
+                hash: hash3,
+            },
+        ].sort((x, y) => x.hash.localeCompare(y.hash));
+
+        const solution = await util.keccakBytesBytesBytes.call(
+            sortedIdentities[0].hash,
+            sortedIdentities[1].hash,
+            sortedIdentities[2].hash,
         );
+
         // Calculate task solution
         for (var i = 65; i >= 2; i -= 1) {
             if (task.charAt(task.length - 1) === solution.charAt(i)) break;
@@ -221,7 +245,7 @@ contract('Litigation testing', async (accounts) => {
         promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await util.keccakBytesAddress.call(offerId, identities[i]);
+            promises[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
         }
         confirmations = await Promise.all(promises);
 
@@ -229,7 +253,10 @@ contract('Litigation testing', async (accounts) => {
         promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await web3.eth.accounts.sign(confirmations[i], privateKeys[i]);
+            promises[i] = await web3.eth.accounts.sign(
+                confirmations[i],
+                sortedIdentities[i].privateKey,
+            );
         }
         const signedConfirmations = await Promise.all(promises);
 
@@ -241,7 +268,11 @@ contract('Litigation testing', async (accounts) => {
             signedConfirmations[1].signature,
             signedConfirmations[2].signature,
             [new BN(2), new BN(2), new BN(2)],
-            [identities[0], identities[1], identities[2]],
+            [
+                sortedIdentities[0].identity,
+                sortedIdentities[1].identity,
+                sortedIdentities[2].identity,
+            ],
             { from: DC_wallet },
         );
     });
@@ -323,26 +354,29 @@ contract('Litigation testing', async (accounts) => {
             ` Got ${res.toString()} but expected ${tokenAmountPerHolder.divn(2).toString()}`,
         );
 
-        const task = await litigationStorage.litigation.call(offerId, DH_identity);
+        const task = (await litigationStorage.litigation.call(
+            offerId,
+            DH_identity,
+        )).replacementTask;
 
-        const hash1 = await util.keccakAddressBytes(identities[0], task);
-        const hash2 = await util.keccakAddressBytes(identities[1], task);
-        const hash3 = await util.keccakAddressBytes(identities[2], task);
+        const hash1 = await util.keccakAddressBytes(identities[3], task);
+        const hash2 = await util.keccakAddressBytes(identities[4], task);
+        const hash3 = await util.keccakAddressBytes(identities[5], task);
 
         const sortedIdentities = [
             {
-                identity: identities[0],
-                privateKey: privateKeys[0],
+                identity: identities[3],
+                privateKey: privateKeys[3],
                 hash: hash1,
             },
             {
-                identity: identities[1],
-                privateKey: privateKeys[1],
+                identity: identities[4],
+                privateKey: privateKeys[4],
                 hash: hash2,
             },
             {
-                identity: identities[2],
-                privateKey: privateKeys[2],
+                identity: identities[5],
+                privateKey: privateKeys[5],
                 hash: hash3,
             },
         ].sort((x, y) => x.hash.localeCompare(y.hash));
@@ -356,7 +390,7 @@ contract('Litigation testing', async (accounts) => {
         let i = 0;
         // Calculate task solution
         for (i = 65; i >= 2; i -= 1) {
-            if (task.replacementTask.charAt(task.replacementTask.length - 1)
+            if (task.charAt(task.length - 1)
                 === solution.charAt(i)) break;
         }
         if (i === 2) {
@@ -367,7 +401,7 @@ contract('Litigation testing', async (accounts) => {
         // Calculating confirmations to be signed by DH's
         var confirmations = [];
         let promises = [];
-        for (let i = 3; i < 6; i += 1) {
+        for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             promises[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
         }
@@ -375,7 +409,7 @@ contract('Litigation testing', async (accounts) => {
 
         // Signing calculated confirmations
         promises = [];
-        for (let i = 3; i < 6; i += 1) {
+        for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             promises[i] = await web3.eth.accounts.sign(
                 confirmations[i],
@@ -389,9 +423,9 @@ contract('Litigation testing', async (accounts) => {
             DH_identity,
             DC_identity,
             shift,
-            signedConfirmations[3].signature,
-            signedConfirmations[4].signature,
-            signedConfirmations[5].signature,
+            signedConfirmations[0].signature,
+            signedConfirmations[1].signature,
+            signedConfirmations[2].signature,
             [
                 sortedIdentities[0].identity,
                 sortedIdentities[1].identity,
@@ -620,17 +654,43 @@ contract('Litigation testing', async (accounts) => {
         expect(litigationStruct.status.toString()).to.equal(litigationStatus.replacing);
 
         // Start replacement.
-        const task = await litigationStorage.litigation.call(offerId, identities[0]);
-        const solution = await util.keccakAddressAddressAddress.call(
-            identities[3],
-            identities[4],
-            identities[5],
+        const task = (await litigationStorage.litigation.call(
+            offerId,
+            DH_identity,
+        )).replacementTask;
+
+        const hash1 = await util.keccakAddressBytes(identities[3], task);
+        const hash2 = await util.keccakAddressBytes(identities[4], task);
+        const hash3 = await util.keccakAddressBytes(identities[5], task);
+
+        const sortedIdentities = [
+            {
+                identity: identities[3],
+                privateKey: privateKeys[3],
+                hash: hash1,
+            },
+            {
+                identity: identities[4],
+                privateKey: privateKeys[4],
+                hash: hash2,
+            },
+            {
+                identity: identities[5],
+                privateKey: privateKeys[5],
+                hash: hash3,
+            },
+        ].sort((x, y) => x.hash.localeCompare(y.hash));
+
+        const solution = await util.keccakBytesBytesBytes.call(
+            sortedIdentities[0].hash,
+            sortedIdentities[1].hash,
+            sortedIdentities[2].hash,
         );
 
         // Calculate task solution
         let i;
         for (i = 65; i >= 2; i -= 1) {
-            if (task.replacementTask.charAt(task.replacementTask.length - 1)
+            if (task.charAt(task.length - 1)
                     === solution.charAt(i)) {
                 break;
             }
@@ -640,38 +700,40 @@ contract('Litigation testing', async (accounts) => {
 
         // Calculating confirmations to be signed by DHs
         let promises = [];
-        for (let i = 3; i < 6; i += 1) {
+        for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = util.keccakBytesAddress.call(offerId, identities[i]);
+            promises[i] = util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
         }
         const confirmations = await Promise.all(promises);
 
         // Signing calculated confirmations
         promises = [];
-        for (let i = 3; i < 6; i += 1) {
+        for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = web3.eth.accounts.sign(confirmations[i], privateKeys[i]);
+            promises[i] = web3.eth.accounts.sign(confirmations[i], sortedIdentities[i].privateKey);
         }
         const signedConfirmations = await Promise.all(promises);
 
-        const replacementHolderIdentities = [
-            identities[3],
-            identities[4],
-            identities[5],
-        ];
         await replacement.replaceHolder(
             offerId,
             identities[0],
             DC_identity,
             shift,
-            signedConfirmations[3].signature,
-            signedConfirmations[4].signature,
-            signedConfirmations[5].signature,
-            replacementHolderIdentities,
+            signedConfirmations[0].signature,
+            signedConfirmations[1].signature,
+            signedConfirmations[2].signature,
+            [
+                sortedIdentities[0].identity,
+                sortedIdentities[1].identity,
+                sortedIdentities[2].identity,
+            ],
             { from: DC_wallet },
         );
 
-        litigationStruct = await litigationStorage.litigation.call(offerId, identities[0]);
+        litigationStruct = await litigationStorage.litigation.call(
+            offerId,
+            identities[0],
+        );
         expect(litigationStruct.status.toString()).to.equal(litigationStatus.replaced);
     });
 });
