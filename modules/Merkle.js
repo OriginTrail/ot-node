@@ -1,5 +1,6 @@
 const abi = require('ethereumjs-abi');
 const BN = require('bn.js');
+const Utilities = require('./Utilities');
 
 class MerkleTree {
     constructor(leaves) {
@@ -8,9 +9,10 @@ class MerkleTree {
 
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
+
             const hash = abi.soliditySHA3(
                 ['bytes32', 'uint256'],
-                [new BN(Buffer.from(leaves[i], 'utf8').toString('hex'), 16), i],
+                [leaves[i], i],
             ).toString('hex');
 
             leavesHashes.push(hash);
@@ -27,13 +29,19 @@ class MerkleTree {
                 if (i + 1 < currentLevel.length) {
                     const hash = abi.soliditySHA3(
                         ['bytes32', 'bytes32'],
-                        [new BN(currentLevel[i], 16), new BN(currentLevel[i + 1], 16)],
+                        [
+                            Utilities.normalizeHex(currentLevel[i]),
+                            Utilities.normalizeHex(currentLevel[i + 1]),
+                        ],
                     ).toString('hex');
                     nextLevel.push(hash);
                 } else {
                     const hash = abi.soliditySHA3(
                         ['bytes32', 'bytes32'],
-                        [new BN(currentLevel[i], 16), new BN(currentLevel[i], 16)],
+                        [
+                            Utilities.normalizeHex(currentLevel[i]),
+                            Utilities.normalizeHex(currentLevel[i]),
+                        ],
                     ).toString('hex');
                     nextLevel.push(hash);
                 }
@@ -78,7 +86,10 @@ class MerkleTree {
     verifyProof(proof, block, i) {
         let h = abi.soliditySHA3(
             ['bytes32', 'uint256'],
-            [new BN(Buffer.from(block, 'utf8').toString('hex'), 16), i],
+            [
+                Utilities.normalizeHex(Buffer.from(block, 'utf8').toString('hex')),
+                i,
+            ],
         ).toString('hex');
 
         let j = this.levels.length - 1;
@@ -90,12 +101,17 @@ class MerkleTree {
             if (r % 2 === 0) {
                 h = abi.soliditySHA3(
                     ['bytes32', 'bytes32'],
-                    [new BN(h, 16), new BN(proof[k], 16)],
+                    [
+                        Utilities.normalizeHex(h),
+                        Utilities.normalizeHex(proof[k]),
+                    ],
                 ).toString('hex');
             } else {
                 h = abi.soliditySHA3(
                     ['bytes32', 'bytes32'],
-                    [new BN(proof[k], 16), new BN(h, 16)],
+                    [
+                        Utilities.normalizeHex(proof[k]),
+                        Utilities.normalizeHex(h)],
                 ).toString('hex');
             }
 
@@ -104,6 +120,8 @@ class MerkleTree {
             j -= 1;
         }
 
+        console.log(h);
+        console.log(this.rootHash);
         return h === this.rootHash;
     }
 }
