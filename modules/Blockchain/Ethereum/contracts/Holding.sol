@@ -215,8 +215,6 @@ contract Holding is Ownable {
         // Verify holder
         require(holdingStorage.getHolderStakedAmount(bytes32(offerId), identity) > 0, "Sender is not holding this data set!");
 
-        require(holdingStorage.getHolderPaidAmount(bytes32(offerId), identity) == 0, "Holder already paid out for this offer!");
-
         // Calculate amount to send
         uint256 amountToTransfer = holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId));
         // Multiply the tokenAmountPerHolder by the time the the holder held the data
