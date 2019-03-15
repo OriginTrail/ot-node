@@ -9,7 +9,6 @@ class MerkleTree {
 
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
-
             const hash = abi.soliditySHA3(
                 ['bytes32', 'uint256'],
                 [leaves[i], i],
@@ -120,8 +119,6 @@ class MerkleTree {
             j -= 1;
         }
 
-        console.log(h);
-        console.log(this.rootHash);
         return h === this.rootHash;
     }
 }
