@@ -324,10 +324,33 @@ contract('Litigation testing', async (accounts) => {
         );
 
         const task = await litigationStorage.litigation.call(offerId, DH_identity);
-        const solution = await util.keccakAddressAddressAddress.call(
-            identities[3],
-            identities[4],
-            identities[5],
+
+        const hash1 = await util.keccakAddressBytes(identities[0], task);
+        const hash2 = await util.keccakAddressBytes(identities[1], task);
+        const hash3 = await util.keccakAddressBytes(identities[2], task);
+
+        const sortedIdentities = [
+            {
+                identity: identities[0],
+                privateKey: privateKeys[0],
+                hash: hash1,
+            },
+            {
+                identity: identities[1],
+                privateKey: privateKeys[1],
+                hash: hash2,
+            },
+            {
+                identity: identities[2],
+                privateKey: privateKeys[2],
+                hash: hash3,
+            },
+        ].sort((x, y) => x.hash.localeCompare(y.hash));
+
+        const solution = await util.keccakBytesBytesBytes.call(
+            sortedIdentities[0].hash,
+            sortedIdentities[1].hash,
+            sortedIdentities[2].hash,
         );
 
         let i = 0;
@@ -346,7 +369,7 @@ contract('Litigation testing', async (accounts) => {
         let promises = [];
         for (let i = 3; i < 6; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await util.keccakBytesAddress.call(offerId, identities[i]);
+            promises[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
         }
         confirmations = await Promise.all(promises);
 
@@ -354,15 +377,12 @@ contract('Litigation testing', async (accounts) => {
         promises = [];
         for (let i = 3; i < 6; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await web3.eth.accounts.sign(confirmations[i], privateKeys[i]);
+            promises[i] = await web3.eth.accounts.sign(
+                confirmations[i],
+                sortedIdentities[i].privateKey,
+            );
         }
         const signedConfirmations = await Promise.all(promises);
-
-        const replacementHolderIdentities = [
-            identities[3],
-            identities[4],
-            identities[5],
-        ];
 
         res = await replacement.replaceHolder(
             offerId,
@@ -372,7 +392,11 @@ contract('Litigation testing', async (accounts) => {
             signedConfirmations[3].signature,
             signedConfirmations[4].signature,
             signedConfirmations[5].signature,
-            replacementHolderIdentities,
+            [
+                sortedIdentities[0].identity,
+                sortedIdentities[1].identity,
+                sortedIdentities[2].identity,
+            ],
             { from: DC_wallet },
         );
 
