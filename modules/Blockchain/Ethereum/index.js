@@ -506,7 +506,7 @@ class Ethereum {
             [
                 importId,
                 dhWallet,
-                proofData,
+                Utilities.normalizeHex(Buffer.from(proofData, 'utf8').toString('hex')),
             ],
             options,
         );
@@ -1258,7 +1258,7 @@ class Ethereum {
         this.log.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi, 'completeLitigation',
-            [offerId, holderIdentity, challengerIdentity, proofData], options,
+            [offerId, holderIdentity, challengerIdentity, Utilities.normalizeHex(Buffer.from(proofData, 'utf8').toString('hex'))], options,
         );
     }
 
