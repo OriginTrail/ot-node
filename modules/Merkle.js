@@ -11,7 +11,7 @@ class MerkleTree {
         for (let i = 0; i < leaves.length; i += 1) {
             const hash = abi.soliditySHA3(
                 ['bytes32', 'uint256'],
-                [leaves[i], i],
+                [Utilities.normalizehex(Buffer.from(leaves[i], 'utf8').toString('hex')), i],
             ).toString('hex');
 
             leavesHashes.push(hash);

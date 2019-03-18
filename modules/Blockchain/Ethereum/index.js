@@ -480,7 +480,7 @@ class Ethereum {
             [
                 offerId,
                 holderIdentity,
-                answer,
+                Utilities.normalizehex(Buffer.from(answer, 'utf8').toString('hex')),
             ],
             options,
         );
