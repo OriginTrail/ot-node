@@ -9,9 +9,10 @@ class MerkleTree {
 
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
+
             const hash = abi.soliditySHA3(
                 ['bytes32', 'uint256'],
-                [Utilities.normalizehex(Buffer.from(leaves[i], 'utf8').toString('hex')), i],
+                [Utilities.normalizeHex(Buffer.from(leaves[i], 'utf8').toString('hex')), i],
             ).toString('hex');
 
             leavesHashes.push(hash);
