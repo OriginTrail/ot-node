@@ -222,9 +222,13 @@ contract Holding is Ownable {
         // Divide the tokenAmountPerHolder by the total time
         amountToTransfer = amountToTransfer.div(holdingStorage.getOfferHoldingTimeInMinutes(bytes32(offerId)).mul(60));
 
-        if(amountToTransfer >= holdingStorage.getHolderStakedAmount(bytes32(offerId), identity)) {
-            amountToTransfer = holdingStorage.getHolderStakedAmount(bytes32(offerId), identity);
+        if(amountToTransfer.add(holdingStorage.getHolderPaidAmount(bytes32(offerId), identity))
+            >= holdingStorage.getHolderStakedAmount(bytes32(offerId), identity)) {
 
+            amountToTransfer = holdingStorage.getHolderStakedAmount(bytes32(offerId), identity);
+            amountToTransfer = amountToTransfer.sub(holdingStorage.getHolderPaidAmount(bytes32(offerId), identity));
+
+            if (amountToTransfer == 0) return;
             // Offer is completed, release holder stake
             Profile(hub.getContractAddress("Profile")).releaseTokens(identity, holdingStorage.getHolderStakedAmount(bytes32(offerId), identity));
         }
