@@ -64,9 +64,7 @@ contract Replacement {
 
     function checkTask(bytes32 offerId, address[] replacementHolderIdentity, address holderIdentity, uint256 shift)
     internal {
-        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
         LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
-        ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
 
         bytes32[3] memory hashes;
 

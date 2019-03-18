@@ -253,7 +253,7 @@ contract('Litigation testing', async (accounts) => {
         promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await web3.eth.accounts.sign(
+            promises[i] = web3.eth.accounts.sign(
                 confirmations[i],
                 sortedIdentities[i].privateKey,
             );
@@ -403,7 +403,7 @@ contract('Litigation testing', async (accounts) => {
         let promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+            promises[i] = util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
         }
         confirmations = await Promise.all(promises);
 
@@ -411,7 +411,7 @@ contract('Litigation testing', async (accounts) => {
         promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await web3.eth.accounts.sign(
+            promises[i] = web3.eth.accounts.sign(
                 confirmations[i],
                 sortedIdentities[i].privateKey,
             );
