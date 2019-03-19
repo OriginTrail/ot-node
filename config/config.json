@@ -352,7 +352,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x0e5995FE34BfC9DB7a31fa318f7f1256Cf28FfCa",
+      "hub_contract_address": "0x4923435d78caB9cFC370a67705113Ad38923c04b",
       "plugins": [
         {
           "enabled": false,
