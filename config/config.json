@@ -396,7 +396,7 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": false
+    "litigationEnabled": true
   },
   "mariner": {
     "identity": null,
