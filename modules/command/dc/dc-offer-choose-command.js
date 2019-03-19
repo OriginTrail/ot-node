@@ -2,6 +2,8 @@ const Command = require('../command');
 const models = require('../../../models/index');
 const Utilities = require('../../Utilities');
 
+const { Op } = models.Sequelize;
+
 /**
  * Creates offer on blockchain
  */
@@ -24,6 +26,8 @@ class DCOfferChooseCommand extends Command {
         const {
             internalOfferId,
             excludedDHs,
+            isReplacement,
+            dhIdentity,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -34,17 +38,21 @@ class DCOfferChooseCommand extends Command {
         const replications = await models.replicated_data.findAll({
             where: {
                 offer_id: offer.offer_id,
-                status: 'VERIFIED',
+                status: {
+                    [Op.in]: ['STARTED', 'VERIFIED'],
+                },
             },
         });
 
-        const verifiedReplications = replications.map(r => r.status === 'VERIFIED');
+        const verifiedReplications = replications.filter(r => r.status === 'VERIFIED');
         if (excludedDHs == null) {
-            this.logger.notify(`Replication window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
+            const action = isReplacement === true ? 'Replacement' : 'Replication';
+            this.logger.notify(`${action} window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
         }
 
-        let identities = replications
+        let identities = verifiedReplications
             .map(r => Utilities.denormalizeHex(r.dh_identity).toLowerCase());
+
         if (excludedDHs) {
             const normalizedExcludedDHs = excludedDHs
                 .map(excludedDH => Utilities.denormalizeHex(excludedDH).toLowerCase());
@@ -54,8 +62,20 @@ class DCOfferChooseCommand extends Command {
             throw new Error('Failed to choose holders. Not enough DHs submitted.');
         }
 
+        let task = null;
+        let difficulty = null;
+        if (isReplacement) {
+            task = await this.blockchain.getLitigationReplacementTask(offer.offer_id, dhIdentity);
+            difficulty = await this.blockchain.getLitigationDifficulty(offer.offer_id, dhIdentity);
+        } else {
+            // eslint-disable-next-line
+            task = offer.task;
+            difficulty = await this.blockchain.getOfferDifficulty(offer.offer_id);
+        }
+
         await this.minerService.sendToMiner(
-            offer.task,
+            task,
+            difficulty,
             identities,
             offer.offer_id,
         );
@@ -68,6 +88,8 @@ class DCOfferChooseCommand extends Command {
                     data: {
                         offerId: offer.offer_id,
                         excludedDHs,
+                        isReplacement,
+                        dhIdentity,
                     },
                 },
             ],
@@ -83,8 +105,9 @@ class DCOfferChooseCommand extends Command {
         const { internalOfferId } = command.data;
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

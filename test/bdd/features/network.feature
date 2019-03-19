@@ -121,3 +121,39 @@ Feature: Test basic network features
   @first
   Scenario: Bootstraps should have /api/info route enabled
     Then 1st bootstrap should reply on info route
+
+  @first
+  Scenario: DH payout scenario
+    Given the replication difficulty is 0
+    And I setup 5 nodes
+    And I override configuration for all nodes
+      | dc_holding_time_in_minutes | 1 |
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And DC waits for holding time
+    Then selected DHes should be payed out
+
+  @first
+  Scenario: Node with diff management and operational wallet should successfully start
+    Given I setup 1 node
+    And I set 1st node's management wallet to be different then operational wallet
+    And I start the node
+    Then default initial token amount should be deposited on 1st node's profile
+
+  @third
+  Scenario: Test repeated offer creation with same dataset
+    Given the replication difficulty is 0
+    And I setup 3 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Then DC's last import's hash should be the same as one manually calculated
+    Given DC initiates the replication for last imported dataset
+    And I wait for DC to fail to finalize last offer
+    Given I additionally setup 1 node
+    And I start additional nodes
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish

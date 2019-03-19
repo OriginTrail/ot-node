@@ -4,7 +4,6 @@ const path = require('path');
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const MerkleTree = require('../Merkle');
-const Challenge = require('../Challenge');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
 
@@ -23,6 +22,7 @@ class ReplicationService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
+        this.challengeService = ctx.challengeService;
         this.replicationCache = {};
     }
 
@@ -53,7 +53,7 @@ class ReplicationService {
                 );
 
                 ImportUtilities.sort(litEncVertices);
-                const litigationBlocks = Challenge.getBlocks(litEncVertices, 32);
+                const litigationBlocks = this.challengeService.getBlocks(litEncVertices);
                 const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
                 const litRootHash = litigationBlocksMerkleTree.getRoot();
 

@@ -9,7 +9,6 @@ const Models = require('../../models');
 const Utilities = require('../Utilities');
 
 const Graph = require('../Graph');
-const Challenge = require('../Challenge');
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const ObjectValidator = require('../validator/object-validator');
@@ -57,6 +56,9 @@ class DHService {
         }), { concurrent: 1 });
     }
 
+    /**
+     * Throttle offer using internal queue
+     */
     handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
@@ -79,7 +81,7 @@ class DHService {
     }
 
     /**
-     * Handle one offer
+     * Handles one offer
      * @returns {Promise<void>}
      */
     async _handleOffer(
@@ -96,22 +98,6 @@ class DHService {
         }
 
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
-
-        const dataInfo = await Models.data_info.findOne({
-            where: { data_set_id: dataSetId },
-        });
-        if (dataInfo) {
-            this.logger.info(`I've already stored data for data set ${dataSetId}. Ignoring.`);
-            return;
-        }
-
-        let bid = await Models.bids.findOne({
-            where: { offer_id: offerId },
-        });
-        if (bid) {
-            this.logger.info(`I've already added bid for offer ${offerId}. Ignoring.`);
-            return;
-        }
 
         const format = d3.formatPrefix(',.6~s', 1e6);
         const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
@@ -139,8 +125,9 @@ class DHService {
             return;
         }
 
-        bid = await Models.bids.create({
+        const bid = await Models.bids.create({
             offer_id: offerId,
+            data_set_id: dataSetId,
             dc_node_id: dcNodeId,
             data_size_in_bytes: dataSetSizeInBytes,
             litigation_interval_in_minutes: litigationIntervalInMinutes,
@@ -148,6 +135,7 @@ class DHService {
             holding_time_in_minutes: holdingTimeInMinutes,
             deposited: false,
             status: 'PENDING',
+            message: 'Bid is still pending',
         });
 
         const remainder = await this._calculatePessimisticMinimumDeposit(
@@ -229,6 +217,170 @@ class DHService {
             }
         }
         return remainder;
+    }
+
+    /**
+     * Handles one offer replacement
+     * @param offerId - Offer ID
+     * @param litigatorIdentity - DC node ERC725 identity
+     * @param penalizedHolderIdentity - Penalized DH ERC725 identity
+     * @param litigationRootHash - Litigation root hash
+     * @return {Promise<void>}
+     */
+    async handleReplacement(
+        offerId, litigatorIdentity,
+        penalizedHolderIdentity, litigationRootHash,
+    ) {
+        let bid = await Models.bids.findOne({
+            where: {
+                offer_id: offerId,
+            },
+        });
+
+        if (bid && bid.status === 'CHOSEN') {
+            this.logger.info(`I am already a holder for offer ${offerId}. Skipping replacement...`);
+            return;
+        }
+
+        this.logger.info(`Not holding offer's data (${offerId}). Preparing for replacement...`);
+
+        const penalizedPaidAmount = new BN(await this.blockchain.getHolderPaidAmount(
+            offerId,
+            penalizedHolderIdentity,
+        ));
+        const penalizedStakedAmount = new BN(await this.blockchain.getHolderStakedAmount(
+            offerId,
+            penalizedHolderIdentity,
+        ));
+
+        const stakeAmount = penalizedStakedAmount.sub(penalizedPaidAmount);
+
+        const offerBc = await this.blockchain.getOffer(offerId);
+
+        const offerSoFarInMillis = Date.now() - (offerBc.startTime * 1000);
+        const offerSoFarInMinutes = new BN(offerSoFarInMillis / (60 * 1000), 10);
+        const offerHoldingTimeInMinutes = new BN(offerBc.holdingTimeInMinutes, 10);
+        const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
+
+        const replacementDurationInMinutes = offerHoldingTimeInMinutes.sub(offerSoFarInMinutes);
+        if (bid == null) {
+            const profile =
+                await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
+            const dcNodeId =
+                Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
+            bid = await Models.bids.create({
+                offer_id: offerId,
+                data_set_id: offerBc.dataSetId,
+                dc_node_id: dcNodeId,
+                data_size_in_bytes: '0', // TODO fetch data size or calculate it upon successful import
+                litigation_interval_in_minutes: offerBc.litigationIntervalInMinutes,
+                token_amount: stakeAmount.toString(),
+                holding_time_in_minutes: replacementDurationInMinutes.toString(),
+                deposited: false,
+                status: 'PENDING',
+                message: 'Bid created for replacement',
+            });
+        } else {
+            bid.token_amount = stakeAmount.toString();
+            bid.holding_time_in_minutes = replacementDurationInMinutes.toString();
+            bid.status = 'PENDING';
+            bid.message = 'Bid created for replacement';
+            await bid.save({ fields: ['token_amount', 'holding_time_in_minutes', 'status', 'message'] });
+        }
+
+        const remainder = await this._calculatePessimisticMinimumDeposit(
+            bid.id,
+            stakeAmount.toString(),
+        );
+
+        if (remainder) {
+            bid.status = 'FAILED';
+            bid.message = 'Not enough tokens';
+            await bid.save({ fields: ['status', 'message'] });
+            throw new Error('Not enough tokens. To take additional jobs please complete any finished jobs or deposit more tokens to your profile.');
+        }
+
+        if (dhMaxHoldingTimeInMinutes.lt(replacementDurationInMinutes)) {
+            this.logger.info(`Replacement duration time for the offer ${offerId} is greater than my holding time defined.`);
+            return;
+        }
+
+        const dhMinLitigationIntervalInMinutes =
+            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
+        if (dhMinLitigationIntervalInMinutes.gt(new BN(offerBc.litigationIntervalInMinutes, 10))) {
+            this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
+            return;
+        }
+
+        const offer = await Models.offers.findOne({
+            where: {
+                offer_id: offerId,
+            },
+        });
+
+        if (offer) {
+            this.logger.info(`I created offer ${offerId}. Skipping replacement...`);
+            return;
+        }
+
+        await this.commandExecutor.add({
+            name: 'dhReplacementHandleCommand',
+            delay: 15000,
+            data: {
+                offerId,
+                litigatorIdentity,
+                litigationRootHash,
+            },
+        });
+    }
+
+    /**
+     * Handles one challenge
+     * @param datasetId - Data set ID
+     * @param blockId - Challenge block ID
+     * @param challengeId - Challenge ID used for reply
+     * @param litigatorNodeId - Litigator node ID
+     * @return {Promise<void>}
+     */
+    async handleChallenge(datasetId, blockId, challengeId, litigatorNodeId) {
+        this.logger.info(`Challenge arrived: Block ID ${blockId}, Data set ID ${datasetId}`);
+
+        await this.commandExecutor.add({
+            name: 'dhChallengeCommand',
+            data: {
+                blockId,
+                datasetId,
+                challengeId,
+                litigatorNodeId,
+            },
+        });
+    }
+
+    /**
+     * Handle started litigated
+     * @param offerId - Offer ID
+     * @param blockId - Block ID
+     * @return {Promise<void>}
+     */
+    async handleLitigation(offerId, blockId) {
+        this.logger.warn(`Litigation initiated for offer ${offerId} and block ID ${blockId}.`);
+
+        const bid = await Models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        if (bid == null) {
+            this.logger.info(`I am not a holder for offer ${offerId}. Ignoring litigation.`);
+            return;
+        }
+
+        await this.commandExecutor.add({
+            name: 'dhLitigationAnswerCommand',
+            data: {
+                offerId,
+                blockId,
+                dataSetId: bid.data_set_id,
+            },
+        });
     }
 
     /**
@@ -618,29 +770,6 @@ class DHService {
         }
     }
 
-    /**
-     * Handles litigation initiation from DC side
-     * @param importId
-     * @param dhWallet
-     * @param blockId
-     * @return {Promise<void>}
-     */
-    async litigationInitiated(importId, dhWallet, blockId) {
-        if (dhWallet !== this.config.node_wallet) {
-            return;
-        }
-        this.logger.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
-
-        let vertices = await this.graphStorage.findVerticesByImportId(importId);
-        ImportUtilities.sort(vertices, '_dc_key');
-        // filter CLASS vertices
-        vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
-        const answer = Challenge.answerTestQuestion(blockId, vertices, 32);
-
-        this.logger.debug(`Answer litigation for import ${importId}. Answer for block ${blockId} is ${answer}`);
-        await this.blockchain.answerLitigation(importId, answer);
-    }
-
     async dataLocationQuery(queryId) {
         const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
         const validationError = ObjectValidator.validateSearchQueryObject(networkQuery);
@@ -746,11 +875,7 @@ class DHService {
 
     async listenToBlockchainEvents() {
         this.blockchain.subscribeToEventPermanent([
-            'AddedPredeterminedBid',
             'OfferCreated',
-            'LitigationInitiated',
-            'LitigationCompleted',
-            'EscrowVerified',
             'NodeApproved',
             'NodeRemoved',
         ]);

@@ -878,6 +878,26 @@ class Utilities {
         properties.forEach(prop => stripped[prop] = config[prop]);
         return stripped;
     }
+
+    /**
+     * Groups array by some criteria
+     * @param list - Array of items
+     * @param keyGetter - Group criteria
+     * @return {Map<any, any>}
+     */
+    static groupBy(list, keyGetter) {
+        const map = new Map();
+        list.forEach((item) => {
+            const key = keyGetter(item);
+            const collection = map.get(key);
+            if (!collection) {
+                map.set(key, [item]);
+            } else {
+                collection.push(item);
+            }
+        });
+        return map;
+    }
 }
 
 module.exports = Utilities;
