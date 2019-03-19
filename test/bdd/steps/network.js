@@ -5,7 +5,10 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
+const BN = require('bn.js');
+const sleep = require('sleep-async')().Promise;
 const request = require('request');
+const _ = require('lodash');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
@@ -31,10 +34,12 @@ function unpackRawTable(rawTable) {
     if (rawTable) {
         for (const row of rawTable.rawTable) {
             let value;
-            if (row.length > 1) {
+            if (row.length > 2) {
                 value = [];
                 for (let index = 1; index < row.length; index += 1) {
-                    value.push(row[index]);
+                    if (!row[index] != null && row[index] !== '') {
+                        value.push(row[index]);
+                    }
                 }
             } else {
                 [, value] = row;
@@ -76,8 +81,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             },
             blockchain: {
                 hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_node_host: 'http://localhost', // TODO use from instance
-                rpc_node_port: 7545,
+                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
             },
             network: {
                 // TODO: Connect other if using multiple.
@@ -119,8 +123,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             blockchain: {
                 hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_node_host: 'http://localhost', // TODO use from instance
-                rpc_node_port: 7545,
+                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
             },
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
@@ -142,6 +145,15 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
 }));
+
+Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    const waitTime = Number(dc.options.nodeConfiguration.dc_holding_time_in_minutes) * 60 * 1000;
+    expect(waitTime, 'waiting time in BDD tests should be less then step timeout').to.be.lessThan(120000);
+    await sleep.sleep(waitTime);
+});
 
 Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -330,18 +342,38 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     const promises = [];
 
     // All nodes including DC emit offer-finalized.
-    this.state.nodes.forEach((node) => {
-        if (node.isRunning) {
-            promises.push(new Promise((acc) => {
-                node.once('offer-finalized', (offerId) => {
-                    // TODO: Change API to connect internal offer ID and external offer ID.
-                    acc();
-                });
-            }));
-        }
+    this.state.nodes.filter(node => node.isRunning).forEach((node) => {
+        promises.push(new Promise((acc) => {
+            node.once('offer-finalized', (offerId) => {
+                // TODO: Change API to connect internal offer ID and external offer ID.
+                acc();
+            });
+        }));
     });
 
     return Promise.all(promises);
+});
+
+Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 1200000 }, function (nodeIndex) {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const node = this.state.nodes[nodeIndex - 1];
+    const { dc } = this.state;
+
+    expect(node.isRunning).to.be.true;
+    expect(dc, 'DC not defined.').not.to.be.undefined;
+
+    return new Promise((accept) => {
+        dc.on('dh-replication-verified', (nodeId) => {
+            if (nodeId === node.state.identity) {
+                accept();
+            }
+        });
+    });
 });
 
 Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
@@ -512,7 +544,7 @@ Then(/^response hash should match last imported data set id$/, function () {
     expect(this.state.lastImport.data_set_id, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
 
-Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done) {
+Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nodeCount, done) {
     const nodeCountSoFar = this.state.nodes.length;
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - nodeCountSoFar);
 
@@ -535,8 +567,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                 },
                 blockchain: {
                     hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                    rpc_node_host: 'http://localhost', // TODO use from instance
-                    rpc_node_port: 7545,
+                    rpc_server_url: 'http://localhost:7545/', // TODO use from instance
                 },
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',
@@ -754,4 +785,62 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
         'version', 'blockchain',
         'network', 'is_bootstrap',
     ]);
+});
+
+Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const myPromises = [];
+
+    // slice(1) to exlude DC node
+    this.state.nodes.slice(1).forEach((node) => {
+        myPromises.push(new Promise((accept) => {
+            // node.state.takenBids gets populated only for choosen DH nodes
+            if (node.state.takenBids.length === 1) {
+                node.once('dh-pay-out-finalized', async () => {
+                    const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
+                    const a = new BN(myBalance.profile.staked);
+                    const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
+                    const c = new BN(node.options.nodeConfiguration.dc_token_amount_per_holder);
+                    expect(a.sub(b).toString()).to.be.equal(c.toString());
+                    accept();
+                });
+            } else {
+                accept();
+            }
+        }));
+    });
+
+    return Promise.all(myPromises);
+});
+
+Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then operational wallet$/, { timeout: 3000000 }, function (nodeIndex) {
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const wallets = LocalBlockchain.wallets();
+    const walletCount = LocalBlockchain.wallets().length;
+
+    const operationalWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.node_wallet;
+    let managementWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.management_wallet;
+    let randomIndex;
+    expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
+
+    while (managementWallet === operationalWallet) {
+        // position walletCount-1 is reserved for bootstrap node
+        randomIndex = _.random(0, walletCount - 2);
+        managementWallet = wallets[randomIndex].address;
+    }
+    expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
+});
+
+
+Given('I wait for DC to fail to finalize last offer', { timeout: 600000 }, function (done) {
+    const promises = [];
+    promises.push(new Promise((acc) => {
+        this.state.dc.once('not-enough-dhs', () => {
+            acc();
+        });
+    }));
+
+    Promise.all(promises).then(() => done());
 });

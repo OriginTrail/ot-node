@@ -69,8 +69,9 @@ class DcOfferTaskCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

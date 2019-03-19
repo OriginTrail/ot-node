@@ -1,7 +1,6 @@
 const bytes = require('utf8-length');
 const events = require('events');
 
-const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
@@ -508,13 +507,7 @@ class EventEmitter {
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await commandExecutor.add({
-                    name: 'dhPayOutCommand',
-                    delay: 0,
-                    data: {
-                        offerId,
-                    },
-                });
+                await profileService.payOut(offerId);
 
                 data.response.status(200);
                 data.response.send({
@@ -656,9 +649,6 @@ class EventEmitter {
             dhService,
             approvalService,
             logger,
-            config,
-            appState,
-            notifyError,
         } = this.ctx;
 
         this._on('eth-NodeApproved', (eventData) => {
@@ -708,38 +698,6 @@ class EventEmitter {
                 );
             } catch (e) {
                 logger.warn(e.message);
-            }
-        });
-
-        this._on('eth-LitigationInitiated', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                requested_data_index,
-            } = eventData;
-
-            try {
-                await dhService.litigationInitiated(
-                    import_id,
-                    DH_wallet,
-                    requested_data_index,
-                );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-                notifyError(error);
-            }
-        });
-
-        this._on('eth-LitigationCompleted', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                DH_was_penalized,
-            } = eventData;
-
-            if (config.node_wallet === DH_wallet) {
-                // the node is DH
-                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
     }
@@ -822,46 +780,25 @@ class EventEmitter {
             }
         });
 
-        // async
-        this._on('kad-replication-finished', async (request) => {
-            const dhNodeId = transport.extractSenderID(request);
-            const replicationFinishedMessage = transport.extractMessage(request);
-            const { wallet } = transport.extractSenderInfo(request);
-            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
-            await dcService.verifyDHReplication(
-                offerId, messageSignature,
-                dhNodeId, dhIdentity, wallet,
-            );
-        });
-
         // sync
-        // TODO this call should be refactored to be async
-        this._on('kad-challenge-request', async (request, response) => {
+        this._on('kad-replacement-replication-request', async (request, response) => {
             try {
                 const message = transport.extractMessage(request);
-                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
-                const challenge = message.payload;
+                const { offerId, wallet, dhIdentity } = message;
+                const { wallet: senderWallet } = transport.extractSenderInfo(request);
+                const identity = transport.extractSenderID(request);
 
-                let vertices = await this.graphStorage
-                    .findVerticesByImportId(challenge.import_id); // TODO add encColor
-                ImportUtilities.unpackKeys(vertices, []);
-                ImportUtilities.sort(vertices);
-                // filter CLASS vertices
-                vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
-                const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
-                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
-
-                try {
-                    await transport.sendResponse(response, {
-                        status: 'success',
-                        answer,
-                    });
-                } catch (e) {
-                    // TODO handle this case
-                    logger.error(`Failed to send challenge response for import ${challenge.import_id}. Error: ${e}.`);
+                if (senderWallet !== wallet) {
+                    logger.warn(`Wallet in the message differs from replacement replication request for offer ID ${offerId}.`);
                 }
+
+                await dcService.handleReplacementRequest(
+                    offerId, wallet, identity, dhIdentity,
+                    response,
+                );
             } catch (error) {
-                logger.error(`Failed to get data. ${error}.`);
+                const errorMessage = `Failed to handle replacement replication request. ${error}.`;
+                logger.warn(errorMessage);
                 notifyError(error);
 
                 try {
@@ -869,15 +806,91 @@ class EventEmitter {
                         status: 'fail',
                     });
                 } catch (e) {
-                    // TODO handle this case
-                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
                 }
             }
         });
 
         // async
+        this._on('kad-replication-finished', async (request) => {
+            try {
+                const dhNodeId = transport.extractSenderID(request);
+                const replicationFinishedMessage = transport.extractMessage(request);
+                const { wallet } = transport.extractSenderInfo(request);
+                const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+                await dcService.verifyDHReplication(
+                    offerId, messageSignature,
+                    dhNodeId, dhIdentity, wallet, false,
+                );
+            } catch (e) {
+                const errorMessage = `Failed to handle replication finished request. ${e}.`;
+                logger.warn(errorMessage);
+                notifyError(e);
+            }
+        });
+
+        // async
+        this._on('kad-replacement-replication-finished', async (request) => {
+            try {
+                const dhNodeId = transport.extractSenderID(request);
+                const replicationFinishedMessage = transport.extractMessage(request);
+                const { wallet } = transport.extractSenderInfo(request);
+                const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+                await dcService.verifyDHReplication(
+                    offerId, messageSignature,
+                    dhNodeId, dhIdentity, wallet, true,
+                );
+            } catch (e) {
+                const errorMessage = `Failed to handle replacement replication finished request. ${e}.`;
+                logger.warn(errorMessage);
+                notifyError(e);
+            }
+        });
+
+        // async
+        this._on('kad-challenge-request', async (request) => {
+            try {
+                const message = transport.extractMessage(request);
+                const error = ObjectValidator.validateChallengeRequest(message);
+                if (error) {
+                    logger.trace(`Challenge request message is invalid. ${error.message}`);
+                    return;
+                }
+                await dhService.handleChallenge(
+                    message.payload.data_set_id,
+                    message.payload.block_id,
+                    message.payload.challenge_id,
+                    message.payload.litigator_id,
+                );
+            } catch (error) {
+                logger.error(`Failed to get data. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-challenge-response', async (request) => {
+            try {
+                const message = transport.extractMessage(request);
+                const error = ObjectValidator.validateChallengeResponse(message);
+                if (error) {
+                    logger.trace(`Challenge response message is invalid. ${error.message}`);
+                    return;
+                }
+
+                await dcService.handleChallengeResponse(
+                    message.payload.challenge_id,
+                    message.payload.answer,
+                );
+            } catch (error) {
+                logger.error(`Failed to get data. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
         this._on('kad-data-location-response', async (request) => {
-            logger.info('DH confirms possesion of required data');
+            logger.info('DH confirms possession of required data');
             try {
                 const dataLocationResponseObject = transport.extractMessage(request);
                 const { message, messageSignature } = dataLocationResponseObject;
@@ -992,7 +1005,7 @@ class EventEmitter {
 
         this._on('int-miner-solution', async (err, data) => {
             if (err) {
-                await dcService.miningFailed(data.offerId);
+                await dcService.miningFailed(err);
             } else {
                 await dcService.miningSucceed(data);
             }

@@ -1,0 +1,21 @@
+{  
+   "node_wallet":"0xb664cf668534fde04cf43173e2187b7a9196bfc3",
+   "node_private_key":"0dbaee2066aacd16d43a9e23649f232913bca244369463320610ffe6ffb0d69d",
+   "management_wallet":"0x64b592e8e9af51eb0dba5d4c18b817c01e8e75a8",
+   "initial_deposit_amount": "10000000000000000000000",
+   "local_network_only":true,
+   "blockchain":{  
+      "hub_contract_address":"0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a",
+      "rpc_server_url":"http://localhost:7545/"
+   },
+   "network":{  
+      "bootstraps":[  
+
+      ],
+      "hostname":"127.0.0.1",
+      "remoteWhitelist":[  
+         "0.0.0.0",
+         "127.0.0.1"
+      ]
+   }
+}

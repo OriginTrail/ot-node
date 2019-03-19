@@ -15,6 +15,7 @@ const umzug_migrations = new Umzug({
 
     storageOptions: {
         sequelize: Models.sequelize,
+        tableName: 'sequelize_meta',
     },
 
     migrations: {
@@ -28,6 +29,47 @@ const umzug_migrations = new Umzug({
 });
 
 class AutoUpdate {
+    /**
+     * Just checks if update is available and resolves into boolean.
+     * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
+     * @param {String} [options.branch] - Github repo's branch.
+     * @returns {Promise.<Boolean>}
+     */
+    static async isUpdateAvailable(options) {
+        return new Promise(async (resolve) => {
+            var autoupdater = new AutoUpdater({
+                pathToJson: '',
+                repo: options.repo,
+                branch: options.branch,
+                autoupdate: false,
+                checkgit: true,
+                jsonhost: 'raw.githubusercontent.com',
+                contenthost: 'codeload.github.com',
+                progressDebounce: 0,
+                devmode: false,
+            });
+
+            autoupdater.on('check.out-dated', (v_old, v) => {
+                log.info(`New version found. Old version ${v_old} - new ${v}`);
+                resolve(true);
+            });
+
+            autoupdater.on('git-clone', () => {
+                resolve(false);
+            });
+            autoupdater.on('check.up-to-date', (v) => {
+                resolve(false);
+            });
+            autoupdater.on('error', (name, e) => {
+                log.error(name, e);
+                resolve(false);
+            });
+
+            // Start check.
+            autoupdater.fire('check');
+        });
+    }
+
     /**
      * Check for the update.
      * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
@@ -104,7 +146,6 @@ class AutoUpdate {
             });
             autoupdater.on('end', () => {
                 log.warn('The app is ready to function');
-                resolve(true);
             });
             autoupdater.on('error', (name, e) => {
                 log.error(name, e);

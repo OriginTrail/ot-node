@@ -15,6 +15,16 @@ contract HoldingStorage {
         _;
     }
 
+    uint256 public difficultyOverride;
+    function getDifficultyOverride()
+    public view returns (uint256) {
+        return difficultyOverride;
+    }
+    function setDifficultyOverride(uint256 new_difficulty)
+    public onlyContracts {
+        difficultyOverride = new_difficulty;
+    }
+
     mapping(bytes32 => bytes32) public fingerprint;
 
     function setFingerprint(bytes32 dataSetId, bytes32 dataRootHash)
@@ -28,6 +38,7 @@ contract HoldingStorage {
 
         uint256 holdingTimeInMinutes;
         uint256 tokenAmountPerHolder;
+        uint256 litigationIntervalInMinutes;
 
         bytes32 task;
         uint256 difficulty;
@@ -55,6 +66,10 @@ contract HoldingStorage {
     function getOfferTokenAmountPerHolder (bytes32 offerId) 
     public view returns(uint256 tokenAmountPerHolder){
         return offer[offerId].tokenAmountPerHolder;
+    }
+    function getOfferLitigationIntervalInMinutes (bytes32 offerId)
+    public view returns(uint256 litigationIntervalInMinutes){
+        return offer[offerId].litigationIntervalInMinutes;
     }
     function getOfferTask (bytes32 offerId) 
     public view returns(bytes32 task){
@@ -97,6 +112,10 @@ contract HoldingStorage {
     public onlyContracts {
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
     }
+    function setOfferLitigationIntervalInMinutes (bytes32 offerId, uint256 litigationIntervalInMinutes)
+    public onlyContracts {
+        offer[offerId].litigationIntervalInMinutes = litigationIntervalInMinutes;
+    }
     function setOfferTask (bytes32 offerId, bytes32 task)
     public onlyContracts {
         offer[offerId].task = task;
@@ -127,6 +146,7 @@ contract HoldingStorage {
         bytes32 dataSetId,
         uint256 holdingTimeInMinutes,
         uint256 tokenAmountPerHolder,
+        uint256 litigationIntervalInMinutes,
         bytes32 task,
         uint256 difficulty)
     public onlyContracts {
@@ -134,6 +154,7 @@ contract HoldingStorage {
         offer[offerId].dataSetId = dataSetId;
         offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
+        offer[offerId].litigationIntervalInMinutes = litigationIntervalInMinutes;
         if(offer[offerId].task != task) offer[offerId].task = task;
         offer[offerId].difficulty = difficulty;
     }
@@ -153,6 +174,8 @@ contract HoldingStorage {
         uint256 stakedAmount;
         uint256 paidAmount;
         uint256 litigationEncryptionType;
+
+        uint256 paymentTimestamp;
     }
     mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
 
@@ -174,6 +197,10 @@ contract HoldingStorage {
         holder[offerId][identities[2]].stakedAmount = offer[offerId].tokenAmountPerHolder;
         if(holder[offerId][identities[2]].litigationEncryptionType != litigationEncryptionTypes[2])
             holder[offerId][identities[2]].litigationEncryptionType = litigationEncryptionTypes[2];
+
+        holder[offerId][identities[0]].paymentTimestamp = block.timestamp;
+        holder[offerId][identities[1]].paymentTimestamp = block.timestamp;
+        holder[offerId][identities[2]].paymentTimestamp = block.timestamp;
     }
     function setHolderStakedAmount (bytes32 offerId, address identity, uint256 stakedAmount)
     public onlyContracts {
@@ -190,6 +217,10 @@ contract HoldingStorage {
         require(identity!=address(0));
         holder[offerId][identity].litigationEncryptionType = litigationEncryptionType;
     }
+    function setHolderPaymentTimestamp(bytes32 offerId, address identity, uint256 paymentTimestamp)
+    public onlyContracts {
+        holder[offerId][identity].paymentTimestamp = paymentTimestamp;
+    }
 
     function getHolderStakedAmount (bytes32 offerId, address identity)
     public view returns(uint256 stakedAmount) {
@@ -205,6 +236,10 @@ contract HoldingStorage {
     public view returns(uint256 litigationEncryptionType) {
         require(identity!=address(0));
         return holder[offerId][identity].litigationEncryptionType;
+    }
+    function getHolderPaymentTimestamp(bytes32 offerId, address identity)
+    public view returns(uint256 paymentTimestamp) {
+        return holder[offerId][identity].paymentTimestamp;
     }
     function setHubAddress(address newHubAddress)
     public onlyContracts {

@@ -57,7 +57,7 @@ class ApprovalService {
             nodeId = nodeId.substr(-40, 40);
             nodeId = Utilities.normalizeHex(nodeId);
         }
-        this.logger.trace(`Addding node ${nodeId} to approved list`);
+        this.logger.trace(`Adding node ${nodeId} to approved list`);
         if (this.approvedNodes.indexOf(nodeId) === -1) {
             this.approvedNodes.push(nodeId);
         }

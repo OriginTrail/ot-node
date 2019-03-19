@@ -21,7 +21,6 @@ const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
 const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
-const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -29,7 +28,6 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
-
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
@@ -37,12 +35,14 @@ const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
 const ApprovalService = require('./modules/service/approval-service');
+const ChallengeService = require('./modules/service/challenge-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
-const APIUtilities = require('./modules/utility/api-utilities');
+const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
-const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
+const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
+const Update = require('./check-updates');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -82,6 +82,11 @@ try {
 
     if (!config.management_wallet) {
         console.error('Please provide a valid management wallet.');
+        process.abort();
+    }
+
+    if (!config.blockchain.rpc_server_url) {
+        console.error('Please provide a valid RPC server URL.');
         process.abort();
     }
 } catch (error) {
@@ -284,18 +289,8 @@ class OTNode {
         config.erc725Identity = '';
         Object.seal(config);
 
-        // check for Updates
-        try {
-            log.info('Checking for updates');
-            await Utilities.checkForUpdates(config.autoUpdater);
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
         const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+            new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
 
         const appState = {};
         if (config.is_bootstrap_node) {
@@ -361,7 +356,6 @@ class OTNode {
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
-            challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
@@ -372,6 +366,7 @@ class OTNode {
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            challengeService: awilix.asClass(ChallengeService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -420,7 +415,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runMigration(blockchain);
+            await this._runMigration();
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -467,28 +462,11 @@ class OTNode {
      * @deprecated
      * @private
      */
-    async _runMigration(blockchain) {
+    async _runMigration() {
         const migrationsStartedMills = Date.now();
         log.info('Initializing code migrations...');
 
-        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
-        const migrationDir = path.join(config.appDataPath, 'migrations');
-        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
-        if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
-
-            try {
-                await migration.run();
-                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
-
-                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
-            } catch (e) {
-                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
-                console.log(e);
-                notifyBugsnag(e);
-                process.exit(1);
-            }
-        }
+        // Note: add migrations here
 
         log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
@@ -573,6 +551,8 @@ class OTNode {
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                blockchain.getAllPastEvents('LITIGATION_CONTRACT');
+                blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -581,19 +561,44 @@ class OTNode {
 }
 
 
-console.log(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
-console.log('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
-console.log('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
-console.log('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
-console.log('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
-console.log(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
+log.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
+log.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
+log.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
+log.info('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
+log.info('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
+log.info(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
 
-console.log('======================================================');
-console.log(`             OriginTrail Node v${pjson.version}`);
-console.log('======================================================');
-console.log('');
+log.info('======================================================');
+log.info(`             OriginTrail Node v${pjson.version}`);
+log.info('======================================================');
+log.info('');
 
-const otNode = new OTNode();
-otNode.bootstrap().then(() => {
-    log.info('OT Node started');
-});
+async function checkIfUpdateAvailable() {
+    if (await Update.isUpdateAvailable(config.autoUpdater)) {
+        log.important('Restarting node due to scheduled update.');
+        Update.restartNode();
+        return;
+    }
+
+    setTimeout(checkIfUpdateAvailable, 43200000);
+}
+
+function main() {
+    setTimeout(checkIfUpdateAvailable, 43200000);
+    const otNode = new OTNode();
+    otNode.bootstrap().then(() => {
+        log.info('OT Node started');
+    });
+}
+
+const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
+
+migrationSequelizeMeta.run()
+    .then(() => {
+        Update.update(config.autoUpdater)
+            .then(main)
+            .catch((error) => {
+                log.error(`Failed to check update. ${error}.`);
+                main();
+            });
+    });

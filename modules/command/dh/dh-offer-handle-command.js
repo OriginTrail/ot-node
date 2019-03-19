@@ -31,13 +31,22 @@ class DHOfferHandleCommand extends Command {
         }, dcNodeId);
 
         if (response.status === 'fail') {
-            if (response.message) {
-                throw new Error('Failed to receive replication ' +
-                    `from ${dcNodeId} for offer ${offerId}. ` +
-                    `Reason: ${response.message}`);
-            } else {
-                throw new Error(`Failed to receive replication from ${dcNodeId} for offer ${offerId}.`);
+            const bid = await Models.bids.findOne({
+                where: {
+                    offer_id: offerId,
+                },
+            });
+
+            bid.status = 'FAILED';
+            let message = `Failed to receive replication from ${dcNodeId} for offer ${offerId}.`;
+            if (response.message != null) {
+                message = `${message} Data creator reason: ${response.message}`;
             }
+
+            bid.message = message;
+            await bid.save({ fields: ['status', 'message'] });
+            this.logger.warn(message);
+            return Command.empty();
         }
 
         const bid = await Models.bids.findOne({

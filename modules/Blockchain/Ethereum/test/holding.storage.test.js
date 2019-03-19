@@ -54,7 +54,7 @@ contract('Holding storage testing', async (accounts) => {
         holdingStorage = await HoldingStorage.deployed();
 
         // Set accounts[0] as holding contract so it can execute functions
-        await hub.setHoldingAddress(accounts[0]);
+        await hub.setContractAddress('Holding', accounts[0]);
 
         DC_wallet = accounts[accounts.length - 1];
     });
@@ -62,7 +62,7 @@ contract('Holding storage testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     after(async () => {
         // Revert Holding contract address in hub contract
-        await hub.setHoldingAddress(holding.address);
+        await hub.setContractAddress('Holding', holding.address);
     });
 
     // eslint-disable-next-line no-undef
@@ -125,6 +125,28 @@ contract('Holding storage testing', async (accounts) => {
         assert(
             newTokenAmountPerHolder.eq(tokenAmountPerHolder),
             `Incorrect token amount per holder written in Holding storage, got ${newTokenAmountPerHolder} instead of ${tokenAmountPerHolder}!`,
+        );
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should set and get offer litigation interval', async () => {
+        const initialLitigationInterval =
+            await holdingStorage.getOfferLitigationIntervalInMinutes.call(offerId);
+
+        assert(initialLitigationInterval.isZero(), 'Initial litigationIntervalInMinutes in Holding storage must be 0!');
+
+        // Execute tested function
+        await holdingStorage.setOfferLitigationIntervalInMinutes(
+            offerId,
+            litigationIntervalInMinutes,
+        );
+
+        const newLitigationInterval =
+            await holdingStorage.getOfferLitigationIntervalInMinutes.call(offerId);
+
+        assert(
+            newLitigationInterval.eq(litigationIntervalInMinutes),
+            `Incorrect token amount per holder written in Holding storage, got ${newLitigationInterval} instead of ${litigationIntervalInMinutes}!`,
         );
     });
 
@@ -242,6 +264,10 @@ contract('Holding storage testing', async (accounts) => {
             initialOffer.tokenAmountPerHolder.eq(tokenAmountPerHolder),
             `Incorrect token amount per holder written in Holding storage, got ${initialOffer.tokenAmountPerHolder.toString()} instead of ${tokenAmountPerHolder.toString()}!`,
         );
+        assert(
+            initialOffer.litigationIntervalInMinutes.eq(litigationIntervalInMinutes),
+            `Incorrect litigation interval written in Holding storage, got ${initialOffer.litigationIntervalInMinutes.toString()} instead of ${litigationIntervalInMinutes.toString()}!`,
+        );
         assert.equal(initialOffer.task, task, 'Incorrect task written in Holding storage!');
         assert(
             initialOffer.difficulty.eq(difficulty),
@@ -262,6 +288,7 @@ contract('Holding storage testing', async (accounts) => {
             emptyHash, // dataSetId
             new BN(0), // holdingTimeInMinutes
             new BN(0), // tokenAmountPerHolder
+            new BN(0), // litigationIntervalInMinutes
             emptyHash, // task
             new BN(0), // difficulty
         );

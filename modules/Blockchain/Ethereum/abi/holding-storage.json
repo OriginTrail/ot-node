@@ -148,6 +148,48 @@
         "type": "bytes32"
       },
       {
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "name": "dataSetId",
+        "type": "bytes32"
+      },
+      {
+        "name": "holdingTimeInMinutes",
+        "type": "uint256"
+      },
+      {
+        "name": "tokenAmountPerHolder",
+        "type": "uint256"
+      },
+      {
+        "name": "litigationIntervalInMinutes",
+        "type": "uint256"
+      },
+      {
+        "name": "task",
+        "type": "bytes32"
+      },
+      {
+        "name": "difficulty",
+        "type": "uint256"
+      }
+    ],
+    "name": "setOfferParameters",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
+      },
+      {
         "name": "redLitigationHash",
         "type": "bytes32"
       }
@@ -260,6 +302,20 @@
   },
   {
     "constant": true,
+    "inputs": [],
+    "name": "difficultyOverride",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [
       {
         "name": "offerId",
@@ -278,6 +334,29 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
+      },
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getHolderPaymentTimestamp",
+    "outputs": [
+      {
+        "name": "paymentTimestamp",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -285,31 +364,15 @@
         "type": "bytes32"
       },
       {
-        "name": "creator",
+        "name": "identity",
         "type": "address"
       },
       {
-        "name": "dataSetId",
-        "type": "bytes32"
-      },
-      {
-        "name": "holdingTimeInMinutes",
-        "type": "uint256"
-      },
-      {
-        "name": "tokenAmountPerHolder",
-        "type": "uint256"
-      },
-      {
-        "name": "task",
-        "type": "bytes32"
-      },
-      {
-        "name": "difficulty",
+        "name": "paymentTimestamp",
         "type": "uint256"
       }
     ],
-    "name": "setOfferParameters",
+    "name": "setHolderPaymentTimestamp",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -398,6 +461,20 @@
   },
   {
     "constant": true,
+    "inputs": [],
+    "name": "getDifficultyOverride",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [
       {
         "name": "",
@@ -458,10 +535,32 @@
       {
         "name": "litigationEncryptionType",
         "type": "uint256"
+      },
+      {
+        "name": "paymentTimestamp",
+        "type": "uint256"
       }
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
+      },
+      {
+        "name": "litigationIntervalInMinutes",
+        "type": "uint256"
+      }
+    ],
+    "name": "setOfferLitigationIntervalInMinutes",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -601,6 +700,10 @@
         "type": "uint256"
       },
       {
+        "name": "litigationIntervalInMinutes",
+        "type": "uint256"
+      },
+      {
         "name": "task",
         "type": "bytes32"
       },
@@ -666,6 +769,20 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "new_difficulty",
+        "type": "uint256"
+      }
+    ],
+    "name": "setDifficultyOverride",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
     "inputs": [
       {
@@ -697,6 +814,25 @@
       {
         "name": "task",
         "type": "bytes32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getOfferLitigationIntervalInMinutes",
+    "outputs": [
+      {
+        "name": "litigationIntervalInMinutes",
+        "type": "uint256"
       }
     ],
     "payable": false,

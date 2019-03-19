@@ -5,8 +5,13 @@ node_js:
 env:
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=first
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=second
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=third
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=fourth
+
 
 sudo: enabled
+services:
+  - docker
 addons:
   apt:
     packages:
@@ -17,7 +22,7 @@ before_script:
   - sudo ./setup_arangodb.sh
   - cp .origintrail_noderc.travis .origintrail_noderc
   - npm run bootstrap
-  - npm install -g ganache-cli@6.1.5 &> /dev/null
+  - npm install -g ganache-cli@6.2.5 &> /dev/null
   - npm install -g truffle@5.0.0-beta.1 &> /dev/null
 script:
   - npm run lint
@@ -25,24 +30,29 @@ script:
       npm run test:bdd:dryrun;
     fi
   - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
-      npm run test:bdd:first -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+      npm run test:bdd -- --tags=@first --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
-      npm run test:bdd:second -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+      npm run test:bdd -- --tags=@second --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+    fi
+  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "third" ) ]]; then
+    npm run test:bdd -- --tags=@third --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
       npm test 2> $ARTIFACTS_DIR/mocha-logs.log;
     fi
   # compile and check Smart Contracts
-  - ganache-cli -i 5777 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief" &> $ARTIFACTS_DIR/ganache.log &
+  - ganache-cli -i 5777 -p 7545 -l 10000000 --acctKeys $ARTIFACTS_DIR/acct-keys.log -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief" &> $ARTIFACTS_DIR/ganache.log &
   - cd modules/Blockchain/Ethereum
   - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
       truffle test --network test > $ARTIFACTS_DIR/truffle-test.log;
     fi
-  - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
+  - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) || ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ) ]]; then
       rm -rf build && truffle migrate --reset --compile-all --network ganache > $ARTIFACTS_DIR/truffle-migrate.log;
     fi
   - cd $TRAVIS_BUILD_DIR
+  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ]]; then ./test/docker/check_image.sh; fi
+  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ]]; then ./test/docker/cleanup_image.sh; fi
   - jobs
   - kill -9 %1
 after_script:
