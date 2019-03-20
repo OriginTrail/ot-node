@@ -231,6 +231,33 @@ module.exports = async (deployer, network, accounts) => {
         console.log('Transfering ERC725 and adding nodeID approval...');
         await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes);
         break;
+    case 'testApproval':
+        hub = await Hub.at('0xa287d7134fb40bef071c932286bd2cd01efccf30');
+
+        // Getting Approval contract
+        temp = await hub.approvalAddress.call();
+        approval = await Approval.at(temp);
+
+        // Getting MultiApproval contract
+        temp = await approval.owner.call();
+        multiApproval = await MultiApproval.at(temp);
+
+        filepath = './approval-identities.json';
+        file = fs.readFileSync(filepath, 'utf8');
+        data = JSON.parse(file);
+
+        for (i = 0; i < data.length; i += 1) {
+            indexes[i] = new BN(0);
+            nodeIds[i] = data[i].nodeId;
+            if (nodeIds[i].length === 40) nodeIds[i] = `0x${nodeIds[i]}`;
+            identities[i] = data[i].newIdentity;
+            oldIdentities[i] = data[i].oldIdentity;
+
+            console.log(`Node ${i + 1}\t id:${nodeIds[i]}\tOld identity:${oldIdentities[i]}\tNew identity:${identities[i]}`);
+        }
+
+        console.log(`Number of entries: ${nodeIds.length}`);
+        break;
     case 'rinkeby':
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
             .then((result) => {

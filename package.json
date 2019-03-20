@@ -29,6 +29,8 @@
     "arango": "/usr/local/opt/arangodb/sbin/arangod &",
     "db_backup": "node add_db_backup.js",
     "generate-identity": "node ./scripts/identity-cli.js",
+    "truffle:testApproval": "cd modules/Blockchain/Ethereum && truffle migrate -f 2 --network testApproval",
+    "truffle:updateApproval": "cd modules/Blockchain/Ethereum && truffle migrate -f 2 --network updateApproval",
     "setup": "node ./scripts/setup.js",
     "setup:hard": "node ./scripts/setup.js --hard",
     "setup:hard:all": "node ./scripts/setup.js --hard --all",
