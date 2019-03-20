@@ -289,6 +289,16 @@ contract('Litigation testing', async (accounts) => {
         const initialDhProfileState = await profileStorage.profile.call(DH_identity);
         const initialDhHolderState = await holdingStorage.holder.call(offerId, DH_identity);
         const initialDcState = await profileStorage.profile.call(DC_identity);
+        let initialReplacementProfile = [{}, {}, {}];
+        let promises = [];
+        for (let i = 0; i < 3; i += 1) {
+            initialReplacementProfile[i].identity = identities[i + 3];
+            promises[i] = profileStorage.profile.call(identities[i + 3]);
+        }
+        let res = await Promise.all(promises);
+        for (let i = 0; i < 3; i += 1) {
+            initialReplacementProfile[i].profile = res[i];
+        }
 
         assert(
             initialLitigationState.status.isZero(),
@@ -323,7 +333,7 @@ contract('Litigation testing', async (accounts) => {
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         // Initiate litigation for data number 5
-        let res = await litigation.initiateLitigation(
+        res = await litigation.initiateLitigation(
             offerId,
             DH_identity,
             DC_identity,
@@ -352,7 +362,7 @@ contract('Litigation testing', async (accounts) => {
             { from: DC_wallet, gasLimit: 6000000 },
         );
 
-        // Get holder paid amount
+        // Verify previous holder paid amount
         const holderPaidAmount =
             await holdingStorage.getHolderPaidAmount.call(offerId, DH_identity);
         assert(
@@ -408,7 +418,7 @@ contract('Litigation testing', async (accounts) => {
 
         // Calculating confirmations to be signed by DH's
         var confirmations = [];
-        let promises = [];
+        promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             promises[i] = util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
@@ -447,12 +457,31 @@ contract('Litigation testing', async (accounts) => {
             return element.event === 'ReplacementCompleted';
         }).args.chosenHolder;
 
-        const replacementDHState = await holdingStorage.holder(offerId, replacementDH);
+        initialReplacementProfile = initialReplacementProfile.find((element) => {
+            return element.identity === replacementDH;
+        }).profile;
+
+        const replacementHolderState = await holdingStorage.holder.call(offerId, replacementDH);
+        const replacementProfileState = await profileStorage.profile.call(replacementDH);
+
+        // Replacement holder assertions
         assert(
-            replacementDHState.stakedAmount.eq(tokenAmountPerHolder.sub(holderPaidAmount)),
+            replacementHolderState.stakedAmount.eq(tokenAmountPerHolder.sub(holderPaidAmount)),
             'Replacement holder staked amount not matching! ' +
-            `Got ${replacementDHState.stakedAmount.toString()} ` +
+            `Got ${replacementHolderState.stakedAmount.toString()} ` +
             `but expected ${tokenAmountPerHolder.sub(holderPaidAmount).toString()}`,
+        );
+        assert(
+            replacementHolderState.paidAmount.isZero(),
+            'Replacement holder paid amount incorrect! ' +
+            `Got ${replacementHolderState.paidAmount.toString()}, but expected zero!`,
+        );
+        assert(
+            replacementProfileState.stakeReserved.eq(initialReplacementProfile.stakeReserved
+                .add(tokenAmountPerHolder.sub(holderPaidAmount))),
+            'Replacement holder staked amount not matching! ' +
+            `Got ${replacementProfileState.stakeReserved.toString()} ` +
+            `but expected ${initialReplacementProfile.stakeReserved.add(tokenAmountPerHolder.sub(holderPaidAmount)).toString()}`,
         );
 
         const finalLitigationState = await litigationStorage.litigation.call(offerId, DH_identity);
