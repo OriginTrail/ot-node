@@ -28,9 +28,9 @@ contract Identity is ERC725 {
         otVersion = 1;
 
         bytes32 _management_key = keccak256(abi.encodePacked(management));
-        
+
         keys[_management_key].key = _management_key;
-        
+
         keys[_management_key].keyType = 1;
 
         keys[_management_key].purposes = [1,2,3,4];

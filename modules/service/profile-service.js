@@ -149,6 +149,7 @@ class ProfileService {
             transactional: false,
             data: {
                 offerId,
+                viaAPI: true,
             },
         });
         this.logger.notify(`Pay-out for offer ${offerId} initiated.`);

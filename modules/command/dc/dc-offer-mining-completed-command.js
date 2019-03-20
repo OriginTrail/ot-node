@@ -24,6 +24,7 @@ class DcOfferMiningCompletedCommand extends Command {
             offerId,
             solution,
             success,
+            isReplacement,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
@@ -50,7 +51,6 @@ class DcOfferMiningCompletedCommand extends Command {
                     commands: [{
                         name: 'dcOfferChooseCommand',
                         data,
-                        transactional: false,
                     }],
                 };
             }
@@ -58,6 +58,17 @@ class DcOfferMiningCompletedCommand extends Command {
             offer.status = 'MINED';
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
+
+            if (isReplacement) {
+                return {
+                    commands: [
+                        {
+                            name: 'dcOfferReplaceCommand',
+                            data: command.data,
+                        },
+                    ],
+                };
+            }
 
             const hasFunds = await this.dcService
                 .hasProfileBalanceForOffer(offer.token_amount_per_holder);
@@ -77,11 +88,12 @@ class DcOfferMiningCompletedCommand extends Command {
             };
         }
         // TODO found no solution, handle this case properly
-        this.logger.warn(`Offer with ID ${offerId} has no solution.`);
+        this.logger.warn(`Offer ${offer.offer_id} has no solution.`);
 
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = 'Failed to find solution for DHs provided';
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
@@ -96,8 +108,9 @@ class DcOfferMiningCompletedCommand extends Command {
         const { offerId } = command.data;
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

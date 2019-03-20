@@ -62,6 +62,7 @@ class DhOfferFinalizedCommand extends Command {
                                 transactional: false,
                                 data: {
                                     offerId,
+                                    viaAPI: false,
                                 },
                             },
                         ],

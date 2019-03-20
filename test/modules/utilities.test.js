@@ -27,7 +27,7 @@ describe('Utilities module', () => {
                     'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
                     'dc_token_amount_per_holder', 'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes', 'dh_min_token_price',
-                    'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval'],
+                    'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval', 'litigationEnabled'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -37,7 +37,7 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.blockchain, [
                     'blockchain_title', 'network_id', 'gas_limit', 'gas_price',
-                    'hub_contract_address', 'rpc_node_host', 'rpc_node_port', 'plugins'],
+                    'hub_contract_address', 'plugins'],
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -90,7 +90,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'hub_contract_address', 'rpc_node_host', 'rpc_node_port']);
+                'gas_price', 'hub_contract_address']);
             assert.equal(config.blockchain.blockchain_title, 'Ethereum');
         });
     });

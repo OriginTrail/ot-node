@@ -38,6 +38,11 @@ class AutoupdaterCommand extends Command {
      * @param command
      */
     async execute(command) {
+        if (!this.config.autoUpdater.enabled) {
+            this.logger.debug('Autoupdate command ignored.');
+            return Command.repeat(); // Can be enabled during runtime.
+        }
+
         if (this.process.env.OT_NODE_DISTRIBUTION !== 'docker') {
             this.logger.warn('Checking for new node version supported only in docker.');
             return Command.empty();

@@ -1,12 +1,5 @@
-const uuidv4 = require('uuid/v4');
-
 module.exports = (sequelize, DataTypes) => {
-    const miner = sequelize.define('miner_records', {
-        id: {
-            type: DataTypes.STRING,
-            defaultValue: () => uuidv4(),
-            primaryKey: true,
-        },
+    const miner = sequelize.define('miner_tasks', {
         offer_id: DataTypes.STRING,
         difficulty: DataTypes.INTEGER,
         task: DataTypes.STRING,

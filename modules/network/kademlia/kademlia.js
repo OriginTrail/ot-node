@@ -238,7 +238,7 @@ class Kademlia {
                     'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-send-encrypted-key',
                     'kad-encrypted-key-process-result',
-                    'kad-replication-request',
+                    'kad-replication-request', 'kad-replacement-replication-request', 'kad-replacement-replication-finished',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
@@ -385,10 +385,23 @@ class Kademlia {
             this.emitter.emit('kad-replication-request', request, response);
         });
 
+        // sync
+        this.node.use('kad-replacement-replication-request', (request, response, next) => {
+            this.log.debug('kad-replacement-replication-request received');
+            this.emitter.emit('kad-replacement-replication-request', request, response);
+        });
+
+        // async
+        this.node.use('kad-replacement-replication-finished', (request, response, next) => {
+            this.log.debug('kad-replacement-replication-finished received');
+            this.emitter.emit('kad-replacement-replication-finished', request, response);
+            response.send([]);
+        });
+
         // async
         this.node.use('kad-replication-finished', (request, response, next) => {
             this.log.debug('kad-replication-finished received');
-            this.emitter.emit('kad-replication-finished', request);
+            this.emitter.emit('kad-replication-finished', request, response);
             response.send([]);
         });
 
@@ -425,10 +438,18 @@ class Kademlia {
             this.emitter.emit('kad-encrypted-key-process-result', request, response);
         });
 
-        // sync
+        // async
         this.node.use('kad-challenge-request', (request, response, next) => {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-challenge-response', (request, response, next) => {
+            this.log.debug('kad-challenge-response received');
+            this.emitter.emit('kad-challenge-response', request, response);
+            response.send([]);
         });
 
         // error handler
@@ -554,6 +575,19 @@ class Kademlia {
                 });
             };
 
+            node.replacementReplicationRequest = async (message, contactId) => {
+                const contact = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-replacement-replication-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
             node.replicationFinished = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
@@ -567,10 +601,36 @@ class Kademlia {
                 });
             };
 
+            node.replacementReplicationFinished = async (message, contactId) => {
+                const contact = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-replacement-replication-finished', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
             node.challengeRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
                     node.send('kad-challenge-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.challengeResponse = async (message, contactId) => {
+                const contact = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-challenge-response', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {

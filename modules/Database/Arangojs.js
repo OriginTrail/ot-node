@@ -231,23 +231,26 @@ class ArangoJS {
         if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
-        const queryString = `FOR vertex, edge, path
-            IN 1 .. ${depth}
-            OUTBOUND 'ot_vertices/${startVertex._key}'
-            ot_edges
-            OPTIONS {bfs: false, uniqueVertices: 'path'}
-            FILTER edge.edge_type != 'IDENTIFIES'
-            AND edge.edge_type != 'IDENTIFIED_BY'
-            AND edge._to != 'ot_vertices/Actor'
-            AND edge._to != 'ot_vertices/Product'
-            AND edge._to != 'ot_vertices/Location'
-            AND edge._to != 'ot_vertices/Transport'
-            AND edge._to != 'ot_vertices/Transformation'
-            AND edge._to != 'ot_vertices/Observation'
-            AND edge._to != 'ot_vertices/Ownership'
-            AND vertex.vertex_type != 'CLASS'
-            AND vertex.vertex_type != 'IDENTIFIER'
-            RETURN path`;
+        const queryString = `let vertices = (FOR v, e, p IN 0..${depth} OUTBOUND 'ot_vertices/${startVertex._key}' ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                FILTER p.vertices[*].vertex_type ALL != 'CLASS'
+                                FILTER p.edges[*].edge_type ALL != 'IDENTIFIES'
+                                RETURN v)
+                                
+                            let edges = (FOR v, e, p IN 0..${depth} OUTBOUND 'ot_vertices/${startVertex._key}' ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                FILTER p.vertices[*].vertex_type ALL != 'CLASS'
+                                FILTER p.edges[*].edge_type ALL != 'IDENTIFIES'
+                                RETURN e)
+                            RETURN {vertices, edges}`;
 
         const rawGraph = await this.runQuery(queryString);
 

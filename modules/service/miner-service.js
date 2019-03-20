@@ -1,7 +1,6 @@
 const { fork } = require('child_process');
 const Models = require('../../models/index');
-
-const DEFAULT_DIFFICULTY = 1;
+const { MinerError } = require('../errors');
 
 class MinerService {
     constructor(ctx) {
@@ -9,26 +8,23 @@ class MinerService {
         this.dcService = ctx.dcService;
         this.emitter = ctx.emitter;
         this.blockchain = ctx.blockchain;
-        this.forks = {};
     }
 
     /**
      * Call miner process
      * @param task
      * @param wallets
+     * @param difficulty
      * @param offerId
      */
-    async sendToMiner(task, wallets, offerId) {
+    async sendToMiner(task, difficulty, wallets, offerId) {
         try {
-            const difficulty = await this.blockchain.getOfferDifficulty(offerId);
-
             const forked = fork('modules/worker/miner-worker.js');
-            this.forks[offerId] = forked;
 
             forked.send({
                 offerId,
                 wallets,
-                difficulty: DEFAULT_DIFFICULTY, // TODO take from configuration
+                difficulty,
                 task,
                 type: 'TASK',
             });
@@ -38,11 +34,11 @@ class MinerService {
                 if (parsed.success) {
                     this.emitter.emit('int-miner-solution', null, parsed);
                 } else {
-                    this.emitter.emit('int-miner-solution', new Error(`Cannot find a solution for offer ${offerId}`), null);
+                    this.emitter.emit('int-miner-solution', new MinerError(`Cannot find a solution for offer ${offerId}`, offerId), null);
                 }
             });
 
-            await Models.miner_records.create({
+            await Models.miner_tasks.create({
                 offer_id: offerId,
                 difficulty,
                 task,
@@ -51,7 +47,7 @@ class MinerService {
 
             this.logger.important(`Miner started for offer ${offerId}.`);
         } catch (e) {
-            this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ID ${offerId}`);
+            this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ${offerId}`);
         }
     }
 }
