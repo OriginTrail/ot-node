@@ -457,6 +457,7 @@ contract('Litigation testing', async (accounts) => {
             return element.event === 'ReplacementCompleted';
         }).args.chosenHolder;
 
+        // eslint-disable-next-line arrow-body-style
         initialReplacementProfile = initialReplacementProfile.find((element) => {
             return element.identity === replacementDH;
         }).profile;
