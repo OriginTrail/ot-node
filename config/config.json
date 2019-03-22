@@ -96,7 +96,8 @@
     "deposit_on_demand": true,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": true
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "staging": {
     "identity": null,
@@ -195,7 +196,8 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": true
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "stable": {
     "identity": null,
@@ -294,7 +296,8 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": true
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "production": {
     "identity": null,
@@ -396,7 +399,8 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": true
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "mariner": {
     "identity": null,
@@ -498,6 +502,7 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": true,
-    "litigationEnabled": false
+    "litigationEnabled": false,
+    "commandExecutorVerboseLoggingEnabled": false
   }
 }
