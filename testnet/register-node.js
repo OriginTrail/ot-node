@@ -130,16 +130,16 @@ function upgradeContainer() {
 
     // Move files to the '/ot-node/init'.
     execSync(`mkdir -p ${initPath}`);
-return true;
+
     execSync(
-        'find . ! -path . -a -not \\( -name ".origintrail_noderc" -o -name "init" -o -name "data" \\) -maxdepth 1 -exec mv {} current/ \\;',
+        'find . ! -path . -a -not \\( -name ".origintrail_noderc" -o -name "init" -o -name "data" \\) -maxdepth 1 -exec mv {} init/ \\;',
         { cwd: basePath },
     );
     execSync(`rm -rf ${path.join(initPath, 'node_modules')}`);
     execSync(`ln -s ${initPath} ${currentPath}`);
 
     logger.info('Installing new node modules.');
-    execSync('/bin/bash -l -c "npm install"', { cwd: initPath });
+    execSync('npm install', { cwd: initPath });
 
     logger.info('Update entrypoint.');
 
