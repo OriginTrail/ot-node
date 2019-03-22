@@ -89,14 +89,14 @@ process.once('message', async (options) => {
                     logger.info(`Downloaded ${pJson.version} version.`);
                     logger.info('Cleaning update destination directory');
                     const installDir = path.join(destinationBaseDir, pJson.version);
-                    execSync(`rm -rf ${installDir}`);
+                    execSync(`/bin/rm -rf ${installDir}`);
 
-                    execSync(`mv ${otNodeExtractionPath} ${installDir}`);
+                    execSync(`/bin/mv ${otNodeExtractionPath} ${installDir}`);
 
                     logger.info(`Update has been moved to directory ${installDir}`);
                     logger.info('Installing node modules...');
 
-                    execSync('bash -l -c "npm install"', { cwd: installDir });
+                    execSync('/bin/bash -l -c "npm install"', { cwd: installDir });
                     logger.info('Node modules installed');
                     process.send({
                         status: 'completed',

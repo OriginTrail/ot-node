@@ -176,7 +176,7 @@ describe('Checks AutoupdaterCommand logic', () => {
 
             const generatedUpdateFile = JSON.parse(fs.readFileSync(path.join(currentPath, 'UPDATE'), 'utf8'));
             expect(expectedUpdateFile).to.deep.equal(generatedUpdateFile);
-        });
+        }).timeout(60000);
 
         it('should fail to prepare update if server wont send archive', async () => {
             const remotePjson = Object.assign({}, dummyAppPackageJson);
