@@ -135,7 +135,7 @@ function upgradeContainer() {
         { cwd: basePath },
     );
     execSync(`rm -rf ${path.join(initPath, 'node_modules')}`);
-    execSync(`ln -s ${initPath} ${currentPath}`);
+    // execSync(`ln -s ${initPath} ${currentPath}`);
 
     logger.info('Installing new node modules.');
     execSync('/bin/bash -l -c "npm install"', { cwd: initPath });
