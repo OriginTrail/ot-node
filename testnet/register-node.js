@@ -112,6 +112,44 @@ function checkForUpdate() {
     //   be restarted to take all the effects.
 }
 
+function upgradeContainer() {
+    // Check if container is in old format.
+    const currentPath = '/ot-node/current';
+
+    if (fs.existsSync(currentPath)) {
+        if (fs.existsSync('/ot-node/testnet/start.sh')) {
+            logger.info('Running upgraded container. Consider creating new one.');
+        }
+        return;
+    }
+
+    logger.info('Upgrading the container\'s filesystem.');
+
+    const initPath = '/ot-node/init';
+    const basePath = '/ot-node';
+
+    // Move files to the '/ot-node/init'.
+    execSync(`mkdir -p ${initPath}`);
+    execSync('find . ! -path . -a -not \\( -name ".origintrail_noderc" -o -name "current" -o -name "data" \\) -maxdepth 1 -exec mv {} current/ \\;');
+    execSync(`rm -rf ${path.join(initPath, 'node_modules')}`);
+    execSync(`ln -sfn ${initPath}/ ${currentPath}`);
+
+    logger.info('Installing new node modules.');
+    execSync('/bin/bash -l -c "npm install"', { cwd: initPath });
+
+    logger.info('Update entrypoint.');
+
+    const startSh =
+`#!/usr/bin/env bash
+/usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf
+`;
+
+    execSync('mkdir -p /ot-node/testnet/');
+    fs.writeFileSync('/ot-node/testnet/start.sh', startSh);
+    execSync('chmod a+x /ot-node/testnet/start.sh');
+    logger.info('Upgrading container finished.');
+}
+
 function main() {
     const localConfigPath = path.join('/ot-node/', `.${pjson.name}rc`);
     let externalConfig = {};
@@ -122,7 +160,7 @@ function main() {
     }
 
     if (!externalConfig.blockchain || !externalConfig.blockchain.rpc_server_url) {
-        console.error('Please provide a valid RPC server URL.\n' +
+        logger.error('Please provide a valid RPC server URL.\n' +
             'Add it to the blockchain section. For example:\n' +
             '   "blockchain": {\n' +
             '       "rpc_server_url": "http://your.server.url/"\n' +
@@ -188,5 +226,6 @@ function main() {
     require('../ot-node');
 }
 
+upgradeContainer();
 checkForUpdate();
 main();
