@@ -156,7 +156,7 @@ function upgradeContainer() {
     setTimeout(() => {
         process.on('exit', () => {
             /* eslint-disable-next-line */
-            spawn('/ot-node/testnet/start.sh', null, {
+            spawn('/ot-node/testnet/start.sh', [], {
                 cwd: currentPath,
                 detached: true,
                 stdio: 'inherit',
