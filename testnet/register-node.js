@@ -130,6 +130,7 @@ function upgradeContainer() {
 
     // Move files to the '/ot-node/init'.
     execSync(`mkdir -p ${initPath}`);
+return true;
     execSync(
         'find . ! -path . -a -not \\( -name ".origintrail_noderc" -o -name "init" -o -name "data" \\) -maxdepth 1 -exec mv {} current/ \\;',
         { cwd: basePath },
