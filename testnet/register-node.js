@@ -145,6 +145,7 @@ function upgradeContainer() {
 
     const startSh =
 `#!/usr/bin/env bash
+export OT_NODE_DISTRIBUTION=docker
 /usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf
 `;
 
