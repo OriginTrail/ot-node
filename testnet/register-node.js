@@ -8,7 +8,7 @@ const Web3 = require('web3');
 const deepExtend = require('deep-extend');
 const pjson = require('../package.json');
 const argv = require('minimist')(process.argv.slice(2));
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 
 const logger = require('../modules/logger');
 const configjson = require('../config/config.json');
@@ -120,7 +120,7 @@ function upgradeContainer() {
         if (fs.existsSync('/ot-node/testnet/start.sh')) {
             logger.info('Running upgraded container. Consider creating new one.');
         }
-        return;
+        return false;
     }
 
     logger.info('Upgrading the container\'s filesystem.');
@@ -147,7 +147,20 @@ function upgradeContainer() {
     execSync('mkdir -p /ot-node/testnet/');
     fs.writeFileSync('/ot-node/testnet/start.sh', startSh);
     execSync('chmod a+x /ot-node/testnet/start.sh');
-    logger.info('Upgrading container finished.');
+    logger.info('Upgrading container finished. Restarting node.');
+
+    setTimeout(() => {
+        process.on('exit', () => {
+            /* eslint-disable-next-line */
+            spawn('/ot-node/testnet/start.sh', null, {
+                cwd: currentPath,
+                detached: true,
+                stdio: 'inherit',
+            });
+        });
+        process.exit(3);
+    }, 5000);
+    return true;
 }
 
 function main() {
@@ -226,6 +239,8 @@ function main() {
     require('../ot-node');
 }
 
-upgradeContainer();
+if (upgradeContainer()) {
+    return;
+}
 checkForUpdate();
 main();
