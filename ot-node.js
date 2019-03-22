@@ -42,7 +42,6 @@ const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
-const Update = require('./check-updates');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -579,32 +578,14 @@ log.info(`             OriginTrail Node v${pjson.version}`);
 log.info('======================================================');
 log.info('');
 
-async function checkIfUpdateAvailable() {
-    if (await Update.isUpdateAvailable(config.autoUpdater)) {
-        log.important('Restarting node due to scheduled update.');
-        Update.restartNode();
-        return;
-    }
-
-    setTimeout(checkIfUpdateAvailable, 43200000);
-}
 
 function main() {
-    setTimeout(checkIfUpdateAvailable, 43200000);
     const otNode = new OTNode();
     otNode.bootstrap().then(() => {
         log.info('OT Node started');
     });
 }
 
+// Make sure the Sequelize meta table is migrated before running main.
 const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
-
-migrationSequelizeMeta.run()
-    .then(() => {
-        Update.update(config.autoUpdater)
-            .then(main)
-            .catch((error) => {
-                log.error(`Failed to check update. ${error}.`);
-                main();
-            });
-    });
+migrationSequelizeMeta.run().then(main);
