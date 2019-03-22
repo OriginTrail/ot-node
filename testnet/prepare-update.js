@@ -96,7 +96,7 @@ process.once('message', async (options) => {
                     logger.info(`Update has been moved to directory ${installDir}`);
                     logger.info('Installing node modules...');
 
-                    execSync('/bin/bash -l -c "npm install"', { cwd: installDir });
+                    execSync('/bin/bash -l -c "npm install"', { cwd: installDir, env: process.env });
                     logger.info('Node modules installed');
                     process.send({
                         status: 'completed',
