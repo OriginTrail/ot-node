@@ -3,5 +3,6 @@
     "node_private_key": "askRadomirIfYouNeedIt",
     "database": {
       "password": "root"
-    }
+    },
+    "commandExecutorVerboseLoggingEnabled": true
 }
