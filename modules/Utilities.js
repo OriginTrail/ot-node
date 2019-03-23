@@ -18,8 +18,6 @@ const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
-const { execSync } = require('child_process');
-const Umzug = require('umzug');
 
 const logger = require('./logger');
 
@@ -154,56 +152,6 @@ class Utilities {
                 );
                 return resolve(true);
             });
-        });
-    }
-    static runUpdate() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const { version, configPath } = JSON.parse(fs.readFileSync('/ot-node/current/UPDATE', 'utf8'));
-                logger.info('Migrating node configuration');
-                logger.info(`running: execSync('cp -r ${configPath} /ot-node/${version}/');`);
-                execSync(`cp -r ${configPath} /ot-node/${version}/`);
-                logger.info('Configuration migration complete');
-
-                const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
-                process.env.SEQUELIZEDB = `/ot-node/${version}/data/system.db`;
-
-                // eslint-disable-next-line
-                const Models = require(`../../${version}/models`);
-
-                const umzug_migrations = new Umzug({
-
-                    storage: 'sequelize',
-
-                    storageOptions: {
-                        sequelize: Models.sequelize,
-                    },
-
-                    migrations: {
-                        params: [Models.sequelize.getQueryInterface(),
-                            Models.sequelize.constructor, () => {
-                                throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.');
-                            }],
-                        path: `../${version}/migrations`,
-                        pattern: /\.js$/,
-                    },
-                });
-
-                umzug_migrations.up().then((migrations) => {
-                    logger.info('Database migrated.');
-                    logger.info('Switching node version');
-                    execSync(`ln -sfn /ot-node/${version}/ /ot-node/current`);
-                    resolve();
-                }).catch((err) => {
-                    logger.error('Update failed');
-                    process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
-                    logger.error('Database migrations failed');
-                    logger.error(err);
-                    reject(err);
-                });
-            } catch (err) {
-                reject(err);
-            }
         });
     }
 
