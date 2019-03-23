@@ -23,7 +23,7 @@ const logger = require('../../../../modules/logger');
 
 class MockProcess {
     constructor() {
-        this.env = {};
+        this.env = process.env;
         this.exit = () => {};
     }
 }
