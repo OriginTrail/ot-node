@@ -44,7 +44,6 @@ const APIUtilities = require('./modules/utility/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
-const Update = require('./check-updates');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -157,10 +156,16 @@ process.on('warning', (warning) => {
 });
 
 process.on('exit', (code) => {
-    if (code !== 0) {
-        log.error(`Whoops, terminating with code: ${code}`);
-    } else {
+    switch (code) {
+    case 0:
         log.debug(`Normal exiting with code: ${code}`);
+        break;
+    case 4:
+        log.trace('Exiting because of update.');
+        break;
+    default:
+        log.error(`Whoops, terminating with code: ${code}`);
+        break;
     }
 });
 
@@ -590,32 +595,14 @@ log.info(`             OriginTrail Node v${pjson.version}`);
 log.info('======================================================');
 log.info('');
 
-async function checkIfUpdateAvailable() {
-    if (await Update.isUpdateAvailable(config.autoUpdater)) {
-        log.important('Restarting node due to scheduled update.');
-        Update.restartNode();
-        return;
-    }
-
-    setTimeout(checkIfUpdateAvailable, 43200000);
-}
 
 function main() {
-    setTimeout(checkIfUpdateAvailable, 43200000);
     const otNode = new OTNode();
     otNode.bootstrap().then(() => {
         log.info('OT Node started');
     });
 }
 
+// Make sure the Sequelize meta table is migrated before running main.
 const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
-
-migrationSequelizeMeta.run()
-    .then(() => {
-        Update.update(config.autoUpdater)
-            .then(main)
-            .catch((error) => {
-                log.error(`Failed to check update. ${error}.`);
-                main();
-            });
-    });
+migrationSequelizeMeta.run().then(main);

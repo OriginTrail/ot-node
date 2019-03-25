@@ -53,7 +53,7 @@ describe('Utilities module', () => {
                 `Some config items are missing in config.bugSnag for environment '${environment}'`,
             );
             assert.hasAllKeys(
-                config.autoUpdater, ['repo', 'branch'],
+                config.autoUpdater, ['archiveUrl', 'enabled', 'packageJsonUrl'],
                 `Some config items are missing in config.autoUpdater for environment '${environment}'`,
             );
         });
