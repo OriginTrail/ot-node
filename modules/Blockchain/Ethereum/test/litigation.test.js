@@ -49,10 +49,10 @@ var root_hash;
 
 // Offer variables
 const dataSetId = '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-const dataRootHash = '0x1cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-const redLitigationHash = '0x2cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-const greenLitigationHash = '0x3cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-const blueLitigationHash = '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+let dataRootHash;
+let redLitigationHash;
+let greenLitigationHash;
+let blueLitigationHash;
 const dcNodeId = '0x5cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
 const holdingTimeInMinutes = new BN(1);
 const tokenAmountPerHolder = new BN(120);
@@ -110,7 +110,7 @@ contract('Litigation testing', async (accounts) => {
         // Generate eth_account, identities, and profiles
 
         // Increase approval for depositing tokens
-        var promises = [];
+        let promises = [];
         for (let i = 0; i < accounts.length; i += 1) {
             promises[i] = trac.increaseApproval(
                 profile.address,
@@ -120,7 +120,7 @@ contract('Litigation testing', async (accounts) => {
         }
         await Promise.all(promises);
 
-        var res;
+        let res;
         // Generate profiles
         for (let i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
@@ -142,11 +142,6 @@ contract('Litigation testing', async (accounts) => {
         DH_wallet = accounts[0];
         // eslint-disable-next-line prefer-destructuring
         DH_identity = identities[0];
-    });
-
-    // eslint-disable-next-line no-undef
-    beforeEach(async () => {
-        // Create an offer used for testing the litigation process
 
         // Calculate litigation root hash
         // Merkle tree structure
@@ -161,7 +156,7 @@ contract('Litigation testing', async (accounts) => {
         A  B C  D E  F G  H  */
 
         // Calculating hashes of requested data
-        let promises = [];
+        promises = [];
         for (let i = 0; i < 8; i += 1) {
             promises[i] = util.keccakString.call(letters[i]);
         }
@@ -183,15 +178,22 @@ contract('Litigation testing', async (accounts) => {
         hash_EFGH = await util.keccak2hashes.call(hash_EF, hash_GH);
         root_hash = await util.keccak2hashes.call(hash_ABCD, hash_EFGH);
 
+        dataRootHash = root_hash;
+        redLitigationHash = root_hash;
+        greenLitigationHash = root_hash;
+        blueLitigationHash = root_hash;
+    });
 
+    // eslint-disable-next-line no-undef
+    beforeEach(async () => {
         // Creating offer used for litigation
         const res = await holding.createOffer(
             DC_identity,
             dataSetId,
             dataRootHash,
-            root_hash, // Use root hash as all 3 colors for easier testing
-            root_hash,
-            root_hash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
             dcNodeId,
             holdingTimeInMinutes,
             tokenAmountPerHolder,
@@ -242,7 +244,7 @@ contract('Litigation testing', async (accounts) => {
 
         // Calculating confirmations to be signed by DH's
         var confirmations = [];
-        promises = [];
+        let promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             promises[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
@@ -287,26 +289,41 @@ contract('Litigation testing', async (accounts) => {
         const initialDhProfileState = await profileStorage.profile.call(DH_identity);
         const initialDhHolderState = await holdingStorage.holder.call(offerId, DH_identity);
         const initialDcState = await profileStorage.profile.call(DC_identity);
+        let initialReplacementProfile = [{}, {}, {}];
+        let promises = [];
+        for (let i = 0; i < 3; i += 1) {
+            initialReplacementProfile[i].identity = identities[i + 3];
+            promises[i] = profileStorage.profile.call(identities[i + 3]);
+        }
+        let res = await Promise.all(promises);
+        for (let i = 0; i < 3; i += 1) {
+            initialReplacementProfile[i].profile = res[i];
+        }
 
         assert(
             initialLitigationState.status.isZero(),
-            `Initial litigation status differs from expected! Got ${initialLitigationState.status.toString()} but expected 0!`,
+            'Initial litigation status differs from expected! ' +
+            `Got ${initialLitigationState.status.toString()} but expected 0!`,
         );
         assert(
             initialLitigationState.timestamp.isZero(),
-            `Initial litigation timestamp differs from expected! Got ${initialLitigationState.timestamp.toString()} but expected 0!`,
+            'Initial litigation timestamp differs from expected! ' +
+            `Got ${initialLitigationState.timestamp.toString()} but expected 0!`,
         );
         assert(
             initialDhHolderState.stakedAmount.eq(initialOfferState.tokenAmountPerHolder),
-            `Initial holder staked amount differs from expected! Got ${initialDhHolderState.stakedAmount.toString()} but expected ${initialOfferState.tokenAmountPerHolder.toString()}!`,
+            'Initial holder staked amount differs from expected! ' +
+            `Got ${initialDhHolderState.stakedAmount.toString()} but expected ${initialOfferState.tokenAmountPerHolder.toString()}!`,
         );
         assert(
             initialDhHolderState.paidAmount.isZero(),
-            `Initial litigation status differs from expected! Got ${initialDhHolderState.paidAmount.toString()} but expected 0!`,
+            'Initial litigation status differs from expected! ' +
+            `Got ${initialDhHolderState.paidAmount.toString()} but expected 0!`,
         );
         assert(
             initialDhHolderState.paymentTimestamp.eq(initialOfferState.startTime),
-            `Initial payment timestamp differs from expected! Got ${initialDhHolderState.paymentTimestamp.toString()} but expected ${initialOfferState.startTime.toString()}!`,
+            'Initial payment timestamp differs from expected! ' +
+            `Got ${initialDhHolderState.paymentTimestamp.toString()} but expected ${initialOfferState.startTime.toString()}!`,
         );
 
         // Move offer half way through
@@ -315,13 +332,13 @@ contract('Litigation testing', async (accounts) => {
         await holdingStorage.setOfferStartTime(offerId, timestamp);
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
-        // Initiate litigation
-        let res = await litigation.initiateLitigation(
+        // Initiate litigation for data number 5
+        res = await litigation.initiateLitigation(
             offerId,
             DH_identity,
             DC_identity,
-            new BN(0),
-            [hashes[1], hash_CD, hash_EFGH],
+            new BN(5),
+            [hashes[4], hash_GH, hash_ABCD],
             { from: DC_wallet },
         );
 
@@ -330,6 +347,7 @@ contract('Litigation testing', async (accounts) => {
         timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
         await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
+        // Move the offer time as well
         timestamp = await holdingStorage.getOfferStartTime.call(offerId);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
         await holdingStorage.setOfferStartTime(offerId, timestamp);
@@ -340,11 +358,11 @@ contract('Litigation testing', async (accounts) => {
             offerId,
             DH_identity,
             DC_identity,
-            hashes[0],
+            hashes[5],
             { from: DC_wallet, gasLimit: 6000000 },
         );
 
-        // Get holder paid amount
+        // Verify previous holder paid amount
         const holderPaidAmount =
             await holdingStorage.getHolderPaidAmount.call(offerId, DH_identity);
         assert(
@@ -400,7 +418,7 @@ contract('Litigation testing', async (accounts) => {
 
         // Calculating confirmations to be signed by DH's
         var confirmations = [];
-        let promises = [];
+        promises = [];
         for (let i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             promises[i] = util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
@@ -439,12 +457,32 @@ contract('Litigation testing', async (accounts) => {
             return element.event === 'ReplacementCompleted';
         }).args.chosenHolder;
 
-        const replacementDHState = await holdingStorage.holder(offerId, replacementDH);
+        // eslint-disable-next-line arrow-body-style
+        initialReplacementProfile = initialReplacementProfile.find((element) => {
+            return element.identity === replacementDH;
+        }).profile;
+
+        const replacementHolderState = await holdingStorage.holder.call(offerId, replacementDH);
+        const replacementProfileState = await profileStorage.profile.call(replacementDH);
+
+        // Replacement holder assertions
         assert(
-            replacementDHState.stakedAmount.eq(tokenAmountPerHolder.sub(holderPaidAmount)),
+            replacementHolderState.stakedAmount.eq(tokenAmountPerHolder.sub(holderPaidAmount)),
             'Replacement holder staked amount not matching! ' +
-            `Got ${replacementDHState.stakedAmount.toString()} ` +
+            `Got ${replacementHolderState.stakedAmount.toString()} ` +
             `but expected ${tokenAmountPerHolder.sub(holderPaidAmount).toString()}`,
+        );
+        assert(
+            replacementHolderState.paidAmount.isZero(),
+            'Replacement holder paid amount incorrect! ' +
+            `Got ${replacementHolderState.paidAmount.toString()}, but expected zero!`,
+        );
+        assert(
+            replacementProfileState.stakeReserved.eq(initialReplacementProfile.stakeReserved
+                .add(tokenAmountPerHolder.sub(holderPaidAmount))),
+            'Replacement holder staked amount not matching! ' +
+            `Got ${replacementProfileState.stakeReserved.toString()} ` +
+            `but expected ${initialReplacementProfile.stakeReserved.add(tokenAmountPerHolder.sub(holderPaidAmount)).toString()}`,
         );
 
         const finalLitigationState = await litigationStorage.litigation.call(offerId, DH_identity);
