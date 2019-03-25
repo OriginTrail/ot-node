@@ -356,7 +356,7 @@ class CommandExecutor {
                         STATUS.started,
                         STATUS.repeating],
                 },
-                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand'] },
+                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand', 'autoupdaterCommand'] },
             },
         })).filter(command => !constants.PERMANENT_COMMANDS.includes(command.name));
 

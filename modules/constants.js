@@ -22,7 +22,9 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
-exports.PERMANENT_COMMANDS = ['cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand', 'dhReplacementStartedCommand'];
+exports.PERMANENT_COMMANDS = [
+    'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
+    'dhReplacementStartedCommand', 'autoupdaterCommand'];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
