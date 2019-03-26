@@ -10,6 +10,7 @@ Feature: Test various litigation scenarios
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 5 |
       | numberOfChallenges | 100 |
+      | challengeResponseTimeMills | 5000 |
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
@@ -42,6 +43,7 @@ Feature: Test various litigation scenarios
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 5 |
       | numberOfChallenges | 100 |
+      | challengeResponseTimeMills | 5000 |
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
@@ -63,6 +65,7 @@ Feature: Test various litigation scenarios
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 5 |
       | numberOfChallenges | 100 |
+      | challengeResponseTimeMills | 5000 |
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
@@ -86,6 +89,7 @@ Feature: Test various litigation scenarios
     When I override configuration for all nodes
       | dc_holding_time_in_minutes | 7 |
       | numberOfChallenges | 100 |
+      | challengeResponseTimeMills | 5000 |
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
@@ -107,6 +111,7 @@ Feature: Test various litigation scenarios
     When I override configuration for all nodes
       | dc_holding_time_in_minutes | 5 |
       | numberOfChallenges | 1 |
+      | challengeResponseTimeMills | 5000 |
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
