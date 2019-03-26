@@ -581,7 +581,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
     done();
 });
 
-Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
+Given(/^I start additional node[s]*$/, { timeout: 5 * 60000 }, function () {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
     const additionalNodesStarts = [];
