@@ -1,10 +1,12 @@
 const fs = require('fs');
+const BN = require('bn.js');
+const uuidv4 = require('uuid/v4');
+const ethereumAbi = require('ethereumjs-abi');
+const Op = require('sequelize/lib/operators');
+
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
-const Op = require('sequelize/lib/operators');
-const uuidv4 = require('uuid/v4');
-const ethereumAbi = require('ethereumjs-abi');
 
 class Ethereum {
     /**
@@ -1324,6 +1326,21 @@ class Ethereum {
             .getHolderPaidAmount(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
             });
+    }
+
+    async getTotalPayouts() {
+        const totalAmount = new BN(0);
+
+        const events = await this.contractsByName.HOLDING_CONTRACT.getPastEvents('PaidOut', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        events.forEach((event) => {
+            if (event.returnValues.identity === this.config.erc725Identity) {
+                totalAmount.iadd(new BN(event.returnValues.amountToTransfer));
+            }
+        });
+        return totalAmount.toString();
     }
 }
 
