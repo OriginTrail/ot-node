@@ -152,12 +152,12 @@ class RemoteControl {
                 this.getLocalData(importId);
             });
 
-            this.socket.on('get-total-stake', () => {
-                this.getTotalStakedAmount();
+            this.socket.on('get-profile', () => {
+                this.getProfile();
             });
 
-            this.socket.on('get-total-income', () => {
-                this.getTotalIncome();
+            this.socket.on('get-total-payouts', () => {
+                this.getTotalPayouts();
             });
 
             this.socket.on('payout', (offer_id) => {
@@ -375,19 +375,19 @@ class RemoteControl {
     }
 
     /**
-     * Get total staked amount of tokens - staked in total
+     * Get profile
      */
-    async getTotalStakedAmount() {
-        const stakedAmount = await this.blockchain.getTotalStakedAmount();
-        this.socket.emit('total_stake', stakedAmount);
+    async getProfile() {
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        this.socket.emit('profile', profile);
     }
 
     /**
      * Get total payments - earning in total
      */
-    async getTotalIncome() {
-        const stakedAmount = await this.blockchain.getTotalIncome();
-        this.socket.emit('total_income', stakedAmount);
+    async getTotalPayouts() {
+        const totalAmount = await this.blockchain.getTotalPayouts();
+        this.socket.emit('total_payouts', totalAmount);
     }
 
     /**
