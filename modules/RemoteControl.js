@@ -179,6 +179,10 @@ class RemoteControl {
             this.socket.on('get-purchase-income', (data) => {
                 this.getPurchaseIncome(data);
             });
+
+            this.socket.on('get-offers', (datasetId) => {
+                this.getOffers(datasetId);
+            });
         });
     }
 
@@ -200,6 +204,41 @@ class RemoteControl {
                     this.socket.emit('imports', rows);
                     resolve();
                 });
+        });
+    }
+
+    /**
+     * Get offers by dataset ID
+     */
+    getOffers(datasetId) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const offers = await Models.offers.findAll({
+                    where: {
+                        data_set_id: datasetId,
+                    },
+                });
+
+                const filtered = offers.map(o => ({
+                    offerId: o.offer_id,
+                    holdingTimeInMinutes: o.holding_time_in_minutes,
+                    tokenAmountPerHolder: o.token_amount_per_holder,
+                    message: o.message,
+                    transactionHash: o.transaction_hash,
+                    litigationIntervalInMinutes: o.litigation_interval_in_minutes,
+                    task: o.task,
+                    global_status: o.global_status,
+                }));
+
+                this.socket.emit('offers', {
+                    datasetId,
+                    offers: filtered,
+                });
+
+                resolve();
+            } catch (e) {
+                reject(e);
+            }
         });
     }
 
