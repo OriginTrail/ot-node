@@ -227,6 +227,7 @@ class RemoteControl {
                     transactionHash: o.transaction_hash,
                     litigationIntervalInMinutes: o.litigation_interval_in_minutes,
                     task: o.task,
+                    status: o.status,
                     global_status: o.global_status,
                 }));
 
