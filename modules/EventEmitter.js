@@ -578,6 +578,32 @@ class EventEmitter {
             }
         });
 
+        this._on('api-offers', async (data) => {
+            const {
+                datasetId,
+            } = data;
+
+            try {
+                const offers = await Models.offers.findAll({
+                    where: {
+                        data_set_id: datasetId,
+                    },
+                });
+
+                data.response.status(200);
+                data.response.send({
+                    offers,
+                });
+            } catch (e) {
+                logger.error(`Failed to create offer. ${e}.`);
+                notifyError(e);
+                data.response.status(405);
+                data.response.send({
+                    message: `Failed to fetch offers. ${e}.`,
+                });
+            }
+        });
+
 
         this._on('api-gs1-import-request', async (data) => {
             try {

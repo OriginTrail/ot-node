@@ -97,7 +97,7 @@ class RemoteControl {
                 socket.emit('system', { info: res });
                 socket.emit('config', this.config); // TODO think about stripping some config values
             }).then((res) => {
-                this.updateImports();
+                this.getImports();
             });
 
             this.socket.on('config-update', (data) => {
@@ -109,7 +109,7 @@ class RemoteControl {
             });
 
             this.socket.on('get-imports', () => {
-                this.updateImports();
+                this.getImports();
             });
 
             this.socket.on('get-visual-graph', (import_id) => {
@@ -193,7 +193,7 @@ class RemoteControl {
     /**
      * Update imports table from data_info
      */
-    updateImports() {
+    getImports() {
         return new Promise((resolve, reject) => {
             Models.data_info.findAll()
                 .then((rows) => {
@@ -552,6 +552,13 @@ class RemoteControl {
      */
     failedToCreateOffer(data) {
         this.socket.emit('failedToCreateOffer', data);
+    }
+
+    /**
+     * DC events
+     */
+    failedToFinalizeOffer(data) {
+        this.socket.emit('failedToFinalizeOffer', data);
     }
 
     writingRootHash(importId) {

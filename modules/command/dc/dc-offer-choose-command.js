@@ -16,6 +16,7 @@ class DCOfferChooseCommand extends Command {
         this.minerService = ctx.minerService;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -110,6 +111,8 @@ class DCOfferChooseCommand extends Command {
         await offer.save({ fields: ['status', 'message', 'global_status'] });
 
         await this.replicationService.cleanup(offer.id);
+
+        this.remoteControl.failedToFinalizeOffer(offer.offer_id);
         return Command.empty();
     }
 

@@ -456,6 +456,27 @@ class RestAPIService {
                 response: res,
             });
         });
+
+        /**
+         * Get offers for dataset
+         * @param Query params: data_set_id
+         */
+        server.get('/api/offers', (req, res) => {
+            this.logger.api('GET: Get offers request received.');
+
+            if (!req.query.data_set_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param data_set_id is required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-offers', {
+                datasetId: req.query.data_set_id,
+                response: res,
+            });
+        });
     }
 
     /**
