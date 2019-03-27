@@ -590,9 +590,20 @@ class EventEmitter {
                     },
                 });
 
+                const filtered = offers.map(o => ({
+                    offerId: o.offer_id,
+                    holdingTimeInMinutes: o.holding_time_in_minutes,
+                    tokenAmountPerHolder: o.token_amount_per_holder,
+                    message: o.message,
+                    transactionHash: o.transaction_hash,
+                    litigationIntervalInMinutes: o.litigation_interval_in_minutes,
+                    task: o.task,
+                    global_status: o.global_status,
+                }));
+
                 data.response.status(200);
                 data.response.send({
-                    offers,
+                    offers: filtered,
                 });
             } catch (e) {
                 logger.error(`Failed to create offer. ${e}.`);
