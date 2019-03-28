@@ -27,6 +27,8 @@ var DC_identity;
 var DC_wallet;
 var offerId;
 var tokensToDeposit = (new BN(100)).mul(new BN(10).pow(new BN(21)));
+const emptyAddress = '0x0000000000000000000000000000000000000000';
+
 
 // Offer variables
 const dataSetId = '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
@@ -145,6 +147,7 @@ async function createOffer(accounts) {
             sortedIdentities[1].identity,
             sortedIdentities[2].identity,
         ],
+        emptyAddress,
         { from: DC_wallet },
     );
 
@@ -344,6 +347,7 @@ contract('Offer testing', async (accounts) => {
                 sortedIdentities[1].identity,
                 sortedIdentities[2].identity,
             ],
+            emptyAddress,
             { from: DC_wallet },
         );
         const finalizeOfferGasUsage = res.receipt.gasUsed;

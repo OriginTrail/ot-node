@@ -33,6 +33,7 @@ var DC_wallet;
 var DH_wallet;
 var offerId;
 var tokensToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(21)));
+const emptyAddress = '0x0000000000000000000000000000000000000000';
 
 // Variables used for litigation
 const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -275,6 +276,7 @@ contract('Litigation testing', async (accounts) => {
                 sortedIdentities[1].identity,
                 sortedIdentities[2].identity,
             ],
+            emptyAddress,
             { from: DC_wallet },
         );
     });
