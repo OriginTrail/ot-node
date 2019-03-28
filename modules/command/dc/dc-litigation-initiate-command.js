@@ -15,6 +15,7 @@ class DCLitigationInitiateCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -44,6 +45,9 @@ class DCLitigationInitiateCommand extends Command {
 
         offer.global_status = 'LITIGATION_INITIATED';
         await offer.save(({ fields: ['global_status'] }));
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);

@@ -347,6 +347,27 @@ class RemoteControl {
     }
 
     /**
+     * Notify offer status update
+     * @param offerIdentifierObject
+     */
+    offerUpdate(offerIdentifierObject) {
+        Models.replicated_data.findOne({ where: offerIdentifierObject }).then((offerData) => {
+            const filtered = {
+                offerId: offerData.offer_id,
+                holdingTimeInMinutes: offerData.holding_time_in_minutes,
+                tokenAmountPerHolder: offerData.token_amount_per_holder,
+                message: offerData.message,
+                transactionHash: offerData.transaction_hash,
+                litigationIntervalInMinutes: offerData.litigation_interval_in_minutes,
+                task: offerData.task,
+                status: offerData.status,
+                global_status: offerData.global_status,
+            };
+            this.socket.emit('offer-update', filtered);
+        });
+    }
+
+    /**
      * Get bids data
      */
     getBids() {
