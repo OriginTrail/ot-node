@@ -32,16 +32,31 @@ contract CreditorHandler {
         _;
     }
 
-    function finalizeOffer(uint256 offerId, address identity, address parentIdentity)
-    public onlyContracts {
+    modifier verifyParent(address identity, address parentIdentity) {
+        require(ERC725(parentIdentity).keyHasPurpose(keccak256(abi.encodePacked(identity)), 237),
+        "Sender identity is not a sub-identity of the provided parent identity!");
+        _;
+    }
+
+    function transferCredit(address identity, address parentIdentity, uint256 amount)
+    internal {
         ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
 
-    	require(ERC725(parentIdentity).keyHasPurpose(keccak256(abi.encodePacked(identity)), 237), "Sender identity is not a sub-identity of the provided parent identity!");
+        uint256 currentStake = profileStorage.getStake(parentIdentity);
+        profileStorage.setStake(parentIdentity, currentStake.sub(amount));
 
-        uint256 amount = HoldingStorage(hub.getContractAddress("HoldingStorage")).getOfferTokenAmountPerHolder(bytes32(offerId));
+        currentStake = profileStorage.getStake(identity);
+        profileStorage.setStake(identity, currentStake.add(amount));
+    }
+
+    function finalizeOffer(uint256 offerId, address identity, address parentIdentity)
+    public onlyContracts verifyParent(identity, parentIdentity) {
+        ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
+
+        uint256 jobCost = HoldingStorage(hub.getContractAddress("HoldingStorage")).getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3);
         uint256 minimalStake = Profile(hub.getContractAddress("Profile")).minimalStake();
 
-    	if(profileStorage.getWithdrawalPending(parentIdentity) && profileStorage.getWithdrawalAmount(parentIdentity).add(amount.mul(3)) > profileStorage.getStake(parentIdentity) - profileStorage.getStakeReserved(parentIdentity)) {
+        if(profileStorage.getWithdrawalPending(parentIdentity) && profileStorage.getWithdrawalAmount(parentIdentity).add(jobCost) > profileStorage.getStake(parentIdentity) - profileStorage.getStakeReserved(parentIdentity)) {
             profileStorage.setWithdrawalPending(parentIdentity,false);
         }
 
@@ -49,15 +64,9 @@ contract CreditorHandler {
             "Parent identity does not have enough stake to create new jobs!");
 
     	// Transferring funds
-    	require(profileStorage.getStake(parentIdentity).sub(profileStorage.getStakeReserved(parentIdentity)) >= amount.mul(3),
+        require(profileStorage.getStake(parentIdentity).sub(profileStorage.getStakeReserved(parentIdentity)) >= jobCost,
             "Parent identity does not have enough stake for reserving!");
 
-    	uint256 currentStake = profileStorage.getStake(parentIdentity);
-        profileStorage.setStake(parentIdentity, currentStake.sub(amount.mul(3)));
-        currentStake = profileStorage.getStake(identity);
-        profileStorage.setStake(identity, currentStake.add(amount.mul(3)));
+        transferCredit(identity, parentIdentity, jobCost);
     }
-    
-        
-
 }
