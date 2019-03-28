@@ -5,6 +5,7 @@ var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
+var CreditorHandler = artifacts.require('CreditorHandler'); // eslint-disable-line no-undef
 var Litigation = artifacts.require('Litigation'); // eslint-disable-line no-undef
 var Replacement = artifacts.require('Replacement'); // eslint-disable-line no-undef
 var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
@@ -26,6 +27,7 @@ module.exports = async (deployer, network, accounts) => {
 
     let profile;
     let holding;
+    let creditorHandler;
     let litigation;
     let replacement;
     let approval;
@@ -78,6 +80,13 @@ module.exports = async (deployer, network, accounts) => {
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setContractAddress('Holding', holding.address);
+
+        creditorHandler = await deployer.deploy(
+            CreditorHandler,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('CreditorHandler', creditorHandler.address);
 
         litigation = await deployer.deploy(
             Litigation,
@@ -139,6 +148,13 @@ module.exports = async (deployer, network, accounts) => {
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 8000000, from: accounts[0] });
         await hub.setContractAddress('Holding', holding.address);
+
+        creditorHandler = await deployer.deploy(
+            CreditorHandler,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('CreditorHandler', creditorHandler.address);
 
         litigation = await deployer.deploy(
             Litigation,
