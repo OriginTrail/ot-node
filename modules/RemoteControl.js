@@ -220,6 +220,8 @@ class RemoteControl {
                 });
 
                 const filtered = offers.map(o => ({
+                    replicationId: o.id,
+                    datasetId: o.data_set_id,
                     offerId: o.offer_id,
                     holdingTimeInMinutes: o.holding_time_in_minutes,
                     tokenAmountPerHolder: o.token_amount_per_holder,
@@ -351,9 +353,11 @@ class RemoteControl {
      * @param offerIdentifierObject
      */
     offerUpdate(offerIdentifierObject) {
-        Models.replicated_data.findOne({ where: offerIdentifierObject }).then((offerData) => {
-            const filtered = {
+        Models.offers.findOne({ where: offerIdentifierObject }).then((offerData) => {
+            this.socket.emit('offerUpdate', {
+                replicationId: offerData.id,
                 offerId: offerData.offer_id,
+                datasetId: offerData.data_set_id,
                 holdingTimeInMinutes: offerData.holding_time_in_minutes,
                 tokenAmountPerHolder: offerData.token_amount_per_holder,
                 message: offerData.message,
@@ -362,8 +366,7 @@ class RemoteControl {
                 task: offerData.task,
                 status: offerData.status,
                 global_status: offerData.global_status,
-            };
-            this.socket.emit('offer-update', filtered);
+            });
         });
     }
 
