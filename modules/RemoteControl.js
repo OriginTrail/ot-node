@@ -6,6 +6,7 @@ const Models = require('../models');
 const Utilities = require('./Utilities');
 const pjson = require('../package.json');
 
+const { forEach } = require('p-iteration');
 
 class SocketDecorator {
     constructor(log) {
@@ -332,11 +333,27 @@ class RemoteControl {
     /**
      * Get holding data
      */
-    getHoldingData() {
-        Models.holding_data.findAll()
-            .then((rows) => {
-                this.socket.emit('holding', rows);
-            });
+    async getHoldingData() {
+        const holdings = await Models.holding_data.findAll();
+
+        const aggregated = await forEach(
+            holdings,
+            async (holding) => {
+                const dataInfo = await Models.data_info.findOne({
+                    where: {
+                        data_set_id: holding.data_set_id,
+                    },
+                });
+                return {
+                    data_set_id: holding.data_set_id,
+                    source_wallet: holding.source_wallet,
+                    color: holding.color,
+                    root_hash: dataInfo.root_hash,
+                };
+            },
+        );
+
+        this.socket.emit('holding', aggregated);
     }
 
     /**
