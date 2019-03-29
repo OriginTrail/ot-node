@@ -374,10 +374,22 @@ class RemoteControl {
      * Get bids data
      */
     getBids() {
-        Models.bids.findAll()
-            .then((rows) => {
-                this.socket.emit('bids', rows);
-            });
+        Models.bids.findAll({
+            where: {
+                status: 'PENDING',
+            },
+        }).then((rows) => {
+            this.socket.emit('bids', rows.map(r => ({
+                datasetId: r.data_set_id,
+                dcNodeId: r.dc_node_id,
+                dataSizeInBytes: r.data_size_in_bytes,
+                litigationIntervalInMinutes: r.litigation_interval_in_minutes,
+                tokenAmount: r.token_amount,
+                holdingTimeInMinutes: r.holding_time_in_minutes,
+                status: r.status,
+                message: r.message,
+            })));
+        });
     }
 
     /**
