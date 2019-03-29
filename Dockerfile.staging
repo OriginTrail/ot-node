@@ -37,6 +37,5 @@ ADD testnet/papertrail.yml /etc/log_files.yml
 
 WORKDIR /ot-node/current
 
-VOLUME /ot-node /var/lib/arangodb
 EXPOSE 5278 8900 3000 3010
 CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/testnet/supervisord.conf"]
