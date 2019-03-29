@@ -1,13 +1,11 @@
 const app = require('http').createServer();
 const remote = require('socket.io')(app);
-const Models = require('../models');
-const kadence = require('@kadenceproject/kadence');
-const pjson = require('../package.json');
-const Storage = require('./Storage');
-const Web3 = require('web3');
-const Utilities = require('./Utilities');
+const deepExtend = require('deep-extend');
 
-const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
+const Models = require('../models');
+const Utilities = require('./Utilities');
+const pjson = require('../package.json');
+
 
 class SocketDecorator {
     constructor(log) {
@@ -100,13 +98,16 @@ class RemoteControl {
                 this.getImports();
             });
 
-            this.socket.on('config-update', (data) => {
-                this.updateConfigRow(data).then(async (res) => {
-                    await this.updateProfile();
-                    this.restartNode();
-                    await this.socket.emit('updateComplete');
-                });
+            this.socket.on('config-update', async (data) => {
+                this.log.important(`Updating config.\n${JSON.stringify(data, null, 4)}`);
+                deepExtend(this.config, data);
+                await this.socket.emit('updateComplete');
             });
+
+            this.socket.on('get-node-info', () => {
+                socket.emit('node-info', { version: pjson.version });
+            });
+
 
             this.socket.on('get-imports', () => {
                 this.getImports();
@@ -407,7 +408,7 @@ class RemoteControl {
         ).then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        web3.eth.getBalance(this.config.node_wallet).then((balance) => {
+        this.web3.eth.getBalance(this.config.node_wallet).then((balance) => {
             this.socket.emit('balance', balance);
         });
     }
