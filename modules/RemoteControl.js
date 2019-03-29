@@ -6,7 +6,7 @@ const Models = require('../models');
 const Utilities = require('./Utilities');
 const pjson = require('../package.json');
 
-const { forEach } = require('p-iteration');
+const { map } = require('p-iteration');
 
 class SocketDecorator {
     constructor(log) {
@@ -336,7 +336,7 @@ class RemoteControl {
     async getHoldingData() {
         const holdings = await Models.holding_data.findAll();
 
-        const aggregated = await forEach(
+        const aggregated = await map(
             holdings,
             async (holding) => {
                 const dataInfo = await Models.data_info.findOne({
