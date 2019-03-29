@@ -30,6 +30,8 @@ const bootstrapIdentity = {
  * @param rawTable
  */
 function unpackRawTable(rawTable) {
+    const parse = val => (Number.isNaN(Number(val)) ? val : Number(val));
+
     const unpacked = {};
     if (rawTable) {
         for (const row of rawTable.rawTable) {
@@ -38,11 +40,11 @@ function unpackRawTable(rawTable) {
                 value = [];
                 for (let index = 1; index < row.length; index += 1) {
                     if (!row[index] != null && row[index] !== '') {
-                        value.push(row[index]);
+                        value.push(parse(row[index]));
                     }
                 }
             } else {
-                [, value] = row;
+                value = parse(row[1]);
             }
 
             const keyParts = row[0].split('.');
