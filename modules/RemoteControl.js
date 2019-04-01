@@ -418,14 +418,14 @@ class RemoteControl {
             async (r) => {
                 const offer = await Models.offers.findOne({
                     where: {
-                        data_set_id: r.offer_id,
+                        offer_id: r.offer_id,
                     },
                 });
                 return {
                     dh_id: r.dh_id,
-                    data_set_id: r.data_set_id,
+                    data_set_id: offer.data_set_id,
                     status: r.status,
-                    offer_id: offer.offer_id,
+                    offer_id: r.offer_id,
                 };
             },
         );
