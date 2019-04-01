@@ -370,7 +370,7 @@ class RemoteControl {
 
     /**
      * Finds holding based on a bid
-     * Note: if offer_id does not exist in the holding record, that's the older offer
+     * NOTE: if offer_id does not exist in the holding record, that's the older offer
      * IMPORTANT: There is an edge case where the same data set is
      *            imported more than once and the holder gets the same color. That's why we cannot
      *            be 100% sure for getting the right info for old offers.
