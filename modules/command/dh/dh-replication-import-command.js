@@ -101,6 +101,7 @@ class DhReplicationImportCommand extends Command {
             where: {
                 data_set_id: dataSetId,
                 color: encColor,
+                source_wallet: dcWallet,
             },
         });
 
@@ -117,6 +118,7 @@ class DhReplicationImportCommand extends Command {
 
         // Store holding information and generate keys for eventual data replication.
         await Models.holding_data.create({
+            offer_id: offerId,
             data_set_id: dataSetId,
             source_wallet: dcWallet,
             litigation_public_key: litigationPublicKey,

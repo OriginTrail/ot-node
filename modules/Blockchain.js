@@ -568,6 +568,13 @@ class Blockchain {
     async getHolderPaidAmount(offerId, holderIdentity) {
         return this.blockchain.getHolderPaidAmount(offerId, holderIdentity);
     }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
+    }
 }
 
 module.exports = Blockchain;

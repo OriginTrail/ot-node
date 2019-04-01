@@ -1328,6 +1328,17 @@ class Ethereum {
             });
     }
 
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        this.log.trace(`getHolderLitigationEncryptionType(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderLitigationEncryptionType(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
     async getTotalPayouts() {
         const totalAmount = new BN(0);
 

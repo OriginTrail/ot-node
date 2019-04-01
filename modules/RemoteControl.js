@@ -334,21 +334,33 @@ class RemoteControl {
      * Get holding data
      */
     async getHoldingData() {
-        const holdings = await Models.holding_data.findAll();
+        const bids = await Models.bids.findAll({
+            status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'HOLDING', 'PENALIZED'] },
+        });
 
         const aggregated = await map(
-            holdings,
-            async (holding) => {
+            bids,
+            async (bid) => {
+                const holding = await this._findHoldingByBid(bid);
+
                 const dataInfo = await Models.data_info.findOne({
                     where: {
                         data_set_id: holding.data_set_id,
                     },
                 });
+
+                const paidAmount = await this.blockchain
+                    .getHolderPaidAmount(holding.offer_id, this.config.erc725Identity);
+                const stakedAmount = await this.blockchain
+                    .getHolderStakedAmount(holding.offer_id, this.config.erc725Identity);
+
                 return {
                     data_set_id: holding.data_set_id,
                     source_wallet: holding.source_wallet,
                     color: holding.color,
                     root_hash: dataInfo.root_hash,
+                    paid_amount: paidAmount,
+                    staked_amount: stakedAmount,
                 };
             },
         );
@@ -357,13 +369,67 @@ class RemoteControl {
     }
 
     /**
+     * Finds holding based on a bid
+     * @param bid
+     * @return {Promise<Model>}
+     */
+    async _findHoldingByBid(bid) {
+        // eslint-disable-next-line
+        let holding = await Models.holding_data.findOne({
+            where: {
+                offer_id: bid.offer_id,
+            },
+        });
+
+        if (holding == null) {
+            // TODO: remove after old offers expiration
+            // holding does not contain offer_id, find it on blockchain
+            // eslint-disable-next-line
+            const encryptionType = await this.blockchain
+                .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
+
+            // eslint-disable-next-line
+            holding = await Models.holding_data.findOne({
+                where: {
+                    data_set_id: bid.data_set_id,
+                    color: encryptionType,
+                },
+            });
+
+            holding.offer_id = bid.offer_id;
+            await holding.save({ fields: ['offer_id'] });
+        }
+        return holding;
+    }
+
+    /**
      * Get replicated data
      */
-    getReplicatedData() {
-        Models.replicated_data.findAll()
-            .then((rows) => {
-                this.socket.emit('replicated', rows);
-            });
+    async getReplicatedData() {
+        const replicated = await Models.replicated_data.findAll({
+            where: {
+                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'HOLDING', 'PENALIZED'] },
+            },
+        });
+
+        const aggregated = await map(
+            replicated,
+            async (r) => {
+                const offer = await Models.offers.findOne({
+                    where: {
+                        data_set_id: r.offer_id,
+                    },
+                });
+                return {
+                    dh_id: r.dh_id,
+                    data_set_id: r.data_set_id,
+                    status: r.status,
+                    offer_id: offer.offer_id,
+                };
+            },
+        );
+
+        this.socket.emit('replicated', aggregated);
     }
 
     /**

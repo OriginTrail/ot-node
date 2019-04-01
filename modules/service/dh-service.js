@@ -100,7 +100,7 @@ class DHService {
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
 
         const format = d3.formatPrefix(',.6~s', 1e6);
-        const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
+        const dhMinTokenPrice = new BN(this.config.dh_mgetOfferin_token_price, 10);
         const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
         const dhMinLitigationIntervalInMinutes =
             new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
@@ -125,8 +125,10 @@ class DHService {
             return;
         }
 
+        const offer = await this.blockchain.getOffer(offerId);
         const bid = await Models.bids.create({
             offer_id: offerId,
+            dc_identity: offer.creator,
             data_set_id: dataSetId,
             dc_node_id: dcNodeId,
             data_size_in_bytes: dataSetSizeInBytes,
@@ -225,11 +227,12 @@ class DHService {
      * @param litigatorIdentity - DC node ERC725 identity
      * @param penalizedHolderIdentity - Penalized DH ERC725 identity
      * @param litigationRootHash - Litigation root hash
+     * @param dcIdentity - DC identity
      * @return {Promise<void>}
      */
     async handleReplacement(
         offerId, litigatorIdentity,
-        penalizedHolderIdentity, litigationRootHash,
+        penalizedHolderIdentity, litigationRootHash, dcIdentity,
     ) {
         let bid = await Models.bids.findOne({
             where: {
@@ -270,6 +273,7 @@ class DHService {
                 Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
             bid = await Models.bids.create({
                 offer_id: offerId,
+                dc_identity: dcIdentity,
                 data_set_id: offerBc.dataSetId,
                 dc_node_id: dcNodeId,
                 data_size_in_bytes: '0', // TODO fetch data size or calculate it upon successful import
