@@ -590,6 +590,7 @@ class Ethereum {
         confirmation3,
         encryptionType,
         holders,
+        parentIdentity,
     ) {
         let contractAddress = this.holdingContractAddress;
 
@@ -616,6 +617,7 @@ class Ethereum {
                 confirmation3,
                 encryptionType,
                 holders,
+                parentIdentity,
             ],
             options,
         );
@@ -1324,6 +1326,29 @@ class Ethereum {
             .getHolderPaidAmount(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
             });
+    }
+
+    /**
+     * Check that the identity key has a specific purpose
+     * @param identity - ERC-725 identity address
+     * @param key - identity key
+     * @param purpose - purpose to verify
+     * @return {Promise<any>}
+     */
+    async keyHasPurpose(identity, key, purpose) {
+        // Get contract instance
+        const identityContract = new this.web3.eth.Contract(
+            this.erc725IdentityContractAbi,
+            identity,
+        );
+
+        key = Utilities.normalizeHex(key);
+
+        this.log.trace(`identity=${identity} keyHasPurpose(key=${key}, purpose=${purpose.toString()})`);
+
+        return identityContract.methods.keyHasPurpose(key, purpose).call({
+            from: this.config.wallet_address,
+        });
     }
 }
 
