@@ -147,7 +147,7 @@ class RemoteControl {
             });
 
             this.socket.on('get-bids', () => {
-                this.getBids();
+                this.getPendingBids();
             });
 
             this.socket.on('get-local-data', (importId) => {
@@ -458,11 +458,13 @@ class RemoteControl {
     /**
      * Get bids data
      */
-    getBids() {
-        Models.bids.findAll()
-            .then((rows) => {
-                this.socket.emit('bids', rows);
-            });
+    async getPendingBids() {
+        const bids = Models.bids.findAll({
+            where: {
+                status: 'PENDING',
+            },
+        });
+        this.socket.emit('bids', bids);
     }
 
     /**
