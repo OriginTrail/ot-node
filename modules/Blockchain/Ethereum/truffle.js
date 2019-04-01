@@ -30,6 +30,20 @@ module.exports = {
             network_id: '5777',
         },
 
+        setIdentity: {
+            host: 'localhost',
+            port: 7545,
+            gas: 6000000,
+            network_id: '5777',
+        },
+
+        removeIdentity: {
+            host: 'localhost',
+            port: 7545,
+            gas: 6000000,
+            network_id: '5777',
+        },
+
         update: {
             host: 'localhost', // Connect to geth on the specified
             port: 8545,
