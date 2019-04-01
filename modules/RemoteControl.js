@@ -106,7 +106,7 @@ class RemoteControl {
             });
 
             this.socket.on('get-node-info', () => {
-                socket.emit('node-info', { version: pjson.version });
+                socket.emit('nodeInfo', { version: pjson.version });
             });
 
 
