@@ -461,7 +461,7 @@ class RemoteControl {
      * Get bids data
      */
     async getPendingBids() {
-        const bids = Models.bids.findAll({
+        const bids = await Models.bids.findAll({
             where: {
                 status: 'PENDING',
             },
