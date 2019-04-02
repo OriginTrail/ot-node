@@ -92,6 +92,7 @@ class DhOfferFinalizedCommand extends Command {
         const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
         bid.status = 'NOT_CHOSEN';
         await bid.save({ fields: ['status'] });
+        await this.remoteControl.onCompletedBids();
         return Command.empty();
     }
 
