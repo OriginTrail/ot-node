@@ -335,7 +335,9 @@ class RemoteControl {
      */
     async getHoldingData() {
         const bids = await Models.bids.findAll({
-            status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'HOLDING', 'PENALIZED'] },
+            where: {
+                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'HOLDING', 'PENALIZED'] },
+            }
         });
 
         const aggregated = await map(
