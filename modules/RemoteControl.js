@@ -363,6 +363,7 @@ class RemoteControl {
                     root_hash: dataInfo.root_hash,
                     paid_amount: paidAmount,
                     staked_amount: stakedAmount,
+                    status: bid.status,
                 };
             },
         );
