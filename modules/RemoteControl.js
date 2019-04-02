@@ -331,13 +331,22 @@ class RemoteControl {
     }
 
     /**
+     * On completed bid
+     * @return {Promise<void>}
+     */
+    async onCompletedBids() {
+        await this.getHoldingData();
+        await this.getPendingBids();
+    }
+
+    /**
      * Get holding data
      */
     async getHoldingData() {
         const bids = await Models.bids.findAll({
             where: {
                 status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'HOLDING', 'PENALIZED'] },
-            }
+            },
         });
 
         const aggregated = await map(
@@ -412,7 +421,7 @@ class RemoteControl {
     async getReplicatedData() {
         const replicated = await Models.replicated_data.findAll({
             where: {
-                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'HOLDING', 'PENALIZED'] },
+                status: { [Models.Sequelize.Op.notIn]: ['STARTED', 'VERIFIED'] },
             },
         });
 
