@@ -100,7 +100,7 @@ class DHService {
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
 
         const format = d3.formatPrefix(',.6~s', 1e6);
-        const dhMinTokenPrice = new BN(this.config.dh_mgetOfferin_token_price, 10);
+        const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
         const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
         const dhMinLitigationIntervalInMinutes =
             new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
