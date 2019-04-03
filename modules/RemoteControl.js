@@ -93,6 +93,7 @@ class RemoteControl {
             this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);
             this.transport.getNetworkInfo().then((res) => {
+                res.environment = process.env.NODE_ENV;
                 socket.emit('system', { info: res });
                 socket.emit('config', this.config); // TODO think about stripping some config values
             }).then((res) => {
