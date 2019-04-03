@@ -391,29 +391,14 @@ class RemoteControl {
      * @return {Promise<Model>}
      */
     async _findHoldingByBid(bid) {
-        // eslint-disable-next-line
-        let holding = await Models.holding_data.findOne({
+        const encryptionType = await this.blockchain
+            .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
+        return Models.holding_data.findOne({
             where: {
-                offer_id: bid.offer_id,
+                data_set_id: bid.data_set_id,
+                color: encryptionType,
             },
         });
-
-        if (holding == null) {
-            // TODO: remove after old offers expiration
-            // holding does not contain offer_id, find it on blockchain
-            // eslint-disable-next-line
-            const encryptionType = await this.blockchain
-                .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
-
-            // eslint-disable-next-line
-            holding = await Models.holding_data.findOne({
-                where: {
-                    data_set_id: bid.data_set_id,
-                    color: encryptionType,
-                },
-            });
-        }
-        return holding;
     }
 
     /**
