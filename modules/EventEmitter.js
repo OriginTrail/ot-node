@@ -578,6 +578,7 @@ class EventEmitter {
             }
         });
 
+
         this._on('api-gs1-import-request', async (data) => {
             try {
                 logger.debug('GS1 import triggered');
