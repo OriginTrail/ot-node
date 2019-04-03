@@ -578,44 +578,6 @@ class EventEmitter {
             }
         });
 
-        this._on('api-offers', async (data) => {
-            const {
-                datasetId,
-            } = data;
-
-            try {
-                const offers = await Models.offers.findAll({
-                    where: {
-                        data_set_id: datasetId,
-                    },
-                });
-
-                const filtered = offers.map(o => ({
-                    offerId: o.offer_id,
-                    holdingTimeInMinutes: o.holding_time_in_minutes,
-                    tokenAmountPerHolder: o.token_amount_per_holder,
-                    message: o.message,
-                    transactionHash: o.transaction_hash,
-                    litigationIntervalInMinutes: o.litigation_interval_in_minutes,
-                    task: o.task,
-                    global_status: o.global_status,
-                }));
-
-                data.response.status(200);
-                data.response.send({
-                    offers: filtered,
-                });
-            } catch (e) {
-                logger.error(`Failed to create offer. ${e}.`);
-                notifyError(e);
-                data.response.status(405);
-                data.response.send({
-                    message: `Failed to fetch offers. ${e}.`,
-                });
-            }
-        });
-
-
         this._on('api-gs1-import-request', async (data) => {
             try {
                 logger.debug('GS1 import triggered');
