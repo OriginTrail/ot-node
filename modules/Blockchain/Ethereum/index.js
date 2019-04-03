@@ -1,4 +1,5 @@
 const fs = require('fs');
+const BN = require('bn.js');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
@@ -1085,6 +1086,44 @@ class Ethereum {
             ],
             options,
         );
+    }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        this.log.trace(`getHolderLitigationEncryptionType(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderLitigationEncryptionType(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    async getTotalPayouts() {
+        const totalAmount = new BN(0);
+
+        const events = await this.contractsByName.HOLDING_CONTRACT.getPastEvents('PaidOut', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        events.forEach((event) => {
+            if (event.returnValues.identity === this.config.erc725Identity) {
+                totalAmount.iadd(new BN(event.returnValues.amountToTransfer));
+            }
+        });
+        return totalAmount.toString();
+    }
+
+    /**
+     * Get offer by offer ID
+     * @param offerId - Offer ID
+     * @return {Promise<any>}
+     */
+    async getOffer(offerId) {
+        this.log.trace(`getOffer(offerId=${offerId})`);
+        return this.holdingStorageContract.methods.offer(offerId).call({
+            from: this.config.wallet_address,
+        });
     }
 }
 

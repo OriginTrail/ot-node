@@ -279,6 +279,10 @@ class Blockchain {
         return this.blockchain.getTotalIncome();
     }
 
+    async getTotalPayouts() {
+        return this.blockchain.getTotalPayouts();
+    }
+
     /**
      * Adds bid to the offer on Ethereum blockchain
      * @param importId Import ID
@@ -478,6 +482,22 @@ class Blockchain {
             blockchainIdentity,
             offerIds,
         );
+    }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
+    }
+
+    /**
+     * Get offer by ID
+     * @param offerId - offer ID
+     * @return {Promise<*>}
+     */
+    async getOffer(offerId) {
+        return this.blockchain.getOffer(offerId);
     }
 }
 

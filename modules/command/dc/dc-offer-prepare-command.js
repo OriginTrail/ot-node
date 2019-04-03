@@ -10,6 +10,7 @@ class DCOfferPrepareCommand extends Command {
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -48,6 +49,9 @@ class DCOfferPrepareCommand extends Command {
         offer.status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

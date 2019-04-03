@@ -11,6 +11,7 @@ class DCOfferCreateDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -45,6 +46,9 @@ class DCOfferCreateDbCommand extends Command {
                 'red_litigation_hash', 'blue_litigation_hash', 'green_litigation_hash',
                 'litigation_interval_in_minutes', 'message', 'status'],
         });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         const { data } = command;
         return this.continueSequence(this.pack(data), command.sequence);
@@ -61,6 +65,9 @@ class DCOfferCreateDbCommand extends Command {
         offer.status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

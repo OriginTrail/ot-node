@@ -10,6 +10,7 @@ class DcOfferFinalizedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -42,6 +43,9 @@ class DcOfferFinalizedCommand extends Command {
                 offer.status = 'FINALIZED';
                 offer.message = 'Offer has been finalized';
                 await offer.save({ fields: ['status', 'message'] });
+                this.remoteControl.offerUpdate({
+                    offer_id: offerId,
+                });
 
                 await this.replicationService.cleanup(offer.id);
                 return Command.empty();
@@ -58,10 +62,13 @@ class DcOfferFinalizedCommand extends Command {
         const { offerId } = command.data;
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

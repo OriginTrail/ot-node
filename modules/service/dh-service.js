@@ -139,8 +139,10 @@ class DHService {
             return;
         }
 
+        const offer = await this.blockchain.getOffer(offerId);
         bid = await Models.bids.create({
             offer_id: offerId,
+            dc_identity: offer.creator,
             dc_node_id: dcNodeId,
             data_size_in_bytes: dataSetSizeInBytes,
             litigation_interval_in_minutes: litigationIntervalInMinutes,
@@ -174,6 +176,8 @@ class DHService {
             data,
             transactional: false,
         });
+
+        await this.remoteControl.getPendingBids();
     }
 
     /**
