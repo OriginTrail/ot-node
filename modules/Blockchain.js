@@ -499,6 +499,20 @@ class Blockchain {
     async getOffer(offerId) {
         return this.blockchain.getOffer(offerId);
     }
+
+    /**
+     * Get staked amount for the holder
+     */
+    async getHolderStakedAmount(offerId, holderIdentity) {
+        return this.blockchain.getHolderStakedAmount(offerId, holderIdentity);
+    }
+
+    /**
+     * Get paid amount for the holder
+     */
+    async getHolderPaidAmount(offerId, holderIdentity) {
+        return this.blockchain.getHolderPaidAmount(offerId, holderIdentity);
+    }
 }
 
 module.exports = Blockchain;
