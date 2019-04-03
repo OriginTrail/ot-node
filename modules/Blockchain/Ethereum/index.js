@@ -163,6 +163,7 @@ class Ethereum {
 
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
+            OLD_HOLDING_CONTRACT: this.oldHoldingContract, // TODO remove after successful migration
             PROFILE_CONTRACT: this.profileContract,
             APPROVAL_CONTRACT: this.approvalContract,
             LITIGATION_CONTRACT: this.litigationContract,
@@ -686,7 +687,11 @@ class Ethereum {
                 fromBlock = Math.max(currentBlock - 100, 0);
             }
 
-            const events = await this.contractsByName[contractName].getPastEvents('allEvents', {
+            const contract = this.contractsByName[contractName];
+            if (Utilities.isZeroHash(contract._address)) {
+                return;
+            }
+            const events = await contract.getPastEvents('allEvents', {
                 fromBlock,
                 toBlock: 'latest',
             });
