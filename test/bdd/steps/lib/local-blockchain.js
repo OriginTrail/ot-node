@@ -127,6 +127,7 @@ class LocalBlockchain {
                 assert(this.holdingStorageContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.tokenContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.profileContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.creditorHandlerContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.holdingContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.readingContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.litigationContractAddress !== '0x0000000000000000000000000000000000000000');
@@ -301,7 +302,7 @@ class LocalBlockchain {
             [this.hubInstance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('CreditorHandler', this.holdingInstance._address)
+        await this.hubInstance.methods.setContractAddress('CreditorHandler', this.creditorHandlerInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
