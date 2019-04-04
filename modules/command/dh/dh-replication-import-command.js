@@ -118,7 +118,6 @@ class DhReplicationImportCommand extends Command {
 
         // Store holding information and generate keys for eventual data replication.
         await Models.holding_data.create({
-            offer_id: offerId,
             data_set_id: dataSetId,
             source_wallet: dcWallet,
             litigation_public_key: litigationPublicKey,
