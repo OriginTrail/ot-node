@@ -362,9 +362,9 @@ class RemoteControl {
                 });
 
                 const paidAmount = await this.blockchain
-                    .getHolderPaidAmount(holding.offer_id, this.config.erc725Identity);
+                    .getHolderPaidAmount(bid.offer_id, this.config.erc725Identity);
                 const stakedAmount = await this.blockchain
-                    .getHolderStakedAmount(holding.offer_id, this.config.erc725Identity);
+                    .getHolderStakedAmount(bid.offer_id, this.config.erc725Identity);
 
                 return {
                     data_set_id: holding.data_set_id,
