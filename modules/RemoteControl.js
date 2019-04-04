@@ -391,7 +391,7 @@ class RemoteControl {
         const encryptionType = await this.blockchain
             .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
 
-        return await Models.holding_data.findOne({
+        return Models.holding_data.findOne({
             where: {
                 data_set_id: bid.data_set_id,
                 color: encryptionType,
