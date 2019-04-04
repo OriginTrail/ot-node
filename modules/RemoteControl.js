@@ -362,9 +362,9 @@ class RemoteControl {
                 });
 
                 const paidAmount = await this.blockchain
-                    .getHolderPaidAmount(holding.offer_id, this.config.erc725Identity);
+                    .getHolderPaidAmount(bid.offer_id, this.config.erc725Identity);
                 const stakedAmount = await this.blockchain
-                    .getHolderStakedAmount(holding.offer_id, this.config.erc725Identity);
+                    .getHolderStakedAmount(bid.offer_id, this.config.erc725Identity);
 
                 return {
                     data_set_id: holding.data_set_id,
@@ -393,10 +393,11 @@ class RemoteControl {
     async _findHoldingByBid(bid) {
         const encryptionType = await this.blockchain
             .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
+        const offer = await this.blockchain.getOffer(bid.offer_id);
         return Models.holding_data.findOne({
             where: {
-                data_set_id: bid.data_set_id,
                 color: encryptionType,
+                data_set_id: offer.dataSetId,
             },
         });
     }
