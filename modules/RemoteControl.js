@@ -478,8 +478,8 @@ class RemoteControl {
             .then((rows) => {
                 this.socket.emit('localDataResponse', rows);
             }).catch((e) => {
-            this.notifyError(e);
-        });
+                this.notifyError(e);
+            });
     }
 
     /**
@@ -564,8 +564,8 @@ class RemoteControl {
                     this.socket.emit('networkQueryResponses', rows);
                 }
             }).catch((e) => {
-            this.notifyError(e);
-        });
+                this.notifyError(e);
+            });
     }
 
     /**
@@ -585,8 +585,8 @@ class RemoteControl {
             .then((rows) => {
                 this.socket.emit('localDataResponses', rows);
             }).catch((e) => {
-            this.notifyError(e);
-        });
+                this.notifyError(e);
+            });
     }
 
     /**
