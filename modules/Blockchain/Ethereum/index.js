@@ -605,7 +605,7 @@ class Ethereum {
             to: contractAddress,
         };
 
-        this.log.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders})`);
+        this.log.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders}), ${parentIdentity}`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'finalizeOffer',
             [
