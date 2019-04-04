@@ -374,6 +374,7 @@ class RemoteControl {
                     paid_amount: paidAmount,
                     staked_amount: stakedAmount,
                     status: bid.status,
+                    offer_id: bid.offer_id,
                 };
             },
         );
