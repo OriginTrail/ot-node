@@ -75,7 +75,7 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
         const mockRemoteControl = {
             lastData: null,
             offerUpdate: (data) => {
-                lastData = data;
+                this.lastData = data;
             },
         };
 
