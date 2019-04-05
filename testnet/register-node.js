@@ -139,7 +139,27 @@ function upgradeContainer() {
     execSync(`ln -s ${initPath} ${currentPath}`);
 
     logger.info('Installing new node modules.');
-    execSync('npm install', { cwd: initPath });
+    try {
+        execSync('npm install', { cwd: initPath });
+    } catch (err) {
+        if (err.stdout) {
+            logger.error(`STDOUT: ${err.stdout.toString()}`);
+        }
+        if (err.stderr) {
+            logger.error(`STDERR: ${err.stderr.toString()}`);
+        }
+        if (err.pid) {
+            logger.error(`PID: ${err.pid}`);
+        }
+        if (err.signal) {
+            logger.error(`SIGNAL: ${err.signal}`);
+        }
+        if (err.status) {
+            logger.error(`STATUS: ${err.status}`);
+        }
+        logger.error(`npm install failed. ${err}.`);
+        logger.error(`Failed to install modules. Please install it manually in ${initPath} path.`);
+    }
 
     logger.info('Update entrypoint.');
 
@@ -152,19 +172,8 @@ export OT_NODE_DISTRIBUTION=docker
     execSync('mkdir -p /ot-node/testnet/');
     fs.writeFileSync('/ot-node/testnet/start.sh', startSh);
     execSync('chmod a+x /ot-node/testnet/start.sh');
-    logger.info('Upgrading container finished. Restarting node.');
-
-    setTimeout(() => {
-        process.on('exit', () => {
-            /* eslint-disable-next-line */
-            spawn('/ot-node/testnet/start.sh', [], {
-                cwd: currentPath,
-                detached: true,
-                stdio: 'inherit',
-            });
-        });
-        process.exit(3);
-    }, 5000);
+    logger.info('Upgrading container finished. Shutting down the Docker container.');
+    process.kill(1, 'SIGTERM');
     return true;
 }
 
