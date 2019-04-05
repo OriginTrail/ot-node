@@ -175,8 +175,8 @@ class RemoteControl {
                 this.getHoldingIncome(import_id);
             });
 
-            this.socket.on('get-local-query-responses', (importId) => {
-                this.getLocalQueryResponses(importId);
+            this.socket.on('get-local-query-responses', (datasetId) => {
+                this.getLocalQueryResponses(datasetId);
             });
 
             this.socket.on('get-purchase-income', (data) => {
@@ -577,10 +577,10 @@ class RemoteControl {
         this.socket.emit('importRequestData', message);
     }
 
-    getLocalQueryResponses(importId) {
+    getLocalQueryResponses(datasetId) {
         Models.data_info.findAll({
             where: {
-                import_id: importId,
+                data_set_id: datasetId,
             },
         })
             .then((rows) => {
