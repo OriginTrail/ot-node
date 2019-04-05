@@ -1,6 +1,7 @@
-const app = require('http').createServer();
-const remote = require('socket.io')(app);
+const restify = require('restify');
+const SocketIo = require('socket.io');
 const deepExtend = require('deep-extend');
+const fs = require('fs');
 
 const Models = require('../models');
 const Utilities = require('./Utilities');
@@ -47,8 +48,19 @@ class RemoteControl {
         this.notifyError = ctx.notifyError;
         this.profileService = ctx.profileService;
 
+        const serverOptions = {};
+        if (this.config.node_rpc_use_ssl) {
+            Object.assign(serverOptions, {
+                key: fs.readFileSync(this.config.node_rpc_ssl_key_path),
+                certificate: fs.readFileSync(this.config.node_rpc_ssl_cert_path),
+                rejectUnauthorized: true,
+            });
+        }
 
-        remote.set('authorization', (handshakeData, callback) => {
+        this.app = restify.createServer(serverOptions);
+        this.remote = new SocketIo(this.app.server);
+
+        this.remote.set('authorization', (handshakeData, callback) => {
             const request = handshakeData;
 
             const regex = /password=([\w0-9-]+)/g;
@@ -88,8 +100,8 @@ class RemoteControl {
     }
 
     async connect() {
-        app.listen(this.config.node_remote_control_port);
-        await remote.on('connection', (socket) => {
+        this.app.listen(this.config.node_remote_control_port);
+        await this.remote.on('connection', (socket) => {
             this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);
             this.transport.getNetworkInfo().then((res) => {
