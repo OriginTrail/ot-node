@@ -172,19 +172,8 @@ export OT_NODE_DISTRIBUTION=docker
     execSync('mkdir -p /ot-node/testnet/');
     fs.writeFileSync('/ot-node/testnet/start.sh', startSh);
     execSync('chmod a+x /ot-node/testnet/start.sh');
-    logger.info('Upgrading container finished. Restarting node.');
-
-    setTimeout(() => {
-        process.on('exit', () => {
-            /* eslint-disable-next-line */
-            spawn('/ot-node/testnet/start.sh', [], {
-                cwd: currentPath,
-                detached: true,
-                stdio: 'inherit',
-            });
-        });
-        process.exit(3);
-    }, 5000);
+    logger.info('Upgrading container finished. Shutting down the Docker container.');
+    process.kill(1, 'SIGTERM');
     return true;
 }
 
