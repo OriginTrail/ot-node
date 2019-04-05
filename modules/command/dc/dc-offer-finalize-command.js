@@ -116,12 +116,12 @@ class DCOfferFinalizeCommand extends Command {
             const hasPermission = await this.profileService.hasParentPermission();
             if (!hasPermission) {
                 errorMessage = 'Identity does not have permission to use parent identity funds!';
-            }
-
-            const hasFunds = await this.dcService
-                .parentHasProfileBalanceForOffer(offer.token_amount_per_holder);
-            if (!hasFunds) {
-                errorMessage = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
+            } else {
+                const hasFunds = await this.dcService
+                    .parentHasProfileBalanceForOffer(offer.token_amount_per_holder);
+                if (!hasFunds) {
+                    errorMessage = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
+                }
             }
         } else {
             const hasFunds = await this.dcService
