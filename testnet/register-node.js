@@ -166,14 +166,19 @@ function upgradeContainer() {
     const startSh =
 `#!/usr/bin/env bash
 export OT_NODE_DISTRIBUTION=docker
-/usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf
+exec /usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf
 `;
 
     execSync('mkdir -p /ot-node/testnet/');
     fs.writeFileSync('/ot-node/testnet/start.sh', startSh);
     execSync('chmod a+x /ot-node/testnet/start.sh');
     logger.info('Upgrading container finished. Shutting down the Docker container.');
-    process.kill(1, 'SIGTERM');
+    // Because the older version of the OT's docker container use shell script (start.sh) for
+    // a parent process we cannot call process.kill(1, 'SIGTERM') on it, since shell won't
+    // forward signal to its child process. We have to kill supervisor daemon directly.
+    // Note above, we created shell script with the 'exec' inside to replace the shell process,
+    // allowing for supervisor process to collect the signals.
+    execSync('kill -9 $(cat /run/supervisord.pid)');
     return true;
 }
 
