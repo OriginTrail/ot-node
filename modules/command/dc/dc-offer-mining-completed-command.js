@@ -71,7 +71,7 @@ class DcOfferMiningCompletedCommand extends Command {
                 };
             }
 
-            if (this.config.parentIdentity !== null) {
+            if (this.config.parentIdentity) {
                 const hasPermission = await this.profileService.hasParentPermission();
                 if (!hasPermission) {
                     const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';

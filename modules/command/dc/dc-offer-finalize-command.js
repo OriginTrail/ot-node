@@ -50,8 +50,8 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        const parentIdentity =
-        this.config.parentIdentity ? this.config.parentIdentity : new BN(0, 16);
+        const parentIdentity = this.config.parentIdentity ?
+            Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
 
         await this.blockchain.finalizeOffer(
             Utilities.normalizeHex(this.config.erc725Identity),
@@ -62,7 +62,7 @@ class DCOfferFinalizeCommand extends Command {
             confirmations[2],
             colors,
             nodeIdentifiers,
-            Utilities.normalizeHex(parentIdentity),
+            parentIdentity,
         );
 
         return {
@@ -112,7 +112,7 @@ class DCOfferFinalizeCommand extends Command {
         }
 
         let errorMessage = err.message;
-        if (this.config.parentIdentity !== null) {
+        if (this.config.parentIdentity) {
             const hasPermission = await this.profileService.hasParentPermission();
             if (!hasPermission) {
                 errorMessage = 'Identity does not have permission to use parent identity funds!';

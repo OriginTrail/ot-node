@@ -51,7 +51,7 @@ class DCService {
             litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);
         }
 
-        if (this.config.parentIdentity !== null) {
+        if (this.config.parentIdentity) {
             const hasPermission = await this.profileService.hasParentPermission();
             if (!hasPermission) {
                 const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';
