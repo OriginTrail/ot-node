@@ -1099,7 +1099,7 @@ class Ethereum {
             });
     }
 
-    async getTotalPayouts() {
+    async getTotalPayouts(identity) {
         const totalAmount = new BN(0);
 
         const events = await this.contractsByName.HOLDING_CONTRACT.getPastEvents('PaidOut', {
@@ -1109,7 +1109,7 @@ class Ethereum {
         events.forEach((event) => {
             if (Utilities.compareHexStrings(
                 event.returnValues.holder,
-                this.config.erc725Identity,
+                identity,
             )) {
                 totalAmount.iadd(new BN(event.returnValues.amount));
             }
