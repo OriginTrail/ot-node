@@ -558,6 +558,7 @@ class OTNode {
                 blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 blockchain.getAllPastEvents('LITIGATION_CONTRACT');
                 blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
+                blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
                 deadline = Date.now() + delay;
                 working = false;
             }

@@ -101,6 +101,7 @@ class DhReplicationImportCommand extends Command {
             where: {
                 data_set_id: dataSetId,
                 color: encColor,
+                source_wallet: dcWallet,
             },
         });
 

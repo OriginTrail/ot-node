@@ -51,7 +51,7 @@ class DHReplacementStartedCommand extends Command {
 
                 await this.dhService.handleReplacement(
                     offerId, challengerIdentity, holderIdentity,
-                    litigationRootHash,
+                    litigationRootHash, challengerIdentity,
                 );
             }
         } catch (e) {

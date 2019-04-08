@@ -1,10 +1,12 @@
 const fs = require('fs');
+const BN = require('bn.js');
+const uuidv4 = require('uuid/v4');
+const ethereumAbi = require('ethereumjs-abi');
+const Op = require('sequelize/lib/operators');
+
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
-const Op = require('sequelize/lib/operators');
-const uuidv4 = require('uuid/v4');
-const ethereumAbi = require('ethereumjs-abi');
 
 class Ethereum {
     /**
@@ -161,6 +163,7 @@ class Ethereum {
 
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
+            OLD_HOLDING_CONTRACT: this.oldHoldingContract, // TODO remove after successful migration
             PROFILE_CONTRACT: this.profileContract,
             APPROVAL_CONTRACT: this.approvalContract,
             LITIGATION_CONTRACT: this.litigationContract,
@@ -686,7 +689,11 @@ class Ethereum {
                 fromBlock = Math.max(currentBlock - 100, 0);
             }
 
-            const events = await this.contractsByName[contractName].getPastEvents('allEvents', {
+            const contract = this.contractsByName[contractName];
+            if (Utilities.isZeroHash(contract._address)) {
+                return;
+            }
+            const events = await contract.getPastEvents('allEvents', {
                 fromBlock,
                 toBlock: 'latest',
             });
@@ -1349,6 +1356,35 @@ class Ethereum {
         return identityContract.methods.keyHasPurpose(key, purpose).call({
             from: this.config.wallet_address,
         });
+    }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        this.log.trace(`getHolderLitigationEncryptionType(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderLitigationEncryptionType(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    async getTotalPayouts(identity) {
+        const totalAmount = new BN(0);
+
+        const events = await this.contractsByName.HOLDING_CONTRACT.getPastEvents('PaidOut', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        events.forEach((event) => {
+            if (Utilities.compareHexStrings(
+                event.returnValues.holder,
+                identity,
+            )) {
+                totalAmount.iadd(new BN(event.returnValues.amount));
+            }
+        });
+        return totalAmount.toString();
     }
 }
 

@@ -18,6 +18,7 @@ class DcOfferFinalizedCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -51,6 +52,9 @@ class DcOfferFinalizedCommand extends Command {
                 offer.global_status = 'ACTIVE';
                 offer.message = 'Offer has been finalized. Offer is now active.';
                 await offer.save({ fields: ['status', 'message', 'global_status'] });
+                this.remoteControl.offerUpdate({
+                    offer_id: offerId,
+                });
 
                 await this._setHolders(offer, event);
 
@@ -142,11 +146,14 @@ class DcOfferFinalizedCommand extends Command {
         const { offerId } = command.data;
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
