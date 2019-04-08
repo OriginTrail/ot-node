@@ -1,6 +1,10 @@
+const { forEach } = require('p-iteration');
+
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+
+const { Op } = Models.Sequelize;
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -10,6 +14,7 @@ class DcOfferFinalizedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -42,12 +47,53 @@ class DcOfferFinalizedCommand extends Command {
                 offer.status = 'FINALIZED';
                 offer.message = 'Offer has been finalized';
                 await offer.save({ fields: ['status', 'message'] });
+                this.remoteControl.offerUpdate({
+                    offer_id: offerId,
+                });
 
+                await this._setHolders(offer, event);
                 await this.replicationService.cleanup(offer.id);
                 return Command.empty();
             }
         }
         return Command.repeat();
+    }
+
+    /**
+     * Update DHs to Holders
+     * @param offer - Offer
+     * @param event - OfferFinalized event
+     * @return {Promise<void>}
+     * @private
+     */
+    async _setHolders(offer, event) {
+        const {
+            holder1,
+            holder2,
+            holder3,
+        } = JSON.parse(event.data);
+
+        const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
+        await forEach(holders, async (holder) => {
+            const replicatedData = await Models.replicated_data.findOne({
+                where: {
+                    offer_id: offer.offer_id,
+                    dh_identity: holder,
+                },
+            });
+            replicatedData.status = 'HOLDING';
+            await replicatedData.save({ fields: ['status'] });
+        });
+
+        // clear old replicated data
+        await Models.replicated_data.destroy({
+            where: {
+                offer_id: offer.offer_id,
+                status: {
+                    [Op.in]: ['STARTED', 'VERIFIED'],
+                },
+            },
+        });
     }
 
     /**
@@ -58,10 +104,13 @@ class DcOfferFinalizedCommand extends Command {
         const { offerId } = command.data;
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

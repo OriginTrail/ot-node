@@ -1,4 +1,5 @@
 const fs = require('fs');
+const BN = require('bn.js');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
@@ -1085,6 +1086,69 @@ class Ethereum {
             ],
             options,
         );
+    }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        this.log.trace(`getHolderLitigationEncryptionType(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderLitigationEncryptionType(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    async getTotalPayouts(identity) {
+        const totalAmount = new BN(0);
+
+        const events = await this.contractsByName.HOLDING_CONTRACT.getPastEvents('PaidOut', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        events.forEach((event) => {
+            if (Utilities.compareHexStrings(
+                event.returnValues.holder,
+                identity,
+            )) {
+                totalAmount.iadd(new BN(event.returnValues.amount));
+            }
+        });
+        return totalAmount.toString();
+    }
+
+    /**
+     * Get offer by offer ID
+     * @param offerId - Offer ID
+     * @return {Promise<any>}
+     */
+    async getOffer(offerId) {
+        this.log.trace(`getOffer(offerId=${offerId})`);
+        return this.holdingStorageContract.methods.offer(offerId).call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Get staked amount for the holder
+     */
+    async getHolderStakedAmount(offerId, holderIdentity) {
+        this.log.trace(`getHolderStakedAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderStakedAmount(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    /**
+     * Get paid amount for the holder
+     */
+    async getHolderPaidAmount(offerId, holderIdentity) {
+        this.log.trace(`getHolderPaidAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderPaidAmount(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
     }
 }
 

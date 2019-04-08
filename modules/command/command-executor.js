@@ -1,10 +1,10 @@
 const async = require('async');
 const Models = require('../../models');
 const Command = require('./command');
+const constants = require('../constants');
 
 const sleep = require('sleep-async')().Promise;
-
-const MAX_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
+const { forEach } = require('p-iteration');
 
 /**
  * Command statuses
@@ -43,6 +43,7 @@ class CommandExecutor {
             try {
                 while (!that.started) {
                     that.logger.trace('Command executor has not been started yet. Hibernating...');
+
                     // eslint-disable-next-line
                     await sleep.sleep(1000);
                 }
@@ -62,7 +63,11 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async init() {
-        await this.startCleaner();
+        await forEach(
+            constants.PERMANENT_COMMANDS,
+            async command => this._startDefaultCommand(command),
+        );
+
         this.logger.trace('Command executor has been initialized...');
     }
 
@@ -108,7 +113,7 @@ class CommandExecutor {
         const waitMs = (command.ready_at + command.delay) - now;
         if (waitMs > 0) {
             this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
-            await this.add(command, Math.min(waitMs, MAX_DELAY_IN_MILLS), false);
+            await this.add(command, Math.min(waitMs, constants.MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
         }
 
@@ -126,7 +131,10 @@ class CommandExecutor {
                     }, transaction);
 
                     command.data = handler.pack(command.data);
-                    await this.add(command, command.period, false);
+
+                    const period = command.period ?
+                        command.period : constants.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
+                    await this.add(command, period, false);
                     return Command.repeat();
                 }
 
@@ -178,13 +186,16 @@ class CommandExecutor {
     }
 
     /**
-     * Start cleaner command
-     * @returns {Promise<void>}
+     * Starts the default command by name
+     * @param name - Command name
+     * @return {Promise<void>}
+     * @private
      */
-    async startCleaner() {
-        await CommandExecutor._delete('cleanerCommand');
-        const handler = this.commandResolver.resolve('cleanerCommand');
+    async _startDefaultCommand(name) {
+        await CommandExecutor._delete(name);
+        const handler = this.commandResolver.resolve(name);
         await this.add(handler.default(), 0, true);
+        this.logger.trace(`Permanent command ${name} created.`);
     }
 
     /**
@@ -196,12 +207,12 @@ class CommandExecutor {
     async add(command, delay = 0, insert = true) {
         const now = Date.now();
 
-        if (delay != null && delay > MAX_DELAY_IN_MILLS) {
+        if (delay != null && delay > constants.MAX_COMMAND_DELAY_IN_MILLS) {
             if (command.ready_at == null) {
                 command.ready_at = now;
             }
             command.ready_at += delay;
-            delay = MAX_DELAY_IN_MILLS;
+            delay = constants.MAX_COMMAND_DELAY_IN_MILLS;
         }
 
         if (insert) {
@@ -323,7 +334,7 @@ class CommandExecutor {
      */
     async replay() {
         this.logger.notify('Replay pending/started commands from the database...');
-        const pendingCommands = await Models.commands.findAll({
+        const pendingCommands = (await Models.commands.findAll({
             where: {
                 status: {
                     [Models.Sequelize.Op.in]: [
@@ -331,9 +342,9 @@ class CommandExecutor {
                         STATUS.started,
                         STATUS.repeating],
                 },
-                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand'] },
+                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand', 'autoupdaterCommand'] },
             },
-        });
+        })).filter(command => !constants.PERMANENT_COMMANDS.includes(command.name));
 
         // TODO consider JOIN instead
         const commands = pendingCommands.filter(async (pc) => {

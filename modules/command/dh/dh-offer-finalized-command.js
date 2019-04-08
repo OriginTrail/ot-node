@@ -10,6 +10,7 @@ class DhOfferFinalizedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -52,6 +53,7 @@ class DhOfferFinalizedCommand extends Command {
                     await bid.save({ fields: ['status'] });
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
 
+                    await this.remoteControl.onCompletedBids();
                     const scheduledTime = (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
                     return {
                         commands: [
@@ -71,6 +73,7 @@ class DhOfferFinalizedCommand extends Command {
                 bid.status = 'NOT_CHOSEN';
                 await bid.save({ fields: ['status'] });
                 this.logger.important(`I haven't been chosen for offer ${offerId}.`);
+                await this.remoteControl.onCompletedBids();
                 return Command.empty();
             }
         }
@@ -88,6 +91,7 @@ class DhOfferFinalizedCommand extends Command {
         const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
         bid.status = 'NOT_CHOSEN';
         await bid.save({ fields: ['status'] });
+        await this.remoteControl.onCompletedBids();
         return Command.empty();
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "2.0.51",
+  "version": "2.0.52",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -115,6 +115,7 @@
     "levelup": "^2.0.2",
     "libxml-xsd": "^0.5.2",
     "lodash": "^4.17.5",
+    "machinepack-zip": "^1.1.0",
     "md5": "^2.2.1",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
@@ -128,6 +129,7 @@
     "npm-cmd": "^0.2.0",
     "number-to-bn": "^1.7.0",
     "os": "^0.1.1",
+    "p-iteration": "^1.1.8",
     "pem": "^1.12.3",
     "python-shell": "^0.5.0",
     "randomstring": "^1.1.5",
@@ -139,6 +141,7 @@
     "rimraf": "^2.6.2",
     "scrypt": "^6.0.3",
     "semaphore-async-await": "^1.5.1",
+    "semver": "^5.6.0",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
     "sleep-async": "^1.0.5",

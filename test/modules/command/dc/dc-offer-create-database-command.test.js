@@ -74,10 +74,18 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
 
         graphStorage = new GraphStorage(selectedDatabase, logger);
 
+        const mockRemoteControl = {
+            lastData: null,
+            offerUpdate: (data) => {
+                this.lastData = data;
+            },
+        };
+
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
             config: awilix.asValue(config),
+            remoteControl: awilix.asValue(mockRemoteControl),
             commandResolver: awilix.asClass(CommandResolver),
             dcOfferCreateDatabaseCommand: awilix.asClass(DCOfferCreateDatabaseCommand),
 

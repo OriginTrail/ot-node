@@ -26,12 +26,23 @@ class DhPayOutCommand extends Command {
         } = command.data;
 
         const bid = await Models.bids.findOne({
-            where: { offer_id: offerId, status: 'CHOSEN' },
+            where: {
+                offer_id: offerId,
+                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'CHOSEN'] },
+            },
         });
         if (!bid) {
             this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
             return Command.empty();
         }
+
+        if (bid.status !== 'COMPLETED') {
+            bid.status = 'COMPLETED';
+            bid.message = `Offer ${offerId} has been completed`;
+            await bid.save({ fields: ['status', 'message'] });
+            this.logger.important(`Offer ${offerId} has been completed successfully.`);
+        }
+
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this._printBalances(blockchainIdentity);
         await this.blockchain.payOut(blockchainIdentity, offerId);
