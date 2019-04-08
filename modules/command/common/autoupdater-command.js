@@ -44,7 +44,6 @@ class AutoupdaterCommand extends Command {
         }
 
         if (this.process.env.OT_NODE_DISTRIBUTION !== 'docker') {
-            this.logger.warn('Checking for new node version supported only in docker.');
             return Command.empty();
         }
 
