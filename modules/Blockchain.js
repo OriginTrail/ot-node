@@ -298,8 +298,8 @@ class Blockchain {
         return this.blockchain.getTotalStakedAmount();
     }
 
-    async getTotalPayouts() {
-        return this.blockchain.getTotalPayouts();
+    async getTotalPayouts(identity) {
+        return this.blockchain.getTotalPayouts(identity);
     }
 
     /**

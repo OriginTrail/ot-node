@@ -545,7 +545,7 @@ class RemoteControl {
      * Get total payments - earning in total
      */
     async getTotalPayouts() {
-        const totalAmount = await this.blockchain.getTotalPayouts();
+        const totalAmount = await this.blockchain.getTotalPayouts(this.config.erc725Identity);
         this.socket.emit('total_payouts', totalAmount);
     }
 
