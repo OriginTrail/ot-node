@@ -298,8 +298,8 @@ class Blockchain {
         return this.blockchain.getTotalStakedAmount();
     }
 
-    async getTotalIncome() {
-        return this.blockchain.getTotalIncome();
+    async getTotalPayouts(identity) {
+        return this.blockchain.getTotalPayouts(identity);
     }
 
     /**
@@ -567,6 +567,13 @@ class Blockchain {
      */
     async getHolderPaidAmount(offerId, holderIdentity) {
         return this.blockchain.getHolderPaidAmount(offerId, holderIdentity);
+    }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
     }
 }
 

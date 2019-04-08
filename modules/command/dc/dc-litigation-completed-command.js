@@ -6,6 +6,7 @@ class DCLitigationCompleted extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -73,6 +74,9 @@ class DCLitigationCompleted extends Command {
 
                     offer.global_status = 'REPLACEMENT_STARTED';
                     await offer.save({ fields: ['global_status'] });
+                    this.remoteControl.offerUpdate({
+                        offer_id: offerId,
+                    });
                     return {
                         commands: [
                             {
@@ -98,6 +102,9 @@ class DCLitigationCompleted extends Command {
 
                 offer.global_status = 'ACTIVE';
                 await offer.save({ fields: ['global_status'] });
+                this.remoteControl.offerUpdate({
+                    offer_id: offerId,
+                });
                 this.logger.important(`DH ${dhIdentity} has successfully answered litigation.`);
                 return Command.empty();
             }

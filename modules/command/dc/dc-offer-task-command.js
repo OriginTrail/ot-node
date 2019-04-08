@@ -12,6 +12,7 @@ class DcOfferTaskCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -52,6 +53,9 @@ class DcOfferTaskCommand extends Command {
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
             await offer.save({ fields: ['task', 'offer_id', 'status', 'message'] });
+            this.remoteControl.offerUpdate({
+                id: internalOfferId,
+            });
 
             this.logger.trace(`Offer successfully started for data set ${dataSetIdNorm}. Offer ID ${eventOfferId}. Internal offer ID ${internalOfferId}.`);
             return this.continueSequence(this.pack(command.data), command.sequence);
@@ -72,6 +76,9 @@ class DcOfferTaskCommand extends Command {
         offer.global_status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

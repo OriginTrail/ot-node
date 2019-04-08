@@ -1,13 +1,13 @@
-const app = require('http').createServer();
-const remote = require('socket.io')(app);
-const Models = require('../models');
-const kadence = require('@kadenceproject/kadence');
-const pjson = require('../package.json');
-const Storage = require('./Storage');
-const Web3 = require('web3');
-const Utilities = require('./Utilities');
+const restify = require('restify');
+const SocketIo = require('socket.io');
+const deepExtend = require('deep-extend');
+const fs = require('fs');
 
-const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
+const Models = require('../models');
+const Utilities = require('./Utilities');
+const pjson = require('../package.json');
+
+const { map } = require('p-iteration');
 
 class SocketDecorator {
     constructor(log) {
@@ -48,8 +48,19 @@ class RemoteControl {
         this.notifyError = ctx.notifyError;
         this.profileService = ctx.profileService;
 
+        const serverOptions = {};
+        if (this.config.node_rpc_use_ssl) {
+            Object.assign(serverOptions, {
+                key: fs.readFileSync(this.config.node_rpc_ssl_key_path),
+                certificate: fs.readFileSync(this.config.node_rpc_ssl_cert_path),
+                rejectUnauthorized: true,
+            });
+        }
 
-        remote.set('authorization', (handshakeData, callback) => {
+        this.app = restify.createServer(serverOptions);
+        this.remote = new SocketIo(this.app.server);
+
+        this.remote.set('authorization', (handshakeData, callback) => {
             const request = handshakeData;
 
             const regex = /password=([\w0-9-]+)/g;
@@ -89,27 +100,31 @@ class RemoteControl {
     }
 
     async connect() {
-        app.listen(this.config.node_remote_control_port);
-        await remote.on('connection', (socket) => {
+        this.app.listen(this.config.node_remote_control_port);
+        await this.remote.on('connection', (socket) => {
             this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);
             this.transport.getNetworkInfo().then((res) => {
+                res.environment = process.env.NODE_ENV;
                 socket.emit('system', { info: res });
                 socket.emit('config', this.config); // TODO think about stripping some config values
             }).then((res) => {
-                this.updateImports();
+                this.getImports();
             });
 
-            this.socket.on('config-update', (data) => {
-                this.updateConfigRow(data).then(async (res) => {
-                    await this.updateProfile();
-                    this.restartNode();
-                    await this.socket.emit('updateComplete');
-                });
+            this.socket.on('config-update', async (data) => {
+                this.log.important(`Updating config.\n${JSON.stringify(data, null, 4)}`);
+                deepExtend(this.config, data);
+                await this.socket.emit('updateComplete');
             });
+
+            this.socket.on('get-node-info', () => {
+                socket.emit('nodeInfo', { version: pjson.version });
+            });
+
 
             this.socket.on('get-imports', () => {
-                this.updateImports();
+                this.getImports();
             });
 
             this.socket.on('get-visual-graph', (import_id) => {
@@ -145,19 +160,19 @@ class RemoteControl {
             });
 
             this.socket.on('get-bids', () => {
-                this.getBids();
+                this.getPendingBids();
             });
 
             this.socket.on('get-local-data', (importId) => {
                 this.getLocalData(importId);
             });
 
-            this.socket.on('get-total-stake', () => {
-                this.getTotalStakedAmount();
+            this.socket.on('get-profile', () => {
+                this.getProfile();
             });
 
-            this.socket.on('get-total-income', () => {
-                this.getTotalIncome();
+            this.socket.on('get-total-payouts', () => {
+                this.getTotalPayouts();
             });
 
             this.socket.on('payout', (offer_id) => {
@@ -172,12 +187,16 @@ class RemoteControl {
                 this.getHoldingIncome(import_id);
             });
 
-            this.socket.on('get-local-query-responses', (importId) => {
-                this.getLocalQueryResponses(importId);
+            this.socket.on('get-local-query-responses', (datasetId) => {
+                this.getLocalQueryResponses(datasetId);
             });
 
             this.socket.on('get-purchase-income', (data) => {
                 this.getPurchaseIncome(data);
+            });
+
+            this.socket.on('get-offers', (datasetId) => {
+                this.getOffers(datasetId);
             });
         });
     }
@@ -193,13 +212,51 @@ class RemoteControl {
     /**
      * Update imports table from data_info
      */
-    updateImports() {
+    getImports() {
         return new Promise((resolve, reject) => {
             Models.data_info.findAll()
                 .then((rows) => {
                     this.socket.emit('imports', rows);
                     resolve();
                 });
+        });
+    }
+
+    /**
+     * Get offers by dataset ID
+     */
+    getOffers(datasetId) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const offers = await Models.offers.findAll({
+                    where: {
+                        data_set_id: datasetId,
+                    },
+                });
+
+                const filtered = offers.map(o => ({
+                    replicationId: o.id,
+                    datasetId: o.data_set_id,
+                    offerId: o.offer_id,
+                    holdingTimeInMinutes: o.holding_time_in_minutes,
+                    tokenAmountPerHolder: o.token_amount_per_holder,
+                    message: o.message,
+                    transactionHash: o.transaction_hash,
+                    litigationIntervalInMinutes: o.litigation_interval_in_minutes,
+                    task: o.task,
+                    status: o.status,
+                    global_status: o.global_status,
+                }));
+
+                this.socket.emit('offers', {
+                    datasetId,
+                    offers: filtered,
+                });
+
+                resolve();
+            } catch (e) {
+                reject(e);
+            }
         });
     }
 
@@ -287,33 +344,135 @@ class RemoteControl {
     }
 
     /**
+     * On completed bid
+     * @return {Promise<void>}
+     */
+    async onCompletedBids() {
+        await this.getHoldingData();
+        await this.getPendingBids();
+    }
+
+    /**
      * Get holding data
      */
-    getHoldingData() {
-        Models.holding_data.findAll()
-            .then((rows) => {
-                this.socket.emit('holding', rows);
-            });
+    async getHoldingData() {
+        const bids = await Models.bids.findAll({
+            where: {
+                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'CHOSEN', 'PENALIZED'] },
+            },
+        });
+
+        const aggregated = await map(
+            bids,
+            async (bid) => {
+                const holding = await this._findHoldingByBid(bid);
+
+                const dataInfo = await Models.data_info.findOne({
+                    where: {
+                        data_set_id: holding.data_set_id,
+                    },
+                });
+
+                const paidAmount = await this.blockchain
+                    .getHolderPaidAmount(bid.offer_id, this.config.erc725Identity);
+                const stakedAmount = await this.blockchain
+                    .getHolderStakedAmount(bid.offer_id, this.config.erc725Identity);
+
+                return {
+                    data_set_id: holding.data_set_id,
+                    source_wallet: holding.source_wallet,
+                    color: holding.color,
+                    root_hash: dataInfo.root_hash,
+                    paid_amount: paidAmount,
+                    staked_amount: stakedAmount,
+                    status: bid.status,
+                    offer_id: bid.offer_id,
+                };
+            },
+        );
+
+        this.socket.emit('holding', aggregated);
+    }
+
+    /**
+     * Finds holding based on a bid
+     * @param bid
+     * @return {Promise<Model>}
+     */
+    async _findHoldingByBid(bid) {
+        const encryptionType = await this.blockchain
+            .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
+
+        return Models.holding_data.findOne({
+            where: {
+                data_set_id: bid.data_set_id,
+                color: encryptionType,
+            },
+        });
     }
 
     /**
      * Get replicated data
      */
-    getReplicatedData() {
-        Models.replicated_data.findAll()
-            .then((rows) => {
-                this.socket.emit('replicated', rows);
+    async getReplicatedData() {
+        const replicated = await Models.replicated_data.findAll({
+            where: {
+                status: { [Models.Sequelize.Op.notIn]: ['STARTED', 'VERIFIED'] },
+            },
+        });
+
+        const aggregated = await map(
+            replicated,
+            async (r) => {
+                const offer = await Models.offers.findOne({
+                    where: {
+                        offer_id: r.offer_id,
+                    },
+                });
+                return {
+                    dh_id: r.dh_id,
+                    data_set_id: offer.data_set_id,
+                    status: r.status,
+                    offer_id: r.offer_id,
+                };
+            },
+        );
+
+        this.socket.emit('replicated', aggregated);
+    }
+
+    /**
+     * Notify offer status update
+     * @param offerIdentifierObject
+     */
+    offerUpdate(offerIdentifierObject) {
+        Models.offers.findOne({ where: offerIdentifierObject }).then((offerData) => {
+            this.socket.emit('offerUpdate', {
+                replicationId: offerData.id,
+                offerId: offerData.offer_id,
+                datasetId: offerData.data_set_id,
+                holdingTimeInMinutes: offerData.holding_time_in_minutes,
+                tokenAmountPerHolder: offerData.token_amount_per_holder,
+                message: offerData.message,
+                transactionHash: offerData.transaction_hash,
+                litigationIntervalInMinutes: offerData.litigation_interval_in_minutes,
+                task: offerData.task,
+                status: offerData.status,
+                global_status: offerData.global_status,
             });
+        });
     }
 
     /**
      * Get bids data
      */
-    getBids() {
-        Models.bids.findAll()
-            .then((rows) => {
-                this.socket.emit('bids', rows);
-            });
+    async getPendingBids() {
+        const bids = await Models.bids.findAll({
+            where: {
+                status: 'PENDING',
+            },
+        });
+        this.socket.emit('bids', bids);
     }
 
     /**
@@ -343,7 +502,7 @@ class RemoteControl {
         ).then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        web3.eth.getBalance(this.config.node_wallet).then((balance) => {
+        this.web3.eth.getBalance(this.config.node_wallet).then((balance) => {
             this.socket.emit('balance', balance);
         });
     }
@@ -375,19 +534,19 @@ class RemoteControl {
     }
 
     /**
-     * Get total staked amount of tokens - staked in total
+     * Get profile
      */
-    async getTotalStakedAmount() {
-        const stakedAmount = await this.blockchain.getTotalStakedAmount();
-        this.socket.emit('total_stake', stakedAmount);
+    async getProfile() {
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        this.socket.emit('profile', profile);
     }
 
     /**
      * Get total payments - earning in total
      */
-    async getTotalIncome() {
-        const stakedAmount = await this.blockchain.getTotalIncome();
-        this.socket.emit('total_income', stakedAmount);
+    async getTotalPayouts() {
+        const totalAmount = await this.blockchain.getTotalPayouts(this.config.erc725Identity);
+        this.socket.emit('total_payouts', totalAmount);
     }
 
     /**
@@ -426,10 +585,10 @@ class RemoteControl {
         this.socket.emit('importRequestData', message);
     }
 
-    getLocalQueryResponses(importId) {
+    getLocalQueryResponses(datasetId) {
         Models.data_info.findAll({
             where: {
-                import_id: importId,
+                data_set_id: datasetId,
             },
         })
             .then((rows) => {
@@ -552,6 +711,13 @@ class RemoteControl {
      */
     failedToCreateOffer(data) {
         this.socket.emit('failedToCreateOffer', data);
+    }
+
+    /**
+     * DC events
+     */
+    failedToFinalizeOffer(data) {
+        this.socket.emit('failedToFinalizeOffer', data);
     }
 
     writingRootHash(importId) {

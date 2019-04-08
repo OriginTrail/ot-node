@@ -123,6 +123,9 @@ class DCOfferReplaceCommand extends Command {
         offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized. ${err.message}`;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
         return Command.empty();
     }
 

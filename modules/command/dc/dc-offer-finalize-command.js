@@ -117,6 +117,9 @@ class DCOfferFinalizeCommand extends Command {
         offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized. ${errorMessage}`;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

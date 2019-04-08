@@ -58,6 +58,9 @@ class DcOfferMiningCompletedCommand extends Command {
             offer.status = 'MINED';
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
+            this.remoteControl.offerUpdate({
+                offer_id: offerId,
+            });
 
             if (isReplacement) {
                 return {
@@ -94,6 +97,9 @@ class DcOfferMiningCompletedCommand extends Command {
         offer.global_status = 'FAILED';
         offer.message = 'Failed to find solution for DHs provided';
         await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
@@ -111,6 +117,9 @@ class DcOfferMiningCompletedCommand extends Command {
         offer.global_status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

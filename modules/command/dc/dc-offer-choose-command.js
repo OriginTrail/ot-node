@@ -16,6 +16,7 @@ class DCOfferChooseCommand extends Command {
         this.minerService = ctx.minerService;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -34,6 +35,9 @@ class DCOfferChooseCommand extends Command {
         offer.status = 'CHOOSING';
         offer.message = 'Choosing wallets for offer';
         await offer.save({ fields: ['status', 'message'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         const replications = await models.replicated_data.findAll({
             where: {
@@ -108,7 +112,9 @@ class DCOfferChooseCommand extends Command {
         offer.global_status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
-
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
