@@ -1107,8 +1107,11 @@ class Ethereum {
             toBlock: 'latest',
         });
         events.forEach((event) => {
-            if (event.returnValues.identity === this.config.erc725Identity) {
-                totalAmount.iadd(new BN(event.returnValues.amountToTransfer));
+            if (Utilities.compareHexStrings(
+                event.returnValues.holder,
+                this.config.erc725Identity,
+            )) {
+                totalAmount.iadd(new BN(event.returnValues.amount));
             }
         });
         return totalAmount.toString();
