@@ -1,4 +1,5 @@
 import sys
+import os
 
 def write_stdout(s):
     # only eventlistener protocol messages may be sent to stdout
