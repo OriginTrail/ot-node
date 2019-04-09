@@ -32,9 +32,15 @@ class DCOfferReplaceCommand extends Command {
         } = command.data;
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
+
         if (offer.global_status === 'COMPLETED') {
             // offer has already been completed
             this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity}`);
+            return Command.empty();
+        }
+        if (offer.global_status === 'FAILED') {
+            // offer has already been failed
+            this.logger.warn(`Offer ${offerId} has already been failed. Skipping litigation for DH identity ${dhIdentity}`);
             return Command.empty();
         }
 
