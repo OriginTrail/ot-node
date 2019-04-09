@@ -32,15 +32,23 @@ class DCLitigationInitiateCommand extends Command {
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
-        if (offer.global_status !== 'ACTIVE') {
-            this.logger.trace(`Litigation already in progress... It needs to be completed in order to litigate ${dhIdentity} for offer ${offerId}`);
-            return Command.repeat(); // wait for offer to be active
-        }
 
         if (offer.global_status === 'COMPLETED') {
             // offer has already been completed
             this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
             return Command.empty();
+        }
+
+        if (offer.global_status === 'FAILED') {
+            // offer has already been failed
+            this.logger.warn(`Offer ${offerId} has already been failed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            return Command.empty();
+        }
+
+        if (offer.global_status !== 'ACTIVE') {
+            // litigation or replacement is in progress
+            this.logger.trace(`Litigation already in progress... It needs to be completed in order to litigate ${dhIdentity} for offer ${offerId}`);
+            return Command.repeat(); // wait for offer to be active
         }
 
         offer.global_status = 'LITIGATION_INITIATED';
