@@ -244,6 +244,14 @@ class Kademlia {
             }));
             this.log.info('Hashcash initialised');
 
+            this.node.blacklist = this.node.plugin(kadence.churnfilter({
+                cooldownBaseTimeout: '5M', //config.ChurnCoolDownBaseTimeout,
+                cooldownMultiplier: 2, // parseInt(config.ChurnCoolDownMultiplier),
+                cooldownResetTime: '60m', //config.ChurnCoolDownResetTime,
+            }));
+            this.log.info('Churn filter initialised');
+
+
             if (this.config.onion_enabled) {
                 this.enableOnion();
             }
