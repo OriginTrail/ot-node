@@ -254,8 +254,8 @@ class Kademlia {
 
             // Use verbose logging if enabled
             if (process.env.LOGS_LEVEL_DEBUG) {
-                this.node.rpc.deserializer.append(new IncomingMessage(this.log));
-                this.node.rpc.serializer.prepend(new OutgoingMessage(this.log));
+                this.node.rpc.deserializer.append(() => new IncomingMessage(this.log));
+                this.node.rpc.serializer.prepend(() => new OutgoingMessage(this.log));
             }
             // Cast network nodes to an array
             if (typeof this.config.network.bootstraps === 'string') {
