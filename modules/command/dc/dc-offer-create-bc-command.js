@@ -53,6 +53,9 @@ class DCOfferCreateBcCommand extends Command {
         offer.status = 'PUBLISHED';
         offer.message = 'Offer has been published to Blockchain';
         await offer.save({ fields: ['status', 'message', 'transaction_hash'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         await this.blockchain.executePlugin('fingerprint-plugin', {
             dataSetId,
@@ -75,6 +78,9 @@ class DCOfferCreateBcCommand extends Command {
         offer.global_status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

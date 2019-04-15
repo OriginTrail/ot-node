@@ -5,6 +5,7 @@ var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
+var CreditorHandler = artifacts.require('CreditorHandler'); // eslint-disable-line no-undef
 var Litigation = artifacts.require('Litigation'); // eslint-disable-line no-undef
 var Replacement = artifacts.require('Replacement'); // eslint-disable-line no-undef
 var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
@@ -17,6 +18,7 @@ var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-un
 var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
+var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
 
 const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
 
@@ -26,6 +28,7 @@ module.exports = async (deployer, network, accounts) => {
 
     let profile;
     let holding;
+    let creditorHandler;
     let litigation;
     let replacement;
     let approval;
@@ -36,6 +39,9 @@ module.exports = async (deployer, network, accounts) => {
 
     var amounts = [];
     var recepients = [];
+
+    var temp;
+    var temp2;
 
     switch (network) {
     case 'test':
@@ -78,6 +84,13 @@ module.exports = async (deployer, network, accounts) => {
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
         await hub.setContractAddress('Holding', holding.address);
+
+        creditorHandler = await deployer.deploy(
+            CreditorHandler,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('CreditorHandler', creditorHandler.address);
 
         litigation = await deployer.deploy(
             Litigation,
@@ -140,6 +153,13 @@ module.exports = async (deployer, network, accounts) => {
         holding = await deployer.deploy(Holding, hub.address, { gas: 8000000, from: accounts[0] });
         await hub.setContractAddress('Holding', holding.address);
 
+        creditorHandler = await deployer.deploy(
+            CreditorHandler,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('CreditorHandler', creditorHandler.address);
+
         litigation = await deployer.deploy(
             Litigation,
             hub.address,
@@ -173,6 +193,40 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
+
+        break;
+    case 'setIdentity':
+        temp = await deployer.deploy(TestingUtilities);
+        temp = await TestingUtilities.deployed();
+        temp = await temp.keccakAddress.call('0xc37c75271deed11c095a96ea0eedcc87e9d35152');
+        temp2 = await Identity.at('0x611d771aafaa3d6fb66c4a81d97768300a6882d5');
+        try {
+            await temp2.addKey(
+                temp,
+                [new BN(237)],
+                new BN(1),
+                { from: accounts[6] },
+            );
+        } catch (e) {
+            temp = await temp2.getKey.call(temp);
+            console.log(temp.purposes[0].toString());
+        }
+
+        break;
+    case 'removeIdentity':
+        temp = await deployer.deploy(TestingUtilities);
+        temp = await TestingUtilities.deployed();
+        temp = await temp.keccakAddress.call('0xc37c75271deed11c095a96ea0eedcc87e9d35152');
+        temp2 = await Identity.at('0x611d771aafaa3d6fb66c4a81d97768300a6882d5');
+        try {
+            await temp2.removeKey(
+                temp,
+                { from: accounts[6] },
+            );
+        } catch (e) {
+            temp = await temp2.getKey.call(temp);
+            console.log(temp.purposes[0].toString());
+        }
 
         break;
     case 'mock':

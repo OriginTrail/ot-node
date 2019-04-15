@@ -42,7 +42,6 @@ const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
-const Update = require('./check-updates');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -82,6 +81,11 @@ try {
 
     if (!config.management_wallet) {
         console.error('Please provide a valid management wallet.');
+        process.abort();
+    }
+
+    if (!config.blockchain.rpc_server_url) {
+        console.error('Please provide a valid RPC server URL.');
         process.abort();
     }
 } catch (error) {
@@ -150,10 +154,16 @@ process.on('warning', (warning) => {
 });
 
 process.on('exit', (code) => {
-    if (code !== 0) {
-        log.error(`Whoops, terminating with code: ${code}`);
-    } else {
+    switch (code) {
+    case 0:
         log.debug(`Normal exiting with code: ${code}`);
+        break;
+    case 4:
+        log.trace('Exiting because of update.');
+        break;
+    default:
+        log.error(`Whoops, terminating with code: ${code}`);
+        break;
     }
 });
 
@@ -285,7 +295,7 @@ class OTNode {
         Object.seal(config);
 
         const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+            new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
 
         const appState = {};
         if (config.is_bootstrap_node) {
@@ -548,6 +558,7 @@ class OTNode {
                 blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 blockchain.getAllPastEvents('LITIGATION_CONTRACT');
                 blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
+                blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -568,32 +579,14 @@ log.info(`             OriginTrail Node v${pjson.version}`);
 log.info('======================================================');
 log.info('');
 
-async function checkIfUpdateAvailable() {
-    if (await Update.isUpdateAvailable(config.autoUpdater)) {
-        log.important('Restarting node due to scheduled update.');
-        Update.restartNode();
-        return;
-    }
-
-    setTimeout(checkIfUpdateAvailable, 43200000);
-}
 
 function main() {
-    setTimeout(checkIfUpdateAvailable, 43200000);
     const otNode = new OTNode();
     otNode.bootstrap().then(() => {
         log.info('OT Node started');
     });
 }
 
+// Make sure the Sequelize meta table is migrated before running main.
 const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
-
-migrationSequelizeMeta.run()
-    .then(() => {
-        Update.update(config.autoUpdater)
-            .then(main)
-            .catch((error) => {
-                log.error(`Failed to check update. ${error}.`);
-                main();
-            });
-    });
+migrationSequelizeMeta.run().then(main);

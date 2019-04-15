@@ -12,7 +12,7 @@ exports.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES = 32;
 /**
  * @constant {number} DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS - Challenge response time
  */
-exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 5000;
+exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 60000;
 
 /**
  * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
@@ -22,7 +22,9 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
-exports.PERMANENT_COMMANDS = ['cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand', 'dhReplacementStartedCommand'];
+exports.PERMANENT_COMMANDS = [
+    'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
+    'dhReplacementStartedCommand', 'autoupdaterCommand'];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands

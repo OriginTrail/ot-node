@@ -74,9 +74,8 @@ describe('PoW MinerTest, generating random wallets and trying to find task solut
 
         const res = miner.solve(wallets, task, difficulty);
 
-        const solution = res.nodeIdentifiers.map(w => new BN(w, 16));
-
-        const solutionHash = abi.soliditySHA3(['address', 'address', 'address'], solution).toString('hex');
+        const hashes = wallets.map(w => abi.soliditySHA3(['address', 'uint256'], [w, task]).toString('hex')).sort((h1, h2) => h1.localeCompare(h2));
+        const solutionHash = abi.soliditySHA3(['uint256', 'uint256', 'uint256'], hashes.map(h => new BN(h, 16))).toString('hex');
 
         assert.isNotFalse(res, 'Should find solution');
         assert.equal(res.task, task.toString('hex'), 'Task should be same as given');
@@ -87,7 +86,7 @@ describe('PoW MinerTest, generating random wallets and trying to find task solut
         assert.include(res.nodeIdentifiers, wallets[2].toString('hex').padStart(40, '0'), 'Solution should contain third given wallet');
     });
 
-    it('Should find solution on position 17 for fixed wallet addresses on lowest difficulty', () => {
+    it('Should find solution on position 26 for fixed wallet addresses on lowest difficulty', () => {
         const w1 = '0000000000000000000000000000000000000000';
         const w2 = '0000000000000000000000000000000000000001';
         const w3 = '0000000000000000000000000000000000000002';
@@ -98,17 +97,19 @@ describe('PoW MinerTest, generating random wallets and trying to find task solut
             new BN(w3, 16),
         ];
 
-        const task = new BN('c50', 16);
+        const task = new BN('a', 16);
 
-        //                  c50
-        // 2ecbc4bf1ece29099c50027601e0ed56e6c4cf41991352508337fe6836bd0b19
-        //                  ^
-        const realHash = abi.soliditySHA3(['address', 'address', 'address'], wallets).toString('hex');
+        //                           a
+        // be89b5c9260c075603ce22549ea4a056c4597c71efb30960e321a68c74d4d187
+        //                           ^
+        const hashes = wallets.map(w => abi.soliditySHA3(['address', 'uint256'], [w, task]).toString('hex')).sort((h1, h2) => h1.localeCompare(h2));
+        const realHash = abi.soliditySHA3(['uint256', 'uint256', 'uint256'], hashes.map(h => new BN(h, 16))).toString('hex');
+
         const difficulty = 1;
 
         const res = miner.solve(wallets, task, difficulty);
 
-        assert.equal(res.shift, 44, 'Shift should be 44');
+        assert.equal(res.shift, 37, 'Shift should be 37');
         assert.equal(res.solutionHash, realHash, 'Hash should be correct');
         assert.equal(res.nodeIdentifiers.length, 3, 'Solution should contain three addresses');
         assert.equal(res.nodeIdentifiers[0], w1, 'First solution hash should be correct');

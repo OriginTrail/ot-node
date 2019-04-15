@@ -1,37 +1,7 @@
 const BN = require('bn.js');
 const abi = require('ethereumjs-abi');
 
-/**
- * Generate all permutations for single combination
- * @param permutations
- * @param current
- * @param usedElements
- * @param elements
- * @param i
- * @param n
- * @private
- */
-function _generatePermutations(permutations, current, usedElements, elements, i, n) {
-    if (i === n) {
-        permutations.push(current.slice());
-    } else {
-        for (const element of elements) {
-            if (usedElements.indexOf(element) === -1) {
-                usedElements.push(element);
-                current[i] = element;
-                _generatePermutations(
-                    permutations,
-                    current,
-                    usedElements,
-                    elements,
-                    i + 1,
-                    n,
-                );
-                usedElements.pop();
-            }
-        }
-    }
-}
+var num_tries = 0;
 
 /**
  * Generate Solidity SHA3 hash for single permutation of three wallets
@@ -41,7 +11,7 @@ function _generatePermutations(permutations, current, usedElements, elements, i,
  */
 function _generateHash(permutation) {
     return abi.soliditySHA3(
-        ['address', 'address', 'address'],
+        ['uint256', 'uint256', 'uint256'],
         [new BN(permutation[0], 16), new BN(permutation[1], 16), new BN(permutation[2], 16)],
     ).toString('hex');
 }
@@ -54,72 +24,85 @@ function _generateHash(permutation) {
  * @private
  */
 function _solutionIndex(permutation, task) {
-    const hex = _generateHash(permutation);
-    return hex.indexOf(task);
+    const hash = _generateHash(permutation);
+    const index = hash.indexOf(task);
+    return {
+        hash,
+        index,
+    };
 }
 
-/**
- * Finds solution for given task and wallet array
- * @param wallets
- * @param candidate
- * @param i
- * @param k
- * @param task
- * @returns {*}
- * @private
- */
-function _findSolution(wallets, candidate, i, k, task) {
+function _findSolution(wallets, candidates, i, k, task) {
     if (i === k) {
-        const permutations = [];
-        _generatePermutations(permutations, [], [], candidate, 0, k);
-
-        for (const permutation of permutations) {
-            const res = _solutionIndex(permutation, task);
-
-            if (res !== -1) {
-                const hash = _generateHash(permutation);
-
-                return {
-                    nodeIdentifiers: permutation,
-                    solutionHash: hash,
-                    shift: 64 - res - task.length,
-                    task,
-                };
-            }
+        num_tries += 1;
+        const { index, hash } = _solutionIndex(candidates.map(i => wallets[i].hash), task);
+        if (index !== -1) {
+            return {
+                nodeIdentifiers: candidates.map(i => wallets[i].wallet),
+                hashes: candidates.map(i => wallets[i].hash),
+                solutionHash: hash,
+                shift: 64 - index - task.length,
+                task,
+                num_tries,
+            };
         }
         return false;
     }
-    for (const wallet of wallets) {
-        if (i === 0 || wallet > candidate[i - 1]) {
-            candidate[i] = wallet;
-            const res = _findSolution(wallets, candidate, i + 1, k, task);
-            if (res) {
-                return res;
-            }
+
+    let j = 0;
+    let n = wallets.length - 2;
+
+    if (i > 0) {
+        j = candidates[i - 1] + 1;
+
+        if (i === 1) {
+            n += 1;
+        } else {
+            n += 2;
+        }
+    }
+
+
+    for (; j < n; j += 1) {
+        candidates[i] = j;
+        const result = _findSolution(wallets, candidates, i + 1, k, task);
+        if (result) {
+            return result;
         }
     }
     return false;
 }
 
 /**
-     * Wrapper function for solution finding function
-     * @param wallets
-     * @param task
-     * @returns {solution|false}
-     * @private
-     */
+ * Wrapper function for solution finding function
+ * @param wallets
+ * @param task
+ * @returns {solution|false}
+ * @private
+ */
 function _solve(wallets, task) {
     return _findSolution(wallets, [], 0, 3, task);
 }
 
 /**
-     * Solve PoW task
-     * @param {BN[]} wallets
-     * @param {BN} task
-     * @param difficulty
-     */
+ * Solve PoW task
+ * @param {BN[]} wallets
+ * @param {BN} task
+ * @param difficulty
+ */
 function solve(wallets, task, difficulty) {
-    const walletsArr = wallets.map(walletBn => walletBn.toString('hex').padStart(40, '0'));
+    num_tries = 0;
+    const walletsArr = wallets.map((walletBn) => {
+        const wallet = walletBn.toString('hex').padStart(40, '0');
+        const hash = abi.soliditySHA3(['address', 'uint256'], [walletBn, task]).toString('hex');
+
+        return {
+            wallet,
+            hash,
+        };
+    });
+
+    walletsArr.sort((a, b) => a.hash.localeCompare(b.hash));
     const taskStr = task.toString('hex').padStart(difficulty, '0');
     return _solve(walletsArr, taskStr);
 }

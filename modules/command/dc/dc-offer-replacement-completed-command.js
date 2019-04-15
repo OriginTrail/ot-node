@@ -18,6 +18,7 @@ class DCOfferReplacementCompletedCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -108,6 +109,9 @@ class DCOfferReplacementCompletedCommand extends Command {
 
                 offer.global_status = 'ACTIVE';
                 await offer.save({ fields: ['global_status'] });
+                this.remoteControl.offerUpdate({
+                    offer_id: offerId,
+                });
 
                 this.logger.important(`Successfully replaced DH ${dhIdentity} with DH ${chosenHolder} for offer ${offerId}`);
                 return Command.empty();

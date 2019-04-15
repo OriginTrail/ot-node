@@ -51,7 +51,7 @@ class DHReplacementStartedCommand extends Command {
 
                 await this.dhService.handleReplacement(
                     offerId, challengerIdentity, holderIdentity,
-                    litigationRootHash,
+                    litigationRootHash, challengerIdentity,
                 );
             }
         } catch (e) {
@@ -73,7 +73,11 @@ class DHReplacementStartedCommand extends Command {
                 event: 'LitigationCompleted',
                 finished: 0,
             },
+            order: [
+                ['timestamp', 'DESC'],
+            ],
         });
+
         if (events) {
             const event = events.find((e) => {
                 const {

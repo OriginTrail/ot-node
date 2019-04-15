@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "2.0.46",
+  "version": "3.0.6",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -37,10 +37,13 @@
     "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')",
     "ganache:tenderly": "ganache-cli -i 5777 -p 8545 -l 10000000 >/dev/null & sleep 5 && tenderly proxy --proxy-port 7545",
     "ganache": "ganache-cli -i 5777 -p 7545 -l 10000000 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
-    "truffle:compile": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle compile",
-    "truffle:test": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test --network test",
-    "truffle:test:litigation": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test ./test/litigation.test.js --network test",
-    "truffle:test:offer": "cd modules/Blockchain/Ethereum && ../../../node_modules/.bin/truffle test ./test/offer.test.js --network test"
+    "truffle:compile": "cd modules/Blockchain/Ethereum && truffle compile",
+    "truffle:deploy:rinkeby": "cd modules/Blockchain/Ethereum && truffle migrate --network rinkeby",
+    "truffle:deploy:ganache": "cd modules/Blockchain/Ethereum && truffle migrate --network ganache",
+    "truffle:test": "cd modules/Blockchain/Ethereum && truffle test --network test",
+    "truffle:test:litigation": "cd modules/Blockchain/Ethereum && truffle test ./test/litigation.test.js --network test",
+    "truffle:test:creditorhandler": "cd modules/Blockchain/Ethereum && truffle test ./test/creditor.handler.test.js --network test",
+    "truffle:test:offer": "cd modules/Blockchain/Ethereum && truffle test ./test/offer.test.js --network test"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
@@ -76,7 +79,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^4.4.0",
+    "@kadenceproject/kadence": "git+https://git@gitlab.com/deadcanaries/kadence.git#v5.0.1",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
@@ -121,6 +124,7 @@
     "levelup": "^2.0.2",
     "libxml-xsd": "^0.5.2",
     "lodash": "^4.17.5",
+    "machinepack-zip": "^1.1.0",
     "md5": "^2.2.1",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
@@ -146,6 +150,7 @@
     "rimraf": "^2.6.2",
     "scrypt": "^6.0.3",
     "semaphore-async-await": "^1.5.1",
+    "semver": "^5.6.0",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
     "sleep-async": "^1.0.5",

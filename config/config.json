@@ -55,9 +55,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x056f4DA796C00766061158A01cE068D912be9c89",
-      "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": "",
+      "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
       "plugins": [
         {
           "enabled": false,
@@ -85,8 +83,9 @@
       "releaseStage": "development"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "develop"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/develop/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/develop.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -98,7 +97,8 @@
     "deposit_on_demand": true,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": true
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "staging": {
     "identity": null,
@@ -157,8 +157,6 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0x16d553B9765b6Aa9fE7C45Dfa1a1839fD88DD7bc",
-      "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": "",
       "plugins": [
         {
           "enabled": false,
@@ -186,8 +184,9 @@
       "releaseStage": "staging"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "release/staging"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/release/staging/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/release/staging.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -199,7 +198,8 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": false
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "stable": {
     "identity": null,
@@ -258,8 +258,6 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0x6C314872A7e97A6F1dC7De2dc43D28500dd36f22",
-      "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": "",
       "plugins": [
         {
           "enabled": false,
@@ -287,8 +285,9 @@
       "releaseStage": "stable"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "release/stable"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/release/stable/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/release/stable.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -300,7 +299,8 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": false
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "production": {
     "identity": null,
@@ -358,9 +358,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x0e5995FE34BfC9DB7a31fa318f7f1256Cf28FfCa",
-      "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": "",
+      "hub_contract_address": "0x53F5b26EB263B96ffA83468F78DA738a3961644A",
       "plugins": [
         {
           "enabled": false,
@@ -391,8 +389,9 @@
       "releaseStage": "testnet"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "master"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/master/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/master.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -404,7 +403,8 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": false,
-    "litigationEnabled": false
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "mariner": {
     "identity": null,
@@ -463,8 +463,6 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "hub_contract_address": "0xa287d7134fb40bef071c932286bd2cd01efccf30",
-      "rpc_node_host": "https://mainnet.infura.io/7c072f60df864d22884e705c5bf3d83f",
-      "rpc_node_port": "",
       "plugins": [
         {
           "enabled": false,
@@ -495,8 +493,9 @@
       "releaseStage": "mariner"
     },
     "autoUpdater": {
-      "repo": "OriginTrail/ot-node",
-      "branch": "release/mariner"
+      "enabled": true,
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/release/mariner/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/release/mariner.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 10080,
@@ -508,6 +507,7 @@
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
     "requireApproval": true,
-    "litigationEnabled": false
+    "litigationEnabled": false,
+    "commandExecutorVerboseLoggingEnabled": false
   }
 }

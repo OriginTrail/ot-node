@@ -99,8 +99,8 @@ AfterAll(async function () {
             try {
                 await systemDb.dropDatabase(databaseItem);
             } catch (error) {
-                logger.log(`Oops, failed to delete database: ${databaseItem}`);
-                logger.log(error);
+                logger.error(`Oops, failed to delete database: ${databaseItem}`);
+                logger.error(error);
             }
         },
     );

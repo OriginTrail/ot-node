@@ -68,24 +68,6 @@ class Utilities {
     }
 
     /**
-     * Check if there is a new version of ot-node
-     * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
-     * @param {String} [options.branch] - Github repo's branch.
-     * @returns {Promise<any>}
-     */
-
-    static checkForUpdates(options) {
-        return new Promise(async (resolve, reject) => {
-            // eslint-disable-next-line
-            const Update = require('../check-updates');
-            const res = await Update.update(options);
-            if (res) {
-                resolve(res);
-            }
-        });
-    }
-
-    /**
      * Check if origintrail database exists, in case of arangoDB create one
      * @returns {Promise<any>}
      */

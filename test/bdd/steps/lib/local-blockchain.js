@@ -127,6 +127,7 @@ class LocalBlockchain {
                 assert(this.holdingStorageContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.tokenContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.profileContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.creditorHandlerContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.holdingContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.readingContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.litigationContractAddress !== '0x0000000000000000000000000000000000000000');
@@ -143,6 +144,7 @@ class LocalBlockchain {
         const tokenSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/TracToken.sol'), 'utf8');
         const profileSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Profile.sol'), 'utf8');
         const holdingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Holding.sol'), 'utf8');
+        const creditorHandlerSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/CreditorHandler.sol'), 'utf8');
         const readingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Reading.sol'), 'utf8');
         const eRC725Source = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ERC725.sol'), 'utf8');
         const safeMathSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/SafeMath.sol'), 'utf8');
@@ -167,6 +169,7 @@ class LocalBlockchain {
                 'Reading.sol': readingSource,
                 'Profile.sol': profileSource,
                 'Holding.sol': holdingSource,
+                'CreditorHandler.sol': creditorHandlerSource,
                 'ERC725.sol': eRC725Source,
                 'SafeMath.sol': safeMathSource,
                 'Identity.sol': identitySource,
@@ -204,6 +207,10 @@ class LocalBlockchain {
         this.holdingContractData = `0x${compileResult.contracts['Holding.sol:Holding'].bytecode}`;
         this.holdingContractAbi = JSON.parse(compileResult.contracts['Holding.sol:Holding'].interface);
         this.holdingContract = new this.web3.eth.Contract(this.holdingContractAbi);
+
+        this.creditorHandlerContractData = `0x${compileResult.contracts['CreditorHandler.sol:CreditorHandler'].bytecode}`;
+        this.creditorHandlerContractAbi = JSON.parse(compileResult.contracts['CreditorHandler.sol:CreditorHandler'].interface);
+        this.creditorHandlerContract = new this.web3.eth.Contract(this.creditorHandlerContractAbi);
 
         this.identityContractData = `0x${compileResult.contracts['Identity.sol:Identity'].bytecode}`;
         this.identityContractAbi = JSON.parse(compileResult.contracts['Identity.sol:Identity'].interface);
@@ -286,6 +293,16 @@ class LocalBlockchain {
         );
 
         await this.hubInstance.methods.setContractAddress('Holding', this.holdingInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        this.logger.log('Deploying creditorHandlerContract');
+        [this.creditorHandlerDeploymentReceipt, this.creditorHandlerInstance] = await this.deployContract(
+            this.web3, this.creditorHandlerContract, this.creditorHandlerContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setContractAddress('CreditorHandler', this.creditorHandlerInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
