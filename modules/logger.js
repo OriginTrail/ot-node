@@ -3,6 +3,8 @@ require('winston-daily-rotate-file');
 // eslint-disable-next-line
 require('winston-papertrail').Papertrail;
 require('winston-loggly-bulk');
+const util = require('util');
+
 const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
 
 const colors = require('colors/safe');
@@ -121,13 +123,12 @@ class Logger {
 
             // Extend logger object to properly log 'Error' types
             const origLog = logger.log;
-            logger.log = (level, msg) => {
-                if (msg instanceof Error) {
-                    // eslint-disable-next-line prefer-rest-params
-                    const args = Array.prototype.slice.call(arguments);
-                    args[1] = msg.stack;
-                    origLog.apply(logger, args);
+            logger.log = (level, ...rest) => {
+                if (rest[0] instanceof Error) {
+                    rest[1] = rest[0].stack;
+                    origLog.apply(logger, rest);
                 } else {
+                    const msg = util.format(...rest);
                     const transformed = Logger.transformLog(level, msg);
                     if (!transformed) {
                         return;
