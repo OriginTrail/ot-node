@@ -132,7 +132,7 @@ function upgradeContainer() {
     execSync(`mkdir -p ${initPath}`);
 
     execSync(
-        'find . ! -path . -a -not \\( -name ".origintrail_noderc" -o -name "init" -o -name "data" \\) -maxdepth 1 -exec mv {} init/ \\;',
+        'find . ! -path . -a -not \\( -name ".origintrail_noderc" -o -name "init" -o -name "data" -o -name "certs" \\) -maxdepth 1 -exec mv {} init/ \\;',
         { cwd: basePath },
     );
     execSync(`rm -rf ${path.join(initPath, 'node_modules')}`);
@@ -189,6 +189,13 @@ function main() {
     // Use any previous saved configuration
     if (fs.existsSync(localConfigPath)) {
         externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
+    }
+
+    if (process.env.RPC_SERVER_URL) {
+        if (externalConfig.blockchain === undefined) {
+            externalConfig.blockchain = {};
+        }
+        externalConfig.blockchain.rpc_server_url = process.env.RPC_SERVER_URL;
     }
 
     if (!externalConfig.blockchain || !externalConfig.blockchain.rpc_server_url) {

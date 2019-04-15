@@ -34,6 +34,12 @@ class DCLitigationCompleteCommand extends Command {
             return Command.empty();
         }
 
+        if (offer.global_status === 'FAILED') {
+            // offer has already been failed
+            this.logger.warn(`Offer ${offerId} has already been failed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            return Command.empty();
+        }
+
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
 
         const challenge = await models.challenges.findOne({

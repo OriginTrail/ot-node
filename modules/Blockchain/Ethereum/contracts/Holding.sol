@@ -6,6 +6,7 @@ import {HoldingStorage} from './HoldingStorage.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
 import {LitigationStorage} from './LitigationStorage.sol';
 import {Profile} from './Profile.sol';
+import {CreditorHandler} from './CreditorHandler.sol';
 import {Approval} from './Approval.sol';
 import {SafeMath} from './SafeMath.sol';
 
@@ -99,12 +100,15 @@ contract Holding is Ownable {
 
     function finalizeOffer(address identity, uint256 offerId, uint256 shift,
         bytes confirmation1, bytes confirmation2, bytes confirmation3,
-        uint8[] encryptionType, address[] holderIdentity) 
+        uint8[] encryptionType, address[] holderIdentity, address parentIdentity)
     public {
         HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
 
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2), "Sender does not have action permission to call this function!");
+        if(parentIdentity != address(0)){
+            CreditorHandler(hub.getContractAddress("CreditorHandler")).finalizeOffer(offerId, identity, parentIdentity);
+        }
         require(identity == holdingStorage.getOfferCreator(bytes32(offerId)), "Offer can only be finalized by its creator!");
 
         // Check if signatures match identities
@@ -112,6 +116,7 @@ contract Holding is Ownable {
         require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[1]))), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
         require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
+        // Verify task answer
         bytes32[3] memory hashes;
 
         hashes[0] = keccak256(abi.encodePacked(holderIdentity[0], holdingStorage.getOfferTask(bytes32(offerId))));
@@ -128,60 +133,55 @@ contract Holding is Ownable {
         holdingStorage.setHolders(bytes32(offerId), holderIdentity, encryptionType);
 
         // Secure funds from all parties
-        reserveTokens(
-            identity,
-            holderIdentity[0],
-            holderIdentity[1],
-            holderIdentity[2],
-            holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId))
-        );
+        reserveTokens(offerId, identity, holderIdentity);
 
         emit OfferFinalized(bytes32(offerId), holderIdentity[0], holderIdentity[1], holderIdentity[2]);
     }
 
-
-    function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
+    function reserveTokens(uint256 offerId, address payer, address[] identity)
     internal {
         ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
+
+        uint256 amount = HoldingStorage(hub.getContractAddress("HoldingStorage")).getOfferTokenAmountPerHolder(bytes32(offerId));
 
         if(profileStorage.getWithdrawalPending(payer) && profileStorage.getWithdrawalAmount(payer).add(amount.mul(3)) > profileStorage.getStake(payer) - profileStorage.getStakeReserved(payer)) {
             profileStorage.setWithdrawalPending(payer,false);
         }
-        if(profileStorage.getWithdrawalPending(identity1) && profileStorage.getWithdrawalAmount(identity1).add(amount) > profileStorage.getStake(identity1) - profileStorage.getStakeReserved(identity1)) {
-            profileStorage.setWithdrawalPending(identity1,false);
+        if(profileStorage.getWithdrawalPending(identity[0]) && profileStorage.getWithdrawalAmount(identity[0]).add(amount) > profileStorage.getStake(identity[0]) - profileStorage.getStakeReserved(identity[0])) {
+            profileStorage.setWithdrawalPending(identity[0],false);
         }
-        if(profileStorage.getWithdrawalPending(identity2) && profileStorage.getWithdrawalAmount(identity2).add(amount) > profileStorage.getStake(identity2) - profileStorage.getStakeReserved(identity2)) {
-            profileStorage.setWithdrawalPending(identity2,false);
+        if(profileStorage.getWithdrawalPending(identity[1]) && profileStorage.getWithdrawalAmount(identity[1]).add(amount) > profileStorage.getStake(identity[1]) - profileStorage.getStakeReserved(identity[1])) {
+            profileStorage.setWithdrawalPending(identity[1],false);
         }
-        if(profileStorage.getWithdrawalPending(identity3) && profileStorage.getWithdrawalAmount(identity3).add(amount) > profileStorage.getStake(identity3) - profileStorage.getStakeReserved(identity3)) {
-            profileStorage.setWithdrawalPending(identity3,false);
+        if(profileStorage.getWithdrawalPending(identity[2]) && profileStorage.getWithdrawalAmount(identity[2]).add(amount) > profileStorage.getStake(identity[2]) - profileStorage.getStakeReserved(identity[2])) {
+            profileStorage.setWithdrawalPending(identity[2],false);
         }
 
         uint256 minimalStake = Profile(hub.getContractAddress("Profile")).minimalStake();
 
         require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
-            "Data creator does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)),
+            "Data creator does not have enough stake to create new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity[0]).sub(profileStorage.getStakeReserved(identity[0])),
             "First profile does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)),
+        require(minimalStake <= profileStorage.getStake(identity[1]).sub(profileStorage.getStakeReserved(identity[1])),
             "Second profile does not have enough stake to take new jobs!");
-        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)),
+        require(minimalStake <= profileStorage.getStake(identity[2]).sub(profileStorage.getStakeReserved(identity[2])),
             "Third profile does not have enough stake to take new jobs!");
 
         require(profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)) >= amount.mul(3),
             "Data creator does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)) >= amount,
+        require(profileStorage.getStake(identity[0]).sub(profileStorage.getStakeReserved(identity[0])) >= amount,
             "First profile does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)) >= amount,
+        require(profileStorage.getStake(identity[1]).sub(profileStorage.getStakeReserved(identity[1])) >= amount,
             "Second profile does not have enough stake for reserving!");
-        require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount,
+        require(profileStorage.getStake(identity[2]).sub(profileStorage.getStakeReserved(identity[2])) >= amount,
             "Third profile does not have enough stake for reserving!");
 
         profileStorage.increaseStakesReserved(
             payer,
-            identity1,
-            identity2,
-            identity3,
+            identity[0],
+            identity[1],
+            identity[2],
             amount
         );
     }

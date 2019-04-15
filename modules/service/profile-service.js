@@ -1,6 +1,7 @@
 const fs = require('fs');
 const BN = require('bn.js');
 const path = require('path');
+const EthereumAbi = require('ethereumjs-abi');
 
 const Utilities = require('../Utilities');
 
@@ -28,6 +29,18 @@ class ProfileService {
         if (this.config.erc725Identity) {
             identityExists = true;
             this.logger.notify(`Identity has already been created for node ${this.config.identity}. Identity is ${this.config.erc725Identity}.`);
+        }
+
+        if (this.config.parentIdentity) {
+            let hasPermission = false;
+
+            if (identityExists) {
+                hasPermission = await this.hasParentPermission();
+            }
+
+            if (!hasPermission) {
+                this.logger.warn('Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config');
+            }
         }
 
         if (identityExists && await this.isProfileCreated()) {
@@ -74,6 +87,7 @@ class ProfileService {
                 throw new Error('Identity could not be confirmed in timely manner. Please, try again later.');
             }
         }
+
         const event = await this.blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.erc725Identity));
         if (event) {
             this.logger.notify(`Profile created for node ${this.config.identity}.`);
@@ -203,6 +217,22 @@ class ProfileService {
                 throw Error(`Failed to transfer profile. ${transferError}. ${transferError.stack}`);
             }
         }
+    }
+
+    /**
+     * Verify that the parent identity has this node's identity set as a sub-identity
+     * @return {Promise<*>}
+     */
+    async hasParentPermission() {
+        const hashedIdentity = EthereumAbi.soliditySHA3(['address'], [this.config.erc725Identity]).toString('hex');
+
+        const isChild = await this.blockchain.keyHasPurpose(
+            this.config.parentIdentity,
+            hashedIdentity,
+            new BN(237),
+        );
+
+        return isChild;
     }
 }
 

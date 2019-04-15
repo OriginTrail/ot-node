@@ -227,10 +227,11 @@ class Blockchain {
         confirmation3,
         encryptionType,
         holders,
+        parentIdentity,
     ) {
         return this.blockchain.finalizeOffer(
             blockchainIdentity, offerId, shift, confirmation1,
-            confirmation2, confirmation3, encryptionType, holders,
+            confirmation2, confirmation3, encryptionType, holders, parentIdentity,
         );
     }
 
@@ -574,6 +575,17 @@ class Blockchain {
      */
     async getHolderLitigationEncryptionType(offerId, holderIdentity) {
         return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
+    }
+
+    /**
+     * Check that the identity key has a specific purpose
+     * @param identity - identity address
+     * @param key - identity key
+     * @param pupose - purpose to verify
+     * @return {Promise<any>}
+     */
+    async keyHasPurpose(identity, key, purpose) {
+        return this.blockchain.keyHasPurpose(identity, key, purpose);
     }
 }
 

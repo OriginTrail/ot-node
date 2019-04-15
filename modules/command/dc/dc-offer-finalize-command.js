@@ -20,6 +20,7 @@ class DCOfferFinalizeCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -49,6 +50,9 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
+        const parentIdentity = this.config.parentIdentity ?
+            Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
+
         await this.blockchain.finalizeOffer(
             Utilities.normalizeHex(this.config.erc725Identity),
             offerId,
@@ -58,7 +62,9 @@ class DCOfferFinalizeCommand extends Command {
             confirmations[2],
             colors,
             nodeIdentifiers,
+            parentIdentity,
         );
+
         return {
             commands: [
                 {
@@ -106,10 +112,23 @@ class DCOfferFinalizeCommand extends Command {
         }
 
         let errorMessage = err.message;
-        const hasFunds = await this.dcService
-            .hasProfileBalanceForOffer(offer.token_amount_per_holder);
-        if (!hasFunds) {
-            errorMessage = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+        if (this.config.parentIdentity) {
+            const hasPermission = await this.profileService.hasParentPermission();
+            if (!hasPermission) {
+                errorMessage = 'Identity does not have permission to use parent identity funds!';
+            } else {
+                const hasFunds = await this.dcService
+                    .parentHasProfileBalanceForOffer(offer.token_amount_per_holder);
+                if (!hasFunds) {
+                    errorMessage = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
+                }
+            }
+        } else {
+            const hasFunds = await this.dcService
+                .hasProfileBalanceForOffer(offer.token_amount_per_holder);
+            if (!hasFunds) {
+                errorMessage = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+            }
         }
         this.logger.error(`Offer ${offerId} has not been finalized. ${errorMessage}`);
 
