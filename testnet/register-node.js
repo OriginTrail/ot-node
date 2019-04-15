@@ -191,6 +191,13 @@ function main() {
         externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
     }
 
+    if (process.env.RPC_SERVER_URL) {
+        if (externalConfig.blockchain === undefined) {
+            externalConfig.blockchain = {};
+        }
+        externalConfig.blockchain.rpc_server_url = process.env.RPC_SERVER_URL;
+    }
+
     if (!externalConfig.blockchain || !externalConfig.blockchain.rpc_server_url) {
         logger.error('Please provide a valid RPC server URL.\n' +
             'Add it to the blockchain section. For example:\n' +
