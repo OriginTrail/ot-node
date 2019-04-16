@@ -1,3 +1,5 @@
+Object.defineProperty(global, '_bitcore', { get(){ return undefined }, set(){} })
+
 const Tx = require('ethereumjs-tx');
 const { txutils } = require('eth-lightwallet');
 const Queue = require('better-queue');

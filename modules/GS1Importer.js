@@ -1,6 +1,6 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
-const xsd = require('libxml-xsd');
+const xsd = require('libxmljs');
 const Utilities = require('./Utilities');
 const models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
