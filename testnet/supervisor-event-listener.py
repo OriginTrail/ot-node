@@ -1,5 +1,6 @@
 import sys
 import os
+import signal
 
 def write_stdout(s):
     # only eventlistener protocol messages may be sent to stdout
@@ -36,4 +37,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
