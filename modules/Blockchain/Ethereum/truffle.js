@@ -47,7 +47,7 @@ module.exports = {
         update: {
             host: 'localhost', // Connect to geth on the specified
             port: 8545,
-            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.RINKEBY_ACCESS_KEY}`),
+            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${process.env.RINKEBY_ACCESS_KEY}`),
             network_id: 4,
             gas: 6000000, // Gas limit used for deploys
             websockets: true,
@@ -71,9 +71,9 @@ module.exports = {
         rinkeby: {
             host: 'localhost', // Connect to geth on the specified
             port: 8545,
-            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.RINKEBY_ACCESS_KEY}`),
+            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${process.env.RINKEBY_ACCESS_KEY}`),
             network_id: 4,
-            gas: 6000000, // Gas limit used for deploys
+            gas: 6500000, // Gas limit used for deploys
             websockets: true,
             skipDryRun: true,
         },
@@ -81,7 +81,7 @@ module.exports = {
         live: {
             host: 'localhost',
             port: 8545,
-            provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/${process.env.MAINNET_ACCESS_KEY}`),
+            provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${process.env.MAINNET_ACCESS_KEY}`),
             network_id: 1,
             gas: 6000000, // Gas limit used for deploys
             websockets: true,
