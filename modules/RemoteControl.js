@@ -367,6 +367,11 @@ class RemoteControl {
             async (bid) => {
                 const holding = await this._findHoldingByBid(bid);
 
+                if (holding == null || holding.data_set_id == null) {
+                    this.log.debug('Failed to get holding data for for bid %s.', bid);
+                    return;
+                }
+
                 const dataInfo = await Models.data_info.findOne({
                     where: {
                         data_set_id: holding.data_set_id,
