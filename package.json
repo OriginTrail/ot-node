@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "3.0.7",
+  "version": "3.1.0",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
