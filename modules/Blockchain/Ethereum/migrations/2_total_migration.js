@@ -272,7 +272,7 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         break;
     case 'rinkeby':
-        await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
+        await deployer.deploy(Hub)
             .then((result) => {
                 hub = result;
             });
@@ -281,21 +281,18 @@ module.exports = async (deployer, network, accounts) => {
         profileStorage = await deployer.deploy(
             ProfileStorage,
             hub.address,
-            { gas: 6000000, from: accounts[0] },
         );
         await hub.setContractAddress('ProfileStorage', profileStorage.address);
 
         holdingStorage = await deployer.deploy(
             HoldingStorage,
             hub.address,
-            { gas: 6000000, from: accounts[0] },
         );
         await hub.setContractAddress('HoldingStorage', holdingStorage.address);
 
         litigationStorage = await deployer.deploy(
             LitigationStorage,
             hub.address,
-            { gas: 6000000, from: accounts[0] },
         );
         await hub.setContractAddress('LitigationStorage', litigationStorage.address);
 
@@ -304,23 +301,21 @@ module.exports = async (deployer, network, accounts) => {
 
         await hub.setContractAddress('Token', '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882');
 
-        profile = await deployer.deploy(Profile, hub.address, { gas: 7000000, from: accounts[0] });
+        profile = await deployer.deploy(Profile, hub.address);
         await hub.setContractAddress('Profile', profile.address);
 
-        holding = await deployer.deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
+        holding = await deployer.deploy(Holding, hub.address);
         await hub.setContractAddress('Holding', holding.address);
 
         litigation = await deployer.deploy(
             Litigation,
             hub.address,
-            { gas: 7000000, from: accounts[0] },
         );
         await hub.setContractAddress('Litigation', litigation.address);
 
         replacement = await deployer.deploy(
             Replacement,
             hub.address,
-            { gas: 7000000, from: accounts[0] },
         );
         await hub.setContractAddress('Replacement', replacement.address);
 

@@ -77,7 +77,12 @@
       "bootstraps": ["https://developbs.origintrial.me:5278/#05edf19bd36906240503e2e2e2f18d13f8211d2f"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
-      "identityDifficulty": 8
+      "identityDifficulty": 8,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "development"
@@ -156,7 +161,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x16d553B9765b6Aa9fE7C45Dfa1a1839fD88DD7bc",
+      "hub_contract_address": "0xA272797Bfc59946388D89CdB6821dEeC927E0E36",
       "plugins": [
         {
           "enabled": false,
@@ -178,7 +183,12 @@
       "bootstraps": ["https://stagingbs.origintrial.me:5278/#1754b56ce26212eab45bc523c36e1d4bf57ea30e"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "staging"
@@ -279,7 +289,12 @@
       "bootstraps": ["https://82.196.10.12:5278/#e2f7ab11d0dd34595dfb2e71b4937ec8d790df84"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "stable"
@@ -383,7 +398,12 @@
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "testnet"
@@ -487,7 +507,12 @@
       ],
       "remoteWhitelist": ["127.0.0.1"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "mariner"

@@ -42,11 +42,17 @@ describe('Utilities module', () => {
             );
             assert.hasAllKeys(
                 config.network, [
-                    'id', 'hostname', 'bootstraps',
+                    'id', 'hostname', 'bootstraps', 'churnPlugin',
                     'remoteWhitelist', 'identityDifficulty',
                     'solutionDifficulty',
                 ],
                 `Some config items are missing in config.network for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
+                config.network.churnPlugin, [
+                    'cooldownBaseTimeout', 'cooldownMultiplier', 'cooldownResetTime',
+                ],
+                `Some config items are missing in config.network.churnPlugin for environment '${environment}'`,
             );
             assert.hasAllKeys(
                 config.bugSnag, ['releaseStage'],
