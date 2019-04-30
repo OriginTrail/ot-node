@@ -9,7 +9,7 @@ ENV GRANAX_USE_SYSTEM_TOR=1
 ENV OT_NODE_DISTRIBUTION=docker
 
 RUN apt-get -qq update && apt-get -qq -y install curl
-RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
+RUN curl -sL https://deb.nodesource.com/setup_10.x |  bash -
 RUN apt-get -qq update && apt-get -qq -y install wget apt-transport-https software-properties-common build-essential git nodejs sqlite unzip nano
 RUN add-apt-repository -y ppa:ethereum/ethereum && apt-get -qq update && apt-get install -y -qq ethereum geth
 #ArangoDB
