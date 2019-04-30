@@ -1,6 +1,6 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
-const xsd = require('libxmljs');
+const libxml = require('libxmljs');
 const Utilities = require('./Utilities');
 const models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
@@ -857,12 +857,12 @@ class GS1Importer {
      * @returns {Promise}
      */
     async parseGS1(contents) {
-        const xsdFileBuffer = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
-        const schema = xsd.parse(xsdFileBuffer.toString());
+        const xsd = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
+        const xsdDoc = libxml.parseXml(xsd);
+        const xmlDoc = libxml.parseXml(contents);
 
-        const validationResult = schema.validate(contents);
-        if (validationResult !== null) {
-            this.helper.handleError(`Failed to validate schema. ${validationResult}`, 400);
+        if (!xmlDoc.validate(xsdDoc)) {
+            this.helper.handleError(`Failed to validate schema. ${xmlDoc.validationErrors}`, 400);
         }
 
         return new Promise(resolve =>
