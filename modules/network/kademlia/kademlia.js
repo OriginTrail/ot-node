@@ -251,6 +251,22 @@ class Kademlia {
             }));
             this.log.info('Churn filter initialised');
 
+            // Patch Churn to ignore all outgoing requests towards blacklisted contacts.
+            const send = this.node.send.bind(this.node);
+            this.node.send = function (method, params, target, handler) {
+                try {
+                    const contactId = target[0].toString('hex');
+                    this.log.debug('Trying to send to blacklisted contact: %s.', contactId);
+                    if (this.node.blacklist.hasBlock(contactId)) {
+                        return handler(Error('Contact blacklisted.'));
+                    }
+                    send(method, params, target, handler);
+                } catch (e) {
+                    this.log.error('Failed to check for blacklist');
+                    handler(Error('Failed to check for blacklist.'));
+                }
+            }.bind(this);
+
             if (this.config.onion_enabled) {
                 this.enableOnion();
             }
