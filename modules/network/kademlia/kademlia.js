@@ -256,8 +256,8 @@ class Kademlia {
             this.node.send = function (method, params, target, handler) {
                 try {
                     const contactId = target[0].toString('hex');
-                    this.log.debug('Trying to send to blacklisted contact: %s.', contactId);
                     if (this.node.blacklist.hasBlock(contactId)) {
+                        this.log.debug('Trying to send to blacklisted contact: %s.', contactId);
                         return handler(Error('Contact blacklisted.'));
                     }
                     send(method, params, target, handler);
