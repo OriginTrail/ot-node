@@ -55,7 +55,7 @@ class DhOfferFinalizedCommand extends Command {
 
                     await this.remoteControl.onCompletedBids();
 
-                    if (this.config.disableAutoPayouts === true) {
+                    if (this.config.disableAutoPayouts !== true) {
                         const scheduledTime =
                             (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
                         return {
