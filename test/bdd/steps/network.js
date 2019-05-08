@@ -41,7 +41,7 @@ function unpackRawTable(rawTable) {
         }
 
         return val;
-    }
+    };
 
     const unpacked = {};
     if (rawTable) {
