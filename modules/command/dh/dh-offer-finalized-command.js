@@ -54,21 +54,26 @@ class DhOfferFinalizedCommand extends Command {
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
 
                     await this.remoteControl.onCompletedBids();
-                    const scheduledTime = (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
-                    return {
-                        commands: [
-                            {
-                                name: 'dhPayOutCommand',
-                                delay: scheduledTime,
-                                retries: 3,
-                                transactional: false,
-                                data: {
-                                    offerId,
-                                    viaAPI: false,
+
+                    if (this.config.disableAutoPayouts !== true) {
+                        const scheduledTime =
+                            (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
+                        return {
+                            commands: [
+                                {
+                                    name: 'dhPayOutCommand',
+                                    delay: scheduledTime,
+                                    retries: 3,
+                                    transactional: false,
+                                    data: {
+                                        offerId,
+                                        viaAPI: false,
+                                    },
                                 },
-                            },
-                        ],
-                    };
+                            ],
+                        };
+                    }
+                    return Command.empty();
                 }
 
                 bid.status = 'NOT_CHOSEN';
