@@ -16,6 +16,7 @@ const ImportUtilities = require('../../../modules/ImportUtilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
+const Models = require('../../../models');
 
 // Identity difficulty 8.
 const bootstrapIdentity = {
@@ -30,7 +31,17 @@ const bootstrapIdentity = {
  * @param rawTable
  */
 function unpackRawTable(rawTable) {
-    const parse = val => (Number.isNaN(Number(val)) ? val : Number(val));
+    const parse = (val) => {
+        if (!Number.isNaN(Number(val))) {
+            return Number(val);
+        }
+
+        if (val.toLowerCase() === 'true' || val.toLowerCase() === 'false') {
+            return Boolean(val);
+        }
+
+        return val;
+    };
 
     const unpacked = {};
     if (rawTable) {
@@ -809,6 +820,40 @@ Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async functio
                 });
             } else {
                 accept();
+            }
+        }));
+    });
+
+    return Promise.all(myPromises);
+});
+
+Given(/^selected DHes should not be payed out*$/, { timeout: 180000 }, async function () {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const myPromises = [];
+
+    this.state.nodes.forEach((node) => {
+        if (node === dc) {
+            // Skip the DC node.
+            return;
+        }
+        myPromises.push(new Promise(async (accept, reject) => {
+            // Check each node for payout command.
+
+            Models.sequelize.options.storage = node.systemDbPath;
+            await Models.sequelize.sync();
+            const payOutCommands = await Models.sequelize.models.commands.findAll({
+                where: {
+                    name: 'dhPayOutCommand',
+                },
+            });
+
+            if (payOutCommands.length === 0) {
+                accept();
+            } else {
+                reject(Error('Command dhPayOutCommand should not be scheduled.'));
             }
         }));
     });
