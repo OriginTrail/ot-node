@@ -137,6 +137,21 @@ Feature: Test basic network features
     Then selected DHes should be payed out
 
   @first
+  Scenario: DH with disabled auto-payouts
+    Given the replication difficulty is 0
+    And I setup 5 nodes
+    And I override configuration for all nodes
+      | dc_holding_time_in_minutes |   1  |
+      | disableAutoPayouts         | true |
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And DC waits for holding time
+    Then selected DHes should not be payed out
+
+  @first
   Scenario: Node with diff management and operational wallet should successfully start
     Given I setup 1 node
     And I set 1st node's management wallet to be different then operational wallet
