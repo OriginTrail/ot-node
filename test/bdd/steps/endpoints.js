@@ -4,6 +4,7 @@ const {
     Then, Given,
 } = require('cucumber');
 const { expect } = require('chai');
+const BN = require('bn.js');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
