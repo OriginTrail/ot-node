@@ -16,6 +16,7 @@ const defaultConfiguration = require('../../../../config/config.json').developme
 const uuidRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const walletRegex = /\b0x[0-9A-F]{40}\b/gi;
 const identityRegex = /\b[0-9A-F]{40}\b/gi;
+const identityWithPrefixRegex = /\b0x[0-9A-F]{40}\b/gi;
 const offerIdRegex = /\b0x[0-9A-F]{64}\b/gi;
 const dataSetRegex = /\b0x[0-9A-F]{64}\b/gi;
 const walletAmountRegex = /\b\d+\b/g;
@@ -34,7 +35,8 @@ class OtNode extends EventEmitter {
         this.options.configDir = path.join(appDataBaseDir || tmpdir, this.id);
         this.options.nodeConfiguration = nodeConfiguration || {};
         this.options.nodeConfiguration = deepExtend(
-            Object.assign({}, defaultConfiguration), // deepExtend changes original object.
+            {},
+            defaultConfiguration,
             this.options.nodeConfiguration,
         );
         this.logger = logger || console;
@@ -62,9 +64,13 @@ class OtNode extends EventEmitter {
         this.state = {};
         this.state.addedBids = []; // List of offer IDs (DH side).
         this.state.takenBids = []; // List of offer IDs (DH side).
+        this.state.pendingLitigationDhIdentities = []; // List of pending litigations (DHs)
+        this.state.takenReplacements = []; // List of replacement offer IDs (DH side).
         // Valid replications (DH side). List of internal offer IDs and their replications DH IDs
         // in pairs. { internalOfferId, dhId }.
         this.state.replications = [];
+        // Array of replacement offer IDs
+        this.state.replacements = [];
         // Valid replications (DC side). List of objects { importId, dhWallet }.
         this.state.holdingData = [];
         // Offers finalized. List of offer IDs.
@@ -149,6 +155,7 @@ class OtNode extends EventEmitter {
     stop() {
         this.logger.log(`Stopping node ${this.id}.`);
         assert(this.isRunning);
+        this.started = false;
         this.process.kill('SIGINT');
     }
 
@@ -211,6 +218,8 @@ class OtNode extends EventEmitter {
             const offerId = line.match(offerIdRegex)[0];
         } else if (line.match(/Miner found a solution of offer .+\./gi)) {
             const offerId = line.match(offerIdRegex)[0];
+        } else if (line.match(/Not enough DHs submitted/gi)) {
+            this.emit('not-enough-dhs');
         } else if (line.match(/Offer .+ finalized/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
@@ -290,6 +299,51 @@ class OtNode extends EventEmitter {
             this.emit('replication-window-closed');
         } else if (line.match(/Offer with internal ID .+ for data set .+ written to blockchain. Waiting for DHs\.\.\./gi)) {
             this.emit('offer-written-blockchain');
+        } else if (line.match(/Command dhPayOutCommand and ID .+ processed\./gi)) {
+            this.emit('dh-pay-out-finalized');
+        } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
+            this.emit('dh-offer-finalized');
+        } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {
+            this.state.litigationStatus = 'LITIGATION_STARTED';
+            this.emit('dc-litigation-initiated');
+        } else if (line.match(/Litigation answered for DH .+ and offer .+\./gi)) {
+            this.emit('dc-litigation-answered');
+        } else if (line.match(/Litigation answered for offer .+\. DH identity .+/gi)) {
+            this.emit('dh-litigation-answered');
+        } else if (line.match(/Litigation completed for DH .+ and offer .+\./gi)) {
+            this.state.litigationStatus = 'LITIGATION_COMPLETED';
+            this.emit('dc-litigation-completed');
+        } else if (line.match(/Litigation already in progress\.\.\. It needs to be completed in order to litigate .+ for offer .+/gi)) {
+            const dhIdentity = line.match(identityWithPrefixRegex)[0];
+            this.state.pendingLitigationDhIdentities.push(dhIdentity);
+            this.emit('dc-litigation-pending');
+        } else if (line.match(/DH .+ was penalized for the offer .+\./gi)) {
+            this.emit('dc-litigation-completed-dh-penalized');
+        } else if (line.match(/DH .+ was not penalized for the offer .+\./gi)) {
+            this.emit('dc-litigation-completed-dh-not-penalized');
+        } else if (line.match(/Replacement for DH .+ and offer .+ has been successfully started. Waiting for DHs\.\.\./gi)) {
+            this.emit('dc-litigation-replacement-started');
+        } else if (line.match(/Replacement triggered for offer .+\. Litigator .+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            this.state.replacements.push(offerId);
+        } else if (line.match(/\[DH] Replacement replication finished for offer ID .+/gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            assert(offerId);
+            this.state.takenReplacements.push(offerId);
+            this.emit('dh-litigation-replacement-received');
+        } else if (line.match(/Successfully replaced DH .+ with DH .+ for offer .+/gi)) {
+            this.emit('dc-litigation-replacement-completed');
+        } else if (line.match(/Challenge answer .+ sent to .+\./gi)) {
+            this.emit('dh-challenge-sent');
+        } else if (line.match(/Not chosen as a replacement for offer .+\./gi)) {
+            this.emit('dh-not-chosen-as-replacement');
+        } else if (line.match(/Chosen as a replacement for offer .+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            this.state.takenBids.push(offerId);
+            this.emit('dh-chosen-as-replacement');
+        } else if (line.match(/Replication finished for DH node .+/gi)) {
+            const nodeId = line.match(identityRegex)[0];
+            this.emit('dh-replication-verified', nodeId);
         }
     }
 
@@ -299,6 +353,21 @@ class OtNode extends EventEmitter {
      */
     get isRunning() {
         return this.initialized && this.started && !!this.process;
+    }
+
+    /**
+     * Retruns path to the system.db.
+     * @return {string} Path.
+     */
+    get systemDbPath() {
+        return path.join(this.options.configDir, 'system.db');
+    }
+
+    get erc725Identity() {
+        return JSON.parse(fs.readFileSync(path.join(
+            this.options.configDir,
+            'erc725_identity.json',
+        ))).identity;
     }
 
     /**
