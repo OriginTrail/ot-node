@@ -103,7 +103,7 @@ Object.freeze(constants);
 /**
  *
  */
-class otJsonImporter {
+class OtJsonImporter {
     /**
      * Default constructor. Creates instance of otJsonImporter.
      * @param ctx IoC context
@@ -329,6 +329,10 @@ class otJsonImporter {
             throw Error('Document cannot be null.');
         }
 
+        if (typeof document !== 'object') {
+            throw Error('Document has to be object.');
+        }
+
         if (Object.keys(document).length !== 5) {
             throw Error('Lack of additional information in OT-JSON document.');
         }
@@ -378,4 +382,4 @@ class otJsonImporter {
     }
 }
 
-module.exports = otJsonImporter;
+module.exports = OtJsonImporter;
