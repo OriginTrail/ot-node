@@ -1,8 +1,6 @@
 const { sha3_256 } = require('js-sha3');
-const { forEachSeries } = require('p-iteration');
 
 const Utilities = require('./Utilities');
-const GraphStorage = require('./Database/GraphStorage');
 
 // Helper functions.
 
@@ -63,6 +61,19 @@ function _keyFrom(...rest) {
     )));
 }
 
+/**
+ * Constants used in graph creation.
+ * @type {{
+ * relationType: {
+ *  identifies: string, hasData: string, identifiedBy: string, connectionDownstream: string},
+ *  vertexType: {
+ *  entityObject: string, identifier: string, data: string, connector: string},
+ * edgeType: {
+ *  connectorRelation: string, dataRelation: string, otRelation: string,
+ *  identifierRelation: string},
+ * objectType: {
+ *  otConnector: string, otObject: string}}}
+ */
 const constants = {
     vertexType: {
         entityObject: 'EntityObject',
@@ -94,16 +105,15 @@ Object.freeze(constants);
  */
 class otJsonImporter {
     /**
-     * Default constructor
+     * Default constructor. Creates instance of otJsonImporter.
      * @param ctx IoC context
      */
     constructor(ctx) {
-        this.db = ctx.graphStorage;
-        this.helper = ctx.gs1Utilities;
         this.log = ctx.logger;
         this.config = ctx.config;
         this.notifyError = ctx.notifyError;
 
+        // TODO: use creditor information from config.
         this.me = {
             dataCreator: {
                 identifiers: [
@@ -119,10 +129,17 @@ class otJsonImporter {
 
     /**
      *
-     * @param document
+     * @param OT-JSON document in JSON-LD format.
+     * @return {{
+     * metadata: {
+     *  datasetHeader: *, datasetContext: *, vertices: *, edges: *, _key: string},
+     * vertices: Array,
+     * dataCreator: string
+     * edges: Array}}
      */
     process(document) {
         // TODO: validate document here.
+        this._validate(document);
 
         const datasetId = _id(document);
         const header = document.datasetHeader;
@@ -134,7 +151,7 @@ class otJsonImporter {
 
         document['@graph'].forEach((otObject) => {
             switch (_type(otObject)) {
-            case 'otObject': {
+            case constants.objectType.otObject: {
                 // Create entity vertex.
                 const entityVertex = {};
                 entityVertex._key = _keyFrom(dataCreator, _id(otObject));
@@ -230,7 +247,7 @@ class otJsonImporter {
                 }
             }
                 break;
-            case 'otConnector': {
+            case constants.objectType.otConnector: {
                 // Create connector vertex.
                 const connectorVertex = {
                     _key: _keyFrom(dataCreator, _id(otObject)),
@@ -260,15 +277,9 @@ class otJsonImporter {
             }
                 break;
             default:
-                throw Error('Only otObject type expected in @graph.');
+                throw Error('Unexpected vertex type in @graph.');
             }
         });
-
-        // console.log('vertices', vertices);
-        // console.log('edges', edges);
-        this.vertices = vertices;
-        this.edges = edges;
-        this.dataCreator = dataCreator;
 
         const metadata = {
             _key: datasetId,
@@ -288,149 +299,82 @@ class otJsonImporter {
             }, []),
         };
 
-        this.metadata = metadata;
-        // console.log(metadata);
-    }
+        // TODO: Check for datasetHeader.dataIntegrity.* proof here.
 
-    async write() {
-        await this.db.connect();
-        await forEachSeries(this.vertices, vertex => this.db.addVertex(vertex));
-        await forEachSeries(this.edges, edge => this.db.addEdge(edge));
-
-        await forEachSeries(this.vertices.filter(vertex => vertex.vertexType === constants.vertexType.connector), async (vertex) => {
-            // Connect to other connectors if available.
-            const relatedConnectors = await this.db.findConnectors(vertex.connectionId);
-
-            await forEachSeries(relatedConnectors, async (relatedVertex) => {
-                await this.db.addEdge({
-                    _key: _keyFrom(this.dataCreator, vertex._key, relatedVertex._key),
-                    _from: vertex._key,
-                    _to: relatedVertex._key,
-                    relationType: constants.relationType.connectionDownstream,
-                    edgeType: constants.edgeType.connectorRelation,
-                });
-
-                // Other way. This time host node is the data creator.
-                await this.db.addEdge({
-                    _key: _keyFrom(this.me, relatedVertex._key, vertex._key),
-                    _from: relatedVertex._key,
-                    _to: vertex._key,
-                    relationType: constants.relationType.connectionDownstream,
-                    edgeType: constants.edgeType.connectorRelation,
-                });
-            });
-        });
-
-        await this.db.addDocument('ot_datasets', this.metadata);
-    }
-
-
-    async getImport(datasetId) {
-        await this.db.connect();
-
-        const vertices = await this.db.findVerticesByImportId(datasetId);
-        const edges = await this.db.findEdgesByImportId(datasetId);
-        const metadata = await this.db.findMetadataByImportId(datasetId);
-
-
-        const document = {
-            '@id': datasetId,
-            '@type': 'Dataset',
-            '@graph': [],
+        return {
+            metadata,
+            dataCreator,
+            vertices,
+            edges,
         };
+    }
 
-        document['@context'] = metadata.datasetContext;
-        document.datasetHeader = metadata.datasetHeader;
+    /**
+     * Validates the JSON-LD document's metadata to be in valid OT-JSON format.
+     * @param document JSON-LD document.
+     * @private
+     */
+    _validate(document) {
+        // Test root level of the document.
+        // Expected:
+        // {
+        //     @id: '',
+        //     @type: 'Dataset',
+        //     @context: {},
+        //     datasetHeader: {},
+        //     @graph: []
+        // }
 
-        vertices.filter(vertex => vertex.vertexType === 'EntityObject').forEach((entityVertex) => {
-            const otObject = {
-                '@type': 'otObject',
-                '@id': entityVertex.uid,
-                identifiers: [],
-            };
+        if (document == null) {
+            throw Error('Document cannot be null.');
+        }
 
-            // Check for identifiers.
-            // Relation 'IDENTIFIES' goes form identifierVertex to entityVertex.
-            edges.filter(edge => (edge.edgeType === 'IdentifierRelation' && edge._to === entityVertex._key))
-                .forEach((edge) => {
-                    vertices.filter(vertices => vertices._key === edge._from)
-                        .forEach((identityVertex) => {
-                            if (edge.autogenerated != null) {
-                                otObject.identifiers.push({
-                                    '@type': identityVertex.identifierType,
-                                    '@value': identityVertex.identifierValue,
-                                    autogenerated: edge.autogenerated,
-                                });
-                            } else {
-                                otObject.identifiers.push({
-                                    '@type': identityVertex.identifierType,
-                                    '@value': identityVertex.identifierValue,
-                                });
-                            }
-                        });
-                });
-            // Check for properties.
-            // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
-            edges.filter(edge => (edge.edgeType === 'dataRelation' && edge._from === entityVertex._key))
-                .forEach((edge) => {
-                    vertices.filter(vertices => vertices._key === edge._to)
-                        .forEach((dataVertex) => {
-                            otObject.properties = Utilities.copyObject(dataVertex.data);
-                        });
-                });
-            // Check for relations.
-            edges.filter(edge => (edge.edgeType === 'otRelation' && edge._from === entityVertex._key))
-                .forEach((edge) => {
-                    if (otObject.relations == null) {
-                        otObject.relations = [];
-                    }
+        if (Object.keys(document).length !== 5) {
+            throw Error('Lack of additional information in OT-JSON document.');
+        }
 
-                    // Find original vertex to get the @id.
-                    const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
+        const datasetId = _id(document);
+        const datasetType = _type(document);
+        const context = _context(document);
+        const { datasetHeader } = document;
+        const graph = document['@graph'];
 
-                    otObject.relations.push({
-                        '@type': 'otRelation',
-                        direction: 'direct', // TODO: check this.
-                        linkedObject: {
-                            '@id': id,
-                        },
-                        properties: edge.properties,
-                    });
-                });
-            document['@graph'].push(otObject);
-        });
+        if (typeof datasetId !== 'string') {
+            throw Error('Wrong format of dataset ID');
+        }
 
-        vertices.filter(vertex => vertex.vertexType === 'Connector').forEach((connectorVertex) => {
-            const otConnector = {
-                '@type': 'otConnector',
-                '@id': connectorVertex.uid,
-                connectionId: connectorVertex.connectionId,
-            };
+        if (datasetType !== 'Dataset') {
+            throw Error('Unsupported dataset type.');
+        }
 
-            // Check for relations.
-            edges.filter(edge => (edge.edgeType === 'otRelation' && edge._from === connectorVertex._key))
-                .forEach((edge) => {
-                    if (otConnector.relations == null) {
-                        otConnector.relations = [];
-                    }
+        if (graph == null || !Array.isArray(graph) || graph.length === 0) {
+            throw Error('Missing or empty graph.');
+        }
 
-                    // Find original vertex to get the @id.
-                    const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
+        // TODO: Validate @context here.
 
-                    otConnector.relations.push({
-                        '@type': 'otRelation',
-                        direction: 'reverse',
-                        linkedObject: {
-                            '@id': id,
-                        },
-                        properties: edge.properties,
-                    });
-                });
+        if (datasetHeader.OTJSONVersion !== '1.0') {
+            throw Error('Unsupported OT-JSON version.');
+        }
 
-            document['@graph'].push(otConnector);
-        });
+        if (datasetHeader.datasetCreationTimestamp == null &&
+            !Number.isNaN(Date.parse(datasetHeader.datasetCreationTimestamp))) {
+            throw Error('Invalid creation date.');
+        }
 
-        return document;
+        if (datasetHeader.dataCreator == null || datasetHeader.dataCreator.identifiers == null) {
+            throw Error('Data creator is missing.');
+        }
+
+        const { identifiers } = datasetHeader.dataCreator;
+        if (!Array.isArray(identifiers) || identifiers.length !== 1) {
+            throw Error('Unexpected format of data creator.');
+        }
+
+        if (identifiers[0].identifierType !== 'ERC725' || identifiers[0].validationSchema !== '/schemas/erc725-main' ||
+            !Utilities.isHexStrict(identifiers[0].identifierValue)) {
+            throw Error('Wrong format of data creator.');
+        }
     }
 }
 
