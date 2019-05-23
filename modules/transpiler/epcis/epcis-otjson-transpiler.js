@@ -150,7 +150,7 @@ class EpcisOtJsonTranspiler {
                 const otVocabulary = {};
                 if (vocabularyElement._attributes.id) {
                     otVocabulary.identifiers =
-                        this._parseGS1Identifier(vocabularyElement._attributes.id);
+                        [this._parseGS1Identifier(vocabularyElement._attributes.id)];
                 }
 
                 otVocabulary['@id'] = vocabularyElement._attributes.id;

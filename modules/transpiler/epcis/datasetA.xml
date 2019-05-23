@@ -94,8 +94,7 @@
                     </destinationList>
                 </extension>
                 <bizTransactionList>
-                    <bizTransaction type="urn:epcglobal:fmcg:btt:po">urn:epcglobal:fmcg:bti:po:prvatura.1
-                    </bizTransaction>
+                    <bizTransaction type="urn:epcglobal:fmcg:btt:po">urn:epcglobal:fmcg:bti:po:prvatura.1</bizTransaction>
                 </bizTransactionList>
             </ObjectEvent>
             <AggregationEvent>
