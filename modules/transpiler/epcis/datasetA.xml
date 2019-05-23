@@ -129,7 +129,7 @@
                 <eventTime>2005-04-03T20:33:31.116-06:00</eventTime>
                 <eventTimeZoneOffset>-06:00</eventTimeZoneOffset>
                 <bizTransactionList>
-                    <bizTransaction type="urn:epcglobal:cbv:btt:po">http://transaction.acme.com/po/12345678	</bizTransaction>
+                    <bizTransaction type="urn:epcglobal:cbv:btt:po">http://transaction.acme.com/po/12345678</bizTransaction>
                 </bizTransactionList>
                 <parentID>urn:epc:id:sscc:0614141.1234567890</parentID>
                 <epcList>
