@@ -274,6 +274,14 @@ class EpcisOtJsonTranspiler {
             objectType: eventType,
         };
 
+        const foundIdentifiers = this._findIdentifiers(event);
+        if (foundIdentifiers.length > 0) {
+            otObject.identifiers.push(...foundIdentifiers);
+        }
+
+        otObject.properties.___metadata = this._extractMetadata(event);
+        const compressed = this._compressText(event);
+
         const createRelation = (id, data) => ({
             '@type': 'otRelation',
             direction: 'direct', // think about direction
@@ -282,18 +290,17 @@ class EpcisOtJsonTranspiler {
             },
             properties: data,
         });
-        if (event.epcList) {
-            for (const epc of event.epcList.epc) {
+        if (compressed.epcList) {
+            for (const epc of compressed.epcList.epc) {
                 otObject.relations.push(createRelation(epc, {
                     relationType: 'EPC',
                 }));
             }
         }
 
-
-        if (event.extension) {
-            if (event.extension.quantityList) {
-                for (const epc of event.extension.quantityList.quantityElement) {
+        if (compressed.extension) {
+            if (compressed.extension.quantityList) {
+                for (const epc of compressed.extension.quantityList.quantityElement) {
                     otObject.relations.push(createRelation(epc.epcClass, {
                         relationType: 'EPC_QUANTITY',
                         quantity: epc.quantity,
@@ -302,26 +309,28 @@ class EpcisOtJsonTranspiler {
                 }
             }
 
-            if (event.extension.childQuantityList) {
-                for (const childEPC of event.extension.childQuantityList) {
-                    otObject.relations.push(createRelation(childEPC.epcClass, {
-                        relationType: 'CHILD_EPC_QUANTITY',
-                        quantity: childEPC.quantity,
-                        uom: childEPC.uom,
-                    }));
+            if (compressed.extension.childQuantityList) {
+                for (const childEPCs of compressed.extension.childQuantityList) {
+                    for (const childEPC of childEPCs.quantityElement) {
+                        otObject.relations.push(createRelation(childEPC.epcClass, {
+                            relationType: 'CHILD_EPC_QUANTITY',
+                            quantity: childEPC.quantity,
+                            uom: childEPC.uom,
+                        }));
+                    }
                 }
             }
 
-            if (event.extension.sourceList) {
-                for (const source of event.extension.sourceList.source) {
+            if (compressed.extension.sourceList) {
+                for (const source of compressed.extension.sourceList.source) {
                     otObject.relations.push(createRelation(source, {
                         relationType: 'SOURCE',
                     }));
                 }
             }
 
-            if (event.extension.destinationList) {
-                for (const destination of event.extension.destinationList.destination) {
+            if (compressed.extension.destinationList) {
+                for (const destination of compressed.extension.destinationList.destination) {
                     otObject.relations.push(createRelation(destination, {
                         relationType: 'DESTINATION',
                     }));
@@ -329,42 +338,38 @@ class EpcisOtJsonTranspiler {
             }
         }
 
-        if (event.bizLocation) {
+        if (compressed.bizLocation) {
             otObject.relations.push(createRelation(
-                event.bizLocation.id,
+                compressed.bizLocation.id,
                 {
                     relationType: 'BIZ_LOCATION',
                 },
             ));
         }
 
-        if (event.readPoint) {
-            otObject.relations.push(createRelation(event.readPoint.id, {
+        if (compressed.readPoint) {
+            otObject.relations.push(createRelation(compressed.readPoint.id, {
                 relationType: 'READ_POINT',
             }));
         }
 
-        if (event.parentID) {
-            otObject.relations.push(createRelation(event.parentID, {
+        if (compressed.parentID) {
+            otObject.relations.push(createRelation(compressed.parentID, {
                 relationType: 'PARENT_EPC',
             }));
         }
 
-        if (event.childEPCs) {
-            for (const childEPC of event.childEPCs) {
-                otObject.relations.push(createRelation(childEPC, {
-                    relationType: 'CHILD_EPC',
-                }));
+        if (compressed.childEPCs) {
+            for (const childEPCs of compressed.childEPCs) {
+                for (const childEPC of childEPCs.epc) {
+                    otObject.relations.push(createRelation(childEPC, {
+                        relationType: 'CHILD_EPC',
+                    }));
+                }
             }
         }
 
-        const foundIdentifiers = this._findIdentifiers(event);
-        if (foundIdentifiers.length > 0) {
-            otObject.identifiers.push(...foundIdentifiers);
-        }
-
-        otObject.properties.___metadata = this._extractMetadata(event);
-        Object.assign(otObject.properties, this._compressText(event));
+        Object.assign(otObject.properties, compressed);
         return otObject;
     }
 
@@ -768,11 +773,11 @@ class EpcisOtJsonTranspiler {
 
 module.exports = EpcisOtJsonTranspiler;
 
-const fs = require('fs');
-
-const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
-const converter = new EpcisOtJsonTranspiler(null);
-const otJson = converter.convertToOTJson(xml);
-console.log(JSON.stringify(otJson));
-const xmlFromOtJson = converter.convertFromOTJson(otJson);
-console.log(xmlFromOtJson);
+// const fs = require('fs');
+//
+// const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
+// const converter = new EpcisOtJsonTranspiler(null);
+// const otJson = converter.convertToOTJson(xml);
+// console.log(JSON.stringify(otJson));
+// const xmlFromOtJson = converter.convertFromOTJson(otJson);
+// console.log(xmlFromOtJson);
