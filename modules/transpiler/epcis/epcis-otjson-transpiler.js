@@ -768,11 +768,11 @@ class EpcisOtJsonTranspiler {
 
 module.exports = EpcisOtJsonTranspiler;
 
-const fs = require('fs');
-
-const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
-const converter = new EpcisOtJsonTranspiler(null);
-const otJson = converter.convertToOTJson(xml);
-console.log(JSON.stringify(otJson));
-const xmlFromOtJson = converter.convertFromOTJson(otJson);
-console.log(xmlFromOtJson);
+// const fs = require('fs');
+//
+// const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
+// const converter = new EpcisOtJsonTranspiler(null);
+// const otJson = converter.convertToOTJson(xml);
+// console.log(JSON.stringify(otJson));
+// const xmlFromOtJson = converter.convertFromOTJson(otJson);
+// console.log(xmlFromOtJson);
