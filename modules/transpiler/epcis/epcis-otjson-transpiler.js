@@ -49,9 +49,62 @@ class EpcisOtJsonTranspiler {
 
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
+
+        const datasetId = '0x3b8137183c0abaf7a6c598ac6fb27d9c'; // TODO: Calculate dataset ID here.
+
+        otjson['@id'] = datasetId;
+        otjson['@type'] = 'Dataset';
+
+        // TODO: fill dataset info.
         otjson.datasetHeader = {
+            OTJSONVersion: '1.0',
+            datasetCreationTimestamp: new Date().toISOString(),
+            datasetTitle: '',
+            datasetTags: [],
+            relatedDatasets: [{
+                datasetId: '0x620867dced3a96809fc69d579b2684a7',
+                relationType: 'UPDATED',
+                relationDescription: 'Some long description',
+                relationDirection: 'direct',
+            }],
+            validationSchemas: {
+                'erc725-main': {
+                    schemaType: 'ethereum-725',
+                    networkId: '1',
+                    networkType: 'private',
+                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                },
+                merkleRoot: {
+                    schemaType: 'merkle-root',
+                    networkId: '1',
+                    networkType: 'private',
+                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                },
+            },
+            dataIntegrity: {
+                proofs: [
+                    {
+                        proofValue: '0x2029a07cc3dc96a82b3260ebc1fed1d7',
+                        proofType: 'merkleRootHash',
+                        validationSchema: '/schemas/merkleRoot',
+                    },
+                ],
+            },
+            dataCreator: {
+                identifiers: [
+                    {
+                        identifierValue: '0xfd8a1fc98c8f173448c86062590dc05f5ada93ee',
+                        identifierType: 'ERC725',
+                        validationSchema: '/schemas/erc725-main',
+                    },
+                ],
+            },
             transpilationInfo,
         };
+
+        // TODO: Fill context here.
+        otjson['@context'] = {};
+
         return otjson;
     }
 
