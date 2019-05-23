@@ -47,7 +47,11 @@ class EpcisOtJsonTranspiler {
             delete json['epcis:EPCISDocument'].EPCISHeader.extension.EPCISMasterData.VocabularyList.Vocabulary;
         }
 
-        otjson.datasetHeader = json;
+        const transpilationInfo = this._getTranspilationInfo();
+        transpilationInfo.diff = json;
+        otjson.datasetHeader = {
+            transpilationInfo,
+        };
         return otjson;
     }
 
@@ -57,7 +61,7 @@ class EpcisOtJsonTranspiler {
      * @return {string} - XML string
      */
     convertFromOTJson(otjson) {
-        const { datasetHeader: json } = otjson;
+        const { diff: json } = otjson.datasetHeader.transpilationInfo;
 
         const graph = otjson['@graph'];
         const otVocabularyObjects = graph.filter(x => x.properties != null && x.properties.objectType === 'vocabularyElement');
@@ -737,15 +741,37 @@ class EpcisOtJsonTranspiler {
             }
         }
     }
+
+    /**
+     * Gets transpilation information.
+     * Diff should be populated with unparsed data from original EPCIS document
+     * @return *
+     */
+    _getTranspilationInfo() {
+        return {
+            transpilationInfo: {
+                transpilerType: 'GS1-EPCIS',
+                transpilerVersion: '1.0',
+                sourceMetadata: {
+                    created: '',
+                    modified: '',
+                    standard: 'GS1-EPCIS',
+                    XMLversion: '1.0',
+                    encoding: 'UTF-8',
+                },
+                diff: {},
+            },
+        };
+    }
 }
 
 module.exports = EpcisOtJsonTranspiler;
 
-// const fs = require('fs');
-//
-// const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
-// const converter = new EpcisOtJsonTranspiler(null);
-// const otJson = converter.convertToOTJson(xml);
-// console.log(JSON.stringify(otJson));
-// const xmlFromOtJson = converter.convertFromOTJson(otJson);
-// console.log(xmlFromOtJson);
+const fs = require('fs');
+
+const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
+const converter = new EpcisOtJsonTranspiler(null);
+const otJson = converter.convertToOTJson(xml);
+console.log(JSON.stringify(otJson));
+const xmlFromOtJson = converter.convertFromOTJson(otJson);
+console.log(xmlFromOtJson);
