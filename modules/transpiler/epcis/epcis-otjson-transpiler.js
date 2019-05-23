@@ -155,6 +155,7 @@ class EpcisOtJsonTranspiler {
 
                 otVocabulary['@id'] = vocabularyElement._attributes.id;
                 otVocabulary.properties = properties;
+                otVocabulary['@type'] = 'otObject';
                 result.push(otVocabulary);
             }
         }
