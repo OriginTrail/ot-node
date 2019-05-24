@@ -23,7 +23,7 @@ class ImportController {
             return;
         }
 
-        const supportedImportTypes = ['GS1', 'WOT'];
+        const supportedImportTypes = ['GS1', 'WOT', 'DL2'];
 
         // Check if import type is valid
         if (req.body.importtype === undefined ||

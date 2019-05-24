@@ -1,9 +1,12 @@
+const Queue = require('better-queue');
+
 // External modules
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
-const Queue = require('better-queue');
 const graphConverter = require('./Database/graph-converter');
 const Utilities = require('./Utilities');
+const EpcisOtJsonTranspiler = require('./transpiler/epcis/epcis-otjson-transpiler');
+const OtJsonImporter = require('./otJsonImporter');
 
 class Importer {
     constructor(ctx) {
@@ -14,6 +17,9 @@ class Importer {
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
         this.helper = ctx.gs1Utilities;
+
+        this.epcisOtJsonTranspiler = new EpcisOtJsonTranspiler(null);
+        this.otJsonImporter = new OtJsonImporter(ctx);
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -280,6 +286,19 @@ class Importer {
                 error: errorObject,
             };
         }
+    }
+
+    /**
+     * Handle data layer 2 XML document.
+     *
+     * The document will be processed and converted to OT-JSON which will be tested for validity.
+     * @param xmlDoc
+     * @return {string}
+     */
+    testDl2(xmlDoc) {
+        const otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(xmlDoc);
+        this.otJsonImporter.process(otJsonDoc);
+        return this.epcisOtJsonTranspiler.convertFromOTJson(otJsonDoc);
     }
 }
 

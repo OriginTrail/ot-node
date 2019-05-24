@@ -613,6 +613,21 @@ class EventEmitter {
             }
         });
 
+        this._on('api-dl2-import-request', async (data) => {
+            try {
+                logger.debug('DL2 import triggered');
+                const recreatedXml = await importer.testDl2(data.content);
+                data.response.status(200);
+                data.response.set('Content-Type', 'text/xml');
+                data.response.send(recreatedXml);
+            } catch (error) {
+                data.response.status(500);
+                data.response.send({
+                    message: error.message,
+                });
+            }
+        });
+
         this._on('api-withdraw-tokens', async (data) => {
             const { trac_amount } = data;
 
