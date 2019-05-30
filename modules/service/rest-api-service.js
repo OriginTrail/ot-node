@@ -56,7 +56,7 @@ class RestAPIService {
                     }
 
                     let data = null;
-                    if (req.path === '/api/trail' && req.method === 'GET') {
+                    if (req.path() === '/api/trail' && req.method === 'GET') {
                         data = JSON.stringify(body, null, 0);
                     } else {
                         data = Utilities.stringify(body, ident);
