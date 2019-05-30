@@ -54,7 +54,13 @@ class RestAPIService {
                             ident = 0;
                         }
                     }
-                    const data = Utilities.stringify(body, ident);
+
+                    let data = null;
+                    if (req.path === '/api/trail' && req.method === 'GET') {
+                        data = JSON.stringify(body, null, 0);
+                    } else {
+                        data = Utilities.stringify(body, ident);
+                    }
 
                     if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                         res.setHeader('Content-Length', Buffer.byteLength(data));
@@ -77,6 +83,7 @@ class RestAPIService {
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
         server.use(restify.plugins.bodyParser());
+        server.use(restify.plugins.gzipResponse());
         const cors = corsMiddleware({
             preflightMaxAge: 5, // Optional
             origins: ['*'],
