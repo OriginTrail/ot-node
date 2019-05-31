@@ -151,6 +151,40 @@ class EpcisOtJsonTranspiler {
         });
     }
 
+    _addPrefix(object, prefix) {
+        if (Array.isArray(object)) {
+            const clone = [];
+            for (const item of object) {
+                clone.push(this._addPrefix(item, prefix));
+            }
+            return clone;
+        } else if (typeof object === 'object') {
+            const clone = {};
+            for (const key of Object.keys(object)) {
+                clone[`${prefix}${key}`] = this._addPrefix(object[key], prefix);
+            }
+            return clone;
+        }
+        return object;
+    }
+
+    _removePrefix(object, prefix) {
+        if (Array.isArray(object)) {
+            const clone = [];
+            for (const item of object) {
+                clone.push(this._removePrefix(item, prefix));
+            }
+            return clone;
+        } else if (typeof object === 'object') {
+            const clone = {};
+            for (const key of Object.keys(object)) {
+                clone[`${key.slice(prefix.length)}`] = this._removePrefix(object[key], prefix);
+            }
+            return clone;
+        }
+        return object;
+    }
+
     /**
      * Converts vocabulary master data from JSON format to OT-JSON
      */
@@ -835,3 +869,20 @@ module.exports = EpcisOtJsonTranspiler;
 // console.log(JSON.stringify(otJson));
 // const xmlFromOtJson = converter.convertFromOTJson(otJson);
 // console.log(xmlFromOtJson);
+
+const converter = new EpcisOtJsonTranspiler(null);
+
+const a = {
+    b: 1,
+    c: {
+        g: {
+            d: [1, 2, 3, 4],
+        },
+    },
+    l: [{
+        y: 2,
+    }],
+};
+
+const prefixed = converter._addPrefix(a, 'ot:');
+console.log(JSON.stringify(converter._removePrefix(prefixed, 'ot:'), null, 2));
