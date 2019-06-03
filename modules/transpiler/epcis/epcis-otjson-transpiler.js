@@ -54,13 +54,17 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(sortedStringify(otjson, null))}`;
+        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortGraphRecursively(otjson['@graph']), null))}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
         return otjson;
     }
 
+    /**
+     * Fill in dataset header
+     * @private
+     */
     _createDatasetHeader(transpilationInfo) {
         return {
             OTJSONVersion: '1.0',
@@ -107,6 +111,37 @@ class EpcisOtJsonTranspiler {
             },
             transpilationInfo,
         };
+    }
+
+    /**
+     * Sort graph recursively
+     * @private
+     */
+    _sortGraphRecursively(object) {
+        if (object == null) {
+            return null;
+        }
+        if (Array.isArray(object)) {
+            const isScalarArray = object.reduce((accumulator, currentValue) => accumulator && (typeof currentValue !== 'object'), true);
+
+            if (isScalarArray) {
+                object.sort();
+                return object;
+            }
+
+            object.forEach(item => this._sortGraphRecursively(item));
+            object.sort((item1, item2) => sha3_256(sortedStringify(item1, null))
+                .localeCompare(sha3_256(sortedStringify(item2, null))));
+            return object;
+        } else if (typeof object === 'object') {
+            for (const key of Object.keys(object)) {
+                this._sortGraphRecursively(object[key]);
+            }
+            const ordered = {};
+            Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
+            return ordered;
+        }
+        return object;
     }
 
     /**
@@ -833,23 +868,29 @@ module.exports = EpcisOtJsonTranspiler;
 // const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
 // const converter = new EpcisOtJsonTranspiler(null);
 // const otJson = converter.convertToOTJson(xml);
-// console.log(JSON.stringify(otJson));
-// const xmlFromOtJson = converter.convertFromOTJson(otJson);
-// console.log(xmlFromOtJson);
 
 // const converter = new EpcisOtJsonTranspiler(null);
 //
 // const a = {
 //     b: 1,
+//     s: 3,
+//     h: '3',
 //     c: {
 //         g: {
-//             d: [1, 2, 3, 4],
+//             d: [4, 1, 3, 2],
 //         },
+//         z: 3,
 //     },
-//     l: [{
+//     l: [1, {
+//         y: 3,
+//     },
+//     {
 //         y: 2,
 //     }],
 // };
+//
+// console.log(JSON.stringify(converter._sortGraphRecursively(a)));
+
 //
 // const prefixed = converter._addPrefix(a, 'ot:');
 // console.log(JSON.stringify(converter._removePrefix(prefixed, 'ot:'), null, 2));
