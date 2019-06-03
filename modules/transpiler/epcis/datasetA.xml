@@ -2,12 +2,43 @@
 <epcis:EPCISDocument xmlns:cbvmda="urn:epcglobal:cbv:mda"
                      xmlns:epcis="urn:epcglobal:epcis:xsd:1"
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd"
-                     xmlns:wg4="http://epcis.wg4.fr/ns"
                      xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"
-                     schemaVersion="1.2" creationDate="2016-09-20T17:45:20.0Z" xmlns:example="http://ns.example.com/epcis"
+                     schemaVersion="1.2" creationDate="2016-09-20T17:45:20.0Z"
+                     xmlns:example="http://ns.example.com/epcis"
                      xmlns:example0="http://ns.example.com/epcis0" xmlns:example1="http://ns.example.com/epcis1"
                      xmlns:example2="http://ns.example.com/epcis2" xmlns:example3="http://ns.example.com/epcis3">
     <EPCISHeader>
+        <sbdh:StandardBusinessDocumentHeader>
+            <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+            <sbdh:Sender>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Abraham Smith</sbdh:Contact>
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Sender>
+            <sbdh:Receiver>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Pink</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Betty Johnson</sbdh:Contact>
+                    <sbdh:EmailAddress>betty@pink.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Receiver>
+            <sbdh:DocumentIdentification>
+                <sbdh:Standard>GS1</sbdh:Standard>
+                <sbdh:TypeVersion>V1.3</sbdh:TypeVersion>
+                <sbdh:InstanceIdentifier>100001</sbdh:InstanceIdentifier>
+                <sbdh:Type>Shipment</sbdh:Type>
+                <sbdh:CreationDateAndTime>2018-01-01T00:31:52Z</sbdh:CreationDateAndTime>
+            </sbdh:DocumentIdentification>
+            <sbdh:BusinessScope>
+                <sbdh:Scope>
+                    <sbdh:Type>BusinessProcess</sbdh:Type>
+                    <sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
+                    <sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+                </sbdh:Scope>
+            </sbdh:BusinessScope>
+        </sbdh:StandardBusinessDocumentHeader>
         <extension>
             <EPCISMasterData>
                 <VocabularyList>

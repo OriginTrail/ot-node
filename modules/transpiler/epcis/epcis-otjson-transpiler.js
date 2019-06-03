@@ -2,7 +2,8 @@ const xml2js = require('xml-js');
 const uuidv4 = require('uuid/v4');
 
 const { sha3_256 } = require('js-sha3');
-const stringify = require('json-stringify-deterministic');
+const sortedStringify = require('sorted-json-stringify');
+
 
 class EpcisOtJsonTranspiler {
     constructor(config) {
@@ -53,7 +54,7 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(stringify(otjson))}`;
+        otjson['@id'] = `0x${sha3_256(sortedStringify(otjson, null))}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
