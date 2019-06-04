@@ -855,13 +855,14 @@ class EpcisOtJsonTranspiler {
      * @return *
      */
     _getTranspilationInfo() {
+        const created = new Date();
         return {
             transpilationInfo: {
                 transpilerType: 'GS1-EPCIS',
                 transpilerVersion: '1.0',
                 sourceMetadata: {
-                    created: '',
-                    modified: '',
+                    created: created.toISOString(),
+                    modified: created.toISOString(),
                     standard: 'GS1-EPCIS',
                     XMLversion: '1.0',
                     encoding: 'UTF-8',
