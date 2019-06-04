@@ -233,7 +233,7 @@ class EpcisOtJsonTranspiler {
                     ___metadata: {},
                 };
                 for (const attribute of vocabularyElement.attribute) {
-                    properties[attribute._attributes.id] = attribute._text;
+                    properties[attribute._attributes.id] = attribute._text.trim();
                 }
 
                 const otVocabulary = {
@@ -529,7 +529,7 @@ class EpcisOtJsonTranspiler {
      */
     _compressText(object) {
         if (this._isLeaf(object)) {
-            return object._text;
+            return object._text.trim();
         }
         if (Array.isArray(object)) {
             const clone = [];
@@ -649,12 +649,12 @@ class EpcisOtJsonTranspiler {
                     if (parentKey === 'attribute') {
                         identifiers.push({
                             '@type': this._trimIdentifier(object._attributes.id),
-                            '@value': object._text,
+                            '@value': object._text.trim(),
                         });
                     } else {
                         identifiers.push({
                             '@type': this._trimIdentifier(parentKey),
-                            '@value': object._text,
+                            '@value': object._text.trim(),
                         });
                     }
                 }
