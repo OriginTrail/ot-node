@@ -1,8 +1,8 @@
 const uuidv4 = require('uuid/v4');
-const Utilities = require('./Utilities');
-const ImportUtilities = require('./ImportUtilities');
+const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 
-const GraphConverter = require('./Database/graph-converter');
+const GraphConverter = require('../Database/graph-converter');
 
 /**
  * Web Of Things model importer

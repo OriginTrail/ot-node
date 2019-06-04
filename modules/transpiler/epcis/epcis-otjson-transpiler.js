@@ -9,8 +9,8 @@ const sortedStringify = require('sorted-json-stringify');
 
 
 class EpcisOtJsonTranspiler {
-    constructor(config) {
-        this.config = config;
+    constructor(ctx) {
+        this.config = ctx.config;
     }
 
     /**
@@ -66,7 +66,7 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortGraphRecursively(otjson['@graph']), null))}`;
+        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortObjectRecursively(otjson['@graph']), null))}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
@@ -148,7 +148,7 @@ class EpcisOtJsonTranspiler {
      * Sort graph recursively
      * @private
      */
-    _sortGraphRecursively(object) {
+    _sortObjectRecursively(object) {
         if (object == null) {
             return null;
         }
@@ -160,13 +160,13 @@ class EpcisOtJsonTranspiler {
                 return object;
             }
 
-            object.forEach(item => this._sortGraphRecursively(item));
+            object.forEach(item => this._sortObjectRecursively(item));
             object.sort((item1, item2) => sha3_256(sortedStringify(item1, null))
                 .localeCompare(sha3_256(sortedStringify(item2, null))));
             return object;
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {
-                this._sortGraphRecursively(object[key]);
+                this._sortObjectRecursively(object[key]);
             }
             const ordered = {};
             Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
@@ -515,7 +515,7 @@ class EpcisOtJsonTranspiler {
         delete properties.___metadata;
 
         const decompressed = this._decompressText(properties);
-        this._addMetadata(decompressed, metadata);
+        this._appendMetadata(decompressed, metadata);
         return decompressed;
     }
 
@@ -607,14 +607,14 @@ class EpcisOtJsonTranspiler {
     /**
      * Adds metadata recursively
      */
-    _addMetadata(object, metadata) {
+    _appendMetadata(object, metadata) {
         if (this._isLeaf(object)) {
             if (metadata != null) {
                 Object.assign(object, metadata);
             }
         } else if (Array.isArray(object)) {
             for (let i = 0; i < object.length; i += 1) {
-                this._addMetadata(object[i], metadata[i]);
+                this._appendMetadata(object[i], metadata[i]);
             }
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {
@@ -623,7 +623,7 @@ class EpcisOtJsonTranspiler {
                         object[key]._attributes = metadata[key]._attributes;
                     }
                 }
-                this._addMetadata(object[key], metadata[key]);
+                this._appendMetadata(object[key], metadata[key]);
             }
         }
     }
@@ -886,13 +886,14 @@ class EpcisOtJsonTranspiler {
      * @return *
      */
     _getTranspilationInfo() {
+        const created = new Date();
         return {
             transpilationInfo: {
                 transpilerType: 'GS1-EPCIS',
                 transpilerVersion: '1.0',
                 sourceMetadata: {
-                    created: '',
-                    modified: '',
+                    created: created.toISOString(),
+                    modified: created.toISOString(),
                     standard: 'GS1-EPCIS',
                     XMLversion: '1.0',
                     encoding: 'UTF-8',

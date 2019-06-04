@@ -1,6 +1,6 @@
 const { sha3_256 } = require('js-sha3');
 
-const Utilities = require('./Utilities');
+const Utilities = require('../Utilities');
 
 // Helper functions.
 
@@ -333,13 +333,12 @@ class OtJsonImporter {
             throw Error('Document has to be object.');
         }
 
-        if (Object.keys(document).length !== 5) {
+        if (Object.keys(document).length !== 4) {
             throw Error('Lack of additional information in OT-JSON document.');
         }
 
         const datasetId = _id(document);
         const datasetType = _type(document);
-        const context = _context(document);
         const { datasetHeader } = document;
         const graph = document['@graph'];
 

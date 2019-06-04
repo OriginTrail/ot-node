@@ -5,21 +5,19 @@ const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const graphConverter = require('./Database/graph-converter');
 const Utilities = require('./Utilities');
-const EpcisOtJsonTranspiler = require('./transpiler/epcis/epcis-otjson-transpiler');
-const OtJsonImporter = require('./otJsonImporter');
 
 class Importer {
     constructor(ctx) {
         this.gs1Importer = ctx.gs1Importer;
         this.wotImporter = ctx.wotImporter;
+        this.otJsonImporter = ctx.otJsonImporter;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
         this.helper = ctx.gs1Utilities;
 
-        this.epcisOtJsonTranspiler = new EpcisOtJsonTranspiler(null);
-        this.otJsonImporter = new OtJsonImporter(ctx);
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;

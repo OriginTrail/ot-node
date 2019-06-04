@@ -1,11 +1,11 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
 const xsd = require('libxml-xsd');
-const Utilities = require('./Utilities');
-const models = require('../models');
-const ImportUtilities = require('./ImportUtilities');
-const { denormalizeGraph, normalizeGraph } = require('./Database/graph-converter');
-const { ImporterError } = require('./errors');
+const Utilities = require('../Utilities');
+const models = require('../../models/index');
+const ImportUtilities = require('../ImportUtilities');
+const { denormalizeGraph, normalizeGraph } = require('../Database/graph-converter');
+const { ImporterError } = require('../errors/index');
 
 class GS1Importer {
     /**
