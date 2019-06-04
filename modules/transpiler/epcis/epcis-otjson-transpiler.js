@@ -236,12 +236,16 @@ class EpcisOtJsonTranspiler {
                     properties[attribute._attributes.id] = attribute._text;
                 }
 
-                const otVocabulary = {};
+                const otVocabulary = {
+                    identifiers: [],
+                };
                 if (vocabularyElement._attributes.id) {
                     otVocabulary.identifiers =
                         Object.entries(this._parseGS1Identifier(vocabularyElement._attributes.id))
                             .map(([key, value]) => ({ '@type': key, '@value': value }));
                 }
+
+                otVocabulary.identifiers.push(...this._findIdentifiers(vocabularyElement));
 
                 otVocabulary['@id'] = vocabularyElement._attributes.id;
                 otVocabulary.properties = properties;
@@ -642,10 +646,17 @@ class EpcisOtJsonTranspiler {
         } else if (typeof object === 'object') {
             if (this._isLeaf(object)) {
                 if (object._attributes != null && object._attributes.identifier) {
-                    identifiers.push({
-                        '@type': this._trimIdentifier(parentKey),
-                        '@value': object._text,
-                    });
+                    if (parentKey === 'attribute') {
+                        identifiers.push({
+                            '@type': this._trimIdentifier(object._attributes.id),
+                            '@value': object._text,
+                        });
+                    } else {
+                        identifiers.push({
+                            '@type': this._trimIdentifier(parentKey),
+                            '@value': object._text,
+                        });
+                    }
                 }
             } else {
                 for (const key of Object.keys(object)) {
@@ -868,8 +879,9 @@ module.exports = EpcisOtJsonTranspiler;
 // const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
 // const converter = new EpcisOtJsonTranspiler(null);
 // const otJson = converter.convertToOTJson(xml);
-
-// const converter = new EpcisOtJsonTranspiler(null);
+//
+// console.log(JSON.stringify(otJson, null, 0));
+// console.log(converter.convertFromOTJson(otJson));
 //
 // const a = {
 //     b: 1,
