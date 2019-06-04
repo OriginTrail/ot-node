@@ -6,8 +6,8 @@ const sortedStringify = require('sorted-json-stringify');
 
 
 class EpcisOtJsonTranspiler {
-    constructor(config) {
-        this.config = config;
+    constructor(ctx) {
+        this.config = ctx.config;
     }
 
     /**
