@@ -233,7 +233,7 @@ class EpcisOtJsonTranspiler {
                     ___metadata: {},
                 };
                 for (const attribute of vocabularyElement.attribute) {
-                    properties[attribute._attributes.id] = attribute._text;
+                    properties[attribute._attributes.id] = attribute._text.trim();
                 }
 
                 const otVocabulary = {};
@@ -525,7 +525,7 @@ class EpcisOtJsonTranspiler {
      */
     _compressText(object) {
         if (this._isLeaf(object)) {
-            return object._text;
+            return object._text.trim();
         }
         if (Array.isArray(object)) {
             const clone = [];
@@ -644,7 +644,7 @@ class EpcisOtJsonTranspiler {
                 if (object._attributes != null && object._attributes.identifier) {
                     identifiers.push({
                         '@type': this._trimIdentifier(parentKey),
-                        '@value': object._text,
+                        '@value': object._text.trim(),
                     });
                 }
             } else {
@@ -863,11 +863,13 @@ class EpcisOtJsonTranspiler {
 
 module.exports = EpcisOtJsonTranspiler;
 
-// const fs = require('fs');
-//
-// const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
-// const converter = new EpcisOtJsonTranspiler(null);
-// const otJson = converter.convertToOTJson(xml);
+const fs = require('fs');
+
+const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
+const converter = new EpcisOtJsonTranspiler(null);
+const otJson = converter.convertToOTJson(xml);
+
+console.log(JSON.stringify(otJson));
 
 // const converter = new EpcisOtJsonTranspiler(null);
 //
