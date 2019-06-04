@@ -6,7 +6,7 @@ const ImportUtilities = require('./ImportUtilities');
 const graphConverter = require('./Database/graph-converter');
 const Utilities = require('./Utilities');
 const EpcisOtJsonTranspiler = require('./transpiler/epcis/epcis-otjson-transpiler');
-const OtJsonImporter = require('./otJsonImporter');
+const OtJsonImporter = require('./ot-json-importer');
 
 class Importer {
     constructor(ctx) {
