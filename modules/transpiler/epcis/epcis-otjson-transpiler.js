@@ -1,5 +1,8 @@
 const xml2js = require('xml-js');
 const uuidv4 = require('uuid/v4');
+const xsd = require('libxml-xsd');
+const utilities = require('../../Utilities');
+const fs = require('fs');
 
 const { sha3_256 } = require('js-sha3');
 const sortedStringify = require('sorted-json-stringify');
@@ -20,10 +23,19 @@ class EpcisOtJsonTranspiler {
             return null;
         }
 
-        const json = xml2js.xml2js(xml, {
+        const xsdFileBuffer = fs.readFileSync('./xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
+        const schema = xsd.parse(xsdFileBuffer.toString());
+
+        const validationResult = schema.validate(xml);
+        if (validationResult !== null) {
+            throw Error(`Failed to validate schema. ${validationResult}`);
+        }
+
+        const jsonRaw = xml2js.xml2js(xml, {
             compact: true,
             spaces: 4,
         });
+        const json = this._removeCommentsAndTrimTexts(jsonRaw);
         this.arrayze(json, ['attribute', 'VocabularyElement', 'Vocabulary', 'epc', 'AggregationEvent', 'ObjectEvent', 'TransactionEvent', 'TransformationEvent', 'quantityElement', 'childQuantityList', 'source', 'destination', 'childEPCs', 'bizTransaction']);
 
         const otjson = {
@@ -59,6 +71,25 @@ class EpcisOtJsonTranspiler {
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
         return otjson;
+    }
+
+    /**
+     * Remove comments from raw json
+     * @param jsonRaw
+     */
+    _removeCommentsAndTrimTexts(obj) {
+        if (typeof obj === 'object' || Array.isArray((obj))) {
+            if (this._isLeaf(obj)) {
+                obj._text = obj._text.trim();
+            }
+            if (obj._comment) {
+                delete obj._comment;
+            }
+            for (const key of Object.keys(obj)) {
+                obj[key] = this._removeCommentsAndTrimTexts(obj[key]);
+            }
+        }
+        return obj;
     }
 
     /**
@@ -150,9 +181,9 @@ class EpcisOtJsonTranspiler {
      * @return {string} - XML string
      */
     convertFromOTJson(otjson) {
-        const { diff: json } = otjson.datasetHeader.transpilationInfo;
+        const json = utilities.copyObject(otjson.datasetHeader.transpilationInfo.diff);
 
-        const graph = otjson['@graph'];
+        const graph = utilities.copyObject(otjson['@graph']);
         const otVocabularyObjects = graph.filter(x => x.properties != null && x.properties.objectType === 'vocabularyElement');
         if (otVocabularyObjects.length > 0) {
             json['epcis:EPCISDocument'].EPCISHeader.extension.EPCISMasterData.VocabularyList = this._convertVocabulariesToJson(otVocabularyObjects);
@@ -384,7 +415,7 @@ class EpcisOtJsonTranspiler {
             },
             properties: data,
         });
-        if (compressed.epcList) {
+        if (compressed.epcList && compressed.epcList.epc) {
             for (const epc of compressed.epcList.epc) {
                 otObject.relations.push(createRelation(epc, {
                     relationType: 'EPC',
@@ -649,12 +680,12 @@ class EpcisOtJsonTranspiler {
                     if (parentKey === 'attribute') {
                         identifiers.push({
                             '@type': this._trimIdentifier(object._attributes.id),
-                            '@value': object._text.trim(),
+                            '@value': object._text,
                         });
                     } else {
                         identifiers.push({
                             '@type': this._trimIdentifier(parentKey),
-                            '@value': object._text.trim(),
+                            '@value': object._text,
                         });
                     }
                 }
@@ -874,12 +905,22 @@ class EpcisOtJsonTranspiler {
 
 module.exports = EpcisOtJsonTranspiler;
 
-// const fs = require('fs');
-//
 // const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
 // const converter = new EpcisOtJsonTranspiler(null);
 // const otJson = converter.convertToOTJson(xml);
 //
+// const recoveredXML = converter.convertFromOTJson(otJson);
+// const recoveredOtJson = converter.convertToOTJson(recoveredXML);
+//
+// console.log(JSON.stringify(converter._sortGraphRecursively(otJson)));
+// console.log(JSON.stringify(converter._sortGraphRecursively(recoveredOtJson)));
+
+// console.log(JSON.stringify(otJson));
+// console.log('-------------------');
+// console.log(JSON.stringify(recoveredOtJson));
+
+// console.log(JSON.stringify(xml) === JSON.stringify(recoveredXML));
+// console.log(JSON.stringify(otJson) === JSON.stringify(recoveredOtJson));
 // console.log(JSON.stringify(otJson, null, 0));
 // console.log(converter.convertFromOTJson(otJson));
 //

@@ -72,6 +72,8 @@
     <EPCISBody>
         <EventList>
             <ObjectEvent>
+                <eventTime>2012-04-05T11:35:00.000Z</eventTime>
+                <eventTimeZoneOffset>-02:00</eventTimeZoneOffset>
                 <baseExtension a="1234">
                     <eventID>somethings</eventID>
                     <errorDeclaration>
@@ -82,26 +84,17 @@
                         </correctiveEventIDs>
                     </errorDeclaration>
                 </baseExtension>
-                <eventTime>2012-04-05T11:35:00.000Z</eventTime>
-                <eventTimeZoneOffset>-02:00</eventTimeZoneOffset>
+                <epcList/>
                 <action>ADD</action>
                 <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
                 <disposition>urn:epcglobal:cbv:disp:active</disposition>
                 <bizLocation>
                     <id>urn:epc:id:sgln:012016.000001</id>
                 </bizLocation>
+                <bizTransactionList>
+                    <bizTransaction type="urn:epcglobal:fmcg:btt:po">urn:epcglobal:fmcg:bti:po:prvatura.1</bizTransaction>
+                </bizTransactionList>
                 <extension>
-                    <ilmd>
-                        <cbvmda:lotNumber identifier="true">00123</cbvmda:lotNumber>
-                        <cbvmda:itemExpirationDate identifier="true">2020-12-12T11</cbvmda:itemExpirationDate>
-                        <cbvmda:countryOfOrigin>
-                            <cbvmda:b>
-                                <cbvmda:c identifier="true">brate</cbvmda:c>
-                            </cbvmda:b>
-                            <cbvmda:b>tebra</cbvmda:b>
-                        </cbvmda:countryOfOrigin>
-                    </ilmd>
-
                     <quantityList>
                         <quantityElement>
                             <epcClass>urn:epc:id:lgtin:012016.000015.L1</epcClass>
@@ -123,10 +116,17 @@
                         <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:016012.000001
                         </destination>
                     </destinationList>
+                    <ilmd>
+                        <cbvmda:lotNumber identifier="true">00123</cbvmda:lotNumber>
+                        <cbvmda:itemExpirationDate identifier="true">2020-12-12T11</cbvmda:itemExpirationDate>
+                        <cbvmda:countryOfOrigin>
+                            <cbvmda:b>
+                                <cbvmda:c identifier="true">brate</cbvmda:c>
+                            </cbvmda:b>
+                            <cbvmda:b>tebra</cbvmda:b>
+                        </cbvmda:countryOfOrigin>
+                    </ilmd>
                 </extension>
-                <bizTransactionList>
-                    <bizTransaction type="urn:epcglobal:fmcg:btt:po">urn:epcglobal:fmcg:bti:po:prvatura.1</bizTransaction>
-                </bizTransactionList>
             </ObjectEvent>
             <AggregationEvent>
                 <eventTime>2012-04-10T10:15:00.000Z</eventTime>
@@ -213,7 +213,7 @@
                         <epc>urn:epc:id:sgtin:4012345.011122.25</epc>
                         <epc>urn:epc:id:sgtin:4000001.065432.99886655</epc>
                     </inputEPCList>
-                    <inputQuantityList test="false">
+                    <inputQuantityList>
                         <quantityElement>
                             <epcClass>urn:epc:class:lgtin:4012345.011111.4444</epcClass>
                             <quantity>10</quantity>
