@@ -13,6 +13,7 @@ chai.use(chaiAsPromised);
 const { assert, expect } = chai;
 const path = require('path');
 const rc = require('rc');
+const Web3 = require('web3');
 const Utilities = require('../../modules/Utilities');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 
@@ -29,6 +30,7 @@ describe('GS1 Importer tests', () => {
         const config = rc(pjson.name, defaultConfig);
         transpiler = new EpcisOtJsonTranspiler({
             config,
+            web3: new Web3(),
         });
     });
 

@@ -8,9 +8,13 @@ const { sha3_256 } = require('js-sha3');
 const deepExtend = require('deep-extend');
 const sortedStringify = require('sorted-json-stringify');
 
+const Utilities = require('../../Utilities');
+const Merkle = require('../../Merkle');
+
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
+        this.web3 = ctx.web3;
     }
 
     /**
@@ -66,10 +70,39 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(utilities.sortObjectRecursively(otjson['@graph']), null))}`;
+        otjson['@id'] = `0x${sha3_256(JSON.stringify(otjson['@graph']), null)}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
+
+        const datasetSummary = {
+            datasetId: otjson['@id'],
+            datasetCreator: otjson.datasetHeader.dataCreator,
+            objects: otjson['@graph'].map(vertex => ({
+                '@id': vertex['@id'],
+                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
+            })),
+            numRelations: otjson['@graph']
+                .filter(vertex => vertex.relations != null)
+                .reduce((acc, value) => acc + value.relations.length, 0),
+        };
+
+        const merkle = new Merkle(
+            [JSON.stringify(datasetSummary), ...otjson['@graph'].map(v => JSON.stringify(v))],
+            'sha3',
+        );
+        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkle.getRoot();
+
+        const { signature } = this.web3.eth.accounts.sign(
+            Utilities.soliditySHA3(JSON.stringify(otjson)),
+            Utilities.normalizeHex(this.config.node_private_key),
+        );
+
+        otjson.signature = {
+            value: signature,
+            type: 'ethereum-signature',
+        };
+
         return otjson;
     }
 
@@ -102,24 +135,26 @@ class EpcisOtJsonTranspiler {
             datasetCreationTimestamp: new Date().toISOString(),
             datasetTitle: '',
             datasetTags: [],
-            relatedDatasets: [{
+            /*
+            relatedDatasets may contain objects like this:
+            {
                 datasetId: '0x620867dced3a96809fc69d579b2684a7',
                 relationType: 'UPDATED',
                 relationDescription: 'Some long description',
                 relationDirection: 'direct',
-            }],
+            }
+             */
+            relatedDatasets: [],
             validationSchemas: {
                 'erc725-main': {
                     schemaType: 'ethereum-725',
-                    networkId: '1',
-                    networkType: 'private',
-                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                    networkId: this.config.blockchain.network_id,
                 },
                 merkleRoot: {
                     schemaType: 'merkle-root',
-                    networkId: '1',
-                    networkType: 'private',
-                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                    networkId: this.config.blockchain.network_id,
+                    hubContractAddress: this.config.blockchain.hubContractAddress,
+                    // TODO: Add holding contract address and version. Hub address is useless.
                 },
             },
             dataIntegrity: {
@@ -134,7 +169,7 @@ class EpcisOtJsonTranspiler {
             dataCreator: {
                 identifiers: [
                     {
-                        identifierValue: '0xfd8a1fc98c8f173448c86062590dc05f5ada93ee',
+                        identifierValue: this.config.erc725Identity,
                         identifierType: 'ERC725',
                         validationSchema: '/schemas/erc725-main',
                     },

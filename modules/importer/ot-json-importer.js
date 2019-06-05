@@ -1,4 +1,5 @@
 const { sha3_256 } = require('js-sha3');
+const { forEach, forEachSeries } = require('p-iteration');
 
 const Utilities = require('../Utilities');
 
@@ -109,6 +110,7 @@ class OtJsonImporter {
      * @param ctx IoC context
      */
     constructor(ctx) {
+        this.db = ctx.graphStorage;
         this.log = ctx.logger;
         this.config = ctx.config;
         this.notifyError = ctx.notifyError;
@@ -137,7 +139,7 @@ class OtJsonImporter {
      * dataCreator: string
      * edges: Array}}
      */
-    process(document) {
+    async importFile(document) {
         // TODO: validate document here.
         this._validate(document);
 
@@ -146,8 +148,8 @@ class OtJsonImporter {
         const dataCreator = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
 
         // Result
-        const vertices = [];
-        const edges = [];
+        let vertices = [];
+        let edges = [];
 
         document['@graph'].forEach((otObject) => {
             switch (_type(otObject)) {
@@ -281,6 +283,25 @@ class OtJsonImporter {
             }
         });
 
+        const deduplicateVertices = [];
+        const deduplicateEdges = [];
+
+        for (const vertex of vertices) {
+            const obj = deduplicateVertices.find(el => el._key === vertex._key);
+
+            if (obj == null) {
+                deduplicateVertices.push(vertex);
+            }
+        }
+
+        for (const edge of edges) {
+            const obj = deduplicateEdges.find(el => el._key === edge._key);
+
+            if (obj == null) {
+                deduplicateEdges.push(edge);
+            }
+        }
+
         const metadata = {
             _key: datasetId,
             datasetContext: _context(document),
@@ -301,11 +322,54 @@ class OtJsonImporter {
 
         // TODO: Check for datasetHeader.dataIntegrity.* proof here.
 
+        // TODO enable commit operation
+        // contents.vertices.map((v) => {
+        //     v.inTransaction = true;
+        //     return v;
+        // });
+        // contents.edges.map((e) => {
+        //     e.inTransaction = true;
+        //     return e;
+        // });
+
+        await forEachSeries(vertices, vertex => this.db.addVertex(vertex));
+        await forEachSeries(edges, edge => this.db.addEdge(edge));
+
+        await forEachSeries(vertices.filter(vertex => vertex.vertexType === 'Connector'), async (vertex) => {
+            // Connect to other connectors if available.
+            const relatedConnectors = await this.db.findConnectors(vertex.connectionId);
+
+            await forEachSeries(relatedConnectors, async (relatedVertex) => {
+                await this.db.addEdge({
+                    _key: _keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                    _from: vertex._key,
+                    _to: relatedVertex._key,
+                    relationType: 'CONNECTION_DOWNSTREAM',
+                    edgeType: 'ConnectorRelation',
+                });
+
+                // Other way. This time host node is the data creator.
+                await this.db.addEdge({
+                    _key: _keyFrom(this.me, relatedVertex._key, vertex._key),
+                    _from: relatedVertex._key,
+                    _to: vertex._key,
+                    relationType: 'CONNECTION_DOWNSTREAM',
+                    edgeType: 'ConnectorRelation',
+                });
+            });
+        });
+
+        await this.db.addDocument('ot_datasets', metadata);
+
+        // TODO enable commit operation
+        // await this.db.commit();
+
         return {
-            metadata,
-            dataCreator,
-            vertices,
-            edges,
+            vertices: deduplicateVertices,
+            edges: deduplicateEdges,
+            data_set_id: datasetId,
+            wallet: '0x123123214abbb12354',
+
         };
     }
 
