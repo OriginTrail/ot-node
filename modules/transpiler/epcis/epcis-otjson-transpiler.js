@@ -70,7 +70,7 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(otjson['@graph']), null)}`;
+        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortGraphRecursively(otjson['@graph']), null, 0))}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
@@ -180,28 +180,30 @@ class EpcisOtJsonTranspiler {
     }
 
     /**
-     * Sort graph recursively
+     * Sort @graph data inline
+     * @param graph
+     * @private
+     */
+    _sortGraphRecursively(graph) {
+        graph.forEach(item => this._sortObjectRecursively(item));
+        return graph;
+    }
+
+    /**
+     * Sort object recursively
      * @private
      */
     _sortObjectRecursively(object) {
         if (object == null) {
             return null;
         }
-        if (Array.isArray(object)) {
-            const isScalarArray = object.reduce((accumulator, currentValue) => accumulator && (typeof currentValue !== 'object'), true);
-
-            if (isScalarArray) {
-                object.sort();
-                return object;
-            }
-
-            object.forEach(item => this._sortObjectRecursively(item));
-            object.sort((item1, item2) => sha3_256(sortedStringify(item1, null))
-                .localeCompare(sha3_256(sortedStringify(item2, null))));
+        if (Array.isArray(object)) { // skip array sorting
             return object;
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {
-                this._sortObjectRecursively(object[key]);
+                if (key !== '___metadata') {
+                    this._sortObjectRecursively(object[key]);
+                }
             }
             const ordered = {};
             Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
