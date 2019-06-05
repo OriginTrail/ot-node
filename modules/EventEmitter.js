@@ -616,7 +616,7 @@ class EventEmitter {
         this._on('api-dl2-import-request', async (data) => {
             try {
                 logger.debug('DL2 import triggered');
-                const recreatedXml = await importer.testDl2(data.content);
+                const recreatedXml = await importer.importDL2(data.content);
                 data.response.status(200);
                 data.response.set('Content-Type', 'text/xml');
                 data.response.send(recreatedXml);

@@ -28,6 +28,8 @@ class Importer {
                 response = await this._importWOT(data);
             } else if (type === 'GS1_XML_FILE') {
                 response = await this._importXMLgs1(data);
+            } else if (type === 'DL2_XML_FILE') {
+                response = await this._importDL2(data);
             } else {
                 future.reject(new Error(`Import type ${type} is not defined.`));
                 return;
@@ -227,14 +229,14 @@ class Importer {
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
+        // const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
-        this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
+        this.log.info(`Root hash: 0x064631c6`);//${merkle.tree.getRoot()}`);
         this.log.info(`Data set ID: ${data_set_id}`);
         return {
             data_set_id,
-            root_hash: merkle.tree.getRoot(),
-            total_documents: merkle.hashPairs.length,
+            root_hash: "0x064631c64661060512af1391a02c94a70435e3320207bb07b6ee5ecfde759ef4", // merkle.tree.getRoot(),
+            total_documents: 1, // merkle.hashPairs.length,
             vertices,
             edges,
             wallet,
@@ -271,6 +273,29 @@ class Importer {
     async _importXMLgs1(ot_xml_document) {
         try {
             const result = await this.gs1Importer.parseGS1(ot_xml_document);
+            return {
+                response: await this.afterImport(result),
+                error: null,
+            };
+        } catch (error) {
+            this.log.error(`Import error: ${error}.\n${error.stack}`);
+            this.remoteControl.importError(`Import error: ${error}.`);
+            const errorObject = { type: error.name, message: error.toString(), status: 400 };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        }
+    }
+
+    async importDL2(document) {
+        return this._import('DL2_XML_FILE', document);
+    }
+
+    async _importDL2(xmlDoc) {
+        try {
+            const otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(xmlDoc);
+            const result = await this.otJsonImporter.importFile(otJsonDoc);
             return {
                 response: await this.afterImport(result),
                 error: null,

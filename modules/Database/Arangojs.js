@@ -21,6 +21,10 @@ class ArangoJS {
         this.db = new Database(`http://${host}:${port}`);
         this.db.useDatabase(database);
         this.db.useBasicAuth(username, password);
+
+        this.dbInfo = {
+            username, password, database, host, port,
+        };
     }
 
     /**
@@ -28,6 +32,18 @@ class ArangoJS {
      * @return {Promise<void>}
      */
     async initialize(allowedClasses) {
+        // Create database if doesn't exist.
+        const listOfDatabases = await this.db.listDatabases();
+        if (!listOfDatabases.includes(this.dbInfo.database)) {
+            await
+            this.db.createDatabase(
+                this.dbInfo.database,
+                [{ username: this.dbInfo.username, passwd: this.dbInfo.password, active: true }],
+            );
+        }
+
+        this.db.useDatabase(this.dbInfo.database);
+        await this.createCollection('ot_datasets');
         await this.createCollection('ot_vertices');
         await this.createEdgeCollection('ot_edges');
 
@@ -541,7 +557,14 @@ class ArangoJS {
             const response = await this.findDocuments(collectionName, { _key: document._key });
             if (response.length > 0) {
                 const existing = ArangoJS._normalize(response[0]);
-                Object.assign(existing, document);
+                if (existing.datasets != null && document.datasets != null) {
+                    existing.datasets =
+                        existing.datasets
+                            .concat(document.datasets
+                                .filter(datasetId => !existing.datasets.includes(datasetId)));
+
+                    existing.datasets.concat(document.datasets);
+                }
                 return this.updateDocument(collectionName, existing);
             }
         }
@@ -664,6 +687,16 @@ class ArangoJS {
         } catch (err) {
             throw err;
         }
+    }
+
+    /**
+     * Finds metadata by dataset ID
+     * @return {Promise<*>}
+     * @param datasetId
+     */
+    async findMetadataByImportId(datasetId) {
+        const queryString = 'FOR v IN ot_datasets FILTER v._key == @datasetId RETURN v';
+        return this.runQuery(queryString, { datasetId });
     }
 
     /**
