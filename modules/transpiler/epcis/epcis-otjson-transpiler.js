@@ -6,7 +6,6 @@ const fs = require('fs');
 
 const { sha3_256 } = require('js-sha3');
 const deepExtend = require('deep-extend');
-const sortedStringify = require('sorted-json-stringify');
 
 const Utilities = require('../../Utilities');
 const Merkle = require('../../Merkle');
