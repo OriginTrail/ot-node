@@ -25,7 +25,7 @@ class EpcisOtJsonTranspiler {
             return null;
         }
 
-        const xsdFileBuffer = fs.readFileSync('./xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
+        const xsdFileBuffer = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
         const schema = xsd.parse(xsdFileBuffer.toString());
 
         const validationResult = schema.validate(xml);
@@ -85,7 +85,10 @@ class EpcisOtJsonTranspiler {
                 .reduce((acc, value) => acc + value.relations.length, 0),
         };
 
-        const merkle = new Merkle([JSON.stringify(datasetSummary), ...otjson['@graph'].map(v => JSON.stringify(v))]);
+        const merkle = new Merkle(
+            [JSON.stringify(datasetSummary), ...otjson['@graph'].map(v => JSON.stringify(v))],
+            'sha3',
+        );
         otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkle.getRoot();
 
         const { signature } = this.web3.eth.accounts.sign(
