@@ -1,16 +1,18 @@
 const xml2js = require('xml-js');
 const uuidv4 = require('uuid/v4');
 const xsd = require('libxml-xsd');
-const utilities = require('../../Utilities');
 const fs = require('fs');
 
 const { sha3_256 } = require('js-sha3');
 const sortedStringify = require('sorted-json-stringify');
 
+const Utilities = require('../../Utilities');
+const Merkle = require('../../Merkle');
 
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
+        this.web3 = ctx.web3;
     }
 
     /**
@@ -70,6 +72,32 @@ class EpcisOtJsonTranspiler {
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
+
+        const datasetSummary = {
+            datasetId: otjson['@id'],
+            datasetCreator: otjson.datasetHeader.dataCreator,
+            objects: otjson['@graph'].map(vertex => ({
+                '@id': vertex['@id'],
+                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
+            })),
+            numRelations: otjson['@graph']
+                .filter(vertex => vertex.relations != null)
+                .reduce((acc, value) => acc + value.relations.length, 0),
+        };
+
+        const merkle = new Merkle([JSON.stringify(datasetSummary), ...otjson['@graph'].map(v => JSON.stringify(v))]);
+        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkle.getRoot();
+
+        const { signature } = this.web3.eth.accounts.sign(
+            Utilities.soliditySHA3(JSON.stringify(otjson)),
+            Utilities.normalizeHex(this.config.node_private_key),
+        );
+
+        otjson.signature = {
+            value: signature,
+            type: 'ethereum-signature',
+        };
+
         return otjson;
     }
 
@@ -102,24 +130,26 @@ class EpcisOtJsonTranspiler {
             datasetCreationTimestamp: new Date().toISOString(),
             datasetTitle: '',
             datasetTags: [],
-            relatedDatasets: [{
+            /*
+            relatedDatasets may contain objects like this:
+            {
                 datasetId: '0x620867dced3a96809fc69d579b2684a7',
                 relationType: 'UPDATED',
                 relationDescription: 'Some long description',
                 relationDirection: 'direct',
-            }],
+            }
+             */
+            relatedDatasets: [],
             validationSchemas: {
                 'erc725-main': {
                     schemaType: 'ethereum-725',
-                    networkId: '1',
-                    networkType: 'private',
-                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                    networkId: this.config.blockchain.network_id,
                 },
                 merkleRoot: {
                     schemaType: 'merkle-root',
-                    networkId: '1',
-                    networkType: 'private',
-                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                    networkId: this.config.blockchain.network_id,
+                    hubContractAddress: this.config.blockchain.hubContractAddress,
+                    // TODO: Add holding contract address and version. Hub address is useless.
                 },
             },
             dataIntegrity: {
@@ -134,7 +164,7 @@ class EpcisOtJsonTranspiler {
             dataCreator: {
                 identifiers: [
                     {
-                        identifierValue: '0xfd8a1fc98c8f173448c86062590dc05f5ada93ee',
+                        identifierValue: this.config.erc725Identity,
                         identifierType: 'ERC725',
                         validationSchema: '/schemas/erc725-main',
                     },
@@ -905,46 +935,3 @@ class EpcisOtJsonTranspiler {
 }
 
 module.exports = EpcisOtJsonTranspiler;
-
-// const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
-// const converter = new EpcisOtJsonTranspiler(null);
-// const otJson = converter.convertToOTJson(xml);
-//
-// const recoveredXML = converter.convertFromOTJson(otJson);
-// const recoveredOtJson = converter.convertToOTJson(recoveredXML);
-//
-// console.log(JSON.stringify(converter._sortGraphRecursively(otJson)));
-// console.log(JSON.stringify(converter._sortGraphRecursively(recoveredOtJson)));
-
-// console.log(JSON.stringify(otJson));
-// console.log('-------------------');
-// console.log(JSON.stringify(recoveredOtJson));
-
-// console.log(JSON.stringify(xml) === JSON.stringify(recoveredXML));
-// console.log(JSON.stringify(otJson) === JSON.stringify(recoveredOtJson));
-// console.log(JSON.stringify(otJson, null, 0));
-// console.log(converter.convertFromOTJson(otJson));
-//
-// const a = {
-//     b: 1,
-//     s: 3,
-//     h: '3',
-//     c: {
-//         g: {
-//             d: [4, 1, 3, 2],
-//         },
-//         z: 3,
-//     },
-//     l: [1, {
-//         y: 3,
-//     },
-//     {
-//         y: 2,
-//     }],
-// };
-//
-// console.log(JSON.stringify(converter._sortGraphRecursively(a)));
-
-//
-// const prefixed = converter._addPrefix(a, 'ot:');
-// console.log(JSON.stringify(converter._removePrefix(prefixed, 'ot:'), null, 2));
