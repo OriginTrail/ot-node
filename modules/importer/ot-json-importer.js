@@ -385,7 +385,8 @@ class OtJsonImporter {
         //     @id: '',
         //     @type: 'Dataset',
         //     datasetHeader: {},
-        //     @graph: []
+        //     @graph: [],
+        //     signature: {}
         // }
 
         if (document == null) {
@@ -396,7 +397,7 @@ class OtJsonImporter {
             throw Error('Document has to be object.');
         }
 
-        if (Object.keys(document).length !== 4) {
+        if (Object.keys(document).length !== 5) {
             throw Error('Lack of additional information in OT-JSON document.');
         }
 
@@ -438,6 +439,11 @@ class OtJsonImporter {
         if (identifiers[0].identifierType !== 'ERC725' || identifiers[0].validationSchema !== '/schemas/erc725-main' ||
             !Utilities.isHexStrict(identifiers[0].identifierValue)) {
             throw Error('Wrong format of data creator.');
+        }
+
+        const { signature } = document;
+        if (signature == null || typeof signature.type !== 'string' || typeof signature.value !== 'string') {
+            throw Error('Wrong or missing signature.');
         }
     }
 }
