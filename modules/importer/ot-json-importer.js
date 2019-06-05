@@ -320,7 +320,6 @@ class OtJsonImporter {
         // {
         //     @id: '',
         //     @type: 'Dataset',
-        //     @context: {},
         //     datasetHeader: {},
         //     @graph: []
         // }
@@ -353,8 +352,6 @@ class OtJsonImporter {
         if (graph == null || !Array.isArray(graph) || graph.length === 0) {
             throw Error('Missing or empty graph.');
         }
-
-        // TODO: Validate @context here.
 
         if (datasetHeader.OTJSONVersion !== '1.0') {
             throw Error('Unsupported OT-JSON version.');

@@ -5,8 +5,8 @@ const utilities = require('../../Utilities');
 const fs = require('fs');
 
 const { sha3_256 } = require('js-sha3');
+const deepExtend = require('deep-extend');
 const sortedStringify = require('sorted-json-stringify');
-
 
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
@@ -23,7 +23,7 @@ class EpcisOtJsonTranspiler {
             return null;
         }
 
-        const xsdFileBuffer = fs.readFileSync('./xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
+        const xsdFileBuffer = fs.readFileSync('./modules/transpiler/epcis/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
         const schema = xsd.parse(xsdFileBuffer.toString());
 
         const validationResult = schema.validate(xml);
@@ -66,7 +66,7 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortObjectRecursively(otjson['@graph']), null))}`;
+        otjson['@id'] = `0x${sha3_256(JSON.stringify(utilities.sortObjectRecursively(otjson['@graph']), null))}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
@@ -260,11 +260,15 @@ class EpcisOtJsonTranspiler {
                 const properties = {
                     objectType: 'vocabularyElement',
                     vocabularyType: type,
-                    ___attributes: vocabularyElement.attribute,
-                    ___metadata: {},
+                    ___metadata: this._extractMetadata(vocabularyElement),
                 };
+
                 for (const attribute of vocabularyElement.attribute) {
-                    properties[attribute._attributes.id] = attribute._text.trim();
+                    if (this._isLeaf(attribute)) {
+                        properties[attribute._attributes.id] = attribute._text.trim();
+                    } else {
+                        properties[attribute._attributes.id] = this._compressText(attribute);
+                    }
                 }
 
                 const otVocabulary = {
@@ -293,14 +297,19 @@ class EpcisOtJsonTranspiler {
     _convertVocabulariesToJson(otVocabularyElementList) {
         const elementsByType = {};
         for (const otVocabularyElement of otVocabularyElementList) {
-            const vocabularyElement = {};
-            vocabularyElement._attributes = {
-                id: otVocabularyElement['@id'],
-            };
-            vocabularyElement.attribute = otVocabularyElement.properties.___attributes;
+            const { properties } = otVocabularyElement;
+            delete properties.objectType;
+            const type = properties.vocabularyType;
+            delete properties.vocabularyType;
+            const metadata = properties.___metadata;
+            delete properties.___metadata;
 
-            Object.assign(vocabularyElement, otVocabularyElement.properties.___metadata);
-            const type = otVocabularyElement.properties.vocabularyType;
+            for (const [key, value] of Object.entries(properties)) {
+                const m = metadata.attribute.find(x => x._attributes.id === key);
+                deepExtend(m, this._decompressText(value));
+            }
+
+            const vocabularyElement = metadata;
             if (elementsByType[type] == null) {
                 elementsByType[type] = [];
             }
@@ -354,7 +363,7 @@ class EpcisOtJsonTranspiler {
                 results.push(this._convertEventFromJson(event, 'ObjectEvent'));
             }
         }
-        if (root.ObjectEvent) {
+        if (root.AggregationEvent) {
             for (const event of root.AggregationEvent) {
                 results.push(this._convertEventFromJson(event, 'AggregationEvent'));
             }
@@ -905,46 +914,3 @@ class EpcisOtJsonTranspiler {
 }
 
 module.exports = EpcisOtJsonTranspiler;
-
-// const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
-// const converter = new EpcisOtJsonTranspiler(null);
-// const otJson = converter.convertToOTJson(xml);
-//
-// const recoveredXML = converter.convertFromOTJson(otJson);
-// const recoveredOtJson = converter.convertToOTJson(recoveredXML);
-//
-// console.log(JSON.stringify(converter._sortGraphRecursively(otJson)));
-// console.log(JSON.stringify(converter._sortGraphRecursively(recoveredOtJson)));
-
-// console.log(JSON.stringify(otJson));
-// console.log('-------------------');
-// console.log(JSON.stringify(recoveredOtJson));
-
-// console.log(JSON.stringify(xml) === JSON.stringify(recoveredXML));
-// console.log(JSON.stringify(otJson) === JSON.stringify(recoveredOtJson));
-// console.log(JSON.stringify(otJson, null, 0));
-// console.log(converter.convertFromOTJson(otJson));
-//
-// const a = {
-//     b: 1,
-//     s: 3,
-//     h: '3',
-//     c: {
-//         g: {
-//             d: [4, 1, 3, 2],
-//         },
-//         z: 3,
-//     },
-//     l: [1, {
-//         y: 3,
-//     },
-//     {
-//         y: 2,
-//     }],
-// };
-//
-// console.log(JSON.stringify(converter._sortGraphRecursively(a)));
-
-//
-// const prefixed = converter._addPrefix(a, 'ot:');
-// console.log(JSON.stringify(converter._removePrefix(prefixed, 'ot:'), null, 2));
