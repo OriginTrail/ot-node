@@ -617,13 +617,13 @@ class EventEmitter {
             try {
                 logger.debug('DL2 import triggered');
                 const result = await importer.importDL2(data.content);
-                data.response.status(200);
-                data.response.send(result);
+                if (result.error != null) {
+                    await processImport(null, result.error, data);
+                } else {
+                    await processImport(result.response, null, data);
+                }
             } catch (error) {
-                data.response.status(500);
-                data.response.send({
-                    message: error.message,
-                });
+                await processImport(null, error, data);
             }
         });
 
