@@ -300,6 +300,48 @@ class ImportUtilities {
         }
         return transactionHash;
     }
+
+    /**
+     * Create SHA256 Hash of graph
+     * @param graph
+     * @returns {string}
+     */
+    static createGraphHash(graph) {
+        return `0x${sha3_256(JSON.stringify(this.sortGraphRecursively(graph), null, 0))}`;
+    }
+
+    /**
+     * Sort @graph data inline
+     * @param graph
+     * @private
+     */
+    static sortGraphRecursively(graph) {
+        graph.forEach(item => this.sortObjectRecursively(item));
+        return graph;
+    }
+
+    /**
+     * Sort object recursively
+     * @private
+     */
+    static sortObjectRecursively(object) {
+        if (object == null) {
+            return null;
+        }
+        if (Array.isArray(object)) { // skip array sorting
+            return object;
+        } else if (typeof object === 'object') {
+            for (const key of Object.keys(object)) {
+                if (key !== '___metadata') {
+                    this.sortObjectRecursively(object[key]);
+                }
+            }
+            const ordered = {};
+            Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
+            return ordered;
+        }
+        return object;
+    }
 }
 
 module.exports = ImportUtilities;

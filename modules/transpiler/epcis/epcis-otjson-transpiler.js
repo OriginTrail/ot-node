@@ -2,9 +2,9 @@ const xml2js = require('xml-js');
 const uuidv4 = require('uuid/v4');
 const xsd = require('libxml-xsd');
 const utilities = require('../../Utilities');
+const importUtilities = require('../../ImportUtilities');
 const fs = require('fs');
 
-const { sha3_256 } = require('js-sha3');
 const deepExtend = require('deep-extend');
 
 const Utilities = require('../../Utilities');
@@ -69,7 +69,7 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortGraphRecursively(otjson['@graph']), null, 0))}`;
+        otjson['@id'] = importUtilities.createGraphHash(otjson['@graph']);
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
@@ -176,39 +176,6 @@ class EpcisOtJsonTranspiler {
             },
             transpilationInfo,
         };
-    }
-
-    /**
-     * Sort @graph data inline
-     * @param graph
-     * @private
-     */
-    _sortGraphRecursively(graph) {
-        graph.forEach(item => this._sortObjectRecursively(item));
-        return graph;
-    }
-
-    /**
-     * Sort object recursively
-     * @private
-     */
-    _sortObjectRecursively(object) {
-        if (object == null) {
-            return null;
-        }
-        if (Array.isArray(object)) { // skip array sorting
-            return object;
-        } else if (typeof object === 'object') {
-            for (const key of Object.keys(object)) {
-                if (key !== '___metadata') {
-                    this._sortObjectRecursively(object[key]);
-                }
-            }
-            const ordered = {};
-            Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
-            return ordered;
-        }
-        return object;
     }
 
     /**
