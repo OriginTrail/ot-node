@@ -105,7 +105,7 @@ class ImportUtilities {
         for (const obj of decryptedDataset['@graph']) {
             if (obj.properties != null) {
                 const decryptedProperties = Encryption.decryptObject(obj.properties, decryptionKey);
-                if (encryptionColor) {
+                if (encryptionColor != null) {
                     const encColor = colorMap[encryptionColor];
                     encryptedMap[obj['@id']] = {};
                     encryptedMap[obj['@id']][encColor] = obj.properties;
