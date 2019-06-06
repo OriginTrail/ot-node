@@ -37,7 +37,7 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
     let container;
     let myCommand;
 
-    const databaseName = 'dc_offer_create_db';
+    const databaseName = 'dh-replication-import-db';
 
     before('Setup preconditions and call DHReplicationImportCommand execute function', async () => {
         config = rc(pjson.name, defaultConfig);
@@ -133,12 +133,12 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
 
     });
 
-    after('Drop DB', async () => {
-        if (arangoDb) {
-            const listOfDatabases = await arangoDb.listDatabases();
-            if (listOfDatabases.includes(databaseName)) {
-                await arangoDb.dropDatabase(databaseName);
-            }
-        }
-    });
+    // after('Drop DB', async () => {
+    //     if (arangoDb) {
+    //         const listOfDatabases = await arangoDb.listDatabases();
+    //         if (listOfDatabases.includes(databaseName)) {
+    //             await arangoDb.dropDatabase(databaseName);
+    //         }
+    //     }
+    // });
 });

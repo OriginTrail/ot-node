@@ -143,7 +143,7 @@ class OtJsonImporter {
     async importFile(data) {
         const {
             otJsonDocument: document,
-            encrypted,
+            encryptedMap: encrypted,
         } = data;
 
         // TODO: validate document here.
@@ -220,7 +220,7 @@ class OtJsonImporter {
                         data: otObject.properties,
                         datasets: [datasetId],
                     };
-                    if (encrypted[_id(otObject)]) {
+                    if (encrypted && encrypted[_id(otObject)]) {
                         dataVertex.encrypted = encrypted[_id(otObject)];
                     }
                     vertices.push(dataVertex);
