@@ -265,3 +265,5 @@ for (const obj of processedJSON['@graph']) {
 
 const encryptedJSON = processedJSON;
 console.log(JSON.stringify(processedJSON));
+
+module.exports = encryptedJSON;
