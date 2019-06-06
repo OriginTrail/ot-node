@@ -114,6 +114,7 @@ class OtJsonImporter {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.notifyError = ctx.notifyError;
+        this.web3 = ctx.web3;
 
         // TODO: use creditor information from config.
         this.me = {
@@ -361,14 +362,26 @@ class OtJsonImporter {
 
         await this.db.addDocument('ot_datasets', metadata);
 
+        // Extract wallet from signature.
+        const docWithoutSignature = {};
+        Object.keys(document)
+            .filter(key => key !== 'signature')
+            .forEach(key => docWithoutSignature[key] = document[key]);
+        const message = JSON.stringify(docWithoutSignature);
+        const wallet = this.web3.eth.accounts.recover(
+            Utilities.soliditySHA3(message),
+            document.signature.value,
+        );
+
         // TODO enable commit operation
         // await this.db.commit();
 
         return {
+            root_hash: document.datasetHeader.dataIntegrity.proofs[0].proofValue,
             vertices: deduplicateVertices,
             edges: deduplicateEdges,
             data_set_id: datasetId,
-            wallet: '0x123123214abbb12354',
+            wallet,
 
         };
     }
