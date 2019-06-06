@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	xmlns:bmtech="http://bmtech.com/schema" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creationDate="2005-07-11T11:30:47.0Z"
+	schemaVersion="1.2">
+	<EPCISBody>
+		<EventList>
+			<ObjectEvent>
+				<eventTime>2016-10-31T15:15:15.000+09:00</eventTime>
+				<eventTimeZoneOffset>+09:00</eventTimeZoneOffset>
+				<epcList>
+					<epc>urn:epc:id:sgtin:0614141.107346.2018</epc>
+				</epcList>
+				<action>OBSERVE</action>
+				<bmtech:nodeid>1</bmtech:nodeid>
+				<bmtech:insecticide>low</bmtech:insecticide>
+			</ObjectEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>

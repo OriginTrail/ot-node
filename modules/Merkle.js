@@ -36,7 +36,6 @@ class MerkleTree {
     constructor(leaves, hashFunction = 'soliditySha3') {
         this.levels = [];
         this.levels.push(leaves);
-        console.log(hashFunction);
         this.hashFunction = hashFunction;
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {

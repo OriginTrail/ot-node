@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:example0="http://ns.example.com/epcis0" xmlns:example1="http://ns.example.com/epcis1"
+	xmlns:example2="http://ns.example.com/epcis2" xmlns:example3="http://ns.example.com/epcis3"
+	xmlns:example="http://ns.example.com/epcis" creationDate="2005-07-11T11:30:47.0Z"
+	schemaVersion="1.2">
+	<EPCISBody>
+		<EventList>
+			<AggregationEvent>
+				<eventTime>2013-06-08T14:58:56.591Z</eventTime>
+				<eventTimeZoneOffset>+02:00</eventTimeZoneOffset>
+				<parentID>urn:epc:id:sscc:0614141.1234567890</parentID>
+				<childEPCs>
+					<epc>urn:epc:id:sgtin:0614141.107346.2017</epc>
+					<epc>urn:epc:id:sgtin:0614141.107346.2018</epc>
+				</childEPCs>
+				<action>OBSERVE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+				<readPoint>
+					<id>urn:epc:id:sgln:0614141.00777.0</id>
+				</readPoint>
+				<bizLocation>
+					<id>urn:epc:id:sgln:0614141.00888.0</id>
+				</bizLocation>
+				<bizTransactionList>
+					<bizTransaction type="urn:epcglobal:cbv:btt:po">http://transaction.acme.com/po/12345678</bizTransaction>
+				</bizTransactionList>
+				<extension>
+					<childQuantityList>
+						<quantityElement>
+							<epcClass>urn:epc:idpat:sgtin:4012345.098765.*</epcClass>
+							<quantity>10</quantity>
+						</quantityElement>
+						<quantityElement>
+							<epcClass>urn:epc:class:lgtin:4012345.012345.998877</epcClass>
+							<quantity>200.5</quantity>
+							<uom>KGM</uom>
+						</quantityElement>
+					</childQuantityList>
+					<sourceList>
+						<source type="urn:epcglobal:cbv:sdt:possessing_party">urn:epc:id:sgln:4012345.00001.0</source>
+						<source type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:4012345.00225.0</source>
+					</sourceList>
+					<destinationList>
+						<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:0614141.00001.0</destination>
+						<destination type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:0614141.00777.0</destination>
+					</destinationList>
+				</extension>
+				<example0:a xsi:type="xsd:int">15</example0:a>
+				<example0:b>
+					<example1:c xsi:type="xsd:double">20.5</example1:c>
+				</example0:b>
+				<example0:h>
+					<example1:d xsi:type="xsd:boolean">true</example1:d>
+					<example1:e>
+						<example2:f xsi:type="xsd:dateTime">2013-06-08T14:58:56.591Z</example2:f>
+					</example1:e>
+					<example1:g xsi:type="xsd:long">50</example1:g>
+				</example0:h>
+			</AggregationEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>

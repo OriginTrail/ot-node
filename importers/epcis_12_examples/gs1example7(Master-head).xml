@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	xmlns:p="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"
+	xmlns:example="http://ns.example.com/epcis" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	creationDate="2005-07-11T11:30:47.0Z" schemaVersion="1.2">
+	<EPCISHeader>
+		<p:StandardBusinessDocumentHeader>
+			<p:HeaderVersion>1.2</p:HeaderVersion>
+			<p:Sender>
+				<p:Identifier Authority="">p:Identifier</p:Identifier>
+			</p:Sender>
+			<p:Receiver>
+				<p:Identifier Authority="">p:Identifier</p:Identifier>
+			</p:Receiver>
+			<p:DocumentIdentification>
+				<p:Standard>EPCglobal</p:Standard>
+				<p:TypeVersion>1.2</p:TypeVersion>
+				<p:InstanceIdentifier>p:InstanceIdentifier</p:InstanceIdentifier>
+				<p:Type>MasterData</p:Type>
+				<p:MultipleType>true</p:MultipleType>
+				<p:CreationDateAndTime>2001-12-31T12:00:00</p:CreationDateAndTime>
+			</p:DocumentIdentification>
+		</p:StandardBusinessDocumentHeader>
+		<extension>
+			<EPCISMasterData>
+				<VocabularyList>
+					<Vocabulary type="urn:epcglobal:epcis:vtype:BusinessLocation">
+						<VocabularyElementList>
+							<VocabularyElement id="urn:epc:id:sgln:0037000.00729.0">
+								<attribute id="http://epcis.example.com/mda/latitude">+18.0000</attribute>
+								<attribute id="http://epcis.example.com/mda/longitude">-70.0000</attribute>
+								<attribute id="http://epcis.example.com/mda/address">
+									<example:Address xmlns:example="http://epcis.example.com/ns">
+										<Street>100 Nowhere Street</Street>
+										<City>Fancy</City>
+										<State>DC</State>
+										<Zip>99999</Zip>
+									</example:Address>
+								</attribute>
+							</VocabularyElement>
+							<VocabularyElement id="urn:epc:id:sgln:0037000.00729.8201">
+								<attribute id="urn:epcglobal:cbv:mda:sst">201</attribute>
+							</VocabularyElement>
+							<VocabularyElement id="urn:epc:id:sgln:0037000.00729.8202">
+								<attribute id="urn:epcglobal:cbv:mda:sst">202</attribute>
+							</VocabularyElement>
+							<VocabularyElement id="urn:epc:id:sgln:0037000.00729.8203">
+								<attribute id="urn:epcglobal:cbv:mda:sst">202</attribute>
+								<attribute id="urn:epcglobal:cbv:mda:ssa">402</attribute>
+							</VocabularyElement>
+						</VocabularyElementList>
+					</Vocabulary>
+					<Vocabulary type="urn:epcglobal:epcis:vtype:ReadPoint">
+						<VocabularyElementList>
+							<VocabularyElement id="urn:epc:id:sgln:0037000.00729.8201">
+								<attribute id="urn:epcglobal:cbv:mda:site">0037000007296</attribute>
+								<attribute id="urn:epcglobal:cbv:mda:sst">201</attribute>
+							</VocabularyElement>
+							<VocabularyElement id="urn:epc:id:sgln:0037000.00729.8202">
+								<attribute id="urn:epcglobal:cbv:mda:site">0037000007296</attribute>
+								<attribute id="urn:epcglobal:cbv:mda:sst">202</attribute>
+							</VocabularyElement>
+							<VocabularyElement id="urn:epc:id:sgln:0037000.00729.8203">
+								<attribute id="urn:epcglobal:cbv:mda:site">0037000007296</attribute>
+								<attribute id="urn:epcglobal:cbv:mda:sst">203</attribute>
+							</VocabularyElement>
+						</VocabularyElementList>
+					</Vocabulary>
+				</VocabularyList>
+			</EPCISMasterData>
+		</extension>
+	</EPCISHeader>
+	<EPCISBody>
+		<EventList>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>
