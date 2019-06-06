@@ -352,7 +352,7 @@ class ImportUtilities {
         const datasetSummary = this.calculateDatasetSummary(dataset);
 
         const merkle = new MerkleTree(
-            [JSON.stringify(datasetSummary), this.sortGraphRecursively(...dataset['@graph'])],
+            [JSON.stringify(datasetSummary), ...this.sortGraphRecursively(dataset['@graph'])],
             'sha3',
         );
 
