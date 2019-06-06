@@ -84,20 +84,18 @@ class ChallengeService {
      * @returns {Array} of blocks.
      */
     getBlocks(vertices, blockSizeBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
-        importUtilities.sort(vertices);
-
         const blocks = [];
         let block = String();
         let byteIndex = 0;
         let bytesToCopy = 0;
 
         for (let i = 0; i < vertices.length; i += 1) {
-            const { data } = vertices[i];
-            if (data != null) {
-                for (let j = 0; j < data.length;) {
+            const { properties } = vertices[i];
+            if (properties != null) {
+                for (let j = 0; j < properties.length;) {
                     bytesToCopy = Math.min(blockSizeBytes, blockSizeBytes - byteIndex);
 
-                    const substring = data.substring(j, j + bytesToCopy);
+                    const substring = properties.substring(j, j + bytesToCopy);
                     block += substring;
                     byteIndex += substring.length; // May be less than wanted bytesToCopy.
                     j += substring.length;

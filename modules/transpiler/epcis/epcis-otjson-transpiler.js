@@ -92,7 +92,6 @@ class EpcisOtJsonTranspiler {
 
     /**
      * Remove comments from raw json
-     * @param jsonRaw
      */
     _removeCommentsAndTrimTexts(obj) {
         if (typeof obj === 'object' || Array.isArray((obj))) {
@@ -161,6 +160,37 @@ class EpcisOtJsonTranspiler {
             },
             transpilationInfo,
         };
+    }
+
+    /**
+     * Sort @graph data inline
+     * @param graph
+     */
+    static sortGraphRecursively(graph) {
+        graph.forEach(item => EpcisOtJsonTranspiler.sortObjectRecursively(item));
+        return graph;
+    }
+
+    /**
+     * Sort object recursively
+     */
+    static sortObjectRecursively(object) {
+        if (object == null) {
+            return null;
+        }
+        if (Array.isArray(object)) { // skip array sorting
+            return object;
+        } else if (typeof object === 'object') {
+            for (const key of Object.keys(object)) {
+                if (key !== '___metadata') {
+                    EpcisOtJsonTranspiler.sortObjectRecursively(object[key]);
+                }
+            }
+            const ordered = {};
+            Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
+            return ordered;
+        }
+        return object;
     }
 
     /**
@@ -273,6 +303,22 @@ class EpcisOtJsonTranspiler {
                 otVocabulary['@id'] = vocabularyElement._attributes.id;
                 otVocabulary.properties = properties;
                 otVocabulary['@type'] = 'otObject';
+
+                if (vocabularyElement.children) {
+                    const compressedChildren = this._compressText(vocabularyElement.children);
+                    otVocabulary.properties.children = compressedChildren.id;
+                    otVocabulary.relations = [];
+                    otVocabulary.properties.children.forEach(() => otVocabulary.relations.push({
+                        '@type': 'otRelation',
+                        direction: 'direct', // think about direction
+                        linkedObject: {
+                            '@id': otVocabulary['@id'],
+                        },
+                        properties: {
+                            relationType: 'HAS_CHILD',
+                        },
+                    }));
+                }
                 result.push(otVocabulary);
             }
         }
@@ -300,6 +346,13 @@ class EpcisOtJsonTranspiler {
             const vocabularyElement = metadata;
             if (elementsByType[type] == null) {
                 elementsByType[type] = [];
+            }
+
+            const { children: otChildren } = otVocabularyElement.properties;
+            if (otChildren) {
+                vocabularyElement.children = {
+                    id: this._decompressText(otChildren),
+                };
             }
             elementsByType[type].push(vocabularyElement);
         }
