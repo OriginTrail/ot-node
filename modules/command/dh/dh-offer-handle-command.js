@@ -99,7 +99,7 @@ class DHOfferHandleCommand extends Command {
         return {
             offerId: response.offer_id,
             dataSetId: response.data_set_id,
-            otjson: response.otjson,
+            otJson: response.otJson,
             dcWallet: response.dc_wallet,
             dcNodeId: response.dcNodeId,
             litigationPublicKey: response.litigation_public_key,
