@@ -24,6 +24,7 @@ class ReplicationService {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationCache = {};
+        this.otJsonImporter = ctx.otJsonImporter;
     }
 
     /**
@@ -37,44 +38,53 @@ class ReplicationService {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
 
-        const [edges, vertices] = await Promise.all([
-            this.graphStorage.findEdgesByImportId(offer.data_set_id),
-            this.graphStorage.findVerticesByImportId(offer.data_set_id),
-        ]);
+        const otJson = await this.otJsonImporter.getImport(offer.data_set_id);
+        const flavor = {
+            [COLOR.RED]: otJson,
+            [COLOR.BLUE]: Utilities.copyObject(otJson),
+            [COLOR.GREEN]: Utilities.copyObject(otJson),
+        };
 
         const that = this;
         this.replicationCache[internalOfferId] = {};
         return Promise.all([COLOR.RED, COLOR.BLUE, COLOR.GREEN]
             .map(async (color) => {
-                const litigationKeyPair = Encryption.generateKeyPair(512);
-                const litEncVertices = ImportUtilities.immutableEncryptVertices(
-                    vertices,
-                    litigationKeyPair.privateKey,
-                );
+                const document = flavor[color];
 
-                ImportUtilities.sort(litEncVertices);
-                const litigationBlocks = this.challengeService.getBlocks(litEncVertices);
+                // vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+
+                const litigationKeyPair = Encryption.generateKeyPair(512);
+                const distributionKeyPair = Encryption.generateKeyPair(512);
+                const distEncVertices = [];
+
+                document['@graph'].forEach((vertex) => {
+                    if (vertex.properties != null) {
+                        distEncVertices.push({
+                            properties: Encryption.encryptObject(
+                                vertex.properties,
+                                distributionKeyPair.privateKey,
+                            ),
+                        })
+                        vertex.properties = Encryption.encryptObject(
+                            vertex.properties,
+                            litigationKeyPair.privateKey,
+                        );
+                    }
+                });
+
+                const litigationBlocks = this.challengeService.getBlocks(document['@graph']);
                 const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
                 const litRootHash = litigationBlocksMerkleTree.getRoot();
 
-                const distributionKeyPair = Encryption.generateKeyPair(512);
-                const distEncVertices = ImportUtilities.immutableEncryptVertices(
-                    vertices,
-                    distributionKeyPair.privateKey,
-                );
-                const distMerkleStructure = await ImportUtilities.merkleStructure(
-                    distEncVertices,
-                    edges,
-                );
-                const distRootHash = distMerkleStructure.tree.getRoot();
+                const distMerkleStructure = new MerkleTree(distEncVertices);
+                const distRootHash = distMerkleStructure.getRoot();
 
                 const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
                 const distributionEpkChecksum = Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
                 const replication = {
                     color,
-                    edges,
-                    litigationVertices: litEncVertices,
+                    otJson: document,
                     litigationPublicKey: litigationKeyPair.publicKey,
                     litigationPrivateKey: litigationKeyPair.privateKey,
                     distributionPublicKey: distributionKeyPair.publicKey,

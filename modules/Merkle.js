@@ -10,7 +10,7 @@ class MerkleTree {
             return abi.soliditySHA3(
                 ['bytes32', 'uint256'],
                 [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
-            ).toString('hex');g
+            ).toString('hex');
 
         case 'sha3': return sha3_256(`${leaf}${index}`);
         default: throw Error('Invalid hash function!');

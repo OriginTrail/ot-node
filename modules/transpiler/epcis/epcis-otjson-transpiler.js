@@ -69,7 +69,7 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortGraphRecursively(otjson['@graph']), null, 0))}`;
+        otjson['@id'] = `0x${sha3_256(JSON.stringify(EpcisOtJsonTranspiler.sortGraphRecursively(otjson['@graph']), null, 0))}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
@@ -180,18 +180,16 @@ class EpcisOtJsonTranspiler {
     /**
      * Sort @graph data inline
      * @param graph
-     * @private
      */
-    _sortGraphRecursively(graph) {
-        graph.forEach(item => this._sortObjectRecursively(item));
+    static sortGraphRecursively(graph) {
+        graph.forEach(item => EpcisOtJsonTranspiler.sortObjectRecursively(item));
         return graph;
     }
 
     /**
      * Sort object recursively
-     * @private
      */
-    _sortObjectRecursively(object) {
+    static sortObjectRecursively(object) {
         if (object == null) {
             return null;
         }
@@ -200,7 +198,7 @@ class EpcisOtJsonTranspiler {
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {
                 if (key !== '___metadata') {
-                    this._sortObjectRecursively(object[key]);
+                    EpcisOtJsonTranspiler.sortObjectRecursively(object[key]);
                 }
             }
             const ordered = {};
@@ -331,7 +329,9 @@ class EpcisOtJsonTranspiler {
                         linkedObject: {
                             '@id': otVocabulary['@id'],
                         },
-                        relationType: 'HAS_CHILD',
+                        properties: {
+                            relationType: 'HAS_CHILD',
+                        },
                     }));
                 }
                 result.push(otVocabulary);
