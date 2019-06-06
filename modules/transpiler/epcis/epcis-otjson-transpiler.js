@@ -5,12 +5,15 @@ const utilities = require('../../Utilities');
 const fs = require('fs');
 
 const { sha3_256 } = require('js-sha3');
-const sortedStringify = require('sorted-json-stringify');
+const deepExtend = require('deep-extend');
 
+const Utilities = require('../../Utilities');
+const Merkle = require('../../Merkle');
 
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
+        this.web3 = ctx.web3;
     }
 
     /**
@@ -23,7 +26,7 @@ class EpcisOtJsonTranspiler {
             return null;
         }
 
-        const xsdFileBuffer = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
+        const xsdFileBuffer = fs.readFileSync('./modules/transpiler/epcis/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
         const schema = xsd.parse(xsdFileBuffer.toString());
 
         const validationResult = schema.validate(xml);
@@ -66,10 +69,39 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortObjectRecursively(otjson['@graph']), null))}`;
+        otjson['@id'] = `0x${sha3_256(JSON.stringify(this._sortGraphRecursively(otjson['@graph']), null, 0))}`;
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
+
+        const datasetSummary = {
+            datasetId: otjson['@id'],
+            datasetCreator: otjson.datasetHeader.dataCreator,
+            objects: otjson['@graph'].map(vertex => ({
+                '@id': vertex['@id'],
+                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
+            })),
+            numRelations: otjson['@graph']
+                .filter(vertex => vertex.relations != null)
+                .reduce((acc, value) => acc + value.relations.length, 0),
+        };
+
+        const merkle = new Merkle(
+            [JSON.stringify(datasetSummary), ...otjson['@graph'].map(v => JSON.stringify(v))],
+            'sha3',
+        );
+        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkle.getRoot();
+
+        const { signature } = this.web3.eth.accounts.sign(
+            Utilities.soliditySHA3(JSON.stringify(otjson)),
+            Utilities.normalizeHex(this.config.node_private_key),
+        );
+
+        otjson.signature = {
+            value: signature,
+            type: 'ethereum-signature',
+        };
+
         return otjson;
     }
 
@@ -102,24 +134,26 @@ class EpcisOtJsonTranspiler {
             datasetCreationTimestamp: new Date().toISOString(),
             datasetTitle: '',
             datasetTags: [],
-            relatedDatasets: [{
+            /*
+            relatedDatasets may contain objects like this:
+            {
                 datasetId: '0x620867dced3a96809fc69d579b2684a7',
                 relationType: 'UPDATED',
                 relationDescription: 'Some long description',
                 relationDirection: 'direct',
-            }],
+            }
+             */
+            relatedDatasets: [],
             validationSchemas: {
                 'erc725-main': {
                     schemaType: 'ethereum-725',
-                    networkId: '1',
-                    networkType: 'private',
-                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                    networkId: this.config.blockchain.network_id,
                 },
                 merkleRoot: {
                     schemaType: 'merkle-root',
-                    networkId: '1',
-                    networkType: 'private',
-                    hubContractAddress: '0x60c14af52908c844568e491242fc530374531854',
+                    networkId: this.config.blockchain.network_id,
+                    hubContractAddress: this.config.blockchain.hubContractAddress,
+                    // TODO: Add holding contract address and version. Hub address is useless.
                 },
             },
             dataIntegrity: {
@@ -134,7 +168,7 @@ class EpcisOtJsonTranspiler {
             dataCreator: {
                 identifiers: [
                     {
-                        identifierValue: '0xfd8a1fc98c8f173448c86062590dc05f5ada93ee',
+                        identifierValue: this.config.erc725Identity,
                         identifierType: 'ERC725',
                         validationSchema: '/schemas/erc725-main',
                     },
@@ -145,28 +179,30 @@ class EpcisOtJsonTranspiler {
     }
 
     /**
-     * Sort graph recursively
+     * Sort @graph data inline
+     * @param graph
+     * @private
+     */
+    _sortGraphRecursively(graph) {
+        graph.forEach(item => this._sortObjectRecursively(item));
+        return graph;
+    }
+
+    /**
+     * Sort object recursively
      * @private
      */
     _sortObjectRecursively(object) {
         if (object == null) {
             return null;
         }
-        if (Array.isArray(object)) {
-            const isScalarArray = object.reduce((accumulator, currentValue) => accumulator && (typeof currentValue !== 'object'), true);
-
-            if (isScalarArray) {
-                object.sort();
-                return object;
-            }
-
-            object.forEach(item => this._sortObjectRecursively(item));
-            object.sort((item1, item2) => sha3_256(sortedStringify(item1, null))
-                .localeCompare(sha3_256(sortedStringify(item2, null))));
+        if (Array.isArray(object)) { // skip array sorting
             return object;
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {
-                this._sortObjectRecursively(object[key]);
+                if (key !== '___metadata') {
+                    this._sortObjectRecursively(object[key]);
+                }
             }
             const ordered = {};
             Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
@@ -260,11 +296,15 @@ class EpcisOtJsonTranspiler {
                 const properties = {
                     objectType: 'vocabularyElement',
                     vocabularyType: type,
-                    ___attributes: vocabularyElement.attribute,
-                    ___metadata: {},
+                    ___metadata: this._extractMetadata(vocabularyElement),
                 };
+
                 for (const attribute of vocabularyElement.attribute) {
-                    properties[attribute._attributes.id] = attribute._text.trim();
+                    if (this._isLeaf(attribute)) {
+                        properties[attribute._attributes.id] = attribute._text.trim();
+                    } else {
+                        properties[attribute._attributes.id] = this._compressText(attribute);
+                    }
                 }
 
                 const otVocabulary = {
@@ -293,14 +333,19 @@ class EpcisOtJsonTranspiler {
     _convertVocabulariesToJson(otVocabularyElementList) {
         const elementsByType = {};
         for (const otVocabularyElement of otVocabularyElementList) {
-            const vocabularyElement = {};
-            vocabularyElement._attributes = {
-                id: otVocabularyElement['@id'],
-            };
-            vocabularyElement.attribute = otVocabularyElement.properties.___attributes;
+            const { properties } = otVocabularyElement;
+            delete properties.objectType;
+            const type = properties.vocabularyType;
+            delete properties.vocabularyType;
+            const metadata = properties.___metadata;
+            delete properties.___metadata;
 
-            Object.assign(vocabularyElement, otVocabularyElement.properties.___metadata);
-            const type = otVocabularyElement.properties.vocabularyType;
+            for (const [key, value] of Object.entries(properties)) {
+                const m = metadata.attribute.find(x => x._attributes.id === key);
+                deepExtend(m, this._decompressText(value));
+            }
+
+            const vocabularyElement = metadata;
             if (elementsByType[type] == null) {
                 elementsByType[type] = [];
             }
@@ -354,7 +399,7 @@ class EpcisOtJsonTranspiler {
                 results.push(this._convertEventFromJson(event, 'ObjectEvent'));
             }
         }
-        if (root.ObjectEvent) {
+        if (root.AggregationEvent) {
             for (const event of root.AggregationEvent) {
                 results.push(this._convertEventFromJson(event, 'AggregationEvent'));
             }
@@ -905,46 +950,3 @@ class EpcisOtJsonTranspiler {
 }
 
 module.exports = EpcisOtJsonTranspiler;
-
-// const xml = fs.readFileSync('./datasetA.xml').toString('UTF-8');
-// const converter = new EpcisOtJsonTranspiler(null);
-// const otJson = converter.convertToOTJson(xml);
-//
-// const recoveredXML = converter.convertFromOTJson(otJson);
-// const recoveredOtJson = converter.convertToOTJson(recoveredXML);
-//
-// console.log(JSON.stringify(converter._sortGraphRecursively(otJson)));
-// console.log(JSON.stringify(converter._sortGraphRecursively(recoveredOtJson)));
-
-// console.log(JSON.stringify(otJson));
-// console.log('-------------------');
-// console.log(JSON.stringify(recoveredOtJson));
-
-// console.log(JSON.stringify(xml) === JSON.stringify(recoveredXML));
-// console.log(JSON.stringify(otJson) === JSON.stringify(recoveredOtJson));
-// console.log(JSON.stringify(otJson, null, 0));
-// console.log(converter.convertFromOTJson(otJson));
-//
-// const a = {
-//     b: 1,
-//     s: 3,
-//     h: '3',
-//     c: {
-//         g: {
-//             d: [4, 1, 3, 2],
-//         },
-//         z: 3,
-//     },
-//     l: [1, {
-//         y: 3,
-//     },
-//     {
-//         y: 2,
-//     }],
-// };
-//
-// console.log(JSON.stringify(converter._sortGraphRecursively(a)));
-
-//
-// const prefixed = converter._addPrefix(a, 'ot:');
-// console.log(JSON.stringify(converter._removePrefix(prefixed, 'ot:'), null, 2));

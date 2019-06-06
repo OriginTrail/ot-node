@@ -253,7 +253,7 @@ class Importer {
         try {
             const result = await this.wotImporter.parse(document);
             return {
-                response: await this.afterImport(result),
+                response: result,
                 error: null,
             };
         } catch (error) {
@@ -298,6 +298,7 @@ class Importer {
         try {
             const otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(xmlDoc);
             const result = await this.otJsonImporter.importFile(otJsonDoc);
+            this.remoteControl.importRequestData();
             return {
                 response: await this.afterImport(result),
                 error: null,

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:example0="http://ns.example.com/epcis0" xmlns:example1="http://ns.example.com/epcis1"
+	xmlns:example2="http://ns.example.com/epcis2" xmlns:example3="http://ns.example.com/epcis3"
+	xmlns:example="http://ns.example.com/epcis" creationDate="2005-07-11T11:30:47.0Z"
+	schemaVersion="1.2">
+	<EPCISBody>
+		<EventList>
+			<QuantityEvent>
+				<eventTime>2013-06-08T14:58:56.591Z</eventTime>
+				<eventTimeZoneOffset>+02:00</eventTimeZoneOffset>
+				<epcClass>urn:epc:class:lgtin:4012345.012345.998877</epcClass>
+				<quantity>200</quantity>
+				<bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+				<readPoint>
+					<id>urn:epc:id:sgln:0614141.00777.0</id>
+				</readPoint>
+				<bizLocation>
+					<id>urn:epc:id:sgln:0614141.00888.0</id>
+				</bizLocation>
+				<bizTransactionList>
+					<bizTransaction type="urn:epcglobal:cbv:btt:po">http://transaction.acme.com/po/12345678</bizTransaction>
+				</bizTransactionList>
+				<example0:a xsi:type="xsd:int">15</example0:a>
+				<example0:b>
+					<example1:c xsi:type="xsd:double">20.5</example1:c>
+				</example0:b>
+				<example0:h>
+					<example1:d xsi:type="xsd:boolean">true</example1:d>
+					<example1:e>
+						<example2:f xsi:type="xsd:dateTime">2013-06-08T14:58:56.591Z</example2:f>
+					</example1:e>
+					<example1:g xsi:type="xsd:long">50</example1:g>
+				</example0:h>
+			</QuantityEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>

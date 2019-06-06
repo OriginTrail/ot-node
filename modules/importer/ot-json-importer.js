@@ -114,6 +114,7 @@ class OtJsonImporter {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.notifyError = ctx.notifyError;
+        this.web3 = ctx.web3;
 
         // TODO: use creditor information from config.
         this.me = {
@@ -369,8 +370,28 @@ class OtJsonImporter {
 
         await this.db.addDocument('ot_datasets', metadata);
 
+        // Extract wallet from signature.
+        const docWithoutSignature = {};
+        Object.keys(document)
+            .filter(key => key !== 'signature')
+            .forEach(key => docWithoutSignature[key] = document[key]);
+        const message = JSON.stringify(docWithoutSignature);
+        const wallet = this.web3.eth.accounts.recover(
+            Utilities.soliditySHA3(message),
+            document.signature.value,
+        );
+
         // TODO enable commit operation
         // await this.db.commit();
+
+        return {
+            root_hash: document.datasetHeader.dataIntegrity.proofs[0].proofValue,
+            vertices: deduplicateVertices,
+            edges: deduplicateEdges,
+            data_set_id: datasetId,
+            wallet,
+
+        };
     }
 
     /**
@@ -384,9 +405,9 @@ class OtJsonImporter {
         // {
         //     @id: '',
         //     @type: 'Dataset',
-        //     @context: {},
         //     datasetHeader: {},
-        //     @graph: []
+        //     @graph: [],
+        //     signature: {}
         // }
 
         if (document == null) {
@@ -397,7 +418,7 @@ class OtJsonImporter {
             throw Error('Document has to be object.');
         }
 
-        if (Object.keys(document).length !== 4) {
+        if (Object.keys(document).length !== 5) {
             throw Error('Lack of additional information in OT-JSON document.');
         }
 
@@ -417,8 +438,6 @@ class OtJsonImporter {
         if (graph == null || !Array.isArray(graph) || graph.length === 0) {
             throw Error('Missing or empty graph.');
         }
-
-        // TODO: Validate @context here.
 
         if (datasetHeader.OTJSONVersion !== '1.0') {
             throw Error('Unsupported OT-JSON version.');
@@ -441,6 +460,11 @@ class OtJsonImporter {
         if (identifiers[0].identifierType !== 'ERC725' || identifiers[0].validationSchema !== '/schemas/erc725-main' ||
             !Utilities.isHexStrict(identifiers[0].identifierValue)) {
             throw Error('Wrong format of data creator.');
+        }
+
+        const { signature } = document;
+        if (signature == null || typeof signature.type !== 'string' || typeof signature.value !== 'string') {
+            throw Error('Wrong or missing signature.');
         }
     }
 }

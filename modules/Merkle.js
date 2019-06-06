@@ -1,18 +1,45 @@
 const abi = require('ethereumjs-abi');
 const BN = require('bn.js');
 const Utilities = require('./Utilities');
+const { sha3_256 } = require('js-sha3');
 
 class MerkleTree {
-    constructor(leaves) {
+    generateLeafHash(leaf, index) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            return abi.soliditySHA3(
+                ['bytes32', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
+            ).toString('hex');g
+
+        case 'sha3': return sha3_256(`${leaf}${index}`);
+        default: throw Error('Invalid hash function!');
+        }
+    }
+
+    generateInternalHash(block1, block2) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            return abi.soliditySHA3(
+                ['bytes32', 'bytes32'],
+                [
+                    Utilities.normalizeHex(`${block1}`),
+                    Utilities.normalizeHex(`${block2}`),
+                ],
+            ).toString('hex');
+
+        case 'sha3': return sha3_256(`${Utilities.normalizeHex(block1)}${Utilities.normalizeHex(block2)}`);
+        default: throw Error('Invalid hash function!');
+        }
+    }
+
+    constructor(leaves, hashFunction = 'soliditySha3') {
         this.levels = [];
         this.levels.push(leaves);
-
+        this.hashFunction = hashFunction;
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
-            const hash = abi.soliditySHA3(
-                ['bytes32', 'uint256'],
-                [Utilities.normalizeHex(Buffer.from(leaves[i], 'utf8').toString('hex')), i],
-            ).toString('hex');
+            const hash = this.generateLeafHash(leaves[i], i);
 
             leavesHashes.push(hash);
         }
@@ -26,22 +53,16 @@ class MerkleTree {
             let i = 0;
             while (i < currentLevel.length) {
                 if (i + 1 < currentLevel.length) {
-                    const hash = abi.soliditySHA3(
-                        ['bytes32', 'bytes32'],
-                        [
-                            Utilities.normalizeHex(currentLevel[i]),
-                            Utilities.normalizeHex(currentLevel[i + 1]),
-                        ],
-                    ).toString('hex');
+                    const hash = this.generateInternalHash(
+                        currentLevel[i],
+                        currentLevel[i + 1],
+                    );
                     nextLevel.push(hash);
                 } else {
-                    const hash = abi.soliditySHA3(
-                        ['bytes32', 'bytes32'],
-                        [
-                            Utilities.normalizeHex(currentLevel[i]),
-                            Utilities.normalizeHex(currentLevel[i]),
-                        ],
-                    ).toString('hex');
+                    const hash = this.generateInternalHash(
+                        currentLevel[i],
+                        currentLevel[i],
+                    );
                     nextLevel.push(hash);
                 }
                 i += 2;
@@ -83,14 +104,7 @@ class MerkleTree {
     }
 
     verifyProof(proof, block, i) {
-        let h = abi.soliditySHA3(
-            ['bytes32', 'uint256'],
-            [
-                Utilities.normalizeHex(Buffer.from(block, 'utf8').toString('hex')),
-                i,
-            ],
-        ).toString('hex');
-
+        let h = this.generateLeafHash(block, i);
         let j = this.levels.length - 1;
         let k = 0;
         let r = 0;
@@ -98,27 +112,15 @@ class MerkleTree {
         while (j > 1) {
             r = i % 2;
             if (r % 2 === 0) {
-                h = abi.soliditySHA3(
-                    ['bytes32', 'bytes32'],
-                    [
-                        Utilities.normalizeHex(h),
-                        Utilities.normalizeHex(proof[k]),
-                    ],
-                ).toString('hex');
+                h = this.generateInternalHash(h, proof[k]);
             } else {
-                h = abi.soliditySHA3(
-                    ['bytes32', 'bytes32'],
-                    [
-                        Utilities.normalizeHex(proof[k]),
-                        Utilities.normalizeHex(h)],
-                ).toString('hex');
+                h = this.generateInternalHash(proof[k], h);
             }
 
             k += 1;
             i = Math.trunc(i / 2);
             j -= 1;
         }
-
         return h === this.rootHash;
     }
 }
