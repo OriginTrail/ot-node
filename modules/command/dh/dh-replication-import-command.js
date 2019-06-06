@@ -49,7 +49,7 @@ class DhReplicationImportCommand extends Command {
         const {
             offerId,
             dataSetId,
-            otjson,
+            otJson,
             dcWallet,
             dcNodeId,
             litigationPublicKey,
@@ -61,7 +61,7 @@ class DhReplicationImportCommand extends Command {
             encColor,
         } = command.data;
         const { decryptedDataset, encryptedMap } =
-            await ImportUtilities.decryptDataset(otjson, litigationPublicKey, encColor);
+            await ImportUtilities.decryptDataset(otJson, litigationPublicKey, encColor);
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphHash(decryptedDataset['@graph']);
 
@@ -72,7 +72,7 @@ class DhReplicationImportCommand extends Command {
         const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
 
         // Verify litigation root hash
-        const encryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(otjson);
+        const encryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(otJson);
 
         if (encryptedGraphRootHash !== litigationRootHash) {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);
@@ -119,12 +119,13 @@ class DhReplicationImportCommand extends Command {
                 throw Error(importResult.error);
             }
 
-            const dataSize = bytes(JSON.stringify(otjson));
+            const dataSize = bytes(JSON.stringify(otJson));
             await Models.data_info.create({
                 data_set_id: dataSetId,
-                total_documents: otjson['@graph'].length,
+                total_documents: otJson['@graph'].length,
                 root_hash: decryptedGraphRootHash,
-                // TODO: add field data_provider_id: 'Perutnina Ptuj ERC...' otjson.datasetHeader.dataProvider || 'Unknown'
+                // TODO: add field data_provider_id: 'Perutnina Ptuj ERC...'
+                // otjson.datasetHeader.dataProvider || 'Unknown'
                 // TODO: add field data_provider_id_type: 'ERC725' || 'Unknown'
                 // TODO: add field data_creator_id: otjson.datasetHeader.dataCreator
                 // TODO: add field data_creator_id_type: 'ERC725' || 'Unknown'

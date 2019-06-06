@@ -92,7 +92,6 @@ class EpcisOtJsonTranspiler {
 
     /**
      * Remove comments from raw json
-     * @param jsonRaw
      */
     _removeCommentsAndTrimTexts(obj) {
         if (typeof obj === 'object' || Array.isArray((obj))) {
@@ -273,6 +272,22 @@ class EpcisOtJsonTranspiler {
                 otVocabulary['@id'] = vocabularyElement._attributes.id;
                 otVocabulary.properties = properties;
                 otVocabulary['@type'] = 'otObject';
+
+                if (vocabularyElement.children) {
+                    const compressedChildren = this._compressText(vocabularyElement.children);
+                    otVocabulary.properties.children = compressedChildren.id;
+                    otVocabulary.relations = [];
+                    otVocabulary.properties.children.forEach(() => otVocabulary.relations.push({
+                        '@type': 'otRelation',
+                        direction: 'direct', // think about direction
+                        linkedObject: {
+                            '@id': otVocabulary['@id'],
+                        },
+                        properties: {
+                            relationType: 'HAS_CHILD',
+                        },
+                    }));
+                }
                 result.push(otVocabulary);
             }
         }
@@ -300,6 +315,13 @@ class EpcisOtJsonTranspiler {
             const vocabularyElement = metadata;
             if (elementsByType[type] == null) {
                 elementsByType[type] = [];
+            }
+
+            const { children: otChildren } = otVocabularyElement.properties;
+            if (otChildren) {
+                vocabularyElement.children = {
+                    id: this._decompressText(otChildren),
+                };
             }
             elementsByType[type].push(vocabularyElement);
         }
