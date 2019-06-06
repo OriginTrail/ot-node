@@ -8,7 +8,6 @@ const fs = require('fs');
 const deepExtend = require('deep-extend');
 
 const Utilities = require('../../Utilities');
-const Merkle = require('../../Merkle');
 
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
@@ -74,23 +73,9 @@ class EpcisOtJsonTranspiler {
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
 
-        const datasetSummary = {
-            datasetId: otjson['@id'],
-            datasetCreator: otjson.datasetHeader.dataCreator,
-            objects: otjson['@graph'].map(vertex => ({
-                '@id': vertex['@id'],
-                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
-            })),
-            numRelations: otjson['@graph']
-                .filter(vertex => vertex.relations != null)
-                .reduce((acc, value) => acc + value.relations.length, 0),
-        };
+        const merkleRoot = importUtilities.calculateDatasetRootHash(otjson);
 
-        const merkle = new Merkle(
-            [JSON.stringify(datasetSummary), ...otjson['@graph'].map(v => JSON.stringify(v))],
-            'sha3',
-        );
-        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkle.getRoot();
+        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
         const { signature } = this.web3.eth.accounts.sign(
             Utilities.soliditySHA3(JSON.stringify(otjson)),

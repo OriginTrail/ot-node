@@ -93,7 +93,7 @@ class ImportUtilities {
      * @param encryptionColor - Encryption color
      * @returns Decrypted OTJson dataset
      */
-    static decryptDataset(dataset, decryptionKey, encryptionColor=null) {
+    static decryptDataset(dataset, decryptionKey, encryptionColor = null) {
         const decryptedDataset = utilities.copyObject(dataset);
         const encryptedMap = {};
         const colorMap = {
@@ -334,10 +334,29 @@ class ImportUtilities {
         return transactionHash;
     }
 
-    static calculateGraphRootHash(graph) {
-        const datasetSummary = {};
-        const mtree = new MerkleTree([datasetSummary].concat(graph), 'sha3');
-        return mtree.getRoot();
+    static calculateDatasetSummary(dataset) {
+        return {
+            datasetId: dataset['@id'],
+            datasetCreator: dataset.datasetHeader.dataCreator,
+            objects: dataset['@graph'].map(vertex => ({
+                '@id': vertex['@id'],
+                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
+            })),
+            numRelations: dataset['@graph']
+                .filter(vertex => vertex.relations != null)
+                .reduce((acc, value) => acc + value.relations.length, 0),
+        };
+    }
+
+    static calculateDatasetRootHash(dataset) {
+        const datasetSummary = this.calculateDatasetSummary(dataset);
+
+        const merkle = new MerkleTree(
+            [JSON.stringify(datasetSummary), this.sortGraphRecursively(...dataset['@graph'])],
+            'sha3',
+        );
+
+        return merkle.getRoot();
     }
 
     /**
