@@ -24,6 +24,8 @@ class Importer {
             let response;
             if (type === 'JSON') {
                 response = await this._importJSON(data);
+            } else if (type === 'OTJSON') {
+                response = await this._importOTJSON(data);
             } else if (type === 'WOT_JSON_FILE') {
                 response = await this._importWOT(data);
             } else if (type === 'GS1_XML_FILE') {
@@ -231,11 +233,11 @@ class Importer {
 
         // const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
-        this.log.info(`Root hash: 0x064631c6`);//${merkle.tree.getRoot()}`);
+        this.log.info('Root hash: 0x064631c6');// ${merkle.tree.getRoot()}`);
         this.log.info(`Data set ID: ${data_set_id}`);
         return {
             data_set_id,
-            root_hash: "0x064631c64661060512af1391a02c94a70435e3320207bb07b6ee5ecfde759ef4", // merkle.tree.getRoot(),
+            root_hash: '0x064631c64661060512af1391a02c94a70435e3320207bb07b6ee5ecfde759ef4', // merkle.tree.getRoot(),
             total_documents: 1, // merkle.hashPairs.length,
             vertices,
             edges,
@@ -310,6 +312,35 @@ class Importer {
                 error: errorObject,
             };
         }
+    }
+
+    async importOTJSON(otJsonDocument, encryptedMap) {
+        try {
+            const result = await this._import('OTJSON', {
+                otJsonDocument,
+                encryptedMap,
+            });
+            return {
+                response: await this.afterImport(result),
+                error: null,
+            };
+        } catch (error) {
+            this.log.error(`Import error: ${error}.`);
+            this.remoteControl.importError(`Import error: ${error}.`);
+            this.notifyError(error);
+            const errorObject = { message: error.toString(), status: error.status };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        }
+    }
+
+    async _importOTJSON(data) {
+        this.log.info('Entering importOTJSON');
+
+        const result = await this.otJsonImporter.importFile(data);
+
     }
 
     /**
