@@ -23,7 +23,7 @@ class EpcisOtJsonTranspiler {
             return null;
         }
 
-        const xsdFileBuffer = fs.readFileSync('./xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
+        const xsdFileBuffer = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
         const schema = xsd.parse(xsdFileBuffer.toString());
 
         const validationResult = schema.validate(xml);

@@ -139,7 +139,12 @@ class OtJsonImporter {
      * dataCreator: string
      * edges: Array}}
      */
-    async importFile(document) {
+    async importFile(data) {
+        const {
+            document,
+            encrypted,
+        } = data;
+
         // TODO: validate document here.
         this._validate(document);
 
@@ -148,8 +153,8 @@ class OtJsonImporter {
         const dataCreator = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
 
         // Result
-        let vertices = [];
-        let edges = [];
+        const vertices = [];
+        const edges = [];
 
         document['@graph'].forEach((otObject) => {
             switch (_type(otObject)) {
@@ -214,6 +219,9 @@ class OtJsonImporter {
                         data: otObject.properties,
                         datasets: [datasetId],
                     };
+                    if (encrypted[_id(otObject)]) {
+                        dataVertex.encrypted = encrypted[_id(otObject)];
+                    }
                     vertices.push(dataVertex);
 
                     // Add has-data edge.
@@ -363,14 +371,6 @@ class OtJsonImporter {
 
         // TODO enable commit operation
         // await this.db.commit();
-
-        return {
-            vertices: deduplicateVertices,
-            edges: deduplicateEdges,
-            data_set_id: datasetId,
-            wallet: '0x123123214abbb12354',
-
-        };
     }
 
     /**
