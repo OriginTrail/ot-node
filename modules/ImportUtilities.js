@@ -87,6 +87,39 @@ class ImportUtilities {
     }
 
     /**
+     * Decrypt encrypted otjson dataset
+     * @param dataset - OTJson dataset
+     * @param decryptionKey - Decryption key
+     * @param encryptionColor - Encryption color
+     * @returns Decrypted OTJson dataset
+     */
+    static decryptDataset(dataset, decryptionKey, encryptionColor=null) {
+        const decryptedDataset = utilities.copyObject(dataset);
+        const encryptedMap = {};
+        const colorMap = {
+            0: 'r',
+            1: 'g',
+            2: 'b',
+        };
+
+        for (const obj of decryptedDataset['@graph']) {
+            if (obj.properties != null) {
+                const decryptedProperties = Encryption.decryptObject(obj.properties, decryptionKey);
+                if (encryptionColor) {
+                    const encColor = colorMap[encryptionColor];
+                    encryptedMap[obj['@id']] = {};
+                    encryptedMap[obj['@id']][encColor] = obj.properties;
+                }
+                obj.properties = decryptedProperties;
+            }
+        }
+        return {
+            decryptedDataset,
+            encryptedMap,
+        };
+    }
+
+    /**
      * Normalizes import (use just necessary data)
      * @param dataSetId - Dataset ID
      * @param vertices - Import vertices
@@ -301,12 +334,18 @@ class ImportUtilities {
         return transactionHash;
     }
 
+    static calculateGraphRootHash(graph) {
+        const datasetSummary = {};
+        const mtree = new MerkleTree([datasetSummary].concat(graph), 'sha3');
+        return mtree.getRoot();
+    }
+
     /**
      * Create SHA256 Hash of graph
      * @param graph
      * @returns {string}
      */
-    static createGraphHash(graph) {
+    static calculateGraphHash(graph) {
         return `0x${sha3_256(JSON.stringify(this.sortGraphRecursively(graph), null, 0))}`;
     }
 

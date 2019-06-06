@@ -78,20 +78,35 @@ class DHOfferHandleCommand extends Command {
      * @private
      */
     static _stripResponse(response) {
+        // return {
+        //     offerId: response.offer_id,
+        //     dataSetId: response.data_set_id,
+        //     edges: response.edges,
+        //     litigationVertices: response.litigation_vertices,
+        //     dcWallet: response.dc_wallet,
+        //     litigationPublicKey: response.litigation_public_key,
+        //     distributionPublicKey: response.distribution_public_key,
+        //     distributionPrivateKey: response.distribution_private_key,
+        //     distributionEpkChecksum: response.distribution_epk_checksum,
+        //     litigationRootHash: response.litigation_root_hash,
+        //     distributionRootHash: response.distribution_root_hash,
+        //     distributionEpk: response.distribution_epk,
+        //     distributionSignature: response.distribution_signature,
+        //     transactionHash: response.transaction_hash,
+        //     encColor: response.color,
+        // };
+
         return {
             offerId: response.offer_id,
             dataSetId: response.data_set_id,
-            edges: response.edges,
-            litigationVertices: response.litigation_vertices,
+            otjson: response.otjson,
             dcWallet: response.dc_wallet,
+            dcNodeId: response.dcNodeId,
             litigationPublicKey: response.litigation_public_key,
-            distributionPublicKey: response.distribution_public_key,
-            distributionPrivateKey: response.distribution_private_key,
-            distributionEpkChecksum: response.distribution_epk_checksum,
             litigationRootHash: response.litigation_root_hash,
-            distributionRootHash: response.distribution_root_hash,
+            distributionPublicKey: response.distributionPublicKey,
+            distributionPrivateKey: response.distributionPrivateKey,
             distributionEpk: response.distribution_epk,
-            distributionSignature: response.distribution_signature,
             transactionHash: response.transaction_hash,
             encColor: response.color,
         };

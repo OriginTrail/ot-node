@@ -30,72 +30,60 @@ class DhReplicationImportCommand extends Command {
      * @param command
      */
     async execute(command) {
+        // const {
+        //     offerId,
+        //     dataSetId,
+        //     edges,
+        //     litigationVertices,
+        //     litigationPublicKey,
+        //     distributionPublicKey,
+        //     distributionPrivateKey,
+        //     distributionEpk,
+        //     distributionEpkChecksum,
+        //     dcWallet,
+        //     dcNodeId,
+        //     litigationRootHash,
+        //     distributionRootHash,
+        //     distributionSignature,
+        //     transactionHash,
+        //     encColor,
+        // } = command.data;
         const {
             offerId,
             dataSetId,
-            edges,
-            litigationVertices,
+            otjson,
+            dcWallet,
+            dcNodeId,
             litigationPublicKey,
+            litigationRootHash,
             distributionPublicKey,
             distributionPrivateKey,
             distributionEpk,
-            distributionEpkChecksum,
-            dcWallet,
-            dcNodeId,
-            litigationRootHash,
-            distributionRootHash,
-            distributionSignature,
             transactionHash,
             encColor,
         } = command.data;
-        const decryptedVertices =
-            await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
+        const { decryptedDataset, encryptedMap } =
+            await ImportUtilities.decryptDataset(otjson, litigationPublicKey);
         const calculatedDataSetId =
-            await ImportUtilities.importHash(dataSetId, decryptedVertices, edges);
+            await ImportUtilities.calculateGraphHash(otjson);
 
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }
 
-        ImportUtilities.sort(litigationVertices);
-        const litigationBlocks = this.challengeService.getBlocks(litigationVertices);
-        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
-        const calculatedLitigationRootHash = litigationBlocksMerkleTree.getRoot();
+        const decryptedGraphRootHash = ImportUtilities.calculateGraphRootHash(decryptedDataset['@graph']);
 
-        if (litigationRootHash !== calculatedLitigationRootHash) {
-            throw new Error(`Calculated litigation hash ${calculatedLitigationRootHash} differs from DC litigation hash ${litigationRootHash}`);
+        // Verify litigation root hash
+        const encryptedGraphRootHash = ImportUtilities.calculateGraphRootHash(otjson['@graph']);
+
+        if (encryptedGraphRootHash !== litigationRootHash) {
+            throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);
         }
 
-        const distEncVertices = ImportUtilities.immutableEncryptVertices(
-            decryptedVertices,
-            distributionPrivateKey,
-        );
-        const calculatedDistributionRootHash = (await ImportUtilities.merkleStructure(
-            distEncVertices,
-            edges,
-        )).tree.getRoot();
-
-        if (distributionRootHash !== calculatedDistributionRootHash) {
-            throw new Error(`Calculated distribution hash ${calculatedLitigationRootHash} differs from DC distribution hash ${litigationRootHash}`);
-        }
-
-        const calculatedDistEpkChecksum = Encryption
-            .calculateDataChecksum(distributionEpk, 0, 0, 0);
-        if (distributionEpkChecksum !== calculatedDistEpkChecksum) {
-            throw new Error(`Calculated distribution EPK checksum ${calculatedDistEpkChecksum} differs from DC distribution EPK checksum ${distributionEpkChecksum}`);
-        }
-
-        const toCheck = [
-            Utilities.denormalizeHex(new BN(distributionEpkChecksum).toString('hex')),
-            Utilities.denormalizeHex(distributionRootHash),
-        ];
-        const senderAddress = Encryption.extractSignerAddress(toCheck, distributionSignature);
-        if (!Utilities.compareHexStrings(senderAddress, dcWallet)) {
-            throw new Error(`Failed to validate DC ${dcWallet} signature for offer ${offerId}`);
-        }
-
-        const calculatedDistPublicKey = Encryption.unpackEPK(distributionEpk);
-        ImportUtilities.immutableDecryptVertices(distEncVertices, calculatedDistPublicKey);
+        // TODO: Verify decrypted data root hash
+        // TODO: Verify EPK checksum
+        // TODO: Verify distribution keys and hashes
+        // TODO: Verify data creator id
 
         const holdingData = await Models.holding_data.findOne({
             where: {
@@ -106,28 +94,19 @@ class DhReplicationImportCommand extends Command {
         });
 
         if (holdingData == null) {
-            // import does not exist
-
-            await this.importer.importJSON({
-                dataSetId,
-                vertices: litigationVertices,
-                edges,
-                wallet: dcWallet,
-            }, true, encColor);
+            // Store holding information and generate keys for eventual data replication.
+            await Models.holding_data.create({
+                data_set_id: dataSetId,
+                source_wallet: dcWallet,
+                litigation_public_key: litigationPublicKey,
+                litigation_root_hash: litigationRootHash,
+                distribution_public_key: distributionPublicKey,
+                distribution_private_key: distributionPrivateKey,
+                distribution_epk: distributionEpk,
+                transaction_hash: transactionHash,
+                color: encColor,
+            });
         }
-
-        // Store holding information and generate keys for eventual data replication.
-        await Models.holding_data.create({
-            data_set_id: dataSetId,
-            source_wallet: dcWallet,
-            litigation_public_key: litigationPublicKey,
-            litigation_root_hash: litigationRootHash,
-            distribution_public_key: distributionPublicKey,
-            distribution_private_key: distributionPrivateKey,
-            distribution_epk: distributionEpk,
-            transaction_hash: transactionHash,
-            color: encColor,
-        });
 
         const dataInfo = await Models.data_info.findOne({
             where: {
@@ -136,25 +115,22 @@ class DhReplicationImportCommand extends Command {
         });
 
         if (dataInfo == null) {
-            let importResult = await this.importer.importJSON({
-                dataSetId,
-                vertices: decryptedVertices,
-                edges,
-                wallet: dcWallet,
-            }, false);
+            const importResult = await this.importer.importOTJSON(decryptedDataset, encryptedMap);
 
             if (importResult.error) {
                 throw Error(importResult.error);
             }
 
-            importResult = importResult.response;
-
-            const dataSize = bytes(JSON.stringify(importResult.vertices));
+            const dataSize = bytes(JSON.stringify(otjson));
             await Models.data_info.create({
-                data_set_id: importResult.data_set_id,
-                total_documents: importResult.vertices.length,
-                root_hash: importResult.root_hash,
-                data_provider_wallet: importResult.wallet,
+                data_set_id: dataSetId,
+                total_documents: otjson['@graph'].length,
+                root_hash: decryptedGraphRootHash,
+                // TODO: add field data_provider_id: 'Perutnina Ptuj ERC...' otjson.datasetHeader.dataProvider || 'Unknown'
+                // TODO: add field data_provider_id_type: 'ERC725' || 'Unknown'
+                // TODO: add field data_creator_id: otjson.datasetHeader.dataCreator
+                // TODO: add field data_creator_id_type: 'ERC725' || 'Unknown'
+                data_provider_wallet: dcWallet, // TODO: rename to data_creator_wallet
                 import_timestamp: new Date(),
                 data_size: dataSize,
                 origin: 'HOLDING',
