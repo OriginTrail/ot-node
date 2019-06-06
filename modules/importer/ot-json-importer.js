@@ -142,7 +142,7 @@ class OtJsonImporter {
      */
     async importFile(data) {
         const {
-            document,
+            otJsonDocument: document,
             encrypted,
         } = data;
 

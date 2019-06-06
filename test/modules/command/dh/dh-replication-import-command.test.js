@@ -10,6 +10,7 @@ const { Database } = require('arangojs');
 
 const models = require('../../../../models/index');
 const Importer = require('../../../../modules/importer');
+const ImportUtilities = require('../../../../modules/ImportUtilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
 const DHReplicationImportCommand = require('../.././../../modules/command/dh/dh-replication-import-command');
@@ -22,6 +23,8 @@ const pjson = require('../../../../package.json');
 const logger = require('../../../../modules/logger');
 
 const testUtilities = require('../../test-utilities');
+
+const {encryptedJSON, publicKey} = require('../../../../mockEncrypted.js');
 
 describe('Checks DHReplicationImportCommand execute() logic', function () {
     this.timeout(5000);
@@ -103,10 +106,20 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
         myGraphStorage = await graphStorage.connect();
         myConfig = await container.resolve('config');
 
-        myCommand = {
-            data: {
-                // insert data here
-            },
+        myCommand = {};
+        myCommand.data = {
+            offerId: '0x2345678',
+            dataSetId: encryptedJSON['@id'],
+            otjson: encryptedJSON,
+            dcWallet: '0x2134',
+            dcNodeId: '21341234124',
+            litigationPublicKey: publicKey,
+            litigationRootHash: ImportUtilities.calculateDatasetRootHash(encryptedJSON),
+            distributionPublicKey: '',
+            distributionPrivateKey: '',
+            distributionEpk: '',
+            transactionHash: '',
+            encColor: 0,
         };
 
         const dhReplicationImportCommand = container.resolve('dhReplicationImportCommand');
