@@ -150,8 +150,8 @@ class OtJsonImporter {
         const dataCreator = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
 
         // Result
-        let vertices = [];
-        let edges = [];
+        const vertices = [];
+        const edges = [];
 
         document['@graph'].forEach((otObject) => {
             switch (_type(otObject)) {
