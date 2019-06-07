@@ -371,7 +371,7 @@ class ImportUtilities {
     /**
      * Sort @graph data inline
      * @param graph
-     * @private
+     * @public
      */
     static sortGraphRecursively(graph) {
         graph.forEach(item => this.sortObjectRecursively(item));

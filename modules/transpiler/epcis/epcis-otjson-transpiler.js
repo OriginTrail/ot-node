@@ -69,6 +69,7 @@ class EpcisOtJsonTranspiler {
         transpilationInfo.diff = json;
 
         otjson['@id'] = importUtilities.calculateGraphHash(otjson['@graph']);
+        console.log(JSON.stringify(importUtilities.sortGraphRecursively(otjson['@graph'])));
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);

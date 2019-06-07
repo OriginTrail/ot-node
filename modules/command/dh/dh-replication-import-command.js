@@ -65,6 +65,7 @@ class DhReplicationImportCommand extends Command {
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphHash(decryptedDataset['@graph']);
 
+        console.log(JSON.stringify(ImportUtilities.sortGraphRecursively(decryptedDataset['@graph'])));
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }

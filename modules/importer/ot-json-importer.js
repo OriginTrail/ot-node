@@ -3,6 +3,7 @@ const { forEach, forEachSeries } = require('p-iteration');
 
 const Utilities = require('../Utilities');
 const EpcisOtJsonTranspiler = require('../transpiler/epcis/epcis-otjson-transpiler');
+const ImportUtilities = require('../ImportUtilities');
 
 // Helper functions.
 
@@ -143,7 +144,7 @@ class OtJsonImporter {
      */
     async importFile(data) {
         const {
-            otJsonDocument: document,
+            document,
             encryptedMap: encrypted,
         } = data;
 
@@ -497,7 +498,7 @@ class OtJsonImporter {
             document['@graph'].push(otConnector);
         });
 
-        EpcisOtJsonTranspiler.sortGraphRecursively(document['@graph']);
+        ImportUtilities.sortGraphRecursively(document['@graph']);
 
         const { signature } = this.web3.eth.accounts.sign(
             Utilities.soliditySHA3(JSON.stringify(document)),
