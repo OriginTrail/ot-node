@@ -9,6 +9,7 @@ const deepExtend = require('deep-extend');
 
 const Utilities = require('../../Utilities');
 const Merkle = require('../../Merkle');
+const sortedStringify = require('sorted-json-stringify');
 
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
@@ -217,6 +218,7 @@ class EpcisOtJsonTranspiler {
      */
     static sortGraphRecursively(graph) {
         graph.forEach(item => EpcisOtJsonTranspiler.sortObjectRecursively(item));
+        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
         return graph;
     }
 
@@ -228,6 +230,15 @@ class EpcisOtJsonTranspiler {
             return null;
         }
         if (Array.isArray(object)) { // skip array sorting
+            const isScalarArray = object.reduce((accumulator, currentValue) => accumulator && (typeof currentValue !== 'object'), true);
+
+            if (isScalarArray) {
+                return object;
+            }
+
+            object.forEach(item => this.sortObjectRecursively(item));
+            object.sort((item1, item2) => sha3_256(sortedStringify(item1, null))
+                .localeCompare(sha3_256(sortedStringify((item2, null)))));
             return object;
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {

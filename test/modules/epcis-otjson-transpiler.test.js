@@ -100,17 +100,16 @@ describe('GS1 Importer tests', () => {
                     const otJson = transpiler.convertToOTJson(xmlContents);
 
                     const {
-                        root_hash,
-                        vertices,
-                        edges,
                         data_set_id,
-                        wallet,
                     } = await importer.importFile(otJson);
 
                     const otJsonFromDb = await importer.getImport(data_set_id);
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
 
-                    assert.deepEqual(otJson, otJsonFromDb);
+                    EpcisOtJsonTranspiler.sortGraphRecursively(otJson['@graph']);
+                    EpcisOtJsonTranspiler.sortGraphRecursively(otJsonFromDb['@graph']);
+
+                    assert.deepEqual(otJson['@graph'], otJsonFromDb['@graph']);
 
                     const xmlFromOtJson = transpiler.convertFromOTJson(otJsonFromDb);
                     const rawJsonFromOtJson = xml2js.xml2js(xmlFromOtJson, {
