@@ -133,19 +133,14 @@ class OtJsonImporter {
     }
 
     /**
-     *
-     * @param OT-JSON document in JSON-LD format.
-     * @return {{
-     * metadata: {
-     *  datasetHeader: *, datasetContext: *, vertices: *, edges: *, _key: string},
-     * vertices: Array,
-     * dataCreator: string
-     * edges: Array}}
+     * Imports OTJSON document
+     * @param data { document, encryptedMap }
+     * @returns {Promise<{root_hash: string, vertices: Array, edges: Array, data_set_id: string, wallet: string}>}
      */
     async importFile(data) {
         const {
             document,
-            encryptedMap: encrypted,
+            encryptedMap,
         } = data;
 
         // TODO: validate document here.
@@ -222,8 +217,8 @@ class OtJsonImporter {
                         data: otObject.properties,
                         datasets: [datasetId],
                     };
-                    if (encrypted && encrypted[_id(otObject)]) {
-                        dataVertex.encrypted = encrypted[_id(otObject)];
+                    if (encryptedMap && encryptedMap[_id(otObject)]) {
+                        dataVertex.encrypted = encryptedMap[_id(otObject)];
                     }
                     vertices.push(dataVertex);
 
