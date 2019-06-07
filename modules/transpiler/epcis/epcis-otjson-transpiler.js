@@ -164,6 +164,37 @@ class EpcisOtJsonTranspiler {
     }
 
     /**
+     * Sort @graph data inline
+     * @param graph
+     */
+    static sortGraphRecursively(graph) {
+        graph.forEach(item => EpcisOtJsonTranspiler.sortObjectRecursively(item));
+        return graph;
+    }
+
+    /**
+     * Sort object recursively
+     */
+    static sortObjectRecursively(object) {
+        if (object == null) {
+            return null;
+        }
+        if (Array.isArray(object)) { // skip array sorting
+            return object;
+        } else if (typeof object === 'object') {
+            for (const key of Object.keys(object)) {
+                if (key !== '___metadata') {
+                    EpcisOtJsonTranspiler.sortObjectRecursively(object[key]);
+                }
+            }
+            const ordered = {};
+            Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
+            return ordered;
+        }
+        return object;
+    }
+
+    /**
      * Convert OT-JSON to EPCIS XML document
      * @param otjson - OT-JSON object
      * @return {string} - XML string
