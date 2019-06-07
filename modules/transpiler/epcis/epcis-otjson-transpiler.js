@@ -120,7 +120,10 @@ class EpcisOtJsonTranspiler {
             const { relations } = element;
             for (const relation of relations) {
                 const id = relation.linkedObject['@id'];
-                const existing = graph.find(e => e['@id'] === id);
+                let existing = graph.find(e => e['@id'] === id);
+                if (existing == null) {
+                    existing = results.find(e => e['@id'] === id);
+                }
                 if (existing != null) {
                     // eslint-disable-next-line
                     continue;
