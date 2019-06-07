@@ -110,7 +110,7 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
         myCommand.data = {
             offerId: '0x2345678',
             dataSetId: encryptedJSON['@id'],
-            otjson: encryptedJSON,
+            otJson: encryptedJSON,
             dcWallet: '0x2134',
             dcNodeId: '21341234124',
             litigationPublicKey: publicKey,

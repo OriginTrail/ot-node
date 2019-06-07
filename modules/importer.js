@@ -319,7 +319,7 @@ class Importer {
     async importOTJSON(otJsonDocument, encryptedMap) {
         try {
             const result = await this._import('OTJSON', {
-                otJsonDocument,
+                document: otJsonDocument,
                 encryptedMap,
             });
             return {
