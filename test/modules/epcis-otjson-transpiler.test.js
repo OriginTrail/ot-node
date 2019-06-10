@@ -113,7 +113,10 @@ describe('GS1 Importer tests', () => {
                         compact: true,
                         spaces: 4,
                     });
-                    assert.isTrue(lodash.isEqual(rawJson, rawJsonFromOtJson), `Converted XML for ${path.basename(test)} is not equal to the original one`);
+
+                    EpcisOtJsonTranspiler.sortObjectRecursively(rawJson);
+                    EpcisOtJsonTranspiler.sortObjectRecursively(rawJsonFromOtJson);
+                    assert.deepEqual(rawJson, rawJsonFromOtJson, `Converted XML for ${path.basename(test)} is not equal to the original one`);
                 },
             );
         });

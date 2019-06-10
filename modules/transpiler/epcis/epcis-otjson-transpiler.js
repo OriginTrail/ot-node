@@ -920,6 +920,19 @@ class EpcisOtJsonTranspiler {
             }
             break;
         // eslint-disable-next-line
+        case 'sscc':
+            // eslint-disable-next-line
+            const serialReference = splitted[3];
+            checkDigit = this._checkDigitGS1(`${companyPrefix.substr(1)}${serialReference}`);
+
+            identifiers = {
+                sscc: identifier,
+                companyPrefix: companyPrefix.substr(1),
+                serialReference,
+                gs1_128: `${companyPrefix.substr(1)}${serialReference}${checkDigit}`,
+            };
+            break;
+            // eslint-disable-next-line
         case 'lgtin':
             // eslint-disable-next-line
             itemReference = splitted[3];
