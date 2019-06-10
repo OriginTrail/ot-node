@@ -21,6 +21,7 @@ const Utilities = require('../../modules/Utilities');
 const logger = require('../../modules/logger');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 
+const ImportUtilities = require('../../modules/ImportUtilities');
 const EpcisOtJsonImporter = require('../../modules/importer/ot-json-importer');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 
@@ -116,9 +117,9 @@ describe('GS1 Importer tests', () => {
                         spaces: 4,
                     });
 
-                    EpcisOtJsonTranspiler.sortObjectRecursively(rawJson);
-                    EpcisOtJsonTranspiler.sortObjectRecursively(rawJsonFromOtJson);
-                    assert.deepEqual(rawJson, rawJsonFromOtJson, `Converted XML for ${path.basename(test)} is not equal to the original one`);
+                    const sortedFirst = ImportUtilities.sortObjectRecursively(rawJson);
+                    const sortedSecond = ImportUtilities.sortObjectRecursively(rawJsonFromOtJson);
+                    assert.deepEqual(sortedFirst, sortedSecond, `Converted XML for ${path.basename(test)} is not equal to the original one`);
                 },
             );
         });

@@ -51,48 +51,35 @@ class ReplicationService {
             .map(async (color) => {
                 const document = flavor[color];
 
-                // vertex.data = Encryption.encryptObject(vertex.data, privateKey);
 
                 const litigationKeyPair = Encryption.generateKeyPair(512);
                 const distributionKeyPair = Encryption.generateKeyPair(512);
                 const distEncVertices = [];
 
-                document['@graph'].forEach((vertex) => {
-                    if (vertex.properties != null) {
-                        distEncVertices.push({
-                            properties: Encryption.encryptObject(
-                                vertex.properties,
-                                distributionKeyPair.privateKey,
-                            ),
-                        })
-                        vertex.properties = Encryption.encryptObject(
-                            vertex.properties,
-                            litigationKeyPair.privateKey,
-                        );
-                    }
-                });
+                const encryptedDataset = ImportUtilities.encryptDataset(document, litigationKeyPair.privateKey);
 
-                const litigationBlocks = this.challengeService.getBlocks(document['@graph']);
-                const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
-                const litRootHash = litigationBlocksMerkleTree.getRoot();
+                // const litigationBlocks = this.challengeService.getBlocks(document['@graph']);
+                // const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+                const litRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset);
 
-                const distMerkleStructure = new MerkleTree(distEncVertices);
-                const distRootHash = distMerkleStructure.getRoot();
+                // const distMerkleStructure = new MerkleTree(distEncVertices);
+                const distRootHash = '';
 
-                const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-                const distributionEpkChecksum = Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
+                // const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+                // const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+                // const distributionEpkChecksum = Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
                 const replication = {
                     color,
-                    otJson: document,
+                    otJson: encryptedDataset,
                     litigationPublicKey: litigationKeyPair.publicKey,
                     litigationPrivateKey: litigationKeyPair.privateKey,
                     distributionPublicKey: distributionKeyPair.publicKey,
                     distributionPrivateKey: distributionKeyPair.privateKey,
-                    distributionEpkChecksum,
+                    distributionEpkChecksum: '',
                     litigationRootHash: litRootHash,
                     distributionRootHash: distRootHash,
-                    distributionEpk: distEpk,
+                    distributionEpk: '',
                 };
 
                 that.replicationCache[internalOfferId][color] = replication;

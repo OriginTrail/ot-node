@@ -492,14 +492,15 @@ class OtJsonImporter {
             document['@graph'].push(otConnector);
         });
 
-        EpcisOtJsonTranspiler.sortGraphRecursively(document['@graph']);
+        const sorted = ImportUtilities.sortGraphRecursively(document['@graph']);
+        document.datasetHeader = JSON.parse(ImportUtilities.sortedStringify(document.datasetHeader));
 
-        const signature = EpcisOtJsonTranspiler.sign(document, this.config, this.web3);
+        const signature = EpcisOtJsonTranspiler.sign(sorted, this.config, this.web3);
         document.signature = {
             value: signature,
             type: 'ethereum-signature',
         };
-        return document;
+        return document;//`{"@id":${document['@id']},"documentHeader":${ImportUtilities.sortedStringify(document.documentHeader)},"@graph":${sorted},"signature":${document.signature}`;
     }
 
     /**

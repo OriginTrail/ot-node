@@ -2,7 +2,7 @@ const xml2js = require('xml-js');
 const uuidv4 = require('uuid/v4');
 const xsd = require('libxml-xsd');
 const utilities = require('../../Utilities');
-const importUtilities = require('../../ImportUtilities');
+const ImportUtilities = require('../../ImportUtilities');
 const fs = require('fs');
 
 const { sha3_256 } = require('js-sha3');
@@ -72,18 +72,17 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = importUtilities.calculateGraphHash(otjson['@graph']);
-        console.log(JSON.stringify(importUtilities.sortGraphRecursively(otjson['@graph'])));
+        otjson['@id'] = ImportUtilities.calculateGraphHash(otjson['@graph']);
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
 
-        const merkleRoot = importUtilities.calculateDatasetRootHash(otjson);
+        const merkleRoot = ImportUtilities.calculateDatasetRootHash(otjson);
 
         otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
-        EpcisOtJsonTranspiler.sortGraphRecursively(otjson['@graph']);
-        const signature = EpcisOtJsonTranspiler.sign(otjson, this.config, this.web3);
+        const sortedForSigning = ImportUtilities.sortGraphRecursively(otjson['@graph']);
+        const signature = EpcisOtJsonTranspiler.sign(sortedForSigning, this.config, this.web3);
         otjson.signature = {
             value: signature,
             type: 'ethereum-signature',
@@ -98,7 +97,7 @@ class EpcisOtJsonTranspiler {
      */
     static sign(otjson, config, web3) {
         const { signature } = web3.eth.accounts.sign(
-            Utilities.soliditySHA3(utilities.stringify(otjson)),
+            Utilities.soliditySHA3(otjson),
             Utilities.normalizeHex(config.node_private_key),
         );
         return signature;
@@ -209,47 +208,6 @@ class EpcisOtJsonTranspiler {
             },
             transpilationInfo,
         };
-    }
-
-    /**
-     * Sort @graph data inline
-     * @param graph
-     */
-    static sortGraphRecursively(graph) {
-        graph.forEach(item => EpcisOtJsonTranspiler.sortObjectRecursively(item));
-        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-        return graph;
-    }
-
-    /**
-     * Sort object recursively
-     */
-    static sortObjectRecursively(object) {
-        if (object == null) {
-            return null;
-        }
-        if (Array.isArray(object)) { // skip array sorting
-            const isScalarArray = object.reduce((accumulator, currentValue) => accumulator && (typeof currentValue !== 'object'), true);
-
-            if (isScalarArray) {
-                return object;
-            }
-
-            object.forEach(item => this.sortObjectRecursively(item));
-            object.sort((item1, item2) => sha3_256(JSON.stringify(item2, null, 0))
-                .localeCompare(sha3_256(JSON.stringify(item1, null, 0))));
-            return object;
-        } else if (typeof object === 'object') {
-            for (const key of Object.keys(object)) {
-                if (key !== '___metadata') {
-                    EpcisOtJsonTranspiler.sortObjectRecursively(object[key]);
-                }
-            }
-            const ordered = {};
-            Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
-            return ordered;
-        }
-        return object;
     }
 
     /**

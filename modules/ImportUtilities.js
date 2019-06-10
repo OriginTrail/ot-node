@@ -119,6 +119,25 @@ class ImportUtilities {
         };
     }
 
+
+    static encryptDataset(dataset, encryptionKey) {
+        const encryptedDataset = utilities.copyObject(dataset);
+        const encryptedMap = {};
+        const colorMap = {
+            r: 0,
+            g: 1,
+            b: 2,
+        };
+
+        for (const obj of encryptedDataset['@graph']) {
+            if (obj.properties != null) {
+                const encryptedProperties = Encryption.encryptObject(obj.properties, encryptionKey);
+                obj.properties = encryptedProperties;
+            }
+        }
+        return encryptedDataset;
+    }
+
     /**
      * Normalizes import (use just necessary data)
      * @param dataSetId - Dataset ID
@@ -352,7 +371,7 @@ class ImportUtilities {
         const datasetSummary = this.calculateDatasetSummary(dataset);
 
         const merkle = new MerkleTree(
-            [JSON.stringify(datasetSummary), ...this.sortGraphRecursively(dataset['@graph'])],
+            [JSON.stringify(datasetSummary), ...JSON.parse(this.sortGraphRecursively(dataset['@graph']))],
             'sha3',
         );
 
@@ -365,28 +384,46 @@ class ImportUtilities {
      * @returns {string}
      */
     static calculateGraphHash(graph) {
-        return `0x${sha3_256(JSON.stringify(this.sortGraphRecursively(graph), null, 0))}`;
+        const sorted = this.sortGraphRecursively(graph);
+        console.log(sorted);
+        return `0x${sha3_256(sorted, null, 0)}`;
     }
 
     /**
      * Sort @graph data inline
      * @param graph
-     * @public
      */
     static sortGraphRecursively(graph) {
-        graph.forEach(item => this.sortObjectRecursively(item));
-        return graph;
+        graph.forEach((el) => {
+            if (el.relations) {
+                el.relations.sort((r1, r2) => sha3_256(this.sortedStringify(r1)).localeCompare(sha3_256(this.sortedStringify(r2))));
+            }
+
+            if (el.identifiers) {
+                el.identifiers.sort((r1, r2) => sha3_256(this.sortedStringify(r1)).localeCompare(sha3_256(this.sortedStringify(r2))));
+            }
+        });
+        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+        return this.sortedStringify(graph);
     }
 
     /**
      * Sort object recursively
-     * @private
      */
     static sortObjectRecursively(object) {
         if (object == null) {
             return null;
         }
         if (Array.isArray(object)) { // skip array sorting
+            const isScalarArray = object.reduce((accumulator, currentValue) => accumulator && (typeof currentValue !== 'object'), true);
+
+            if (isScalarArray) {
+                return object;
+            }
+
+            object.forEach(item => this.sortObjectRecursively(item));
+            object.sort((item1, item2) => sha3_256(JSON.stringify(item2, null, 0))
+                .localeCompare(sha3_256(JSON.stringify(item1, null, 0))));
             return object;
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {
@@ -399,6 +436,28 @@ class ImportUtilities {
             return ordered;
         }
         return object;
+    }
+
+    static sortedStringify(obj) {
+        if (obj == null) {
+            return 'null';
+        }
+        if (typeof obj === 'object' || Array.isArray(obj)) {
+            const stringified = [];
+            for (const key of Object.keys(obj)) {
+                if (!Array.isArray(obj)) {
+                    stringified.push(`"${key}":${this.sortedStringify(obj[key])}`);
+                } else {
+                    stringified.push(this.sortedStringify(obj[key]));
+                }
+            }
+            if (!Array.isArray(obj)) {
+                stringified.sort();
+                return `{${stringified.join(',')}}`;
+            }
+            return `[${stringified.join(',')}]`;
+        }
+        return `${JSON.stringify(obj)}`;
     }
 }
 
