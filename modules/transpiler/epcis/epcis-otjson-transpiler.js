@@ -2,13 +2,12 @@ const xml2js = require('xml-js');
 const uuidv4 = require('uuid/v4');
 const xsd = require('libxml-xsd');
 const utilities = require('../../Utilities');
+const importUtilities = require('../../ImportUtilities');
 const fs = require('fs');
 
-const { sha3_256 } = require('js-sha3');
 const deepExtend = require('deep-extend');
 
 const Utilities = require('../../Utilities');
-const Merkle = require('../../Merkle');
 
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
@@ -72,28 +71,15 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = `0x${sha3_256(JSON.stringify(EpcisOtJsonTranspiler.sortGraphRecursively(otjson['@graph']), null, 0))}`;
+        otjson['@id'] = importUtilities.calculateGraphHash(otjson['@graph']);
+        console.log(JSON.stringify(importUtilities.sortGraphRecursively(otjson['@graph'])));
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
 
-        const datasetSummary = {
-            datasetId: otjson['@id'],
-            datasetCreator: otjson.datasetHeader.dataCreator,
-            objects: otjson['@graph'].map(vertex => ({
-                '@id': vertex['@id'],
-                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
-            })),
-            numRelations: otjson['@graph']
-                .filter(vertex => vertex.relations != null)
-                .reduce((acc, value) => acc + value.relations.length, 0),
-        };
+        const merkleRoot = importUtilities.calculateDatasetRootHash(otjson);
 
-        const merkle = new Merkle(
-            [JSON.stringify(datasetSummary), ...otjson['@graph'].map(v => JSON.stringify(v))],
-            'sha3',
-        );
-        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkle.getRoot();
+        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
         EpcisOtJsonTranspiler.sortGraphRecursively(otjson['@graph']);
         const signature = EpcisOtJsonTranspiler.sign(otjson, this.config, this.web3);

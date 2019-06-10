@@ -493,7 +493,7 @@ class EventEmitter {
                     offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for interanl ID ${replicationId}`);
+                logger.error(`There is no offer for internal ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
                     message: 'Replication not found',
