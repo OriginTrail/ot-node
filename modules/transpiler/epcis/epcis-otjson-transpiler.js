@@ -166,6 +166,7 @@ class EpcisOtJsonTranspiler {
                 obj[key] = this._removeCommentsAndTrimTexts(obj[key]);
             }
         }
+        Object.keys(obj).forEach(k => (obj[k] === undefined ? delete obj[k] : '')); // remove undefined
         return obj;
     }
 
@@ -564,11 +565,16 @@ class EpcisOtJsonTranspiler {
             if (compressed.extension.childQuantityList) {
                 for (const childEPCs of compressed.extension.childQuantityList) {
                     for (const childEPC of childEPCs.quantityElement) {
-                        otObject.relations.push(createRelation(childEPC.epcClass, {
+                        const data = {
                             relationType: 'CHILD_EPC_QUANTITY',
                             quantity: childEPC.quantity,
-                            uom: childEPC.uom,
-                        }));
+                        };
+                        if (childEPC.uom) {
+                            Object.assign(data, {
+                                uom: childEPC.uom,
+                            });
+                        }
+                        otObject.relations.push(createRelation(childEPC.epcClass, data));
                     }
                 }
             }
