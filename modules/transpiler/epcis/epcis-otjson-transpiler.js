@@ -189,7 +189,7 @@ class EpcisOtJsonTranspiler {
                 merkleRoot: {
                     schemaType: 'merkle-root',
                     networkId: this.config.blockchain.network_id,
-                    hubContractAddress: this.config.blockchain.hubContractAddress,
+                    hubContractAddress: this.config.blockchain.hub_contract_address,
                     // TODO: Add holding contract address and version. Hub address is useless.
                 },
             },
@@ -240,8 +240,8 @@ class EpcisOtJsonTranspiler {
             }
 
             object.forEach(item => this.sortObjectRecursively(item));
-            object.sort((item1, item2) => sha3_256(sortedStringify(item1, null))
-                .localeCompare(sha3_256(sortedStringify((item2, null)))));
+            object.sort((item1, item2) => sha3_256(JSON.stringify(item2, null, 0))
+                .localeCompare(sha3_256(JSON.stringify(item1, null, 0))));
             return object;
         } else if (typeof object === 'object') {
             for (const key of Object.keys(object)) {

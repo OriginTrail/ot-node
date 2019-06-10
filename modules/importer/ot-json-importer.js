@@ -398,7 +398,6 @@ class OtJsonImporter {
             '@graph': [],
         };
 
-        document['@context'] = metadata.datasetContext;
         document.datasetHeader = metadata.datasetHeader;
 
         vertices.filter(vertex => vertex.vertexType === 'EntityObject').forEach((entityVertex) => {
