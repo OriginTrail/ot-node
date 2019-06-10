@@ -9,7 +9,6 @@ const deepExtend = require('deep-extend');
 
 const Utilities = require('../../Utilities');
 const Merkle = require('../../Merkle');
-const sortedStringify = require('sorted-json-stringify');
 
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
@@ -96,17 +95,31 @@ class EpcisOtJsonTranspiler {
         );
         otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkle.getRoot();
 
-        const { signature } = this.web3.eth.accounts.sign(
-            Utilities.soliditySHA3(JSON.stringify(otjson)),
-            Utilities.normalizeHex(this.config.node_private_key),
-        );
-
+        EpcisOtJsonTranspiler.sortGraphRecursively(otjson['@graph']);
+        const signature = EpcisOtJsonTranspiler.sign(otjson, this.config, this.web3);
         otjson.signature = {
             value: signature,
             type: 'ethereum-signature',
         };
 
         return otjson;
+    }
+
+    /**
+     * Sign OT-JSON
+     * @static
+     */
+    static sign(otjson, config, web3) {
+        const ordered = {};
+        Object.keys(otjson).sort().forEach((key) => {
+            ordered[key] = otjson[key];
+        });
+        const { signature } = web3.eth.accounts.sign(
+            Utilities.soliditySHA3(JSON.stringify(ordered, null, 0)),
+            Utilities.normalizeHex(config.node_private_key),
+        );
+        console.log(JSON.stringify(ordered, null, 0));
+        return signature;
     }
 
     /**

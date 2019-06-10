@@ -490,17 +490,11 @@ class OtJsonImporter {
 
         EpcisOtJsonTranspiler.sortGraphRecursively(document['@graph']);
 
-        const { signature } = this.web3.eth.accounts.sign(
-            Utilities.soliditySHA3(JSON.stringify(document)),
-            Utilities.normalizeHex(this.config.node_private_key),
-        );
-
+        const signature = EpcisOtJsonTranspiler.sign(document, this.config, this.web3);
         document.signature = {
             value: signature,
             type: 'ethereum-signature',
         };
-
-
         return document;
     }
 
