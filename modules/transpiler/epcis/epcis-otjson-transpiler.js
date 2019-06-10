@@ -110,15 +110,10 @@ class EpcisOtJsonTranspiler {
      * @static
      */
     static sign(otjson, config, web3) {
-        const ordered = {};
-        Object.keys(otjson).sort().forEach((key) => {
-            ordered[key] = otjson[key];
-        });
         const { signature } = web3.eth.accounts.sign(
-            Utilities.soliditySHA3(JSON.stringify(ordered, null, 0)),
+            Utilities.soliditySHA3(utilities.stringify(otjson)),
             Utilities.normalizeHex(config.node_private_key),
         );
-        console.log(JSON.stringify(ordered, null, 0));
         return signature;
     }
 
@@ -891,7 +886,7 @@ class EpcisOtJsonTranspiler {
      * @private
      */
     _parseGS1Identifier(identifier) {
-        const regex = /^urn:epc:\w+:(\w+):([\d]+).([\d]+).?(\w+)?$/g;
+        const regex = /^urn:epc:\w+:(\w+):([\d]+).([\d]+).?([\w*]+)?$/g;
         const splitted = regex.exec(identifier);
 
         if (!splitted) {
