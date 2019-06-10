@@ -492,7 +492,7 @@ class OtJsonImporter {
             document['@graph'].push(otConnector);
         });
 
-        ImportUtilities.sortGraphRecursively(document['@graph']);
+        EpcisOtJsonTranspiler.sortGraphRecursively(document['@graph']);
 
         const signature = EpcisOtJsonTranspiler.sign(document, this.config, this.web3);
         document.signature = {

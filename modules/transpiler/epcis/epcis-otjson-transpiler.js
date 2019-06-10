@@ -5,6 +5,7 @@ const utilities = require('../../Utilities');
 const importUtilities = require('../../ImportUtilities');
 const fs = require('fs');
 
+const { sha3_256 } = require('js-sha3');
 const deepExtend = require('deep-extend');
 
 const Utilities = require('../../Utilities');
