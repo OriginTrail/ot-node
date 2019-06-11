@@ -376,6 +376,8 @@ class RestAPIService {
 
             emitter.emit('api-query-local-import', {
                 data_set_id: req.params.data_set_id,
+                format: ((req.query && req.query.format) || 'otjson'),
+                encryption: req.query.encryption,
                 request: req,
                 response: res,
             });

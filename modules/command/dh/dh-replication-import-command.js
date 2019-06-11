@@ -65,7 +65,6 @@ class DhReplicationImportCommand extends Command {
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphHash(decryptedDataset['@graph']);
 
-        console.log(ImportUtilities.sortGraphRecursively(decryptedDataset['@graph']));
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }
@@ -94,7 +93,7 @@ class DhReplicationImportCommand extends Command {
 
         if (holdingData == null) {
             // Store holding information and generate keys for eventual data replication.
-            await Models.holding_data.create({
+            const newHoldingEntry = {
                 data_set_id: dataSetId,
                 source_wallet: dcWallet,
                 litigation_public_key: litigationPublicKey,
@@ -104,7 +103,8 @@ class DhReplicationImportCommand extends Command {
                 distribution_epk: distributionEpk,
                 transaction_hash: transactionHash,
                 color: encColor,
-            });
+            };
+            await Models.holding_data.create(newHoldingEntry);
         }
 
         const dataInfo = await Models.data_info.findOne({

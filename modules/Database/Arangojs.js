@@ -702,20 +702,17 @@ class ArangoJS {
     /**
      * Finds vertices by dataset ID
      * @param {string} data_id - Dataset ID
-     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
      * @return {Promise<*>}
      */
-    async findVerticesByImportId(data_id, encColor = null) {
+    async findVerticesByImportId(data_id) {
         const queryString = `FOR v IN ot_vertices 
-                            FILTER v.datasets != null 
-                            AND POSITION(v.datasets, @importId, false)  != false 
-                            AND (v.encrypted == ${encColor})
-                            SORT v._key RETURN v`;
-
+                        FILTER v.datasets != null 
+                        AND POSITION(v.datasets, @importId, false)  != false 
+                        SORT v._key RETURN v`;
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
 
-        const normalizedVertices = normalizeGraph(data_id, vertices, []).vertices;
+        const normalizedVertices = normalizeGraph(data_id, vertices, []).vertices; // ???
 
         if (normalizedVertices.length === 0) {
             return [];

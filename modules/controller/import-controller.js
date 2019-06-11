@@ -89,6 +89,7 @@ class ImportController {
 
         this.emitter.emit('api-import-info', {
             dataSetId: queryObject.data_set_id,
+            responseFormat: queryObject.format || 'otjson',
             response: res,
         });
     }

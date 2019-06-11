@@ -17,6 +17,8 @@ class EventEmitter {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.appState = ctx.appState;
+        this.otJsonImporter = ctx.otJsonImporter;
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -140,22 +142,37 @@ class EventEmitter {
         });
 
         this._on('api-query-local-import', async (data) => {
-            const { data_set_id: dataSetId } = data;
+            const { data_set_id: dataSetId, format, encryption } = data;
             logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const result = await dhService.getImport(dataSetId);
+                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId, encryption);
 
-                if (result.vertices.length === 0) {
+                if (datasetOtJson == null) {
                     data.response.status(204);
                 } else {
                     data.response.status(200);
                 }
 
-                const normalizedImport = ImportUtilities
-                    .normalizeImport(dataSetId, result.vertices, result.edges);
+                let formattedDataset = '';
 
-
-                data.response.send(normalizedImport);
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                    data.response.send({});
+                } else if (format !== 'otjson' && encryption == null) {
+                    switch (format) {
+                    case 'otjson':
+                        formattedDataset = datasetOtJson;
+                        break;
+                    case 'epcis':
+                        formattedDataset = this.epcisOtJsonTranspiler
+                            .convertFromOTJson(datasetOtJson);
+                        break;
+                    default:
+                        throw Error('Invalid response format.');
+                    }
+                } else {
+                    data.response.send(formattedDataset);
+                }
             } catch (error) {
                 logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
@@ -181,7 +198,7 @@ class EventEmitter {
         });
 
         this._on('api-import-info', async (data) => {
-            const { dataSetId } = data;
+            const { dataSetId, responseFormat } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
                 const dataInfo =
@@ -196,29 +213,26 @@ class EventEmitter {
                     return;
                 }
 
-                const result = await dhService.getImport(dataSetId);
+                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId);
+                let formattedDataset = null;
 
-                // Check if packed to fix issue with double classes.
-                const filtered = result.vertices.filter(v => v._dc_key);
-                if (filtered.length > 0) {
-                    result.vertices = filtered;
-                    ImportUtilities.unpackKeys(result.vertices, result.edges);
-                }
-
-                if (result.vertices.length === 0) {
+                if (datasetOtJson == null) {
                     data.response.status(204);
-                    data.response.send(result);
+                    data.response.send({});
                 } else {
+                    switch (responseFormat) {
+                    case 'otjson': formattedDataset = datasetOtJson; break;
+                    case 'epcis': formattedDataset = this.epcisOtJsonTranspiler.convertFromOTJson(datasetOtJson); break;
+                    default: throw Error('Invalid response format.');
+                    }
+
                     const transactionHash = await ImportUtilities
                         .getTransactionHash(dataSetId, dataInfo.origin);
 
                     data.response.status(200);
                     data.response.send({
-                        import: ImportUtilities.normalizeImport(
-                            dataSetId,
-                            result.vertices,
-                            result.edges,
-                        ),
+                        dataSetId,
+                        document: formattedDataset,
                         root_hash: dataInfo.root_hash,
                         transaction: transactionHash,
                         data_provider_wallet: dataInfo.data_provider_wallet,

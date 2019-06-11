@@ -323,7 +323,7 @@ class EpcisOtJsonTranspiler {
 
                 if (vocabularyElement.children) {
                     const compressedChildren = this._compressText(vocabularyElement.children);
-                    otVocabulary.properties.children = compressedChildren.id;
+                    otVocabulary.properties.children = utilities.arrayze(compressedChildren.id);
                     otVocabulary.relations = [];
                     otVocabulary.properties.children.forEach(id => otVocabulary.relations.push({
                         '@type': 'otRelation',
@@ -841,6 +841,9 @@ class EpcisOtJsonTranspiler {
         const splitted = regex.exec(identifier);
 
         if (!splitted) {
+            return {
+                id: identifier // TEMP FIX, REMOVE LAYER,
+            };
             throw Error('Invalid Identifier');
         }
 
@@ -919,7 +922,8 @@ class EpcisOtJsonTranspiler {
                 identifiers.extension = extension;
             }
             break;
-        default:
+            default:
+
             throw Error('Invalid identifier type');
         }
         return identifiers;

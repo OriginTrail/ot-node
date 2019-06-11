@@ -859,7 +859,7 @@ class DHService {
      *
      * Method will return object in following format { vertices: [], edges: [] }.
      * @param dataSetId ID of data-set.
-     * @returns {Promise<*>}
+     * @returns {Promiose<*>}
      */
     async getImport(dataSetId) {
         // Check if import came from DH replication or reading replication.

@@ -880,6 +880,13 @@ class Utilities {
         });
         return map;
     }
+
+    static arrayze(obj) {
+        if (Array.isArray(obj)) {
+            return obj;
+        }
+        return [obj];
+    }
 }
 
 module.exports = Utilities;

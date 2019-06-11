@@ -391,10 +391,19 @@ class OtJsonImporter {
         };
     }
 
-    async getImport(datasetId) {
+    async getImport(datasetId, encColor = null) {
+        if (![null, 'red', 'green', 'blue'].includes(encColor)) {
+            throw Error('Invalid encryption color.');
+        }
         const vertices = await this.db.findVerticesByImportId(datasetId);
         const edges = await this.db.findEdgesByImportId(datasetId);
         const metadata = await this.db.findMetadataByImportId(datasetId);
+
+        // TODO: Check if date with specified encryption exists
+        if (encColor != null) {
+            vertices.filter(v => v.encrypted != null)
+                .forEach(v => v.data = v.encrypted[encColor.charAt(0)]);
+        }
 
         const document = {
             '@id': datasetId,
@@ -500,7 +509,7 @@ class OtJsonImporter {
             value: signature,
             type: 'ethereum-signature',
         };
-        return document;//`{"@id":${document['@id']},"documentHeader":${ImportUtilities.sortedStringify(document.documentHeader)},"@graph":${sorted},"signature":${document.signature}`;
+        return document;
     }
 
     /**
