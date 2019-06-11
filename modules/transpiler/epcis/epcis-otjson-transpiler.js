@@ -525,18 +525,34 @@ class EpcisOtJsonTranspiler {
             }
 
             if (compressed.extension.sourceList) {
-                for (const source of compressed.extension.sourceList.source) {
-                    otObject.relations.push(createRelation(source, {
+                const sources = compressed.extension.sourceList.source;
+                for (let i = 0; i < sources.length; i += 1) {
+                    const data = {
                         relationType: 'SOURCE',
-                    }));
+                    };
+                    const type = this._extractType(otObject.properties.___metadata, 'extension.sourceList.source', i);
+                    if (type) {
+                        Object.assign(data, {
+                            type,
+                        });
+                    }
+                    otObject.relations.push(createRelation(sources[i], data));
                 }
             }
 
             if (compressed.extension.destinationList) {
-                for (const destination of compressed.extension.destinationList.destination) {
-                    otObject.relations.push(createRelation(destination, {
+                const destinations = compressed.extension.destinationList.destination;
+                for (let i = 0; i < destinations.length; i += 1) {
+                    const data = {
                         relationType: 'DESTINATION',
-                    }));
+                    };
+                    const type = this._extractType(otObject.properties.___metadata, 'extension.destinationList.destination', i);
+                    if (type) {
+                        Object.assign(data, {
+                            type,
+                        });
+                    }
+                    otObject.relations.push(createRelation(destinations[i], data));
                 }
             }
         }
@@ -574,6 +590,32 @@ class EpcisOtJsonTranspiler {
 
         Object.assign(otObject.properties, compressed);
         return otObject;
+    }
+
+    /**
+     * Extract type from metadata
+     */
+    _extractType(metadata, path, index) {
+        if (path == null) {
+            return null;
+        }
+        const chunks = path.split('.');
+
+        let current = metadata;
+        for (const chunk of chunks) {
+            current = current[chunk];
+            if (current == null) {
+                return null;
+            }
+        }
+        if (current == null) {
+            return null;
+        }
+        const attributes = current[index]._attributes;
+        if (attributes) {
+            return attributes.type;
+        }
+        return null;
     }
 
     /**

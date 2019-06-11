@@ -385,7 +385,6 @@ class ImportUtilities {
      */
     static calculateGraphHash(graph) {
         const sorted = this.sortGraphRecursively(graph);
-        console.log(sorted);
         return `0x${sha3_256(sorted, null, 0)}`;
     }
 
