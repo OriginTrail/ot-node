@@ -242,12 +242,23 @@ class OtJsonImporter {
                         relationEdge._to = _keyFrom(dataCreator, _id(relation.linkedObject));
                         relationEdge.edgeType = constants.edgeType.otRelation;
                         relationEdge.relationType = relation.properties.relationType;
-                        relationEdge._key = _keyFrom(
-                            dataCreator,
-                            relationEdge._from,
-                            relationEdge._to,
-                            relationEdge.relationType,
-                        );
+
+                        if (relation.properties.type) {
+                            relationEdge._key = _keyFrom(
+                                dataCreator,
+                                relationEdge._from,
+                                relationEdge._to,
+                                relationEdge.relationType,
+                                relation.properties.type,
+                            );
+                        } else {
+                            relationEdge._key = _keyFrom(
+                                dataCreator,
+                                relationEdge._from,
+                                relationEdge._to,
+                                relationEdge.relationType,
+                            );
+                        }
                         relationEdge.properties = relation.properties;
                         relationEdge.datasets = [datasetId];
                         edges.push(relationEdge);
