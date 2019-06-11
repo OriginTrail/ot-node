@@ -7,6 +7,9 @@ class MerkleTree {
     generateLeafHash(leaf, index) {
         switch (this.hashFunction) {
         case 'soliditySha3':
+            if (Buffer.from(`${leaf}`, 'utf8').byteLength > 32) {
+                throw Error('Block size is larger than 32 bytes.');
+            }
             return abi.soliditySHA3(
                 ['bytes32', 'uint256'],
                 [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
