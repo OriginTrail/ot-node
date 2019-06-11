@@ -6,33 +6,32 @@ const { sha3_256 } = require('js-sha3');
 const Utilities = require('../../modules/Utilities');
 const Merkle = require('../../modules/Merkle');
 
-function solidityLeafHash(leaf, index) {
-    return abi.soliditySHA3(
-        ['bytes32', 'uint256'],
-        [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
-    ).toString('hex');
-}
-
-function solidityInternalHash(block1, block2) {
-    return abi.soliditySHA3(
-        ['bytes32', 'bytes32'],
-        [
-            Utilities.normalizeHex(`${block1}`),
-            Utilities.normalizeHex(`${block2}`),
-        ],
-    ).toString('hex');
-}
-
-function sha3LeafHash(leaf, index) {
-    return sha3_256(`${leaf}${index}`);
-}
-
-function sha3InternalHash(block1, block2) {
-    return sha3_256(`${Utilities.normalizeHex(block1)}${Utilities.normalizeHex(block2)}`);
-}
-
-
 describe('Merkle module', () => {
+    function solidityLeafHash(leaf, index) {
+        return abi.soliditySHA3(
+            ['bytes32', 'uint256'],
+            [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
+        ).toString('hex');
+    }
+
+    function solidityInternalHash(block1, block2) {
+        return abi.soliditySHA3(
+            ['bytes32', 'bytes32'],
+            [
+                Utilities.normalizeHex(`${block1}`),
+                Utilities.normalizeHex(`${block2}`),
+            ],
+        ).toString('hex');
+    }
+
+    function sha3LeafHash(leaf, index) {
+        return sha3_256(`${leaf}${index}`);
+    }
+
+    function sha3InternalHash(block1, block2) {
+        return sha3_256(`${Utilities.normalizeHex(block1)}${Utilities.normalizeHex(block2)}`);
+    }
+
     it('Solidity SHA3: Constructing trivial tree', () => {
         const data = ['A'];
         const tree1 = new Merkle(data);
