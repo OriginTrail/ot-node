@@ -646,6 +646,28 @@ class Utilities {
         return number;
     }
 
+    static sortedStringify(obj) {
+        if (obj == null) {
+            return 'null';
+        }
+        if (typeof obj === 'object') {
+            const stringified = [];
+            for (const key of Object.keys(obj)) {
+                if (!Array.isArray(obj)) {
+                    stringified.push(`"${key}":${this.sortedStringify(obj[key])}`);
+                } else {
+                    stringified.push(this.sortedStringify(obj[key]));
+                }
+            }
+            if (!Array.isArray(obj)) {
+                stringified.sort();
+                return `{${stringified.join(',')}}`;
+            }
+            return `[${stringified.join(',')}]`;
+        }
+        return `${JSON.stringify(obj)}`;
+    }
+
     /**
      * Denormalizes hex number
      * @param number     Hex number

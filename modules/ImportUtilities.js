@@ -366,7 +366,7 @@ class ImportUtilities {
         const datasetSummary = this.calculateDatasetSummary(dataset);
 
         const merkle = new MerkleTree(
-            [this.sortedStringify(datasetSummary), ...JSON.parse(this.sortGraphRecursively(dataset['@graph']))],
+            [Utilities.sortedStringify(datasetSummary), ...JSON.parse(this.sortGraphRecursively(dataset['@graph']))],
             'sha3',
         );
 
@@ -390,17 +390,17 @@ class ImportUtilities {
     static sortGraphRecursively(graph) {
         graph.forEach((el) => {
             if (el.relations) {
-                el.relations.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
-                    .localeCompare(sha3_256(this.sortedStringify(r2))));
+                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
 
             if (el.identifiers) {
-                el.identifiers.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
-                    .localeCompare(sha3_256(this.sortedStringify(r2))));
+                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
         });
         graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-        return this.sortedStringify(graph);
+        return Utilities.sortedStringify(graph);
     }
 
     /**
@@ -434,42 +434,20 @@ class ImportUtilities {
         return object;
     }
 
-    static sortedStringify(obj) {
-        if (obj == null) {
-            return 'null';
-        }
-        if (typeof obj === 'object' || Array.isArray(obj)) {
-            const stringified = [];
-            for (const key of Object.keys(obj)) {
-                if (!Array.isArray(obj)) {
-                    stringified.push(`"${key}":${this.sortedStringify(obj[key])}`);
-                } else {
-                    stringified.push(this.sortedStringify(obj[key]));
-                }
-            }
-            if (!Array.isArray(obj)) {
-                stringified.sort();
-                return `{${stringified.join(',')}}`;
-            }
-            return `[${stringified.join(',')}]`;
-        }
-        return `${JSON.stringify(obj)}`;
-    }
-
     static sortDataset(dataset) {
         dataset['@graph'].forEach((el) => {
             if (el.relations) {
-                el.relations.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
-                    .localeCompare(sha3_256(this.sortedStringify(r2))));
+                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
 
             if (el.identifiers) {
-                el.identifiers.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
-                    .localeCompare(sha3_256(this.sortedStringify(r2))));
+                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
         });
         dataset['@graph'].sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-        return this.sortedStringify(dataset);
+        return Utilities.sortedStringify(dataset);
     }
 
     /**
