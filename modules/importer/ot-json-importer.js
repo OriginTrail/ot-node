@@ -379,15 +379,12 @@ class OtJsonImporter {
         await this.db.addDocument('ot_datasets', metadata);
 
         // Extract wallet from signature.
-        const docWithoutSignature = {};
-        Object.keys(document)
-            .filter(key => key !== 'signature')
-            .forEach(key => docWithoutSignature[key] = document[key]);
-        const message = JSON.stringify(docWithoutSignature);
-        const wallet = this.web3.eth.accounts.recover(
-            Utilities.soliditySHA3(message),
-            document.signature.value,
+        const wallet = ImportUtilities.extractDatasetSigner(
+            document,
+            this.web3,
         );
+
+        // TODO: Verify that signer's wallet belongs to dataCreator ERC
 
         // TODO enable commit operation
         // await this.db.commit();
