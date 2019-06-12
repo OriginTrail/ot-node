@@ -81,26 +81,13 @@ class EpcisOtJsonTranspiler {
 
         otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
-        const sortedForSigning = ImportUtilities.sortGraphRecursively(otjson['@graph']);
-        const signature = EpcisOtJsonTranspiler.sign(sortedForSigning, this.config, this.web3);
+        const signature = ImportUtilities.signDataset(otjson, this.config, this.web3);
         otjson.signature = {
             value: signature,
             type: 'ethereum-signature',
         };
 
         return otjson;
-    }
-
-    /**
-     * Sign OT-JSON
-     * @static
-     */
-    static sign(otjson, config, web3) {
-        const { signature } = web3.eth.accounts.sign(
-            Utilities.soliditySHA3(otjson),
-            Utilities.normalizeHex(config.node_private_key),
-        );
-        return signature;
     }
 
     /**

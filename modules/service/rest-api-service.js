@@ -390,7 +390,6 @@ class RestAPIService {
                 || req.body.data_set_id == null) {
                 res.status(400);
                 res.send({ message: 'Bad request' });
-                return;
             }
             const { query_id, reply_id, data_set_id } = req.body;
 

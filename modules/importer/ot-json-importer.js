@@ -512,10 +512,7 @@ class OtJsonImporter {
             document['@graph'].push(otConnector);
         });
 
-        const sorted = ImportUtilities.sortGraphRecursively(document['@graph']);
-        document.datasetHeader = JSON.parse(ImportUtilities.sortedStringify(document.datasetHeader));
-
-        const signature = EpcisOtJsonTranspiler.sign(sorted, this.config, this.web3);
+        const signature = ImportUtilities.signDataset(document, this.config, this.web3);
         document.signature = {
             value: signature,
             type: 'ethereum-signature',

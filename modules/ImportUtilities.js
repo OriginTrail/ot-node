@@ -6,6 +6,7 @@ const utilities = require('./Utilities');
 const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
 const { normalizeGraph } = require('./Database/graph-converter');
+const Utilities = require('./Utilities');
 
 const Models = require('../models');
 
@@ -97,9 +98,9 @@ class ImportUtilities {
         const decryptedDataset = utilities.copyObject(dataset);
         const encryptedMap = {};
         const colorMap = {
-            0: 'r',
-            1: 'g',
-            2: 'b',
+            0: 'red',
+            1: 'green',
+            2: 'blue',
         };
 
         for (const obj of decryptedDataset['@graph']) {
@@ -122,12 +123,6 @@ class ImportUtilities {
 
     static encryptDataset(dataset, encryptionKey) {
         const encryptedDataset = utilities.copyObject(dataset);
-        const encryptedMap = {};
-        const colorMap = {
-            r: 0,
-            g: 1,
-            b: 2,
-        };
 
         for (const obj of encryptedDataset['@graph']) {
             if (obj.properties != null) {
@@ -395,11 +390,13 @@ class ImportUtilities {
     static sortGraphRecursively(graph) {
         graph.forEach((el) => {
             if (el.relations) {
-                el.relations.sort((r1, r2) => sha3_256(this.sortedStringify(r1)).localeCompare(sha3_256(this.sortedStringify(r2))));
+                el.relations.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
+                    .localeCompare(sha3_256(this.sortedStringify(r2))));
             }
 
             if (el.identifiers) {
-                el.identifiers.sort((r1, r2) => sha3_256(this.sortedStringify(r1)).localeCompare(sha3_256(this.sortedStringify(r2))));
+                el.identifiers.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
+                    .localeCompare(sha3_256(this.sortedStringify(r2))));
             }
         });
         graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
@@ -457,6 +454,44 @@ class ImportUtilities {
             return `[${stringified.join(',')}]`;
         }
         return `${JSON.stringify(obj)}`;
+    }
+
+    static sortDataset(dataset) {
+        dataset['@graph'].forEach((el) => {
+            if (el.relations) {
+                el.relations.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
+                    .localeCompare(sha3_256(this.sortedStringify(r2))));
+            }
+
+            if (el.identifiers) {
+                el.identifiers.sort((r1, r2) => sha3_256(this.sortedStringify(r1))
+                    .localeCompare(sha3_256(this.sortedStringify(r2))));
+            }
+        });
+        dataset['@graph'].sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+        return this.sortedStringify(dataset);
+    }
+
+    /**
+     * Sign OT-JSON
+     * @static
+     */
+    static signDataset(otjson, config, web3) {
+        const stringifiedOtjson = this.sortDataset(otjson);
+        const { signature } = web3.eth.accounts.sign(
+            stringifiedOtjson,
+            Utilities.normalizeHex(config.node_private_key),
+        );
+        return signature;
+    }
+
+    /**
+     * Extract Signer from OT-JSON signature
+     * @static
+     */
+    static extractDatasetSigner(otjson, signature, web3) {
+        const stringifiedOtjson = this.sortDataset(otjson);
+        return web3.eth.personal.ecRecover(stringifiedOtjson, signature);
     }
 }
 
