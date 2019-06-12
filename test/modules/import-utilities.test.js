@@ -1,7 +1,7 @@
 const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const ImportUtilities = require('../../modules/ImportUtilities');
-const { graph: testGraph, shuffledGraph } = require('./test_data/otjson-graph');
+const { graph: testGraph, shuffledGraph, graph2: testGraph2 } = require('./test_data/otjson-graph');
 const Encryption = require('./../../modules/Encryption');
 const Utilities = require('./../../modules/Utilities');
 const Web3 = require('web3');
@@ -160,5 +160,13 @@ describe('Encryption modules ', () => {
 
         assert.equal(signerOfOriginal, signerOfShuffled);
         assert.equal(signerOfShuffled, signingWallet.wallet);
+    });
+
+    it('check that decrypting encrypted dataset gives back original dataset', () => {
+        const encryptedDataset = ImportUtilities.encryptDataset(testGraph2, keyPair.privateKey);
+        const decryptedDataset = ImportUtilities.decryptDataset(encryptedDataset, keyPair.publicKey, 0);
+
+        console.log(JSON.stringify(encryptedDataset));
+        console.log(JSON.stringify(decryptedDataset));
     });
 });

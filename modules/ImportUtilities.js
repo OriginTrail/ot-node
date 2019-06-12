@@ -97,6 +97,7 @@ class ImportUtilities {
     static decryptDataset(dataset, decryptionKey, encryptionColor = null) {
         const decryptedDataset = utilities.copyObject(dataset);
         const encryptedMap = {};
+        encryptedMap.relations = {};
         const colorMap = {
             0: 'red',
             1: 'green',
@@ -112,6 +113,23 @@ class ImportUtilities {
                     encryptedMap[obj['@id']][encColor] = obj.properties;
                 }
                 obj.properties = decryptedProperties;
+                if (obj.relations != null) {
+                    encryptedMap.relations[obj['@id']] = [];
+                    for (const rel of obj.relations) {
+                        const decryptedProperties = Encryption.decryptObject(rel.properties, decryptionKey);
+                        if (encryptionColor != null) {
+                            const encColor = colorMap[encryptionColor];
+                            const relation = {};
+                            relation[rel.linkedObject['@id']] = {
+                                [decryptedProperties.relationType]: {
+                                    [encColor]: rel.properties,
+                                },
+                            };
+                            encryptedMap.relations[obj['@id']].push(relation);
+                        }
+                        rel.properties = decryptedProperties;
+                    }
+                }
             }
         }
         return {
@@ -130,10 +148,10 @@ class ImportUtilities {
                 obj.properties = encryptedProperties;
             }
             if (obj.relations != null) {
-                for (const obj of obj.relations) {
-                    if (obj.properties != null) {
-                        const encryptedProperties = Encryption.encryptObject(obj.properties, encryptionKey);
-                        obj.properties = encryptedProperties;
+                for (const rel of obj.relations) {
+                    if (rel.properties != null) {
+                        const encryptedProperties = Encryption.encryptObject(rel.properties, encryptionKey);
+                        rel.properties = encryptedProperties;
                     }
                 }
             }

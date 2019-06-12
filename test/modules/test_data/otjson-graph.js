@@ -860,4 +860,81 @@ const shuffledGraph = {
     }
 };
 
-module.exports = { graph, shuffledGraph };
+const graph2 = {
+    '@graph': [
+        {
+            '@id': 'urn:epc:id:sgln:0037000.00729.0',
+            '@type': 'otObject',
+            properties: {
+                objectType: 'vocabularyElement',
+                vocabularyType: 'urn:epcglobal:epcis:vtype:BusinessLocation',
+            },
+            relations: [
+                {
+                    '@type': 'otRelation',
+                    direction: 'direct',
+                    linkedObject: {
+                        '@id': 'urn:epc:id:sgln:0037000.00729.8202',
+                    },
+                    properties: {
+                        relationType: 'HAS_CHILD',
+                    },
+                },
+                {
+                    '@type': 'otRelation',
+                    direction: 'direct',
+                    linkedObject: {
+                        '@id': 'urn:epc:id:sgln:0037000.00729.8202',
+                    },
+                    properties: {
+                        relationType: 'READ_POINT',
+                    },
+                },
+                {
+                    '@type': 'otRelation',
+                    direction: 'direct',
+                    linkedObject: {
+                        '@id': 'urn:epc:id:sgln:0037000.00729.8203',
+                    },
+                    properties: {
+                        relationType: 'HAS_CHILD',
+                    },
+                },
+            ],
+        },
+        {
+            '@id': 'urn:epc:id:sgln:0037000.00729.8201',
+            '@type': 'otObject',
+            properties: {
+                objectType: 'vocabularyElement',
+                'urn:epcglobal:cbv:mda:site': '0037000007296',
+                'urn:epcglobal:cbv:mda:sst': '201',
+                vocabularyType: 'urn:epcglobal:epcis:vtype:ReadPoint',
+            },
+            relations: [
+                {
+                    '@type': 'otRelation',
+                    direction: 'direct',
+                    linkedObject: {
+                        '@id': 'urn:epc:id:sgln:0037000.00729.8204',
+                    },
+                    properties: {
+                        relationType: 'HAS_CHILD',
+                    },
+                },
+                {
+                    '@type': 'otRelation',
+                    direction: 'direct',
+                    linkedObject: {
+                        '@id': 'urn:epc:id:sgln:0037000.00729.8201',
+                    },
+                    properties: {
+                        relationType: 'HAS_CHILD',
+                    },
+                },
+            ],
+        },
+    ],
+};
+
+module.exports = { graph, shuffledGraph, graph2 };
