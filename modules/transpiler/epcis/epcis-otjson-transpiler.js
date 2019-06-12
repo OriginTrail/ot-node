@@ -81,13 +81,9 @@ class EpcisOtJsonTranspiler {
 
         otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
-        const signature = ImportUtilities.signDataset(otjson, this.config, this.web3);
-        otjson.signature = {
-            value: signature,
-            type: 'ethereum-signature',
-        };
+        const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
 
-        return otjson;
+        return signedOtjson;
     }
 
     /**

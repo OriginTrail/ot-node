@@ -512,12 +512,8 @@ class OtJsonImporter {
             document['@graph'].push(otConnector);
         });
 
-        const signature = ImportUtilities.signDataset(document, this.config, this.web3);
-        document.signature = {
-            value: signature,
-            type: 'ethereum-signature',
-        };
-        return document;
+        const signedOtjson = ImportUtilities.signDataset(document, this.config, this.web3);
+        return signedOtjson;
     }
 
     /**

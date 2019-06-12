@@ -366,7 +366,7 @@ class ImportUtilities {
         const datasetSummary = this.calculateDatasetSummary(dataset);
 
         const merkle = new MerkleTree(
-            [JSON.stringify(datasetSummary), ...JSON.parse(this.sortGraphRecursively(dataset['@graph']))],
+            [this.sortedStringify(datasetSummary), ...JSON.parse(this.sortGraphRecursively(dataset['@graph']))],
             'sha3',
         );
 
@@ -482,16 +482,23 @@ class ImportUtilities {
             stringifiedOtjson,
             Utilities.normalizeHex(config.node_private_key),
         );
-        return signature;
+        otjson.signature = {
+            value: signature,
+            type: 'ethereum-signature',
+        };
+        return otjson;
     }
 
     /**
      * Extract Signer from OT-JSON signature
      * @static
      */
-    static extractDatasetSigner(otjson, signature, web3) {
-        const stringifiedOtjson = this.sortDataset(otjson);
-        return web3.eth.personal.ecRecover(stringifiedOtjson, signature);
+    static extractDatasetSigner(otjson, web3) {
+        const strippedOtjson = Object.assign({}, otjson);
+        delete strippedOtjson.signature;
+
+        const stringifiedOtjson = this.sortDataset(strippedOtjson);
+        return web3.eth.accounts.recover(stringifiedOtjson, otjson.signature.value);
     }
 }
 

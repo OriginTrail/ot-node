@@ -1,13 +1,25 @@
 const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const ImportUtilities = require('../../modules/ImportUtilities');
-const testGraph = require('./test_data/otjson-graph');
+const { graph: testGraph, shuffledGraph } = require('./test_data/otjson-graph');
 const Encryption = require('./../../modules/Encryption');
 const Utilities = require('./../../modules/Utilities');
+const Web3 = require('web3');
 
 let keyPair = {};
+const signingWallet = {
+    wallet: '0x324b939670d154667466b17524d9136d879CDC09',
+    privateKey: '1556ba8faf6c2a1e696e4a70a0b7e1c6582ba26b9d8e6a9a7b96b22a29a5d2d3',
+};
+
+const config = {
+    node_private_key: signingWallet.privateKey,
+};
 
 describe('Encryption modules ', () => {
+    const web3 = new Web3();
+    web3.setProvider(new web3.providers.HttpProvider());
+
     before('Prepare encryption keys', () => {
         keyPair = Encryption.generateKeyPair();
     });
@@ -24,6 +36,13 @@ describe('Encryption modules ', () => {
         const stringifiedObject1 = ImportUtilities.sortedStringify(object1);
         const stringifiedObject2 = ImportUtilities.sortedStringify(object2);
         assert.equal(stringifiedObject1, stringifiedObject2);
+    });
+
+    it('Sorted dataset', () => {
+        const sortedOriginal = ImportUtilities.sortDataset(testGraph);
+        const sortedShuffled = ImportUtilities.sortDataset(shuffledGraph);
+
+        assert.equal(sortedOriginal, sortedShuffled);
     });
 
     it('Encrypt dataset', () => {
@@ -106,5 +125,40 @@ describe('Encryption modules ', () => {
         const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph);
 
         assert.equal(originalRootHash, decryptedRootHash);
+    });
+
+    it('Sign dataset', () => {
+        const testGraphCopy = Object.assign({}, testGraph);
+        const shuffledGraphCopy = Object.assign({}, shuffledGraph);
+        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
+
+        const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
+
+        assert(signedOriginal.signature != null);
+        assert(signedShuffled.signature != null);
+
+        assert.equal(
+            ImportUtilities
+                .sortDataset(signedOriginal),
+            ImportUtilities
+                .sortDataset(signedShuffled),
+        );
+    });
+
+    it('Verify dataset signature', async () => {
+        const testGraphCopy = Object.assign({}, testGraph);
+        const shuffledGraphCopy = Object.assign({}, shuffledGraph);
+
+        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
+        const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
+
+        assert.equal(ImportUtilities
+            .sortDataset(signedOriginal), ImportUtilities.sortDataset(signedShuffled));
+
+        const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
+        const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
+
+        assert.equal(signerOfOriginal, signerOfShuffled);
+        assert.equal(signerOfShuffled, signingWallet.wallet);
     });
 });
