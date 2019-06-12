@@ -129,6 +129,14 @@ class ImportUtilities {
                 const encryptedProperties = Encryption.encryptObject(obj.properties, encryptionKey);
                 obj.properties = encryptedProperties;
             }
+            if (obj.relations != null) {
+                for (const obj of obj.relations) {
+                    if (obj.properties != null) {
+                        const encryptedProperties = Encryption.encryptObject(obj.properties, encryptionKey);
+                        obj.properties = encryptedProperties;
+                    }
+                }
+            }
         }
         return encryptedDataset;
     }
