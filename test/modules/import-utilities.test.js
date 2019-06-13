@@ -114,8 +114,9 @@ describe('Encryption modules ', () => {
                 for (const objectId of Object.keys(encryptedMap[type])) {
                     for (const relationId of Object.keys(encryptedMap[type][objectId])) {
                         const mapData = encryptedMap[type][objectId][relationId][encryptionColor];
-                        const encryptedData = encryptedGraph['@graph'].find(el => el['@id'] === objectId)
+                        const decryptedData = testGraph['@graph'].find(el => el['@id'] === objectId)
                             .relations.find(el => sha3_256(Utilities.stringify(el, 0)) === relationId).properties;
+                        const encryptedData = Encryption.encryptObject(decryptedData, keyPair.privateKey)
                         assert.equal(mapData, encryptedData);
                     }
                 }

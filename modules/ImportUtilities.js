@@ -107,25 +107,25 @@ class ImportUtilities {
 
         for (const obj of decryptedDataset['@graph']) {
             if (obj.properties != null) {
-                const decryptedProperties = Encryption.decryptObject(obj.properties, decryptionKey);
+                const encryptedProperties = obj.properties;
+                obj.properties = Encryption.decryptObject(obj.properties, decryptionKey);
                 if (encryptionColor != null) {
                     const encColor = colorMap[encryptionColor];
                     encryptedMap.objects[obj['@id']] = {};
-                    encryptedMap.objects[obj['@id']][encColor] = obj.properties;
+                    encryptedMap.objects[obj['@id']][encColor] = encryptedProperties;
                 }
-                obj.properties = decryptedProperties;
             }
             if (obj.relations != null) {
                 encryptedMap.relations[obj['@id']] = {};
                 for (const rel of obj.relations) {
-                    const decryptedProperties = Encryption.decryptObject(rel.properties, decryptionKey);
+                    const encryptedProperties = rel.properties;
+                    rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
                     if (encryptionColor != null) {
                         const encColor = colorMap[encryptionColor];
                         const relationKey = sha3_256(utilities.stringify(rel, 0));
                         encryptedMap.relations[obj['@id']][relationKey] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][encColor] = rel.properties;
+                        encryptedMap.relations[obj['@id']][relationKey][encColor] = encryptedProperties;
                     }
-                    rel.properties = decryptedProperties;
                 }
             }
         }
