@@ -365,8 +365,26 @@ class ImportUtilities {
     static calculateDatasetRootHash(dataset) {
         const datasetSummary = this.calculateDatasetSummary(dataset);
 
+        dataset['@graph'].forEach((el) => {
+            if (el.relations) {
+                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
+            }
+
+            if (el.identifiers) {
+                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
+            }
+        });
+
+        const stringifiedGraph = [];
+
+        for (const obj of dataset['@graph']) {
+            stringifiedGraph.push(Utilities.sortedStringify(obj));
+        }
+
         const merkle = new MerkleTree(
-            [Utilities.sortedStringify(datasetSummary), ...JSON.parse(this.sortGraphRecursively(dataset['@graph']))],
+            [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
             'sha3',
         );
 

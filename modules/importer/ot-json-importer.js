@@ -323,6 +323,7 @@ class OtJsonImporter {
             _key: datasetId,
             datasetContext: _context(document),
             datasetHeader: document.datasetHeader,
+            signature: document.signature,
             vertices: vertices.reduce((acc, current) => {
                 if (!acc.includes(current._key)) {
                     acc.push(current._key);
@@ -420,6 +421,7 @@ class OtJsonImporter {
         };
 
         document.datasetHeader = metadata.datasetHeader;
+        document.signature = metadata.signature;
 
         vertices.filter(vertex => vertex.vertexType === 'EntityObject').forEach((entityVertex) => {
             const otObject = {
@@ -509,8 +511,7 @@ class OtJsonImporter {
             document['@graph'].push(otConnector);
         });
 
-        const signedOtjson = ImportUtilities.signDataset(document, this.config, this.web3);
-        return signedOtjson;
+        return document;
     }
 
     /**
