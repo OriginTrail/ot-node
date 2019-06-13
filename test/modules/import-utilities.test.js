@@ -5,6 +5,7 @@ const { graph: testGraph, shuffledGraph, graph2: testGraph2 } = require('./test_
 const Encryption = require('./../../modules/Encryption');
 const Utilities = require('./../../modules/Utilities');
 const Web3 = require('web3');
+const { sha3_256 } = require('js-sha3');
 
 let keyPair = {};
 const signingWallet = {
@@ -33,8 +34,8 @@ describe('Encryption modules ', () => {
 
         const object2 = { c: { d: [1, 2, 3, { x: undefined, e: null }] }, b: 'abc', a: 1 };
 
-        const stringifiedObject1 = ImportUtilities.sortedStringify(object1);
-        const stringifiedObject2 = ImportUtilities.sortedStringify(object2);
+        const stringifiedObject1 = Utilities.sortedStringify(object1);
+        const stringifiedObject2 = Utilities.sortedStringify(object2);
         assert.equal(stringifiedObject1, stringifiedObject2);
     });
 
@@ -59,8 +60,15 @@ describe('Encryption modules ', () => {
                 keyPair.publicKey,
             );
 
-            const stringifiedOriginal = ImportUtilities.sortedStringify(originalItem);
-            const stringifiedDecrypted = ImportUtilities.sortedStringify(decryptedItem);
+            if (decryptedItem.relations != null) {
+                decryptedItem.relations.forEach((relation) => {
+                    relation.properties =
+                        Encryption.decryptObject(relation.properties, keyPair.publicKey);
+                });
+            }
+
+            const stringifiedOriginal = Utilities.sortedStringify(originalItem);
+            const stringifiedDecrypted = Utilities.sortedStringify(decryptedItem);
 
             assert.equal(stringifiedOriginal, stringifiedDecrypted);
         }
@@ -73,17 +81,17 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const stringifiedOriginal = ImportUtilities.sortedStringify(testGraph);
-        const stringifiedDecrypted = ImportUtilities.sortedStringify(decryptedGraph);
+        const stringifiedOriginal = Utilities.sortedStringify(testGraph);
+        const stringifiedDecrypted = Utilities.sortedStringify(decryptedGraph);
 
         assert.equal(stringifiedOriginal, stringifiedDecrypted);
     });
 
     it('Decrypted dataset encryption map', () => {
         const colorMap = {
-            0: 'red',
-            1: 'green',
-            2: 'blue',
+            red: 0,
+            green: 1,
+            blue: 2,
         };
 
         const encryptionColor = 'red';
@@ -94,10 +102,24 @@ describe('Encryption modules ', () => {
             colorMap[encryptionColor],
         );
 
-        for (const objectId of Object.keys(encryptedMap)) {
-            const mapData = encryptedMap[objectId][encryptionColor];
-            const encryptedData = encryptedGraph['@graph'].find(el => el['@id'] === objectId).properties;
-            assert.equal(mapData, encryptedData);
+        for (const type of Object.keys(encryptedMap)) {
+            if (type === 'objects') {
+                for (const objectId of Object.keys(encryptedMap[type])) {
+                    const mapData = encryptedMap[type][objectId][encryptionColor];
+                    const encryptedData = encryptedGraph['@graph'].find(el => el['@id'] === objectId).properties;
+                    assert.equal(mapData, encryptedData);
+                }
+            }
+            if (type === 'relations') {
+                for (const objectId of Object.keys(encryptedMap[type])) {
+                    for (const relationId of Object.keys(encryptedMap[type][objectId])) {
+                        const mapData = encryptedMap[type][objectId][relationId][encryptionColor];
+                        const encryptedData = encryptedGraph['@graph'].find(el => el['@id'] === objectId)
+                            .relations.find(el => sha3_256(Utilities.stringify(el, 0)) === relationId).properties;
+                        assert.equal(mapData, encryptedData);
+                    }
+                }
+            }
         }
     });
 
@@ -108,8 +130,8 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalGraphHash = ImportUtilities.calculateGraphHash(encryptedGraph['@graph']);
-        const decryptedGraphHash = ImportUtilities.calculateGraphHash(encryptedGraph['@graph']);
+        const originalGraphHash = ImportUtilities.calculateGraphHash(testGraph['@graph']);
+        const decryptedGraphHash = ImportUtilities.calculateGraphHash(decryptedGraph['@graph']);
 
         assert.equal(originalGraphHash, decryptedGraphHash);
     });
@@ -160,13 +182,5 @@ describe('Encryption modules ', () => {
 
         assert.equal(signerOfOriginal, signerOfShuffled);
         assert.equal(signerOfShuffled, signingWallet.wallet);
-    });
-
-    it('check that decrypting encrypted dataset gives back original dataset', () => {
-        const encryptedDataset = ImportUtilities.encryptDataset(testGraph2, keyPair.privateKey);
-        const decryptedDataset = ImportUtilities.decryptDataset(encryptedDataset, keyPair.publicKey, 0);
-
-        console.log(JSON.stringify(encryptedDataset));
-        console.log(JSON.stringify(decryptedDataset));
     });
 });
