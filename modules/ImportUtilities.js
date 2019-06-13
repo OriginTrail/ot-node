@@ -114,18 +114,18 @@ class ImportUtilities {
                     encryptedMap.objects[obj['@id']][encColor] = obj.properties;
                 }
                 obj.properties = decryptedProperties;
-                if (obj.relations != null) {
-                    encryptedMap.relations[obj['@id']] = {};
-                    for (const rel of obj.relations) {
-                        const decryptedProperties = Encryption.decryptObject(rel.properties, decryptionKey);
-                        if (encryptionColor != null) {
-                            const encColor = colorMap[encryptionColor];
-                            const relationKey = sha3_256(utilities.stringify(rel, 0));
-                            encryptedMap.relations[obj['@id']][relationKey] = {};
-                            encryptedMap.relations[obj['@id']][relationKey][encColor] = rel.properties;
-                        }
-                        rel.properties = decryptedProperties;
+            }
+            if (obj.relations != null) {
+                encryptedMap.relations[obj['@id']] = {};
+                for (const rel of obj.relations) {
+                    const decryptedProperties = Encryption.decryptObject(rel.properties, decryptionKey);
+                    if (encryptionColor != null) {
+                        const encColor = colorMap[encryptionColor];
+                        const relationKey = sha3_256(utilities.stringify(rel, 0));
+                        encryptedMap.relations[obj['@id']][relationKey] = {};
+                        encryptedMap.relations[obj['@id']][relationKey][encColor] = rel.properties;
                     }
+                    rel.properties = decryptedProperties;
                 }
             }
         }
