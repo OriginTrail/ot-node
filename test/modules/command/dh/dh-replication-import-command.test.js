@@ -114,7 +114,7 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
             dcWallet: '0x2134',
             dcNodeId: '21341234124',
             litigationPublicKey: publicKey,
-            litigationRootHash: ImportUtilities.calculateDatasetRootHash(encryptedJSON),
+            litigationRootHash: ImportUtilities.calculateDatasetRootHash(encryptedJSON['@graph'], encryptedJSON['@id'], encryptedJSON.datasetHeader.dataCreator),
             distributionPublicKey: '',
             distributionPrivateKey: '',
             distributionEpk: '',
