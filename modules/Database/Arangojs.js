@@ -749,7 +749,6 @@ class ArangoJS {
         const queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
                 'AND POSITION(v.datasets, @importId, false) != false ' +
-                `AND v.encrypted == ${encColor} ` +
                 'SORT v._key ' +
                 'RETURN v';
 
