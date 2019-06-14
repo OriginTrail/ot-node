@@ -597,14 +597,11 @@ class EventEmitter {
         this._on('api-gs1-import-request', async (data) => {
             try {
                 logger.debug('GS1 import triggered');
-                const responseObject = await importer.importXMLgs1(data.content);
-                const { error } = responseObject;
-                const { response } = responseObject;
-
-                if (response === null) {
-                    await processImport(null, error, data);
+                const result = await importer.importDL2(data.content);
+                if (result.error != null) {
+                    await processImport(null, result.error, data);
                 } else {
-                    await processImport(response, null, data);
+                    await processImport(result.response, null, data);
                 }
             } catch (error) {
                 await processImport(null, error, data);

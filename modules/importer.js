@@ -226,20 +226,18 @@ class Importer {
         }
 
         const {
-            data_set_id, wallet,
+            data_set_id, wallet, root_hash,
         } = result;
 
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        // const merkle = await ImportUtilities.merkleStructure(vertices, edges);
-
-        this.log.info('Root hash: 0x064631c6');// ${merkle.tree.getRoot()}`);
+        this.log.info(`Root hash: ${root_hash}`);
         this.log.info(`Data set ID: ${data_set_id}`);
         return {
             data_set_id,
-            root_hash: '0x064631c64661060512af1391a02c94a70435e3320207bb07b6ee5ecfde759ef4', // merkle.tree.getRoot(),
-            total_documents: 1, // merkle.hashPairs.length,
+            root_hash,
+            total_documents: 1,
             vertices,
             edges,
             wallet,

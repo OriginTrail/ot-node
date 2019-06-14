@@ -78,6 +78,11 @@ class DhReplicationImportCommand extends Command {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);
         }
 
+        const originalRootHash = otJson.datasetHeader.dataIntegrity.proofs[0].proofValue;
+        if (decryptedGraphRootHash !== originalRootHash) {
+            throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from document root hash ${originalRootHash}`);
+        }
+
         // TODO: Verify decrypted data root hash
         // TODO: Verify EPK checksum
         // TODO: Verify distribution keys and hashes
