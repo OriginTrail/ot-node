@@ -321,11 +321,12 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(response.document, 'response.document should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    // TODO: calculate root hash and compare.
-    // TODO: verify signature.
+    expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 
-    // const calculatedImportHash = utilities.calculateImportHash(response.document);
-    // expect(calculatedImportHash, `Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`).to.be.equal(this.state.lastImport.data_set_id);
+    const calculatedRootHash = utilities.calculateRootHash(response.document);
+    const calculateDatasetId = utilities.calculateImportHash(response.document['@graph']);
+    expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.root_hash);
+    expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data_set_id}.`).to.be.equal(this.state.lastImport.data_set_id);
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {
@@ -337,20 +338,23 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const { dc } = this.state;
 
-    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
-    expect(myFingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    const fingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    expect(fingerprint).to.have.keys(['root_hash']);
+    expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
 
-    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
     // vertices and edges are already sorted from the response
 
-    // TODO: calculate merkle structure here.
-    // const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices, myApiImportInfo.import.edges);
+    const calculatedDataSetId = utilities.calculateImportHash(importInfo.document['@graph']);
+    const calculatedRootHash = utilities.calculateRootHash(importInfo.document);
 
-    // expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
-
-    console.log(myApiImportInfo);
+    expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
+        .to.be.equal(calculatedRootHash);
+    expect(this.state.lastImport.root_hash, 'Root hash from last import and manually calculated should match')
+        .to.be.equal(calculatedRootHash);
+    expect(this.state.lastImport.data_set_id, 'Dataset ID and manually calculated ID should match')
+        .to.be.equal(calculatedDataSetId);
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {

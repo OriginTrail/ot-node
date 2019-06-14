@@ -481,7 +481,8 @@ class EventEmitter {
                     data.response.send({
                         message: 'Import success',
                         data_set_id,
-                        wallet: config.node_wallet,
+                        root_hash,
+                        wallet,
                     });
                     remoteControl.importSucceeded();
                 }
