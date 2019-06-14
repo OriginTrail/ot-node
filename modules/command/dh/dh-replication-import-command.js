@@ -69,10 +69,10 @@ class DhReplicationImportCommand extends Command {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }
 
-        const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
+        const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset['@graph'], decryptedDataset['@id'], decryptedDataset.datasetHeader.dataCreator);
 
         // Verify litigation root hash
-        const encryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(otJson);
+        const encryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(otJson['@graph'], otJson['@id'], otJson.datasetHeader.dataCreator);
 
         if (encryptedGraphRootHash !== litigationRootHash) {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);

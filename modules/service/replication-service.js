@@ -60,7 +60,7 @@ class ReplicationService {
 
                 // const litigationBlocks = this.challengeService.getBlocks(document['@graph']);
                 // const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
-                const litRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset);
+                const litRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
                 // const distMerkleStructure = new MerkleTree(distEncVertices);
                 const distRootHash = '';

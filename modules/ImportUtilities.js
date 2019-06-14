@@ -365,24 +365,23 @@ class ImportUtilities {
         return transactionHash;
     }
 
-    static calculateDatasetSummary(dataset) {
+    static calculateDatasetSummary(graph, datasetId, datasetCreator) {
         return {
-            datasetId: dataset['@id'],
-            datasetCreator: dataset.datasetHeader.dataCreator,
-            objects: dataset['@graph'].map(vertex => ({
+            datasetId: datasetId,
+            datasetCreator: datasetCreator, //TODO consider to use only one (main) dataCreator
+            objects: graph.map(vertex => ({
                 '@id': vertex['@id'],
                 identifiers: vertex.identifiers != null ? vertex.identifiers : [],
             })),
-            numRelations: dataset['@graph']
-                .filter(vertex => vertex.relations != null)
+            numRelations: graph.filter(vertex => vertex.relations != null)
                 .reduce((acc, value) => acc + value.relations.length, 0),
         };
     }
 
-    static calculateDatasetRootHash(dataset) {
-        const datasetSummary = Utilities.sortedStringify(this.calculateDatasetSummary(dataset));
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const datasetSummary = Utilities.sortedStringify(this.calculateDatasetSummary(graph, datasetId, datasetCreator));
 
-        dataset['@graph'].forEach((el) => {
+        graph.forEach((el) => {
             if (el.relations) {
                 el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
                     .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
@@ -396,7 +395,7 @@ class ImportUtilities {
 
         const stringifiedGraph = [];
 
-        for (const obj of dataset['@graph']) {
+        for (const obj of graph) {
             stringifiedGraph.push(Utilities.sortedStringify(obj));
         }
 
