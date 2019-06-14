@@ -813,9 +813,8 @@ class EpcisOtJsonTranspiler {
 
         if (!splitted) {
             return {
-                id: identifier // TEMP FIX, REMOVE LAYER,
+                id: identifier, // TEMP FIX, REMOVE LAYER,
             };
-            throw Error('Invalid Identifier');
         }
 
         const identifierType = splitted[1];
@@ -893,8 +892,7 @@ class EpcisOtJsonTranspiler {
                 identifiers.extension = extension;
             }
             break;
-            default:
-
+        default:
             throw Error('Invalid identifier type');
         }
         return identifiers;

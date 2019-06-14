@@ -136,7 +136,9 @@ class OtJsonImporter {
     /**
      * Imports OTJSON document
      * @param data { document, encryptedMap }
-     * @returns {Promise<{root_hash: string, vertices: Array, edges: Array, data_set_id: string, wallet: string}>}
+     * @returns {
+     * Promise<{
+     * root_hash: string, vertices: Array, edges: Array, data_set_id: string, wallet: string}>}
      */
     async importFile(data) {
         const {

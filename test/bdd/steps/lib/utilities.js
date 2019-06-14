@@ -41,15 +41,13 @@ function _sortedStringify(obj) {
 function _sortGraphRecursively(graph) {
     graph.forEach((el) => {
         if (el.relations) {
-            el.relations.sort(
-                (r1, r2) =>
-                    sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
+            el.relations.sort((r1, r2) =>
+                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
         }
 
         if (el.identifiers) {
-            el.identifiers.sort(
-                (r1, r2) =>
-                    sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
+            el.identifiers.sort((r1, r2) =>
+                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
         }
     });
     graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));

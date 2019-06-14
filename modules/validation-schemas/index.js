@@ -28,9 +28,9 @@ class Validator {
                     message: `Missing information for schema ${schemaName}`,
                 };
             }
-            //const shemaValidationResult = validationFunction[schemaName](schemaData, obj);
+            // const shemaValidationResult = validationFunction[schemaName](schemaData, obj);
 
-            //console.log(schemaName);
+            // console.log(schemaName);
         }
         //
         // console.log(validationData);

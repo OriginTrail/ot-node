@@ -367,8 +367,8 @@ class ImportUtilities {
 
     static calculateDatasetSummary(graph, datasetId, datasetCreator) {
         return {
-            datasetId: datasetId,
-            datasetCreator: datasetCreator, //TODO consider to use only one (main) dataCreator
+            datasetId,
+            datasetCreator,
             objects: graph.map(vertex => ({
                 '@id': vertex['@id'],
                 identifiers: vertex.identifiers != null ? vertex.identifiers : [],
@@ -379,7 +379,9 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
-        const datasetSummary = Utilities.sortedStringify(this.calculateDatasetSummary(graph, datasetId, datasetCreator));
+        const datasetSummary =
+            Utilities
+                .sortedStringify(this.calculateDatasetSummary(graph, datasetId, datasetCreator));
 
         graph.forEach((el) => {
             if (el.relations) {

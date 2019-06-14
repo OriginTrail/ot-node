@@ -426,7 +426,7 @@ const graph = {
                 schemaType: 'merkle-root',
             },
         },
-    }
+    },
 };
 
 const shuffledGraph = {
@@ -857,7 +857,7 @@ const shuffledGraph = {
                 schemaType: 'ethereum-725',
             },
         },
-    }
+    },
 };
 
 module.exports = { graph, shuffledGraph };

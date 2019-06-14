@@ -56,7 +56,8 @@ class ReplicationService {
                 const distributionKeyPair = Encryption.generateKeyPair(512);
                 const distEncVertices = [];
 
-                const encryptedDataset = ImportUtilities.encryptDataset(document, litigationKeyPair.privateKey);
+                const encryptedDataset =
+                    ImportUtilities.encryptDataset(document, litigationKeyPair.privateKey);
 
                 // const litigationBlocks = this.challengeService.getBlocks(document['@graph']);
                 // const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
@@ -67,7 +68,8 @@ class ReplicationService {
 
                 // const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
                 // const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-                // const distributionEpkChecksum = Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
+                // const distributionEpkChecksum =
+                //  Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
                 const replication = {
                     color,
