@@ -380,8 +380,7 @@ class ImportUtilities {
 
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
         const datasetSummary =
-            Utilities
-                .sortedStringify(this.calculateDatasetSummary(graph, datasetId, datasetCreator));
+            this.calculateDatasetSummary(graph, datasetId, datasetCreator);
 
         graph.forEach((el) => {
             if (el.relations) {
