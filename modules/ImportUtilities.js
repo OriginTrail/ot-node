@@ -97,6 +97,9 @@ class ImportUtilities {
             '@graph': graph,
         };
 
+        const rootHash = this.calculateDatasetRootHash(dataset);
+        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+
         const signed = this.signDataset(dataset, config, web3);
         return signed;
     }
@@ -377,7 +380,7 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(dataset) {
-        const datasetSummary = this.calculateDatasetSummary(dataset);
+        const datasetSummary = Utilities.sortedStringify(this.calculateDatasetSummary(dataset));
 
         dataset['@graph'].forEach((el) => {
             if (el.relations) {
@@ -547,7 +550,7 @@ class ImportUtilities {
             dataIntegrity: {
                 proofs: [
                     {
-                        proofValue: '0x2029a07cc3dc96a82b3260ebc1fed1d7',
+                        proofValue: '',
                         proofType: 'merkleRootHash',
                         validationSchema: '/schemas/merkleRoot',
                     },
