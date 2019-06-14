@@ -15,6 +15,7 @@ class EventEmitter {
         this.ctx = ctx;
         this.product = ctx.product;
         this.web3 = ctx.web3;
+        this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.appState = ctx.appState;
         this.otJsonImporter = ctx.otJsonImporter;
@@ -631,6 +632,21 @@ class EventEmitter {
             try {
                 logger.debug('DL2 import triggered');
                 const result = await importer.importDL2(data.content);
+                if (result.error != null) {
+                    await processImport(null, result.error, data);
+                } else {
+                    await processImport(result.response, null, data);
+                }
+            } catch (error) {
+                await processImport(null, error, data);
+            }
+        });
+
+        this._on('api-graph-import-request', async (data) => {
+            try {
+                logger.debug('Graph import triggered');
+                const dataset = ImportUtilities.prepareDataset(JSON.parse(data.content), this.config, this.web3);
+                const result = await importer.importOTJSON(dataset);
                 if (result.error != null) {
                     await processImport(null, result.error, data);
                 } else {

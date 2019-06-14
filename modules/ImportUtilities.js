@@ -87,6 +87,20 @@ class ImportUtilities {
         }
     }
 
+    static prepareDataset(graph, config, web3) {
+        const id = this.calculateGraphHash(graph);
+        const header = this.createDatasetHeader(config);
+        const dataset = {
+            '@id': id,
+            '@type': 'Dataset',
+            datasetHeader: header,
+            '@graph': graph,
+        };
+
+        const signed = this.signDataset(dataset, config, web3);
+        return signed;
+    }
+
     /**
      * Decrypt encrypted otjson dataset
      * @param dataset - OTJson dataset
@@ -477,6 +491,66 @@ class ImportUtilities {
 
         const stringifiedOtjson = this.sortDataset(strippedOtjson);
         return web3.eth.accounts.recover(stringifiedOtjson, otjson.signature.value);
+    }
+
+
+    /**
+     * Fill in dataset header
+     * @private
+     */
+    static createDatasetHeader(config, transpilationInfo = null, tags = []) {
+        const header = {
+            OTJSONVersion: '1.0',
+            datasetCreationTimestamp: new Date().toISOString(),
+            datasetTitle: '',
+            datasetTags: tags,
+            /*
+            relatedDatasets may contain objects like this:
+            {
+                datasetId: '0x620867dced3a96809fc69d579b2684a7',
+                relationType: 'UPDATED',
+                relationDescription: 'Some long description',
+                relationDirection: 'direct',
+            }
+             */
+            relatedDatasets: [],
+            validationSchemas: {
+                'erc725-main': {
+                    schemaType: 'ethereum-725',
+                    networkId: config.blockchain.network_id,
+                },
+                merkleRoot: {
+                    schemaType: 'merkle-root',
+                    networkId: config.blockchain.network_id,
+                    hubContractAddress: config.blockchain.hub_contract_address,
+                    // TODO: Add holding contract address and version. Hub address is useless.
+                },
+            },
+            dataIntegrity: {
+                proofs: [
+                    {
+                        proofValue: '0x2029a07cc3dc96a82b3260ebc1fed1d7',
+                        proofType: 'merkleRootHash',
+                        validationSchema: '/schemas/merkleRoot',
+                    },
+                ],
+            },
+            dataCreator: {
+                identifiers: [
+                    {
+                        identifierValue: config.erc725Identity,
+                        identifierType: 'ERC725',
+                        validationSchema: '/schemas/erc725-main',
+                    },
+                ],
+            },
+        };
+
+        if (transpilationInfo) {
+            header.transpilationInfo = transpilationInfo;
+        }
+
+        return header;
     }
 }
 

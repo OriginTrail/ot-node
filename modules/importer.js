@@ -200,6 +200,7 @@ class Importer {
         }
 
         return {
+            total_documents: jsonDocument['@graph'].length,
             vertices,
             edges,
             data_set_id: dataSetId,
@@ -323,7 +324,7 @@ class Importer {
                 encryptedMap,
             });
             return {
-                response: 'ok',
+                response: result,
                 error: null,
             };
         } catch (error) {
@@ -349,6 +350,8 @@ class Importer {
             document,
             encryptedMap,
         });
+
+        return result;
     }
 
     /**

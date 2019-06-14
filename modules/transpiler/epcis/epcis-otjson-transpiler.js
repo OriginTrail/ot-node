@@ -75,7 +75,7 @@ class EpcisOtJsonTranspiler {
         otjson['@id'] = ImportUtilities.calculateGraphHash(otjson['@graph']);
         otjson['@type'] = 'Dataset';
 
-        otjson.datasetHeader = this._createDatasetHeader(transpilationInfo);
+        otjson.datasetHeader = ImportUtilities.createDatasetHeader(this.config, transpilationInfo);
 
         const merkleRoot = ImportUtilities.calculateDatasetRootHash(otjson);
 
@@ -137,60 +137,6 @@ class EpcisOtJsonTranspiler {
         }
         Object.keys(obj).forEach(k => (obj[k] === undefined ? delete obj[k] : '')); // remove undefined
         return obj;
-    }
-
-    /**
-     * Fill in dataset header
-     * @private
-     */
-    _createDatasetHeader(transpilationInfo) {
-        return {
-            OTJSONVersion: '1.0',
-            datasetCreationTimestamp: new Date().toISOString(),
-            datasetTitle: '',
-            datasetTags: [],
-            /*
-            relatedDatasets may contain objects like this:
-            {
-                datasetId: '0x620867dced3a96809fc69d579b2684a7',
-                relationType: 'UPDATED',
-                relationDescription: 'Some long description',
-                relationDirection: 'direct',
-            }
-             */
-            relatedDatasets: [],
-            validationSchemas: {
-                'erc725-main': {
-                    schemaType: 'ethereum-725',
-                    networkId: this.config.blockchain.network_id,
-                },
-                merkleRoot: {
-                    schemaType: 'merkle-root',
-                    networkId: this.config.blockchain.network_id,
-                    hubContractAddress: this.config.blockchain.hub_contract_address,
-                    // TODO: Add holding contract address and version. Hub address is useless.
-                },
-            },
-            dataIntegrity: {
-                proofs: [
-                    {
-                        proofValue: '0x2029a07cc3dc96a82b3260ebc1fed1d7',
-                        proofType: 'merkleRootHash',
-                        validationSchema: '/schemas/merkleRoot',
-                    },
-                ],
-            },
-            dataCreator: {
-                identifiers: [
-                    {
-                        identifierValue: this.config.erc725Identity,
-                        identifierType: 'ERC725',
-                        validationSchema: '/schemas/erc725-main',
-                    },
-                ],
-            },
-            transpilationInfo,
-        };
     }
 
     /**

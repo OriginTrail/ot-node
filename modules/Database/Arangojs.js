@@ -68,12 +68,7 @@ class ArangoJS {
             const filters = [];
             for (const key in queryObject) {
                 if (key.match(/^[\w\d]+$/g) !== null) {
-                    let searchKey;
-                    if (key !== 'vertex_type' && key !== 'edge_type' && key !== '_key') {
-                        searchKey = `identifiers.${key}`;
-                    } else {
-                        searchKey = key;
-                    }
+                    const searchKey = key;
                     const param = `param${count}`;
                     filters.push(`v.${searchKey} == @param${count}`);
 
