@@ -24,7 +24,7 @@ const logger = require('../../../../modules/logger');
 
 const testUtilities = require('../../test-utilities');
 
-const {encryptedJSON, publicKey} = require('../../test_data/mockEncrypted.js');
+const { encryptedJSON, publicKey } = require('../../test_data/mockEncrypted.js');
 
 describe('Checks DHReplicationImportCommand execute() logic', function () {
     this.timeout(5000);

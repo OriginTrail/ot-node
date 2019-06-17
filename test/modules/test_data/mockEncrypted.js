@@ -19,8 +19,6 @@ for (const obj of processedJSON['@graph']) {
             relation.properties = Encryption.encryptObject(relation.properties, privateKey);
         });
     }
-        // obj.properties = Encryption.decryptObject(obj.properties, publicKey);
-        // console.log(obj);
 }
 
 const encryptedJSON = processedJSON;

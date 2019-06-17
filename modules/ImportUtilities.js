@@ -164,7 +164,8 @@ class ImportUtilities {
             if (obj.relations != null) {
                 for (const rel of obj.relations) {
                     if (rel.properties != null) {
-                        const encryptedProperties = Encryption.encryptObject(rel.properties, encryptionKey);
+                        const encryptedProperties =
+                            Encryption.encryptObject(rel.properties, encryptionKey);
                         rel.properties = encryptedProperties;
                     }
                 }
