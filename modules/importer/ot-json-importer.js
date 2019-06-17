@@ -136,7 +136,9 @@ class OtJsonImporter {
     /**
      * Imports OTJSON document
      * @param data { document, encryptedMap }
-     * @returns {Promise<{root_hash: string, vertices: Array, edges: Array, data_set_id: string, wallet: string}>}
+     * @returns {
+     * Promise<{
+     * root_hash: string, vertices: Array, edges: Array, data_set_id: string, wallet: string}>}
      */
     async importFile(data) {
         const {
@@ -220,8 +222,8 @@ class OtJsonImporter {
                         data: otObject.properties,
                         datasets: [datasetId],
                     };
-                    if (encryptedMap && encryptedMap[_id(otObject)]) {
-                        dataVertex.encrypted = encryptedMap[_id(otObject)];
+                    if (encryptedMap && encryptedMap.objects && encryptedMap.objects[_id(otObject)]) {
+                        dataVertex.encrypted = encryptedMap.objects[_id(otObject)];
                     }
                     vertices.push(dataVertex);
 
@@ -264,6 +266,10 @@ class OtJsonImporter {
                         }
                         relationEdge.properties = relation.properties;
                         relationEdge.datasets = [datasetId];
+                        if (encryptedMap && encryptedMap.relations && encryptedMap.relations[_id(otObject)]) {
+                            const relationKey = sha3_256(Utilities.stringify(relation, 0));
+                            relationEdge.encrypted = encryptedMap.relations[_id(otObject)][relationKey];
+                        }
                         edges.push(relationEdge);
                     });
                 }

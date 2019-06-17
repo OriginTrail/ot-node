@@ -114,6 +114,8 @@ class ImportUtilities {
     static decryptDataset(dataset, decryptionKey, encryptionColor = null) {
         const decryptedDataset = utilities.copyObject(dataset);
         const encryptedMap = {};
+        encryptedMap.objects = {};
+        encryptedMap.relations = {};
         const colorMap = {
             0: 'red',
             1: 'green',
@@ -122,13 +124,26 @@ class ImportUtilities {
 
         for (const obj of decryptedDataset['@graph']) {
             if (obj.properties != null) {
-                const decryptedProperties = Encryption.decryptObject(obj.properties, decryptionKey);
+                const encryptedProperties = obj.properties;
+                obj.properties = Encryption.decryptObject(obj.properties, decryptionKey);
                 if (encryptionColor != null) {
                     const encColor = colorMap[encryptionColor];
-                    encryptedMap[obj['@id']] = {};
-                    encryptedMap[obj['@id']][encColor] = obj.properties;
+                    encryptedMap.objects[obj['@id']] = {};
+                    encryptedMap.objects[obj['@id']][encColor] = encryptedProperties;
                 }
-                obj.properties = decryptedProperties;
+            }
+            if (obj.relations != null) {
+                encryptedMap.relations[obj['@id']] = {};
+                for (const rel of obj.relations) {
+                    const encryptedProperties = rel.properties;
+                    rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
+                    if (encryptionColor != null) {
+                        const encColor = colorMap[encryptionColor];
+                        const relationKey = sha3_256(utilities.stringify(rel, 0));
+                        encryptedMap.relations[obj['@id']][relationKey] = {};
+                        encryptedMap.relations[obj['@id']][relationKey][encColor] = encryptedProperties;
+                    }
+                }
             }
         }
         return {
@@ -145,6 +160,14 @@ class ImportUtilities {
             if (obj.properties != null) {
                 const encryptedProperties = Encryption.encryptObject(obj.properties, encryptionKey);
                 obj.properties = encryptedProperties;
+            }
+            if (obj.relations != null) {
+                for (const rel of obj.relations) {
+                    if (rel.properties != null) {
+                        const encryptedProperties = Encryption.encryptObject(rel.properties, encryptionKey);
+                        rel.properties = encryptedProperties;
+                    }
+                }
             }
         }
         return encryptedDataset;
@@ -365,24 +388,24 @@ class ImportUtilities {
         return transactionHash;
     }
 
-    static calculateDatasetSummary(dataset) {
+    static calculateDatasetSummary(graph, datasetId, datasetCreator) {
         return {
-            datasetId: dataset['@id'],
-            datasetCreator: dataset.datasetHeader.dataCreator,
-            objects: dataset['@graph'].map(vertex => ({
+            datasetId,
+            datasetCreator,
+            objects: graph.map(vertex => ({
                 '@id': vertex['@id'],
                 identifiers: vertex.identifiers != null ? vertex.identifiers : [],
             })),
-            numRelations: dataset['@graph']
-                .filter(vertex => vertex.relations != null)
+            numRelations: graph.filter(vertex => vertex.relations != null)
                 .reduce((acc, value) => acc + value.relations.length, 0),
         };
     }
 
-    static calculateDatasetRootHash(dataset) {
-        const datasetSummary = Utilities.sortedStringify(this.calculateDatasetSummary(dataset));
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const datasetSummary =
+            this.calculateDatasetSummary(graph, datasetId, datasetCreator);
 
-        dataset['@graph'].forEach((el) => {
+        graph.forEach((el) => {
             if (el.relations) {
                 el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
                     .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
@@ -396,7 +419,7 @@ class ImportUtilities {
 
         const stringifiedGraph = [];
 
-        for (const obj of dataset['@graph']) {
+        for (const obj of graph) {
             stringifiedGraph.push(Utilities.sortedStringify(obj));
         }
 

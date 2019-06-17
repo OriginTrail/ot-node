@@ -24,7 +24,7 @@ const logger = require('../../../../modules/logger');
 
 const testUtilities = require('../../test-utilities');
 
-const {encryptedJSON, publicKey} = require('../../../../mockEncrypted.js');
+const {encryptedJSON, publicKey} = require('../../test_data/mockEncrypted.js');
 
 describe('Checks DHReplicationImportCommand execute() logic', function () {
     this.timeout(5000);
@@ -114,7 +114,7 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
             dcWallet: '0x2134',
             dcNodeId: '21341234124',
             litigationPublicKey: publicKey,
-            litigationRootHash: ImportUtilities.calculateDatasetRootHash(encryptedJSON),
+            litigationRootHash: ImportUtilities.calculateDatasetRootHash(encryptedJSON['@graph'], encryptedJSON['@id'], encryptedJSON.datasetHeader.dataCreator),
             distributionPublicKey: '',
             distributionPrivateKey: '',
             distributionEpk: '',

@@ -1,10 +1,11 @@
 const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const ImportUtilities = require('../../modules/ImportUtilities');
-const { graph: testGraph, shuffledGraph } = require('./test_data/otjson-graph');
+const { graph: testGraph, shuffledGraph, graph2: testGraph2 } = require('./test_data/otjson-graph');
 const Encryption = require('./../../modules/Encryption');
 const Utilities = require('./../../modules/Utilities');
 const Web3 = require('web3');
+const { sha3_256 } = require('js-sha3');
 
 let keyPair = {};
 const signingWallet = {
@@ -59,6 +60,13 @@ describe('Encryption modules ', () => {
                 keyPair.publicKey,
             );
 
+            if (decryptedItem.relations != null) {
+                decryptedItem.relations.forEach((relation) => {
+                    relation.properties =
+                        Encryption.decryptObject(relation.properties, keyPair.publicKey);
+                });
+            }
+
             const stringifiedOriginal = Utilities.sortedStringify(originalItem);
             const stringifiedDecrypted = Utilities.sortedStringify(decryptedItem);
 
@@ -81,9 +89,9 @@ describe('Encryption modules ', () => {
 
     it('Decrypted dataset encryption map', () => {
         const colorMap = {
-            0: 'red',
-            1: 'green',
-            2: 'blue',
+            red: 0,
+            green: 1,
+            blue: 2,
         };
 
         const encryptionColor = 'red';
@@ -94,10 +102,25 @@ describe('Encryption modules ', () => {
             colorMap[encryptionColor],
         );
 
-        for (const objectId of Object.keys(encryptedMap)) {
-            const mapData = encryptedMap[objectId][encryptionColor];
-            const encryptedData = encryptedGraph['@graph'].find(el => el['@id'] === objectId).properties;
-            assert.equal(mapData, encryptedData);
+        for (const type of Object.keys(encryptedMap)) {
+            if (type === 'objects') {
+                for (const objectId of Object.keys(encryptedMap[type])) {
+                    const mapData = encryptedMap[type][objectId][encryptionColor];
+                    const encryptedData = encryptedGraph['@graph'].find(el => el['@id'] === objectId).properties;
+                    assert.equal(mapData, encryptedData);
+                }
+            }
+            if (type === 'relations') {
+                for (const objectId of Object.keys(encryptedMap[type])) {
+                    for (const relationId of Object.keys(encryptedMap[type][objectId])) {
+                        const mapData = encryptedMap[type][objectId][relationId][encryptionColor];
+                        const decryptedData = testGraph['@graph'].find(el => el['@id'] === objectId)
+                            .relations.find(el => sha3_256(Utilities.stringify(el, 0)) === relationId).properties;
+                        const encryptedData = Encryption.encryptObject(decryptedData, keyPair.privateKey)
+                        assert.equal(mapData, encryptedData);
+                    }
+                }
+            }
         }
     });
 
@@ -108,8 +131,8 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalGraphHash = ImportUtilities.calculateGraphHash(encryptedGraph['@graph']);
-        const decryptedGraphHash = ImportUtilities.calculateGraphHash(encryptedGraph['@graph']);
+        const originalGraphHash = ImportUtilities.calculateGraphHash(testGraph['@graph']);
+        const decryptedGraphHash = ImportUtilities.calculateGraphHash(decryptedGraph['@graph']);
 
         assert.equal(originalGraphHash, decryptedGraphHash);
     });
@@ -121,8 +144,8 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalRootHash = ImportUtilities.calculateDatasetRootHash(testGraph);
-        const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph);
+        const originalRootHash = ImportUtilities.calculateDatasetRootHash(encryptedGraph['@graph'], encryptedGraph['@id'], encryptedGraph.datasetHeader.dataCreator);
+        const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph['@graph'], decryptedGraph['@id'], decryptedGraph.datasetHeader.dataCreator);
 
         assert.equal(originalRootHash, decryptedRootHash);
     });

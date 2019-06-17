@@ -77,7 +77,7 @@ class EpcisOtJsonTranspiler {
 
         otjson.datasetHeader = ImportUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        const merkleRoot = ImportUtilities.calculateDatasetRootHash(otjson);
+        const merkleRoot = ImportUtilities.calculateDatasetRootHash(otjson['@graph'], otjson['@id'], otjson.datasetHeader.dataCreator);
 
         otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
@@ -813,9 +813,8 @@ class EpcisOtJsonTranspiler {
 
         if (!splitted) {
             return {
-                id: identifier // TEMP FIX, REMOVE LAYER,
+                id: identifier, // TEMP FIX, REMOVE LAYER,
             };
-            throw Error('Invalid Identifier');
         }
 
         const identifierType = splitted[1];
@@ -893,8 +892,7 @@ class EpcisOtJsonTranspiler {
                 identifiers.extension = extension;
             }
             break;
-            default:
-
+        default:
             throw Error('Invalid identifier type');
         }
         return identifiers;
