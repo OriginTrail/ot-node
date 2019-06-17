@@ -46,11 +46,6 @@ class ArangoJS {
         await this.createCollection('ot_datasets');
         await this.createCollection('ot_vertices');
         await this.createEdgeCollection('ot_edges');
-
-        await Promise.all(allowedClasses.map(className => this.addVertex({
-            _key: className,
-            vertex_type: 'CLASS',
-        })));
     }
 
     /**

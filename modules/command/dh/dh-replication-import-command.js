@@ -21,6 +21,7 @@ class DhReplicationImportCommand extends Command {
         this.logger = ctx.logger;
         this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -70,6 +71,11 @@ class DhReplicationImportCommand extends Command {
         }
 
         const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
+        const blockchainRootHash = await this.blockchain.getRootHash(dataSetId);
+
+        if (decryptedGraphRootHash !== blockchainRootHash) {
+            throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from Blockchain root hash ${blockchainRootHash}`);
+        }
 
         // Verify litigation root hash
         const encryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(otJson);
@@ -83,7 +89,6 @@ class DhReplicationImportCommand extends Command {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from document root hash ${originalRootHash}`);
         }
 
-        // TODO: Verify decrypted data root hash
         // TODO: Verify EPK checksum
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id

@@ -108,7 +108,6 @@ describe('GS1 Importer tests', () => {
 
                     const otJsonFromDb = await importer.getImport(data_set_id);
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
-
                     assert.deepEqual(otJson, otJsonFromDb);
 
                     const xmlFromOtJson = transpiler.convertFromOTJson(otJsonFromDb);

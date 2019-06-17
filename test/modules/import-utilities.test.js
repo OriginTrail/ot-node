@@ -33,8 +33,8 @@ describe('Encryption modules ', () => {
 
         const object2 = { c: { d: [1, 2, 3, { x: undefined, e: null }] }, b: 'abc', a: 1 };
 
-        const stringifiedObject1 = ImportUtilities.sortedStringify(object1);
-        const stringifiedObject2 = ImportUtilities.sortedStringify(object2);
+        const stringifiedObject1 = Utilities.sortedStringify(object1);
+        const stringifiedObject2 = Utilities.sortedStringify(object2);
         assert.equal(stringifiedObject1, stringifiedObject2);
     });
 
@@ -59,8 +59,8 @@ describe('Encryption modules ', () => {
                 keyPair.publicKey,
             );
 
-            const stringifiedOriginal = ImportUtilities.sortedStringify(originalItem);
-            const stringifiedDecrypted = ImportUtilities.sortedStringify(decryptedItem);
+            const stringifiedOriginal = Utilities.sortedStringify(originalItem);
+            const stringifiedDecrypted = Utilities.sortedStringify(decryptedItem);
 
             assert.equal(stringifiedOriginal, stringifiedDecrypted);
         }
@@ -73,8 +73,8 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const stringifiedOriginal = ImportUtilities.sortedStringify(testGraph);
-        const stringifiedDecrypted = ImportUtilities.sortedStringify(decryptedGraph);
+        const stringifiedOriginal = Utilities.sortedStringify(testGraph);
+        const stringifiedDecrypted = Utilities.sortedStringify(decryptedGraph);
 
         assert.equal(stringifiedOriginal, stringifiedDecrypted);
     });
@@ -121,7 +121,7 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalRootHash = ImportUtilities.calculateDatasetRootHash(encryptedGraph);
+        const originalRootHash = ImportUtilities.calculateDatasetRootHash(testGraph);
         const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph);
 
         assert.equal(originalRootHash, decryptedRootHash);
