@@ -19,7 +19,7 @@ const pjson = require('../../package.json');
 
 const logger = require('../../modules/logger');
 
-describe('WOT Importer tests', () => {
+describe.skip('WOT Importer tests', () => {
     const databaseName = 'wot-test';
     let graphStorage;
     let systemDb;
