@@ -3,7 +3,7 @@ Feature: API endpoints features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
+  @fixme
   Scenario: Smoke check /api/consensus endpoint
     Given I setup 1 node
     And I start the node
