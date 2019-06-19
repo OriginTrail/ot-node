@@ -102,6 +102,9 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
             gs1Utilities: awilix.asValue({}),
             otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            blockchain: awilix.asValue({
+                getRootHash: () => 'Na ovom testu mora ozbiljno da se poradi - Vuk Djoric.',
+            }),
         });
         myGraphStorage = await graphStorage.connect();
         myConfig = await container.resolve('config');

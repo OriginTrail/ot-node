@@ -147,7 +147,7 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalRootHash = ImportUtilities.calculateDatasetRootHash(encryptedGraph['@graph'], encryptedGraph['@id'], encryptedGraph.datasetHeader.dataCreator);
+        const originalRootHash = ImportUtilities.calculateDatasetRootHash(testGraph['@graph'], testGraph['@id'], testGraph.datasetHeader.dataCreator);
         const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph['@graph'], decryptedGraph['@id'], decryptedGraph.datasetHeader.dataCreator);
 
         assert.equal(originalRootHash, decryptedRootHash);
