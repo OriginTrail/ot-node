@@ -17,7 +17,7 @@ Feature: Data layer related features
     And DC waits for last offer to get written to blockchain
     Then checking again first import's root hash should point to remembered value
 
-  @second
+  @fixme
   Scenario: Smoke check data-layer basic endpoints
     Given I setup 2 nodes
     And I start the nodes
@@ -29,7 +29,7 @@ Feature: Data layer related features
     Given I query DC node locally for last imported data set id
     Then response hash should match last imported data set id
 
-  @second
+  @fixme
   Scenario: Basic dataset integrity with it's xml
     Given I setup 1 node
     And I start the node
@@ -37,7 +37,7 @@ Feature: Data layer related features
     And DC imports "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1
     Then imported data is compliant with 01_Green_to_pink_shipment.xml file
 
-  @second
+  @fixme
   Scenario: Dataset immutability DC and DH side
     Given I setup 5 node
     And I start the node
@@ -53,7 +53,7 @@ Feature: Data layer related features
     Then DH's 2 dataset hashes should match blockchain values
 
 
-  @second
+  @fixme
   Scenario: Dataset immutability II
     Given I setup 1 node
     And I start the node
@@ -66,7 +66,7 @@ Feature: Data layer related features
     And DC waits for last offer to get written to blockchain
     Then DC's 2 dataset hashes should match blockchain values
 
-  @second
+  @fixme
   Scenario: Imported XML's private data should be hashed
     Given I setup 1 node
     And I start the node
@@ -85,7 +85,7 @@ Feature: Data layer related features
     Given I query DV node locally for last imported data set id
     Then DV's local query response should contain hashed private attributes
 
-  @second
+  @fixme
   Scenario: Remote event connection on DH and DV
     Given I setup 5 nodes
     And I start the nodes
@@ -115,7 +115,7 @@ Feature: Data layer related features
     And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
     Then last consensus response should have 1 event with 1 match
 
-  @second
+  @fixme
   Scenario: Data location with multiple identifiers
     Given I setup 1 node
     And I start the node
