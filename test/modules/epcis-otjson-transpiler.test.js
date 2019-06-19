@@ -97,11 +97,6 @@ describe('EPCIS OT JSON transpiler tests', () => {
                 // eslint-disable-next-line no-loop-func
                 async () => {
                     const xmlContents = await Utilities.fileContents(test);
-                    const rawJson = xml2js.xml2js(xmlContents, {
-                        compact: true,
-                        spaces: 4,
-                    });
-
                     const otJson = transpiler.convertToOTJson(xmlContents);
 
                     const {
@@ -114,14 +109,8 @@ describe('EPCIS OT JSON transpiler tests', () => {
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
                     assert.deepEqual(otJson, otJsonFromDb);
 
-                    const xmlFromOtJson = transpiler.convertFromOTJson(otJsonFromDb);
-                    const rawJsonFromOtJson = xml2js.xml2js(xmlFromOtJson, {
-                        compact: true,
-                        spaces: 4,
-                    });
-
-                    const sortedFirst = ImportUtilities.sortObjectRecursively(rawJson);
-                    const sortedSecond = ImportUtilities.sortObjectRecursively(rawJsonFromOtJson);
+                    const sortedFirst = ImportUtilities.sortDataset(otJson);
+                    const sortedSecond = ImportUtilities.sortDataset(otJsonFromDb);
                     assert.deepEqual(sortedFirst, sortedSecond, `Converted XML for ${path.basename(test)} is not equal to the original one`);
                 },
             );

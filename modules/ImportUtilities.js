@@ -462,37 +462,6 @@ class ImportUtilities {
         return Utilities.sortedStringify(graph);
     }
 
-    /**
-     * Sort object recursively
-     */
-    static sortObjectRecursively(object) {
-        if (object == null) {
-            return null;
-        }
-        if (Array.isArray(object)) { // skip array sorting
-            const isScalarArray = object.reduce((accumulator, currentValue) => accumulator && (typeof currentValue !== 'object'), true);
-
-            if (isScalarArray) {
-                return object;
-            }
-
-            object.forEach(item => this.sortObjectRecursively(item));
-            object.sort((item1, item2) => sha3_256(JSON.stringify(item2, null, 0))
-                .localeCompare(sha3_256(JSON.stringify(item1, null, 0))));
-            return object;
-        } else if (typeof object === 'object') {
-            for (const key of Object.keys(object)) {
-                if (key !== '___metadata') {
-                    this.sortObjectRecursively(object[key]);
-                }
-            }
-            const ordered = {};
-            Object.keys(object).sort().forEach(key => ordered[key] = object[key]);
-            return ordered;
-        }
-        return object;
-    }
-
     static sortDataset(dataset) {
         dataset['@graph'].forEach((el) => {
             if (el.relations) {
