@@ -109,8 +109,8 @@ describe('EPCIS OT JSON transpiler tests', () => {
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
                     assert.deepEqual(otJson, otJsonFromDb);
 
-                    const sortedFirst = ImportUtilities.sortDataset(otJson);
-                    const sortedSecond = ImportUtilities.sortDataset(otJsonFromDb);
+                    const sortedFirst = ImportUtilities.sortStringifyDataset(otJson);
+                    const sortedSecond = ImportUtilities.sortStringifyDataset(otJsonFromDb);
                     assert.deepEqual(sortedFirst, sortedSecond, `Converted XML for ${path.basename(test)} is not equal to the original one`);
                 },
             );

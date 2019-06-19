@@ -40,8 +40,8 @@ describe('Encryption modules ', () => {
     });
 
     it('Sorted dataset', () => {
-        const sortedOriginal = ImportUtilities.sortDataset(testGraph);
-        const sortedShuffled = ImportUtilities.sortDataset(shuffledGraph);
+        const sortedOriginal = ImportUtilities.sortStringifyDataset(testGraph);
+        const sortedShuffled = ImportUtilities.sortStringifyDataset(shuffledGraph);
 
         assert.equal(sortedOriginal, sortedShuffled);
     });
@@ -165,9 +165,9 @@ describe('Encryption modules ', () => {
 
         assert.equal(
             ImportUtilities
-                .sortDataset(signedOriginal),
+                .sortStringifyDataset(signedOriginal),
             ImportUtilities
-                .sortDataset(signedShuffled),
+                .sortStringifyDataset(signedShuffled),
         );
     });
 
@@ -179,7 +179,7 @@ describe('Encryption modules ', () => {
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
 
         assert.equal(ImportUtilities
-            .sortDataset(signedOriginal), ImportUtilities.sortDataset(signedShuffled));
+            .sortStringifyDataset(signedOriginal), ImportUtilities.sortStringifyDataset(signedShuffled));
 
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);

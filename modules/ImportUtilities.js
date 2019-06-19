@@ -341,15 +341,6 @@ class ImportUtilities {
     }
 
     /**
-     * Filter CLASS vertices
-     * @param vertices
-     * @returns {*}
-     */
-    static immutableFilterClassVertices(vertices) {
-        return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
-    }
-
-    /**
      * Gets transaction hash for the data set
      * @param dataSetId Data set ID
      * @param origin    Data set origin
@@ -406,20 +397,9 @@ class ImportUtilities {
         const datasetSummary =
             this.calculateDatasetSummary(graph, datasetId, datasetCreator);
 
-        graph.forEach((el) => {
-            if (el.relations) {
-                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
-            }
-
-            if (el.identifiers) {
-                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
-            }
-        });
+        ImportUtilities.sortGraphRecursively(graph);
 
         const stringifiedGraph = [];
-
         for (const obj of graph) {
             stringifiedGraph.push(Utilities.sortedStringify(obj));
         }
@@ -428,7 +408,6 @@ class ImportUtilities {
             [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
             'sha3',
         );
-
         return merkle.getRoot();
     }
 
@@ -462,19 +441,8 @@ class ImportUtilities {
         return Utilities.sortedStringify(graph);
     }
 
-    static sortDataset(dataset) {
-        dataset['@graph'].forEach((el) => {
-            if (el.relations) {
-                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
-            }
-
-            if (el.identifiers) {
-                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
-            }
-        });
-        dataset['@graph'].sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+    static sortStringifyDataset(dataset) {
+        ImportUtilities.sortGraphRecursively(dataset['@graph']);
         return Utilities.sortedStringify(dataset);
     }
 
@@ -483,7 +451,7 @@ class ImportUtilities {
      * @static
      */
     static signDataset(otjson, config, web3) {
-        const stringifiedOtjson = this.sortDataset(otjson);
+        const stringifiedOtjson = this.sortStringifyDataset(otjson);
         const { signature } = web3.eth.accounts.sign(
             stringifiedOtjson,
             Utilities.normalizeHex(config.node_private_key),
@@ -503,7 +471,7 @@ class ImportUtilities {
         const strippedOtjson = Object.assign({}, otjson);
         delete strippedOtjson.signature;
 
-        const stringifiedOtjson = this.sortDataset(strippedOtjson);
+        const stringifiedOtjson = this.sortStringifyDataset(strippedOtjson);
         return web3.eth.accounts.recover(stringifiedOtjson, otjson.signature.value);
     }
 

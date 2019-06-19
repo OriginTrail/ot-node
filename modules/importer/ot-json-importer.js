@@ -524,7 +524,7 @@ class OtJsonImporter {
             document['@graph'].push(otConnector);
         });
 
-        ImportUtilities.sortDataset(document);
+        ImportUtilities.sortStringifyDataset(document);
         return document;
     }
 
