@@ -1,4 +1,4 @@
-@third
+@fixme
 Feature: Test various litigation scenarios
   Background: Setup local blockchain and bootstraps
     Given the blockchain is set up
