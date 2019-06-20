@@ -342,7 +342,7 @@ describe('Arangojs module ', async () => {
         // precondition
         await testDb.createEdgeCollection(edgeCollectionName);
         await testDb.addEdge(edgeOne);
-        const updatetedEdgeOne =         {
+        const updatetedEdgeOne = {
             _key: '0x8c18e27785af981e407072ee850c3fd31cab225cd087647c7d7992df524c663a',
             _from: 'ot_vertices/0xd5993149b27751620ba70be97eb48a3b6222fc7129348d36b804c41985622d3e',
             _to: 'ot_vertices/0xb0b07c594db5f7321d81b60b83f8bd52a09ec3d23d95a70318c40347ee4a8b26',
