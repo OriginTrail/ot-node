@@ -178,8 +178,11 @@ describe('Encryption modules ', () => {
         const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
 
-        assert.equal(ImportUtilities
-            .sortStringifyDataset(signedOriginal), ImportUtilities.sortStringifyDataset(signedShuffled));
+        assert.equal(
+            ImportUtilities
+                .sortStringifyDataset(signedOriginal),
+            ImportUtilities.sortStringifyDataset(signedShuffled),
+        );
 
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);

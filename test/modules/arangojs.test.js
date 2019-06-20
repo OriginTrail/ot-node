@@ -13,8 +13,6 @@ const databaseData = require('./test_data/arangodb-data.js');
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
-const myUserName = 'root';
-const myPassword = 'root';
 const myDatabaseName = 'testDb';
 
 const documentCollectionName = 'ot_vertices';
@@ -44,11 +42,15 @@ describe('Arangojs module ', async () => {
 
         await systemDb.createDatabase(
             myDatabaseName,
-            [{ username: myUserName, passwd: myPassword, active: true }],
+            [{
+                username: config.database.username,
+                passwd: config.database.password,
+                active: true,
+            }],
         );
         testDb = new ArangoJs(
-            myUserName,
-            myPassword,
+            config.database.username,
+            config.database.password,
             myDatabaseName,
             config.database.host,
             config.database.port,
@@ -340,14 +342,16 @@ describe('Arangojs module ', async () => {
         // precondition
         await testDb.createEdgeCollection(edgeCollectionName);
         await testDb.addEdge(edgeOne);
-
-        const updatetedEdgeOne = {
-            _key: '6eb743d84a605b2ab6be67a373b883d4',
-            edge_type: 'OWNED_BY',
-            data_provider: 'WALLET_ID',
-            imports: [1520345631, 1234567890],
-            _from: 'ot_vertices/2e0b1ba163be76138d51a0b8258e97d7',
-            _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
+        const updatetedEdgeOne =         {
+            _key: '0x8c18e27785af981e407072ee850c3fd31cab225cd087647c7d7992df524c663a',
+            _from: 'ot_vertices/0xd5993149b27751620ba70be97eb48a3b6222fc7129348d36b804c41985622d3e',
+            _to: 'ot_vertices/0xb0b07c594db5f7321d81b60b83f8bd52a09ec3d23d95a70318c40347ee4a8b26',
+            edgeType: 'dataRelation',
+            relationType: 'HAS_DATA',
+            datasets: [
+                '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
+                '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600ae10',
+            ],
         };
 
         await testDb.updateDocument(
@@ -358,7 +362,7 @@ describe('Arangojs module ', async () => {
 
         // check value of new imports
         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
-            assert.isTrue(response.imports.length === 2);
+            assert.isTrue(response.datasets.length === 2);
         });
     });
 
