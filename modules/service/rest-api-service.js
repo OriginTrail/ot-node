@@ -273,6 +273,26 @@ class RestAPIService {
             });
         });
 
+        /**
+         * Get entity trail from database
+         * @param QueryObject
+         */
+        server.post('/api/trail/entity', (req, res, next) => {
+            this.logger.api('POST: Entity trail request received.');
+
+            const error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
+            }
+
+            const queryObject = req.body;
+
+            emitter.emit('api-trail-entity', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
         /** Get root hash for provided data query
          * @param Query params: data_set_id
          */

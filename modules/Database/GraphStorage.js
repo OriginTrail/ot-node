@@ -99,6 +99,29 @@ class GraphStorage {
     }
 
     /**
+     *
+     * @param {Object} startVertex
+     * @param {Number} depth
+     * @param {Array.<string>} includeOnly
+     * @param {Array.<string>} excludeOnly
+     * @return {Promise<void>}
+     */
+    findEntitiesTraversalPath(startVertex, depth, includeOnly, excludeOnly) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findEntitiesTraversalPath(startVertex, depth, includeOnly, excludeOnly)
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
      * Finds traversal path starting from particular vertex
      * @param depth             Traversal depth
      * @param startVertex       Starting vertex
