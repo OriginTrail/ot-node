@@ -53,7 +53,7 @@ class DhReplicationImportCommand extends Command {
         const calculatedDataSetId =
             await ImportUtilities.importHash(dataSetId, decryptedVertices, edges);
 
-        if (bytes(JSON.stringify(vertices)) > this.config.dh_max_data_set_size) {
+        if (bytes(JSON.stringify(litigationVertices)) > this.config.dh_max_data_set_size) {
             throw new Error(`Data set size is bigger than given limit of ${this.config.dh_max_data_set_size} bytes`);
         }
 
