@@ -96,7 +96,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "dh_max_data_set_size": 1000000
   },
   "staging": {
     "identity": null,
@@ -195,7 +196,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "dh_max_data_set_size": 1000000
   },
   "stable": {
     "identity": null,
@@ -294,7 +296,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "dh_max_data_set_size": 1000000
   },
   "production": {
     "identity": null,
@@ -396,7 +399,8 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": false
+    "requireApproval": false,
+    "dh_max_data_set_size": 1000000
   },
   "mariner": {
     "identity": null,
@@ -498,6 +502,7 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 600000,
-    "requireApproval": true
+    "requireApproval": true,
+    "dh_max_data_set_size": 1000000
   }
 }
