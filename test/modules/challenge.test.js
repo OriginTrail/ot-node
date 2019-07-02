@@ -40,7 +40,7 @@ function checkChallenges(tests, startTime, endTime, expectedBlockSize) {
     });
 }
 
-describe('Challenge service tests', () => {
+describe.skip('Challenge service tests', () => {
     describe('Challenge generation', () => {
         const startTime = new Date('May 1, 2018 03:24:00').getTime();
         const endTime = new Date('January 1, 2019 00:24:00').getTime();

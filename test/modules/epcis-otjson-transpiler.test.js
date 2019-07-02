@@ -30,7 +30,7 @@ const pjson = require('../../package.json');
 
 const databaseName = 'ot-json-importer-test-db';
 
-describe('GS1 Importer tests', () => {
+describe('EPCIS OT JSON transpiler tests', () => {
     let importer;
     let transpiler;
 
@@ -43,6 +43,10 @@ describe('GS1 Importer tests', () => {
 
     before('Init EPCIS transpiler', async () => {
         const config = rc(pjson.name, defaultConfig);
+
+        config.erc725Identity = '0x611d771aAfaa3D6Fb66c4a81D97768300a6882D5';
+        config.node_wallet = '0xa9a07f3c53ec5de8dd83039ca27fae83408e16f5';
+        config.node_private_key = '952e45854ca5470a6d0b6cb86346c0e9c4f8f3a5a459657df8c94265183b9253';
 
         selectedDatabase = config.database;
         selectedDatabase.database = databaseName;
@@ -93,11 +97,6 @@ describe('GS1 Importer tests', () => {
                 // eslint-disable-next-line no-loop-func
                 async () => {
                     const xmlContents = await Utilities.fileContents(test);
-                    const rawJson = xml2js.xml2js(xmlContents, {
-                        compact: true,
-                        spaces: 4,
-                    });
-
                     const otJson = transpiler.convertToOTJson(xmlContents);
 
                     const {
@@ -110,14 +109,8 @@ describe('GS1 Importer tests', () => {
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
                     assert.deepEqual(otJson, otJsonFromDb);
 
-                    const xmlFromOtJson = transpiler.convertFromOTJson(otJsonFromDb);
-                    const rawJsonFromOtJson = xml2js.xml2js(xmlFromOtJson, {
-                        compact: true,
-                        spaces: 4,
-                    });
-
-                    const sortedFirst = ImportUtilities.sortObjectRecursively(rawJson);
-                    const sortedSecond = ImportUtilities.sortObjectRecursively(rawJsonFromOtJson);
+                    const sortedFirst = ImportUtilities.sortStringifyDataset(otJson);
+                    const sortedSecond = ImportUtilities.sortStringifyDataset(otJsonFromDb);
                     assert.deepEqual(sortedFirst, sortedSecond, `Converted XML for ${path.basename(test)} is not equal to the original one`);
                 },
             );

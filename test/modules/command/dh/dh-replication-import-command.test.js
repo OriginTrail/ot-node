@@ -24,7 +24,7 @@ const logger = require('../../../../modules/logger');
 
 const testUtilities = require('../../test-utilities');
 
-const {encryptedJSON, publicKey} = require('../../test_data/mockEncrypted.js');
+const { encryptedJSON, publicKey } = require('../../test_data/mockEncrypted.js');
 
 describe('Checks DHReplicationImportCommand execute() logic', function () {
     this.timeout(5000);
@@ -102,6 +102,9 @@ describe('Checks DHReplicationImportCommand execute() logic', function () {
             gs1Utilities: awilix.asValue({}),
             otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            blockchain: awilix.asValue({
+                getRootHash: () => 'Na ovom testu mora ozbiljno da se poradi - Vuk Djoric.',
+            }),
         });
         myGraphStorage = await graphStorage.connect();
         myConfig = await container.resolve('config');

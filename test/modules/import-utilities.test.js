@@ -40,8 +40,8 @@ describe('Encryption modules ', () => {
     });
 
     it('Sorted dataset', () => {
-        const sortedOriginal = ImportUtilities.sortDataset(testGraph);
-        const sortedShuffled = ImportUtilities.sortDataset(shuffledGraph);
+        const sortedOriginal = ImportUtilities.sortStringifyDataset(testGraph);
+        const sortedShuffled = ImportUtilities.sortStringifyDataset(shuffledGraph);
 
         assert.equal(sortedOriginal, sortedShuffled);
     });
@@ -61,6 +61,7 @@ describe('Encryption modules ', () => {
             );
 
             if (decryptedItem.relations != null) {
+                // eslint-disable-next-line no-loop-func
                 decryptedItem.relations.forEach((relation) => {
                     relation.properties =
                         Encryption.decryptObject(relation.properties, keyPair.publicKey);
@@ -115,8 +116,10 @@ describe('Encryption modules ', () => {
                     for (const relationId of Object.keys(encryptedMap[type][objectId])) {
                         const mapData = encryptedMap[type][objectId][relationId][encryptionColor];
                         const decryptedData = testGraph['@graph'].find(el => el['@id'] === objectId)
-                            .relations.find(el => sha3_256(Utilities.stringify(el, 0)) === relationId).properties;
-                        const encryptedData = Encryption.encryptObject(decryptedData, keyPair.privateKey)
+                            .relations.find(el =>
+                                sha3_256(Utilities.stringify(el, 0)) === relationId).properties;
+                        const encryptedData =
+                            Encryption.encryptObject(decryptedData, keyPair.privateKey);
                         assert.equal(mapData, encryptedData);
                     }
                 }
@@ -144,7 +147,7 @@ describe('Encryption modules ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalRootHash = ImportUtilities.calculateDatasetRootHash(encryptedGraph['@graph'], encryptedGraph['@id'], encryptedGraph.datasetHeader.dataCreator);
+        const originalRootHash = ImportUtilities.calculateDatasetRootHash(testGraph['@graph'], testGraph['@id'], testGraph.datasetHeader.dataCreator);
         const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph['@graph'], decryptedGraph['@id'], decryptedGraph.datasetHeader.dataCreator);
 
         assert.equal(originalRootHash, decryptedRootHash);
@@ -162,9 +165,9 @@ describe('Encryption modules ', () => {
 
         assert.equal(
             ImportUtilities
-                .sortDataset(signedOriginal),
+                .sortStringifyDataset(signedOriginal),
             ImportUtilities
-                .sortDataset(signedShuffled),
+                .sortStringifyDataset(signedShuffled),
         );
     });
 
@@ -175,8 +178,11 @@ describe('Encryption modules ', () => {
         const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
 
-        assert.equal(ImportUtilities
-            .sortDataset(signedOriginal), ImportUtilities.sortDataset(signedShuffled));
+        assert.equal(
+            ImportUtilities
+                .sortStringifyDataset(signedOriginal),
+            ImportUtilities.sortStringifyDataset(signedShuffled),
+        );
 
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);

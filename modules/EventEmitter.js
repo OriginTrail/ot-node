@@ -142,6 +142,32 @@ class EventEmitter {
             });
         });
 
+        this._on('api-trail-entity', (data) => {
+            logger.info(`Get enitity trail triggered with query ${JSON.stringify(data.query)}`);
+
+            this.graphStorage
+                .findEntitiesTraversalPath(
+                    data.query.startVertex,
+                    data.query.depth,
+                    data.query.includeOnly,
+                    data.query.excludeOnly,
+                ).then((res) => {
+                    if (res.length === 0) {
+                        data.response.status(204);
+                    } else {
+                        data.response.status(200);
+                    }
+                    data.response.send(res);
+                }).catch((error) => {
+                    logger.error(`Failed to get trail for query ${JSON.stringify(data.query)}`);
+                    notifyError(error);
+                    data.response.status(500);
+                    data.response.send({
+                        message: error,
+                    });
+                });
+        });
+
         this._on('api-query-local-import', async (data) => {
             const { data_set_id: dataSetId, format, encryption } = data;
             logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);

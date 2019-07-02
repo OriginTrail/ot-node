@@ -228,6 +228,69 @@ class ArangoJS {
     }
 
     /**
+     *
+     * @param {Object} startVertexKey
+     * @param {Number} depth
+     * @param {Array.<string>} includeOnly
+     * @param {Array.<string>} excludeOnly
+     * @return {Promise<void>}
+     */
+    async findEntitiesTraversalPath(startVertexKey, depth, includeOnly, excludeOnly) {
+        if (startVertexKey == null || typeof startVertexKey !== 'string') {
+            throw Error('Must include a valid start vertex.');
+        }
+        if (includeOnly != null && !Array.isArray(includeOnly)) {
+            throw Error('Invalid param.');
+        }
+        if (excludeOnly != null && !Array.isArray(excludeOnly)) {
+            throw Error('Invalid param.');
+        }
+        if (depth == null || !Number.isInteger(depth)) {
+            throw Error('Invalid param.');
+        }
+        const includeOnlyValid = includeOnly != null && includeOnly.length > 0;
+        const excludeOnlyValid = excludeOnly != null && excludeOnly.length > 0;
+
+        const queryString = `let vertices = (FOR v, e, p IN 0..@depth ANY CONCAT('ot_vertices/', @startVertex) ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                ${includeOnlyValid ? 'FILTER p.edges[*].relationType ALL IN @includeOnly' : ''}
+                                ${excludeOnlyValid ? 'FILTER p.edges[*].relationType ALL NOT IN @excludeOnly' : ''}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN v)
+                                
+                            let edges = (FOR v, e, p IN 0..@depth ANY CONCAT('ot_vertices/', @startVertex) ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                ${includeOnlyValid ? 'FILTER p.edges[*].relationType ALL IN @includeOnly' : ''}
+                                ${excludeOnlyValid ? 'FILTER p.edges[*].relationType ALL NOT IN @excludeOnly' : ''}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN e)
+                            RETURN {vertices, edges}`;
+
+        const params = {
+            startVertex: startVertexKey,
+            depth,
+        };
+
+        if (includeOnlyValid) {
+            params.includeOnly = includeOnly;
+        }
+        if (excludeOnlyValid) {
+            params.excludeOnly = excludeOnly;
+        }
+
+        const rawGraph = await this.runQuery(queryString, params);
+        return ArangoJS.convertToVirtualGraph(rawGraph);
+    }
+
+    /**
      * Finds traversal path starting from particular vertex
      * @param startVertex       Starting vertex
      * @param depth             Explicit traversal depth
@@ -237,29 +300,28 @@ class ArangoJS {
         if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
-        const queryString = `let vertices = (FOR v, e, p IN 0..${depth} OUTBOUND 'ot_vertices/${startVertex._key}' ot_edges
+        const queryString = `let vertices = (FOR v, e, p IN 0..${depth} ANY 'ot_vertices/${startVertex._key}' ot_edges
                                 OPTIONS {
                                     bfs: true,
                                     uniqueVertices: 'global',
                                     uniqueEdges: 'path'
                                 }
-                                FILTER p.vertices[*].vertex_type ALL != 'CLASS'
-                                FILTER p.edges[*].edge_type ALL != 'IDENTIFIES'
+                                FILTER p.edges[*].relationType ALL IN ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC']
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
                                 RETURN v)
                                 
-                            let edges = (FOR v, e, p IN 0..${depth} OUTBOUND 'ot_vertices/${startVertex._key}' ot_edges
+                            let edges = (FOR v, e, p IN 0..${depth} ANY 'ot_vertices/${startVertex._key}' ot_edges
                                 OPTIONS {
                                     bfs: true,
                                     uniqueVertices: 'global',
                                     uniqueEdges: 'path'
                                 }
-                                FILTER p.vertices[*].vertex_type ALL != 'CLASS'
-                                FILTER p.edges[*].edge_type ALL != 'IDENTIFIES'
+                                FILTER p.edges[*].relationType ALL IN ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC']
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
                                 RETURN e)
                             RETURN {vertices, edges}`;
 
         const rawGraph = await this.runQuery(queryString);
-
         return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 
