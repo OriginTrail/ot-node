@@ -97,7 +97,7 @@ class ImportUtilities {
             '@graph': graph,
         };
 
-        const rootHash = this.calculateDatasetRootHash(dataset);
+        const rootHash = this.calculateDatasetRootHash(dataset, id, header.dataCreator);
         dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
 
         const signed = this.signDataset(dataset, config, web3);
