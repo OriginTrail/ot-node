@@ -747,6 +747,10 @@ class ArangoJS {
         // AND @senderId in v.partner_id AND v.sender_id in @partnerId ' +
         //  'RETURN v';
 
+        if (documentId == null || bizStep == null || partnerId == null || senderId == null) {
+            return [];
+        }
+
         const queryString = `let e = (
                                 FOR v IN ot_vertices
                                 FILTER v.datasets != null AND v.vertex_type == 'EVENT'
