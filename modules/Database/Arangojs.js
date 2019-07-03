@@ -747,30 +747,30 @@ class ArangoJS {
         // AND @senderId in v.partner_id AND v.sender_id in @partnerId ' +
         //  'RETURN v';
 
-        const queryString = `FOR v IN ot_vertices
-            FILTER v.vertex_type == 'EVENT' and v.encrypted == null
-            RETURN v`;
-        const params = {};
+        const queryString = `let e = (
+                                FOR v IN ot_vertices
+                                FILTER v.datasets != null AND v.vertex_type == 'EVENT'
+                                FILTER v.encrypted == null
+                                LET events = (
+                                    FOR dataset IN v.datasets
+                                    FILTER v[dataset].data != null
+                                    FILTER v[dataset].data.bizStep LIKE @bizStep
+                                    FILTER v[dataset].data.extension != null
+                                    FILTER v[dataset].data.extension.extension != null
+                                    FILTER v[dataset].data.extension.extension.documentId == @documentId
+                                    FILTER @senderId IN v[dataset].data.partner_id
+                                    RETURN v
+                                )
+                                return events
+                                )
+                            return FLATTEN(e)`;
+        const params = {
+            bizStep: `%${bizStep}`,
+            documentId,
+            senderId,
+        };
         const result = await this.runQuery(queryString, params);
-
-        return result.filter((event) => {
-            if (partnerId.indexOf(event.sender_id) !== -1) {
-                for (const key in event) {
-                    if (event[key].data) {
-                        const { data } = event[key];
-
-                        if (data.bizStep
-                            && data.bizStep.endsWith(bizStep)
-                            && data.extension
-                            && data.extension.extension
-                            && data.extension.extension.documentId === documentId) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        });
+        return result[0];
     }
 
     /**
