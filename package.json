@@ -73,7 +73,7 @@
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "@kadenceproject/kadence": "^4.4.0",
     "ajv": "^5.5.2",
-    "arangojs": "^5.8.0",
+    "arangojs": "^6.10.0",
     "async": "^2.6.0",
     "async-retry": "^1.2.1",
     "auto-updater": "git+https://github.com/OriginTrail/auto-updater.git#v1.1.0",
