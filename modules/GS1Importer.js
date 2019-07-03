@@ -414,25 +414,6 @@ class GS1Importer {
                             for (const location of filtered) {
                                 event.partner_id = [location.participant_id];
                             }
-
-                            // eslint-disable-next-line
-                            const shippingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
-                            for (const shippingEventVertex of shippingEventVertices) {
-                                currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, shippingEventVertex._key, eventKey),
-                                    _from: `${shippingEventVertex._key}`,
-                                    _to: `${eventKey}`,
-                                    edge_type: 'EVENT_CONNECTION',
-                                    transaction_flow: 'OUTPUT',
-                                });
-                                currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, eventKey, shippingEventVertex._key),
-                                    _from: `${eventKey}`,
-                                    _to: `${shippingEventVertex._key}`,
-                                    edge_type: 'EVENT_CONNECTION',
-                                    transaction_flow: 'INPUT',
-                                });
-                            }
                         }
                     }
                 }
@@ -454,25 +435,6 @@ class GS1Importer {
                                 locations.filter(location => location.id === destination);
                             for (const location of filtered) {
                                 event.partner_id = [location.participant_id];
-                            }
-
-                            // eslint-disable-next-line
-                            const receivingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
-                            if (receivingEventVertices.length > 0) {
-                                currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, receivingEventVertices[0]._key, eventKey),
-                                    _from: `${receivingEventVertices[0]._key}`,
-                                    _to: `${eventKey}`,
-                                    edge_type: 'EVENT_CONNECTION',
-                                    transaction_flow: 'INPUT',
-                                });
-                                currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, eventKey, receivingEventVertices[0]._key),
-                                    _from: `${eventKey}`,
-                                    _to: `${receivingEventVertices[0]._key}`,
-                                    edge_type: 'EVENT_CONNECTION',
-                                    transaction_flow: 'OUTPUT',
-                                });
                             }
                         }
                     }

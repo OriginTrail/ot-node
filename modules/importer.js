@@ -152,36 +152,6 @@ class Importer {
                         } else {
                             sender = false;
                         }
-
-                        let step = '';
-                        if (sender) {
-                            step = 'receiving';
-                        } else {
-                            step = 'shipping';
-                        }
-                        // eslint-disable-next-line
-                        const connectingEventVertices = await this.graphStorage.findEvent(
-                            vertex.sender_id,
-                            vertex.data.partner_id,
-                            vertex.data.extension.extension.documentId,
-                            step,
-                        );
-                        if (connectingEventVertices.length > 0) {
-                            await this.graphStorage.addEdge({
-                                _key: this.helper.createKey('event_connection', vertex.sender_id, connectingEventVertices[0]._key, vertex._key),
-                                _from: `${connectingEventVertices[0]._key}`,
-                                _to: `${vertex._key}`,
-                                edge_type: 'EVENT_CONNECTION',
-                                transaction_flow: 'INPUT',
-                            });
-                            await this.graphStorage.addEdge({
-                                _key: this.helper.createKey('event_connection', vertex.sender_id, vertex._key, connectingEventVertices[0]._key),
-                                _from: `${vertex._key}`,
-                                _to: `${connectingEventVertices[0]._key}`,
-                                edge_type: 'EVENT_CONNECTION',
-                                transaction_flow: 'OUTPUT',
-                            });
-                        }
                     }
                 }
             });
