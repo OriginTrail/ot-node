@@ -253,15 +253,6 @@ class ImportUtilities {
     }
 
     /**
-     * Filter CLASS vertices
-     * @param vertices
-     * @returns {*}
-     */
-    static immutableFilterClassVertices(vertices) {
-        return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
-    }
-
-    /**
      * Gets transaction hash for the data set
      * @param dataSetId Data set ID
      * @param origin    Data set origin
@@ -299,6 +290,148 @@ class ImportUtilities {
             throw new Error(`Failed to find transaction hash for ${dataSetId} and origin ${origin}. Origin not valid.`);
         }
         return transactionHash;
+    }
+
+    static calculateDatasetSummary(graph, datasetId, datasetCreator) {
+        return {
+            datasetId,
+            datasetCreator,
+            objects: graph.map(vertex => ({
+                '@id': vertex['@id'],
+                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
+            })),
+            numRelations: graph.filter(vertex => vertex.relations != null)
+                .reduce((acc, value) => acc + value.relations.length, 0),
+        };
+    }
+
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const datasetSummary =
+            this.calculateDatasetSummary(graph, datasetId, datasetCreator);
+
+        ImportUtilities.sortGraphRecursively(graph);
+
+        const stringifiedGraph = [];
+        for (const obj of graph) {
+            stringifiedGraph.push(utilities.sortedStringify(obj));
+        }
+
+        const merkle = new MerkleTree(
+            [utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
+            'sha3',
+        );
+        return merkle.getRoot();
+    }
+
+    /**
+     * Create SHA256 Hash of graph
+     * @param graph
+     * @returns {string}
+     */
+    static calculateGraphHash(graph) {
+        const sorted = this.sortGraphRecursively(graph);
+        return `0x${sha3_256(sorted, null, 0)}`;
+    }
+
+    /**
+     * Sort @graph data inline
+     * @param graph
+     */
+    static sortGraphRecursively(graph) {
+        graph.forEach((el) => {
+            if (el.relations) {
+                el.relations.sort((r1, r2) => sha3_256(utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(utilities.sortedStringify(r2))));
+            }
+
+            if (el.identifiers) {
+                el.identifiers.sort((r1, r2) => sha3_256(utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(utilities.sortedStringify(r2))));
+            }
+        });
+        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+        return utilities.sortedStringify(graph);
+    }
+
+    static sortStringifyDataset(dataset) {
+        ImportUtilities.sortGraphRecursively(dataset['@graph']);
+        return utilities.sortedStringify(dataset);
+    }
+
+    /**
+     * Sign OT-JSON
+     * @static
+     */
+    static signDataset(otjson, config, web3) {
+        const stringifiedOtjson = this.sortStringifyDataset(otjson);
+        const { signature } = web3.eth.accounts.sign(
+            stringifiedOtjson,
+            utilities.normalizeHex(config.node_private_key),
+        );
+        otjson.signature = {
+            value: signature,
+            type: 'ethereum-signature',
+        };
+        return otjson;
+    }
+
+    /**
+     * Fill in dataset header
+     * @private
+     */
+    static createDatasetHeader(config, transpilationInfo = null, tags = []) {
+        const header = {
+            OTJSONVersion: '1.0',
+            datasetCreationTimestamp: new Date().toISOString(),
+            datasetTitle: '',
+            datasetTags: tags,
+            /*
+            relatedDatasets may contain objects like this:
+            {
+                datasetId: '0x620867dced3a96809fc69d579b2684a7',
+                relationType: 'UPDATED',
+                relationDescription: 'Some long description',
+                relationDirection: 'direct',
+            }
+             */
+            relatedDatasets: [],
+            validationSchemas: {
+                'erc725-main': {
+                    schemaType: 'ethereum-725',
+                    networkId: config.blockchain.network_id,
+                },
+                merkleRoot: {
+                    schemaType: 'merkle-root',
+                    networkId: config.blockchain.network_id,
+                    hubContractAddress: config.blockchain.hub_contract_address,
+                    // TODO: Add holding contract address and version. Hub address is useless.
+                },
+            },
+            dataIntegrity: {
+                proofs: [
+                    {
+                        proofValue: '',
+                        proofType: 'merkleRootHash',
+                        validationSchema: '/schemas/merkleRoot',
+                    },
+                ],
+            },
+            dataCreator: {
+                identifiers: [
+                    {
+                        identifierValue: config.erc725Identity,
+                        identifierType: 'ERC725',
+                        validationSchema: '/schemas/erc725-main',
+                    },
+                ],
+            },
+        };
+
+        if (transpilationInfo) {
+            header.transpilationInfo = transpilationInfo;
+        }
+
+        return header;
     }
 }
 

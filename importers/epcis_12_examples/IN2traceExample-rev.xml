@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument schemaVersion="1.2"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:example0="http://ns.example.com/epcis0" xmlns:example1="http://ns.example.com/epcis1"
+	xmlns:example2="http://ns.example.com/epcis2" xmlns:example3="http://ns.example.com/epcis3"
+	xmlns:example="http://ns.example.com/epcis" creationDate="2013-06-04T14:59:02.099+02:00"
+	xmlns:epcis="urn:epcglobal:epcis:xsd:1">
+	<EPCISBody>
+		<EventList>
+			<TransactionEvent>
+				<eventTime>2016-08-17T00:00:00.000Z</eventTime>
+				<eventTimeZoneOffset>+02:00</eventTimeZoneOffset>
+				<bizTransactionList>
+					<bizTransaction type="urn:epcglobal:cbv:btt:pedigree">urn:epcglobal:cbv:bt:38512345.3851234500005:209</bizTransaction>
+				</bizTransactionList>
+				<epcList>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.7VFZB0V6G545FZAW9YT7</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.S4A9HXWHAXGZANE92DZM</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.P25P0ZV6KB26TEZB24F6</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.DN015S9641V45CFBCX8N</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.ER72M16Y5Y7CAFEW1E93</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.N0014KNEDRE337VG421W</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.224F46H7H4X55B9B113C</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.YEHB4NWA5WTBGKDABYGW</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.N5Y3SGB9C25P1126XVKD</epc>
+					<epc>urn:epc:id:sgtin:38512345.24121452145214.B6VPXEMV8T6NPHPSVWWP</epc>
+				</epcList>
+				<action>ADD</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+				<readPoint>
+					<id>urn:epc:id:sgln:38512345.3851234500005</id>
+				</readPoint>
+				<bizLocation>
+					<id>urn:epc:id:sgln:38512345.3851234500005</id>
+				</bizLocation>
+				<extension>
+					<sourceList>
+						<source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:38512345.3851234500005</source>
+					</sourceList>
+				</extension>
+				<example0:expiry xsi:type="xsd:dateTime">2018-06-08T14:58:56.591Z</example0:expiry>
+				<example1:lot xsi:type="xsd:int">15123</example1:lot>
+			</TransactionEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>
