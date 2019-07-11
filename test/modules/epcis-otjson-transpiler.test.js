@@ -23,7 +23,6 @@ const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
 describe('EPCIS OT JSON transpiler tests', () => {
-    let importer;
     let transpiler;
 
     const directoryPath = path.join(__dirname, '../../importers/epcis_12_examples/');
