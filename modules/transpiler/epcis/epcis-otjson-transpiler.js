@@ -20,7 +20,7 @@ class EpcisOtJsonTranspiler {
      */
     convertToOTJson(xml) {
         if (xml == null) {
-            return null;
+            throw new Error('XML document cannot be empty');
         }
 
         const xsdFileBuffer = fs.readFileSync('./modules/transpiler/epcis/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
@@ -142,6 +142,9 @@ class EpcisOtJsonTranspiler {
      * @return {string} - XML string
      */
     convertFromOTJson(otjson) {
+        if (otjson == null) {
+            throw new Error('OT-JSON document cannot be empty');
+        }
         const json = utilities.copyObject(otjson.datasetHeader.transpilationInfo.diff);
 
         const graph = utilities.copyObject(otjson['@graph']);
