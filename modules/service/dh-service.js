@@ -170,7 +170,7 @@ class DHService {
 
         await this.commandExecutor.add({
             name: 'dhOfferHandleCommand',
-            delay: 15000,
+            delay: 45000,
             data,
             transactional: false,
         });
