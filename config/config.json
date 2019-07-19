@@ -355,7 +355,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0xBF40492500a862f876E217DAaB33fF2b25953007",
+      "hub_contract_address": "0x0e5995FE34BfC9DB7a31fa318f7f1256Cf28FfCa",
       "plugins": [
         {
           "enabled": false,
@@ -375,19 +375,20 @@
       "hostname": "127.0.0.1",
       "id": "TestnetV2.0.1b",
       "bootstraps": [
-        "https://188.166.3.182:5278/#1e40ccef94ca01732d1dee75e38f8b0f505297fd"
+        "https://46.101.233.127:5278/#41d7357b322ca75d1187b3163b510ff704e9a040",
+        "https://82.196.6.215:5278/#9e7f1ec47d0da65b9f2e004510ae366519290dff"
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 8
+      "identityDifficulty": 12
     },
     "bugSnag": {
       "releaseStage": "testnet"
     },
     "autoUpdater": {
       "enabled": true,
-      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/feature/reduce-blockchain-calls/package.json",
-      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/feature/reduce-blockchain-calls.zip"
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/master/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/master.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
