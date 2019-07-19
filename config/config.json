@@ -375,7 +375,7 @@
       "hostname": "127.0.0.1",
       "id": "TestnetV2.0.1b",
       "bootstraps": [
-        "https://188.166.3.182:5278/#e4d3e630f29d92687ce7486355456083ad9f6d4f"
+        "https://188.166.3.182:5278/#1e40ccef94ca01732d1dee75e38f8b0f505297fd"
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
