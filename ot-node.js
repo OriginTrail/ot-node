@@ -569,12 +569,12 @@ class OTNode {
         const delay = 20000;
         let working = false;
         let deadline = Date.now();
-        setInterval(() => {
+        setInterval(async () => {
             if (!working && Date.now() > deadline) {
                 working = true;
-                blockchain.getAllPastEvents('HOLDING_CONTRACT');
-                blockchain.getAllPastEvents('PROFILE_CONTRACT');
-                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                await blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                await blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                await blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
