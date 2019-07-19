@@ -355,7 +355,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x0e5995FE34BfC9DB7a31fa318f7f1256Cf28FfCa",
+      "hub_contract_address": "0xBF40492500a862f876E217DAaB33fF2b25953007",
       "plugins": [
         {
           "enabled": false,
@@ -380,15 +380,15 @@
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 8
     },
     "bugSnag": {
       "releaseStage": "testnet"
     },
     "autoUpdater": {
       "enabled": true,
-      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/master/package.json",
-      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/master.zip"
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/feature/reduce-blockchain-calls/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/feature/reduce-blockchain-calls.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
