@@ -521,7 +521,7 @@ class Ethereum {
      */
     async getCurrentBlock() {
         const timeout = 10000;
-        if (this.lastBlockCheck != null || this.lastBlockCheck + timeout < Date.now()) {
+        if (this.lastBlockCheck == null || this.lastBlockCheck + timeout < Date.now()) {
             this.lastBlock = await this.web3.eth.getBlockNumber();
             this.lastBlockCheck = Date.now();
         }
