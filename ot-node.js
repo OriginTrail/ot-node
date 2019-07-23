@@ -547,18 +547,18 @@ class OTNode {
     listenBlockchainEvents(blockchain) {
         log.info('Starting blockchain event listener');
 
-        const delay = 10000;
+        const delay = 20000;
         let working = false;
         let deadline = Date.now();
-        setInterval(() => {
+        setInterval(async () => {
             if (!working && Date.now() > deadline) {
                 working = true;
-                blockchain.getAllPastEvents('HOLDING_CONTRACT');
-                blockchain.getAllPastEvents('PROFILE_CONTRACT');
-                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
-                blockchain.getAllPastEvents('LITIGATION_CONTRACT');
-                blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
-                blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
+                await blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                await blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                await blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                await blockchain.getAllPastEvents('LITIGATION_CONTRACT');
+                await blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
+                await blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
                 deadline = Date.now() + delay;
                 working = false;
             }
