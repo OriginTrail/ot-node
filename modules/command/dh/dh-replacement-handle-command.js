@@ -11,7 +11,7 @@ const ImportUtilities = require('../../ImportUtilities');
 /**
  * Imports data for replication
  */
-class DHReplacementImportCommand extends Command {
+class DHReplacementHandleCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -274,7 +274,7 @@ class DHReplacementImportCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhReplacementImportCommand',
+            name: 'dhReplacementHandleCommand',
             delay: 10000,
             transactional: false,
         };
@@ -283,4 +283,4 @@ class DHReplacementImportCommand extends Command {
     }
 }
 
-module.exports = DHReplacementImportCommand;
+module.exports = DHReplacementHandleCommand;
