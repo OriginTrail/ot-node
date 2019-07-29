@@ -373,7 +373,7 @@
       "network_id": "rinkeby",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x53F5b26EB263B96ffA83468F78DA738a3961644A",
+      "hub_contract_address": "0x0306ef4Ca29Ff28b129B0c0134A30C6bf054e908",
       "plugins": [
         {
           "enabled": false,
@@ -391,14 +391,13 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "TestnetV2.0.1b",
+      "id": "ReleaseV3.0.8",
       "bootstraps": [
-        "https://46.101.233.127:5278/#41d7357b322ca75d1187b3163b510ff704e9a040",
-        "https://82.196.6.215:5278/#9e7f1ec47d0da65b9f2e004510ae366519290dff"
+        "https://188.166.3.182:5278/#1e40ccef94ca01732d1dee75e38f8b0f505297fd"
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12,
+      "identityDifficulty": 8,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
@@ -409,13 +408,13 @@
       "releaseStage": "testnet"
     },
     "autoUpdater": {
-      "enabled": true,
+      "enabled": false,
       "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/master/package.json",
       "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/master.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "50000000000000000000",
+    "dc_token_amount_per_holder": "10000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
     "dh_min_token_price": "10000000000000000000",
