@@ -664,12 +664,26 @@ class Ethereum {
     }
 
     /**
+     * Gets the current block if one wasn't retrieved in the last 10 seconds
+     * @returns {int}
+     */
+    async getCurrentBlock() {
+        const timeout = 10000;
+        if (this.lastBlockCheck == null || this.lastBlockCheck + timeout < Date.now()) {
+            this.lastBlock = await this.web3.eth.getBlockNumber();
+            this.lastBlockCheck = Date.now();
+        }
+
+        return this.lastBlock;
+    }
+
+    /**
      * Gets all past events for the contract
      * @param contractName
      */
     async getAllPastEvents(contractName) {
         try {
-            const currentBlock = await this.web3.eth.getBlockNumber();
+            const currentBlock = await this.getCurrentBlock();
 
             let fromBlock = 0;
 
