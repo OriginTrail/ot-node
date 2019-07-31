@@ -141,6 +141,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
             initial_deposit_amount: '10000000000000000000000',
+            commandExecutorVerboseLoggingEnabled: true,
         };
 
         const newNode = new OtNode({
@@ -584,6 +585,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                 },
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',
+                commandExecutorVerboseLoggingEnabled: true,
             },
             appDataBaseDir: this.parameters.appDataBaseDir,
         });
