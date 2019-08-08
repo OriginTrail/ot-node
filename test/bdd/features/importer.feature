@@ -24,3 +24,17 @@ Feature: Test basic importer features
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
     And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
     Then the traversal from batch "urn:epc:id:sgtin:Batch_1" should contain 1 trail and 2 vertices of type EVENT
+
+  @local
+  Scenario: Query locally
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Then DC's last import's hash should be the same as one manually calculated
+    Given I create json query with path: "identifiers.uid", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
+    Then DC's last import should be in local
+
+
+
+

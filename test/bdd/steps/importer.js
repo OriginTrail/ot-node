@@ -29,3 +29,14 @@ Then(/^the traversal from batch "(\S+)" should contain (\d+) trail[s]* and (\d+)
     }
     expect(foundVertices, `failed to find ${numberOfVertices} vertices in the trail`).to.be.equal(numberOfVertices);
 });
+
+Then(/^([DC]+)'s last import should be in local$/, async function (nodeType) {
+    expect(nodeType, 'Node type can only be DC.').to.satisfy(val => (val === 'DC'));
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastImport.data_set_id, 'Last imports data set id seems not defined').to.be.equal(true);
+
+    const myNode = this.state[nodeType.toLowerCase()];
+    const response = await httpApiHelper.apiQueryLocal(myNode.state.node_rpc_url, this.state.jsonQuery);
+
+    expect(!!response, 'Data should exist').to.be.equal(true);
+});
