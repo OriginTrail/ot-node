@@ -51,6 +51,8 @@ module.exports = async (deployer, network, accounts) => {
     var file;
     var data;
 
+    var gasToSend;
+
     switch (network) {
     case 'test':
         await deployer.deploy(TestingUtilities);
@@ -229,7 +231,9 @@ module.exports = async (deployer, network, accounts) => {
 
         console.log(`Number of entries: ${nodeIds.length}`);
         console.log('Transfering ERC725 and adding nodeID approval...');
-        await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes);
+
+        gasToSend = 200000*nodeIds.length;
+        await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes, { gas: gasToSend});
         break;
     case 'testApproval':
         hub = await Hub.at('0xa287d7134fb40bef071c932286bd2cd01efccf30');
