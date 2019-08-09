@@ -9,6 +9,7 @@ var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
 var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
 var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
 var MultiApproval = artifacts.require('MultiApproval'); // eslint-disable-line no-undef
+var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
 
 var ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
 var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
@@ -46,6 +47,7 @@ module.exports = async (deployer, network, accounts) => {
 
     var temp;
     var i;
+    var otVersion;
 
     var filepath = '';
     var file;
@@ -229,11 +231,27 @@ module.exports = async (deployer, network, accounts) => {
             console.log(`Node ${i + 1}\t id:${nodeIds[i]}\tOld identity:${oldIdentities[i]}\tNew identity:${identities[i]}`);
         }
 
+
+        console.log('Verifying identities');
+        for (i = 0; i < identities.length; i += 1) {
+            console.log(`Verifying identity ${identities[i]} with nodeId: ${nodeIds[i]}`);
+            // eslint-disable-next-line no-await-in-loop
+            temp = await Identity.at(identities[i]);
+            // eslint-disable-next-line no-await-in-loop
+            otVersion = await temp.otVersion.call();
+        }
+
         console.log(`Number of entries: ${nodeIds.length}`);
         console.log('Transfering ERC725 and adding nodeID approval...');
 
-        gasToSend = 200000*nodeIds.length;
-        await multiApproval.transferApprovals(oldIdentities, identities, nodeIds, indexes, { gas: gasToSend});
+        gasToSend = 200000 * nodeIds.length;
+        await multiApproval.transferApprovals(
+            oldIdentities,
+            identities,
+            nodeIds,
+            indexes,
+            { gas: gasToSend },
+        );
         break;
     case 'testApproval':
         hub = await Hub.at('0xa287d7134fb40bef071c932286bd2cd01efccf30');
@@ -258,6 +276,15 @@ module.exports = async (deployer, network, accounts) => {
             oldIdentities[i] = data[i].oldIdentity;
 
             console.log(`Node ${i + 1}\t id:${nodeIds[i]}\tOld identity:${oldIdentities[i]}\tNew identity:${identities[i]}`);
+        }
+
+        console.log('Verifying identities');
+        for (i = 0; i < identities.length; i += 1) {
+            console.log(`Verifying identity ${identities[i]} with nodeId: ${nodeIds[i]}`);
+            // eslint-disable-next-line no-await-in-loop
+            temp = await Identity.at(identities[i]);
+            // eslint-disable-next-line no-await-in-loop
+            otVersion = await temp.otVersion.call();
         }
 
         console.log(`Number of entries: ${nodeIds.length}`);
