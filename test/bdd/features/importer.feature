@@ -25,7 +25,7 @@ Feature: Test basic importer features
     And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
     Then the traversal from batch "urn:epc:id:sgtin:Batch_1" should contain 1 trail and 2 vertices of type EVENT
 
-  @local
+  @first
   Scenario: Query locally
     Given I setup 1 node
     And I start the node
