@@ -177,6 +177,26 @@ class GraphStorage {
     }
 
     /**
+     * Add document to collection
+     * @param collectionName
+     * @param document
+     * @returns {Promise}
+     */
+    addDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.addDocument(collectionName, document).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Identify selected graph database
      * @returns {string}
      */
@@ -291,6 +311,25 @@ class GraphStorage {
             } else {
                 this.db.findEdgesByImportId(datasetId, encColor).then((result) => {
                     resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Gets metadata about import ID from the underlying database
+     * @param datasetId - Dataset ID
+     * @returns {Promise}
+     */
+    findMetadataByImportId(datasetId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findMetadataByImportId(datasetId).then((result) => {
+                    resolve(result[0]);
                 }).catch((err) => {
                     reject(err);
                 });

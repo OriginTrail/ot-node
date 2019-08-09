@@ -1,0 +1,14 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 100
+    },
+    "auditLog": "logs/.d1d527b5afae96623ba12e94ed5f60936428fb5b-audit.json",
+    "files": [
+        {
+            "date": 1565337180592,
+            "name": "logs/otnode-2019-08-09-09.log",
+            "hash": "4b279b0c58c2bf787641d43ada113b74"
+        }
+    ]
+}
