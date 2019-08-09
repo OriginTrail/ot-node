@@ -30,13 +30,16 @@ Then(/^the traversal from batch "(\S+)" should contain (\d+) trail[s]* and (\d+)
     expect(foundVertices, `failed to find ${numberOfVertices} vertices in the trail`).to.be.equal(numberOfVertices);
 });
 
-Then(/^([DC]+)'s last import should be in local$/, async function (nodeType) {
-    expect(nodeType, 'Node type can only be DC.').to.satisfy(val => (val === 'DC'));
+Then(/^the last query should return same id as last import's$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastImport.data_set_id, 'Last imports data set id seems not defined').to.be.equal(true);
+    expect(!!this.state.jsonQuery, 'JSON query must exist.').to.be.equal(true);
 
-    const myNode = this.state[nodeType.toLowerCase()];
+
+    const myNode = this.state.dc;
     const response = await httpApiHelper.apiQueryLocal(myNode.state.node_rpc_url, this.state.jsonQuery);
 
     expect(!!response, 'Data should exist').to.be.equal(true);
+    expect(response.filter(id => id === this.state.lastImport.data_set_id).length, 'Response should be equal to last imports id').to.be.equal(response.length);
 });

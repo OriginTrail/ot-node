@@ -33,7 +33,7 @@ Feature: Test basic importer features
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
     Then DC's last import's hash should be the same as one manually calculated
     Given I create json query with path: "identifiers.uid", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
-    Then DC's last import should be in local
+    Then the last query should return same id as last import's
 
 
 
