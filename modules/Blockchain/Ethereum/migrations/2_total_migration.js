@@ -232,9 +232,9 @@ module.exports = async (deployer, network, accounts) => {
         }
 
 
-        console.log('Verifying identities');
+        console.log('\nVerifying identities:');
         for (i = 0; i < identities.length; i += 1) {
-            console.log(`Verifying identity ${identities[i]} with nodeId: ${nodeIds[i]}`);
+            console.log(`\tVerifying identity ${identities[i]} with nodeId: ${nodeIds[i]}`);
             // eslint-disable-next-line no-await-in-loop
             temp = await Identity.at(identities[i]);
             // eslint-disable-next-line no-await-in-loop
@@ -278,9 +278,9 @@ module.exports = async (deployer, network, accounts) => {
             console.log(`Node ${i + 1}\t id:${nodeIds[i]}\tOld identity:${oldIdentities[i]}\tNew identity:${identities[i]}`);
         }
 
-        console.log('Verifying identities');
+        console.log('\nVerifying identities');
         for (i = 0; i < identities.length; i += 1) {
-            console.log(`Verifying identity ${identities[i]} with nodeId: ${nodeIds[i]}`);
+            console.log(`\tVerifying identity ${identities[i]} with nodeId: ${nodeIds[i]}`);
             // eslint-disable-next-line no-await-in-loop
             temp = await Identity.at(identities[i]);
             // eslint-disable-next-line no-await-in-loop
