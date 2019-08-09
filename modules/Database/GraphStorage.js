@@ -177,6 +177,26 @@ class GraphStorage {
     }
 
     /**
+     * Add document to collection
+     * @param collectionName
+     * @param document
+     * @returns {Promise}
+     */
+    addDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.addDocument(collectionName, document).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Identify selected graph database
      * @returns {string}
      */

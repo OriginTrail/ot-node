@@ -62,7 +62,7 @@ describe('GraphStorage module', () => {
         myInvalidGraphStorage = new GraphStorage();
     });
 
-    beforeEach('reset ot_vertices and ot_edges collections', async () => {
+    beforeEach('reset ot_vertices, ot_edges and ot_datasets collections', async () => {
         if (selectedDatabase.provider === 'arangodb') {
             try {
                 await myGraphStorage.db.dropCollection('ot_vertices');
@@ -78,6 +78,22 @@ describe('GraphStorage module', () => {
             }
         } else {
             throw Error('Not implemented database provider.');
+        }
+    });
+
+    it('adding vertex and edges should save in collections', async () => {
+        try {
+            const res_v1 = await myGraphStorage.addVertex(vertexOne);
+            const res_v2 = await myGraphStorage.addVertex(vertexTwo);
+
+            assert.equal(res_v1._key, vertexOne._key);
+            assert.equal(res_v2._key, vertexTwo._key);
+
+            const res = await myGraphStorage.addEdge(edgeOne);
+
+            assert.equal(res._key, edgeOne._key);
+        } catch (error) {
+            assert.isTrue(!!error);
         }
     });
 
