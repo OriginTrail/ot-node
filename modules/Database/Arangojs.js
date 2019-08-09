@@ -667,16 +667,6 @@ class ArangoJS {
     }
 
     /**
-     * Finds metadata by dataset ID
-     * @return {Promise<*>}
-     * @param datasetId
-     */
-    async findMetadataByImportId(datasetId) {
-        const queryString = 'FOR v IN ot_datasets FILTER v._key == @datasetId RETURN v';
-        return this.runQuery(queryString, { datasetId });
-    }
-
-    /**
      * Finds vertices by dataset ID
      * @param {string} data_id - Dataset ID
      * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)

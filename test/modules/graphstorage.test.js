@@ -62,7 +62,7 @@ describe('GraphStorage module', () => {
         myInvalidGraphStorage = new GraphStorage();
     });
 
-    beforeEach('reset ot_vertices, ot_edges and ot_datasets collections', async () => {
+    beforeEach('reset ot_vertices and ot_edges collections', async () => {
         if (selectedDatabase.provider === 'arangodb') {
             try {
                 await myGraphStorage.db.dropCollection('ot_vertices');
