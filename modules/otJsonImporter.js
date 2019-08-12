@@ -35,15 +35,14 @@ function _value(jsonLdObject) {
 }
 
 /**
- * Returns value of '@context' property.
- * @param jsonLdObject JSON-LD object
- * @returns {*}
+ * Returns value of '@graph' property.
+ * @param OT-JSON document object.
+ * @return [Object]
  * @private
  */
-function _context(jsonLdObject) {
-    return jsonLdObject['@context'];
+function _graph(document) {
+    return document['@graph'];
 }
-
 
 /**
  * Calculate SHA3 from input objects and return normalized hex string.
@@ -320,7 +319,6 @@ class OtJsonImporter {
         // {
         //     @id: '',
         //     @type: 'Dataset',
-        //     @context: {},
         //     datasetHeader: {},
         //     @graph: []
         // }
@@ -333,15 +331,14 @@ class OtJsonImporter {
             throw Error('Document has to be object.');
         }
 
-        if (Object.keys(document).length !== 5) {
+        if (Object.keys(document).length !== 4) {
             throw Error('Lack of additional information in OT-JSON document.');
         }
 
         const datasetId = _id(document);
         const datasetType = _type(document);
-        const context = _context(document);
         const { datasetHeader } = document;
-        const graph = document['@graph'];
+        const graph = _graph(document);
 
         if (typeof datasetId !== 'string') {
             throw Error('Wrong format of dataset ID');
