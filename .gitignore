@@ -33,3 +33,4 @@ newrelic_agent.log
 logs/*
 OT-JSON-example.json
 testici/*
+modules/logs/*
