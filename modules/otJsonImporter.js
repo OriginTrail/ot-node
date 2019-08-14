@@ -1,6 +1,7 @@
 const { sha3_256 } = require('js-sha3');
 
 const Utilities = require('./Utilities');
+const SchemaValidator = require('./validator/schema-validator');
 
 // Helper functions.
 
@@ -163,7 +164,7 @@ class OtJsonImporter {
      * @param OT-JSON document in JSON-LD format.
      * @return {{
      * metadata: {
-     *  datasetHeader: *, datasetContext: *, vertices: *, edges: *, _key: string},
+     *  datasetHeader: *, vertices: *, edges: *, _key: string},
      * vertices: Array,
      * dataCreator: string
      * edges: Array}}
@@ -415,6 +416,7 @@ class OtJsonImporter {
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('Wrong format of data creator.');
         }
+        SchemaValidator.validateSchema(ERCIdentifier.validationSchema);
 
         _validateRelatedEntities(graph);
     }
