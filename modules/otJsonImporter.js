@@ -361,28 +361,35 @@ class OtJsonImporter {
             throw Error('Missing or empty graph.');
         }
 
-        // TODO: Validate @context here.
-
-        if (datasetHeader.OTJSONVersion !== '1.0') {
+        // TODO: Prepare support for multiple versions
+        const { OTJSONVersion } = datasetHeader;
+        if (OTJSONVersion !== '1.0') {
             throw Error('Unsupported OT-JSON version.');
         }
 
-        if (datasetHeader.datasetCreationTimestamp == null &&
+        const { datasetCreationTimestamp } = datasetHeader;
+        if (datasetCreationTimestamp == null &&
             !Number.isNaN(Date.parse(datasetHeader.datasetCreationTimestamp))) {
             throw Error('Invalid creation date.');
         }
 
-        if (datasetHeader.dataCreator == null || datasetHeader.dataCreator.identifiers == null) {
+        const { dataCreator } = datasetHeader;
+        if (dataCreator == null || dataCreator.identifiers == null) {
             throw Error('Data creator is missing.');
         }
 
-        const { identifiers } = datasetHeader.dataCreator;
+        const { identifiers } = dataCreator;
         if (!Array.isArray(identifiers) || identifiers.length !== 1) {
             throw Error('Unexpected format of data creator.');
         }
 
-        if (identifiers[0].identifierType !== 'ERC725' || identifiers[0].validationSchema !== '/schemas/erc725-main' ||
-            !Utilities.isHexStrict(identifiers[0].identifierValue)) {
+        // Data creator identifier must contain ERC725 and the proper schema
+        const ERCIdentifier = identifiers.find(identifierObject => (
+            identifierObject.identifierType === 'ERC725'
+        ));
+        if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
+            ERCIdentifier.validationSchema !== '/schemas/erc725-main' ||
+            !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('Wrong format of data creator.');
         }
 
