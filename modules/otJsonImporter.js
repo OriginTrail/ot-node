@@ -61,6 +61,15 @@ function _keyFrom(...rest) {
 }
 
 /**
+ * Validate that all related entities listed in the graph exist.
+ * @param graph An array objects in the OT-JSON graph field.
+ * @private
+ */
+function _validateRelatedEntities(graph) {
+
+}
+
+/**
  * Constants used in graph creation.
  * @type {{
  * relationType: {
@@ -309,8 +318,8 @@ class OtJsonImporter {
     }
 
     /**
-     * Validates the JSON-LD document's metadata to be in valid OT-JSON format.
-     * @param document JSON-LD document.
+     * Validates the OT-JSON document's metadata to be in valid OT-JSON format.
+     * @param document OT-JSON document.
      * @private
      */
     _validate(document) {
@@ -376,6 +385,8 @@ class OtJsonImporter {
             !Utilities.isHexStrict(identifiers[0].identifierValue)) {
             throw Error('Wrong format of data creator.');
         }
+
+        _validateRelatedEntities(graph);
     }
 }
 
