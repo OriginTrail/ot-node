@@ -66,7 +66,30 @@ function _keyFrom(...rest) {
  * @private
  */
 function _validateRelatedEntities(graph) {
+    const verticesIds = new Set();
+    const relationsIds = new Set();
 
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < graph.length; i++) {
+        verticesIds.add(_id(graph[i]));
+
+        const { relations } = graph[i];
+        if (relations == null) {
+            // eslint-disable-next-line no-continue
+            continue;
+        }
+
+        // eslint-disable-next-line no-plusplus
+        for (let j = 0; j < relations.length; j++) {
+            relationsIds.add(relations[j].linkedObject['@id']);
+        }
+    }
+
+    relationsIds.forEach((id) => {
+        if (!verticesIds.has(id)) {
+            throw Error('OT-JSON relations not valid');
+        }
+    });
 }
 
 /**
@@ -291,7 +314,7 @@ class OtJsonImporter {
 
         const metadata = {
             _key: datasetId,
-            datasetContext: _context(document),
+            // datasetContext: _context(document),
             datasetHeader: document.datasetHeader,
             vertices: vertices.reduce((acc, current) => {
                 if (!acc.includes(current._key)) {
