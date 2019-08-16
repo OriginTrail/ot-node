@@ -1,6 +1,7 @@
 /**
  * Methods used for various data schema validations
  */
+
 const ethutils = require('ethereumjs-util');
 const importUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
@@ -22,8 +23,10 @@ const web3 = require('web3');
 
 
 class SchemaValidator {
-    constructor() {
-        this.supportedSchemas = { '/schemas/erc725-main': SchemaValidator._validateERC725Schema };
+    constructor(ctx) {
+        this.blockchain = ctx.blockchain;
+        this.config = ctx.config;
+        this.supportedSchemas = { 'ethereum-725': SchemaValidator._validateERC725Schema };
     }
 
     /**
@@ -35,7 +38,8 @@ class SchemaValidator {
         return this.supportedSchemas[schemaName](document);
     }
 
-    _getSignerAddress(document) {
+    static _getSignerAddress(document) {
+
         const merkleRoot = importUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
         const { signature } = document;
 
@@ -55,19 +59,45 @@ class SchemaValidator {
         return Utilities.normalizeHex(addr);
     }
 
-    _validateERC725Schema(document) {
+    async _validateERC725Schema(document) {
+        // TODO Validate that the schema is on the same network
+
         const signer = this._getSignerAddress(document);
 
+        const { datasetHeader } = document;
+        const { dataCreator } = datasetHeader;
+        if (dataCreator == null || dataCreator.identifiers == null) {
+            throw Error('Data creator is missing.');
+        }
 
-        // otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
+        const { identifiers } = dataCreator;
+        if (!Array.isArray(identifiers) || identifiers.length !== 1) {
+            throw Error('Unexpected format of data creator.');
+        }
 
-        // const signedOtjson = importUtilities.signDataset(otjson, this.config, this.web3);
+        // Data creator identifier must contain ERC725 and the proper schema
+        const ERCIdentifier = identifiers.find(identifierObject => (
+            identifierObject.identifierType === 'ERC725'
+            && identifierObject.networkId === this.config.blockchain.network_id
+        ));
 
-        // return signedOtjson;
-        // return null;
+        if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
+            ERCIdentifier.validationSchema !== '/schemas/erc725-main' ||
+            !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
+            throw Error('Wrong format of data creator.');
+        }
+
+        const erc725Identity = ERCIdentifier.identifierValue;
+
+        const walletPurposes = await this.blockchain.getWalletPurposes(erc725Identity, signer);
+
+        if (!walletPurposes.includes('4')) {
+            throw Error(`Signer ${signer} does not have encryption approval for the ` +
+                `ERC-725 identity ${erc725Identity} specified in the dataset header!`);
+        }
+
+        return null;
     }
 }
-
-
 
 module.exports = SchemaValidator;

@@ -416,7 +416,7 @@ class OtJsonImporter {
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('Wrong format of data creator.');
         }
-        SchemaValidator.validateSchema(ERCIdentifier.validationSchema);
+        SchemaValidator.validateSchema(document, ERCIdentifier.validationSchema);
 
         _validateRelatedEntities(graph);
     }
