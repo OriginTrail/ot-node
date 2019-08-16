@@ -61,37 +61,6 @@ function _keyFrom(...rest) {
     )));
 }
 
-/**
- * Validate that all related entities listed in the graph exist.
- * @param graph An array objects in the OT-JSON graph field.
- * @private
- */
-function _validateRelatedEntities(graph) {
-    const verticesIds = new Set();
-    const relationsIds = new Set();
-
-    // eslint-disable-next-line no-plusplus
-    for (let i = 0; i < graph.length; i++) {
-        verticesIds.add(_id(graph[i]));
-
-        const { relations } = graph[i];
-        if (relations == null) {
-            // eslint-disable-next-line no-continue
-            continue;
-        }
-
-        // eslint-disable-next-line no-plusplus
-        for (let j = 0; j < relations.length; j++) {
-            relationsIds.add(relations[j].linkedObject['@id']);
-        }
-    }
-
-    relationsIds.forEach((id) => {
-        if (!verticesIds.has(id)) {
-            throw Error('OT-JSON relations not valid');
-        }
-    });
-}
 
 /**
  * Constants used in graph creation.
@@ -157,6 +126,38 @@ class OtJsonImporter {
                 ],
             },
         };
+    }
+
+    /**
+     * Validate that all related entities listed in the graph exist.
+     * @param graph An array objects in the OT-JSON graph field.
+     * @private
+     */
+    _validateRelatedEntities(graph) {
+        const verticesIds = new Set();
+        const relationsIds = new Set();
+
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < graph.length; i++) {
+            verticesIds.add(_id(graph[i]));
+
+            const { relations } = graph[i];
+            if (relations == null) {
+                // eslint-disable-next-line no-continue
+                continue;
+            }
+
+            // eslint-disable-next-line no-plusplus
+            for (let j = 0; j < relations.length; j++) {
+                relationsIds.add(relations[j].linkedObject['@id']);
+            }
+        }
+
+        relationsIds.forEach((id) => {
+            if (!verticesIds.has(id)) {
+                throw Error('OT-JSON relations not valid');
+            }
+        });
     }
 
     /**
