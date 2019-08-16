@@ -52,12 +52,7 @@ class ArangoJS {
             const filters = [];
             for (const key in queryObject) {
                 if (key.match(/^[\w\d]+$/g) !== null) {
-                    let searchKey;
-                    if (key !== 'vertex_type' && key !== 'edge_type' && key !== '_key') {
-                        searchKey = `identifiers.${key}`;
-                    } else {
-                        searchKey = key;
-                    }
+                    const searchKey = key;
                     const param = `param${count}`;
                     filters.push(`v.${searchKey} == @param${count}`);
 
@@ -219,6 +214,69 @@ class ArangoJS {
         queryString += ')}';
 
         return this.runQuery(queryString, params);
+    }
+
+    /**
+     *
+     * @param {Object} startVertexKey
+     * @param {Number} depth
+     * @param {Array.<string>} includeOnly
+     * @param {Array.<string>} excludeOnly
+     * @return {Promise<void>}
+     */
+    async findEntitiesTraversalPath(startVertexKey, depth, includeOnly, excludeOnly) {
+        if (startVertexKey == null || typeof startVertexKey !== 'string') {
+            throw Error('Must include a valid start vertex.');
+        }
+        if (includeOnly != null && !Array.isArray(includeOnly)) {
+            throw Error('Invalid param.');
+        }
+        if (excludeOnly != null && !Array.isArray(excludeOnly)) {
+            throw Error('Invalid param.');
+        }
+        if (depth == null || !Number.isInteger(depth)) {
+            throw Error('Invalid param.');
+        }
+        const includeOnlyValid = includeOnly != null && includeOnly.length > 0;
+        const excludeOnlyValid = excludeOnly != null && excludeOnly.length > 0;
+
+        const queryString = `let vertices = (FOR v, e, p IN 0..@depth ANY CONCAT('ot_vertices/', @startVertex) ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                ${includeOnlyValid ? 'FILTER p.edges[*].relationType ALL IN @includeOnly' : ''}
+                                ${excludeOnlyValid ? 'FILTER p.edges[*].relationType ALL NOT IN @excludeOnly' : ''}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN v)
+                                
+                            let edges = (FOR v, e, p IN 0..@depth ANY CONCAT('ot_vertices/', @startVertex) ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                ${includeOnlyValid ? 'FILTER p.edges[*].relationType ALL IN @includeOnly' : ''}
+                                ${excludeOnlyValid ? 'FILTER p.edges[*].relationType ALL NOT IN @excludeOnly' : ''}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN e)
+                            RETURN {vertices, edges}`;
+
+        const params = {
+            startVertex: startVertexKey,
+            depth,
+        };
+
+        if (includeOnlyValid) {
+            params.includeOnly = includeOnly;
+        }
+        if (excludeOnlyValid) {
+            params.excludeOnly = excludeOnly;
+        }
+
+        const rawGraph = await this.runQuery(queryString, params);
+        return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 
     /**
@@ -541,7 +599,14 @@ class ArangoJS {
             const response = await this.findDocuments(collectionName, { _key: document._key });
             if (response.length > 0) {
                 const existing = ArangoJS._normalize(response[0]);
-                Object.assign(existing, document);
+                if (existing.datasets != null && document.datasets != null) {
+                    existing.datasets =
+                        existing.datasets
+                            .concat(document.datasets
+                                .filter(datasetId => !existing.datasets.includes(datasetId)));
+
+                    existing.datasets.concat(document.datasets);
+                }
                 return this.updateDocument(collectionName, existing);
             }
         }
@@ -664,6 +729,16 @@ class ArangoJS {
         } catch (err) {
             throw err;
         }
+    }
+
+    /**
+     * Finds metadata by dataset ID
+     * @return {Promise<*>}
+     * @param datasetId
+     */
+    async findMetadataByImportId(datasetId) {
+        const queryString = 'FOR v IN ot_datasets FILTER v._key == @datasetId RETURN v';
+        return this.runQuery(queryString, { datasetId });
     }
 
     /**
