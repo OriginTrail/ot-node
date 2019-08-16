@@ -34,11 +34,11 @@ class SchemaValidator {
      * @param document OT-JSON dataset
      * @param schemaName the name of the schema to be validated
      */
-    validateSchema(document, schemaName) {
-        return this.supportedSchemas[schemaName](document);
+    async validateSchema(document, schemaName) {
+        await this.supportedSchemas[schemaName](document);
     }
 
-    static _getSignerAddress(document) {
+    _getSignerAddress(document) {
 
         const merkleRoot = importUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
         const { signature } = document;

@@ -169,9 +169,9 @@ class OtJsonImporter {
      * dataCreator: string
      * edges: Array}}
      */
-    process(document) {
+    async process(document) {
         // TODO: validate document here.
-        this._validate(document);
+        await this._validate(document);
 
         const datasetId = _id(document);
         const header = document.datasetHeader;
@@ -346,7 +346,7 @@ class OtJsonImporter {
      * @param document OT-JSON document.
      * @private
      */
-    _validate(document) {
+    async _validate(document) {
         // Test root level of the document.
         // Expected:
         // {
@@ -416,7 +416,7 @@ class OtJsonImporter {
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('Wrong format of data creator.');
         }
-        SchemaValidator.validateSchema(document, ERCIdentifier.validationSchema);
+        await SchemaValidator.validateSchema(document, ERCIdentifier.validationSchema);
 
         _validateRelatedEntities(graph);
     }
