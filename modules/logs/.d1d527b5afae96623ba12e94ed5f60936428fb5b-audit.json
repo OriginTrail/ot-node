@@ -19,6 +19,11 @@
             "date": 1565778207957,
             "name": "logs/otnode-2019-08-14-12.log",
             "hash": "9f8dd77bf0d5b66f30d2f03b0f9797f5"
+        },
+        {
+            "date": 1565960720251,
+            "name": "logs/otnode-2019-08-16-15.log",
+            "hash": "e1445e72c36991d2a5a81e6ae6517e44"
         }
     ]
 }
