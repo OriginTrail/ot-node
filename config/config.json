@@ -100,7 +100,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false
@@ -206,7 +206,7 @@
     "dh_min_token_price": "1",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false
@@ -312,7 +312,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false
@@ -421,7 +421,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false
@@ -530,7 +530,7 @@
     "dh_min_token_price": "20000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": true,
     "litigationEnabled": false,
     "commandExecutorVerboseLoggingEnabled": false
