@@ -121,7 +121,7 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     };
     const queryNetworkResponse =
         await httpApiHelper.apiQueryNetwork(dv.state.node_rpc_url, jsonQuery);
-    expect(Object.keys(queryNetworkResponse), 'Reponse should have message and query_id').to.have.members(['message', 'query_id']);
+    expect(Object.keys(queryNetworkResponse), 'Response should have message and query_id').to.have.members(['message', 'query_id']);
     expect(queryNetworkResponse.message, 'Message should inform about successful sending of the query').to.be.equal('Query sent successfully.');
     this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));

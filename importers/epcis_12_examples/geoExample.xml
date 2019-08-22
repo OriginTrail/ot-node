@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	xmlns:example="http://ns.example.com/epcis" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creationDate="2005-07-11T11:30:47.0Z"
+	schemaVersion="1.2">
+	<EPCISBody>
+		<EventList>
+			<ObjectEvent>
+				<eventTime>2005-04-03T20:33:31.116-06:00</eventTime>
+				<eventTimeZoneOffset>-06:00</eventTimeZoneOffset>
+				<epcList>
+					<epc>urn:epc:id:sgtin:0614141.107346.2018</epc>
+				</epcList>
+				<action>OBSERVE</action>
+				<example:point>127.365459, 36.374530^geoPoint</example:point>
+				<example:polygon>127.361199, 36.372906, 127.361183, 36.371831,
+					127.361790, 36.372003, 127.361988, 36.372509, 127.361773,
+					36.372828^geoArea</example:polygon>
+			</ObjectEvent>
+
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>

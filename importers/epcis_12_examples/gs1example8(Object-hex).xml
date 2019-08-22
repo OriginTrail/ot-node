@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	xmlns:example0="http://ns.example.com/epcis0" xmlns:example1="http://ns.example.com/epcis1"
+	xmlns:example2="http://ns.example.com/epcis2" xmlns:example3="http://ns.example.com/epcis3"
+	xmlns:example="http://ns.example.com/epcis" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	creationDate="2005-07-11T11:30:47.0Z" schemaVersion="1.2">
+	<EPCISBody>
+		<EventList>
+			<ObjectEvent>
+				<eventTime>2005-04-04T20:33:31.116-06:00</eventTime>
+				<eventTimeZoneOffset>-06:00</eventTimeZoneOffset>
+				<epcList>
+					<epc>urn:epc:id:sgtin:0614141.107346.2018</epc>
+				</epcList>
+				<action>OBSERVE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+				<readPoint>
+					<id>urn:epc:id:sgln:0012345.11111.400</id>
+				</readPoint>
+				<bizLocation>
+					<id>urn:epc:id:sgln:0012345.11111.0</id>
+				</bizLocation>
+				<bizTransactionList>
+					<bizTransaction type="urn:epcglobal:cbv:btt:po">http://transaction.acme.com/po/12345678</bizTransaction>
+					<bizTransaction type="urn:epcglobal:cbv:btt:desadv">urn:epcglobal:cbv:bt:0614141073467:1152</bizTransaction>
+				</bizTransactionList>
+				<example0:a>A</example0:a>
+				<example0:b>
+					<example1:b>B</example1:b>
+				</example0:b>
+				<example0:c>
+					<example1:d>C</example1:d>
+					<example1:b>
+						<example2:c>C</example2:c>
+					</example1:b>
+					<example1:e>C</example1:e>
+				</example0:c>
+			</ObjectEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>
