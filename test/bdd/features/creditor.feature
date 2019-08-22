@@ -1,9 +1,9 @@
+@fourth
 Feature: Parent identity creditor features
   Background: Setup local blockchain and bootstraps
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @third
   Scenario: Expect node to add a sub-identity
     Given I setup 2 nodes
     And I start the nodes
@@ -11,7 +11,6 @@ Feature: Parent identity creditor features
     And the 2nd node should have a valid ERC725 identity
     Then I set up the 1st node as the parent of the 2nd node
 
-  @third
   Scenario: Expect node to create offer from parent identity
     Given I setup 5 nodes
     And I start the nodes
