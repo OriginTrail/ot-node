@@ -880,6 +880,49 @@ class Utilities {
         });
         return map;
     }
+
+    /**
+     * Custom sorted stringify
+     * TODO think about optimization
+     * @param obj - Object to be serialized
+     * @param sortArrays - Sort array items
+     * @return {string}
+     */
+    static sortedStringify(obj, sortArrays = false) {
+        if (obj == null) {
+            return 'null';
+        }
+        if (typeof obj === 'object') {
+            const stringified = [];
+            for (const key of Object.keys(obj)) {
+                if (Array.isArray(obj)) {
+                    stringified.push(this.sortedStringify(obj[key], sortArrays));
+                } else {
+                    stringified.push(`"${key}":${this.sortedStringify(obj[key], sortArrays)}`);
+                }
+                if (sortArrays) {
+                    stringified.sort();
+                }
+            }
+            if (!Array.isArray(obj)) {
+                stringified.sort();
+                return `{${stringified.join(',')}}`;
+            }
+            return `[${stringified.join(',')}]`;
+        }
+        return `${JSON.stringify(obj)}`;
+    }
+
+    /**
+     * Wrap into array if necessary
+     * @return {*}
+     */
+    static arrayze(obj) {
+        if (Array.isArray(obj)) {
+            return obj;
+        }
+        return [obj];
+    }
 }
 
 module.exports = Utilities;
