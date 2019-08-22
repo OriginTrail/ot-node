@@ -158,7 +158,7 @@ Feature: Test basic network features
     And I start the node
     Then default initial token amount should be deposited on 1st node's profile
 
-  @third
+  @fourth
   Scenario: Test repeated offer creation with same dataset
     Given the replication difficulty is 0
     And I setup 3 nodes
