@@ -177,6 +177,7 @@
     "winston-daily-rotate-file": "^3.4.1",
     "winston-loggly-bulk": "^2.0.3",
     "winston-papertrail": "^1.0.5",
+    "xml-js": "^1.6.11",
     "xml2js": "^0.4.19"
   }
 }
