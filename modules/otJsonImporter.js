@@ -1,6 +1,7 @@
 const { sha3_256 } = require('js-sha3');
 
 const Utilities = require('./Utilities');
+const SchemaValidator = require('./validator/schema-validator');
 
 // Helper functions.
 
@@ -35,15 +36,14 @@ function _value(jsonLdObject) {
 }
 
 /**
- * Returns value of '@context' property.
- * @param jsonLdObject JSON-LD object
- * @returns {*}
+ * Returns value of '@graph' property.
+ * @param OT-JSON document object.
+ * @return [Object]
  * @private
  */
-function _context(jsonLdObject) {
-    return jsonLdObject['@context'];
+function _graph(document) {
+    return document['@graph'];
 }
-
 
 /**
  * Calculate SHA3 from input objects and return normalized hex string.
@@ -60,6 +60,7 @@ function _keyFrom(...rest) {
         '',
     )));
 }
+
 
 /**
  * Constants used in graph creation.
@@ -132,14 +133,14 @@ class OtJsonImporter {
      * @param OT-JSON document in JSON-LD format.
      * @return {{
      * metadata: {
-     *  datasetHeader: *, datasetContext: *, vertices: *, edges: *, _key: string},
+     *  datasetHeader: *, vertices: *, edges: *, _key: string},
      * vertices: Array,
      * dataCreator: string
      * edges: Array}}
      */
-    process(document) {
+    async process(document) {
         // TODO: validate document here.
-        this._validate(document);
+        await this._validate(document);
 
         const datasetId = _id(document);
         const header = document.datasetHeader;
@@ -283,7 +284,7 @@ class OtJsonImporter {
 
         const metadata = {
             _key: datasetId,
-            datasetContext: _context(document),
+            // datasetContext: _context(document),
             datasetHeader: document.datasetHeader,
             vertices: vertices.reduce((acc, current) => {
                 if (!acc.includes(current._key)) {
@@ -310,17 +311,16 @@ class OtJsonImporter {
     }
 
     /**
-     * Validates the JSON-LD document's metadata to be in valid OT-JSON format.
-     * @param document JSON-LD document.
+     * Validates the OT-JSON document's metadata to be in valid OT-JSON format.
+     * @param document OT-JSON document.
      * @private
      */
-    _validate(document) {
+    async _validate(document) {
         // Test root level of the document.
         // Expected:
         // {
         //     @id: '',
         //     @type: 'Dataset',
-        //     @context: {},
         //     datasetHeader: {},
         //     @graph: []
         // }
@@ -333,15 +333,14 @@ class OtJsonImporter {
             throw Error('Document has to be object.');
         }
 
-        if (Object.keys(document).length !== 5) {
+        if (Object.keys(document).length !== 4) {
             throw Error('Lack of additional information in OT-JSON document.');
         }
 
         const datasetId = _id(document);
         const datasetType = _type(document);
-        const context = _context(document);
         const { datasetHeader } = document;
-        const graph = document['@graph'];
+        const graph = _graph(document);
 
         if (typeof datasetId !== 'string') {
             throw Error('Wrong format of dataset ID');
@@ -355,30 +354,72 @@ class OtJsonImporter {
             throw Error('Missing or empty graph.');
         }
 
-        // TODO: Validate @context here.
-
-        if (datasetHeader.OTJSONVersion !== '1.0') {
+        // TODO: Prepare support for multiple versions
+        const { OTJSONVersion } = datasetHeader;
+        if (OTJSONVersion !== '1.0') {
             throw Error('Unsupported OT-JSON version.');
         }
 
-        if (datasetHeader.datasetCreationTimestamp == null &&
+        const { datasetCreationTimestamp } = datasetHeader;
+        if (datasetCreationTimestamp == null &&
             !Number.isNaN(Date.parse(datasetHeader.datasetCreationTimestamp))) {
             throw Error('Invalid creation date.');
         }
 
-        if (datasetHeader.dataCreator == null || datasetHeader.dataCreator.identifiers == null) {
+        const { dataCreator } = datasetHeader;
+        if (dataCreator == null || dataCreator.identifiers == null) {
             throw Error('Data creator is missing.');
         }
 
-        const { identifiers } = datasetHeader.dataCreator;
+        const { identifiers } = dataCreator;
         if (!Array.isArray(identifiers) || identifiers.length !== 1) {
             throw Error('Unexpected format of data creator.');
         }
 
-        if (identifiers[0].identifierType !== 'ERC725' || identifiers[0].validationSchema !== '/schemas/erc725-main' ||
-            !Utilities.isHexStrict(identifiers[0].identifierValue)) {
+        // Data creator identifier must contain ERC725 and the proper schema
+        const ERCIdentifier = identifiers.find(identifierObject => (
+            identifierObject.identifierType === 'ERC725'
+        ));
+        if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
+            ERCIdentifier.validationSchema !== '/schemas/erc725-main' ||
+            !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('Wrong format of data creator.');
         }
+        await SchemaValidator.validateSchema(document, ERCIdentifier.validationSchema);
+
+        this._validateRelatedEntities(graph);
+    }
+
+    /**
+     * Validate that all related entities listed in the graph exist.
+     * @param graph An array objects in the OT-JSON graph field.
+     * @private
+     */
+    _validateRelatedEntities(graph) {
+        const verticesIds = new Set();
+        const relationsIds = new Set();
+
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < graph.length; i++) {
+            verticesIds.add(_id(graph[i]));
+
+            const { relations } = graph[i];
+            if (relations == null) {
+                // eslint-disable-next-line no-continue
+                continue;
+            }
+
+            // eslint-disable-next-line no-plusplus
+            for (let j = 0; j < relations.length; j++) {
+                relationsIds.add(relations[j].linkedObject['@id']);
+            }
+        }
+
+        relationsIds.forEach((id) => {
+            if (!verticesIds.has(id)) {
+                throw Error('OT-JSON relations not valid');
+            }
+        });
     }
 }
 
