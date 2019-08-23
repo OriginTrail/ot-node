@@ -195,6 +195,57 @@ class ImportUtilities {
         return true;
     }
 
+    static calculateDatasetSummary(graph, datasetId, datasetCreator) {
+        return {
+            datasetId,
+            datasetCreator,
+            objects: graph.map(vertex => ({
+                '@id': vertex['@id'],
+                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
+            })),
+            numRelations: graph.filter(vertex => vertex.relations != null)
+                .reduce((acc, value) => acc + value.relations.length, 0),
+        };
+    }
+
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const datasetSummary =
+            this.calculateDatasetSummary(graph, datasetId, datasetCreator);
+
+        ImportUtilities.sortGraphRecursively(graph);
+
+        const stringifiedGraph = [];
+        for (const obj of graph) {
+            stringifiedGraph.push(utilities.sortedStringify(obj));
+        }
+
+        const merkle = new MerkleTree(
+            [utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
+            'sha3',
+        );
+        return merkle.getRoot();
+    }
+
+    /**
+     * Sort @graph data inline
+     * @param graph
+     */
+    static sortGraphRecursively(graph) {
+        graph.forEach((el) => {
+            if (el.relations) {
+                el.relations.sort((r1, r2) => sha3_256(utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(utilities.sortedStringify(r2))));
+            }
+
+            if (el.identifiers) {
+                el.identifiers.sort((r1, r2) => sha3_256(utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(utilities.sortedStringify(r2))));
+            }
+        });
+        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+        return utilities.sortedStringify(graph);
+    }
+
     /**
      * Calculates more or less accurate size of the import
      * @param vertices   Collection of vertices
