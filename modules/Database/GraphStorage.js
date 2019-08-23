@@ -308,20 +308,6 @@ class GraphStorage {
     }
 
     /**
-     * Finds all object classes
-     * @return {Promise<*>}
-     */
-    async findObjectClassVertices() {
-        const classes = await this.db.findObjectClassVertices();
-        if (classes.length === 0) {
-            this.notifyError(new Error('Missing class vertices'));
-            await this.__initDatabase__();
-            return this.db.findObjectClassVertices();
-        }
-        return classes;
-    }
-
-    /**
      * Get list of vertices by import ID
      * @param importId - Import ID
      * @param encColor - Encrypted color

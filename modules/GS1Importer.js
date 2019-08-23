@@ -787,14 +787,9 @@ class GS1Importer {
                 denormalizedEdges,
             );
 
-            const objectClasses = await this.db.findObjectClassVertices();
-            if (objectClasses.length === 0) {
-                throw Error('Missing class vertices');
-            }
-
             const dataSetId = ImportUtilities.importHash(
                 importId,
-                normalizedVertices.concat(objectClasses),
+                normalizedVertices,
                 normalizedEdges,
             );
 
@@ -838,7 +833,7 @@ class GS1Importer {
             });
 
             return {
-                vertices: normalizedVertices.concat(objectClasses),
+                vertices: normalizedVertices,
                 edges: normalizedEdges,
                 data_set_id: dataSetId,
                 wallet: senderWallet,

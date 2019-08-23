@@ -87,9 +87,6 @@ describe('WOT Importer tests', () => {
                 .parse(await Utilities.fileContents(inputJsonFiles[0].args[0]));
             const { vertices, edges, data_set_id } = response;
 
-            const classVertices = await graphStorage.findObjectClassVertices();
-            vertices.push(...classVertices);
-
             ImportUtilities.sort(edges);
             ImportUtilities.sort(vertices);
 
