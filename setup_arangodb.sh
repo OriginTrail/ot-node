@@ -19,7 +19,7 @@ echo "Waiting until ArangoDB is ready on port 8529"
 
 n=0
 # timeout value for startup
-timeout=60 
+timeout=60
 while [[ (-z `curl -H 'Authorization: Basic cm9vdDo=' -s 'http://127.0.0.1:8529/_api/version' `) && (n -lt timeout) ]] ; do
   echo -n "."
   sleep 1s

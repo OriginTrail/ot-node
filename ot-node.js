@@ -18,6 +18,7 @@ const path = require('path');
 const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
+const SchemaValidator = require('./modules/validator/schema-validator');
 const GS1Importer = require('./modules/GS1Importer');
 const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
@@ -354,6 +355,7 @@ class OTNode {
             appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
+            schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
