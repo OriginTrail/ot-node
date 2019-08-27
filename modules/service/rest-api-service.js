@@ -7,12 +7,17 @@ const Utilities = require('../Utilities');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 
+const RestApiV2 = require('./rest-api-v2');
+
 class RestAPIService {
     constructor(ctx) {
         this.ctx = ctx;
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.apiUtilities = ctx.apiUtilities;
+
+        this.restApis = [new RestApiV2(ctx, true)];
+        [this.defaultRestApi] = this.restApis;
     }
 
     /**
@@ -121,6 +126,7 @@ class RestAPIService {
         if (this.config.is_bootstrap_node) {
             this._exposeBootstrapAPIRoutes(server);
         } else {
+            this.restApis.forEach(restApi => restApi._exposeAPIRoutes(server));
             this._exposeAPIRoutes(server);
         }
     }
@@ -187,9 +193,10 @@ class RestAPIService {
          * @param importfile - file or text data
          * @param importtype - (GS1/WOT)
          */
-        server.post('/api/import', async (req, res) => {
-            await importController.import(req, res);
-        });
+        // server.post('/api/import', async (req, res) => {
+        //     // await importController.import(req, res);
+        //     this.restApi.
+        // });
 
         /**
          * Create offer route
