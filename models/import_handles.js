@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: () => uuidv4(),
         },
         import_handle_id: DataTypes.STRING,
-        data: DataTypes.JSON,
+        data: DataTypes.TEXT,
         status: DataTypes.STRING,
     }, {});
     import_handles.associate = (models) => {
