@@ -18,6 +18,8 @@ class RestAPIService {
 
         this.restApis = [new RestApiV2(ctx, true)];
         [this.defaultRestApi] = this.restApis;
+
+        this.stanards = ['OT-JSON', 'GS1-EPCIS'];
     }
 
     /**
@@ -148,6 +150,30 @@ class RestAPIService {
         } = this.ctx;
 
         this._registerNodeInfoRoute(server, false);
+
+        server.get('/api/versions', async (req, res) => {
+            let msg = '';
+            let latest_id = 'latest : ';
+            this.restApis.forEach((restApi) => {
+                msg += `${restApi.version},  `;
+                if (restApi.version_id === 'latest') {
+                    latest_id += restApi.version;
+                }
+            });
+            res.send({
+                message: msg + latest_id,
+            });
+        });
+
+        server.get('/api/standards', async (req, res) => {
+            let msg = '';
+            this.stanards.forEach(standard =>
+                msg += `${standard},   `);
+
+            res.send({
+                message: msg,
+            });
+        });
 
         server.get('/api/balance', async (req, res) => {
             this.logger.api('Get balance.');

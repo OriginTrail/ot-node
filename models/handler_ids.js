@@ -1,8 +1,8 @@
 const uuidv4 = require('uuid/v4');
 
 module.exports = (sequelize, DataTypes) => {
-    const import_handles = sequelize.define('import_handles', {
-        import_handle_id: {
+    const handler_ids = sequelize.define('handler_ids', {
+        handler_id: {
             type: DataTypes.UUID,
             primaryKey: true,
             defaultValue: () => uuidv4(),
@@ -10,8 +10,8 @@ module.exports = (sequelize, DataTypes) => {
         data: DataTypes.TEXT,
         status: DataTypes.STRING,
     }, {});
-    import_handles.associate = (models) => {
+    handler_ids.associate = (models) => {
         // associations can be defined here
     };
-    return import_handles;
+    return handler_ids;
 };

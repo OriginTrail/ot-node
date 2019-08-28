@@ -1,7 +1,7 @@
 
 module.exports = {
-    up: (queryInterface, Sequelize) => queryInterface.createTable('import_handles', {
-        import_handle_id: {
+    up: (queryInterface, Sequelize) => queryInterface.createTable('handler_ids', {
+        handler_id: {
             allowNull: false,
             primaryKey: true,
             type: Sequelize.STRING,
@@ -15,5 +15,5 @@ module.exports = {
             type: Sequelize.STRING,
         },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('import_handles'),
+    down: (queryInterface, Sequelize) => queryInterface.dropTable('handler_ids'),
 };

@@ -19,6 +19,7 @@ class RestAPIServiceV2 {
         this.apiUtilities = ctx.apiUtilities;
         this.emitter = ctx.emitter;
 
+        this.version = 'v2';
         this.version_id = 'v2';
 
         if (ctx.config.latest_api_version === this.version_id) {
@@ -137,13 +138,13 @@ class RestAPIServiceV2 {
     }
 
     async _handler_check_existance(req, res) {
-        const import_handle_object = await Models.import_handles.findOne({
+        const handler_object = await Models.handler_ids.findOne({
             where: {
-                import_handle_id: req.params.import_handle_id,
+                handler_id: req.params.handler_id,
             },
         });
 
-        if (import_handle_object == null) {
+        if (handler_object == null) {
             this.logger.info('Invalid request');
             res.status(404);
             res.send({
@@ -152,7 +153,7 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const { data, status } = import_handle_object;
+        const { data, status } = handler_object;
 
         res.status(200);
         res.send({
@@ -213,16 +214,16 @@ class RestAPIServiceV2 {
                     };
 
 
-                const inserted_object = await Models.import_handles.create({
+                const inserted_object = await Models.handler_ids.create({
                     data: JSON.stringify(object_to_import),
                     status: 'COMPLETED',
                 });
                 this.emitter.emit(`api-${standard_id}-import-request`, queryObject);
 
-                const { import_handle_id } = inserted_object.dataValues;
+                const { handler_id } = inserted_object.dataValues;
                 res.status(200);
                 res.send({
-                    import_handle: import_handle_id,
+                    import_handle: handler_id,
                 });
             } catch (e) {
                 res.status(400);
@@ -317,13 +318,13 @@ class RestAPIServiceV2 {
                 };
 
 
-            const inserted_object = await Models.import_handles.create({
+            const inserted_object = await Models.handler_ids.create({
                 data: JSON.stringify(object_to_import),
                 status: 'COMPLETED',
             });
             const QueryObject = {
                 response: res,
-                offer_handle_id: inserted_object.dataValues.import_handle_id,
+                handler_id: inserted_object.dataValues.handler_id,
             };
 
             this.emitter.emit('api-create-offer-v2', QueryObject);
@@ -350,7 +351,7 @@ class RestAPIServiceV2 {
             await this._import_v2(req, res);
         });
 
-        server.get(`/api/${this.version_id}/import/result/:import_handle_id`, async (req, res) => {
+        server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
             await this._handler_check_existance(req, res);
         });
 
@@ -358,7 +359,7 @@ class RestAPIServiceV2 {
             await this._createOffer(req, res);
         });
 
-        server.get(`/api/${this.version_id}/replicate/result/:import_handle_id`, async (req, res) => {
+        server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
             await this._handler_check_existance(req, res);
         });
     }
