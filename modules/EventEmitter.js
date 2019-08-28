@@ -15,8 +15,11 @@ class EventEmitter {
         this.ctx = ctx;
         this.product = ctx.product;
         this.web3 = ctx.web3;
+        this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.appState = ctx.appState;
+        this.otJsonImporter = ctx.otJsonImporter;
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -139,23 +142,64 @@ class EventEmitter {
             });
         });
 
+        this._on('api-trail-entity', (data) => {
+            logger.info(`Get enitity trail triggered with query ${JSON.stringify(data.query)}`);
+
+            this.graphStorage
+                .findEntitiesTraversalPath(
+                    data.query.startVertex,
+                    data.query.depth,
+                    data.query.includeOnly,
+                    data.query.excludeOnly,
+                ).then((res) => {
+                    if (res.length === 0) {
+                        data.response.status(204);
+                    } else {
+                        data.response.status(200);
+                    }
+                    data.response.send(res);
+                }).catch((error) => {
+                    logger.error(`Failed to get trail for query ${JSON.stringify(data.query)}`);
+                    notifyError(error);
+                    data.response.status(500);
+                    data.response.send({
+                        message: error,
+                    });
+                });
+        });
+
         this._on('api-query-local-import', async (data) => {
-            const { data_set_id: dataSetId } = data;
+            const { data_set_id: dataSetId, format, encryption } = data;
             logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const result = await dhService.getImport(dataSetId);
+                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId, encryption);
 
-                if (result.vertices.length === 0) {
+                if (datasetOtJson == null) {
                     data.response.status(204);
                 } else {
                     data.response.status(200);
                 }
 
-                const normalizedImport = ImportUtilities
-                    .normalizeImport(dataSetId, result.vertices, result.edges);
+                let formattedDataset = '';
 
-
-                data.response.send(normalizedImport);
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                    data.response.send({});
+                } else if (format !== 'otjson' && encryption == null) {
+                    switch (format) {
+                    case 'otjson':
+                        formattedDataset = datasetOtJson;
+                        break;
+                    case 'epcis':
+                        formattedDataset = this.epcisOtJsonTranspiler
+                            .convertFromOTJson(datasetOtJson);
+                        break;
+                    default:
+                        throw Error('Invalid response format.');
+                    }
+                } else {
+                    data.response.send(formattedDataset);
+                }
             } catch (error) {
                 logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
@@ -181,7 +225,7 @@ class EventEmitter {
         });
 
         this._on('api-import-info', async (data) => {
-            const { dataSetId } = data;
+            const { dataSetId, responseFormat } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
                 const dataInfo =
@@ -196,29 +240,26 @@ class EventEmitter {
                     return;
                 }
 
-                const result = await dhService.getImport(dataSetId);
+                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId);
+                let formattedDataset = null;
 
-                // Check if packed to fix issue with double classes.
-                const filtered = result.vertices.filter(v => v._dc_key);
-                if (filtered.length > 0) {
-                    result.vertices = filtered;
-                    ImportUtilities.unpackKeys(result.vertices, result.edges);
-                }
-
-                if (result.vertices.length === 0) {
+                if (datasetOtJson == null) {
                     data.response.status(204);
-                    data.response.send(result);
+                    data.response.send({});
                 } else {
+                    switch (responseFormat) {
+                    case 'otjson': formattedDataset = datasetOtJson; break;
+                    case 'epcis': formattedDataset = this.epcisOtJsonTranspiler.convertFromOTJson(datasetOtJson); break;
+                    default: throw Error('Invalid response format.');
+                    }
+
                     const transactionHash = await ImportUtilities
                         .getTransactionHash(dataSetId, dataInfo.origin);
 
                     data.response.status(200);
                     data.response.send({
-                        import: ImportUtilities.normalizeImport(
-                            dataSetId,
-                            result.vertices,
-                            result.edges,
-                        ),
+                        dataSetId,
+                        document: formattedDataset,
                         root_hash: dataInfo.root_hash,
                         transaction: transactionHash,
                         data_provider_wallet: dataInfo.data_provider_wallet,
@@ -466,7 +507,8 @@ class EventEmitter {
                     data.response.send({
                         message: 'Import success',
                         data_set_id,
-                        wallet: config.node_wallet,
+                        root_hash,
+                        wallet,
                     });
                     remoteControl.importSucceeded();
                 }
@@ -493,7 +535,7 @@ class EventEmitter {
                     offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for interanl ID ${replicationId}`);
+                logger.error(`There is no offer for internal ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
                     message: 'Replication not found',
@@ -582,14 +624,11 @@ class EventEmitter {
         this._on('api-gs1-import-request', async (data) => {
             try {
                 logger.debug('GS1 import triggered');
-                const responseObject = await importer.importXMLgs1(data.content);
-                const { error } = responseObject;
-                const { response } = responseObject;
-
-                if (response === null) {
-                    await processImport(null, error, data);
+                const result = await importer.importXMLgs1(data.content);
+                if (result.error != null) {
+                    await processImport(null, result.error, data);
                 } else {
-                    await processImport(response, null, data);
+                    await processImport(result.response, null, data);
                 }
             } catch (error) {
                 await processImport(null, error, data);
@@ -607,6 +646,22 @@ class EventEmitter {
                     await processImport(null, error, data);
                 } else {
                     await processImport(response, null, data);
+                }
+            } catch (error) {
+                await processImport(null, error, data);
+            }
+        });
+
+        this._on('api-graph-import-request', async (data) => {
+            try {
+                logger.debug('Graph import triggered');
+                const dataset = ImportUtilities
+                    .prepareDataset(JSON.parse(data.content), this.config, this.web3);
+                const result = await importer.importOTJSON(dataset);
+                if (result.error != null) {
+                    await processImport(null, result.error, data);
+                } else {
+                    await processImport(result.response, null, data);
                 }
             } catch (error) {
                 await processImport(null, error, data);

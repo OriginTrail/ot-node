@@ -1,4 +1,4 @@
-const OtJsonImporter = require('../../modules/otJsonImporter');
+const OtJsonImporter = require('../../modules/importer/ot-json-importer');
 
 const {
     describe, before, beforeEach, afterEach, it,

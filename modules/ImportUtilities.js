@@ -1,12 +1,12 @@
+const bytes = require('utf8-length');
+const uuidv4 = require('uuid/v4');
+const { sha3_256 } = require('js-sha3');
+
+const Utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
 const Encryption = require('./Encryption');
-const bytes = require('utf8-length');
-const utilities = require('./Utilities');
-const uuidv4 = require('uuid/v4');
-const { sha3_256 } = require('js-sha3');
 const { normalizeGraph } = require('./Database/graph-converter');
-
 const Models = require('../models');
 
 /**
@@ -86,6 +86,93 @@ class ImportUtilities {
         }
     }
 
+    static prepareDataset(graph, config, web3) {
+        const id = this.calculateGraphHash(graph);
+        const header = this.createDatasetHeader(config);
+        const dataset = {
+            '@id': id,
+            '@type': 'Dataset',
+            datasetHeader: header,
+            '@graph': graph,
+        };
+
+        const rootHash = this.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
+        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+
+        const signed = this.signDataset(dataset, config, web3);
+        return signed;
+    }
+
+    /**
+     * Decrypt encrypted otjson dataset
+     * @param dataset - OTJson dataset
+     * @param decryptionKey - Decryption key
+     * @param encryptionColor - Encryption color
+     * @returns Decrypted OTJson dataset
+     */
+    static decryptDataset(dataset, decryptionKey, encryptionColor = null) {
+        const decryptedDataset = Utilities.copyObject(dataset);
+        const encryptedMap = {};
+        encryptedMap.objects = {};
+        encryptedMap.relations = {};
+        const colorMap = {
+            0: 'red',
+            1: 'green',
+            2: 'blue',
+        };
+
+        for (const obj of decryptedDataset['@graph']) {
+            if (obj.properties != null) {
+                const encryptedProperties = obj.properties;
+                obj.properties = Encryption.decryptObject(obj.properties, decryptionKey);
+                if (encryptionColor != null) {
+                    const encColor = colorMap[encryptionColor];
+                    encryptedMap.objects[obj['@id']] = {};
+                    encryptedMap.objects[obj['@id']][encColor] = encryptedProperties;
+                }
+            }
+            if (obj.relations != null) {
+                encryptedMap.relations[obj['@id']] = {};
+                for (const rel of obj.relations) {
+                    const encryptedProperties = rel.properties;
+                    rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
+                    if (encryptionColor != null) {
+                        const encColor = colorMap[encryptionColor];
+                        const relationKey = sha3_256(Utilities.stringify(rel, 0));
+                        encryptedMap.relations[obj['@id']][relationKey] = {};
+                        encryptedMap.relations[obj['@id']][relationKey][encColor] = encryptedProperties;
+                    }
+                }
+            }
+        }
+        return {
+            decryptedDataset,
+            encryptedMap,
+        };
+    }
+
+
+    static encryptDataset(dataset, encryptionKey) {
+        const encryptedDataset = Utilities.copyObject(dataset);
+
+        for (const obj of encryptedDataset['@graph']) {
+            if (obj.properties != null) {
+                const encryptedProperties = Encryption.encryptObject(obj.properties, encryptionKey);
+                obj.properties = encryptedProperties;
+            }
+            if (obj.relations != null) {
+                for (const rel of obj.relations) {
+                    if (rel.properties != null) {
+                        const encryptedProperties =
+                            Encryption.encryptObject(rel.properties, encryptionKey);
+                        rel.properties = encryptedProperties;
+                    }
+                }
+            }
+        }
+        return encryptedDataset;
+    }
+
     /**
      * Normalizes import (use just necessary data)
      * @param dataSetId - Dataset ID
@@ -103,7 +190,7 @@ class ImportUtilities {
             edges,
         );
 
-        return utilities.sortObject({
+        return Utilities.sortObject({
             edges: normEdges,
             vertices: normVertices,
         });
@@ -118,7 +205,7 @@ class ImportUtilities {
      */
     static importHash(dataSetId, vertices, edges) {
         const normalized = ImportUtilities.normalizeImport(dataSetId, vertices, edges);
-        return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)));
+        return Utilities.normalizeHex(sha3_256(Utilities.stringify(normalized, 0)));
     }
 
     /**
@@ -136,7 +223,7 @@ class ImportUtilities {
 
         // process vertices
         for (const i in vertices) {
-            const hash = utilities.soliditySHA3(utilities.sortObject({
+            const hash = Utilities.soliditySHA3(Utilities.sortObject({
                 identifiers: vertices[i].identifiers,
                 data: vertices[i].data,
             }));
@@ -148,7 +235,7 @@ class ImportUtilities {
         }
 
         for (const edge of edges) {
-            const hash = utilities.soliditySHA3(utilities.sortObject({
+            const hash = Utilities.soliditySHA3(Utilities.sortObject({
                 identifiers: edge.identifiers,
                 _from: edge._from,
                 _to: edge._to,
@@ -187,7 +274,7 @@ class ImportUtilities {
         ImportUtilities.sort(documents2);
 
         for (const index in documents1) {
-            const distance = utilities.objectDistance(documents1[index], documents2[index]);
+            const distance = Utilities.objectDistance(documents1[index], documents2[index]);
             if (distance !== 100) {
                 return false;
             }
@@ -216,11 +303,11 @@ class ImportUtilities {
 
         const stringifiedGraph = [];
         for (const obj of graph) {
-            stringifiedGraph.push(utilities.sortedStringify(obj));
+            stringifiedGraph.push(Utilities.sortedStringify(obj));
         }
 
         const merkle = new MerkleTree(
-            [utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
+            [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
             'sha3',
         );
         return merkle.getRoot();
@@ -233,17 +320,17 @@ class ImportUtilities {
     static sortGraphRecursively(graph) {
         graph.forEach((el) => {
             if (el.relations) {
-                el.relations.sort((r1, r2) => sha3_256(utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(utilities.sortedStringify(r2))));
+                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
 
             if (el.identifiers) {
-                el.identifiers.sort((r1, r2) => sha3_256(utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(utilities.sortedStringify(r2))));
+                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
         });
         graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-        return utilities.sortedStringify(graph);
+        return Utilities.sortedStringify(graph);
     }
 
     /**
@@ -277,7 +364,7 @@ class ImportUtilities {
      * @param privateKey Encryption key
      */
     static immutableEncryptVertices(vertices, privateKey) {
-        const copy = utilities.copyObject(vertices);
+        const copy = Utilities.copyObject(vertices);
         for (const id in copy) {
             const vertex = copy[id];
             if (vertex.data) {
@@ -294,7 +381,7 @@ class ImportUtilities {
      * @returns {*}
      */
     static immutableDecryptVertices(vertices, public_key) {
-        const copy = utilities.copyObject(vertices);
+        const copy = Utilities.copyObject(vertices);
         for (const id in copy) {
             if (copy[id].data) {
                 copy[id].data = Encryption.decryptObject(copy[id].data, public_key);
@@ -355,7 +442,7 @@ class ImportUtilities {
 
     static sortStringifyDataset(dataset) {
         ImportUtilities.sortGraphRecursively(dataset['@graph']);
-        return utilities.sortedStringify(dataset);
+        return Utilities.sortedStringify(dataset);
     }
 
     /**
@@ -366,7 +453,7 @@ class ImportUtilities {
         const stringifiedOtjson = this.sortStringifyDataset(otjson);
         const { signature } = web3.eth.accounts.sign(
             stringifiedOtjson,
-            utilities.normalizeHex(config.node_private_key),
+            Utilities.normalizeHex(config.node_private_key),
         );
         otjson.signature = {
             value: signature,
@@ -374,6 +461,19 @@ class ImportUtilities {
         };
         return otjson;
     }
+
+    /**
+     * Extract Signer from OT-JSON signature
+     * @static
+     */
+    static extractDatasetSigner(otjson, web3) {
+        const strippedOtjson = Object.assign({}, otjson);
+        delete strippedOtjson.signature;
+
+        const stringifiedOtjson = this.sortStringifyDataset(strippedOtjson);
+        return web3.eth.accounts.recover(stringifiedOtjson, otjson.signature.value);
+    }
+
 
     /**
      * Fill in dataset header

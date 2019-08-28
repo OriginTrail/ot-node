@@ -24,9 +24,9 @@ const web3 = require('web3');
 
 class SchemaValidator {
     constructor(ctx) {
-        this.blockchain = ctx.blockchain;
+        // this.blockchain = ctx.blockchain;
         this.config = ctx.config;
-        this.supportedSchemas = { 'ethereum-725': SchemaValidator._validateERC725Schema };
+        this.supportedSchemas = { '/schemas/erc725-main': () => this._validateERC725Schema };
     }
 
     /**
@@ -88,12 +88,12 @@ class SchemaValidator {
 
         const erc725Identity = ERCIdentifier.identifierValue;
 
-        const walletPurposes = await this.blockchain.getWalletPurposes(erc725Identity, signer);
-
-        if (!walletPurposes.includes('4')) {
-            throw Error(`Signer ${signer} does not have encryption approval for the ` +
-                `ERC-725 identity ${erc725Identity} specified in the dataset header!`);
-        }
+        // const walletPurposes = await this.blockchain.getWalletPurposes(erc725Identity, signer);
+        //
+        // if (!walletPurposes.includes('4')) {
+        //     throw Error(`Signer ${signer} does not have encryption approval for the ` +
+        //         `ERC-725 identity ${erc725Identity} specified in the dataset header!`);
+        // }
 
         return null;
     }
