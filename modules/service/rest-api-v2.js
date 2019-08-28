@@ -211,6 +211,11 @@ class RestAPIServiceV2 {
 
             console.log(res);
         });
+
+        server.post(`/api/${this.version_id}/import/result/:import_handle`, async (req, res) => {
+            //pitaj bazu
+            //vrati rez
+        });
     }
 }
 
