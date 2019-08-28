@@ -257,10 +257,10 @@ class RestAPIServiceV2 {
             await this._import_v2(req, res);
         });
 
-        server.post(`/api/${this.version_id}/import/result/:import_handle`, async (req, res) => {
+        server.get(`/api/${this.version_id}/import/result/:import_handle_id`, async (req, res) => {
             const import_handle_object = await Models.import_handles.findOne({
                 where: {
-                    import_handle_id: 'e14bd51d-46d0',
+                    import_handle_id: req.params.import_handle_id,
                 },
             });
 
