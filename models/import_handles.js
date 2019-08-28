@@ -2,12 +2,11 @@ const uuidv4 = require('uuid/v4');
 
 module.exports = (sequelize, DataTypes) => {
     const import_handles = sequelize.define('import_handles', {
-        id: {
+        import_handle_id: {
             type: DataTypes.UUID,
             primaryKey: true,
             defaultValue: () => uuidv4(),
         },
-        import_handle_id: DataTypes.STRING,
         data: DataTypes.TEXT,
         status: DataTypes.STRING,
     }, {});

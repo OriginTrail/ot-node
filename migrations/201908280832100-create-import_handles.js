@@ -1,14 +1,9 @@
 
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('import_handles', {
-        id: {
-            allowNull: false,
-            autoIncrement: true,
-            primaryKey: true,
-            type: Sequelize.STRING,
-        },
         import_handle_id: {
             allowNull: false,
+            primaryKey: true,
             type: Sequelize.STRING,
         },
         data: {

@@ -190,8 +190,6 @@ class RestAPIServiceV2 {
 
 
                 await Models.import_handles.create({
-                    id: uuidv4(),
-                    import_handle_id: 'e14bd51d-46d0',
                     data: JSON.stringify(object_to_import),
                     status: 'COMPLETED',
                 });
@@ -228,8 +226,6 @@ class RestAPIServiceV2 {
 
 
             await Models.import_handles.create({
-                id: uuidv4(),
-                import_handle_id: 'e14bd51d-46d0',
                 data: JSON.stringify(object_to_import),
                 status: 'COMPLETED',
             });
