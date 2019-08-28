@@ -22,7 +22,6 @@ class RestAPIServiceV2 {
         this.version_id = 'v2';
 
         if (ctx.config.latest_api_version === this.version_id) {
-
             this.version_id = 'latest';
         }
     }
@@ -174,6 +173,28 @@ class RestAPIServiceV2 {
                     replicate: req.body.replicate,
                     response: res,
                 };
+
+                /**
+                 * dodaje se jedan podatak u bazu, da bi se kasnije testiralo da li je proso import
+                 */
+                const object_to_import =
+                    {
+                        dataset_id: '0x123abc',
+                        import_time: 1565884857,
+                        dataset_size_in_bytes: 16384,
+                        otjson_size_in_bytes: 12144,
+                        root_hash: '0xAB13C',
+                        data_hash: '0xBB34C',
+                        total_graph_entities: 15,
+                    };
+
+
+                await Models.import_handles.create({
+                    id: uuidv4(),
+                    import_handle_id: 'e14bd51d-46d0',
+                    data: JSON.stringify(object_to_import),
+                    status: 'COMPLETED',
+                });
                 this.emitter.emit(`api-${importtype}-import-request`, queryObject);
             } catch (e) {
                 res.status(400);
