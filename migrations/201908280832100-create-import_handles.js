@@ -5,7 +5,7 @@ module.exports = {
             allowNull: false,
             autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         import_handle_id: {
             allowNull: false,
@@ -13,11 +13,11 @@ module.exports = {
         },
         data: {
             allowNull: false,
-            type: Sequelize.STRING,
+            type: Sequelize.TEXT,
         },
         status: {
             allowNull: false,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('import_handles'),

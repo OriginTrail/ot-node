@@ -255,8 +255,6 @@ class RestAPIServiceV2 {
 
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
             await this._import_v2(req, res);
-
-            console.log(res);
         });
 
         server.post(`/api/${this.version_id}/import/result/:import_handle`, async (req, res) => {
