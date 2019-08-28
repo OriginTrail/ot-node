@@ -8,6 +8,8 @@ const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 
 const utilities = require('../Utilities');
+const Models = require('../../models');
+const uuidv4 = require('uuid/v4');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -187,6 +189,30 @@ class RestAPIServiceV2 {
                 replicate: req.body.replicate,
                 response: res,
             };
+
+            /**
+             * dodaje se jedan podatak u bazu, da bi se kasnije testiralo da li je proso import
+             */
+
+            const object_to_import =
+                {
+                    dataset_id: '0x123abc',
+                    import_time: 1565884857,
+                    dataset_size_in_bytes: 16384,
+                    otjson_size_in_bytes: 12144,
+                    root_hash: '0xAB13C',
+                    data_hash: '0xBB34C',
+                    total_graph_entities: 15,
+                };
+
+
+            await Models.import_handles.create({
+                id: uuidv4(),
+                import_handle_id: 'e14bd51d-46d0',
+                data: JSON.stringify(object_to_import),
+                status: 'COMPLETED',
+            });
+
             this.emitter.emit(`api-${importtype}-import-request`, queryObject);
         } else {
             // No import data provided
@@ -213,8 +239,14 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/import/result/:import_handle`, async (req, res) => {
-            //pitaj bazu
-            //vrati rez
+            const import_handle_object = await Models.import_handles.findOne({
+                where: {
+                    import_handle_id: 'e14bd51d-46d0',
+                },
+            });
+
+            const { status } = import_handle_object;
+            console.log(status);
         });
     }
 }
