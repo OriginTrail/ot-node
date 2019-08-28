@@ -597,10 +597,6 @@ class EventEmitter {
         });
 
         this._on('api-gs1-epcis-import-request', async (data) => {
-            data.response.status(200);
-            data.response.send({
-                import_handle: 'ecc1c469-2d11-45e4-b4fc-6011f870c9ad', // mock response
-            });
         });
 
         this._on('api-wot-import-request', async (data) => {

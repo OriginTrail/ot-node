@@ -189,11 +189,17 @@ class RestAPIServiceV2 {
                     };
 
 
-                await Models.import_handles.create({
+                const inserted_object = await Models.import_handles.create({
                     data: JSON.stringify(object_to_import),
                     status: 'COMPLETED',
                 });
                 this.emitter.emit(`api-${importtype}-import-request`, queryObject);
+
+                const { import_handle_id } = inserted_object.dataValues;
+                res.status(200);
+                res.send({
+                    import_handle: import_handle_id,
+                });
             } catch (e) {
                 res.status(400);
                 res.send({
@@ -230,7 +236,13 @@ class RestAPIServiceV2 {
                 status: 'COMPLETED',
             });
 
-            this.emitter.emit(`api-${importtype}-import-request`, queryObject);
+            const inserted_object = this.emitter.emit(`api-${importtype}-import-request`, queryObject);
+
+            const { import_handle_id } = inserted_object.dataValues;
+            res.status(200);
+            res.send({
+                import_handle: import_handle_id,
+            });
         } else {
             // No import data provided
             res.status(400);
@@ -260,8 +272,15 @@ class RestAPIServiceV2 {
                 },
             });
 
-            const { status } = import_handle_object;
-            console.log(status);
+            if (import_handle_object) {
+                const { data, status } = import_handle_object;
+
+                res.status(400);
+                res.send({
+                    data: JSON.parse(data),
+                    status,
+                });
+            }
         });
     }
 }
