@@ -136,6 +136,30 @@ class RestAPIServiceV2 {
         }
     }
 
+    async _handler_check_existance(req, res) {
+        const import_handle_object = await Models.import_handles.findOne({
+            where: {
+                import_handle_id: req.params.import_handle_id,
+            },
+        });
+
+        if (import_handle_object == null) {
+            this.logger.info('Invalid request');
+            res.status(404);
+            res.send({
+                message: 'This data set does not exist in the database',
+            });
+            return;
+        }
+
+        const { data, status } = import_handle_object;
+
+        res.status(200);
+        res.send({
+            data: JSON.parse(data),
+            status,
+        });
+    }
     // This is hardcoded import in case it is needed to make new importer with this method
     async _import_v2(req, res) {
         this.logger.api('POST: Import of data request received.');
@@ -151,8 +175,8 @@ class RestAPIServiceV2 {
         const supportedImportTypes = ['GS1-EPCIS', 'OT-JSON'];
 
         // Check if import type is valid
-        if (req.body.importtype === undefined ||
-            supportedImportTypes.indexOf(req.body.importtype) === -1) {
+        if (req.body.standard_id === undefined ||
+            supportedImportTypes.indexOf(req.body.standard_id) === -1) {
             res.status(400);
             res.send({
                 message: 'Invalid import type',
@@ -160,11 +184,11 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const importtype = req.body.importtype.toLowerCase();
+        const standard_id = req.body.standard_id.toLowerCase();
 
         // Check if file is provided
-        if (req.files !== undefined && req.files.importfile !== undefined) {
-            const inputFile = req.files.importfile.path;
+        if (req.files !== undefined && req.files.file !== undefined) {
+            const inputFile = req.files.file.path;
             try {
                 const content = await utilities.fileContents(inputFile);
                 const queryObject = {
@@ -193,7 +217,7 @@ class RestAPIServiceV2 {
                     data: JSON.stringify(object_to_import),
                     status: 'COMPLETED',
                 });
-                this.emitter.emit(`api-${importtype}-import-request`, queryObject);
+                this.emitter.emit(`api-${standard_id}-import-request`, queryObject);
 
                 const { import_handle_id } = inserted_object.dataValues;
                 res.status(200);
@@ -206,12 +230,12 @@ class RestAPIServiceV2 {
                     message: 'No import data provided',
                 });
             }
-        } else if (req.body.importfile !== undefined) {
+        } else if (req.body.file !== undefined) {
             // Check if import data is provided in request body
             const queryObject = {
-                content: req.body.importfile,
+                content: req.body.file,
                 contact: req.contact,
-                replicate: req.body.replicate,
+                // replicate: req.body.replicate,
                 response: res,
             };
 
@@ -236,7 +260,7 @@ class RestAPIServiceV2 {
                 status: 'COMPLETED',
             });
 
-            const inserted_object = this.emitter.emit(`api-${importtype}-import-request`, queryObject);
+            const inserted_object = this.emitter.emit(`api-${standard_id}-import-request`, queryObject);
 
             const { import_handle_id } = inserted_object.dataValues;
             res.status(200);
@@ -252,6 +276,67 @@ class RestAPIServiceV2 {
         }
     }
 
+    async _createOffer(req, res) {
+        this.logger.api('POST: Replication of imported data request received.');
+
+        if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
+            utilities.validateNumberParameter(req.body.data_lifespan) &&
+            utilities.validateStringParameter(req.body.total_token_amount)) {
+            const dataset = await Models.data_info.findOne({
+                /**
+                 * u tabeli data_info ovo polje se i
+                 * dalje zove data_set_id a treba dataset_id po novom apiju
+                 */
+                where: { data_set_id: req.body.dataset_id },
+            });
+            // if (dataset == null) {
+            //     this.logger.info('Invalid request');
+            //     res.status(404);
+            //     res.send({
+            //         message: 'This data set does not exist in the database',
+            //     });
+            //     return;
+            // }
+            //
+            // const queryObject = {
+            //     dataSetId: req.body.dataset_id,
+            //     data_lifespan: req.body.data_lifespan,
+            //     total_token_amount: req.body.total_token_amount,
+            //     response: res,
+            // };
+
+            const object_to_import =
+                {
+                    dataset_id: '0x123abc',
+                    import_time: 1565884857,
+                    dataset_size_in_bytes: 16384,
+                    otjson_size_in_bytes: 12144,
+                    root_hash: '0xAB13C',
+                    data_hash: '0xBB34C',
+                    total_graph_entities: 15,
+                };
+
+
+            const inserted_object = await Models.import_handles.create({
+                data: JSON.stringify(object_to_import),
+                status: 'COMPLETED',
+            });
+            const QueryObject = {
+                response: res,
+                offer_handle_id: inserted_object.dataValues.import_handle_id,
+            };
+
+            this.emitter.emit('api-create-offer-v2', QueryObject);
+        } else {
+            this.logger.error('Invalid request');
+            res.status(400);
+            res.send({
+                message: 'Invalid parameters!',
+            });
+        }
+    }
+
+
     /**
      * API Routes
      */
@@ -266,21 +351,15 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/import/result/:import_handle_id`, async (req, res) => {
-            const import_handle_object = await Models.import_handles.findOne({
-                where: {
-                    import_handle_id: req.params.import_handle_id,
-                },
-            });
+            await this._handler_check_existance(req, res);
+        });
 
-            if (import_handle_object) {
-                const { data, status } = import_handle_object;
+        server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
+            await this._createOffer(req, res);
+        });
 
-                res.status(400);
-                res.send({
-                    data: JSON.parse(data),
-                    status,
-                });
-            }
+        server.get(`/api/${this.version_id}/replicate/result/:import_handle_id`, async (req, res) => {
+            await this._handler_check_existance(req, res);
         });
     }
 }

@@ -995,6 +995,14 @@ class EventEmitter {
                 logger.notify(`DV ${senderId} failed to process the encrypted key`);
             }
         });
+
+        this._on('api-create-offer-v2', (data) => {
+            data.response.status(200);
+            data.response.send({
+                message: 'Replication initialized correctly with offer id : ' +
+                `${data.offer_handle_id}`,
+            });
+        });
     }
 
     /**
