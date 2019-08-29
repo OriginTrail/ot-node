@@ -119,22 +119,22 @@ class DcOfferFinalizedCommand extends Command {
                 replicatedData.litigation_private_key,
             );
 
-            const challenges = this.challengeService.generateChallenges(
-                encryptedVertices, startTime,
-                endTime, this.config.numberOfChallenges,
-            );
-
-            await forEach(challenges, async challenge =>
-                Models.challenges.create({
-                    dh_id: replicatedData.dh_id,
-                    dh_identity: replicatedData.dh_identity,
-                    data_set_id: offer.data_set_id,
-                    block_id: challenge.block_id,
-                    expected_answer: challenge.answer,
-                    start_time: challenge.time,
-                    offer_id: offer.offer_id,
-                    status: 'PENDING',
-                }));
+            // const challenges = this.challengeService.generateChallenges(
+            //     encryptedVertices, startTime,
+            //     endTime, this.config.numberOfChallenges,
+            // );
+            //
+            // await forEach(challenges, async challenge =>
+            //     Models.challenges.create({
+            //         dh_id: replicatedData.dh_id,
+            //         dh_identity: replicatedData.dh_identity,
+            //         data_set_id: offer.data_set_id,
+            //         block_id: challenge.block_id,
+            //         expected_answer: challenge.answer,
+            //         start_time: challenge.time,
+            //         offer_id: offer.offer_id,
+            //         status: 'PENDING',
+            //     }));
         });
     }
 

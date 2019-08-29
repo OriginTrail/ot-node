@@ -23,7 +23,7 @@ class ImportController {
             return;
         }
 
-        const supportedImportTypes = ['GS1', 'WOT'];
+        const supportedImportTypes = ['GS1', 'WOT', 'GRAPH'];
 
         // Check if import type is valid
         if (req.body.importtype === undefined ||
@@ -89,6 +89,7 @@ class ImportController {
 
         this.emitter.emit('api-import-info', {
             dataSetId: queryObject.data_set_id,
+            responseFormat: queryObject.format || 'otjson',
             response: res,
         });
     }
