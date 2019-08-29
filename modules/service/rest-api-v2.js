@@ -197,27 +197,28 @@ class RestAPIServiceV2 {
                     contact: req.contact,
                     replicate: req.body.replicate,
                     response: res,
+                    handler_id: null,
                 };
 
                 /**
                  * dodaje se jedan podatak u bazu, da bi se kasnije testiralo da li je proso import
                  */
-                const object_to_import =
-                    {
-                        dataset_id: '0x123abc',
-                        import_time: 1565884857,
-                        dataset_size_in_bytes: 16384,
-                        otjson_size_in_bytes: 12144,
-                        root_hash: '0xAB13C',
-                        data_hash: '0xBB34C',
-                        total_graph_entities: 15,
-                    };
-
-
+                // const object_to_import =
+                //     {
+                //         dataset_id: '0x123abc',
+                //         import_time: 1565884857,
+                //         dataset_size_in_bytes: 16384,
+                //         otjson_size_in_bytes: 12144,
+                //         root_hash: '0xAB13C',
+                //         data_hash: '0xBB34C',
+                //         total_graph_entities: 15,
+                //     };
+                //
+                //
                 const inserted_object = await Models.handler_ids.create({
-                    data: JSON.stringify(object_to_import),
-                    status: 'COMPLETED',
+                    status: 'PENDING',
                 });
+                queryObject.handler_id = inserted_object.handler_id;
                 this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
 
                 const { handler_id } = inserted_object.dataValues;

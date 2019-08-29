@@ -655,7 +655,9 @@ class EventEmitter {
             }
         });
 
-        this._on('api-graph-import-request', async (data) => {
+        this._on('api-graph-import-request', async (queryData) => {
+            const data = {};
+            data.content = queryData.content['@graph'];
             try {
                 logger.debug('Graph import triggered');
                 const dataset = ImportUtilities
@@ -670,8 +672,33 @@ class EventEmitter {
                 } else {
                     await processImport(result.response, null, data);
                 }
+                this.emit('api-finished-import', { data: { dataset_id: queryData.content['@id'] }, error: result.error, id: queryData.handler_id });
             } catch (error) {
                 await processImport(null, error, data);
+            }
+        });
+
+        this._on('api-finished-import', async (object_for_import) => {
+            const { error } = object_for_import;
+            const { data } = object_for_import;
+            const { id } = object_for_import;
+            if (error == null) {
+            //     await Models.handler_ids.create({
+            //         data: JSON.stringify(data),
+            //         status: 'COMPLETED',
+            //     });
+                await Models.handler_ids.update(
+                    { data: JSON.stringify(data) },
+                    { status: 'COMPLETED' },
+                    { where: id },
+                );
+            } else {
+                const err = { error_field: error };
+                await Models.handler_ids.update(
+                    { data: JSON.stringify(err) },
+                    { status: 'FAILED' },
+                    { where: id },
+                );
             }
         });
 
