@@ -333,10 +333,6 @@ class RestAPIServiceV2 {
         }
     }
 
-    getBar(req, res) {
-        res.send(200);
-    }
-
     /**
      * API Routes
      */
@@ -361,13 +357,6 @@ class RestAPIServiceV2 {
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
             await this._handler_check_existance(req, res);
         });
-
-        server.get('/foo', (req, res, next) => {
-            this.getBar(req, res);
-            // res.send(200);
-        });
-
-        server.get('/bar', this.getBar);
     }
 }
 
