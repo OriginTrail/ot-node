@@ -21,6 +21,10 @@ class RestAPIServiceV2 {
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS'];
+
+        this.mapping_standards_for_event = new Map();
+        this.mapping_standards_for_event.set('ot-json', 'graph');
+        this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
     }
 
     /**
@@ -214,7 +218,7 @@ class RestAPIServiceV2 {
                     data: JSON.stringify(object_to_import),
                     status: 'COMPLETED',
                 });
-                this.emitter.emit(`api-${standard_id}-import-request`, queryObject);
+                this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
 
                 const { handler_id } = inserted_object.dataValues;
                 res.status(200);
