@@ -19,8 +19,8 @@ class RestAPIServiceV2 {
         this.apiUtilities = ctx.apiUtilities;
         this.emitter = ctx.emitter;
 
-        this.version_id = 'v1.1';
-
+        this.version_id = 'v2.0';
+        this.stanards = ['OT-JSON', 'GS1-EPCIS'];
     }
 
     /**
@@ -333,6 +333,71 @@ class RestAPIServiceV2 {
         }
     }
 
+    async _export_v2(req, res) {
+        this.logger.api('POST: Export of data request received.');
+
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        // Check if import type is valid
+        if (req.body.standard_id === undefined ||
+            this.stanards.indexOf(req.body.standard_id) === -1) {
+            res.status(400);
+            res.send({
+                message: 'Invalid import type or unsupported standard',
+            });
+        }
+
+        if (req.body.dataset_id === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Dataset_id is not provided',
+            });
+        }
+
+        const requested_dataset = await Models.data_info.findOne({
+            where: {
+                data_set_id: req.params.dataset_id,
+            },
+
+        });
+
+        // if (requested_dataset === undefined) {
+        //     res.status(400);
+        //     res.send({
+        //         message: 'Data set does not exist',
+        //     });
+        // }
+
+        // const { dataset_id } = requested_dataset;
+
+        const object_to_import =
+            {
+                dataset_id: '0x123abc',
+                import_time: 1565884857,
+                dataset_size_in_bytes: 16384,
+                otjson_size_in_bytes: 12144,
+                root_hash: '0xAB13C',
+                data_hash: '0xBB34C',
+                total_graph_entities: 15,
+            };
+
+        const inserted_object = await Models.handler_ids.create({
+            data: JSON.stringify(object_to_import),
+            status: 'COMPLETED',
+        });
+
+        const { handler_id } = inserted_object.dataValues;
+        res.status(200);
+        res.send({
+            import_handle: handler_id,
+        });
+    }
     /**
      * API Routes
      */
@@ -356,6 +421,27 @@ class RestAPIServiceV2 {
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
             await this._handler_check_existance(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/export`, async (req, res) => {
+            await this._export_v2(req, res);
+            /**
+             * ovde ce da dodje docin eksporter
+             */
+        });
+
+        server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
+            await this._handler_check_existance(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/standards`, async (req, res) => {
+            let msg = '';
+            this.stanards.forEach(standard =>
+                msg += `${standard},   `);
+
+            res.send({
+                message: msg,
+            });
         });
     }
 }

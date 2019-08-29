@@ -18,8 +18,6 @@ class RestAPIService {
 
         this.restApis = [new RestApiV2(ctx, true)];
         [this.defaultRestApi] = this.restApis;
-
-        this.stanards = ['OT-JSON', 'GS1-EPCIS'];
     }
 
     /**
@@ -168,16 +166,6 @@ class RestAPIService {
             });
             res.send({
                 message: msg + latest_id,
-            });
-        });
-
-        server.get('/api/standards', async (req, res) => {
-            let msg = '';
-            this.stanards.forEach(standard =>
-                msg += `${standard},   `);
-
-            res.send({
-                message: msg,
             });
         });
 

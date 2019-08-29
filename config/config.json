@@ -41,7 +41,7 @@
     "dh_min_stake_amount": "100000000000",
     "dh_min_reputation": 0,
     "probability_threshold": 10,
-    "latest_api_version" : "v1.1",
+    "latest_api_version" : "v2.0",
     "database": {
       "provider": "arangodb",
       "username": "root",
