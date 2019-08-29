@@ -81,9 +81,15 @@ class RestAPIService {
 
         const server = restify.createServer(options);
 
+        const parseLatest = (req, res, next) => {
+            req.url = req.url.replace('latest', this.ctx.config.latest_api_version);
+            next();
+        };
+
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
         server.use(restify.plugins.bodyParser());
+        server.pre(parseLatest);
         const cors = corsMiddleware({
             preflightMaxAge: 5, // Optional
             origins: ['*'],

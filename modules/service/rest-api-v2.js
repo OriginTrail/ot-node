@@ -19,12 +19,8 @@ class RestAPIServiceV2 {
         this.apiUtilities = ctx.apiUtilities;
         this.emitter = ctx.emitter;
 
-        this.version = 'v2';
-        this.version_id = 'v2';
+        this.version_id = 'v1.1';
 
-        if (ctx.config.latest_api_version === this.version_id) {
-            this.version_id = 'latest';
-        }
     }
 
     /**
@@ -337,6 +333,9 @@ class RestAPIServiceV2 {
         }
     }
 
+    getBar(req, res) {
+        res.send(200);
+    }
 
     /**
      * API Routes
@@ -362,6 +361,13 @@ class RestAPIServiceV2 {
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
             await this._handler_check_existance(req, res);
         });
+
+        server.get('/foo', (req, res, next) => {
+            this.getBar(req, res);
+            // res.send(200);
+        });
+
+        server.get('/bar', this.getBar);
     }
 }
 
