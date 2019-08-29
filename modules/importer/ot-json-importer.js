@@ -277,6 +277,11 @@ class OtJsonImporter {
                     objectType: constants.objectType.otConnector,
                     datasets: [datasetId],
                 };
+                if (otObject.expectedConnectionCreators != null) {
+                    connectorVertex.expectedConnectionCreators =
+                        otObject.expectedConnectionCreators;
+                }
+
                 vertices.push(connectorVertex);
 
                 // Add relations edges.
@@ -429,6 +434,7 @@ class OtJsonImporter {
                 '@type': 'otObject',
                 '@id': entityVertex.uid,
                 identifiers: [],
+                relations: [],
             };
 
             // Check for identifiers.
@@ -488,6 +494,10 @@ class OtJsonImporter {
                 '@id': connectorVertex.uid,
                 connectionId: connectorVertex.connectionId,
             };
+
+            if (connectorVertex.expectedConnectionCreators != null) {
+                otConnector.expectedConnectionCreators = connectorVertex.expectedConnectionCreators;
+            }
 
             // Check for relations.
             edges.filter(edge => (edge.edgeType === 'otRelation' && edge._from === connectorVertex._key))

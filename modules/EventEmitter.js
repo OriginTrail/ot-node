@@ -656,7 +656,11 @@ class EventEmitter {
             try {
                 logger.debug('Graph import triggered');
                 const dataset = ImportUtilities
-                    .prepareDataset(JSON.parse(data.content), this.config, this.web3);
+                    .prepareDataset(
+                        ImportUtilities.formatGraph(JSON.parse(data.content)),
+                        this.config,
+                        this.web3,
+                    );
                 const result = await importer.importOTJSON(dataset);
                 if (result.error != null) {
                     await processImport(null, result.error, data);

@@ -86,6 +86,31 @@ class ImportUtilities {
         }
     }
 
+    /**
+     * Format empty identifiers, properties and relations format from a graph.
+     * @param graph
+     */
+    static formatGraph(graph) {
+        graph.filter(vertex => vertex['@type'] === 'otObject').forEach((vertex) => {
+            if (vertex.identifiers == null) {
+                vertex.identifiers = [];
+            }
+            if (vertex.properties != null && Object.keys(vertex.properties).length === 0) {
+                delete vertex.properties;
+            }
+            if (vertex.relations == null) {
+                vertex.relations = [];
+            } else {
+                vertex.relations.forEach((relation) => {
+                    if (relation.direction == null) {
+                        relation.direction = 'direct';
+                    }
+                });
+            }
+        });
+        return graph;
+    }
+
     static prepareDataset(graph, config, web3) {
         const id = this.calculateGraphHash(graph);
         const header = this.createDatasetHeader(config);
