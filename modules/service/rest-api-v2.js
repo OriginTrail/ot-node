@@ -138,7 +138,7 @@ class RestAPIServiceV2 {
         }
     }
 
-    async _handler_check_existance(req, res) {
+    async _check_for_handler_status(req, res) {
         const handler_object = await Models.handler_ids.findOne({
             where: {
                 handler_id: req.params.handler_id,
@@ -163,7 +163,7 @@ class RestAPIServiceV2 {
         });
     }
     // This is hardcoded import in case it is needed to make new importer with this method
-    async _import_v2(req, res) {
+    async _import_handler(req, res) {
         this.logger.api('POST: Import of data request received.');
 
         if (req.body === undefined) {
@@ -363,11 +363,11 @@ class RestAPIServiceV2 {
         } = this.ctx;
 
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
-            await this._import_v2(req, res);
+            await this._import_handler(req, res);
         });
 
         server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
-            await this._handler_check_existance(req, res);
+            await this._check_for_handler_status(req, res);
         });
 
         server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
@@ -375,7 +375,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
-            await this._handler_check_existance(req, res);
+            await this._check_for_handler_status(req, res);
         });
 
         server.post(`/api/${this.version_id}/export`, async (req, res) => {
@@ -386,7 +386,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
-            await this._handler_check_existance(req, res);
+            await this._check_for_handler_status(req, res);
         });
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
