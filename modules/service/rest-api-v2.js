@@ -241,44 +241,33 @@ class RestAPIServiceV2 {
                  */
                 where: { data_set_id: req.body.dataset_id },
             });
-            // if (dataset == null) {
-            //     this.logger.info('Invalid request');
-            //     res.status(404);
-            //     res.send({
-            //         message: 'This data set does not exist in the database',
-            //     });
-            //     return;
-            // }
-            //
-            // const queryObject = {
-            //     dataSetId: req.body.dataset_id,
-            //     data_lifespan: req.body.data_lifespan,
-            //     total_token_amount: req.body.total_token_amount,
-            //     response: res,
-            // };
-
-            const object_to_import =
-                {
-                    dataset_id: '0x123abc',
-                    import_time: 1565884857,
-                    dataset_size_in_bytes: 16384,
-                    otjson_size_in_bytes: 12144,
-                    root_hash: '0xAB13C',
-                    data_hash: '0xBB34C',
-                    total_graph_entities: 15,
-                };
-
-
-            const inserted_object = await Models.handler_ids.create({
-                data: JSON.stringify(object_to_import),
-                status: 'COMPLETED',
-            });
-            const QueryObject = {
+            if (dataset == null) {
+                this.logger.info('Invalid request');
+                res.status(404);
+                res.send({
+                    message: 'This data set does not exist in the database',
+                });
+                return;
+            }
+            const queryObject = {
+                dataSetId: req.body.dataset_id,
+                data_lifespan: req.body.data_lifespan,
+                total_token_amount: req.body.total_token_amount,
                 response: res,
-                handler_id: inserted_object.dataValues.handler_id,
             };
-
-            this.emitter.emit('api-create-offer-v2', QueryObject);
+            const handler_data = {
+                data_lifespan: queryObject.data_lifespan,
+                total_token_amount: queryObject.total_token_amount,
+                status: 'PUBLISHING_TO_BLOCKCHAIN',
+                hold: [],
+            };
+            const inserted_object = await Models.handler_ids.create({
+                status: 'PENDING',
+                data: JSON.stringify(handler_data),
+            });
+            queryObject.handler_id = inserted_object.dataValues.handler_id;
+            console.log(queryObject.handler_id);
+            await this.emitter.emit('api-create-offer', queryObject);
         } else {
             this.logger.error('Invalid request');
             res.status(400);
@@ -288,6 +277,13 @@ class RestAPIServiceV2 {
         }
     }
 
+    /**
+     * Still not implemented in another layers
+     * @param req
+     * @param res
+     * @returns {Promise<void>}
+     * @private
+     */
     async _export_v2(req, res) {
         this.logger.api('POST: Export of data request received.');
 

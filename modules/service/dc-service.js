@@ -30,7 +30,7 @@ class DCService {
      */
     async createOffer(
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-        dataSizeInBytes, litigationIntervalInMinutes,
+        dataSizeInBytes, litigationIntervalInMinutes, handler_id,
     ) {
         const offer = await models.offers.create({
             data_set_id: dataSetId,
@@ -82,6 +82,7 @@ class DCService {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            handler_id,
         };
         const commandSequence = [
             'dcOfferPrepareCommand',

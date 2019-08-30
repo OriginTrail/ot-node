@@ -573,6 +573,7 @@ class EventEmitter {
                 holdingTimeInMinutes,
                 tokenAmountPerHolder,
                 litigationIntervalInMinutes,
+                handler_id,
             } = data;
 
             let {
@@ -604,7 +605,7 @@ class EventEmitter {
 
                 const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes,
+                    dataSizeInBytes, litigationIntervalInMinutes, handler_id,
                 );
 
                 data.response.status(201);
