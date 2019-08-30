@@ -673,18 +673,26 @@ class EventEmitter {
                 } else {
                     await processImport(result.response, null, data);
                 }
-                this.emit('api-finished-import', { handler_id: data.handler_id, import_data: result.response, error: result.error });
+                const import_data = {
+                    response: result.response,
+                    handler_id: data.handler_id,
+                    error: result.error,
+                    length: (JSON.parse(data.content)).length,
+                    size: bytes(data.content),
+                    timestamp: Date.now(),
+                };
+                this.emit('api-finished-import', import_data);
             } catch (error) {
                 await processImport(null, error, data);
             }
         });
 
         this._on('api-finished-import', async (data) => {
-            const { error } = data;
-            const { handler_id } = data;
-            const { import_data } = data;
+            const {
+                error, handler_id, response, length, size, timestamp,
+            } = data;
 
-            const { data_set_id, root_hash, wallet } = import_data;
+            const { data_set_id, root_hash, wallet } = response;
 
             if (error == null) {
             //     await Models.handler_ids.create({
@@ -694,7 +702,9 @@ class EventEmitter {
                 await Models.handler_ids.update(
                     {
                         status: 'COMPLETED',
-                        data: JSON.stringify({ data_set_id, root_hash, wallet }),
+                        data: JSON.stringify({
+                            data_set_id, root_hash, wallet, length, size, timestamp,
+                        }),
                     },
                     {
                         where: {
