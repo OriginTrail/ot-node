@@ -474,6 +474,8 @@ class EventEmitter {
                 vertices,
             } = response;
 
+            const { handler_id } = data;
+
             try {
                 const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
@@ -509,6 +511,7 @@ class EventEmitter {
                         data_set_id,
                         root_hash,
                         wallet,
+                        handler_id,
                     });
                     remoteControl.importSucceeded();
                 }
@@ -670,33 +673,47 @@ class EventEmitter {
                 } else {
                     await processImport(result.response, null, data);
                 }
-              //  this.emit('api-finished-import', { handler_id, error: result.error, length: JSON.parse(data.content).length });
+                this.emit('api-finished-import', { handler_id: data.handler_id, import_data: result.response, error: result.error });
             } catch (error) {
                 await processImport(null, error, data);
             }
         });
 
-        this._on('api-finished-import', async (object_for_import) => {
-            const { error } = object_for_import;
-            const { handler_id } = object_for_import;
-            const { length } = object_for_import;
-            const data_object = { length };
+        this._on('api-finished-import', async (data) => {
+            const { error } = data;
+            const { handler_id } = data;
+            const { import_data } = data;
+
+            const { data_set_id, root_hash, wallet } = import_data;
+
             if (error == null) {
             //     await Models.handler_ids.create({
             //         data: JSON.stringify(data),
             //         status: 'COMPLETED',
             //     });
                 await Models.handler_ids.update(
-                    { data: JSON.stringify(data_object) },
-                    { status: 'COMPLETED' },
-                    { where: handler_id },
+                    {
+                        status: 'COMPLETED',
+                        data: JSON.stringify({ data_set_id, root_hash, wallet }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
                 );
             } else {
                 const err = { error_field: error };
                 await Models.handler_ids.update(
-                    { data: JSON.stringify(err) },
-                    { status: 'FAILED' },
-                    { where: handler_id },
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify(err),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
                 );
             }
         });

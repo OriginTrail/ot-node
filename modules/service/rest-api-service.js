@@ -161,7 +161,7 @@ class RestAPIService {
             this.restApis.forEach((restApi) => {
                 msg += `${restApi.version},  `;
                 if (restApi.version_id === 'latest') {
-                    latest_id += restApi.version;
+                    latest_id += restApi.version_id;
                 }
             });
             res.send({

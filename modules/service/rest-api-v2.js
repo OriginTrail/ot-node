@@ -20,11 +20,12 @@ class RestAPIServiceV2 {
         this.emitter = ctx.emitter;
 
         this.version_id = 'v2.0';
-        this.stanards = ['OT-JSON', 'GS1-EPCIS'];
+        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
 
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'graph');
         this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
+        this.mapping_standards_for_event.set('graph', 'graph');
     }
 
     /**
@@ -173,11 +174,11 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const supportedImportTypes = ['GS1-EPCIS', 'OT-JSON'];
+        // const supportedImportTypes = ['GS1-EPCIS', 'OT-JSON', 'GRAPH'];
 
         // Check if import type is valid
         if (req.body.standard_id === undefined ||
-            supportedImportTypes.indexOf(req.body.standard_id) === -1) {
+            this.stanards.indexOf(req.body.standard_id) === -1) {
             res.status(400);
             res.send({
                 message: 'Invalid import type',
@@ -217,14 +218,14 @@ class RestAPIServiceV2 {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-
+                queryObject.handler_id = inserted_object.dataValues.handler_id;
+                console.log(queryObject.handler_id);
                 this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
-
-                const { handler_id } = inserted_object.dataValues;
-                res.status(200);
-                res.send({
-                    import_handle: handler_id,
-                });
+                // const { handler_id } = inserted_object.dataValues;
+                // res.status(200);
+                // res.send({
+                //     import_handle: handler_id,
+                // });
             } catch (e) {
                 res.status(400);
                 res.send({
