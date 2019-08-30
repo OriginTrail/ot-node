@@ -271,7 +271,9 @@ class Importer {
     async _importXMLgs1(ot_xml_document) {
         try {
             const otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(ot_xml_document);
-            const result = await this.otJsonImporter.importFile(otJsonDoc);
+            const result = await this.otJsonImporter.importFile({
+                document: otJsonDoc,
+            });
             this.remoteControl.importRequestData();
             return {
                 response: await this.afterImport(result),
