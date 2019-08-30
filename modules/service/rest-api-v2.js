@@ -174,8 +174,6 @@ class RestAPIServiceV2 {
             return;
         }
 
-        // const supportedImportTypes = ['GS1-EPCIS', 'OT-JSON', 'GRAPH'];
-
         // Check if import type is valid
         if (req.body.standard_id === undefined ||
             this.stanards.indexOf(req.body.standard_id) === -1) {
@@ -196,36 +194,13 @@ class RestAPIServiceV2 {
                 const queryObject = {
                     content,
                     contact: req.contact,
-                    replicate: req.body.replicate,
                     response: res,
                 };
-
-                /**
-                 * dodaje se jedan podatak u bazu, da bi se kasnije testiralo da li je proso import
-                 */
-                // const object_to_import =
-                //     {
-                //         dataset_id: '0x123abc',
-                //         import_time: 1565884857,
-                //         dataset_size_in_bytes: 16384,
-                //         otjson_size_in_bytes: 12144,
-                //         root_hash: '0xAB13C',
-                //         data_hash: '0xBB34C',
-                //         total_graph_entities: 15,
-                //     };
-                //
-                //
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
                 queryObject.handler_id = inserted_object.dataValues.handler_id;
-                console.log(queryObject.handler_id);
-                this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
-                // const { handler_id } = inserted_object.dataValues;
-                // res.status(200);
-                // res.send({
-                //     import_handle: handler_id,
-                // });
+                await this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
             } catch (e) {
                 res.status(400);
                 res.send({
@@ -237,38 +212,13 @@ class RestAPIServiceV2 {
             const queryObject = {
                 content: req.body.file,
                 contact: req.contact,
-                // replicate: req.body.replicate,
                 response: res,
             };
-
-            /**
-             * dodaje se jedan podatak u bazu, da bi se kasnije testiralo da li je proso import
-             */
-
-            const object_to_import =
-                {
-                    dataset_id: '0x123abc',
-                    import_time: 1565884857,
-                    dataset_size_in_bytes: 16384,
-                    otjson_size_in_bytes: 12144,
-                    root_hash: '0xAB13C',
-                    data_hash: '0xBB34C',
-                    total_graph_entities: 15,
-                };
-
-
-            await Models.import_handles.create({
-                data: JSON.stringify(object_to_import),
-                status: 'COMPLETED',
+            const inserted_object = await Models.handler_ids.create({
+                status: 'PENDING',
             });
-
-            const inserted_object = this.emitter.emit(`api-${standard_id}-import-request`, queryObject);
-
-            const { import_handle_id } = inserted_object.dataValues;
-            res.status(200);
-            res.send({
-                import_handle: import_handle_id,
-            });
+            queryObject.handler_id = inserted_object.dataValues.handler_id;
+            await this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
         } else {
             // No import data provided
             res.status(400);
