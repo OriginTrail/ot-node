@@ -197,7 +197,6 @@ class RestAPIServiceV2 {
                     contact: req.contact,
                     replicate: req.body.replicate,
                     response: res,
-                    handler_id: null,
                 };
 
                 /**
@@ -218,7 +217,7 @@ class RestAPIServiceV2 {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                queryObject.handler_id = inserted_object.handler_id;
+
                 this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
 
                 const { handler_id } = inserted_object.dataValues;

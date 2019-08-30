@@ -655,9 +655,7 @@ class EventEmitter {
             }
         });
 
-        this._on('api-graph-import-request', async (queryData) => {
-            const data = {};
-            data.content = queryData.content['@graph'];
+        this._on('api-graph-import-request', async (data) => {
             try {
                 logger.debug('Graph import triggered');
                 const dataset = ImportUtilities
@@ -672,7 +670,7 @@ class EventEmitter {
                 } else {
                     await processImport(result.response, null, data);
                 }
-                this.emit('api-finished-import', { data: { dataset_id: queryData.content['@id'] }, error: result.error, id: queryData.handler_id });
+              //  this.emit('api-finished-import', { handler_id, error: result.error, length: JSON.parse(data.content).length });
             } catch (error) {
                 await processImport(null, error, data);
             }
@@ -680,24 +678,25 @@ class EventEmitter {
 
         this._on('api-finished-import', async (object_for_import) => {
             const { error } = object_for_import;
-            const { data } = object_for_import;
-            const { id } = object_for_import;
+            const { handler_id } = object_for_import;
+            const { length } = object_for_import;
+            const data_object = { length };
             if (error == null) {
             //     await Models.handler_ids.create({
             //         data: JSON.stringify(data),
             //         status: 'COMPLETED',
             //     });
                 await Models.handler_ids.update(
-                    { data: JSON.stringify(data) },
+                    { data: JSON.stringify(data_object) },
                     { status: 'COMPLETED' },
-                    { where: id },
+                    { where: handler_id },
                 );
             } else {
                 const err = { error_field: error };
                 await Models.handler_ids.update(
                     { data: JSON.stringify(err) },
                     { status: 'FAILED' },
-                    { where: id },
+                    { where: handler_id },
                 );
             }
         });
