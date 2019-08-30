@@ -26,7 +26,7 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const { offerId, nodeIdentifiers, handler_id } = command.data;
 
         const events = await Models.events.findAll({
             where: {
@@ -46,6 +46,24 @@ class DcOfferFinalizedCommand extends Command {
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Offer ${offerId} finalized`);
+
+                const handler = await Models.handler_ids.findOne({
+                    where: { handler_id },
+                });
+                console.log(handler);
+                const handler_data = JSON.parse(handler.data);
+                handler_data.status = 'FINALIZED';
+                handler_data.holders = nodeIdentifiers;
+                await Models.handler_ids.update(
+                    {
+                        data: JSON.stringify(handler_data),
+                        status: 'COMPLETED',
+                    },
+                    {
+                        where: { handler_id },
+                    },
+                );
+
 
                 const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
                 offer.status = 'FINALIZED';

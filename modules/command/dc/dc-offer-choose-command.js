@@ -109,6 +109,7 @@ class DCOfferChooseCommand extends Command {
                         excludedDHs,
                         isReplacement,
                         dhIdentity,
+                        handler_id,
                     },
                 },
             ],

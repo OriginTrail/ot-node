@@ -634,12 +634,18 @@ class EventEmitter {
                 } else {
                     await processImport(result.response, null, data);
                 }
+                const import_data = {
+                    response: result.response,
+                    handler_id: data.handler_id,
+                    error: result.error,
+                    length: null,
+                    size: bytes(data.content),
+                    timestamp: Date.now(),
+                };
+                this.emit('api-finished-import', import_data);
             } catch (error) {
                 await processImport(null, error, data);
             }
-        });
-
-        this._on('api-gs1-epcis-import-request', async (data) => {
         });
 
         this._on('api-wot-import-request', async (data) => {
