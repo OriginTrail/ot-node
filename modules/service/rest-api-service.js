@@ -80,7 +80,7 @@ class RestAPIService {
         const server = restify.createServer(options);
 
         const parseLatest = (req, res, next) => {
-            req.url = req.url.replace('latest', this.ctx.config.latest_api_version);
+            req.url = req.url.replace(/(\/api\/)latest(\/.+)/, `$1${this.ctx.config.latest_api_version}$2`);
             next();
         };
 
@@ -156,16 +156,15 @@ class RestAPIService {
         this._registerNodeInfoRoute(server, false);
 
         server.get('/api/versions', async (req, res) => {
-            let msg = '';
-            let latest_id = 'latest : ';
+            const msg = [];
             this.restApis.forEach((restApi) => {
-                msg += `${restApi.version},  `;
-                if (restApi.version_id === 'latest') {
-                    latest_id += restApi.version_id;
+                msg.push(restApi.version_id);
+                if (restApi.version_id === this.ctx.config.latest_api_version) {
+                    msg.push(`latest: ${restApi.version_id}`);
                 }
             });
             res.send({
-                message: msg + latest_id,
+                message: msg,
             });
         });
 

@@ -386,10 +386,9 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
-            let msg = '';
+            const msg = [];
             this.stanards.forEach(standard =>
-                msg += `${standard},   `);
-
+                msg.push(standard));
             res.send({
                 message: msg,
             });

@@ -690,7 +690,16 @@ class EventEmitter {
                 };
                 this.emit('api-finished-import', import_data);
             } catch (error) {
+                const import_data = {
+                    response: undefined,
+                    handler_id: data.handler_id,
+                    error,
+                    length: undefined,
+                    size: undefined,
+                    timestamp: undefined,
+                };
                 await processImport(null, error, data);
+                this.emit('api-finished-import', import_data);
             }
         });
 
