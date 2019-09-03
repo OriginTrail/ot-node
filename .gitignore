@@ -31,6 +31,3 @@ test.*
 db_backup/*
 newrelic_agent.log
 logs/*
-testici/*
-modules/logs/*
-OT-JSON-example.json
