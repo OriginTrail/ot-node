@@ -42,7 +42,7 @@ const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
-const RestAPIService = require('./modules/service/rest-api-service');
+const RestApiController = require('./modules/service/rest-api-controller');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 
 const pjson = require('./package.json');
@@ -374,7 +374,7 @@ class OTNode {
             importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
             challengeService: awilix.asClass(ChallengeService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
@@ -443,9 +443,9 @@ class OTNode {
         }
 
         // Initialise API
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restApiController');
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
@@ -512,7 +512,7 @@ class OTNode {
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
         });
 
         const transport = container.resolve('transport');
