@@ -533,9 +533,9 @@ class OTNode {
             approvalService.handleApprovalEvent(eventData);
         });
 
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restAPIController');
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
