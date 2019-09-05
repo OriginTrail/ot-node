@@ -448,16 +448,22 @@ class EventEmitter {
         });
 
         const processImport = async (response, error, data) => {
+            const { handler_id } = data;
+
             if (response === null) {
-                if (typeof (error.status) !== 'number') {
-                    // TODO investigate why we get non numeric error.status
-                    data.response.status(500);
-                } else {
-                    data.response.status(error.status);
-                }
-                data.response.send({
-                    message: error.message,
-                });
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error: error.message,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
                 remoteControl.importFailed(error);
 
                 if (error.type !== 'ImporterError') {
@@ -474,26 +480,34 @@ class EventEmitter {
                 vertices,
             } = response;
 
-            const { handler_id } = data;
-
             try {
                 const dataSize = bytes(JSON.stringify(vertices));
+                const importTimestamp = new Date();
                 await Models.data_info
                     .create({
                         data_set_id,
                         root_hash,
                         data_provider_wallet: config.node_wallet,
-                        import_timestamp: new Date(),
+                        import_timestamp: importTimestamp,
                         total_documents,
                         data_size: dataSize,
                         origin: 'IMPORTED',
-                    }).catch((error) => {
+                    }).catch(async (error) => {
                         logger.error(error);
                         notifyError(error);
-                        data.response.status(500);
-                        data.response.send({
-                            message: error,
-                        });
+                        await Models.handler_ids.update(
+                            {
+                                status: 'FAILED',
+                                data: JSON.stringify({
+                                    error,
+                                }),
+                            },
+                            {
+                                where: {
+                                    handler_id,
+                                },
+                            },
+                        );
                         remoteControl.importFailed(error);
                     });
 
@@ -505,23 +519,43 @@ class EventEmitter {
                         response: data.response,
                     });
                 } else {
-                    data.response.status(201);
-                    data.response.send({
-                        message: 'Import success',
-                        data_set_id,
-                        root_hash,
-                        wallet,
-                        handler_id,
-                    });
+                    await Models.handler_ids.update(
+                        {
+                            status: 'COMPLETED',
+                            data: JSON.stringify({
+                                dataset_id: data_set_id,
+                                import_time: importTimestamp.valueOf(),
+                                dataset_size_in_bytes: dataSize,
+                                otjson_size_in_bytes: 0, // TODO calculate otjson size in bytes
+                                root_hash,
+                                data_hash: "0x0", // TODO calculate data dash
+                                total_graph_entities: 0, // TODO calculate total graph entites
+                            }),
+                        },
+                        {
+                            where: {
+                                handler_id,
+                            },
+                        },
+                    );
                     remoteControl.importSucceeded();
                 }
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
                 notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error,
-                });
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
                 remoteControl.importFailed(error);
             }
         };
@@ -634,15 +668,6 @@ class EventEmitter {
                 } else {
                     await processImport(result.response, null, data);
                 }
-                const import_data = {
-                    response: result.response,
-                    handler_id: data.handler_id,
-                    error: result.error,
-                    length: null,
-                    size: bytes(data.content),
-                    timestamp: Date.now(),
-                };
-                this.emit('api-finished-import', import_data);
             } catch (error) {
                 await processImport(null, error, data);
             }
@@ -680,67 +705,8 @@ class EventEmitter {
                 } else {
                     await processImport(result.response, null, data);
                 }
-                const import_data = {
-                    response: result.response,
-                    handler_id: data.handler_id,
-                    error: result.error,
-                    length: (JSON.parse(data.content)).length,
-                    size: bytes(data.content),
-                    timestamp: Date.now(),
-                };
-                this.emit('api-finished-import', import_data);
             } catch (error) {
-                const import_data = {
-                    response: undefined,
-                    handler_id: data.handler_id,
-                    error,
-                    length: undefined,
-                    size: undefined,
-                    timestamp: undefined,
-                };
                 await processImport(null, error, data);
-                this.emit('api-finished-import', import_data);
-            }
-        });
-
-        this._on('api-finished-import', async (data) => {
-            const {
-                error, handler_id, response, length, size, timestamp,
-            } = data;
-
-            const { data_set_id, root_hash, wallet } = response;
-
-            if (error == null) {
-            //     await Models.handler_ids.create({
-            //         data: JSON.stringify(data),
-            //         status: 'COMPLETED',
-            //     });
-                await Models.handler_ids.update(
-                    {
-                        status: 'COMPLETED',
-                        data: JSON.stringify({
-                            data_set_id, root_hash, wallet, length, size, timestamp,
-                        }),
-                    },
-                    {
-                        where: {
-                            handler_id,
-                        },
-                    },
-                );
-            } else {
-                const err = { error_field: error };
-                await Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify(err),
-                    },
-                    {
-                        where: {
-                            handler_id,
-                        },
-                    },
-                );
             }
         });
 

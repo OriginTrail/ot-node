@@ -90,7 +90,11 @@ class RestAPIServiceV2 {
                     status: 'PENDING',
                 });
                 queryObject.handler_id = inserted_object.dataValues.handler_id;
-                await this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
+                this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
+                res.status(200);
+                res.send({
+                    handler_id: inserted_object.dataValues.handler_id,
+                });
             } catch (e) {
                 res.status(400);
                 res.send({
@@ -108,7 +112,11 @@ class RestAPIServiceV2 {
                 status: 'PENDING',
             });
             queryObject.handler_id = inserted_object.dataValues.handler_id;
-            await this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
+            this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
+            res.status(200);
+            res.send({
+                handler_id: inserted_object.dataValues.handler_id,
+            });
         } else {
             // No import data provided
             res.status(400);
