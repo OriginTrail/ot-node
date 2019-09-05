@@ -528,7 +528,7 @@ class EventEmitter {
                                 dataset_size_in_bytes: dataSize,
                                 otjson_size_in_bytes: 0, // TODO calculate otjson size in bytes
                                 root_hash,
-                                data_hash: "0x0", // TODO calculate data dash
+                                data_hash: '0x0', // TODO calculate data dash
                                 total_graph_entities: 0, // TODO calculate total graph entites
                             }),
                         },
