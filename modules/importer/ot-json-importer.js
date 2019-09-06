@@ -363,24 +363,45 @@ class OtJsonImporter {
             // Connect to other connectors if available.
             const relatedConnectors = await this.db.findConnectors(vertex.connectionId);
 
-            await forEachSeries(relatedConnectors, async (relatedVertex) => {
-                await this.db.addEdge({
-                    _key: _keyFrom(dataCreator, vertex._key, relatedVertex._key),
-                    _from: vertex._key,
-                    _to: relatedVertex._key,
-                    relationType: 'CONNECTION_DOWNSTREAM',
-                    edgeType: 'ConnectorRelation',
-                });
+            await forEachSeries(
+                relatedConnectors.filter(v => v._key !== vertex._key),
+                async (relatedVertex) => {
+                // Check if there is connection is expected and if so check connection.
+                    if (relatedVertex.expectedConnectionCreators != null) {
+                        let hasConnection = false;
+                        relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
+                            const expectedErc725 = _value(expectedCreator);
 
-                // Other way. This time host node is the data creator.
-                await this.db.addEdge({
-                    _key: _keyFrom(this.me, relatedVertex._key, vertex._key),
-                    _from: relatedVertex._key,
-                    _to: vertex._key,
-                    relationType: 'CONNECTION_DOWNSTREAM',
-                    edgeType: 'ConnectorRelation',
-                });
-            });
+                            if (dataCreator === expectedErc725) {
+                                hasConnection = true;
+                            }
+                        });
+
+                        if (!hasConnection) {
+                        // None of mentioned pointed to data creator.
+                            this.log.warn(`Dataset ${datasetId} has invalid connectors (${vertex.connectionId}).`);
+                            return;
+                        }
+                    }
+
+                    await this.db.addEdge({
+                        _key: _keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                        _from: vertex._key,
+                        _to: relatedVertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+
+                    // Other way. This time host node is the data creator.
+                    await this.db.addEdge({
+                        _key: _keyFrom(this.me, relatedVertex._key, vertex._key),
+                        _from: relatedVertex._key,
+                        _to: vertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+                },
+            );
         });
 
         await this.db.addDatasetMetadata(metadata);
