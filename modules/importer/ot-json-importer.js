@@ -434,7 +434,6 @@ class OtJsonImporter {
                 '@type': 'otObject',
                 '@id': entityVertex.uid,
                 identifiers: [],
-                relations: [],
             };
 
             // Check for identifiers.
@@ -476,14 +475,17 @@ class OtJsonImporter {
                     // Find original vertex to get the @id.
                     const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
 
-                    otObject.relations.push({
+                    const newRelation = {
                         '@type': 'otRelation',
                         direction: 'direct', // TODO: check this.
                         linkedObject: {
                             '@id': id,
                         },
-                        properties: edge.properties,
-                    });
+                    };
+                    if (edge.properties != null) {
+                        newRelation.properties = edge.properties;
+                    }
+                    otObject.relations.push(newRelation);
                 });
             document['@graph'].push(otObject);
         });
@@ -509,14 +511,18 @@ class OtJsonImporter {
                     // Find original vertex to get the @id.
                     const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
 
-                    otConnector.relations.push({
+
+                    const newRelation = {
                         '@type': 'otRelation',
                         direction: 'reverse',
                         linkedObject: {
                             '@id': id,
                         },
-                        properties: edge.properties,
-                    });
+                    };
+                    if (edge.properties != null) {
+                        newRelation.properties = edge.properties;
+                    }
+                    otConnector.relations.push(newRelation);
                 });
 
             document['@graph'].push(otConnector);
