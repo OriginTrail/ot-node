@@ -533,7 +533,7 @@ class OTNode {
             approvalService.handleApprovalEvent(eventData);
         });
 
-        const restApiController = container.resolve('restAPIController');
+        const restApiController = container.resolve('restApiController');
         try {
             await restApiController.startRPC();
         } catch (err) {
