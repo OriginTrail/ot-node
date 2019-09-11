@@ -220,6 +220,26 @@ class GraphStorage {
     }
 
     /**
+     * Add document to collection
+     * @param collectionName
+     * @param document
+     * @returns {Promise}
+     */
+    addDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.addDocument(collectionName, document).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Add dataset metadata
      * @param metadata Dataset metadata
      * @returns {Promise<any>}
@@ -304,20 +324,6 @@ class GraphStorage {
      */
     updateVertexImportsByUID(senderId, uid, importNumber) {
         return this.db.updateVertexImportsByUID(senderId, uid, importNumber);
-    }
-
-    /**
-     * Finds all object classes
-     * @return {Promise<*>}
-     */
-    async findObjectClassVertices() {
-        const classes = await this.db.findObjectClassVertices();
-        if (classes.length === 0) {
-            this.notifyError(new Error('Missing class vertices'));
-            await this.__initDatabase__();
-            return this.db.findObjectClassVertices();
-        }
-        return classes;
     }
 
     /**

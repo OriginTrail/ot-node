@@ -92,10 +92,9 @@ class WOTImporter {
                 edges,
             );
 
-        const objectClasses = await this.db.findObjectClassVertices();
         const dataSetId = ImportUtilities.importHash(
             tmpDataSetId,
-            denormalizedVertices.concat(objectClasses),
+            denormalizedVertices,
             denormalizedEdges,
         );
 
