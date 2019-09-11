@@ -583,6 +583,15 @@ class ArangoJS {
     }
 
     /**
+     * Add dataset metadata
+     * @param metadata Dataset metadata
+     * @returns {Promise<any>}
+     */
+    async addDatasetMetadata(metadata) {
+        return this.addDocument('ot_datasets', metadata);
+    }
+
+    /**
      * Inserts edge into ArangoDB graph database
      * @param {vertex} - document
      * @returns {Promise<any>}

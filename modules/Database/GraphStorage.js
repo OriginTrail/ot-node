@@ -240,6 +240,25 @@ class GraphStorage {
     }
 
     /**
+     * Add dataset metadata
+     * @param metadata Dataset metadata
+     * @returns {Promise<any>}
+     */
+    addDatasetMetadata(metadata) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.addDatasetMetadata(metadata).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Identify selected graph database
      * @returns {string}
      */

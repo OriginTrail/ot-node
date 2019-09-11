@@ -31,6 +31,7 @@ class DCOfferFinalizeCommand extends Command {
         const {
             offerId,
             solution,
+            handler_id,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -53,6 +54,21 @@ class DCOfferFinalizeCommand extends Command {
         const parentIdentity = this.config.parentIdentity ?
             Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
 
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id },
+        });
+        const handler_data = JSON.parse(handler.data);
+        handler_data.status = 'FINALIZING_OFFER';
+        await Models.handler_ids.update(
+            {
+                data: JSON.stringify(handler_data),
+            },
+            {
+                where: { handler_id },
+            },
+        );
+
+
         await this.blockchain.finalizeOffer(
             Utilities.normalizeHex(this.config.erc725Identity),
             offerId,
@@ -70,7 +86,7 @@ class DCOfferFinalizeCommand extends Command {
                 {
                     name: 'dcOfferFinalizedCommand',
                     period: 5000,
-                    data: { offerId },
+                    data: { offerId, nodeIdentifiers, handler_id },
                 },
             ],
         };

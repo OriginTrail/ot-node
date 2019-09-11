@@ -1,11 +1,11 @@
 const md5 = require('md5');
 const crypto = require('crypto');
 const validator = require('validator');
-const Utilities = require('./Utilities');
 const stringify = require('json-stable-stringify');
 const Barcoder = require('barcoder');
 
-const ZK = require('./ZK');
+const Utilities = require('../Utilities');
+const ZK = require('../ZK');
 
 class GS1Utilities {
     constructor(ctx) {

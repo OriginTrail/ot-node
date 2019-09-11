@@ -693,17 +693,34 @@ class EpcisOtJsonTranspiler {
         }
         if (Array.isArray(object)) {
             const clone = [];
+            let arrayHasMetadata = false;
             for (const item of object) {
-                clone.push(this._extractMetadata(item));
+                const keyMetadata = this._extractMetadata(item);
+                clone.push((keyMetadata));
+                if (keyMetadata != null) {
+                    arrayHasMetadata = true;
+                }
+            }
+            if (clone.length === 0 || !arrayHasMetadata) {
+                return null;
             }
             return clone;
         } else if (typeof object === 'object') {
             const clone = {};
             for (const key of Object.keys(object)) {
-                clone[key] = this._extractMetadata(object[key]);
+                if (key !== '_attributes') {
+                    const keyMetadata = this._extractMetadata(object[key]);
+                    if (keyMetadata != null) {
+                        clone[key] = keyMetadata;
+                    }
+                }
             }
             if (object._attributes) {
                 clone._attributes = object._attributes;
+            }
+
+            if (Object.keys(clone).length === 0) {
+                return null;
             }
             return clone;
         }

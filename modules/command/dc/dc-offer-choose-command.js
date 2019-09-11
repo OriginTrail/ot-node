@@ -29,6 +29,7 @@ class DCOfferChooseCommand extends Command {
             excludedDHs,
             isReplacement,
             dhIdentity,
+            handler_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -76,6 +77,20 @@ class DCOfferChooseCommand extends Command {
             task = offer.task;
             difficulty = await this.blockchain.getOfferDifficulty(offer.offer_id);
         }
+        const handler = await models.handler_ids.findOne({
+            where: { handler_id },
+        });
+        console.log(handler);
+        const handler_data = JSON.parse(handler.data);
+        handler_data.status = 'MINING_SOLUTION';
+        await models.handler_ids.update(
+            {
+                data: JSON.stringify(handler_data),
+            },
+            {
+                where: { handler_id },
+            },
+        );
 
         await this.minerService.sendToMiner(
             task,
@@ -94,6 +109,7 @@ class DCOfferChooseCommand extends Command {
                         excludedDHs,
                         isReplacement,
                         dhIdentity,
+                        handler_id,
                     },
                 },
             ],

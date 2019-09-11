@@ -1,14 +1,5 @@
-const OtJsonImporter = require('../../modules/importer/ot-json-importer');
-
-const {
-    describe, before, beforeEach, afterEach, it,
-} = require('mocha');
-const chai = require('chai');
-
-const { assert } = chai;
-
-describe('OT-JSON importer tests', () => {
-    const testOtJsonFile =
+{
+    '@graph':
     [
         {
             '@id': 'urn:epc:id:sgln:0037000.00729.0',
@@ -314,17 +305,127 @@ describe('OT-JSON importer tests', () => {
                 objectType: 'vocabularyElement',
             },
         },
-    ];
-
-    const importer = new OtJsonImporter({});
-
-    it('Test _validateRelatedEntities()', () => {
-        const graph = testOtJsonFile;
-
-        try {
-            importer._validateRelatedEntities(graph);
-        } catch (error) {
-            assert.isFalse(!!error, 'OT-JSON has invalid form');
-        }
-    });
-});
+    ],
+    '@id': '0x189e5ab5ffe717397a6dbbc058db0f2985ba8872c39f3fca160c3bafe3c24f81',
+    '@type': 'Dataset',
+    datasetHeader: {
+        OTJSONVersion: '1.0',
+        dataCreator: {
+            identifiers: [
+                {
+                    identifierType: 'ERC725',
+                    identifierValue: '0x9ffb5578ad7e54db19b6421e97a129f17d9b541e',
+                    validationSchema: '/schemas/erc725-main',
+                },
+            ],
+        },
+        dataIntegrity: {
+            proofs: [
+                {
+                    proofType: 'merkleRootHash',
+                    proofValue: '0x135ff3e9c5936039b07f47efb7b9008064bdbf75f3b552ea3844ad6d60fbeb19',
+                    validationSchema: '/schemas/merkleRoot',
+                },
+            ],
+        },
+        datasetCreationTimestamp: '2019-06-11T11:06:54.010Z',
+        datasetTags: [],
+        datasetTitle: '',
+        relatedDatasets: [],
+        transpilationInfo: {
+            diff: {
+                _declaration: {
+                    _attributes: {
+                        encoding: 'UTF-8',
+                        version: '1.0',
+                    },
+                },
+                _doctype: 'project',
+                'epcis:EPCISDocument': {
+                    EPCISBody: {
+                        EventList: {},
+                    },
+                    EPCISHeader: {
+                        extension: {
+                            EPCISMasterData: {
+                                VocabularyList: {},
+                            },
+                        },
+                        'p:StandardBusinessDocumentHeader': {
+                            'p:DocumentIdentification': {
+                                'p:CreationDateAndTime': {
+                                    _text: '2001-12-31T12:00:00',
+                                },
+                                'p:InstanceIdentifier': {
+                                    _text: 'p:InstanceIdentifier',
+                                },
+                                'p:MultipleType': {
+                                    _text: 'true',
+                                },
+                                'p:Standard': {
+                                    _text: 'EPCglobal',
+                                },
+                                'p:Type': {
+                                    _text: 'MasterData',
+                                },
+                                'p:TypeVersion': {
+                                    _text: '1.2',
+                                },
+                            },
+                            'p:HeaderVersion': {
+                                _text: '1.2',
+                            },
+                            'p:Receiver': {
+                                'p:Identifier': {
+                                    _attributes: {
+                                        Authority: '',
+                                    },
+                                    _text: 'p:Identifier',
+                                },
+                            },
+                            'p:Sender': {
+                                'p:Identifier': {
+                                    _attributes: {
+                                        Authority: '',
+                                    },
+                                    _text: 'p:Identifier',
+                                },
+                            },
+                        },
+                    },
+                    _attributes: {
+                        creationDate: '2005-07-11T11:30:47.0Z',
+                        schemaVersion: '1.2',
+                        'xmlns:epcis': 'urn:epcglobal:epcis:xsd:1',
+                        'xmlns:example': 'http://ns.example.com/epcis',
+                        'xmlns:p': 'http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader',
+                        'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                    },
+                },
+            },
+            transpilationInfo: {
+                diff: {},
+                sourceMetadata: {
+                    XMLversion: '1.0',
+                    created: '2019-06-11T11:06:53.984Z',
+                    encoding: 'UTF-8',
+                    modified: '2019-06-11T11:06:53.984Z',
+                    standard: 'GS1-EPCIS',
+                },
+                transpilerType: 'GS1-EPCIS',
+                transpilerVersion: '1.0',
+            },
+        },
+        validationSchemas: {
+            'erc725-main': {
+                networkId: 'ganache',
+                schemaType: 'ethereum-725',
+            },
+            merkleRoot: {
+                hubContractAddress: '0x6E9d88d683B7c4c24BC2cA2e188BAc6691708956',
+                networkId: 'ganache',
+                schemaType: 'merkle-root',
+            },
+        },
+    },
+}

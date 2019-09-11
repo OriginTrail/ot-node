@@ -7,130 +7,141 @@ const Utilities = require('../Utilities');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 
-class RestAPIService {
+const RestApiV2 = require('./rest-api-v2');
+
+class RestAPIServiceV1 {
     constructor(ctx) {
         this.ctx = ctx;
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.apiUtilities = ctx.apiUtilities;
+
+        this.stanards = ['GS1-EPCIS'];
     }
 
     /**
      * Start RPC server
      */
-    async startRPC() {
-        const options = {
-            name: 'RPC server',
-            version: pjson.version,
-            formatters: {
-                'application/json': (req, res, body) => {
-                    res.set('content-type', 'application/json; charset=utf-8');
-                    if (!body) {
-                        if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
-                            res.setHeader('Content-Length', 0);
-                        }
-                        return null;
-                    }
-
-                    if (body instanceof Error) {
-                        // snoop for RestError or HttpError, but don't rely on instanceof
-                        if ((body.restCode || body.httpCode) && body.body) {
-                            // eslint-disable-next-line
-                            body = body.body;
-                        } else {
-                            body = {
-                                message: body.message,
-                            };
-                        }
-                    }
-
-                    if (Buffer.isBuffer(body)) {
-                        body = body.toString('base64');
-                    }
-
-                    let ident = 2;
-                    if ('prettify-json' in req.headers) {
-                        if (req.headers['prettify-json'] === 'false') {
-                            ident = 0;
-                        }
-                    }
-                    const data = Utilities.stringify(body, ident);
-
-                    if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
-                        res.setHeader('Content-Length', Buffer.byteLength(data));
-                    }
-                    return data;
-                },
-            },
-        };
-
-        if (this.config.node_rpc_use_ssl) {
-            Object.assign(options, {
-                key: fs.readFileSync(this.config.node_rpc_ssl_key_path),
-                certificate: fs.readFileSync(this.config.node_rpc_ssl_cert_path),
-                rejectUnauthorized: true,
-            });
-        }
-
-        const server = restify.createServer(options);
-
-        server.use(restify.plugins.acceptParser(server.acceptable));
-        server.use(restify.plugins.queryParser());
-        server.use(restify.plugins.bodyParser());
-        const cors = corsMiddleware({
-            preflightMaxAge: 5, // Optional
-            origins: ['*'],
-            allowHeaders: ['API-Token', 'prettify-json', 'raw-data'],
-            exposeHeaders: ['API-Token-Expiry'],
-        });
-
-        server.pre(cors.preflight);
-        server.use(cors.actual);
-        server.use((request, response, next) => {
-            const result = this.apiUtilities.authorize(request);
-            if (result) {
-                response.status(result.status);
-                response.send({
-                    message: result.message,
-                });
-                return;
-            }
-            return next();
-        });
-
-        // TODO: Temp solution to listen all adapters in local net.
-        let serverListenAddress = this.config.node_rpc_ip;
-        if (ip.isLoopback(serverListenAddress)) {
-            serverListenAddress = '0.0.0.0';
-        }
-
-        // promisified server.listen()
-        const startServer = () => new Promise((resolve, reject) => {
-            server.listen(this.config.node_rpc_port, serverListenAddress, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
-
-        await startServer(server, serverListenAddress);
-        this.logger.notify(`API exposed at  ${server.url}`);
-
-        if (this.config.is_bootstrap_node) {
-            this._exposeBootstrapAPIRoutes(server);
-        } else {
-            this._exposeAPIRoutes(server);
-        }
-    }
+    // async startRPC() {
+    //     const options = {
+    //         name: 'RPC server',
+    //         version: pjson.version,
+    //         formatters: {
+    //             'application/json': (req, res, body) => {
+    //                 res.set('content-type', 'application/json; charset=utf-8');
+    //                 if (!body) {
+    //                     if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+    //                         res.setHeader('Content-Length', 0);
+    //                     }
+    //                     return null;
+    //                 }
+    //
+    //                 if (body instanceof Error) {
+    //                     // snoop for RestError or HttpError, but don't rely on instanceof
+    //                     if ((body.restCode || body.httpCode) && body.body) {
+    //                         // eslint-disable-next-line
+    //                         body = body.body;
+    //                     } else {
+    //                         body = {
+    //                             message: body.message,
+    //                         };
+    //                     }
+    //                 }
+    //
+    //                 if (Buffer.isBuffer(body)) {
+    //                     body = body.toString('base64');
+    //                 }
+    //
+    //                 let ident = 2;
+    //                 if ('prettify-json' in req.headers) {
+    //                     if (req.headers['prettify-json'] === 'false') {
+    //                         ident = 0;
+    //                     }
+    //                 }
+    //                 const data = Utilities.stringify(body, ident);
+    //
+    //                 if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+    //                     res.setHeader('Content-Length', Buffer.byteLength(data));
+    //                 }
+    //                 return data;
+    //             },
+    //         },
+    //     };
+    //
+    //     if (this.config.node_rpc_use_ssl) {
+    //         Object.assign(options, {
+    //             key: fs.readFileSync(this.config.node_rpc_ssl_key_path),
+    //             certificate: fs.readFileSync(this.config.node_rpc_ssl_cert_path),
+    //             rejectUnauthorized: true,
+    //         });
+    //     }
+    //
+    //     const server = restify.createServer(options);
+    //
+    //     const parseLatest = (req, res, next) => {
+    //         req.url = req.url.replace(/(\/api\/)latest(\/.+)/, `$1${this.ctx.config.latest_api_version}$2`);
+    //         next();
+    //     };
+    //
+    //     server.use(restify.plugins.acceptParser(server.acceptable));
+    //     server.use(restify.plugins.queryParser());
+    //     server.use(restify.plugins.bodyParser());
+    //     server.pre(parseLatest);
+    //     const cors = corsMiddleware({
+    //         preflightMaxAge: 5, // Optional
+    //         origins: ['*'],
+    //         allowHeaders: ['API-Token', 'prettify-json', 'raw-data'],
+    //         exposeHeaders: ['API-Token-Expiry'],
+    //     });
+    //
+    //     server.pre(cors.preflight);
+    //     server.use(cors.actual);
+    //     server.use((request, response, next) => {
+    //         const result = this.apiUtilities.authorize(request);
+    //         if (result) {
+    //             response.status(result.status);
+    //             response.send({
+    //                 message: result.message,
+    //             });
+    //             return;
+    //         }
+    //         return next();
+    //     });
+    //
+    //     // TODO: Temp solution to listen all adapters in local net.
+    //     let serverListenAddress = this.config.node_rpc_ip;
+    //     if (ip.isLoopback(serverListenAddress)) {
+    //         serverListenAddress = '0.0.0.0';
+    //     }
+    //
+    //     // promisified server.listen()
+    //     const startServer = () => new Promise((resolve, reject) => {
+    //         server.listen(this.config.node_rpc_port, serverListenAddress, (err) => {
+    //             if (err) {
+    //                 reject(err);
+    //             } else {
+    //                 resolve();
+    //             }
+    //         });
+    //     });
+    //
+    //     await startServer(server, serverListenAddress);
+    //     this.logger.notify(`API exposed at  ${server.url}`);
+    //
+    //     if (this.config.is_bootstrap_node) {
+    //         this._exposeBootstrapAPIRoutes(server);
+    //     } else {
+    //         this.restApis.forEach(restApi => restApi._exposeAPIRoutes(server));
+    //         this._exposeAPIRoutes(server);
+    //     }
+    // }
 
     /**
      * Expose bootstrap API Routes
      */
-    _exposeBootstrapAPIRoutes(server) {
-        this._registerNodeInfoRoute(server, true);
-    }
+    // _exposeBootstrapAPIRoutes(server) {
+    //     this._registerNodeInfoRoute(server, true);
+    // }
 
     /**
      * API Routes
@@ -187,9 +198,10 @@ class RestAPIService {
          * @param importfile - file or text data
          * @param importtype - (GS1/WOT)
          */
-        server.post('/api/import', async (req, res) => {
-            await importController.import(req, res);
-        });
+        // server.post('/api/import', async (req, res) => {
+        //     // await importController.import(req, res);
+        //     this.restApi.
+        // });
 
         /**
          * Create offer route
@@ -268,6 +280,26 @@ class RestAPIService {
             }
             const queryObject = req.query;
             emitter.emit('api-trail', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
+        /**
+         * Get entity trail from database
+         * @param QueryObject
+         */
+        server.post('/api/trail/entity', (req, res, next) => {
+            this.logger.api('POST: Entity trail request received.');
+
+            const error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
+            }
+
+            const queryObject = req.body;
+
+            emitter.emit('api-trail-entity', {
                 query: queryObject,
                 response: res,
             });
@@ -376,6 +408,8 @@ class RestAPIService {
 
             emitter.emit('api-query-local-import', {
                 data_set_id: req.params.data_set_id,
+                format: ((req.query && req.query.format) || 'otjson'),
+                encryption: req.query.encryption,
                 request: req,
                 response: res,
             });
@@ -409,6 +443,15 @@ class RestAPIService {
 
             emitter.emit('api-imports-info', {
                 response: res,
+            });
+        });
+
+        server.get('/api/standards', async (req, res) => {
+            const msg = [];
+            this.stanards.forEach(standard =>
+                msg.push(standard));
+            res.send({
+                message: msg,
             });
         });
 
@@ -502,4 +545,4 @@ class RestAPIService {
     }
 }
 
-module.exports = RestAPIService;
+module.exports = RestAPIServiceV1;

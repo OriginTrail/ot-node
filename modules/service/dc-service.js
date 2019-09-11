@@ -30,7 +30,7 @@ class DCService {
      */
     async createOffer(
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-        dataSizeInBytes, litigationIntervalInMinutes,
+        dataSizeInBytes, litigationIntervalInMinutes, handler_id,
     ) {
         const offer = await models.offers.create({
             data_set_id: dataSetId,
@@ -82,6 +82,7 @@ class DCService {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            handler_id,
         };
         const commandSequence = [
             'dcOfferPrepareCommand',
@@ -391,8 +392,7 @@ class DCService {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
-            edges: replication.edges,
-            litigation_vertices: replication.litigationVertices,
+            otJson: replication.otJson,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,

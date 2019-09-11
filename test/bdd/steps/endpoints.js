@@ -20,7 +20,7 @@ Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, 
 
     const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
 
-    expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet']);
+    expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet', 'root_hash']);
 
     // sometimes there is a need to remember import before the last one
     if (this.state.lastImport) {
