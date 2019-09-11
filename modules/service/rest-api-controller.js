@@ -160,6 +160,49 @@ class RestApiController {
             });
         });
     }
+
+    /**
+     * Register common info route
+     * @param server - Server instance
+     * @param isBootstrap - Is this a bootstrap node?
+     * @private
+     */
+    _registerNodeInfoRoute(server, isBootstrap) {
+        const {
+            transport,
+            config,
+        } = this.ctx;
+
+        server.get('/api/info', async (req, res) => {
+            this.logger.api('GET: Node information request received.');
+
+            try {
+                const network = await transport.getNetworkInfo();
+                const basicConfig = {
+                    version: pjson.version,
+                    blockchain: config.blockchain.blockchain_title,
+                    network,
+                    is_bootstrap: isBootstrap,
+                };
+
+                if (!isBootstrap) {
+                    Object.assign(basicConfig, {
+                        node_wallet: config.node_wallet,
+                        erc_725_identity: config.erc725Identity,
+                    });
+                }
+
+                res.status(200);
+                res.send(basicConfig);
+            } catch (error) {
+                this.logger.error(`Failed to process /api/info route. ${error}`);
+                res.status(500);
+                res.send({
+                    message: error,
+                });
+            }
+        });
+    }
 }
 
 module.exports = RestApiController;
