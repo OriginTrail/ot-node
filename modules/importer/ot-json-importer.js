@@ -454,6 +454,8 @@ class OtJsonImporter {
             const otObject = {
                 '@type': 'otObject',
                 '@id': entityVertex.uid,
+                identifiers: [],
+                relations: [],
             };
 
             // Check for identifiers.
@@ -499,17 +501,14 @@ class OtJsonImporter {
                     // Find original vertex to get the @id.
                     const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
 
-                    const newRelation = {
+                    otObject.relations.push({
                         '@type': 'otRelation',
                         direction: 'direct', // TODO: check this.
                         linkedObject: {
                             '@id': id,
                         },
-                    };
-                    if (edge.properties != null) {
-                        newRelation.properties = edge.properties;
-                    }
-                    otObject.relations.push(newRelation);
+                        properties: edge.properties,
+                    });
                 });
             document['@graph'].push(otObject);
         });
