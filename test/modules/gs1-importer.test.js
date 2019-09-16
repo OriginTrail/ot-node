@@ -16,6 +16,7 @@ const GS1Utilities = require('../../modules/importer/gs1-utilities');
 const WOTImporter = require('../../modules/importer/wot-importer');
 const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
+const ImportUtilities = require('../../modules/ImportUtilities');
 const Network = require('../../modules/network/kademlia/kademlia');
 const NetworkUtilities = require('../../modules/network/kademlia/kademlia-utils');
 const EventEmitter = require('../../modules/EventEmitter');
@@ -222,6 +223,33 @@ describe('GS1 Importer tests', () => {
             assert.equal(verticesCount1, verticesCount2, '# of docs should remain constant after re-import');
             assert.equal(edgesCount1, edgesCount2, '# of edges should remain constant after re-import');
         });
+    });
+
+    describe('OT-JSON files before and after import should be the same', async () => {
+        inputXmlFiles.forEach((inputFile) => {
+            it(
+                `should correctly import ${path.basename(inputFile.args[0])} and retrieve it from database`,
+                // eslint-disable-next-line no-loop-func
+                async () => {
+                    const xmlContents = await Utilities.fileContents(inputFile.args[0]);
+                    const otJson = epcisOtJsonTranspiler.convertToOTJson(xmlContents);
+
+                    const {
+                        data_set_id,
+                    } = await gs1.importFile({
+                        document: otJson,
+                    });
+
+                    const otJsonFromDb = await gs1.getImport(data_set_id);
+                    assert.isNotNull(otJsonFromDb, 'DB result is null');
+                    assert.deepEqual(otJson, otJsonFromDb);
+
+                    const sortedFirst = ImportUtilities.sortStringifyDataset(otJson);
+                    const sortedSecond = ImportUtilities.sortStringifyDataset(otJsonFromDb);
+                    assert.deepEqual(sortedFirst, sortedSecond, `Converted XML for ${path.basename(inputFile.args[0])} is not equal to the original one`);
+                },
+            );
+        })
     });
 
     describe.skip('Graph validation', async () => {
