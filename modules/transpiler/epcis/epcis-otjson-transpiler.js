@@ -664,17 +664,21 @@ class EpcisOtJsonTranspiler {
                 Object.assign(object, metadata);
             }
         } else if (Array.isArray(object)) {
-            for (let i = 0; i < object.length; i += 1) {
-                this._appendMetadata(object[i], metadata[i]);
+            if (metadata != null) {
+                for (let i = 0; i < object.length; i += 1) {
+                    this._appendMetadata(object[i], metadata[i]);
+                }
             }
         } else if (typeof object === 'object') {
-            for (const key of Object.keys(object)) {
-                if (metadata[key] != null) {
-                    if (metadata[key]._attributes != null) {
-                        object[key]._attributes = metadata[key]._attributes;
+            if (metadata != null) {
+                for (const key of Object.keys(object)) {
+                    if (metadata[key] != null) {
+                        if (metadata[key]._attributes != null) {
+                            object[key]._attributes = metadata[key]._attributes;
+                        }
                     }
+                    this._appendMetadata(object[key], metadata[key]);
                 }
-                this._appendMetadata(object[key], metadata[key]);
             }
         }
     }
