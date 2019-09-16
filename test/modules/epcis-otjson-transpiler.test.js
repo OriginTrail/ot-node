@@ -10,7 +10,7 @@ const lodash = require('lodash');
 const chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
-const { assert } = chai;
+const { assert, expect } = chai;
 const path = require('path');
 const rc = require('rc');
 const Web3 = require('web3');
@@ -117,6 +117,18 @@ describe('EPCIS OT JSON transpiler tests', () => {
                     );
                 },
             );
+        });
+    });
+
+    describe('Convert empty XML into OT-JSON', () => {
+        it('should fail on empty XML document', async () => {
+            expect(transpiler.convertToOTJson.bind(transpiler, null)).to.throw('XML document cannot be empty');
+        });
+    });
+
+    describe('Convert empty OT-JSON into XML', () => {
+        it('should fail on empty OT-JSON document', async () => {
+            expect(transpiler.convertFromOTJson.bind(transpiler, null)).to.throw('OT-JSON document cannot be empty');
         });
     });
 });
