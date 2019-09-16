@@ -450,7 +450,7 @@ class EventEmitter {
         const processImport = async (response, error, data) => {
             const { handler_id } = data;
 
-            if (response === null) {
+            if (response === undefined) {
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',
@@ -707,6 +707,78 @@ class EventEmitter {
                 }
             } catch (error) {
                 await processImport(null, error, data);
+            }
+        });
+
+        const processExport = async (error, data) => {
+            const { handler_id, formatted_dataset } = data;
+
+            if (formatted_dataset === undefined) {
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error: error.message,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+                // TODO notify Houston
+                // remoteControl.exportFailed(error);
+
+                if (error.type !== 'ExporterError') {
+                    notifyError(error);
+                }
+            } else {
+                await Models.handler_ids.update(
+                    {
+                        status: 'COMPLETED',
+                        data: JSON.stringify({
+                            formatted_dataset,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+            }
+        };
+
+        this._on('api-export-request', async (data) => {
+            try {
+                logger.debug('Export triggered');
+
+                const result = await this.otJsonImporter.getImport(data.dataset_id);
+
+                if (result.error != null) {
+                    await processExport(result.error, data);
+                } else {
+                    switch (data.standard) {
+                    case 'gs1': {
+                        const formatted_dataset =
+                            this.epcisOtJsonTranspiler.convertFromOTJson(result);
+                        await processExport(
+                            null,
+                            { formatted_dataset, handler_id: data.handler_id });
+                        break;
+                    }
+                    case 'graph': {
+                        await processExport(null,
+                            { formatted_dataset: result, handler_id: data.handler_id });
+                        break;
+                    }
+                    default:
+                        throw new Error('Export for unsuported standard');
+                    }
+                }
+            } catch (error) {
+                await processExport(error, data);
             }
         });
 

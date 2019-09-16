@@ -193,12 +193,20 @@ class RestAPIServiceV2 {
             return;
         }
 
+        let standard_id;
         // Check if import type is valid
         if (req.body.standard_id === undefined ||
             this.stanards.indexOf(req.body.standard_id) === -1) {
+            standard_id = 'GRAPH'.toLowerCase();
+        } else {
+            // eslint-disable-next-line prefer-destructuring
+            standard_id = req.body.standard_id.toLowerCase();
+        }
+
+        if (!this.mapping_standards_for_event.get(standard_id)) {
             res.status(400);
             res.send({
-                message: 'Invalid import type or unsupported standard',
+                message: 'Standard ID not supported',
             });
         }
 
@@ -213,32 +221,25 @@ class RestAPIServiceV2 {
             where: {
                 data_set_id: req.params.dataset_id,
             },
-
         });
 
-        // if (requested_dataset === undefined) {
-        //     res.status(400);
-        //     res.send({
-        //         message: 'Data set does not exist',
-        //     });
-        // }
+        if (requested_dataset === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Data set does not exist',
+            });
+        }
 
-        // const { dataset_id } = requested_dataset;
+        const dataset_id = requested_dataset.dataValues.data_set_id;
 
-        const object_to_import =
+        const object_to_export =
             {
-                dataset_id: '0x123abc',
-                import_time: 1565884857,
-                dataset_size_in_bytes: 16384,
-                otjson_size_in_bytes: 12144,
-                root_hash: '0xAB13C',
-                data_hash: '0xBB34C',
-                total_graph_entities: 15,
+                dataset_id: requested_dataset,
             };
 
         const inserted_object = await Models.handler_ids.create({
-            data: JSON.stringify(object_to_import),
-            status: 'COMPLETED',
+            data: JSON.stringify(object_to_export),
+            status: 'PENDING',
         });
 
         const { handler_id } = inserted_object.dataValues;
@@ -246,6 +247,8 @@ class RestAPIServiceV2 {
         res.send({
             import_handle: handler_id,
         });
+
+        this.emitter.emit('api-export-request', { dataset_id, handler_id, standard: this.mapping_standards_for_event.get(standard_id) });
     }
     /**
      * API Routes
