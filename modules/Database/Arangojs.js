@@ -31,7 +31,7 @@ class ArangoJS {
      * Initialize database
      * @return {Promise<void>}
      */
-    async initialize(allowedClasses) {
+    async initialize() {
         // Create database if doesn't exist.
         const listOfDatabases = await this.db.listDatabases();
         if (!listOfDatabases.includes(this.dbInfo.database)) {
@@ -300,13 +300,15 @@ class ArangoJS {
         if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
+        const relationTypes = ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC'];
+
         const queryString = `let vertices = (FOR v, e, p IN 0..${depth} ANY 'ot_vertices/${startVertex._key}' ot_edges
                                 OPTIONS {
                                     bfs: true,
                                     uniqueVertices: 'global',
                                     uniqueEdges: 'path'
                                 }
-                                FILTER p.edges[*].relationType ALL IN ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC']
+                                FILTER p.edges[*].relationType ALL IN ${relationTypes}
                                 FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
                                 RETURN v)
                                 
@@ -316,7 +318,7 @@ class ArangoJS {
                                     uniqueVertices: 'global',
                                     uniqueEdges: 'path'
                                 }
-                                FILTER p.edges[*].relationType ALL IN ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC']
+                                FILTER p.edges[*].relationType ALL IN ${relationTypes}
                                 FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
                                 RETURN e)
                             RETURN {vertices, edges}`;
