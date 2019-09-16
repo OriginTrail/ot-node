@@ -617,6 +617,20 @@ class RemoteControl {
         this.socket.emit('importSucceeded', data);
     }
 
+    /**
+     * Get export data error
+     */
+    exportFailed(data) {
+        this.socket.emit('exportFailed', data);
+    }
+
+    /**
+     * Get export data - succeeded
+     */
+    exportSucceeded(data) {
+        this.socket.emit('exportSucceeded', data);
+    }
+
 
     /**
      * Emmit collected offers for ODN Search
