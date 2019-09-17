@@ -451,7 +451,7 @@ class EventEmitter {
         const processImport = async (response, error, data) => {
             const { handler_id } = data;
 
-            if (response === undefined) {
+            if (!response) {
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',
@@ -714,7 +714,7 @@ class EventEmitter {
         const processExport = async (error, data) => {
             const { handler_id, formatted_dataset } = data;
 
-            if (formatted_dataset === undefined) {
+            if (!formatted_dataset) {
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',

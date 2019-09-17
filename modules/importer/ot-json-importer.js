@@ -572,15 +572,15 @@ class OtJsonImporter {
         // }
 
         if (document == null) {
-            throw Error('Document cannot be null.');
+            throw Error('[Validation Error] Document cannot be null.');
         }
 
         if (typeof document !== 'object') {
-            throw Error('Document has to be object.');
+            throw Error('[Validation Error] Document has to be object.');
         }
 
         if (Object.keys(document).length !== 5) {
-            throw Error('Lack of additional information in OT-JSON document.');
+            throw Error('[Validation Error] Lack of additional information in OT-JSON document.');
         }
 
         const datasetId = _id(document);
@@ -588,46 +588,48 @@ class OtJsonImporter {
         const { datasetHeader } = document;
         const graph = _graph(document);
 
+        // TODO Dodati validaciju da svaki element grafa ima @id
+
         if (typeof datasetId !== 'string') {
-            throw Error('Wrong format of dataset ID');
+            throw Error('[Validation Error] Wrong format of dataset ID');
         }
 
         if (datasetId !== ImportUtilities.calculateGraphHash(document['@graph'])) {
-            throw Error('Invalid dataset ID');
+            throw Error('[Validation Error] Invalid dataset ID');
         }
 
         if (datasetId !== ImportUtilities.calculateGraphHash(document['@graph'])) {
-            throw Error('Invalid dataset ID');
+            throw Error('[Validation Error] Invalid dataset ID');
         }
 
         if (datasetType !== 'Dataset') {
-            throw Error('Unsupported dataset type.');
+            throw Error('[Validation Error] Unsupported dataset type.');
         }
 
         if (graph == null || !Array.isArray(graph) || graph.length === 0) {
-            throw Error('Missing or empty graph.');
+            throw Error('[Validation Error] Missing or empty graph.');
         }
 
         // TODO: Prepare support for multiple versions
         const { OTJSONVersion } = datasetHeader;
         if (OTJSONVersion !== '1.0') {
-            throw Error('Unsupported OT-JSON version.');
+            throw Error('[Validation Error] Unsupported OT-JSON version.');
         }
 
         const { datasetCreationTimestamp } = datasetHeader;
         if (datasetCreationTimestamp == null &&
             !Number.isNaN(Date.parse(datasetHeader.datasetCreationTimestamp))) {
-            throw Error('Invalid creation date.');
+            throw Error('[Validation Error] Invalid creation date.');
         }
 
         const { dataCreator } = datasetHeader;
         if (dataCreator == null || dataCreator.identifiers == null) {
-            throw Error('Data creator is missing.');
+            throw Error('[Validation Error] Data creator is missing.');
         }
 
         const { identifiers } = dataCreator;
         if (!Array.isArray(identifiers) || identifiers.length !== 1) {
-            throw Error('Unexpected format of data creator.');
+            throw Error('[Validation Error] Unexpected format of data creator.');
         }
 
         // Data creator identifier must contain ERC725 and the proper schema
@@ -637,7 +639,7 @@ class OtJsonImporter {
         if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
             ERCIdentifier.validationSchema !== '/schemas/erc725-main' ||
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
-            throw Error('Wrong format of data creator.');
+            throw Error('[Validation Error] Wrong format of data creator.');
         }
         await this.schemaValidator.validateSchema(document, ERCIdentifier.validationSchema);
 
@@ -671,7 +673,7 @@ class OtJsonImporter {
 
         relationsIds.forEach((id) => {
             if (!verticesIds.has(id)) {
-                throw Error('OT-JSON relations not valid');
+                throw Error('[Validation Error] OT-JSON relations not valid');
             }
         });
     }

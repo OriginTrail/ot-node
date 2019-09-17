@@ -66,12 +66,12 @@ class SchemaValidator {
         const { datasetHeader } = document;
         const { dataCreator } = datasetHeader;
         if (dataCreator == null || dataCreator.identifiers == null) {
-            throw Error('Data creator is missing.');
+            throw Error('[Validation Error] Data creator is missing.');
         }
 
         const { identifiers } = dataCreator;
         if (!Array.isArray(identifiers) || identifiers.length !== 1) {
-            throw Error('Unexpected format of data creator.');
+            throw Error('[Validation Error] Unexpected format of data creator.');
         }
 
         // Data creator identifier must contain ERC725 and the proper schema
@@ -83,7 +83,7 @@ class SchemaValidator {
         if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
             ERCIdentifier.validationSchema !== '/schemas/erc725-main' ||
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
-            throw Error('Wrong format of data creator.');
+            throw Error('[Validation Error] Wrong format of data creator.');
         }
 
         const erc725Identity = ERCIdentifier.identifierValue;

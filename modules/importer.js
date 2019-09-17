@@ -280,7 +280,11 @@ class Importer {
                 error: null,
             };
         } catch (error) {
-            this.log.error(`Import error: ${error}.\n${error.stack}`);
+            if (error.toString().match(/^Error: \[Transpilation Error].*/)) {
+                this.log.error(`${error}.`);
+            } else {
+                this.log.error(`Import error: ${error}.\n${error.stack}`);
+            }
             this.remoteControl.importError(`Import error: ${error}.`);
             const errorObject = { type: error.name, message: error.toString(), status: 400 };
             return {
@@ -291,25 +295,10 @@ class Importer {
     }
 
     async importOTJSON(document, encryptedMap) {
-        try {
-            const result = await this._import('OTJSON', {
-                document,
-                encryptedMap,
-            });
-            return {
-                response: result,
-                error: null,
-            };
-        } catch (error) {
-            this.log.error(`Import error: ${error}.`);
-            this.remoteControl.importError(`Import error: ${error}.`);
-            this.notifyError(error);
-            const errorObject = { message: error.toString(), status: error.status };
-            return {
-                response: null,
-                error: errorObject,
-            };
-        }
+        return this._import('OTJSON', {
+            document,
+            encryptedMap,
+        });
     }
 
     async _importOTJSON(data) {
@@ -319,12 +308,29 @@ class Importer {
             encryptedMap,
         } = data;
 
-        const result = await this.otJsonImporter.importFile({
-            document,
-            encryptedMap,
-        });
-
-        return result;
+        try {
+            const result = await this.otJsonImporter.importFile({
+                document,
+                encryptedMap,
+            });
+            return {
+                response: this.afterImport(result),
+                error: null,
+            };
+        } catch (error) {
+            if (error.toString().match(/^Error: \[Validation Error].*/)) {
+                this.log.error(`${error}.`);
+            } else {
+                this.log.error(`Import error: ${error}.\n${error.stack}`);
+            }
+            this.remoteControl.importError(`Import error: ${error}.`);
+            this.notifyError(error);
+            const errorObject = { type: error.name, message: error.toString(), status: 400 };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        }
     }
 }
 

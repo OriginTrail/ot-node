@@ -20,7 +20,7 @@ class EpcisOtJsonTranspiler {
      */
     convertToOTJson(xml) {
         if (xml == null) {
-            throw new Error('XML document cannot be empty');
+            throw new Error('[Transpilation Error] XML document cannot be empty');
         }
 
         const xsdFileBuffer = fs.readFileSync('./modules/transpiler/epcis/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
@@ -28,7 +28,7 @@ class EpcisOtJsonTranspiler {
 
         const validationResult = schema.validate(xml);
         if (validationResult !== null) {
-            throw Error(`Failed to validate schema. ${validationResult}`);
+            throw Error(`[Transpilation Error] Failed to validate schema. ${validationResult}`);
         }
 
         const jsonRaw = xml2js.xml2js(xml, {
