@@ -59,7 +59,7 @@ module.exports = {
             provider: () => new HDWalletProvider(liveMnemonic, `https://mainnet.infura.io/${process.env.MAINNET_ACCESS_KEY}`),
             network_id: 1,
             gas: 6000000, // Gas limit used for deploys
-            gasPrice: 15000000000, // Gas price used for deploys
+            gasPrice: 25000000000, // Gas price used for deploys
             websockets: true,
             skipDryRun: true,
         },
