@@ -185,7 +185,7 @@ class EventEmitter {
                 if (datasetOtJson == null) {
                     data.response.status(204);
                     data.response.send({});
-                } else if (format !== 'otjson' && encryption == null) {
+                } else if (encryption == null) {
                     switch (format) {
                     case 'otjson':
                         formattedDataset = datasetOtJson;
@@ -197,6 +197,7 @@ class EventEmitter {
                     default:
                         throw Error('Invalid response format.');
                     }
+                    data.response.send(formattedDataset);
                 } else {
                     data.response.send(formattedDataset);
                 }
