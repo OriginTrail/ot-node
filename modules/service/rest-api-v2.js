@@ -28,6 +28,255 @@ class RestAPIServiceV2 {
         this.mapping_standards_for_event.set('graph', 'graph');
     }
 
+    /**
+     * API Routes
+     */
+    _exposeAPIRoutes(server) {
+        const {
+            importController, dcController, transport, emitter,
+            blockchain, web3, config,
+        } = this.ctx;
+
+        this._registerNodeInfoRoute(server, false);
+
+        /**
+         * Data import route
+         * @param file - file or text data
+         * @param standard_id - ID of file standard
+         *        (supported standards are listed in this.standards array)
+         */
+        server.post(`/api/${this.version_id}/import`, async (req, res) => {
+            await this._importDataset(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
+            await this._check_for_handler_status(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
+            await this._replicateDataset(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
+            await this._check_for_handler_status(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/export`, async (req, res) => {
+            await this._exportDataset(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
+            await this._check_for_handler_status(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/standards`, async (req, res) => {
+            const msg = [];
+            this.stanards.forEach(standard =>
+                msg.push(standard));
+            res.send({
+                message: msg,
+            });
+        });
+
+        /** Local query routes */
+        // TODO Add remaining query routes
+        /**
+         * Get trail from database
+         * @param QueryObject - ex. {uid: abc:123}
+         */
+        server.get(`/api/${this.version_id}/trail`, (req, res, next) => { });
+
+        /** Network related routes */
+        server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
+            const nodeId = req.params.node_id;
+            this.logger.api(`Get contact node ID ${nodeId}`);
+
+            const result = await transport.getContact(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
+        server.get(`/api/${this.version_id}/network/find/:node_id`, async (req, res) => {
+            const nodeId = req.params.node_id;
+            this.logger.api(`Find node ID ${nodeId}`);
+
+            const result = await transport.findNode(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
+        /**
+         * Temporary route used for HTTP network prototype
+         */
+        server.post(`/api/${this.version_id}/network/send`, (req, res) => {
+            this.logger.api('P2P request received');
+
+            const { type } = req.body;
+            emitter.emit(type, req, res);
+        });
+
+        /** Network queries & read requests, to be refactored */
+
+        server.post(`/api/${this.version_id}/query/network`, (req, res, next) => {
+            this.logger.api('POST: Network query request received.');
+
+            let error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
+            }
+
+            const { query } = req.body;
+            error = RestAPIValidator.validateSearchQuery(query);
+            if (error) {
+                return next(error);
+            }
+
+            emitter.emit('api-network-query', {
+                query,
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/query/network/:query_id`, (req, res) => {
+            this.logger.api('GET: Query for status request received.');
+
+            if (!req.params.query_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param required.',
+                });
+                return;
+            }
+            emitter.emit('api-network-query-status', {
+                id: req.params.query_id,
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/query/:query_id/responses`, (req, res) => {
+            this.logger.api('GET: Local query responses request received.');
+
+            if (!req.params.query_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param query_id is required.',
+                });
+                return;
+            }
+            emitter.emit('api-network-query-responses', {
+                query_id: req.params.query_id,
+                response: res,
+            });
+        });
+
+        server.post(`/api/${this.version_id}/read/network`, (req, res) => {
+            this.logger.api('POST: Network read request received.');
+
+            if (req.body == null || req.body.query_id == null || req.body.reply_id == null
+                || req.body.data_set_id == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            }
+            const { query_id, reply_id, data_set_id } = req.body;
+
+            emitter.emit('api-choose-offer', {
+                query_id,
+                reply_id,
+                data_set_id,
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/consensus/:sender_id`, (req, res) => {
+            this.logger.api('GET: Consensus check events request received.');
+
+            if (req.params.sender_id == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
+
+            emitter.emit('api-consensus-events', {
+                sender_id: req.params.sender_id,
+                response: res,
+            });
+        });
+
+        /**
+         * Payout route
+         * @param Query params: data_set_id
+         */
+        server.get(`/api/${this.version_id}/payout`, (req, res) => {
+            this.logger.api('GET: Payout request received.');
+
+            if (!req.query.offer_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param offer_id is required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-payout', {
+                offerId: req.query.offer_id,
+                response: res,
+            });
+        });
+    }
+
+    /**
+     * Register common info route
+     * @param server - Server instance
+     * @param isBootstrap - Is this a bootstrap node?
+     * @private
+     */
+    _registerNodeInfoRoute(server, isBootstrap) {
+        const {
+            transport,
+            config,
+        } = this.ctx;
+
+        server.get(`/api/${this.version_id}/info`, async (req, res) => {
+            this.logger.api('GET: Node information request received.');
+
+            try {
+                const network = await transport.getNetworkInfo();
+                const basicConfig = {
+                    version: pjson.version,
+                    blockchain: config.blockchain.blockchain_title,
+                    network,
+                    is_bootstrap: isBootstrap,
+                };
+
+                if (!isBootstrap) {
+                    Object.assign(basicConfig, {
+                        node_wallet: config.node_wallet,
+                        erc_725_identity: config.erc725Identity,
+                    });
+                }
+
+                res.status(200);
+                res.send(basicConfig);
+            } catch (error) {
+                this.logger.error(`Failed to process /api/info route. ${error}`);
+                res.status(500);
+                res.send({
+                    message: error,
+                });
+            }
+        });
+    }
+
     async _check_for_handler_status(req, res) {
         const handler_object = await Models.handler_ids.findOne({
             where: {
@@ -52,8 +301,9 @@ class RestAPIServiceV2 {
             status,
         });
     }
+
     // This is hardcoded import in case it is needed to make new importer with this method
-    async _import_handler(req, res) {
+    async _importDataset(req, res) {
         this.logger.api('POST: Import of data request received.');
 
         if (req.body === undefined) {
@@ -126,7 +376,7 @@ class RestAPIServiceV2 {
         }
     }
 
-    async _createOffer(req, res) {
+    async _replicateDataset(req, res) {
         this.logger.api('POST: Replication of imported data request received.');
 
         if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
@@ -182,7 +432,7 @@ class RestAPIServiceV2 {
      * @returns {Promise<void>}
      * @private
      */
-    async _export_v2(req, res) {
+    async _exportDataset(req, res) {
         this.logger.api('POST: Export of data request received.');
 
         if (req.body === undefined) {
@@ -249,51 +499,6 @@ class RestAPIServiceV2 {
         });
 
         this.emitter.emit('api-export-request', { dataset_id, handler_id, standard: this.mapping_standards_for_event.get(standard_id) });
-    }
-    /**
-     * API Routes
-     */
-    _exposeAPIRoutes(server) {
-        const {
-            importController, dcController, transport, emitter,
-            blockchain, web3, config,
-        } = this.ctx;
-
-        server.post(`/api/${this.version_id}/import`, async (req, res) => {
-            await this._import_handler(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
-            await this._createOffer(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/export`, async (req, res) => {
-            await this._export_v2(req, res);
-            /**
-             * ovde ce da dodje docin eksporter
-             */
-        });
-
-        server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/standards`, async (req, res) => {
-            const msg = [];
-            this.stanards.forEach(standard =>
-                msg.push(standard));
-            res.send({
-                message: msg,
-            });
-        });
     }
 }
 

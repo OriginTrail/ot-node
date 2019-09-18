@@ -314,7 +314,7 @@ class Importer {
                 encryptedMap,
             });
             return {
-                response: this.afterImport(result),
+                response: await this.afterImport(result),
                 error: null,
             };
         } catch (error) {
