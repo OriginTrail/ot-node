@@ -50,7 +50,6 @@ class DcOfferFinalizedCommand extends Command {
                 const handler = await Models.handler_ids.findOne({
                     where: { handler_id },
                 });
-                console.log(handler);
                 const handler_data = JSON.parse(handler.data);
                 handler_data.status = 'FINALIZED';
                 handler_data.holders = nodeIdentifiers;

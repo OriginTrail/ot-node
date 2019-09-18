@@ -1083,7 +1083,7 @@ class Ethereum {
      * Get Profile minimum stake
      */
     async getProfileMinimumStake() {
-        this.log.trace('Get replication modifier from blockchain');
+        this.log.trace('Get minimum stake from blockchain');
         return this.profileContract.methods.minimalStake().call({
             from: this.config.wallet_address,
         });
