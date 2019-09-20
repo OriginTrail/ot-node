@@ -7,6 +7,7 @@ const Utilities = require('../../Utilities.js');
 const { TransactionFailedError } = require('../../errors');
 const logger = require('../../logger');
 
+
 class Transactions {
     /**
      * Initialize Transaction object
@@ -15,11 +16,12 @@ class Transactions {
      * @param walletKey Wallet's private in Hex string without 0x at beginning
      * @param log Standard logger object.
      */
-    constructor(web3, wallet, walletKey, log = logger) {
+    constructor(web3, wallet, walletKey, log = logger, allowedGasPrice) {
         this.web3 = web3;
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
         this.logger = log;
+        this.allowedGasPrice = allowedGasPrice;
 
         this.queue = new Queue((async (args, cb) => {
             const { transaction, future } = args;

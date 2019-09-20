@@ -86,7 +86,7 @@
     "async-retry": "^1.2.1",
     "auto-updater": "git+https://github.com/OriginTrail/auto-updater.git#v1.1.0",
     "awilix": "^3.0.9",
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "barcoder": "^2.0.1",
     "better-queue": "^3.8.10",
     "bn.js": "^4.11.8",
