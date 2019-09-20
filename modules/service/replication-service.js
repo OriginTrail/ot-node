@@ -54,34 +54,34 @@ class ReplicationService {
 
                 const litigationKeyPair = Encryption.generateKeyPair(512);
                 const distributionKeyPair = Encryption.generateKeyPair(512);
-                const distEncVertices = [];
 
                 const encryptedDataset =
                     ImportUtilities.encryptDataset(document, litigationKeyPair.privateKey);
 
-                // const litigationBlocks = this.challengeService.getBlocks(document['@graph']);
-                // const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+                const distEncDataset =
+                    ImportUtilities.encryptDataset(document, distributionKeyPair.privateKey);
+
                 const litRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
-                // const distMerkleStructure = new MerkleTree(distEncVertices);
-                const distRootHash = '';
+                const distRootHash = ImportUtilities.calculateDatasetRootHash(distEncDataset['@graph'], distEncDataset['@id'], distEncDataset.datasetHeader.dataCreator);
 
-                // const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-                // const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-                // const distributionEpkChecksum =
-                //  Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
+                const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+                // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+                // TODO Why are there zeroes here
+                const distributionEpkChecksum =
+                 Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
                 const replication = {
                     color,
                     otJson: encryptedDataset,
                     litigationPublicKey: litigationKeyPair.publicKey,
-                    litigationPrivateKey: litigationKeyPair.privateKey,
+                    litigation_private_key: litigationKeyPair.privateKey,
                     distributionPublicKey: distributionKeyPair.publicKey,
                     distributionPrivateKey: distributionKeyPair.privateKey,
-                    distributionEpkChecksum: '',
+                    distributionEpkChecksum,
                     litigationRootHash: litRootHash,
                     distributionRootHash: distRootHash,
-                    distributionEpk: '',
+                    distributionEpk: distEpk,
                 };
 
                 that.replicationCache[internalOfferId][color] = replication;
@@ -153,7 +153,6 @@ class ReplicationService {
         const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
         this.logger.trace(`Loaded replication from file for offer internal ID ${internalOfferId} and color ${color}`);
-        return JSON.parse(await Utilities.fileContents(colorFilePath));
     }
 
     /**

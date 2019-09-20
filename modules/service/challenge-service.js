@@ -8,11 +8,11 @@ class ChallengeService {
 
     /**
      * Generate test challenges for Data Holder
-     * @param numberOfTests Number of challenges to generate.
-     * @param blockSizeBytes Desired block size.
      * @param vertexData Input vertex data.
      * @param startTime Unix timestamp in milliseconds of the start time of the testing period.
      * @param endTime Unix timestamp in milliseconds of the end of the testing period.
+     * @param numberOfTests Number of challenges to generate.
+     * @param blockSizeBytes Desired block size.
      * @returns {Array}
      */
     generateChallenges(
@@ -53,8 +53,10 @@ class ChallengeService {
         for (let i = 0; i < numberOfTests; i += 1) {
             testBlockId = Math.floor(Math.random() * blocks.length);
             tests.push({
-                block_id: testBlockId,
-                answer: blocks[testBlockId],
+                testIndex: testBlockId,
+                objectIndex: blocks[testBlockId].objectIndex,
+                blockIndex: blocks[testBlockId].blockIndex,
+                answer: blocks[testBlockId].data,
                 time: randomIntervals[i],
             });
         }
@@ -83,38 +85,36 @@ class ChallengeService {
      * @param blockSizeBytes Desired size of each block.
      * @returns {Array} of blocks.
      */
-    getBlocks(vertices, blockSizeBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+    getBlocks(vertices, blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
         importUtilities.sort(vertices);
 
         const blocks = [];
         let block = String();
-        let byteIndex = 0;
-        let bytesToCopy = 0;
 
         for (let i = 0; i < vertices.length; i += 1) {
-            const { data } = vertices[i];
-            if (data != null) {
-                for (let j = 0; j < data.length;) {
-                    bytesToCopy = Math.min(blockSizeBytes, blockSizeBytes - byteIndex);
+            const data = JSON.stringify(vertices[i]);
 
-                    const substring = data.substring(j, j + bytesToCopy);
+            if (data) {
+                for (let j = 0; j < data.length; j += blockSizeInBytes) {
+                    block = String();
+
+                    const substring = data.substring(j, j + blockSizeInBytes);
                     block += substring;
-                    byteIndex += substring.length; // May be less than wanted bytesToCopy.
-                    j += substring.length;
-
-                    if (byteIndex === blockSizeBytes) {
-                        blocks.push(block);
-                        block = String();
-                        byteIndex = 0;
-                    }
+                    block = block.padEnd(blockSizeInBytes, '\0');
+                    blocks.push({
+                        data: block,
+                        objectIndex: i,
+                        blockIndex: j / blockSizeInBytes,
+                    });
                 }
             }
         }
 
-        if (block.length > 0) {
-            // Add last node.
-            blocks.push(block);
-        }
+        // Commented because logic was changed, delete if it works.
+        // if (block.length > 0) {
+        //     // Add last node.
+        //     blocks.push(block);
+        // }
         return blocks;
     }
 }

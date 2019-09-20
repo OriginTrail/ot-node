@@ -2,9 +2,9 @@ const Command = require('../command');
 const models = require('../../../models');
 
 /**
- *  Challenges one DH
+ *  Checks one DH's challenge response
  */
-class DCChallengeCommand extends Command {
+class DCChallengeCheckCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -55,7 +55,9 @@ class DCChallengeCommand extends Command {
                     period: 5000,
                     data: {
                         offerId,
-                        blockId: challenge.block_id,
+                        blockId: challenge.test_index,
+                        object_index: challenge.object_index,
+                        blockId: challenge.test_index,
                         dhIdentity,
                         litigationPrivateKey,
                     },
@@ -81,4 +83,4 @@ class DCChallengeCommand extends Command {
     }
 }
 
-module.exports = DCChallengeCommand;
+module.exports = DCChallengeCheckCommand;
