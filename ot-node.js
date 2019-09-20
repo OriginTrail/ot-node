@@ -19,9 +19,10 @@ const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
 const SchemaValidator = require('./modules/validator/schema-validator');
-const GS1Importer = require('./modules/GS1Importer');
-const GS1Utilities = require('./modules/GS1Utilities');
-const WOTImporter = require('./modules/WOTImporter');
+const GS1Utilities = require('./modules/importer/gs1-utilities');
+const OTJsonImporter = require('./modules/importer/ot-json-importer');
+const WOTImporter = require('./modules/importer/wot-importer');
+const EpcisOtJsonTranspiler = require('./modules/transpiler/epcis/epcis-otjson-transpiler');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -41,7 +42,7 @@ const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
-const RestAPIService = require('./modules/service/rest-api-service');
+const RestApiController = require('./modules/service/rest-api-controller');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 
 const pjson = require('./package.json');
@@ -358,9 +359,10 @@ class OTNode {
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
-            gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
+            otJsonImporter: awilix.asClass(OTJsonImporter).singleton(),
+            epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
@@ -372,7 +374,7 @@ class OTNode {
             importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
             challengeService: awilix.asClass(ChallengeService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
@@ -441,9 +443,9 @@ class OTNode {
         }
 
         // Initialise API
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restApiController');
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
@@ -510,7 +512,7 @@ class OTNode {
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
         });
 
         const transport = container.resolve('transport');
@@ -531,9 +533,9 @@ class OTNode {
             approvalService.handleApprovalEvent(eventData);
         });
 
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restApiController');
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);

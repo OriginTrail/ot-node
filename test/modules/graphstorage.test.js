@@ -151,29 +151,27 @@ describe('GraphStorage module', () => {
         assert.containsAllKeys(await myGraphStorage.addEdge(edgeOne), ['_key']);
     });
 
-    it.skip('findVerticesByImportId() ', async () => {
+    it('findVerticesByImportId() ', async () => {
         // precondition
         await myGraphStorage.addVertex(vertexOne);
 
-        await myGraphStorage.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
-            assert.deepEqual(response[0].data, vertexOne.data);
-            assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
-            assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
-            assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
-            assert.deepEqual(response[0].imports, vertexOne.imports);
-            assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        await myGraphStorage.findVerticesByImportId(vertexOne.datasets[0]).then((response) => {
+            const vertexOneCopy = Utilities.copyObject(vertexOne);
+            delete vertexOneCopy.datasets;
+            assert.deepEqual(response[0], vertexOneCopy);
         });
     });
 
     it('call to findVerticesByImportId() from invalid storage should fail', async () => {
         try {
-            const result = await myInvalidGraphStorage.findVerticesByImportId(vertexOne.imports[0]);
+            await myInvalidGraphStorage.findVerticesByImportId(vertexOne.datasets[0]);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
         }
     });
 
-    it('test virtualGraph', async () => {
+    // TODO enable this test when DL2 importer is in place
+    it.skip('test virtualGraph', async () => {
         // precondition
         const responseVertexOne = await myGraphStorage.addVertex(vertexOne);
         const responseVertexTwo = await myGraphStorage.addVertex(vertexTwo);

@@ -26,7 +26,7 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const { offerId, nodeIdentifiers, handler_id } = command.data;
 
         const events = await Models.events.findAll({
             where: {
@@ -46,6 +46,23 @@ class DcOfferFinalizedCommand extends Command {
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Offer ${offerId} finalized`);
+
+                const handler = await Models.handler_ids.findOne({
+                    where: { handler_id },
+                });
+                const handler_data = JSON.parse(handler.data);
+                handler_data.status = 'FINALIZED';
+                handler_data.holders = nodeIdentifiers;
+                await Models.handler_ids.update(
+                    {
+                        data: JSON.stringify(handler_data),
+                        status: 'COMPLETED',
+                    },
+                    {
+                        where: { handler_id },
+                    },
+                );
+
 
                 const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
                 offer.status = 'FINALIZED';
@@ -119,22 +136,22 @@ class DcOfferFinalizedCommand extends Command {
                 replicatedData.litigation_private_key,
             );
 
-            const challenges = this.challengeService.generateChallenges(
-                encryptedVertices, startTime,
-                endTime, this.config.numberOfChallenges,
-            );
-
-            await forEach(challenges, async challenge =>
-                Models.challenges.create({
-                    dh_id: replicatedData.dh_id,
-                    dh_identity: replicatedData.dh_identity,
-                    data_set_id: offer.data_set_id,
-                    block_id: challenge.block_id,
-                    expected_answer: challenge.answer,
-                    start_time: challenge.time,
-                    offer_id: offer.offer_id,
-                    status: 'PENDING',
-                }));
+            // const challenges = this.challengeService.generateChallenges(
+            //     encryptedVertices, startTime,
+            //     endTime, this.config.numberOfChallenges,
+            // );
+            //
+            // await forEach(challenges, async challenge =>
+            //     Models.challenges.create({
+            //         dh_id: replicatedData.dh_id,
+            //         dh_identity: replicatedData.dh_identity,
+            //         data_set_id: offer.data_set_id,
+            //         block_id: challenge.block_id,
+            //         expected_answer: challenge.answer,
+            //         start_time: challenge.time,
+            //         offer_id: offer.offer_id,
+            //         status: 'PENDING',
+            //     }));
         });
     }
 

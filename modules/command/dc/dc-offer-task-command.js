@@ -20,7 +20,7 @@ class DcOfferTaskCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { dataSetId, internalOfferId } = command.data;
+        const { dataSetId, internalOfferId, handler_id } = command.data;
 
         const dataSetIdNorm = Utilities.normalizeHex(dataSetId.toString('hex').padStart(64, '0'));
         const event = await Models.events.findOne({
@@ -56,6 +56,20 @@ class DcOfferTaskCommand extends Command {
             this.remoteControl.offerUpdate({
                 id: internalOfferId,
             });
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+            const handler_data = JSON.parse(handler.data);
+            handler_data.offer_id = offer.offer_id;
+            handler_data.status = 'WAITING_FOR_HOLDERS';
+            await Models.handler_ids.update(
+                {
+                    data: JSON.stringify(handler_data),
+                },
+                {
+                    where: { handler_id },
+                },
+            );
 
             this.logger.trace(`Offer successfully started for data set ${dataSetIdNorm}. Offer ID ${eventOfferId}. Internal offer ID ${internalOfferId}.`);
             return this.continueSequence(this.pack(command.data), command.sequence);

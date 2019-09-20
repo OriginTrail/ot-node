@@ -158,6 +158,7 @@ class DHService {
             tokenAmountPerHolder,
         };
 
+        this.logger.trace('Waiting for DC to receive offer_id before sending replication request...');
         await this.commandExecutor.add({
             name: 'dhOfferHandleCommand',
             delay: 45000,
@@ -852,31 +853,6 @@ class DHService {
         });
 
         return vertices;
-    }
-
-    /**
-     * Returns given import's vertices and edges and decrypt them if needed.
-     *
-     * Method will return object in following format { vertices: [], edges: [] }.
-     * @param dataSetId ID of data-set.
-     * @returns {Promise<*>}
-     */
-    async getImport(dataSetId) {
-        // Check if import came from DH replication or reading replication.
-        const holdingData = await Models.holding_data.find({ where: { data_set_id: dataSetId } });
-
-        const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
-
-        if (dataInfo) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-
-            return { vertices: values[0], edges: values[1] };
-        }
-
-        throw Error(`Cannot find import for data-set ID ${dataSetId}.`);
     }
 
     async listenToBlockchainEvents() {
