@@ -49,16 +49,36 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        await this.blockchain.finalizeOffer(
-            Utilities.normalizeHex(this.config.erc725Identity),
-            offerId,
-            new BN(solution.shift, 10),
-            confirmations[0],
-            confirmations[1],
-            confirmations[2],
-            colors,
-            nodeIdentifiers,
-        );
+        let finalizeOfferSent = false;
+        do {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await this.blockchain.finalizeOffer(
+                    Utilities.normalizeHex(this.config.erc725Identity),
+                    offerId,
+                    new BN(solution.shift, 10),
+                    confirmations[0],
+                    confirmations[1],
+                    confirmations[2],
+                    colors,
+                    nodeIdentifiers,
+                );
+                finalizeOfferSent = true;
+            } catch (error) {
+                if (error.contains('gas price too high')) {
+                    this.logger.info('Gas price too high, delaying call for 30 minutes');
+                    // eslint-disable-next-line no-await-in-loop
+                    await new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve();
+                        }, 30 * 60 * 1000);
+                    });
+                } else {
+                    throw error;
+                }
+            }
+        } while (finalizeOfferSent === false);
+
         return {
             commands: [
                 {

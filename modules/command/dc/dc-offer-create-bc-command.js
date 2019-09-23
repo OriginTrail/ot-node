@@ -33,19 +33,42 @@ class DCOfferCreateBcCommand extends Command {
             litigationIntervalInMinutes,
         } = command.data;
 
-        const result = await this.blockchain.createOffer(
-            Utilities.normalizeHex(this.config.erc725Identity),
-            dataSetId,
-            dataRootHash,
-            redLitigationHash,
-            greenLitigationHash,
-            blueLitigationHash,
-            Utilities.normalizeHex(this.config.identity),
-            holdingTimeInMinutes,
-            tokenAmountPerHolder,
-            dataSizeInBytes,
-            litigationIntervalInMinutes,
-        );
+        let result;
+
+        let createOfferSent = false;
+        do {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                result = await this.blockchain.createOffer(
+                    Utilities.normalizeHex(this.config.erc725Identity),
+                    dataSetId,
+                    dataRootHash,
+                    redLitigationHash,
+                    greenLitigationHash,
+                    blueLitigationHash,
+                    Utilities.normalizeHex(this.config.identity),
+                    holdingTimeInMinutes,
+                    tokenAmountPerHolder,
+                    dataSizeInBytes,
+                    litigationIntervalInMinutes,
+                );
+                createOfferSent = true;
+            } catch (error) {
+                if (error.contains('gas price too high')) {
+                    this.logger.info('Gas price too high, delaying call for 30 minutes');
+                    // eslint-disable-next-line no-await-in-loop
+                    await new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve();
+                        }, 30 * 60 * 1000);
+                    });
+                } else {
+                    throw error;
+                }
+            }
+        } while (createOfferSent === false);
+
+
         this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
