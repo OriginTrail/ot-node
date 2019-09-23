@@ -40,3 +40,9 @@ exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
  * @constant {number} GAS_PRICE_VALIDITY_TIME - gas price maximum validity time
  */
 exports.GAS_PRICE_VALIDITY_TIME = 30 * 60 * 1000; // 30 min
+
+/**
+ *
+ * @constant {number} AVERAGE_GAS_PRICE_MULTIPLIER - gas price multiplier
+ */
+exports.AVERAGE_GAS_PRICE_MULTIPLIER = 1.2; // 30 min
