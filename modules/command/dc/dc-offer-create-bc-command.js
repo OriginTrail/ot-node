@@ -35,38 +35,29 @@ class DCOfferCreateBcCommand extends Command {
 
         let result;
 
-        let createOfferSent = false;
-        do {
-            try {
-                // eslint-disable-next-line no-await-in-loop
-                result = await this.blockchain.createOffer(
-                    Utilities.normalizeHex(this.config.erc725Identity),
-                    dataSetId,
-                    dataRootHash,
-                    redLitigationHash,
-                    greenLitigationHash,
-                    blueLitigationHash,
-                    Utilities.normalizeHex(this.config.identity),
-                    holdingTimeInMinutes,
-                    tokenAmountPerHolder,
-                    dataSizeInBytes,
-                    litigationIntervalInMinutes,
-                );
-                createOfferSent = true;
-            } catch (error) {
-                if (error.contains('gas price too high')) {
-                    this.logger.info('Gas price too high, delaying call for 30 minutes');
-                    // eslint-disable-next-line no-await-in-loop
-                    await new Promise((resolve) => {
-                        setTimeout(() => {
-                            resolve();
-                        }, 30 * 60 * 1000);
-                    });
-                } else {
-                    throw error;
-                }
+
+        try {
+            result = await this.blockchain.createOffer(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                dataSetId,
+                dataRootHash,
+                redLitigationHash,
+                greenLitigationHash,
+                blueLitigationHash,
+                Utilities.normalizeHex(this.config.identity),
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSizeInBytes,
+                litigationIntervalInMinutes,
+            );
+        } catch (error) {
+            if (error.contains('gas price too high')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                Command.repeat();
+            } else {
+                throw error;
             }
-        } while (createOfferSent === false);
+        }
 
 
         this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
@@ -117,6 +108,7 @@ class DCOfferCreateBcCommand extends Command {
         const command = {
             name: 'dcOfferCreateBcCommand',
             delay: 0,
+            period: 30 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);

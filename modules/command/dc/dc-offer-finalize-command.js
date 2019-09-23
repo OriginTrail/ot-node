@@ -49,35 +49,25 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        let finalizeOfferSent = false;
-        do {
-            try {
-                // eslint-disable-next-line no-await-in-loop
-                await this.blockchain.finalizeOffer(
-                    Utilities.normalizeHex(this.config.erc725Identity),
-                    offerId,
-                    new BN(solution.shift, 10),
-                    confirmations[0],
-                    confirmations[1],
-                    confirmations[2],
-                    colors,
-                    nodeIdentifiers,
-                );
-                finalizeOfferSent = true;
-            } catch (error) {
-                if (error.contains('gas price too high')) {
-                    this.logger.info('Gas price too high, delaying call for 30 minutes');
-                    // eslint-disable-next-line no-await-in-loop
-                    await new Promise((resolve) => {
-                        setTimeout(() => {
-                            resolve();
-                        }, 30 * 60 * 1000);
-                    });
-                } else {
-                    throw error;
-                }
+        try {
+            await this.blockchain.finalizeOffer(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                offerId,
+                new BN(solution.shift, 10),
+                confirmations[0],
+                confirmations[1],
+                confirmations[2],
+                colors,
+                nodeIdentifiers,
+            );
+        } catch (error) {
+            if (error.contains('gas price too high')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                Command.repeat();
+            } else {
+                throw error;
             }
-        } while (finalizeOfferSent === false);
+        }
 
         return {
             commands: [
@@ -153,6 +143,7 @@ class DCOfferFinalizeCommand extends Command {
         const command = {
             name: 'dcOfferFinalizeCommand',
             delay: 0,
+            period: 30 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
