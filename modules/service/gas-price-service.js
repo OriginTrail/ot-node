@@ -2,7 +2,7 @@ const constants = require('../constants');
 const Web3 = require('web3');
 
 class GasPriceService {
-    construction(ctx) {
+    constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.axiosService = ctx.axiosService;
