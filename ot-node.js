@@ -29,6 +29,7 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
+const AxiosService = require('./modules/service/axios-service');
 
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
@@ -374,6 +375,7 @@ class OTNode {
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            axiosService: awilix.asClass(AxiosService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
