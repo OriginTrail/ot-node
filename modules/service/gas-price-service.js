@@ -18,7 +18,7 @@ class GasPriceService {
             + constants.GAS_PRICE_VALIDITY_TIME > now) {
             return this.config.gas_price;
         }
-        const axiosResponse = await this.axiosService.getGasPrice()
+        const axiosGasPrice = await this.axiosService.getGasPrice()
             .catch((err) => { this.logger.warn(err); });
 
         const web3 =
@@ -27,13 +27,11 @@ class GasPriceService {
         const web3GasPrice = await web3.eth.getGasPrice()
             .catch((err) => { this.logger.warn(err); });
 
-        if (axiosResponse && web3GasPrice) {
-            const axiosGasPrice = axiosResponse.data.average * 100000000;
-            const gasPrice = (axiosGasPrice > web3GasPrice ? axiosResponse : web3GasPrice);
+        if (axiosGasPrice && web3GasPrice) {
+            const gasPrice = (axiosGasPrice > web3GasPrice ? axiosGasPrice : web3GasPrice);
             this.saveNewGasPriceAndTime(gasPrice);
             return gasPrice;
-        } else if (axiosResponse) {
-            const axiosGasPrice = axiosResponse.data.average * 100000000;
+        } else if (axiosGasPrice) {
             this.saveNewGasPriceAndTime(axiosGasPrice);
             return axiosGasPrice;
         } else if (web3GasPrice) {
