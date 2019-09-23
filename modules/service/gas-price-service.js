@@ -6,6 +6,7 @@ class GasPriceService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.axiosService = ctx.axiosService;
+        this.web3 = ctx.web3;
     }
 
     async getGasPrice() {
@@ -14,17 +15,14 @@ class GasPriceService {
         }
 
         const now = new Date().getTime();
-        if (this.config.gas_price_last_update_time_in_miliseconds
+        if (this.config.gas_price_last_update_timestamp
             + constants.GAS_PRICE_VALIDITY_TIME > now) {
             return this.config.gas_price;
         }
         const axiosGasPrice = await this.axiosService.getGasPrice()
             .catch((err) => { this.logger.warn(err); });
 
-        const web3 =
-            new Web3(new Web3.providers.HttpProvider(this.config.blockchain.rpc_server_url));
-
-        const web3GasPrice = await web3.eth.getGasPrice()
+        const web3GasPrice = await this.web3.eth.getGasPrice()
             .catch((err) => { this.logger.warn(err); });
 
         if (axiosGasPrice && web3GasPrice) {
@@ -43,7 +41,7 @@ class GasPriceService {
 
     saveNewGasPriceAndTime(gasPrice) {
         this.config.blockchain.gas_price = gasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
-        this.config.blockchain.gas_price_last_update_time_in_miliseconds = new Date().getTime();
+        this.config.blockchain.gas_price_last_update_timestamp = new Date().getTime();
     }
 }
 

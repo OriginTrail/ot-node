@@ -458,7 +458,7 @@
       "network_id": "mainnet",
       "gas_limit": "2000000",
       "gas_price": "20000000000",
-      "gas_price_last_update_time_in_miliseconds": "",
+      "gas_price_last_update_timestamp": "",
       "max_allowed_gas_price" : "50000000000",
       "hub_contract_address": "0xa287d7134fb40bef071c932286bd2cd01efccf30",
       "plugins": [
