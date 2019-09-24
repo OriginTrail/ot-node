@@ -33,19 +33,33 @@ class DCOfferCreateBcCommand extends Command {
             litigationIntervalInMinutes,
         } = command.data;
 
-        const result = await this.blockchain.createOffer(
-            Utilities.normalizeHex(this.config.erc725Identity),
-            dataSetId,
-            dataRootHash,
-            redLitigationHash,
-            greenLitigationHash,
-            blueLitigationHash,
-            Utilities.normalizeHex(this.config.identity),
-            holdingTimeInMinutes,
-            tokenAmountPerHolder,
-            dataSizeInBytes,
-            litigationIntervalInMinutes,
-        );
+        let result;
+
+
+        try {
+            result = await this.blockchain.createOffer(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                dataSetId,
+                dataRootHash,
+                redLitigationHash,
+                greenLitigationHash,
+                blueLitigationHash,
+                Utilities.normalizeHex(this.config.identity),
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSizeInBytes,
+                litigationIntervalInMinutes,
+            );
+        } catch (error) {
+            if (error.contains('gas price too high')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                Command.repeat();
+            } else {
+                throw error;
+            }
+        }
+
+
         this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
@@ -94,6 +108,7 @@ class DCOfferCreateBcCommand extends Command {
         const command = {
             name: 'dcOfferCreateBcCommand',
             delay: 0,
+            period: 30 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);

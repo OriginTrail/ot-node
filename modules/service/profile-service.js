@@ -45,26 +45,71 @@ class ProfileService {
             initialTokenAmount = new BN(profileMinStake, 10);
         }
 
-        await this.blockchain.increaseProfileApproval(initialTokenAmount);
+        let approvalIncreased = false;
+        do {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await this.blockchain.increaseProfileApproval(initialTokenAmount);
+                approvalIncreased = true;
+            } catch (error) {
+                if (error.contains('gas price too high')) {
+                    this.logger.warn('Current average gas price is too high, to force profile' +
+                        ' creation increase maxGasPrice in your configuration file and reset the node.' +
+                        ' Retrying in 30 minutes...');
+                    // eslint-disable-next-line no-await-in-loop
+                    await new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve();
+                        }, 30 * 60 * 1000);
+                    });
+                } else {
+                    throw error;
+                }
+            }
+        } while (approvalIncreased === false);
 
         // set empty identity if there is none
         const identity = this.config.erc725Identity ? this.config.erc725Identity : new BN(0, 16);
 
-        if (this.config.management_wallet) {
-            await this.blockchain.createProfile(
-                this.config.management_wallet,
-                this.config.identity,
-                initialTokenAmount, identityExists, identity,
-            );
-        } else {
-            this.logger.important('Management wallet not set. Creating profile with operating wallet only.' +
-                    ' Please set management one.');
-            await this.blockchain.createProfile(
-                this.config.node_wallet,
-                this.config.identity,
-                initialTokenAmount, identityExists, identity,
-            );
-        }
+        let createProfileCalled = false;
+        do {
+            try {
+                if (this.config.management_wallet) {
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.blockchain.createProfile(
+                        this.config.management_wallet,
+                        this.config.identity,
+                        initialTokenAmount, identityExists, identity,
+                    );
+                    createProfileCalled = true;
+                } else {
+                    this.logger.important('Management wallet not set. Creating profile with operating wallet only.' +
+                            ' Please set management one.');
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.blockchain.createProfile(
+                        this.config.node_wallet,
+                        this.config.identity,
+                        initialTokenAmount, identityExists, identity,
+                    );
+                    createProfileCalled = true;
+                }
+            } catch (error) {
+                if (error.contains('gas price too high')) {
+                    this.logger.warn('Current average gas price is too high, to force profile' +
+                        ' creation increase maxGasPrice in your configuration file and reset the node.' +
+                        ' Retrying in 30 minutes...');
+                    // eslint-disable-next-line no-await-in-loop
+                    await new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve();
+                        }, 30 * 60 * 1000);
+                    });
+                } else {
+                    throw error;
+                }
+            }
+        } while (createProfileCalled === false);
+
         if (!identityExists) {
             const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet));
             if (event) {

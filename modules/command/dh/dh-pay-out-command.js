@@ -45,9 +45,18 @@ class DhPayOutCommand extends Command {
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this._printBalances(blockchainIdentity);
-        await this.blockchain.payOut(blockchainIdentity, offerId);
-        this.logger.important(`Payout for offer ${offerId} successfully completed.`);
-        await this._printBalances(blockchainIdentity);
+        try {
+            await this.blockchain.payOut(blockchainIdentity, offerId);
+            this.logger.important(`Payout for offer ${offerId} successfully completed.`);
+            await this._printBalances(blockchainIdentity);
+        } catch (error) {
+            if (error.contains('gas price too high')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                Command.repeat();
+            } else {
+                throw error;
+            }
+        }
         return Command.empty();
     }
 
@@ -77,6 +86,7 @@ class DhPayOutCommand extends Command {
         const command = {
             name: 'dhPayOutCommand',
             delay: 0,
+            period: 30 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
