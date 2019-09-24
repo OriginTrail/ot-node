@@ -153,10 +153,11 @@ class Blockchain {
      * Pay out tokens
      * @param blockchainIdentity
      * @param offerId
+     * @param urgent
      * @returns {Promise}
      */
-    payOut(blockchainIdentity, offerId) {
-        return this.blockchain.payOut(blockchainIdentity, offerId);
+    payOut(blockchainIdentity, offerId, urgent) {
+        return this.blockchain.payOut(blockchainIdentity, offerId, urgent);
     }
 
     /**

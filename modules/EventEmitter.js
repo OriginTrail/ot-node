@@ -504,7 +504,7 @@ class EventEmitter {
         });
 
         this._on('api-payout', async (data) => {
-            const { offerId } = data;
+            const { offerId, urgent } = data;
 
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
@@ -513,6 +513,7 @@ class EventEmitter {
                     name: 'dhPayOutCommand',
                     delay: 0,
                     data: {
+                        urgent,
                         offerId,
                     },
                 });

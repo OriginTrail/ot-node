@@ -434,6 +434,7 @@ class Ethereum {
      * Pay out tokens
      * @param blockchainIdentity
      * @param offerId
+     * @param urgent
      * @returns {Promise}
      */
     async payOut(blockchainIdentity, offerId, urgent) {

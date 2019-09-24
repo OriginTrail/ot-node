@@ -23,6 +23,7 @@ class DhPayOutCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            urgent,
         } = command.data;
 
         const bid = await Models.bids.findOne({
@@ -46,7 +47,7 @@ class DhPayOutCommand extends Command {
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this._printBalances(blockchainIdentity);
         try {
-            await this.blockchain.payOut(blockchainIdentity, offerId);
+            await this.blockchain.payOut(blockchainIdentity, offerId, urgent);
             this.logger.important(`Payout for offer ${offerId} successfully completed.`);
             await this._printBalances(blockchainIdentity);
         } catch (error) {
