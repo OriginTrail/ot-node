@@ -461,6 +461,7 @@ class EventEmitter {
                         dataSizeInBytes: dataSize,
                         dataRootHash: root_hash,
                         response: data.response,
+                        urgent: data.urgent,
                     });
                 } else {
                     data.response.status(201);
@@ -535,6 +536,7 @@ class EventEmitter {
                 holdingTimeInMinutes,
                 tokenAmountPerHolder,
                 litigationIntervalInMinutes,
+                urgent,
             } = data;
 
             let {
@@ -566,7 +568,7 @@ class EventEmitter {
 
                 const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes,
+                    dataSizeInBytes, litigationIntervalInMinutes, urgent,
                 );
 
                 data.response.status(201);

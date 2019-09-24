@@ -30,6 +30,7 @@ class DCOfferFinalizeCommand extends Command {
         const {
             offerId,
             solution,
+            urgent,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -59,6 +60,7 @@ class DCOfferFinalizeCommand extends Command {
                 confirmations[2],
                 colors,
                 nodeIdentifiers,
+                urgent,
             );
         } catch (error) {
             if (error.contains('gas price too high')) {

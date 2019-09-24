@@ -31,6 +31,7 @@ class DCOfferCreateBcCommand extends Command {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            urgent,
         } = command.data;
 
         let result;
@@ -49,6 +50,7 @@ class DCOfferCreateBcCommand extends Command {
                 tokenAmountPerHolder,
                 dataSizeInBytes,
                 litigationIntervalInMinutes,
+                urgent,
             );
         } catch (error) {
             if (error.contains('gas price too high')) {

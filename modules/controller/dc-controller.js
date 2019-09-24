@@ -42,6 +42,7 @@ class DCController {
                 tokenAmountPerHolder: req.body.token_amount_per_holder,
                 litigationIntervalInMinutes: req.body.litigation_interval_in_minutes,
                 response: res,
+                urgent: req.body.urgent,
             };
             this.emitter.emit('api-create-offer', queryObject);
         } else {
