@@ -45,7 +45,6 @@ class Web3Mock {
 }
 
 describe('Gas price service test', () => {
-
     beforeEach('Setup container', async () => {
         // Create the container and set the injectionMode to PROXY (which is also the default).
         process.env.NODE_ENV = 'mariner';
