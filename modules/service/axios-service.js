@@ -2,7 +2,7 @@ const axios = require('axios');
 
 class AxiosService {
     async getGasPrice() {
-        const response = axios.get('https://ethgasstation.info/json/ethgasAPI.json')
+        const response = await axios.get('https://ethgasstation.info/json/ethgasAPI.json')
             .catch((err) => {
                 this.log.warn(err);
                 return undefined;
