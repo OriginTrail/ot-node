@@ -51,12 +51,11 @@ class DhPayOutCommand extends Command {
             this.logger.important(`Payout for offer ${offerId} successfully completed.`);
             await this._printBalances(blockchainIdentity);
         } catch (error) {
-            if (error.contains('gas price too high')) {
+            if (error.message.includes('Gas price higher than maximum allowed price')) {
                 this.logger.info('Gas price too high, delaying call for 30 minutes');
-                Command.repeat();
-            } else {
-                throw error;
+                return Command.repeat();
             }
+            throw error;
         }
         return Command.empty();
     }

@@ -52,9 +52,9 @@ class ProfileService {
                 await this.blockchain.increaseProfileApproval(initialTokenAmount);
                 approvalIncreased = true;
             } catch (error) {
-                if (error.contains('gas price too high')) {
+                if (error.message.includes('Gas price higher than maximum allowed price')) {
                     this.logger.warn('Current average gas price is too high, to force profile' +
-                        ' creation increase maxGasPrice in your configuration file and reset the node.' +
+                        ' creation increase max_allowed_gas_price in your configuration file and reset the node.' +
                         ' Retrying in 30 minutes...');
                     // eslint-disable-next-line no-await-in-loop
                     await new Promise((resolve) => {
@@ -94,9 +94,9 @@ class ProfileService {
                     createProfileCalled = true;
                 }
             } catch (error) {
-                if (error.contains('gas price too high')) {
+                if (error.message.includes('Gas price higher than maximum allowed price')) {
                     this.logger.warn('Current average gas price is too high, to force profile' +
-                        ' creation increase maxGasPrice in your configuration file and reset the node.' +
+                        ' creation increase max_allowed_gas_price in your configuration file and reset the node.' +
                         ' Retrying in 30 minutes...');
                     // eslint-disable-next-line no-await-in-loop
                     await new Promise((resolve) => {

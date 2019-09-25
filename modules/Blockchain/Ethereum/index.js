@@ -1201,7 +1201,7 @@ class Ethereum {
      */
     async getGasPrice(urgent = false) {
         const gasPrice = await this.gasPriceService.getGasPrice();
-        if (gasPrice > this.config.blockchain.max_allowed_gas_price && !urgent) {
+        if (gasPrice > this.config.max_allowed_gas_price && !urgent) {
             throw new Error('Gas price higher than maximum allowed price');
         } else {
             return gasPrice;
