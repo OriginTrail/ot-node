@@ -3,6 +3,7 @@ const BN = require('bn.js');
 const path = require('path');
 
 const Utilities = require('../Utilities');
+const constants = require('../constants');
 
 class ProfileService {
     /**
@@ -60,7 +61,7 @@ class ProfileService {
                     await new Promise((resolve) => {
                         setTimeout(() => {
                             resolve();
-                        }, 30 * 60 * 1000);
+                        }, constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS);
                     });
                 } else {
                     throw error;
@@ -102,7 +103,7 @@ class ProfileService {
                     await new Promise((resolve) => {
                         setTimeout(() => {
                             resolve();
-                        }, 30 * 60 * 1000);
+                        }, constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS);
                     });
                 } else {
                     throw error;

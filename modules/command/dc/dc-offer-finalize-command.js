@@ -5,6 +5,8 @@ const Utilities = require('../../Utilities');
 
 const Models = require('../../../models/index');
 
+const constants = require('../../constants');
+
 const { Op } = Models.Sequelize;
 
 
@@ -144,7 +146,7 @@ class DCOfferFinalizeCommand extends Command {
         const command = {
             name: 'dcOfferFinalizeCommand',
             delay: 0,
-            period: 30 * 60 * 1000,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);

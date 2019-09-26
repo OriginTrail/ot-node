@@ -2,6 +2,7 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Starts token withdrawal operation
@@ -86,7 +87,7 @@ class DhPayOutCommand extends Command {
         const command = {
             name: 'dhPayOutCommand',
             delay: 0,
-            period: 30 * 60 * 1000,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);

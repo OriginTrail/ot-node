@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
 const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 /**
  * Creates offer on blockchain
@@ -109,7 +110,7 @@ class DCOfferCreateBcCommand extends Command {
         const command = {
             name: 'dcOfferCreateBcCommand',
             delay: 0,
-            period: 30 * 60 * 1000,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);
