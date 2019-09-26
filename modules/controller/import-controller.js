@@ -46,6 +46,7 @@ class ImportController {
                     content,
                     contact: req.contact,
                     replicate: req.body.replicate,
+                    urgent: req.body.urgent,
                     response: res,
                 };
                 this.emitter.emit(`api-${importtype}-import-request`, queryObject);
