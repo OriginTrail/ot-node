@@ -28,7 +28,7 @@ describe('Utilities module', () => {
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
                     'dc_token_amount_per_holder', 'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes', 'dh_min_token_price',
                     'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval', 'dh_max_data_set_size', 'max_allowed_gas_price'],
-                `Some config items are missing in config for environment '${environment}'`
+                `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
                 config.database, ['provider', 'username', 'password', 'database', 'port', 'host', 'max_path_length'],
