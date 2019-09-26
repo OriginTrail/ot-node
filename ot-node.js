@@ -532,6 +532,8 @@ class OTNode {
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            axiosService: awilix.asClass(AxiosService).singleton(),
+            gasPriceService: awilix.asClass(GasPriceService).singleton(),
         });
 
         const transport = container.resolve('transport');
