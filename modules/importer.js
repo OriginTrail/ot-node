@@ -211,7 +211,7 @@ class Importer {
      * @param result  Import result
      * @return {Promise<>}
      */
-    async afterImport(result, unpack = false) {
+    afterImport(result, unpack = false) {
         this.log.info('[DC] Import complete');
         this.remoteControl.importRequestData();
         let {
@@ -286,6 +286,7 @@ class Importer {
                 this.log.error(`Import error: ${error}.\n${error.stack}`);
             }
             this.remoteControl.importError(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { type: error.name, message: error.toString(), status: 400 };
             return {
                 response: null,
@@ -314,7 +315,7 @@ class Importer {
                 encryptedMap,
             });
             return {
-                response: await this.afterImport(result),
+                response: this.afterImport(result),
                 error: null,
             };
         } catch (error) {
