@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         blue_litigation_hash: DataTypes.STRING,
         green_litigation_hash: DataTypes.STRING,
         task: DataTypes.STRING,
+        urgent: DataTypes.BOOLEAN,
         status: DataTypes.STRING,
         global_status: DataTypes.STRING,
         message: DataTypes.STRING,

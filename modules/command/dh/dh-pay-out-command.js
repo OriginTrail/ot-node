@@ -2,8 +2,7 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 
 const Models = require('../../../models/index');
-
-const DELAY_ON_FAIL_IN_MILLS = 5 * 60 * 1000;
+const constants = require('../../constants');
 
 /**
  * Starts token withdrawal operation
@@ -25,6 +24,7 @@ class DhPayOutCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            urgent,
         } = command.data;
 
         const bid = await Models.bids.findOne({
@@ -48,34 +48,16 @@ class DhPayOutCommand extends Command {
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this._printBalances(blockchainIdentity);
-        await this.blockchain.payOut(blockchainIdentity, offerId);
-        this.logger.important(`Payout for offer ${offerId} successfully completed.`);
-        await this._printBalances(blockchainIdentity);
-        return Command.empty();
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
-        const {
-            offerId,
-            viaAPI,
-        } = command.data;
-
-        if (!viaAPI) {
-            this.logger.warn(`Rescheduling failed payout for offer ${offerId}. Schedule delay ${DELAY_ON_FAIL_IN_MILLS} milliseconds`);
-            return {
-                commands: [
-                    {
-                        name: 'dhPayOutCommand',
-                        data: command.data,
-                        delay: DELAY_ON_FAIL_IN_MILLS,
-                    },
-                ],
-            };
+        try {
+            await this.blockchain.payOut(blockchainIdentity, offerId, urgent);
+            this.logger.important(`Payout for offer ${offerId} successfully completed.`);
+            await this._printBalances(blockchainIdentity);
+        } catch (error) {
+            if (error.message.includes('Gas price higher than maximum allowed price')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                return Command.repeat();
+            }
+            throw error;
         }
         return Command.empty();
     }
@@ -106,6 +88,7 @@ class DhPayOutCommand extends Command {
         const command = {
             name: 'dhPayOutCommand',
             delay: 0,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);

@@ -18,12 +18,14 @@ class Ethereum {
         web3,
         logger,
         appState,
+        gasPriceService,
     }) {
         // Loading Web3
         this.appState = appState;
         this.emitter = emitter;
         this.web3 = web3;
         this.log = logger;
+        this.gasPriceService = gasPriceService;
 
         this.config = {
             wallet_address: config.node_wallet,
@@ -379,16 +381,17 @@ class Ethereum {
      * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @return {Promise<any>}
      */
-    createProfile(
+    async createProfile(
         managementWallet,
         profileNodeId,
         initialBalance,
         isSender725,
         blockchainIdentity,
     ) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
         this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
@@ -407,10 +410,11 @@ class Ethereum {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseProfileApproval(tokenAmountIncrease) {
+    async increaseProfileApproval(tokenAmountIncrease) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.tokenContractAddress,
         };
         this.log.trace(`increaseProfileApproval(amount=${tokenAmountIncrease})`);
@@ -423,10 +427,11 @@ class Ethereum {
      * @param amount
      * @return {Promise<any>}
      */
-    startTokenWithdrawal(blockchainIdentity, amount) {
+    async startTokenWithdrawal(blockchainIdentity, amount) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
         this.log.trace(`startTokenWithdrawal(blockchainIdentity=${blockchainIdentity}, amount=${amount}`);
@@ -438,10 +443,11 @@ class Ethereum {
      * @param blockchainIdentity
      * @return {Promise<any>}
      */
-    withdrawTokens(blockchainIdentity) {
+    async withdrawTokens(blockchainIdentity) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
         this.log.trace(`withdrawTokens(blockchainIdentity=${blockchainIdentity}`);
@@ -453,10 +459,11 @@ class Ethereum {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseBiddingApproval(tokenAmountIncrease) {
+    async increaseBiddingApproval(tokenAmountIncrease) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.tokenContractAddress,
         };
         this.log.notify('Increasing bidding approval');
@@ -464,26 +471,54 @@ class Ethereum {
     }
 
     /**
-     * Answers litigation from DH side
-     * @param offerId - Offer ID
-     * @param holderIdentity - DH identity
-     * @param answer - Litigation answer
+     * DC initiates litigation on DH wrong challenge answer
+     * @param importId
+     * @param dhWallet
+     * @param blockId
+     * @param merkleProof
      * @return {Promise<any>}
      */
-    answerLitigation(offerId, holderIdentity, answer) {
+    async initiateLitigation(importId, dhWallet, blockId, merkleProof) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.litigationContractAddress,
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.escrowContractAddress,
         };
-        this.log.trace(`answerLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, answer=${answer})`);
+        this.log.important(`Initiates litigation for import ${importId} and DH ${dhWallet}`);
         return this.transactions.queueTransaction(
-            this.litigationContractAbi,
+            this.escrowContractAbi,
+            'initiateLitigation',
+            [
+                importId,
+                dhWallet,
+                blockId,
+                merkleProof,
+            ],
+            options,
+        );
+    }
+
+    /**
+     * Answers litigation from DH side
+     * @param importId
+     * @param requestedData
+     * @return {Promise<any>}
+     */
+    async answerLitigation(importId, requestedData) {
+        const gasPrice = await this.getGasPrice();
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.escrowContractAddress,
+        };
+        this.log.important(`Answer litigation for import ${importId}`);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
             'answerLitigation',
             [
-                offerId,
-                holderIdentity,
-                answer,
+                importId,
+                requestedData,
             ],
             options,
         );
@@ -496,10 +531,11 @@ class Ethereum {
      * @param proofData
      * @return {Promise<any>}
      */
-    proveLitigation(importId, dhWallet, proofData) {
+    async proveLitigation(importId, dhWallet, proofData) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.escrowContractAddress,
         };
         this.log.important(`Prove litigation for import ${importId} and DH ${dhWallet}`);
@@ -519,20 +555,15 @@ class Ethereum {
      * Pay out tokens
      * @param blockchainIdentity
      * @param offerId
+     * @param urgent
      * @returns {Promise}
      */
-    async payOut(blockchainIdentity, offerId) {
-        let contractAddress = this.holdingContractAddress;
-
-        const offer = await this.getOffer(offerId);
-        if (Utilities.isZeroHash(offer['0'])) {
-            contractAddress = this.oldHoldingContractAddress;
-        }
-
+    async payOut(blockchainIdentity, offerId, urgent) {
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: contractAddress,
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.holdingContractAddress,
         };
         this.log.trace(`payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
         return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', [blockchainIdentity, offerId], options);
@@ -542,7 +573,7 @@ class Ethereum {
      * Creates offer for the data storing on the Ethereum blockchain.
      * @returns {Promise<any>} Return choose start-time.
      */
-    createOffer(
+    async createOffer(
         blockchainIdentity,
         dataSetId,
         dataRootHash,
@@ -554,10 +585,12 @@ class Ethereum {
         tokenAmountPerHolder,
         dataSizeInBytes,
         litigationIntervalInMinutes,
+        urgent,
     ) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.holdingContractAddress,
         };
         this.log.trace(`createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
@@ -594,18 +627,13 @@ class Ethereum {
         encryptionType,
         holders,
         parentIdentity,
+        urgent,
     ) {
-        let contractAddress = this.holdingContractAddress;
-
-        const offer = await this.getOffer(offerId);
-        if (Utilities.isZeroHash(offer['0'])) {
-            contractAddress = this.oldHoldingContractAddress;
-        }
-
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: contractAddress,
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.holdingContractAddress,
         };
 
         this.log.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders}), ${parentIdentity}`);
@@ -905,10 +933,11 @@ class Ethereum {
      * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(importId, dhNodeId) {
+    async addBid(importId, dhNodeId) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.biddingContractAddress,
         };
 
@@ -927,9 +956,10 @@ class Ethereum {
      * @returns {Promise<any>}
      */
     async depositTokens(blockchainIdentity, amount) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
 
@@ -961,10 +991,11 @@ class Ethereum {
         return this.readingContract.methods.purchased_data(importId, wallet).call();
     }
 
-    initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
+    async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -975,10 +1006,11 @@ class Ethereum {
         );
     }
 
-    sendCommitment(importId, dvWallet, commitment) {
+    async sendCommitment(importId, dvWallet, commitment) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -989,10 +1021,11 @@ class Ethereum {
         );
     }
 
-    initiateDispute(importId, dhWallet) {
+    async initiateDispute(importId, dhWallet) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1003,10 +1036,11 @@ class Ethereum {
         );
     }
 
-    confirmPurchase(importId, dhWallet) {
+    async confirmPurchase(importId, dhWallet) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1017,10 +1051,11 @@ class Ethereum {
         );
     }
 
-    cancelPurchase(importId, correspondentWallet, senderIsDh) {
+    async cancelPurchase(importId, correspondentWallet, senderIsDh) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1031,13 +1066,14 @@ class Ethereum {
         );
     }
 
-    sendProofData(
+    async sendProofData(
         importId, dvWallet, checksumLeft, checksumRight, checksumHash,
         randomNumber1, randomNumber2, decryptionKey, blockIndex,
     ) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1052,9 +1088,10 @@ class Ethereum {
     }
 
     async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1065,10 +1102,11 @@ class Ethereum {
         );
     }
 
-    payOutForReading(importId, dvWallet) {
+    async payOutForReading(importId, dvWallet, urgent) {
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1176,10 +1214,11 @@ class Ethereum {
      * @param {string} - erc725identity
      * @param {string} - managementWallet
      */
-    transferProfile(erc725identity, managementWallet) {
+    async transferProfile(erc725identity, managementWallet) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
 
@@ -1213,75 +1252,29 @@ class Ethereum {
     }
 
     /**
-     * Get offer by offer ID
-     * @param offerId - Offer ID
-     * @return {Promise<any>}
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
      */
-    async getOffer(offerId) {
-        this.log.trace(`getOffer(offerId=${offerId})`);
-        return this.holdingStorageContract.methods.offer(offerId).call({
-            from: this.config.wallet_address,
-        });
-    }
-
-    /**
-     * Get holders for offer ID
-     * @param offerId - Offer ID
-     * @param holderIdentity - Holder identity
-     * @return {Promise<any>}
-     */
-    async getHolder(offerId, holderIdentity) {
-        this.log.trace(`getHolder(offerId=${offerId}, holderIdentity=${holderIdentity})`);
-        return this.holdingStorageContract.methods.holder(offerId, holderIdentity).call({
-            from: this.config.wallet_address,
-        });
-    }
-
-    /**
-     * Initiate litigation for the particular DH
-     * @param offerId - Offer ID
-     * @param holderIdentity - DH identity
-     * @param litigatorIdentity - Litigator identity
-     * @param requestedDataIndex - Block ID
-     * @param hashArray - Merkle proof
-     * @return {Promise<any>}
-     */
-    async initiateLitigation(
-        offerId, holderIdentity, litigatorIdentity,
-        requestedDataIndex, hashArray,
+    async payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+        urgent,
     ) {
+        const gasLimit = offerIds.length * 200000;
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.litigationContractAddress,
+            gasLimit,
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.holdingContractAddress,
         };
-
-        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedDataIndex=${requestedDataIndex}, hashArray=${hashArray})`);
+        this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
         return this.transactions.queueTransaction(
-            this.litigationContractAbi, 'initiateLitigation',
-            [offerId, holderIdentity, litigatorIdentity, requestedDataIndex, hashArray], options,
-        );
-    }
-
-    /**
-     * Completes litigation for the particular DH
-     * @param offerId - Offer ID
-     * @param holderIdentity - DH identity
-     * @param challengerIdentity - DC identity
-     * @param proofData - answer
-     * @return {Promise<void>}
-     */
-    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData) {
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.litigationContractAddress,
-        };
-
-        this.log.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData})`);
-        return this.transactions.queueTransaction(
-            this.litigationContractAbi, 'completeLitigation',
-            [offerId, holderIdentity, challengerIdentity, proofData], options,
+            this.holdingContractAbi, 'payOutMultiple',
+            [
+                blockchainIdentity,
+                offerIds,
+            ],
+            options,
         );
     }
 
@@ -1323,28 +1316,6 @@ class Ethereum {
         this.log.trace(`getLitigationReplacementTask(offerId=${offerId}, holderIdentity=${holderIdentity})`);
         return this.litigationStorageContract
             .methods.getLitigationReplacementTask(offerId, holderIdentity).call({
-                from: this.config.wallet_address,
-            });
-    }
-
-    /**
-     * Get staked amount for the holder
-     */
-    async getHolderStakedAmount(offerId, holderIdentity) {
-        this.log.trace(`getHolderStakedAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
-        return this.holdingStorageContract.methods
-            .getHolderStakedAmount(offerId, holderIdentity).call({
-                from: this.config.wallet_address,
-            });
-    }
-
-    /**
-     * Get paid amount for the holder
-     */
-    async getHolderPaidAmount(offerId, holderIdentity) {
-        this.log.trace(`getHolderPaidAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
-        return this.holdingStorageContract.methods
-            .getHolderPaidAmount(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
             });
     }
@@ -1399,6 +1370,54 @@ class Ethereum {
             }
         });
         return totalAmount.toString();
+    }
+
+    /**
+     * Get offer by offer ID
+     * @param offerId - Offer ID
+     * @return {Promise<any>}
+     */
+    async getOffer(offerId) {
+        this.log.trace(`getOffer(offerId=${offerId})`);
+        return this.holdingStorageContract.methods.offer(offerId).call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Get staked amount for the holder
+     */
+    async getHolderStakedAmount(offerId, holderIdentity) {
+        this.log.trace(`getHolderStakedAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderStakedAmount(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    /**
+     * Get paid amount for the holder
+     */
+    async getHolderPaidAmount(offerId, holderIdentity) {
+        this.log.trace(`getHolderPaidAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods
+            .getHolderPaidAmount(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    /**
+     * Returns gas price, throws error if not urgent and gas price higher than maximum allowed price
+     * @param urgent
+     * @returns {Promise<*|number>}
+     */
+    async getGasPrice(urgent = false) {
+        const gasPrice = await this.gasPriceService.getGasPrice();
+        if (gasPrice > this.config.max_allowed_gas_price && !urgent) {
+            throw new Error('Gas price higher than maximum allowed price');
+        } else {
+            return gasPrice;
+        }
     }
 }
 
