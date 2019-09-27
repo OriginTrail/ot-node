@@ -29,6 +29,7 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
+const AxiosService = require('./modules/service/axios-service');
 
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
@@ -44,6 +45,7 @@ const APIUtilities = require('./modules/utility/api-utilities');
 const RestAPIService = require('./modules/service/rest-api-service');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
+const GasPriceService = require('./modules/service/gas-price-service');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -374,6 +376,8 @@ class OTNode {
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            axiosService: awilix.asClass(AxiosService).singleton(),
+            gasPriceService: awilix.asClass(GasPriceService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -528,6 +532,8 @@ class OTNode {
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            axiosService: awilix.asClass(AxiosService).singleton(),
+            gasPriceService: awilix.asClass(GasPriceService).singleton(),
         });
 
         const transport = container.resolve('transport');
