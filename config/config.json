@@ -56,7 +56,7 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
-      "hub_contract_address": "0x056f4DA796C00766061158A01cE068D912be9c89",
+      "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
       "plugins": [
         {
           "enabled": false,
@@ -163,7 +163,7 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
-      "hub_contract_address": "0x16d553B9765b6Aa9fE7C45Dfa1a1839fD88DD7bc",
+      "hub_contract_address": "0xA272797Bfc59946388D89CdB6821dEeC927E0E36",
       "plugins": [
         {
           "enabled": false,
@@ -377,7 +377,7 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
-      "hub_contract_address": "0x0e5995FE34BfC9DB7a31fa318f7f1256Cf28FfCa",
+      "hub_contract_address": "0x53F5b26EB263B96ffA83468F78DA738a3961644A",
       "plugins": [
         {
           "enabled": false,
@@ -428,7 +428,7 @@
     "dc_choose_time": 600000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": true
+    "commandExecutorVerboseLoggingEnabled": false
   },
   "mariner": {
     "identity": null,
@@ -538,6 +538,6 @@
     "dc_choose_time": 600000,
     "requireApproval": true,
     "litigationEnabled": false,
-    "commandExecutorVerboseLoggingEnabled": true
+    "commandExecutorVerboseLoggingEnabled": false
   }
 }

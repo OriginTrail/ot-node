@@ -54,6 +54,9 @@ class DCOfferFinalizeCommand extends Command {
         }
 
         try {
+            const parentIdentity = this.config.parentIdentity ?
+                Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
+
             await this.blockchain.finalizeOffer(
                 Utilities.normalizeHex(this.config.erc725Identity),
                 offerId,
@@ -63,6 +66,7 @@ class DCOfferFinalizeCommand extends Command {
                 confirmations[2],
                 colors,
                 nodeIdentifiers,
+                parentIdentity,
                 urgent,
             );
         } catch (error) {

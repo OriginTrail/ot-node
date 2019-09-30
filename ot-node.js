@@ -374,6 +374,7 @@ class OTNode {
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restAPIService: awilix.asClass(RestAPIService).singleton(),
+            challengeService: awilix.asClass(ChallengeService).singleton(),
             axiosService: awilix.asClass(AxiosService).singleton(),
             gasPriceService: awilix.asClass(GasPriceService).singleton(),
         });

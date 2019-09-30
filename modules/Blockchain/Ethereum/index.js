@@ -471,54 +471,27 @@ class Ethereum {
     }
 
     /**
-     * DC initiates litigation on DH wrong challenge answer
-     * @param importId
-     * @param dhWallet
-     * @param blockId
-     * @param merkleProof
-     * @return {Promise<any>}
-     */
-    async initiateLitigation(importId, dhWallet, blockId, merkleProof) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.escrowContractAddress,
-        };
-        this.log.important(`Initiates litigation for import ${importId} and DH ${dhWallet}`);
-        return this.transactions.queueTransaction(
-            this.escrowContractAbi,
-            'initiateLitigation',
-            [
-                importId,
-                dhWallet,
-                blockId,
-                merkleProof,
-            ],
-            options,
-        );
-    }
-
-    /**
      * Answers litigation from DH side
-     * @param importId
-     * @param requestedData
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param answer - Litigation answer
      * @return {Promise<any>}
      */
-    async answerLitigation(importId, requestedData) {
+    async answerLitigation(offerId, holderIdentity, answer) {
         const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.escrowContractAddress,
+            to: this.litigationContractAddress,
         };
-        this.log.important(`Answer litigation for import ${importId}`);
+        this.log.trace(`answerLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, answer=${answer})`);
         return this.transactions.queueTransaction(
-            this.escrowContractAbi,
+            this.litigationContractAbi,
             'answerLitigation',
             [
-                importId,
-                requestedData,
+                offerId,
+                holderIdentity,
+                answer,
             ],
             options,
         );
@@ -1275,6 +1248,67 @@ class Ethereum {
                 offerIds,
             ],
             options,
+        );
+    }
+
+    /**
+     * Get holders for offer ID
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getHolder(offerId, holderIdentity) {
+        this.log.trace(`getHolder(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods.holder(offerId, holderIdentity).call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Initiate litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param litigatorIdentity - Litigator identity
+     * @param requestedDataIndex - Block ID
+     * @param hashArray - Merkle proof
+     * @return {Promise<any>}
+     */
+    async initiateLitigation(
+        offerId, holderIdentity, litigatorIdentity,
+        requestedDataIndex, hashArray,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.litigationContractAddress,
+        };
+
+        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedDataIndex=${requestedDataIndex}, hashArray=${hashArray})`);
+        return this.transactions.queueTransaction(
+            this.litigationContractAbi, 'initiateLitigation',
+            [offerId, holderIdentity, litigatorIdentity, requestedDataIndex, hashArray], options,
+        );
+    }
+
+    /**
+     * Completes litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param challengerIdentity - DC identity
+     * @param proofData - answer
+     * @return {Promise<void>}
+     */
+    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.litigationContractAddress,
+        };
+
+        this.log.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData})`);
+        return this.transactions.queueTransaction(
+            this.litigationContractAbi, 'completeLitigation',
+            [offerId, holderIdentity, challengerIdentity, proofData], options,
         );
     }
 

@@ -229,11 +229,12 @@ class Blockchain {
         confirmation3,
         encryptionType,
         holders,
+        parentIdentity,
         urgent,
     ) {
         return this.blockchain.finalizeOffer(
             blockchainIdentity, offerId, shift, confirmation1,
-            confirmation2, confirmation3, encryptionType, holders, urgent,
+            confirmation2, confirmation3, encryptionType, holders, parentIdentity, urgent,
         );
     }
 
