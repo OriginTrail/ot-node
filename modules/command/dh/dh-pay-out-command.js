@@ -71,9 +71,9 @@ class DhPayOutCommand extends Command {
      */
     async recover(command, err) {
         const {
-                offerId,
-                viaAPI,
-            } = command.data;
+            offerId,
+            viaAPI,
+        } = command.data;
 
         if (!viaAPI) {
             this.logger.warn(`Rescheduling failed payout for offer ${offerId}. Schedule delay ${DELAY_ON_FAIL_IN_MILLS} milliseconds`);
