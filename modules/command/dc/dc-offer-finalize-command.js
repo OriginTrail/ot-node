@@ -5,6 +5,8 @@ const Utilities = require('../../Utilities');
 
 const Models = require('../../../models/index');
 
+const constants = require('../../constants');
+
 const { Op } = Models.Sequelize;
 
 
@@ -31,6 +33,7 @@ class DCOfferFinalizeCommand extends Command {
         const {
             offerId,
             solution,
+            urgent,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -50,20 +53,29 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        const parentIdentity = this.config.parentIdentity ?
-            Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
+        try {
+            const parentIdentity = this.config.parentIdentity ?
+                Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
 
-        await this.blockchain.finalizeOffer(
-            Utilities.normalizeHex(this.config.erc725Identity),
-            offerId,
-            new BN(solution.shift, 10),
-            confirmations[0],
-            confirmations[1],
-            confirmations[2],
-            colors,
-            nodeIdentifiers,
-            parentIdentity,
-        );
+            await this.blockchain.finalizeOffer(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                offerId,
+                new BN(solution.shift, 10),
+                confirmations[0],
+                confirmations[1],
+                confirmations[2],
+                colors,
+                nodeIdentifiers,
+                parentIdentity,
+                urgent,
+            );
+        } catch (error) {
+            if (error.message.includes('Gas price higher than maximum allowed price')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                return Command.repeat();
+            }
+            throw error;
+        }
 
         return {
             commands: [
@@ -153,6 +165,7 @@ class DCOfferFinalizeCommand extends Command {
         const command = {
             name: 'dcOfferFinalizeCommand',
             delay: 0,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);
