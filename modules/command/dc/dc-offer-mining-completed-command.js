@@ -68,7 +68,7 @@ class DcOfferMiningCompletedCommand extends Command {
                 throw new Error('Not enough tokens. To replicate data please deposit more tokens to your profile');
             }
 
-            const commandData = { offerId, solution };
+            const commandData = { offerId, solution, urgent: offer.urgent };
             const commandSequence = ['dcOfferFinalizeCommand'];
             return {
                 commands: [

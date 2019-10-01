@@ -5,6 +5,8 @@ const Utilities = require('../../Utilities');
 
 const Models = require('../../../models/index');
 
+const constants = require('../../constants');
+
 const { Op } = Models.Sequelize;
 
 
@@ -30,6 +32,7 @@ class DCOfferFinalizeCommand extends Command {
         const {
             offerId,
             solution,
+            urgent,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -49,16 +52,26 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        await this.blockchain.finalizeOffer(
-            Utilities.normalizeHex(this.config.erc725Identity),
-            offerId,
-            new BN(solution.shift, 10),
-            confirmations[0],
-            confirmations[1],
-            confirmations[2],
-            colors,
-            nodeIdentifiers,
-        );
+        try {
+            await this.blockchain.finalizeOffer(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                offerId,
+                new BN(solution.shift, 10),
+                confirmations[0],
+                confirmations[1],
+                confirmations[2],
+                colors,
+                nodeIdentifiers,
+                urgent,
+            );
+        } catch (error) {
+            if (error.message.includes('Gas price higher than maximum allowed price')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                return Command.repeat();
+            }
+            throw error;
+        }
+
         return {
             commands: [
                 {
@@ -133,6 +146,7 @@ class DCOfferFinalizeCommand extends Command {
         const command = {
             name: 'dcOfferFinalizeCommand',
             delay: 0,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);

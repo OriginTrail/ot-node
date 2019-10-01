@@ -461,6 +461,7 @@ class EventEmitter {
                         dataSizeInBytes: dataSize,
                         dataRootHash: root_hash,
                         response: data.response,
+                        urgent: data.urgent,
                     });
                 } else {
                     data.response.status(201);
@@ -503,7 +504,7 @@ class EventEmitter {
         });
 
         this._on('api-payout', async (data) => {
-            const { offerId } = data;
+            const { offerId, urgent } = data;
 
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
@@ -512,6 +513,7 @@ class EventEmitter {
                     name: 'dhPayOutCommand',
                     delay: 0,
                     data: {
+                        urgent,
                         offerId,
                     },
                 });
@@ -535,6 +537,7 @@ class EventEmitter {
                 holdingTimeInMinutes,
                 tokenAmountPerHolder,
                 litigationIntervalInMinutes,
+                urgent,
             } = data;
 
             let {
@@ -566,7 +569,7 @@ class EventEmitter {
 
                 const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes,
+                    dataSizeInBytes, litigationIntervalInMinutes, urgent,
                 );
 
                 data.response.status(201);

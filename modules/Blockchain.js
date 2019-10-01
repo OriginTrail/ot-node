@@ -153,10 +153,11 @@ class Blockchain {
      * Pay out tokens
      * @param blockchainIdentity
      * @param offerId
+     * @param urgent
      * @returns {Promise}
      */
-    payOut(blockchainIdentity, offerId) {
-        return this.blockchain.payOut(blockchainIdentity, offerId);
+    payOut(blockchainIdentity, offerId, urgent) {
+        return this.blockchain.payOut(blockchainIdentity, offerId, urgent);
     }
 
     /**
@@ -175,6 +176,7 @@ class Blockchain {
         tokenAmountPerHolder,
         dataSizeInBytes,
         litigationIntervalInMinutes,
+        urgent,
     ) {
         return this.blockchain.createOffer(
             blockchainIdentity,
@@ -188,6 +190,7 @@ class Blockchain {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            urgent,
         );
     }
 
@@ -204,10 +207,11 @@ class Blockchain {
         confirmation3,
         encryptionType,
         holders,
+        urgent,
     ) {
         return this.blockchain.finalizeOffer(
             blockchainIdentity, offerId, shift, confirmation1,
-            confirmation2, confirmation3, encryptionType, holders,
+            confirmation2, confirmation3, encryptionType, holders, urgent,
         );
     }
 
