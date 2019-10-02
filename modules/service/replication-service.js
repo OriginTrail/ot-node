@@ -75,7 +75,7 @@ class ReplicationService {
                     color,
                     otJson: encryptedDataset,
                     litigationPublicKey: litigationKeyPair.publicKey,
-                    litigation_private_key: litigationKeyPair.privateKey,
+                    litigationPrivateKey: litigationKeyPair.privateKey,
                     distributionPublicKey: distributionKeyPair.publicKey,
                     distributionPrivateKey: distributionKeyPair.privateKey,
                     distributionEpkChecksum,

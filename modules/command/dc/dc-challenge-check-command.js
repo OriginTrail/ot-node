@@ -55,9 +55,9 @@ class DCChallengeCheckCommand extends Command {
                     period: 5000,
                     data: {
                         offerId,
-                        blockId: challenge.test_index,
+                        test_index: challenge.test_index,
                         object_index: challenge.object_index,
-                        blockId: challenge.test_index,
+                        block_index: challenge.block_index,
                         dhIdentity,
                         litigationPrivateKey,
                     },

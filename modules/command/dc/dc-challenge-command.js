@@ -32,7 +32,7 @@ class DCChallengeCommand extends Command {
             },
         });
 
-        this.logger.trace(`Sending challenge to ${challenge.dh_id}. Offer ID ${challenge.offer_id}, block ID ${challenge.block_id}.`);
+        this.logger.trace(`Sending challenge to ${challenge.dh_id}. Offer ID ${challenge.offer_id}, object_index ${challenge.object_index}, block_index ${challenge.block_index}.`);
 
         challenge.end_time = new Date().getTime() + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
 
