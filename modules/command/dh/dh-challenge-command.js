@@ -21,7 +21,8 @@ class DHChallengeCommand extends Command {
      */
     async execute(command) {
         const {
-            blockId,
+            objectIndex,
+            blockIndex,
             datasetId,
             challengeId,
             litigatorNodeId,
@@ -45,9 +46,9 @@ class DHChallengeCommand extends Command {
         const vertices = await this.graphStorage
             .findVerticesByImportId(datasetId, holdingData.color);
         importUtilities.unpackKeys(vertices, []);
-        const answer = this.challengeService.answerChallengeQuestion(blockId, vertices);
+        const answer = this.challengeService.answerChallengeQuestion(objectIndex, blockIndex, vertices);
 
-        this.logger.info(`Calculated answer for dataset ${datasetId}, color ${holdingData.color} and block ${blockId} is ${answer}`);
+        this.logger.info(`Calculated answer for dataset ${datasetId}, color ${holdingData.color} object index ${objectIndex} and block index ${blockIndex} is ${answer}`);
         await this.transport.challengeResponse({
             payload: {
                 answer,

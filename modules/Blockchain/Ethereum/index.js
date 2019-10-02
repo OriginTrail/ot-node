@@ -1112,6 +1112,25 @@ class Ethereum {
     }
 
     /**
+     * Set node ID
+     * @param identity
+     * @param nodeId
+     */
+    async setNodeId(identity, nodeId) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.profileContractAddress,
+        };
+
+        this.log.trace(`Calling - setNodeId(${identity}, ${nodeId})`);
+        return this.transactions.queueTransaction(
+            this.profileContractAbi, 'setNodeId',
+            [identity, nodeId], options,
+        );
+    }
+
+    /**
      * Get difficulty for the particular offer
      */
     async getOfferDifficulty(offerId) {

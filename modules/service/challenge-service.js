@@ -64,18 +64,22 @@ class ChallengeService {
     }
 
     /**
-     * Returns answer block for given block ID, block size and vertex data.
-     * @param blockId ID of the required block.
+     * Returns answer block for given object ID, block ID and block size and vertex data.
+     * @param objectIndex ID of the required object.
+     * @param blockIndex ID of the required block.
      * @param vertexData Original vertex data.
      * @param blockSize Desired size of
      * @returns {String}
      */
     answerChallengeQuestion(
-        blockId, vertexData,
+        objectIndex, blockIndex, vertexData,
         blockSize = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
         const blocks = this.getBlocks(vertexData, blockSize);
-        return blocks[blockId];
+        blocks.forEach((block) => {
+            if (block.objectIndex === objectIndex &&
+                block.blockIndex === blockIndex) { return block; }
+        });
     }
 
     /**

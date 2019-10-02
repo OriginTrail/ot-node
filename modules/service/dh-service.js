@@ -349,13 +349,14 @@ class DHService {
      * @param litigatorNodeId - Litigator node ID
      * @return {Promise<void>}
      */
-    async handleChallenge(datasetId, blockId, challengeId, litigatorNodeId) {
-        this.logger.info(`Challenge arrived: Block ID ${blockId}, Data set ID ${datasetId}`);
+    async handleChallenge(datasetId, testIndex, objectIndex, blockIndex, challengeId, litigatorNodeId) {
+        this.logger.info(`Challenge arrived: Test index ${testIndex}, Object index ${objectIndex}, Block index ${blockIndex}, Data set ID ${datasetId}`);
 
         await this.commandExecutor.add({
             name: 'dhChallengeCommand',
             data: {
-                blockId,
+                objectIndex,
+                blockIndex,
                 datasetId,
                 challengeId,
                 litigatorNodeId,
