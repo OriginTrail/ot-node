@@ -357,9 +357,8 @@ class DCService {
      * @returns {Promise<void>}
      */
     async _sendReplication(offer, wallet, identity, dhIdentity, response) {
-        const colors = ['red', 'green', 'blue'];
-        const color = colors[Utilities.getRandomInt(2)];
-        const colorNumber = this.replicationService.castColorToNumber(color);
+        const colorNumber = Utilities.getRandomInt(2)
+        const color = this.replicationService.castNumberToColor(colorNumber);
 
         const replication = await this.replicationService.loadReplication(offer.id, color);
         await models.replicated_data.create({
@@ -376,7 +375,7 @@ class DCService {
             distribution_root_hash: replication.distributionRootHash,
             distribution_epk: replication.distributionEpk,
             status: 'STARTED',
-            color: colorNumber.toNumber(),
+            color: colorNumber,
         });
 
         const toSign = [
@@ -403,7 +402,7 @@ class DCService {
             distribution_signature: distributionSignature.signature,
             transaction_hash: offer.transaction_hash,
             distributionSignature,
-            color: colorNumber.toNumber(),
+            color: colorNumber,
         };
 
         // send replication to DH

@@ -791,12 +791,39 @@ class ArangoJS {
     }
 
     /**
+     * Returns vertices with queried parameters
+     * @param importId
+     * @param uid
+     * @returns {Promise<any>}
+     */
+    async findVerticesByImportIdAndUid(importId, uid) {
+        const queryString = `FOR v IN ot_vertices 
+                        FILTER v.datasets != null AND v.uid == @uid
+                        AND POSITION(v.datasets, @importId, false)  != false 
+                        RETURN v`;
+        const params = { importId, uid };
+        const vertices = await this.runQuery(queryString, params);
+        const normalizedVertices = normalizeGraph(importId, vertices, []).vertices; // ???
+
+        if (normalizedVertices.length === 0) {
+            return [];
+        }
+
+        // Check if packed to fix issue with double classes.
+        const filtered = normalizedVertices.filter(v => v._dc_key);
+        if (filtered.length > 0) {
+            return normalizedVertices;
+        }
+
+        return normalizedVertices;
+    }
+
+    /**
      * Find edges by dataset ID
      * @param {string} data_id - Dataset ID
-     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
      * @return {Promise<void>}
      */
-    async findEdgesByImportId(data_id, encColor = null) {
+    async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
                 'AND POSITION(v.datasets, @importId, false) != false ' +
@@ -806,6 +833,18 @@ class ArangoJS {
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);
         return normalizeGraph(data_id, [], edges).edges;
+    }
+
+    async findEdgesByImportIdAndFromId(importId, fromId) {
+        const queryString = `FOR v IN ot_edges 
+            FILTER v.datasets != null AND v._from== @fromId
+            AND POSITION(v.datasets, @importId, false) != false
+            SORT v._key 
+            RETURN v`;
+
+        const params = { importId, fromId };
+        const edges = await this.runQuery(queryString, params);
+        return normalizeGraph(importId, [], edges).edges;
     }
 
     /**

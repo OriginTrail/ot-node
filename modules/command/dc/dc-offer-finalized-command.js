@@ -119,7 +119,8 @@ class DcOfferFinalizedCommand extends Command {
 
         const startTime = Date.now();
         const endTime = startTime + (offer.holding_time_in_minutes * 60 * 1000);
-        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
+
+        // const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
         const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
         await forEach(holders, async (holder) => {
             const replicatedData = await Models.replicated_data.findOne({
@@ -131,13 +132,13 @@ class DcOfferFinalizedCommand extends Command {
             replicatedData.status = 'HOLDING';
             await replicatedData.save({ fields: ['status'] });
 
-            const encryptedVertices = importUtilitites.immutableEncryptVertices(
-                vertices,
-                replicatedData.litigation_private_key,
-            );
+            const encryptionColor = this.replicationService.castNumberToColor(replicatedData.color);
+
+            const encryptedGraph =
+                this.replicationService.replicationCache[offer.id][encryptionColor].otJson;
 
             const challenges = this.challengeService.generateChallenges(
-                encryptedVertices, startTime,
+                encryptedGraph, startTime,
                 endTime, this.config.numberOfChallenges,
             );
 
@@ -155,6 +156,7 @@ class DcOfferFinalizedCommand extends Command {
                     status: 'PENDING',
                 }));
         });
+        await this.replicationService.cleanup(offer.id);
     }
 
     /**

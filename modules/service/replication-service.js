@@ -107,6 +107,27 @@ class ReplicationService {
     }
 
     /**
+     * Cast number to color
+     * @param colorNumber: allowed numbers:
+     * 0 - RED
+     * 1 - GREEN
+     * 2 - BLUE
+     * @returns {string}
+     */
+    castNumberToColor(colorNumber) {
+        switch (colorNumber) {
+        case 0:
+            return COLOR.RED;
+        case 1:
+            return COLOR.GREEN;
+        case 2:
+            return COLOR.BLUE;
+        default:
+            throw new Error(`Failed to cast number to color ${colorNumber}, allowed number 0, 1, 2`);
+        }
+    }
+
+    /**
      * Replications cleanup (delete dir, purge cache)
      * @param internalOfferId
      * @return {Promise<void>}

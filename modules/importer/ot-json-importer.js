@@ -156,8 +156,10 @@ class OtJsonImporter {
         // Result
         const vertices = [];
         const edges = [];
-
+        const objectIds = [];
         document['@graph'].forEach((otObject) => {
+            objectIds.push(_keyFrom(dataCreator, _id(otObject)));
+
             switch (_type(otObject)) {
             case constants.objectType.otObject: {
                 // Create entity vertex.
@@ -342,6 +344,7 @@ class OtJsonImporter {
                 }
                 return acc;
             }, []),
+            objectIds,
         };
 
         // TODO: Check for datasetHeader.dataIntegrity.* proof here.
@@ -553,6 +556,21 @@ class OtJsonImporter {
 
         ImportUtilities.sortStringifyDataset(document);
         return document;
+    }
+
+    async getImportedOtObject(datasetId, objectIndex) {
+        // get metadata id using otObjectId
+        const metadata = await this.db.findMetadataByImportId(datasetId);
+        const otObjectId = metadata.objectIds[objectIndex];
+        const vertices = await this.db.findVerticesByImportIdAndUid(datasetId, otObjectId);
+        if (!vertices && vertices.length === 0) {
+            // throw error
+        }
+        const fromId = vertices[0]._key;
+        // get edge with type identifies get vertex where id = _from from edge
+        const edges = await this.db.findEdgesByImportIdAndFromId(datasetId, fromId);
+
+
     }
 
     /**

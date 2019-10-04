@@ -8,7 +8,7 @@ class ChallengeService {
 
     /**
      * Generate test challenges for Data Holder
-     * @param vertexData Input vertex data.
+     * @param encryptedGraphData Input vertex data.
      * @param startTime Unix timestamp in milliseconds of the start time of the testing period.
      * @param endTime Unix timestamp in milliseconds of the end of the testing period.
      * @param numberOfTests Number of challenges to generate.
@@ -16,7 +16,7 @@ class ChallengeService {
      * @returns {Array}
      */
     generateChallenges(
-        vertexData, startTime, endTime, numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
+        encryptedGraphData, startTime, endTime, numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
         blockSizeBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
         if (numberOfTests <= 0) {
@@ -48,7 +48,7 @@ class ChallengeService {
         }
 
         const tests = [];
-        const blocks = this.getBlocks(vertexData, blockSizeBytes);
+        const blocks = this.getBlocks(encryptedGraphData, blockSizeBytes);
         let testBlockId = 0;
         for (let i = 0; i < numberOfTests; i += 1) {
             testBlockId = Math.floor(Math.random() * blocks.length);
@@ -72,14 +72,21 @@ class ChallengeService {
      * @returns {String}
      */
     answerChallengeQuestion(
-        objectIndex, blockIndex, vertexData,
+        blockIndex, encryptedObject,
         blockSize = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-        const blocks = this.getBlocks(vertexData, blockSize);
-        blocks.forEach((block) => {
-            if (block.objectIndex === objectIndex &&
-                block.blockIndex === blockIndex) { return block; }
-        });
+        // console.log(`*********************`);
+        // console.log(`Searching for blockIndex: ${blockIndex} and objectIndex ${objectIndex}`)
+        // console.log(`*********************`);
+        // const blocks = this.getBlocks(vertexData, blockSize);
+        // blocks.forEach((block) => {
+        //     console.log(`block: ${JSON.stringify(block)}`);
+        //     if (block.objectIndex === objectIndex &&
+        //         block.blockIndex === blockIndex) { return block.data; }
+        // });
+        // console.log(`*********************`);
+        const answer = encryptedObject.substring(blockIndex * blockSize, blockSize);
+        return answer;
     }
 
     /**
