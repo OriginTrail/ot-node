@@ -173,3 +173,77 @@ When(/^I add the (\d+)[st|nd|rd|th]+ node erc identity as the parent in the (\d+
 
     node.overrideConfiguration({ parentIdentity });
 });
+
+
+Then(/^the (\d+)[st|nd|rd|th]+ node should have a management wallet/, async function (nodeIndex) {
+    expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const node = this.state.nodes[nodeIndex - 1];
+
+    // Profile file should exist in app-data-path.
+    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
+    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+    expect(erc725Profile).to.have.key('identity');
+
+    const erc725ProfileAddress = erc725Profile.identity;
+    const { web3 } = this.state.localBlockchain;
+    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+    erc725Contract.options.address = erc725ProfileAddress;
+
+    const managementWallet = await erc725Contract.methods.getKeysByPurpose(1).call();
+    expect(managementWallet.length).to.be.greaterThan(0);
+    expect(managementWallet[0]).to.be.not.null;
+});
+
+
+Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid management wallet/, async function (nodeIndex) {
+    expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const node = this.state.nodes[nodeIndex - 1];
+    const nodeManagementWallet = node.options.nodeConfiguration.management_wallet;
+    const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeManagementWallet), 'hex'));
+
+    // Profile file should exist in app-data-path.
+    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
+    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+    expect(erc725Profile).to.have.key('identity');
+
+    const erc725ProfileAddress = erc725Profile.identity;
+    const { web3 } = this.state.localBlockchain;
+    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+    erc725Contract.options.address = erc725ProfileAddress;
+
+    const managementWallet = await erc725Contract.methods.getKeysByPurpose(1).call();
+    expect(managementWallet.length).to.be.greaterThan(0);
+    expect(managementWallet[0]).to.equal(`0x${hashedAddress}`);
+});
+
+
+Then(/^the (\d+)[st|nd|rd|th]+ node should have a default management wallet/, async function (nodeIndex) {
+    expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const node = this.state.nodes[nodeIndex - 1];
+    const nodeManagementWallet = node.options.nodeConfiguration.management_wallet;
+    const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeManagementWallet), 'hex'));
+
+    // Profile file should exist in app-data-path.
+    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
+    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+    expect(erc725Profile).to.have.key('identity');
+
+    const erc725ProfileAddress = erc725Profile.identity;
+    const { web3 } = this.state.localBlockchain;
+    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+    erc725Contract.options.address = erc725ProfileAddress;
+
+    const managementWallet = await erc725Contract.methods.getKeysByPurpose(2).call();
+    expect(managementWallet.length).to.be.greaterThan(0);
+    expect(managementWallet[0]).to.equal(`0x${hashedAddress}`);
+});
+
