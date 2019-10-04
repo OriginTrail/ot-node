@@ -44,17 +44,10 @@ class DHChallengeCommand extends Command {
         if (holdingData == null) {
             throw new Error(`Failed to find holding data for data set ${datasetId}`);
         }
-        // async getImport(datasetId, encColor = null)
-        const document = this.otJsonImporter.getImport(datasetId, holdingData.color);
-        // const vertices = await this.graphStorage
-        //     .findVerticesByImportId(datasetId, holdingData.color);
 
-        // const encryptedVertices = importUtilitites.immutableEncryptVertices(
-        //     vertices,
-        //     replicatedData.litigation_private_key,
-        // );
+        const otObject = await this.otJsonImporter.getImportedOtObject(datasetId, objectIndex);
 
-        const answer = this.challengeService.answerChallengeQuestion(blockIndex, document['@graph'][objectIndex].data);
+        const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
 
         this.logger.info(`Calculated answer for dataset ${datasetId}, color ${holdingData.color} object index ${objectIndex} and block index ${blockIndex} is ${answer}`);
         await this.transport.challengeResponse({

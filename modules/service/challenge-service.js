@@ -75,10 +75,8 @@ class ChallengeService {
         blockIndex, encryptedObject,
         blockSize = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-        // console.log(`*********************`);
-        // console.log(`Searching for blockIndex: ${blockIndex} and objectIndex ${objectIndex}`)
-        // console.log(`*********************`);
-        // const blocks = this.getBlocks(vertexData, blockSize);
+
+        // const blocks = this.getBlocks(encryptedObject, blockSize);
         // blocks.forEach((block) => {
         //     console.log(`block: ${JSON.stringify(block)}`);
         //     if (block.objectIndex === objectIndex &&
