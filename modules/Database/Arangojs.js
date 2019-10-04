@@ -791,31 +791,42 @@ class ArangoJS {
     }
 
     /**
-     * Returns vertices with queried parameters
+     * Returns vertices and edges with specific parameters
      * @param importId
-     * @param uid
+     * @param fromKey
      * @returns {Promise<any>}
      */
-    async findVerticesByImportIdAndUid(importId, uid) {
-        const queryString = `FOR v IN ot_vertices 
-                        FILTER v.datasets != null AND v.uid == @uid
-                        AND POSITION(v.datasets, @importId, false)  != false 
-                        RETURN v`;
-        const params = { importId, uid };
-        const vertices = await this.runQuery(queryString, params);
-        const normalizedVertices = normalizeGraph(importId, vertices, []).vertices; // ???
+    async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
+        const queryString = `LET edges = (
+                                FOR e IN ot_edges                                
+                                FILTER e.datasets != null 
+                                AND e._from == @objectId
+                                AND POSITION(e.datasets, @importId, false) != false                                
+                                RETURN e
+                            )                             
+                            LET vertex_ids = (
+                                FOR e IN edges
+                                FILTER e.relationType == 'IdentifierRelation' 
+                                OR e.relationType == 'dataRelation'
+                                OR e.relationType == 'otRelation'
+                                RETURN e._to
+                            )                            
+                            LET vertices = (
+                                FOR v IN ot_vertices
+                                FILTER v.datasets != null
+                                AND POSITION(v.datasets, @importId, false) != false
+                                AND v._id IN vertex_ids
+                                RETURN v
+                            )
+                            RETURN {'edges':edges, 'vertices':vertices}`;
 
-        if (normalizedVertices.length === 0) {
-            return [];
-        }
+        const result = await this.runQuery(queryString, {
+            importId,
+            objectId,
+        });
+        const normalizedResult = normalizeGraph(importId, result.vertices, result.edges);
 
-        // Check if packed to fix issue with double classes.
-        const filtered = normalizedVertices.filter(v => v._dc_key);
-        if (filtered.length > 0) {
-            return normalizedVertices;
-        }
-
-        return normalizedVertices;
+        return normalizedResult;
     }
 
     /**
