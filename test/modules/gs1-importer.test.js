@@ -249,7 +249,7 @@ describe('GS1 Importer tests', () => {
                     assert.deepEqual(sortedFirst, sortedSecond, `Converted XML for ${path.basename(inputFile.args[0])} is not equal to the original one`);
                 },
             );
-        })
+        });
     });
 
     describe.skip('Graph validation', async () => {
