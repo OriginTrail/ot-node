@@ -81,6 +81,25 @@ describe('GraphStorage module', () => {
         }
     });
 
+    it('addDocument()', async () => {
+        try {
+            const res_v1 = await myGraphStorage.addDocument('ot_vertices', vertexOne);
+            const res_v2 = await myGraphStorage.addDocument('ot_vertices', vertexTwo);
+
+            assert.equal(res_v1._key, vertexOne._key);
+            assert.equal(res_v2._key, vertexTwo._key);
+
+            const _edge = Utilities.copyObject(edgeOne);
+            _edge._from = `ot_vertices/${edgeOne._from}`;
+            _edge._to = `ot_vertices/${edgeOne._to}`;
+
+            const res = await myGraphStorage.addDocument('ot_edges', _edge);
+            assert.equal(res._key, _edge._key);
+        } catch (error) {
+            assert.isTrue(!!error === false);
+        }
+    });
+
     it('identify()', async () => {
         if (selectedDatabase.provider === 'arangodb') {
             assert.equal(myGraphStorage.identify(), 'ArangoJS');
