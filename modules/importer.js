@@ -5,6 +5,7 @@ const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const graphConverter = require('./Database/graph-converter');
 const Utilities = require('./Utilities');
+const bytes = require('utf8-length');
 
 class Importer {
     constructor(ctx) {
@@ -270,8 +271,10 @@ class Importer {
                 document: otJsonDoc,
             });
             this.remoteControl.importRequestData();
+            const response = await this.afterImport(result);
+            response.otjson_size = bytes(JSON.stringify(otJsonDoc));
             return {
-                response: await this.afterImport(result),
+                response,
                 error: null,
             };
         } catch (error) {
@@ -309,8 +312,10 @@ class Importer {
                 document,
                 encryptedMap,
             });
+            const response = this.afterImport(result);
+            response.otjson_size = bytes(JSON.stringify(document));
             return {
-                response: this.afterImport(result),
+                response,
                 error: null,
             };
         } catch (error) {
