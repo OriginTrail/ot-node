@@ -415,7 +415,11 @@ class RestAPIServiceV2 {
             });
             queryObject.handler_id = inserted_object.dataValues.handler_id;
             console.log(queryObject.handler_id);
-            await this.emitter.emit('api-create-offer', queryObject);
+            this.emitter.emit('api-create-offer', queryObject);
+            res.status(200);
+            res.send({
+                handler_id: inserted_object.dataValues.handler_id,
+            });
         } else {
             this.logger.error('Invalid request');
             res.status(400);

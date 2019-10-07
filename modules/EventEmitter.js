@@ -642,12 +642,6 @@ class EventEmitter {
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
                     dataSizeInBytes, litigationIntervalInMinutes, handler_id,
                 );
-
-                data.response.status(201);
-                data.response.send({
-                    replication_id: replicationId,
-                    data_set_id: dataSetId,
-                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 notifyError(error);
