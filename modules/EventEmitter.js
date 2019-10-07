@@ -670,7 +670,6 @@ class EventEmitter {
             try {
                 logger.debug('GS1 import triggered');
                 const result = await importer.importXMLgs1(data.content);
-                // data['otjson_size'] = result.otjson_size;
                 if (result.error != null) {
                     await processImport(null, result.error, data);
                 } else {
@@ -708,7 +707,6 @@ class EventEmitter {
                         this.web3,
                     );
                 const result = await importer.importOTJSON(dataset);
-                // data.otjson_size = result.otjson_size;
                 if (result.error != null) {
                     await processImport(null, result.error, data);
                 } else {
