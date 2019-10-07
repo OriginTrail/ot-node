@@ -450,7 +450,7 @@ class EventEmitter {
         });
 
         const processImport = async (response, error, data) => {
-            const { handler_id } = data;
+            const { handler_id, otjson_size } = data;
 
             if (!response) {
                 await Models.handler_ids.update(
@@ -524,7 +524,6 @@ class EventEmitter {
                 } else {
                     const graphObject = {};
                     Object.assign(graphObject, { vertices, edges });
-                    const otJson = await this.otJsonImporter.getImport(data_set_id);
                     await Models.handler_ids.update(
                         {
                             status: 'COMPLETED',
@@ -532,7 +531,7 @@ class EventEmitter {
                                 dataset_id: data_set_id,
                                 import_time: importTimestamp.valueOf(),
                                 dataset_size_in_bytes: dataSize,
-                                otjson_size_in_bytes: bytes(JSON.stringify(otJson)),
+                                otjson_size_in_bytes: otjson_size,
                                 root_hash,
                                 data_hash: Utilities.normalizeHex(sha3_256(`${graphObject}`)),
                                 total_graph_entities: vertices.length
@@ -670,6 +669,7 @@ class EventEmitter {
             try {
                 logger.debug('GS1 import triggered');
                 const result = await importer.importXMLgs1(data.content);
+                data['otjson_size'] = result.otjson_size;
                 if (result.error != null) {
                     await processImport(null, result.error, data);
                 } else {
@@ -707,6 +707,7 @@ class EventEmitter {
                         this.web3,
                     );
                 const result = await importer.importOTJSON(dataset);
+                data['otjson_size'] = result.otjson_size;
                 if (result.error != null) {
                     await processImport(null, result.error, data);
                 } else {

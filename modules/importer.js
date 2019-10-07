@@ -5,6 +5,7 @@ const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const graphConverter = require('./Database/graph-converter');
 const Utilities = require('./Utilities');
+const bytes = require('utf8-length');
 
 class Importer {
     constructor(ctx) {
@@ -277,6 +278,7 @@ class Importer {
             this.remoteControl.importRequestData();
             return {
                 response: await this.afterImport(result),
+                otjson_size: bytes(JSON.stringify(otJsonDoc)),
                 error: null,
             };
         } catch (error) {
@@ -316,6 +318,7 @@ class Importer {
             });
             return {
                 response: this.afterImport(result),
+                otjson_size: bytes(JSON.stringify(document)),
                 error: null,
             };
         } catch (error) {
