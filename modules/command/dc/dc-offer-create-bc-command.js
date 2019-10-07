@@ -46,6 +46,33 @@ class DCOfferCreateBcCommand extends Command {
             dataSizeInBytes,
             litigationIntervalInMinutes,
         );
+        const eventData = await this.blockchain.web3.eth.abi.decodeLog(
+            [
+                {
+                    indexed: false,
+                    name: 'dataSetId',
+                    type: 'bytes32',
+                },
+                {
+                    indexed: false,
+                    name: 'dcNodeId',
+                    type: 'bytes32',
+                },
+                {
+                    indexed: false,
+                    name: 'offerId',
+                    type: 'bytes32',
+                },
+                {
+                    indexed: false,
+                    name: 'task',
+                    type: 'bytes32',
+                },
+            ],
+            result.logs[0].data,
+            result.logs[0].topics,
+        );
+
         this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
