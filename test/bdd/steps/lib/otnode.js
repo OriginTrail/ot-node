@@ -114,6 +114,51 @@ class OtNode extends EventEmitter {
         this.logger.log('Node configuration overridden.');
     }
 
+    /**
+     * Overrides node configuration using variables
+     * @param override - Configuration override with variables
+     */
+    overrideConfigurationVariables(override) {
+        for (const pair of override) {
+            if (pair.length === 2) {
+                const keyFrom = pair[1];
+                const keyTo = pair[0];
+                if (keyFrom in this.options.nodeConfiguration &&
+                    keyTo in this.options.nodeConfiguration) {
+                    this.options.nodeConfiguration[keyTo] = this.options.nodeConfiguration[keyFrom];
+                }
+            }
+        }
+
+        this.configFilePath = path.join(this.options.configDir, 'initial-configuration.json');
+        fs.writeFileSync(
+            this.configFilePath,
+            JSON.stringify(this.options.nodeConfiguration, null, 4),
+        );
+        execSync(`npm run setup -- --configDir=${this.options.configDir} --config ${this.configFilePath}`);
+        this.logger.log('Node configuration overridden.');
+    }
+
+    /**
+     * Removes node configuration keys
+     * @param keys - Configuration keys to be removed
+     */
+    removeConfigurationKeys(keys) {
+        for (const key of keys) {
+            if (key in this.options.nodeConfiguration) {
+                delete this.options.nodeConfiguration[key];
+            }
+        }
+
+        this.configFilePath = path.join(this.options.configDir, 'initial-configuration.json');
+        fs.writeFileSync(
+            this.configFilePath,
+            JSON.stringify(this.options.nodeConfiguration, null, 4),
+        );
+        execSync(`npm run setup -- --configDir=${this.options.configDir} --config ${this.configFilePath}`);
+        this.logger.log('Node configuration keys removed.');
+    }
+
     start() {
         assert(!this.process);
         assert(this.initialized);

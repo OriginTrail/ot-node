@@ -801,6 +801,15 @@ Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function
     done();
 });
 
+Given(/^I override configuration using variables for all nodes*$/, { timeout: 120000 }, function (configuration, done) {
+    const configurationOverride = configuration.raw();
+    for (const node of this.state.nodes) {
+        node.overrideConfigurationVariables(configurationOverride);
+        this.logger.log(`Configuration updated for node ${node.id}`);
+    }
+    done();
+});
+
 Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3000000 }, async function (nodeIndex) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.bootstraps.length);
