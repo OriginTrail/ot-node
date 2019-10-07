@@ -115,7 +115,7 @@ class OtNode extends EventEmitter {
     }
 
     /**
-     * Removes node configuration keys
+     * Overrides node configuration using variables
      * @param override - Configuration override with variables
      */
     overrideConfigurationVariables(override) {
