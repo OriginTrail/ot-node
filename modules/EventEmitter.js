@@ -450,7 +450,7 @@ class EventEmitter {
         });
 
         const processImport = async (response, error, data) => {
-            const { handler_id, otjson_size } = data;
+            const { handler_id } = data;
 
             if (!response) {
                 await Models.handler_ids.update(
@@ -481,6 +481,7 @@ class EventEmitter {
                 wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
                 edges,
+                otjson_size,
             } = response;
 
             try {
@@ -669,7 +670,7 @@ class EventEmitter {
             try {
                 logger.debug('GS1 import triggered');
                 const result = await importer.importXMLgs1(data.content);
-                data['otjson_size'] = result.otjson_size;
+                // data['otjson_size'] = result.otjson_size;
                 if (result.error != null) {
                     await processImport(null, result.error, data);
                 } else {
@@ -707,7 +708,7 @@ class EventEmitter {
                         this.web3,
                     );
                 const result = await importer.importOTJSON(dataset);
-                data['otjson_size'] = result.otjson_size;
+                // data.otjson_size = result.otjson_size;
                 if (result.error != null) {
                     await processImport(null, result.error, data);
                 } else {
