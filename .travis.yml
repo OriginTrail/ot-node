@@ -29,16 +29,16 @@ script:
   - if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
       npm run test:bdd:dryrun;
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
+  - travis_wait if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
       npm run test:bdd -- --tags=@first --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
+  - travis_wait if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
       npm run test:bdd -- --tags=@second --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "third" ) ]]; then
+  - travis_wait if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "third" ) ]]; then
     npm run test:bdd -- --tags=@third --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "fourth" ) ]]; then
+  - travis_wait if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "fourth" ) ]]; then
     npm run test:bdd -- --tags=@fourth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
