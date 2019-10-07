@@ -155,45 +155,6 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     done();
 });
 
-Given(/^I setup (\d+) node[s]* without management wallet$/, { timeout: 120000 }, function (nodeCount, done) {
-    expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
-
-    for (let i = 0; i < nodeCount; i += 1) {
-        const nodeConfiguration = {
-            node_wallet: LocalBlockchain.wallets()[i].address,
-            node_private_key: LocalBlockchain.wallets()[i].privateKey,
-            node_port: 6000 + i,
-            node_rpc_port: 9000 + i,
-            node_remote_control_port: 4000 + i,
-            network: {
-                bootstraps: this.state.bootstraps.map(bootstrap =>
-                    `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
-                remoteWhitelist: ['localhost', '127.0.0.1'],
-            },
-            database: {
-                database: `origintrail-test-${uuidv4()}`,
-            },
-            blockchain: {
-                hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
-            },
-            local_network_only: true,
-            dc_choose_time: 120000, // 2 minute
-            initial_deposit_amount: '10000000000000000000000',
-            commandExecutorVerboseLoggingEnabled: true,
-        };
-
-        const newNode = new OtNode({
-            nodeConfiguration,
-            appDataBaseDir: this.parameters.appDataBaseDir,
-        });
-        this.state.nodes.push(newNode);
-        newNode.initialize();
-        this.logger.log(`Node set up at ${newNode.options.configDir}`);
-    }
-    done();
-});
-
 Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
@@ -835,6 +796,15 @@ Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function
 
     for (const node of this.state.nodes) {
         node.overrideConfiguration(configurationOverride);
+        this.logger.log(`Configuration updated for node ${node.id}`);
+    }
+    done();
+});
+
+Given(/^I override configuration using variables for all nodes*$/, { timeout: 120000 }, function (configuration, done) {
+    const configurationOverride = configuration.raw();
+    for (const node of this.state.nodes) {
+        node.overrideConfigurationVariables(configurationOverride);
         this.logger.log(`Configuration updated for node ${node.id}`);
     }
     done();

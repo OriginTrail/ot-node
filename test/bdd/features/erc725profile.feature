@@ -32,20 +32,22 @@ Feature: ERC725 Profile features
     Then the 1st node should have a valid ERC725 identity
     And the 1st node should have a valid profile
 
-  @managementwallet
+  @second
   Scenario: Expect node to have a non-empty management wallet
     Given I setup 1 node
     And I start the node
     Then the 1st node should have a management wallet
 
-  @managementwallet
+  @second
   Scenario: Expect node to have a valid management wallet
     Given I setup 1 node
     And I start the node
     Then the 1st node should have a valid management wallet
 
-  @managementwallet
+  @second
   Scenario: Expect node to have a default management wallet if it is not provided
-    Given I setup 1 node without management wallet
+    Given I setup 1 node
+    And I override configuration using variables for all nodes
+      | management_wallet | node_wallet |
     And I start the node
     Then the 1st node should have a default management wallet
