@@ -60,6 +60,15 @@ class Blockchain {
     }
 
     /**
+     * Set node ID
+     * @param identity
+     * @param nodeId
+     */
+    async setNodeId(identity, nodeId) {
+        return this.blockchain.setNodeId(identity, nodeId);
+    }
+
+    /**
      * Creates node profile on the Bidding contract
      * @param managementWallet - Management wallet
      * @param profileNodeId - Network node ID

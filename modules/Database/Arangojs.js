@@ -791,12 +791,50 @@ class ArangoJS {
     }
 
     /**
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param fromKey
+     * @returns {Promise<any>}
+     */
+    async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
+        const queryString = `LET edges = (
+                                FOR e IN ot_edges                                
+                                FILTER e.datasets != null 
+                                AND e._from == @objectId
+                                AND POSITION(e.datasets, @importId, false) != false                                
+                                RETURN e
+                            )                             
+                            LET vertex_ids = (
+                                FOR e IN edges
+                                FILTER e.edgeType == 'IdentifierRelation' 
+                                OR e.edgeType == 'dataRelation'
+                                OR e.edgeType == 'otRelation'
+                                RETURN e._to
+                            )                            
+                            LET vertices = (
+                                FOR v IN ot_vertices
+                                FILTER v.datasets != null
+                                AND POSITION(v.datasets, @importId, false) != false
+                                AND (v._id IN vertex_ids OR v._id == @objectId)
+                                RETURN v
+                            )
+                            RETURN {'edges':edges, 'vertices':vertices}`;
+
+        const result = await this.runQuery(queryString, {
+            importId,
+            objectId,
+        });
+        const normalizedResult = normalizeGraph(importId, result.vertices, result.edges);
+
+        return normalizedResult;
+    }
+
+    /**
      * Find edges by dataset ID
      * @param {string} data_id - Dataset ID
-     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
      * @return {Promise<void>}
      */
-    async findEdgesByImportId(data_id, encColor = null) {
+    async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
                 'AND POSITION(v.datasets, @importId, false) != false ' +
@@ -806,6 +844,18 @@ class ArangoJS {
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);
         return normalizeGraph(data_id, [], edges).edges;
+    }
+
+    async findEdgesByImportIdAndFromId(importId, fromId) {
+        const queryString = `FOR v IN ot_edges 
+            FILTER v.datasets != null AND v._from== @fromId
+            AND POSITION(v.datasets, @importId, false) != false
+            SORT v._key 
+            RETURN v`;
+
+        const params = { importId, fromId };
+        const edges = await this.runQuery(queryString, params);
+        return normalizeGraph(importId, [], edges).edges;
     }
 
     /**
