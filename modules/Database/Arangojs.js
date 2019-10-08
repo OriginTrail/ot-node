@@ -806,16 +806,16 @@ class ArangoJS {
                             )                             
                             LET vertex_ids = (
                                 FOR e IN edges
-                                FILTER e.relationType == 'IdentifierRelation' 
-                                OR e.relationType == 'dataRelation'
-                                OR e.relationType == 'otRelation'
+                                FILTER e.edgeType == 'IdentifierRelation' 
+                                OR e.edgeType == 'dataRelation'
+                                OR e.edgeType == 'otRelation'
                                 RETURN e._to
                             )                            
                             LET vertices = (
                                 FOR v IN ot_vertices
                                 FILTER v.datasets != null
                                 AND POSITION(v.datasets, @importId, false) != false
-                                AND v._id IN vertex_ids
+                                AND (v._id IN vertex_ids OR v._id == @objectId)
                                 RETURN v
                             )
                             RETURN {'edges':edges, 'vertices':vertices}`;

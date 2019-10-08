@@ -75,7 +75,6 @@ class ChallengeService {
         blockIndex, encryptedObject,
         blockSize = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-
         // const blocks = this.getBlocks(encryptedObject, blockSize);
         // blocks.forEach((block) => {
         //     console.log(`block: ${JSON.stringify(block)}`);
@@ -83,7 +82,7 @@ class ChallengeService {
         //         block.blockIndex === blockIndex) { return block.data; }
         // });
         // console.log(`*********************`);
-        const answer = encryptedObject.substring(blockIndex * blockSize, blockSize);
+        const answer = JSON.stringify(encryptedObject).substring(blockIndex * blockSize, blockSize);
         return answer;
     }
 

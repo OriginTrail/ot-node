@@ -45,7 +45,11 @@ class DHChallengeCommand extends Command {
             throw new Error(`Failed to find holding data for data set ${datasetId}`);
         }
 
-        const otObject = await this.otJsonImporter.getImportedOtObject(datasetId, objectIndex);
+        const colors = ['red', 'green', 'blue'];
+        const colorIndex = holdingData.color;
+        const color = colors[colorIndex];
+
+        const otObject = await this.otJsonImporter.getImportedOtObject(datasetId, objectIndex, color);
 
         const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
 
