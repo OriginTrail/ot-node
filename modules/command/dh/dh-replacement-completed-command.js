@@ -52,22 +52,24 @@ class DHReplacementCompleted extends Command {
                     bid.status = 'CHOSEN';
                     await bid.save({ fields: ['status'] });
 
-                    const scheduledTime =
-                        (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
-                    return {
-                        commands: [
-                            {
-                                name: 'dhPayOutCommand',
-                                delay: scheduledTime,
-                                retries: 3,
-                                transactional: false,
-                                data: {
-                                    offerId,
-                                    viaAPI: false,
+                    if (this.config.disableAutoPayouts !== true) {
+                        const scheduledTime =
+                            (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
+                        return {
+                            commands: [
+                                {
+                                    name: 'dhPayOutCommand',
+                                    delay: scheduledTime,
+                                    retries: 3,
+                                    transactional: false,
+                                    data: {
+                                        offerId,
+                                        viaAPI: false,
+                                    },
                                 },
-                            },
-                        ],
-                    };
+                            ],
+                        };
+                    }
                 }
 
                 this.logger.important(`Not chosen as a replacement for offer ${offerId}.`);
