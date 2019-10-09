@@ -85,15 +85,15 @@ Feature: Data layer related features
     Given I query DV node locally for last imported data set id
     Then DV's local query response should contain hashed private attributes
 
-  @second
+  @neki
   Scenario: Remote event connection on DH and DV
     Given I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
-    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And I use 2nd node as DH
@@ -114,6 +114,18 @@ Feature: Data layer related features
     Then last consensus response should have 1 event with 1 match
     And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
     Then last consensus response should have 1 event with 1 match
+
+  @novi_import
+  Scenario: Latest datalayer import and data read query
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Given I create json query with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
+    Then response should return same dataset_ids as second last import and last import
 
   @second
   Scenario: Data location with multiple identifiers

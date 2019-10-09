@@ -212,16 +212,13 @@ class Importer {
      * @return {Promise<>}
      */
     afterImport(result, unpack = false) {
-        this.log.info('[DC] Import complete');
         this.remoteControl.importRequestData();
         let {
             vertices, edges,
         } = result;
-
         if (unpack) {
             ImportUtilities.unpackKeys(vertices, edges);
         }
-
         const {
             data_set_id, wallet, root_hash,
         } = result;
@@ -229,8 +226,6 @@ class Importer {
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        this.log.info(`Root hash: ${root_hash}`);
-        this.log.info(`Data set ID: ${data_set_id}`);
         return {
             data_set_id,
             root_hash,

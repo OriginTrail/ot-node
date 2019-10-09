@@ -33,14 +33,14 @@ class ArangoJS {
      */
     async initialize() {
         // Create database if doesn't exist.
-        const listOfDatabases = await this.db.listDatabases();
-        if (!listOfDatabases.includes(this.dbInfo.database)) {
-            await
-            this.db.createDatabase(
-                this.dbInfo.database,
-                [{ username: this.dbInfo.username, passwd: this.dbInfo.password, active: true }],
-            );
-        }
+        // const listOfDatabases = await this.db.listDatabases();
+        // if (!listOfDatabases.includes(this.dbInfo.database)) {
+        //     await
+        //     this.db.createDatabase(
+        //         this.dbInfo.database,
+        //         [{ username: this.dbInfo.username, passwd: this.dbInfo.password, active: true }],
+        //     );
+        // }
 
         this.db.useDatabase(this.dbInfo.database);
         await this.createCollection('ot_datasets');
@@ -164,28 +164,26 @@ class ArangoJS {
             let filter = `LET v_res${count} = (
                                             FOR v${count} IN ot_vertices
                                         LET objects = (
-                                            FOR w${count}, e IN 1..1
-                                        OUTBOUND v${count}._id ot_edges
-                                        FILTER e.edge_type == "IDENTIFIES"
-                                        AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        AND v${count}.encrypted == ${encColor}
-                                        RETURN w${count})
+                                            FOR e IN ot_edges
+                                        FILTER e._from == v1._id
+                                        AND LENGTH(INTERSECTION(e.datasets, v1.datasets)) > 0
+                                        RETURN e._to)
                              `;
 
             switch (opcode) {
             case 'EQ':
-                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == @id_type${count}
-                                     AND v${count}.id_value == @id_value${count}
+                filter += `FILTER v${count}.vertexType == "Identifier"
+                                     AND v${count}.identifierType == @id_type${count}
+                                     AND v${count}.identifierValue == @id_value${count}
                                      AND v${count}.encrypted == ${encColor}
                                      `;
                 params[`id_type${count}`] = id_type;
                 params[`id_value${count}`] = id_value;
                 break;
             case 'IN':
-                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == @id_type${count}
-                                     AND  @id_value${count} IN v${count}.id_value
+                filter += `FILTER v${count}.vertexType == "IDENTIFIER"
+                                     AND v${count}.identifierType == @id_type${count}
+                                     AND  @id_value${count} IN v${count}.identifierValue
                                      AND v${count}.encrypted == ${encColor}
                                      `;
 
@@ -224,6 +222,7 @@ class ArangoJS {
         }
         queryString += ')}';
 
+        console.log(queryString);
         return this.runQuery(queryString, params);
     }
 

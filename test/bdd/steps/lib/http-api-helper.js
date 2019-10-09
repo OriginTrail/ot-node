@@ -86,11 +86,11 @@ async function apiImport(nodeRpcUrl, importFilePath, importType) {
         request({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            url: `${nodeRpcUrl}/api/import`,
+            url: `${nodeRpcUrl}/api/latest/import`,
             json: true,
             formData: {
-                importfile: fs.createReadStream(path.join(__dirname, '../../../../', importFilePath)),
-                importtype: `${importType}`,
+                file: fs.createReadStream(path.join(__dirname, '../../../../', importFilePath)),
+                standard_id: `${importType}`,
             },
         }, (error, response, body) => {
             if (error) {
@@ -101,6 +101,32 @@ async function apiImport(nodeRpcUrl, importFilePath, importType) {
         });
     });
 }
+
+/**
+ * Fetch /api/latest/import/result
+ * @typedef {Object} ImportResult
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} handler_id
+ * @return {Promise.<ImportResult>}
+ */
+async function apiImportResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/import/result/${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
 
 /**
  * @typedef {Object} Import
@@ -251,10 +277,12 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/replication`,
-                json: true,
+                uri: `${nodeRpcUrl}/api/latest/replicate`,
                 body: {
-                    data_set_id,
+                    dataset_id: data_set_id,
+                    // Hardcoded values
+                    data_lifespan: 15,
+                    total_token_amount: '15000000',
                 },
             },
             (err, res, body) => {
@@ -504,6 +532,7 @@ async function apiBalance(nodeRpcUrl, humanReadable) {
 module.exports = {
     apiImport,
     apiImportContent,
+    apiImportResult,
     apiImportInfo,
     apiImportsInfo,
     apiFingerprint,
