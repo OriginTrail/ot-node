@@ -316,7 +316,7 @@ class Utilities {
      * @return object
      */
     static sortObject(object) {
-        if (typeof object !== 'object') {
+        if (typeof object !== 'object' || object == null) {
             return object;
         }
         const sortedObj = {};
