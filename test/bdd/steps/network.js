@@ -140,6 +140,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             local_network_only: true,
             initial_deposit_amount: '10000000000000000000000',
+            dc_choose_time: 120000, // 2 minutes
         };
 
         const newNode = new OtNode({
@@ -312,15 +313,20 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
 
     const response = await httpApiHelper.apiImportInfo(myNode.state.node_rpc_url, this.state.lastImport.data_set_id);
 
-    expect(response, 'response should contain root_hash, import, transaction and data_provider_wallet keys').to.have.keys([
-        'root_hash', 'import',
+    expect(response, 'response should contain root_hash, dataSetId, document, transaction and data_provider_wallet keys').to.have.keys([
+        'dataSetId', 'root_hash', 'document',
         'transaction', 'data_provider_wallet',
     ]);
 
-    expect(response.import, 'response.import should contain vertices and edges').to.have.keys(['vertices', 'edges']);
+    expect(response.document, 'response.document should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    const calculatedImportHash = utilities.calculateImportHash(response.import);
-    expect(calculatedImportHash, `Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`).to.be.equal(this.state.lastImport.data_set_id);
+    expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+
+    const calculatedRootHash = utilities.calculateRootHash(response.document);
+    const calculateDatasetId = utilities.calculateImportHash(response.document['@graph']);
+    expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.root_hash);
+    expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data_set_id}.`).to.be.equal(this.state.lastImport.data_set_id);
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {
@@ -332,16 +338,23 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const { dc } = this.state;
 
-    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
-    expect(myFingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    const fingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    expect(fingerprint).to.have.keys(['root_hash']);
+    expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
 
-    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
     // vertices and edges are already sorted from the response
-    const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices, myApiImportInfo.import.edges);
 
-    expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
+    const calculatedDataSetId = utilities.calculateImportHash(importInfo.document['@graph']);
+    const calculatedRootHash = utilities.calculateRootHash(importInfo.document);
+
+    expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
+        .to.be.equal(calculatedRootHash);
+    expect(this.state.lastImport.root_hash, 'Root hash from last import and manually calculated should match')
+        .to.be.equal(calculatedRootHash);
+    expect(this.state.lastImport.data_set_id, 'Dataset ID and manually calculated ID should match')
+        .to.be.equal(calculatedDataSetId);
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
@@ -355,13 +368,10 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 
     // All nodes including DC emit offer-finalized.
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
-        promises.push(new Promise((resolve, reject) => {
+        promises.push(new Promise((acc) => {
             node.once('offer-finalized', (offerId) => {
                 // TODO: Change API to connect internal offer ID and external offer ID.
-                resolve();
-            });
-            node.once('not-enough-dhs', () => {
-                reject();
+                acc();
             });
         }));
     });
@@ -586,6 +596,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                 },
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',
+                commandExecutorVerboseLoggingEnabled: true,
             },
             appDataBaseDir: this.parameters.appDataBaseDir,
         });
