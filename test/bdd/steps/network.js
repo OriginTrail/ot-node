@@ -355,10 +355,13 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 
     // All nodes including DC emit offer-finalized.
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
-        promises.push(new Promise((acc) => {
+        promises.push(new Promise((resolve, reject) => {
             node.once('offer-finalized', (offerId) => {
                 // TODO: Change API to connect internal offer ID and external offer ID.
-                acc();
+                resolve();
+            });
+            node.once('not-enough-dhs', () => {
+                reject();
             });
         }));
     });
