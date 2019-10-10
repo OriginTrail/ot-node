@@ -49,11 +49,15 @@ class DHChallengeCommand extends Command {
         const colorIndex = holdingData.color;
         const color = colors[colorIndex];
 
-        const otObject = await this.otJsonImporter.getImportedOtObject(datasetId, objectIndex, color);
+        const otObject = await this.otJsonImporter.getImportedOtObject(
+            datasetId,
+            objectIndex,
+            color,
+        );
 
         const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
 
-        this.logger.info(`Calculated answer for dataset ${datasetId}, color ${holdingData.color} object index ${objectIndex} and block index ${blockIndex} is ${answer}`);
+        this.logger.info(`Calculated answer for dataset ${datasetId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
         await this.transport.challengeResponse({
             payload: {
                 answer,

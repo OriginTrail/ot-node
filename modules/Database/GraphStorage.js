@@ -357,7 +357,7 @@ class GraphStorage {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findDocumentsByImportIdAndFromKey(importId, objectId).then((result) => {
+                this.db.findDocumentsByImportIdAndOtObjectId(importId, objectId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

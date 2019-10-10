@@ -793,40 +793,38 @@ class ArangoJS {
     /**
      * Returns vertices and edges with specific parameters
      * @param importId
-     * @param fromKey
+     * @param objectKey
      * @returns {Promise<any>}
      */
-    async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
-        const queryString = `LET edges = (
-                                FOR e IN ot_edges                                
-                                FILTER e.datasets != null 
-                                AND e._from == @objectId
-                                AND POSITION(e.datasets, @importId, false) != false                                
-                                RETURN e
-                            )                             
-                            LET vertex_ids = (
-                                FOR e IN edges
-                                FILTER e.edgeType == 'IdentifierRelation' 
-                                OR e.edgeType == 'dataRelation'
-                                OR e.edgeType == 'otRelation'
-                                RETURN e._to
-                            )                            
-                            LET vertices = (
-                                FOR v IN ot_vertices
-                                FILTER v.datasets != null
-                                AND POSITION(v.datasets, @importId, false) != false
-                                AND (v._id IN vertex_ids OR v._id == @objectId)
-                                RETURN v
+    async findDocumentsByImportIdAndOtObjectId(importId, objectKey) {
+        const queryString = `LET rootObject = (
+                                RETURN document('ot_vertices', @objectKey)
                             )
-                            RETURN {'edges':edges, 'vertices':vertices}`;
+                            
+                            LET relatedObjects = (
+                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                    AND POSITION(e.datasets, @importId, false) != false
+                                    AND POSITION(v.datasets, @importId, false) != false
+                                RETURN {
+                                    "vertex": v,
+                                    "edge": e
+                                }
+                            )
+                            
+                            RETURN {
+                                "rootObject": rootObject[0],
+                                "relatedObjects": relatedObjects
+                            }`;
 
         const result = await this.runQuery(queryString, {
             importId,
-            objectId,
+            objectKey,
         });
-        const normalizedResult = normalizeGraph(importId, result.vertices, result.edges);
 
-        return normalizedResult;
+        return result[0];
     }
 
     /**
