@@ -52,11 +52,12 @@ class ChallengeService {
         let testBlockId = 0;
         for (let i = 0; i < numberOfTests; i += 1) {
             testBlockId = Math.floor(Math.random() * blocks.length);
+            const answerEscaped = blocks[testBlockId].data.split('"').join('\'');
             tests.push({
                 testIndex: testBlockId,
                 objectIndex: blocks[testBlockId].objectIndex,
                 blockIndex: blocks[testBlockId].blockIndex,
-                answer: blocks[testBlockId].data,
+                answer: answerEscaped,
                 time: randomIntervals[i],
             });
         }
@@ -83,7 +84,9 @@ class ChallengeService {
         // });
         // console.log(`*********************`);
         const answer = JSON.stringify(encryptedObject).substring(blockIndex * blockSize, blockSize);
-        return answer;
+        const answerEscaped = answer.split('"').join('\'');
+
+        return answerEscaped;
     }
 
     /**
