@@ -156,7 +156,6 @@ class DCOfferFinalizeCommand extends Command {
             offer_id: offerId,
         });
 
-        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 

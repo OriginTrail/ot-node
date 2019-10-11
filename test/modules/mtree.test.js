@@ -7,10 +7,10 @@ const Utilities = require('../../modules/Utilities');
 const Merkle = require('../../modules/Merkle');
 
 describe('Merkle module', () => {
-    function solidityLeafHash(leaf, index) {
+    function solidityLeafHash(leaf, objectIndex, blockIndex) {
         return abi.soliditySHA3(
-            ['bytes32', 'uint256'],
-            [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
+            ['bytes32', 'uint256', 'uint256'],
+            [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), objectIndex, blockIndex],
         ).toString('hex');
     }
 
@@ -33,11 +33,15 @@ describe('Merkle module', () => {
     }
 
     it('Solidity SHA3: Constructing trivial tree', () => {
-        const data = ['A'];
-        const tree1 = new Merkle(data);
-        const tree2 = new Merkle(data, 'soliditySha3');
+        const block = [{
+            data: ['A'],
+            objectIndex: 0,
+            blockIndex: 0,
+        }];
+        const tree1 = new Merkle(block);
+        const tree2 = new Merkle(block, 'soliditySha3');
 
-        const leafHash = solidityLeafHash('A', 0);
+        const leafHash = solidityLeafHash('A', 0, 0);
 
         assert.equal(tree1.getRoot(), tree2.getRoot());
         assert.equal(tree1.getRoot(), `0x${solidityInternalHash(leafHash, leafHash)}`);
@@ -46,13 +50,34 @@ describe('Merkle module', () => {
     });
 
     it('Solidity SHA3: Constructing tree with even number of leaves', () => {
-        const data = ['A', 'B', 'C', 'D'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+            {
+                data: 'D',
+                objectIndex: 2,
+                blockIndex: 0,
+            },
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
-        const leafHash1 = solidityLeafHash('A', 0);
-        const leafHash2 = solidityLeafHash('B', 1);
-        const leafHash3 = solidityLeafHash('C', 2);
-        const leafHash4 = solidityLeafHash('D', 3);
+        const leafHash1 = solidityLeafHash('A', 0, 0);
+        const leafHash2 = solidityLeafHash('B', 0, 1);
+        const leafHash3 = solidityLeafHash('C', 1, 0);
+        const leafHash4 = solidityLeafHash('D', 2, 0);
 
         const internalHash1 = solidityInternalHash(leafHash1, leafHash2);
         const internalHash2 = solidityInternalHash(leafHash3, leafHash4);
@@ -67,12 +92,28 @@ describe('Merkle module', () => {
 
 
     it('Solidity SHA3: Constructing tree with odd number of leaves', () => {
-        const data = ['A', 'B', 'C'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
-        const leafHash1 = solidityLeafHash('A', 0);
-        const leafHash2 = solidityLeafHash('B', 1);
-        const leafHash3 = solidityLeafHash('C', 2);
+        const leafHash1 = solidityLeafHash('A', 0, 0);
+        const leafHash2 = solidityLeafHash('B', 0, 1);
+        const leafHash3 = solidityLeafHash('C', 1, 0);
 
         const internalHash1 = solidityInternalHash(leafHash1, leafHash2);
         const internalHash2 = solidityInternalHash(leafHash3, leafHash3);
@@ -86,26 +127,91 @@ describe('Merkle module', () => {
     });
 
     it('Solidity SHA3: Generate and verify valid proofs', () => {
-        const data = ['A', 'B', 'C', 'D'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+            {
+                data: 'D',
+                objectIndex: 2,
+                blockIndex: 0,
+            },
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
-        for (let i = 0; i < data.length; i += 1) {
-            const proof = tree.createProof(i);
-            assert.equal(tree.verifyProof(proof, data[i], i), true);
+        for (const element of data) {
+            const proof = tree.createProof(element.objectIndex, element.blockIndex);
+            assert.equal(
+                tree.verifyProof(proof, element.data, element.objectIndex, element.blockIndex),
+                true,
+            );
         }
     });
 
-    it('Solidity SHA3: Generate and verify valid proofs', () => {
-        const data = ['A', 'B', 'C', 'D'];
+    it('Solidity SHA3: Generate and verify invalid proofs', () => {
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+            {
+                data: 'D',
+                objectIndex: 2,
+                blockIndex: 0,
+            },
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
         for (let i = 0; i < data.length; i += 1) {
-            const proof = tree.createProof(i - 1);
-            assert.equal(tree.verifyProof(proof, data[i], i), false);
+            const proof = tree.createProof(data[i].objectIndex, data[i].blockIndex);
+            if (i === data.length - 1) {
+                assert.equal(
+                    tree.verifyProof(
+                        proof,
+                        data[i].data,
+                        data[i - 1].objectIndex,
+                        data[i - 1].blockIndex,
+                    ),
+                    false,
+                );
+            } else {
+                assert.equal(
+                    tree.verifyProof(
+                        proof,
+                        data[i].data,
+                        data[i + 1].objectIndex,
+                        data[i + 1].blockIndex,
+                    ),
+                    false,
+                );
+            }
         }
     });
 
