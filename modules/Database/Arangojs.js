@@ -96,8 +96,9 @@ class ArangoJS {
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
-                       FILTER v.vertex_type == 'EVENT'
-                       AND v.sender_id == @sender_id
+                       FILTER v.vertexType == 'Data'
+                       AND v.data.objectType='ObjectEvent'
+                       AND v.senderId == @sender_id
                        AND v.encrypted == null
                        RETURN v`;
 
@@ -121,7 +122,7 @@ class ArangoJS {
 
         for (const event of ownershipEvents) {
             const query = `FOR v, e IN 1..1 OUTBOUND @senderEventKey ot_edges
-            FILTER e.edge_type == 'EVENT_CONNECTION'
+            FILTER e.edgeType == 'EVENT_CONNECTION'
             RETURN v`;
             promises.push(this.runQuery(query, { senderEventKey: `ot_vertices/${event.side1._key}` }));
         }

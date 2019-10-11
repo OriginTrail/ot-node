@@ -3,7 +3,7 @@ Feature: Data layer related features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @dl2_completed
+  @second
   Scenario: Check that second gs1 import does not mess up first import's hash value
     Given I setup 4 nodes
     And I start the nodes
@@ -11,6 +11,7 @@ Feature: Data layer related features
     And DC imports "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1-EPCIS
     And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
     And DC waits for last offer to get written to blockchain
     And I remember previous import's fingerprint value
     And DC imports "importers/xml_examples/Basic/02_Green_to_pink_shipment.xml" as GS1-EPCIS
@@ -19,20 +20,7 @@ Feature: Data layer related features
     And DC waits for last offer to get written to blockchain
     Then checking again first import's root hash should point to remembered value
 
-  @dl2_completed
-  Scenario: Latest datalayer import and data read query
-    Given I setup 1 node
-    And I start the node
-    And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
-    And DC waits for import to finish
-    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
-    And DC waits for import to finish
-    Given I create json query with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
-    Then response should return same dataset_ids as second last import and last import
-
-
-  @dl2_completed
+  @second
   Scenario: Smoke check data-layer basic endpoints
     Given I setup 2 nodes
     And I start the nodes
@@ -45,7 +33,7 @@ Feature: Data layer related features
     Given I query DC node locally for last imported data set id
     Then response hash should match last imported data set id
 
-  @dl2_completed
+  @second
   Scenario: Basic dataset integrity with it's xml
     Given I setup 1 node
     And I start the node
@@ -54,7 +42,7 @@ Feature: Data layer related features
     And DC waits for import to finish
     Then imported data is compliant with 01_Green_to_pink_shipment.xml file
 
-  @dl2_failed
+  @second
   Scenario: Dataset immutability DC and DH side
     Given I setup 5 node
     And I start the node
@@ -72,7 +60,7 @@ Feature: Data layer related features
     Then DH's 2 dataset hashes should match blockchain values
 
 
-  @dl2_failed
+  @second
   Scenario: Dataset immutability II
     Given I setup 1 node
     And I start the node
@@ -87,7 +75,7 @@ Feature: Data layer related features
     And DC waits for last offer to get written to blockchain
     Then DC's 2 dataset hashes should match blockchain values
 
-  @dl2_failed
+  @second
   Scenario: Imported XML's private data should be hashed
     Given I setup 1 node
     And I start the node
@@ -107,43 +95,61 @@ Feature: Data layer related features
     Given I query DV node locally for last imported data set id
     Then DV's local query response should contain hashed private attributes
 
-  @neki
+  @second
   Scenario: Remote event connection on DH and DV
     Given I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And I use 2nd node as DH
-    Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
-    Then last consensus response should have 1 event with 1 match
-    Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
-    Then last consensus response should have 1 event with 1 match
+
+#    Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
+#    Then last consensus response should have 1 event with 1 match
+#    Given DH calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
+#    Then last consensus response should have 1 event with 1 match
+
     Given I additionally setup 1 node
     And I start additional nodes
     And I use 6th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
-    And the DV purchases last import from the last query from a DH
-    Given DV publishes query consisting of path: "uid", value: "urn:epc:id:sgln:Building_Green_V1" and opcode: "EQ" to the network
-    Then all nodes with second last import should answer to last network query by DV
-    And the DV purchases second last import from the last query from a DH
-    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
-    Then last consensus response should have 1 event with 1 match
-    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
-    Then last consensus response should have 1 event with 1 match
 
-  @dl2_failed
+#    And the DV purchases last import from the last query from a DH
+
+    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgln:Building_Green_V1" and opcode: "EQ" to the network
+    Then all nodes with second last import should answer to last network query by DV
+
+#    And the DV purchases second last import from the last query from a DH
+#    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
+#    Then last consensus response should have 1 event with 1 match
+#    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
+#    Then last consensus response should have 1 event with 1 match
+
+  @second
+  Scenario: Latest datalayer import and data read query
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Given I create json query with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
+    Then response should return same dataset_ids as second last import and last import
+
+  @second
   Scenario: Data location with multiple identifiers
     Given I setup 1 node
     And I start the node
     And I use 1st node as DC
     And DC imports "test/modules/test_xml/MultipleIdentifiers.xml" as GS1-EPCIS
-    And DC waits for import to finish
     Given I create json query with path: "identifiers.uid", value: "urn:ot:object:product:id:P1" and opcode: "EQ"
     And I append json query with path: "identifiers.ean13", value: "1234567890123" and opcode: "EQ"
     Given DC node makes local query with previous json query

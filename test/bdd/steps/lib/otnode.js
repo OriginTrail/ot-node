@@ -184,7 +184,7 @@ class OtNode extends EventEmitter {
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
         } else if (line.match(/.*\[DC] Import complete/gi)) {
             this.emit('import-complete');
-        } else if (line.match(/[DH] Replication finished for offer ID .+/gi)) {
+        } else if (line.match(/.*\[DH] Replication finished for offer ID .+/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
             this.state.addedBids.push(offerId);
@@ -222,12 +222,12 @@ class OtNode extends EventEmitter {
             const offerId = line.match(offerIdRegex)[0];
         } else if (line.match(/Not enough DHs submitted/gi)) {
             this.emit('not-enough-dhs');
-        } else if (line.match(/Offer .+ finalized/gi)) {
+        } else if (line.match(/.*Offer .+ finalized/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
             this.state.offersFinalized.push(offerId);
             this.emit('offer-finalized', offerId);
-        } else if (line.match(/Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
+        } else if (line.match(/.*Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
             this.emit('dv-network-query-processed');
         } else if (line.match(/DH .+ in query ID .+ and reply ID .+ confirms possession of data imports: '.+'/)) {
             const identity = line.match(identityRegex)[0];

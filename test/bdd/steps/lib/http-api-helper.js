@@ -127,6 +127,31 @@ async function apiImportResult(nodeRpcUrl, handler_id) {
     });
 }
 
+/**
+ * Fetch /api/latest/import/result
+ * @typedef {Object} ImportResult
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} handler_id
+ * @return {Promise.<ImportResult>}
+ */
+async function apiReplicationResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/replicate/result/${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
 
 /**
  * @typedef {Object} Import
@@ -279,11 +304,8 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
                 headers: { 'Content-Type': 'application/json' },
                 uri: `${nodeRpcUrl}/api/latest/replicate`,
                 json: true,
-                formData: {
+                body: {
                     dataset_id: data_set_id,
-                    // Hardcoded values
-                    data_lifespan: 15,
-                    total_token_amount: '15000000',
                 },
             },
             (err, res, body) => {
@@ -540,6 +562,7 @@ module.exports = {
     apiQueryLocal,
     apiQueryLocalImportByDataSetId,
     apiReplication,
+    apiReplicationResult,
     apiQueryNetwork,
     apiQueryNetworkResponses,
     apiReadNetwork,

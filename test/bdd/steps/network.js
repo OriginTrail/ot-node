@@ -327,7 +327,7 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     const calculatedRootHash = utilities.calculateRootHash(response.document);
     const calculateDatasetId = utilities.calculateImportHash(response.document['@graph']);
     expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
-    expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data_set_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
+    expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {
@@ -335,7 +335,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
 
     const { dc } = this.state;
 
@@ -361,7 +361,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -382,7 +382,7 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 
 Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 1200000 }, function (nodeIndex) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
@@ -405,7 +405,7 @@ Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 
 Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -419,7 +419,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Get offer ID for last import.
     const lastOfferId =
-        dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
+        dc.state.offers.internalIDs[this.state.lastReplicationHandler].offerId;
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
@@ -642,7 +642,7 @@ Then(/^all nodes with (last import|second last import) should answer to last net
         promises.push(new Promise(async (accept) => {
             const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
             body.find((importInfo) => {
-                if (importInfo.data_set_id === this.state[whichImport].data_set_id) {
+                if (importInfo.data_set_id === this.state[whichImport].data.dataset_id) {
                     nodeCandidates.push(node.state.identity);
                     return true;
                 }
@@ -666,7 +666,7 @@ Then(/^all nodes with (last import|second last import) should answer to last net
         // const intervalHandler;
         const intervalHandler = setInterval(async () => {
             const confirmationsSoFar =
-                dv.nodeConfirmsForDataSetId(queryId, this.state[whichImport].data_set_id);
+                dv.nodeConfirmsForDataSetId(queryId, this.state[whichImport].data.dataset_id);
             if (Date.now() - startTime > 60000) {
                 clearTimeout(intervalHandler);
                 reject(Error('Not enough confirmations for query. ' +
@@ -716,7 +716,7 @@ Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, 
 Given(/^DC waits for replication window to close$/, { timeout: 180000 }, function (done) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -730,7 +730,7 @@ Given(/^DC waits for replication window to close$/, { timeout: 180000 }, functio
 Given(/^DC waits for last offer to get written to blockchain$/, { timeout: 180000 }, function (done) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 

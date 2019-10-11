@@ -72,17 +72,18 @@ Given(/^DC initiates the replication for last imported dataset$/, { timeout: 600
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    const response =
-        await httpApiHelper.apiReplication(
-            dc.state.node_rpc_url,
-            this.state.lastImport.data.dataset_id,
-        );
+    const host = dc.state.node_rpc_url;
 
-    if (!response.handler_id) {
-        throw Error(`Failed to replicate. Got reply: ${JSON.stringify(response)}`);
+    try {
+        const response =
+            await httpApiHelper.apiReplication(
+                host,
+                this.state.lastImport.data.dataset_id,
+            );
+        this.state.lastReplicationHandler = response;
+    } catch (e) {
+        throw Error(`Failed to initiate replicate. Got reply: ${JSON.stringify(response)}`);
     }
-
-    this.state.lastReplication = response;
 });
 
 Given(/^I create json query with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (path, value, opcode) {
@@ -174,7 +175,7 @@ Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last
     const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const queryId = this.state.lastQueryNetworkId;
-    const dataSetId = this.state[whichImport].data_set_id;
+    const dataSetId = this.state[whichImport].data.dataset_id;
     let sellerNode;
 
     const confirmationsSoFar =
