@@ -278,7 +278,8 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 uri: `${nodeRpcUrl}/api/latest/replicate`,
-                body: {
+                json: true,
+                formData: {
                     dataset_id: data_set_id,
                     // Hardcoded values
                     data_lifespan: 15,

@@ -3,20 +3,22 @@ Feature: Test basic importer features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @second
+  @dl2_failed
   Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
     Given I setup 1 node
     And I start the node
     And I use 1st node as DC
-    And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
+    And DC imports "importers/json_examples/WOT_Example_1.json" as GS1-EPCIS
+    And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And DC waits for last offer to get written to blockchain
     And I remember previous import's fingerprint value
-    And DC imports "importers/json_examples/WOT_Example_2.json" as WOT
+    And DC imports "importers/json_examples/WOT_Example_2.json" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Then checking again first import's root hash should point to remembered value
 
-  @second
+  @skip
   Scenario: Check that WOT import is connecting to the same batch from GS1 import
     Given I setup 1 node
     And I start the node

@@ -4,7 +4,7 @@ Feature: Protocol related issues.
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @second
+  @skip
   Scenario: Expect publish to work with ghost nodes.
     # Use 7 nodes in total - Kadence.APLHA(3) times two plus one DC.
     Given I setup 7 nodes

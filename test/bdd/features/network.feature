@@ -3,32 +3,34 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
+  @dl2_completed
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
-  @first
+  @dl2
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
     And I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
 
-  @first
+  @dl2
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
@@ -48,7 +50,8 @@ Feature: Test basic network features
     And I setup 1 node
     And I start the node
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And DC waits for replication window to close
@@ -66,7 +69,8 @@ Feature: Test basic network features
     And I setup 1 node
     And I start the node
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And DC waits for replication window to close
@@ -101,24 +105,6 @@ Feature: Test basic network features
     Then everything should be ok
 
   @first
-  Scenario: API calls should be forbidden
-    Given I setup 1 node
-    And I override configuration for all nodes
-      | network.remoteWhitelist | 100.100.100.100 | 200.200.200.200 |
-    And I start the node
-    And I use 1st node as DC
-    Then API calls will be forbidden
-
-  @first
-  Scenario: API calls should not be authorized
-    Given I setup 1 node
-    And I override configuration for all nodes
-      | auth_token_enabled | true |
-    And I start the node
-    And I use 1st node as DC
-    Then API calls will not be authorized
-
-  @first
   Scenario: Bootstraps should have /api/info route enabled
     Then 1st bootstrap should reply on info route
 
@@ -130,7 +116,8 @@ Feature: Test basic network features
       | dc_holding_time_in_minutes | 1 |
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And DC waits for holding time
@@ -145,7 +132,8 @@ Feature: Test basic network features
       | disableAutoPayouts         | true |
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And DC waits for holding time
@@ -164,7 +152,8 @@ Feature: Test basic network features
     And I setup 3 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And I wait for DC to fail to finalize last offer

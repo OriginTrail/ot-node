@@ -18,17 +18,17 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
 
     const { dc } = this.state;
     let data;
-    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
     expect(
-        utilities.findVertexIdValue(myApiImportInfo.import.vertices, 'IDENTIFIER', 'urn:ot:object:actor:id:Company_Green', 'uid', 'urn:ot:object:actor:id:Company_Green:2018-01-01T01:00:00.000-04:00Z-04:00').length,
+        utilities.findVertexIdValue(myApiImportInfo.document['@graph'], 'id', 'urn:ot:object:actor:id:Company_Green').length,
         'There should be at least one such vertex',
     ).to.be.above(0);
     data = {
         parent_id: 'urn:epc:id:sgln:Building_Green',
     };
     expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'LOCATION', 'urn:ot:object:actor:id:Company_Green', 'urn:epc:id:sgln:Building_Green_V2', data).length,
+        utilities.findVertexUid(myApiImportInfo.document['@graph'], 'urn:epc:id:sgln:Building_Green_V2').length,
         'There should be at least one such vertex',
     ).to.be.above(0);
     data = {
@@ -38,7 +38,7 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
         wallet: '0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0',
     };
     expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'ACTOR', 'urn:ot:object:actor:id:Company_Green', 'urn:ot:object:actor:id:Company_Green', data).length,
+        utilities.findVertexUid(myApiImportInfo.document['@graph'], 'urn:ot:object:actor:id:Company_Green').length,
         'There should be at least one such vertex',
     ).to.be.above(0);
     data = {
@@ -47,7 +47,7 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
         object_class_id: 'Product',
     };
     expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'PRODUCT', 'urn:ot:object:actor:id:Company_Green', 'urn:ot:object:product:id:Product_1', data).length,
+        utilities.findVertexUid(myApiImportInfo.document['@graph'], 'urn:ot:object:product:id:Product_1', data).length,
         'There should be at least one such vertex',
     ).to.be.above(0);
     data = {
@@ -62,11 +62,11 @@ Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, asy
         },
     };
     expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'BATCH', 'urn:ot:object:actor:id:Company_Green', 'urn:epc:id:sgtin:Batch_1', data).length,
+        utilities.findVertexUid(myApiImportInfo.document['@graph'], 'urn:epc:id:sgtin:Batch_1', data).length,
         'There should be at least one such vertex',
     ).to.be.above(0);
     expect(
-        utilities.findVertexIdValue(myApiImportInfo.import.vertices, 'IDENTIFIER', 'urn:ot:object:actor:id:Company_Green', 'uid', 'urn:epc:id:sgln:Building_Green').length,
+        utilities.findVertexIdValue(myApiImportInfo.document['@graph'], 'id', 'urn:ot:object:actor:id:Company_Green').length,
         'There should be at least one such vertex',
     ).to.be.above(0);
 });
@@ -78,6 +78,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
     const myNode = this.state[nodeType.toLowerCase()];
     const myApiImportsInfo = await httpApiHelper.apiImportsInfo(myNode.state.node_rpc_url);
+
     expect(myApiImportsInfo.length, 'We should have preciselly this many datasets').to.be.equal(datasetsCount);
 
     for (const i in Array.from({ length: myApiImportsInfo.length })) {
@@ -85,11 +86,10 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         const myFingerprint = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
         expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-
         const myEdgesVertices = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
-        expect(myEdgesVertices, 'Should have corresponding keys').to.have.keys(['edges', 'vertices']);
-
-        const calculatedImportHash = utilities.calculateImportHash(myEdgesVertices);
+        // expect(myEdgesVertices, 'Should have corresponding keys').to.have.keys(['edges', 'vertices']);
+        console.log(myEdgesVertices);
+        const calculatedImportHash = utilities.calculateImportHash(myEdgesVertices['@graph']);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         // vertices and edges are already sorted from the response
@@ -105,7 +105,7 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
 
     expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'Query response of last local imported data set id not defined').to.be.equal(true);
 
-    expect(this.state.apiQueryLocalImportByDataSetIdResponse, 'Response should contain two keys').to.have.keys(['edges', 'vertices']);
+    // expect(this.state.apiQueryLocalImportByDataSetIdResponse, 'Response should contain two keys').to.have.keys(['edges', 'vertices']);
 
     this.state.apiQueryLocalImportByDataSetIdResponse.vertices.forEach((vertex) => {
         if (vertex.data) {

@@ -75,7 +75,7 @@ Given(/^DC initiates the replication for last imported dataset$/, { timeout: 600
     const response =
         await httpApiHelper.apiReplication(
             dc.state.node_rpc_url,
-            this.state.lastImport.data_set_id,
+            this.state.lastImport.data.dataset_id,
         );
 
     if (!response.handler_id) {
@@ -128,12 +128,12 @@ Given(/^(DC|DH|DV) node makes local query with previous json query$/, async func
 
 Given(/^I query ([DC|DH|DV]+) node locally for last imported data set id$/, async function (targetNode) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastImport.data_set_id, 'Last imports data set id seems not defined').to.be.equal(true);
+    expect(!!this.state.lastImport.data.dataset_id, 'Last imports data set id seems not defined').to.be.equal(true);
     expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
     expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
 
     const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
-    const lastDataSetId = this.state.lastImport.data_set_id;
+    const lastDataSetId = this.state.lastImport.data.dataset_id;
 
     const response = await httpApiHelper.apiQueryLocalImportByDataSetId(host, lastDataSetId);
     this.state.apiQueryLocalImportByDataSetIdResponse = response;
