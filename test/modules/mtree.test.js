@@ -71,7 +71,7 @@ describe('Merkle module', () => {
                 objectIndex: 2,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
         const leafHash1 = solidityLeafHash('A', 0, 0);
@@ -108,7 +108,7 @@ describe('Merkle module', () => {
                 objectIndex: 1,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
         const leafHash1 = solidityLeafHash('A', 0, 0);
@@ -148,15 +148,18 @@ describe('Merkle module', () => {
                 objectIndex: 2,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
         for (const element of data) {
             const proof = tree.createProof(element.objectIndex, element.blockIndex);
-            assert.equal(tree.verifyProof(proof, element.data, element.objectIndex, element.blockIndex), true);
-        };
+            assert.equal(
+                tree.verifyProof(proof, element.data, element.objectIndex, element.blockIndex),
+                true,
+            );
+        }
     });
 
     it('Solidity SHA3: Generate and verify invalid proofs', () => {
@@ -181,7 +184,7 @@ describe('Merkle module', () => {
                 objectIndex: 2,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'soliditySha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
@@ -189,9 +192,25 @@ describe('Merkle module', () => {
         for (let i = 0; i < data.length; i += 1) {
             const proof = tree.createProof(data[i].objectIndex, data[i].blockIndex);
             if (i === data.length - 1) {
-                assert.equal(tree.verifyProof(proof, data[i].data, data[i - 1].objectIndex, data[i - 1].blockIndex), false);
+                assert.equal(
+                    tree.verifyProof(
+                        proof,
+                        data[i].data,
+                        data[i - 1].objectIndex,
+                        data[i - 1].blockIndex,
+                    ),
+                    false,
+                );
             } else {
-                assert.equal(tree.verifyProof(proof, data[i].data, data[i + 1].objectIndex, data[i + 1].blockIndex), false);
+                assert.equal(
+                    tree.verifyProof(
+                        proof,
+                        data[i].data,
+                        data[i + 1].objectIndex,
+                        data[i + 1].blockIndex,
+                    ),
+                    false,
+                );
             }
         }
     });

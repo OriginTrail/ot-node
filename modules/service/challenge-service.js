@@ -16,7 +16,8 @@ class ChallengeService {
      * @returns {Array}
      */
     generateChallenges(
-        encryptedGraphData, startTime, endTime, numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
+        encryptedGraphData, startTime, endTime,
+        numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
         blockSizeBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
         if (numberOfTests <= 0) {

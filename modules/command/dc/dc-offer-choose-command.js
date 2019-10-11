@@ -79,7 +79,7 @@ class DCOfferChooseCommand extends Command {
         }
         const handler = await models.handler_ids.findOne({
             where: { handler_id },
-        })
+        });
         const handler_data = JSON.parse(handler.data);
         handler_data.status = 'MINING_SOLUTION';
         await models.handler_ids.update(

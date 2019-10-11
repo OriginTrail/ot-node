@@ -93,7 +93,9 @@ class MerkleTree {
 
         const proof = [];
 
-        const leafNumber = levels[0].findIndex(element => element.objectIndex === leafObjectIndex && element.blockIndex === leafBlockIndex);
+        const leafNumber =
+            levels[0].findIndex(element =>
+                element.objectIndex === leafObjectIndex && element.blockIndex === leafBlockIndex);
         let i = leafNumber;
 
         while (currentLevel < levels.length - 1) {
@@ -113,7 +115,9 @@ class MerkleTree {
     }
 
     verifyProof(proof, data, objectIndex, blockIndex) {
-        let leafNumber = this.levels[0].findIndex(element => element.objectIndex === objectIndex && element.blockIndex === blockIndex);
+        let leafNumber =
+            this.levels[0].findIndex(element =>
+                element.objectIndex === objectIndex && element.blockIndex === blockIndex);
         let h = this.generateLeafHash(data, objectIndex, blockIndex);
         let j = this.levels.length - 1;
         let k = 0;

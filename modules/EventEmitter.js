@@ -766,12 +766,15 @@ class EventEmitter {
                             this.epcisOtJsonTranspiler.convertFromOTJson(result);
                         await processExport(
                             null,
-                            { formatted_dataset, handler_id: data.handler_id });
+                            { formatted_dataset, handler_id: data.handler_id },
+                        );
                         break;
                     }
                     case 'graph': {
-                        await processExport(null,
-                            { formatted_dataset: result, handler_id: data.handler_id });
+                        await processExport(
+                            null,
+                            { formatted_dataset: result, handler_id: data.handler_id },
+                        );
                         break;
                     }
                     default:

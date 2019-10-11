@@ -357,7 +357,7 @@ class DCService {
      * @returns {Promise<void>}
      */
     async _sendReplication(offer, wallet, identity, dhIdentity, response) {
-        const colorNumber = Utilities.getRandomInt(2)
+        const colorNumber = Utilities.getRandomInt(2);
         const color = this.replicationService.castNumberToColor(colorNumber);
 
         const replication = await this.replicationService.loadReplication(offer.id, color);
