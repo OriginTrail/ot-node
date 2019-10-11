@@ -1,6 +1,7 @@
 const Command = require('../command');
 const importUtilities = require('../../ImportUtilities');
 const models = require('../../../models/index');
+const importUtilitites = require('../../ImportUtilities');
 
 /**
  * Handles one data challenge
@@ -13,6 +14,7 @@ class DHChallengeCommand extends Command {
         this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
+        this.otJsonImporter = ctx.otJsonImporter;
     }
 
     /**
@@ -21,7 +23,8 @@ class DHChallengeCommand extends Command {
      */
     async execute(command) {
         const {
-            blockId,
+            objectIndex,
+            blockIndex,
             datasetId,
             challengeId,
             litigatorNodeId,
@@ -42,12 +45,19 @@ class DHChallengeCommand extends Command {
             throw new Error(`Failed to find holding data for data set ${datasetId}`);
         }
 
-        const vertices = await this.graphStorage
-            .findVerticesByImportId(datasetId, holdingData.color);
-        importUtilities.unpackKeys(vertices, []);
-        const answer = this.challengeService.answerChallengeQuestion(blockId, vertices);
+        const colors = ['red', 'green', 'blue'];
+        const colorIndex = holdingData.color;
+        const color = colors[colorIndex];
 
-        this.logger.info(`Calculated answer for dataset ${datasetId}, color ${holdingData.color} and block ${blockId} is ${answer}`);
+        const otObject = await this.otJsonImporter.getImportedOtObject(
+            datasetId,
+            objectIndex,
+            color,
+        );
+
+        const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
+
+        this.logger.info(`Calculated answer for dataset ${datasetId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
         await this.transport.challengeResponse({
             payload: {
                 answer,

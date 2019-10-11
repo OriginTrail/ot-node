@@ -438,8 +438,7 @@ class OTNode {
         const profile = await blockchain.getProfile(config.erc725Identity);
 
         if (!profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
-            throw Error('ERC725 profile not created for this node ID. ' +
-                `My identity ${config.identity}, profile's node id: ${profile.nodeId}.`);
+            await blockchain.setNodeId(config.erc725Identity, config.identity.toLowerCase());
         }
 
         // Initialise API
