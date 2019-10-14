@@ -53,12 +53,12 @@ class ChallengeService {
         let testBlockId = 0;
         for (let i = 0; i < numberOfTests; i += 1) {
             testBlockId = Math.floor(Math.random() * blocks.length);
-            const answerEscaped = blocks[testBlockId].data.split('"').join('\'');
+            const answer = blocks[testBlockId].data;
             tests.push({
                 testIndex: testBlockId,
                 objectIndex: blocks[testBlockId].objectIndex,
                 blockIndex: blocks[testBlockId].blockIndex,
-                answer: answerEscaped,
+                answer,
                 time: randomIntervals[i],
             });
         }
@@ -67,30 +67,28 @@ class ChallengeService {
 
     /**
      * Returns answer block for given object ID, block ID and block size and vertex data.
-     * @param objectIndex ID of the required object.
      * @param blockIndex ID of the required block.
-     * @param vertexData Original vertex data.
-     * @param blockSize Desired size of
+     * @param encryptedObject Graph object with properties encrypted.
+     * @param blockSizeInBytes Desired size of each block.
      * @returns {String}
      */
     answerChallengeQuestion(
         blockIndex, encryptedObject,
-        blockSize = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
+        blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-        const answer = JSON.stringify(encryptedObject).substring(
-            blockIndex * blockSize,
-            (blockIndex + 1) * blockSize,
+        let answer = JSON.stringify(encryptedObject).substring(
+            blockIndex * blockSizeInBytes,
+            (blockIndex + 1) * blockSizeInBytes,
         );
-        const answerEscaped = answer.split('"').join('\'');
-
-        return answerEscaped;
+        answer = answer.padEnd(blockSizeInBytes, '#');
+        return answer;
     }
 
     /**
      * Creates array of blocks based on the vertex data.
      * @note Last block can be smaller than desired blockSizeBytes.
      * @param vertices Vertex data in form { ..., data: "vertex-data" }
-     * @param blockSizeBytes Desired size of each block.
+     * @param blockSizeInBytes Desired size of each block.
      * @returns {Array} of blocks.
      */
     getBlocks(vertices, blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
@@ -108,7 +106,7 @@ class ChallengeService {
 
                     const substring = data.substring(j, j + blockSizeInBytes);
                     block += substring;
-                    block = block.padEnd(blockSizeInBytes, '\0');
+                    block = block.padEnd(blockSizeInBytes, '#');
                     blocks.push({
                         data: block,
                         objectIndex: i,
@@ -117,12 +115,6 @@ class ChallengeService {
                 }
             }
         }
-
-        // Commented because logic was changed, delete if it works.
-        // if (block.length > 0) {
-        //     // Add last node.
-        //     blocks.push(block);
-        // }
         return blocks;
     }
 }
