@@ -166,8 +166,8 @@ class ArangoJS {
                                             FOR v${count} IN ot_vertices
                                         LET objects = (
                                             FOR e IN ot_edges
-                                        FILTER e._from == v1._id
-                                        AND LENGTH(INTERSECTION(e.datasets, v1.datasets)) > 0
+                                        FILTER e._from == v${count}._id
+                                        AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
                                         RETURN e._to)
                              `;
 

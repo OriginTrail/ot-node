@@ -77,9 +77,10 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
     expect(datasetsCount >= 1, 'datasetsCount should be positive integer').to.be.true;
 
     const myNode = this.state[nodeType.toLowerCase()];
+    // const myApiImportsInfo = await httpApiHelper.apiImportResult(myNode.state.node_rpc_url, this.state.lastImportsHandler);
     const myApiImportsInfo = await httpApiHelper.apiImportsInfo(myNode.state.node_rpc_url);
 
-    expect(myApiImportsInfo.length, 'We should have preciselly this many datasets').to.be.equal(datasetsCount);
+    expect(myApiImportsInfo.length, 'We should have precisely this many datasets').to.be.equal(datasetsCount);
 
     for (const i in Array.from({ length: myApiImportsInfo.length })) {
         const myDataSetId = myApiImportsInfo[i].data_set_id;
@@ -88,12 +89,22 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
         const myEdgesVertices = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
         // expect(myEdgesVertices, 'Should have corresponding keys').to.have.keys(['edges', 'vertices']);
-        console.log(myEdgesVertices);
+
         const calculatedImportHash = utilities.calculateImportHash(myEdgesVertices['@graph']);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
+        const vertices = myEdgesVertices['@graph'];
+        let edges = [];
+        vertices.forEach((vertex) => {
+            vertex.relations.forEach((edge) => {
+                edges.push(edge);
+            });
+        });
+
+        // console.log(edges[0]);
+
         // vertices and edges are already sorted from the response
-        const myMerkle = await ImportUtilities.merkleStructure(myEdgesVertices.vertices, myEdgesVertices.edges);
+        const myMerkle = await ImportUtilities.merkleStructure(vertices, edges);
 
         expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
     }
