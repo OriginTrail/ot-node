@@ -77,7 +77,10 @@ class ChallengeService {
         blockIndex, encryptedObject,
         blockSize = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-        const answer = JSON.stringify(encryptedObject).substring(blockIndex * blockSize, blockSize);
+        const answer = JSON.stringify(encryptedObject).substring(
+            blockIndex * blockSize,
+            (blockIndex + 1) * blockSize,
+        );
         const answerEscaped = answer.split('"').join('\'');
 
         return answerEscaped;
