@@ -541,7 +541,7 @@ class EventEmitter {
                     );
                     logger.info('[DC] Import complete');
                     logger.info(`Root hash: ${root_hash}`);
-                    logger.info(`Data set ID: ${data_set_id}`)
+                    logger.info(`Data set ID: ${data_set_id}`);
                     remoteControl.importSucceeded();
                 }
             } catch (error) {

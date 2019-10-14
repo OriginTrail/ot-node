@@ -50,7 +50,7 @@ Given(/^DC waits for import to finish$/, async function () {
     return promise;
 });
 
-Given(/^response should return same dataset_ids as second last import and last import$/, async function() {
+Given(/^response should return same dataset_ids as second last import and last import$/, async function () {
     expect(!!this.state.lastImportsHandler, 'Last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.secondLastImportsHandler, 'Second last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
 
@@ -61,7 +61,7 @@ Given(/^response should return same dataset_ids as second last import and last i
     this.state.apiQueryLocalResponse = response;
     const importIds = [this.state.secondLastImport.data.dataset_id, this.state.lastImport.data.dataset_id];
     // TODO fix message
-    expect(response.filter(val => -1 !== importIds.includes(val)).length, 'Response not good.').to.be.equal(2);
+    expect(response.filter(val => importIds.includes(val) !== false).length, 'Response not good.').to.be.equal(2);
 });
 
 
@@ -74,8 +74,9 @@ Given(/^DC initiates the replication for last imported dataset$/, { timeout: 600
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
 
+    let response;
     try {
-        const response =
+        response =
             await httpApiHelper.apiReplication(
                 host,
                 this.state.lastImport.data.dataset_id,

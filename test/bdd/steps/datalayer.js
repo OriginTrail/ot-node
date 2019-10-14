@@ -94,7 +94,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         const vertices = myEdgesVertices['@graph'];
-        let edges = [];
+        const edges = [];
         vertices.forEach((vertex) => {
             vertex.relations.forEach((edge) => {
                 edges.push(edge);
