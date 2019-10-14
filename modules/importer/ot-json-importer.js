@@ -537,7 +537,6 @@ class OtJsonImporter {
             }
         }
 
-        this.log.notify(`Reconstructed object: ${JSON.stringify(otObject)}`);
         return otObject;
     }
 
