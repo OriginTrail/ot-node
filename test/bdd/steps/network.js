@@ -339,12 +339,12 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const { dc } = this.state;
 
-    const fingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const fingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
     expect(fingerprint).to.have.keys(['root_hash']);
     expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
 
-    const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
     // vertices and edges are already sorted from the response
 
     const calculatedDataSetId = utilities.calculateImportHash(importInfo.document['@graph']);
@@ -352,9 +352,9 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
         .to.be.equal(calculatedRootHash);
-    expect(this.state.lastImport.root_hash, 'Root hash from last import and manually calculated should match')
+    expect(this.state.lastImport.data.root_hash, 'Root hash from last import and manually calculated should match')
         .to.be.equal(calculatedRootHash);
-    expect(this.state.lastImport.data_set_id, 'Dataset ID and manually calculated ID should match')
+    expect(this.state.lastImport.data.dataset_id, 'Dataset ID and manually calculated ID should match')
         .to.be.equal(calculatedDataSetId);
 });
 
@@ -418,17 +418,23 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     ).to.equal(this.state.nodes.reduce((acc, node) => acc + node.isRunning, -1)); // Start from -1. DC is not counted.
 
     // Get offer ID for last import.
-    const lastOfferId =
-        dc.state.offers.internalIDs[this.state.lastReplicationHandler].offerId;
+    const response = await httpApiHelper.apiReplicationResult(dc.state.node_rpc_url, this.state.lastReplicationHandler.handler_id);
+    const lastOfferId = response.data.offer_id;
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
         await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
 
+    console.log(lastOfferId);
+    console.log(response);
     // TODO: Check how many actually was chosen.
     let chosenCount = 0;
     this.state.nodes.forEach(node => (
         chosenCount += (node.state.takenBids.includes(lastOfferId) ? 1 : 0)));
+
+
+    this.state.nodes.forEach(node => (
+        console.log(node.state.takenBids)));
 
     if (currentDifficulty > 0) {
         expect(currentDifficulty).to.equal(chosenCount);

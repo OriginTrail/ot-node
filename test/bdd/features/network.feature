@@ -3,13 +3,13 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @dl2_completed
+  @first
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
-  @dl2
+  @first
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -23,7 +23,7 @@ Feature: Test basic network features
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
 
-  @dl2
+  @first
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -146,7 +146,7 @@ Feature: Test basic network features
     And I start the node
     Then default initial token amount should be deposited on 1st node's profile
 
-  @fourth
+  @second
   Scenario: Test repeated offer creation with same dataset
     Given the replication difficulty is 0
     And I setup 3 nodes
