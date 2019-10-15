@@ -135,6 +135,7 @@ class DHReplacementImportCommand extends Command {
 
         const holdingData = await Models.holding_data.findOne({
             where: {
+                offer_id: offerId,
                 data_set_id: dataSetId,
                 color: encColor,
             },
@@ -162,6 +163,7 @@ class DHReplacementImportCommand extends Command {
             distribution_epk: distributionEpk,
             transaction_hash: transactionHash,
             color: encColor,
+            offer_id: offerId,
         });
 
         const dataInfo = await Models.data_info.findOne({

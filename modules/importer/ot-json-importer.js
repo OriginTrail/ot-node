@@ -491,7 +491,6 @@ class OtJsonImporter {
                 // Check for properties.
                 // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
                 if (relatedObject.edge.edgeType === constants.edgeType.dataRelation) {
-                    console.log(relatedObject.vertex);
                     otObject.properties = Utilities.copyObject(relatedObject.vertex.data);
                 }
 
@@ -673,8 +672,6 @@ class OtJsonImporter {
         for (const object of result.relatedObjects) {
             if (object.vertex.vertexType === constants.vertexType.data
                 && object.vertex.data != null) {
-                console.log(object.vertex.encrypted);
-                console.log(object.vertex.encrypted[offerId][color]);
                 object.vertex.data = object.vertex.encrypted[offerId][color];
             }
         }
@@ -682,7 +679,6 @@ class OtJsonImporter {
         for (const object of result.relatedObjects) {
             if (object.edge.edgeType === constants.edgeType.otRelation
                 && object.edge.properties != null) {
-                console.log(object.edge.properties);
                 object.edge.properties = object.edge.encrypted[offerId][color];
             }
         }

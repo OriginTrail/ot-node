@@ -77,6 +77,7 @@ class DhReplicationImportCommand extends Command {
 
         const holdingData = await Models.holding_data.findOne({
             where: {
+                offer_id: offerId,
                 data_set_id: dataSetId,
                 color: encColor,
                 source_wallet: dcWallet,
@@ -95,6 +96,7 @@ class DhReplicationImportCommand extends Command {
                 distribution_epk: distributionEpk,
                 transaction_hash: transactionHash,
                 color: encColor,
+                offer_id: offerId,
             };
             await Models.holding_data.create(newHoldingEntry);
         }

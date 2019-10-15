@@ -34,7 +34,7 @@ class DHChallengeCommand extends Command {
         const holdingData = await models.holding_data.findOne({
             limit: 1,
             where: {
-                data_set_id: datasetId,
+                offer_id: offerId,
 
             },
             order: [
