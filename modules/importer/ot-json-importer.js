@@ -656,7 +656,7 @@ class OtJsonImporter {
     }
 
 
-    async getImportedOtObject(datasetId, objectIndex, color = null) {
+    async getImportedOtObject(datasetId, offerId, objectIndex, color = null) {
         // get metadata id using otObjectId
         const metadata = await this.db.findMetadataByImportId(datasetId);
         const otObjectId = metadata.objectIds[objectIndex];
@@ -672,14 +672,14 @@ class OtJsonImporter {
         for (const object of result.relatedObjects) {
             if (object.vertex.vertexType === constants.vertexType.data
                 && object.vertex.data != null) {
-                object.vertex.data = object.vertex.encrypted[color];
+                object.vertex.data = object.vertex.encrypted[offerId][color];
             }
         }
 
         for (const object of result.relatedObjects) {
             if (object.edge.edgeType === constants.edgeType.otRelation
                 && object.edge.properties != null) {
-                object.edge.properties = object.edge.encrypted[color];
+                object.edge.properties = object.edge.encrypted[offerId][color];
             }
         }
 

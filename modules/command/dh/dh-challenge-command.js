@@ -26,6 +26,7 @@ class DHChallengeCommand extends Command {
             objectIndex,
             blockIndex,
             datasetId,
+            offerId,
             challengeId,
             litigatorNodeId,
         } = command.data;

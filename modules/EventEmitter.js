@@ -1034,6 +1034,7 @@ class EventEmitter {
                 }
                 await dhService.handleChallenge(
                     message.payload.data_set_id,
+                    message.payload.offer_id,
                     message.payload.object_index,
                     message.payload.block_index,
                     message.payload.challenge_id,
