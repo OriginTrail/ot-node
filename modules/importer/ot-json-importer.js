@@ -311,6 +311,7 @@ class OtJsonImporter {
         const deduplicateVertices = [];
         const deduplicateEdges = [];
 
+        // TODO: This is O(n^2) and should probably be optimized
         for (const vertex of vertices) {
             const obj = deduplicateVertices.find(el => el._key === vertex._key);
 
@@ -319,6 +320,7 @@ class OtJsonImporter {
             }
         }
 
+        // TODO: This is O(n^2) and should probably be optimized
         for (const edge of edges) {
             const obj = deduplicateEdges.find(el => el._key === edge._key);
 

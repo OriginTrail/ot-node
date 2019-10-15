@@ -44,7 +44,7 @@ class DhReplicationImportCommand extends Command {
             encColor,
         } = command.data;
         const { decryptedDataset, encryptedMap } =
-            await ImportUtilities.decryptDataset(otJson, litigationPublicKey, encColor);
+            await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphHash(decryptedDataset['@graph']);
 
@@ -105,13 +105,13 @@ class DhReplicationImportCommand extends Command {
             },
         });
 
+        const importResult = await this.importer.importOTJSON(decryptedDataset, encryptedMap);
+
+        if (importResult.error) {
+            throw Error(importResult.error);
+        }
+
         if (dataInfo == null) {
-            const importResult = await this.importer.importOTJSON(decryptedDataset, encryptedMap);
-
-            if (importResult.error) {
-                throw Error(importResult.error);
-            }
-
             const dataSize = bytes(JSON.stringify(otJson));
             await Models.data_info.create({
                 data_set_id: dataSetId,

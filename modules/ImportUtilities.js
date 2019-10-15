@@ -129,13 +129,14 @@ class ImportUtilities {
     }
 
     /**
-     * Decrypt encrypted otjson dataset
-     * @param dataset - OTJson dataset
+     * Decrypt encrypted OT-JSON dataset
+     * @param dataset - OT-JSON dataset
      * @param decryptionKey - Decryption key
+     * @param offerId - Replication identifier from which the dataset was received
      * @param encryptionColor - Encryption color
      * @returns Decrypted OTJson dataset
      */
-    static decryptDataset(dataset, decryptionKey, encryptionColor = null) {
+    static decryptDataset(dataset, decryptionKey, offerId = null, encryptionColor = null) {
         const decryptedDataset = Utilities.copyObject(dataset);
         const encryptedMap = {};
         encryptedMap.objects = {};
@@ -153,7 +154,8 @@ class ImportUtilities {
                 if (encryptionColor != null) {
                     const encColor = colorMap[encryptionColor];
                     encryptedMap.objects[obj['@id']] = {};
-                    encryptedMap.objects[obj['@id']][encColor] = encryptedProperties;
+                    encryptedMap.objects[obj['@id']][offerId] = {};
+                    encryptedMap.objects[obj['@id']][offerId][encColor] = encryptedProperties;
                 }
             }
             if (obj.relations != null) {
@@ -165,7 +167,9 @@ class ImportUtilities {
                         const encColor = colorMap[encryptionColor];
                         const relationKey = sha3_256(Utilities.stringify(rel, 0));
                         encryptedMap.relations[obj['@id']][relationKey] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][encColor] = encryptedProperties;
+                        encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
+                        encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
+                            encryptedProperties;
                     }
                 }
             }

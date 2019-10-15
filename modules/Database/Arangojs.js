@@ -628,6 +628,11 @@ class ArangoJS {
 
                     existing.datasets.concat(document.datasets);
                 }
+                if (existing.encrypted && document.encrypted) {
+                    for (const key of Object.keys(document.encrypted)) {
+                        existing.encrypted[key] = document.encrypted[key];
+                    }
+                }
                 return this.updateDocument(collectionName, existing);
             }
         }
