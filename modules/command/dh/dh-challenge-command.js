@@ -53,6 +53,7 @@ class DHChallengeCommand extends Command {
         const otObject = await this.otJsonImporter.getImportedOtObject(
             datasetId,
             objectIndex,
+            offerId,
             color,
         );
 
