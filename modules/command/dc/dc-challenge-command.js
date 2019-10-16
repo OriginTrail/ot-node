@@ -38,7 +38,7 @@ class DCChallengeCommand extends Command {
 
         await this.transport.challengeRequest({
             payload: {
-                data_set_id: challenge.data_set_id
+                data_set_id: challenge.data_set_id,
                 offer_id: challenge.offer_id,
                 object_index: challenge.object_index,
                 block_index: challenge.block_index,
