@@ -718,6 +718,7 @@ class EventEmitter {
             const { handler_id, formatted_dataset } = data;
 
             if (!formatted_dataset) {
+                logger.info(`Export failed for export handler_id: ${handler_id}`);
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',
@@ -738,6 +739,7 @@ class EventEmitter {
                     notifyError(error);
                 }
             } else {
+                logger.info(`Export complete for export handler_id: ${handler_id}`);
                 await Models.handler_ids.update(
                     {
                         status: 'COMPLETED',
