@@ -499,7 +499,7 @@ class RestAPIServiceV2 {
         const { handler_id } = inserted_object.dataValues;
         res.status(200);
         res.send({
-            import_handle: handler_id,
+            handler_id,
         });
 
         this.emitter.emit('api-export-request', { dataset_id, handler_id, standard: this.mapping_standards_for_event.get(standard_id) });
