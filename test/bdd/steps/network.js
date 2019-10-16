@@ -330,6 +330,32 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
 });
 
+Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async function (nodeType) {
+    expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
+    expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const myNode = this.state[nodeType.toLowerCase()];
+
+    const response = await httpApiHelper.apiExportResult(myNode.state.node_rpc_url, this.state.lastExportHandler);
+
+    expect(response, 'response should contain data and status keys').to.have.keys([
+        'data', 'status',
+    ]);
+
+    expect(response.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    expect(response.data, 'response.data should have the formatted_dataset field')
+        .to.have.keys(['formatted_dataset']);
+
+    expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+});
+
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);

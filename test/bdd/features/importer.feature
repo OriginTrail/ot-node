@@ -3,6 +3,17 @@ Feature: Test basic importer features
     Given the blockchain is set up
     And 1 bootstrap is running
 
+  @first
+  Scenario: Check that imported GS1 dataset has a valid signature
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    Then the last exported dataset signature should belong to DC
+
   @skip
   Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
     Given I setup 1 node
