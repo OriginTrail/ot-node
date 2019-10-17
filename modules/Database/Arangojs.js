@@ -167,6 +167,7 @@ class ArangoJS {
                                         LET objects = (
                                             FOR e IN ot_edges
                                         FILTER e._from == v${count}._id
+                                        AND e.edgeType=='IdentifierValue'
                                         AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
                                         RETURN e._to)
                              `;
