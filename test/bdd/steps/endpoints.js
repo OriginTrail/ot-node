@@ -22,10 +22,10 @@ Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/, async function
     expect(importResponse).to.have.keys(['handler_id']);
 
     // sometimes there is a need to remember import before the last one
-    if (this.state.lastImportsHandler) {
-        this.state.secondLastImportsHandler = this.state.lastImportsHandler;
+    if (this.state.lastImportHandler) {
+        this.state.secondLastImportHandler = this.state.lastImportHandler;
     }
-    this.state.lastImportsHandler = importResponse.handler_id;
+    this.state.lastImportHandler = importResponse.handler_id;
 });
 
 Given(/^DC waits for import to finish$/, async function () {
@@ -42,7 +42,7 @@ Given(/^DC waits for import to finish$/, async function () {
                 this.state.secondLastImport = this.state.lastImport;
             }
 
-            this.state.lastImport = await httpApiHelper.apiImportResult(host, this.state.lastImportsHandler);
+            this.state.lastImport = await httpApiHelper.apiImportResult(host, this.state.lastImportHandler);
             acc();
         });
     });
@@ -92,8 +92,8 @@ Given(/^DC waits for export to finish$/, async function () {
 });
 
 Given(/^response should return same dataset_ids as second last import and last import$/, async function () {
-    expect(!!this.state.lastImportsHandler, 'Last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.secondLastImportsHandler, 'Second last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImportHandler, 'Last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.secondLastImportHandler, 'Second last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;

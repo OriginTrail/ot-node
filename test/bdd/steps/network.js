@@ -457,16 +457,10 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     const currentDifficulty =
         await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
 
-    console.log(lastOfferId);
-    console.log(response);
     // TODO: Check how many actually was chosen.
     let chosenCount = 0;
     this.state.nodes.forEach(node => (
         chosenCount += (node.state.takenBids.includes(lastOfferId) ? 1 : 0)));
-
-
-    this.state.nodes.forEach(node => (
-        console.log(node.state.takenBids)));
 
     if (currentDifficulty > 0) {
         expect(currentDifficulty).to.equal(chosenCount);
@@ -602,8 +596,9 @@ Then(/^response should contain only last imported data set id$/, function () {
 Then(/^response hash should match last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
 
-    // expect(Object.keys(this.state.apiQueryLocalImportByDataSetIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']); ???
-    // check that lastImport.data_set_id and sha256 calculated hash are matching
+    // TODO not sure if we should check for edges and vertices in apiQueryLocalImportByDataSetIdResponse
+    // TODO check that lastImport.data_set_id and sha256 calculated hash are matching
+
     const calculatedImportHash = utilities.calculateImportHash(this.state.apiQueryLocalImportByDataSetIdResponse['@graph']);
     expect(this.state.lastImport.data.dataset_id, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
