@@ -84,7 +84,6 @@ Given(/^DC waits for export to finish$/, async function () {
             }
 
             this.state.lastExport = await httpApiHelper.apiExportResult(host, this.state.lastExportHandler);
-            console.log(JSON.stringify(this.state.lastExport, null, 4));
             acc();
         });
     });
