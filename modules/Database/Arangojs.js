@@ -223,7 +223,6 @@ class ArangoJS {
         }
         queryString += ')}';
 
-        console.log(queryString);
         return this.runQuery(queryString, params);
     }
 
