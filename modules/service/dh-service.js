@@ -360,7 +360,6 @@ class DHService {
         litigatorNodeId,
     ) {
         this.logger.info(`Challenge arrived: Object index ${objectIndex}, Block index ${blockIndex}, Data set ID ${datasetId}`);
-        console.log(offerId);
         await this.commandExecutor.add({
             name: 'dhChallengeCommand',
             data: {

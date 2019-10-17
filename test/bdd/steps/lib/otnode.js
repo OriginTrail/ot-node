@@ -229,6 +229,8 @@ class OtNode extends EventEmitter {
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
         } else if (line.match(/.*Import complete/gi)) {
             this.emit('import-complete');
+        } else if (line.match(/.*Export complete/gi)) {
+            this.emit('export-complete');
         } else if (line.match(/.*\[DH] Replication finished for offer ID .+/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
@@ -348,6 +350,9 @@ class OtNode extends EventEmitter {
             this.emit('offer-written-blockchain');
         } else if (line.match(/Command dhPayOutCommand and ID .+ processed\./gi)) {
             this.emit('dh-pay-out-finalized');
+        } else if (line.match(/Payout for offer .+ successfully completed\./gi)) {
+            const offerId = line.match(/Payout for offer .+ successfully completed\./gi)[0].match(/Payout for offer (.*?) successfully completed\./)[1];
+            this.emit(`dh-pay-out-offer-${offerId}-completed`);
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
         } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {

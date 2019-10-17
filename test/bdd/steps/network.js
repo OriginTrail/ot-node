@@ -330,6 +330,32 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
 });
 
+Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async function (nodeType) {
+    expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
+    expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const myNode = this.state[nodeType.toLowerCase()];
+
+    const response = await httpApiHelper.apiExportResult(myNode.state.node_rpc_url, this.state.lastExportHandler);
+
+    expect(response, 'response should contain data and status keys').to.have.keys([
+        'data', 'status',
+    ]);
+
+    expect(response.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    expect(response.data, 'response.data should have the formatted_dataset field')
+        .to.have.keys(['formatted_dataset']);
+
+    expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+});
+
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -371,6 +397,12 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
         promises.push(new Promise((acc) => {
             node.once('offer-finalized', (offerId) => {
+                if (this.state.lastReplicationOfferId !== offerId) {
+                    if (this.state.lastReplicationOfferId) {
+                        this.state.secondLastReplicationOfferId = this.state.lastReplicationOfferId;
+                    }
+                    this.state.lastReplicationOfferId = offerId;
+                }
                 // TODO: Change API to connect internal offer ID and external offer ID.
                 acc();
             });
@@ -425,16 +457,10 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     const currentDifficulty =
         await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
 
-    console.log(lastOfferId);
-    console.log(response);
     // TODO: Check how many actually was chosen.
     let chosenCount = 0;
     this.state.nodes.forEach(node => (
         chosenCount += (node.state.takenBids.includes(lastOfferId) ? 1 : 0)));
-
-
-    this.state.nodes.forEach(node => (
-        console.log(node.state.takenBids)));
 
     if (currentDifficulty > 0) {
         expect(currentDifficulty).to.equal(chosenCount);
@@ -570,8 +596,9 @@ Then(/^response should contain only last imported data set id$/, function () {
 Then(/^response hash should match last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
 
-    // expect(Object.keys(this.state.apiQueryLocalImportByDataSetIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']); ???
-    // check that lastImport.data_set_id and sha256 calculated hash are matching
+    // TODO not sure if we should check for edges and vertices in apiQueryLocalImportByDataSetIdResponse
+    // TODO check that lastImport.data_set_id and sha256 calculated hash are matching
+
     const calculatedImportHash = utilities.calculateImportHash(this.state.apiQueryLocalImportByDataSetIdResponse['@graph']);
     expect(this.state.lastImport.data.dataset_id, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
@@ -919,4 +946,26 @@ Given('I wait for DC to fail to finalize last offer', { timeout: 600000 }, funct
     }));
 
     Promise.all(promises).then(() => done());
+});
+
+Given(/^DHs should be payed out for all offers*$/, { timeout: 360000 }, function (done) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const promises = [];
+    this.state.nodes.slice(1).forEach((node) => {
+        promises.push(new Promise((acc) => {
+            node.once(`dh-pay-out-offer-${this.state.lastReplicationOfferId}-completed`, () => {
+                acc();
+            });
+        }));
+        promises.push(new Promise((acc) => {
+            node.once(`dh-pay-out-offer-${this.state.secondLastReplicationOfferId}-completed`, () => {
+                acc();
+            });
+        }));
+    });
+
+    Promise.all(promises).then(() => {
+        done();
+    });
 });
