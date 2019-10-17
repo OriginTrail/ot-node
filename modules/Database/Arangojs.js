@@ -628,7 +628,10 @@ class ArangoJS {
 
                     existing.datasets.concat(document.datasets);
                 }
-                if (existing.encrypted && document.encrypted) {
+                if (document.encrypted) {
+                    if (!existing.encrypted) {
+                        existing.encrypted = {};
+                    }
                     for (const key of Object.keys(document.encrypted)) {
                         existing.encrypted[key] = document.encrypted[key];
                     }

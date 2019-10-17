@@ -128,6 +128,60 @@ async function apiImportResult(nodeRpcUrl, handler_id) {
 }
 
 /**
+ * Fetch /api/export
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} dataset_id ID of dataset to be exported
+ * @param {string} exportType - Export data format
+ * @return {Promise.<ExportHandler>}
+ */
+async function apiExport(nodeRpcUrl, dataset_id, exportType) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/export`,
+            json: true,
+            formData: {
+                dataset_id,
+                standard_id: exportType,
+            },
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
+ * Fetch /api/latest/export/result
+ * @typedef {Object} ExportResult
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} handler_id
+ * @return {Promise.<ExportResult>}
+ */
+async function apiExportResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/export/result/${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
  * Fetch /api/latest/import/result
  * @typedef {Object} ImportResult
  *
@@ -558,6 +612,8 @@ module.exports = {
     apiImportResult,
     apiImportInfo,
     apiImportsInfo,
+    apiExport,
+    apiExportResult,
     apiFingerprint,
     apiQueryLocal,
     apiQueryLocalImportByDataSetId,

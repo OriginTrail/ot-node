@@ -229,6 +229,8 @@ class OtNode extends EventEmitter {
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
         } else if (line.match(/.*\[DC] Import complete/gi)) {
             this.emit('import-complete');
+        } else if (line.match(/.*Export complete/gi)) {
+            this.emit('export-complete');
         } else if (line.match(/.*\[DH] Replication finished for offer ID .+/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);

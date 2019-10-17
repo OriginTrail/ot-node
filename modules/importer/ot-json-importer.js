@@ -656,7 +656,7 @@ class OtJsonImporter {
     }
 
 
-    async getImportedOtObject(datasetId, objectIndex, offerId,  color = null) {
+    async getImportedOtObject(datasetId, objectIndex, offerId = null, color = null) {
         // get metadata id using otObjectId
         const metadata = await this.db.findMetadataByImportId(datasetId);
         const otObjectId = metadata.objectIds[objectIndex];

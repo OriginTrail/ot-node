@@ -50,6 +50,48 @@ Given(/^DC waits for import to finish$/, async function () {
     return promise;
 });
 
+Given(/^DC exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/, async function (exportType) {
+    expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON'));
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const { dataset_id } = this.state.lastImport.data;
+
+    const exportResponse = await httpApiHelper.apiExport(host, dataset_id, exportType);
+
+    expect(exportResponse).to.have.keys(['handler_id']);
+
+    // sometimes there is a need to remember export before the last one
+    if (this.state.lastExportHandler) {
+        this.state.secondLastExportHandler = this.state.lastExportHandler;
+    }
+    this.state.lastExportHandler = exportResponse.handler_id;
+});
+
+Given(/^DC waits for export to finish$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const promise = new Promise((acc) => {
+        dc.once('export-complete', async () => {
+            if (this.state.lastExport) {
+                this.state.secondLastExport = this.state.lastExport;
+            }
+
+            this.state.lastExport = await httpApiHelper.apiExportResult(host, this.state.lastExportHandler);
+            console.log(JSON.stringify(this.state.lastExport, null, 4));
+            acc();
+        });
+    });
+
+    return promise;
+});
+
 Given(/^response should return same dataset_ids as second last import and last import$/, async function () {
     expect(!!this.state.lastImportsHandler, 'Last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.secondLastImportsHandler, 'Second last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
