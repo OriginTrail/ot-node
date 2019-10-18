@@ -24,8 +24,8 @@ describe('Merkle module', () => {
         ).toString('hex');
     }
 
-    function sha3LeafHash(leaf, index) {
-        return sha3_256(`${leaf}${index}`);
+    function sha3LeafHash(leaf, objectIndex, blockIndex) {
+        return sha3_256(`${leaf}${objectIndex}${blockIndex}`);
     }
 
     function sha3InternalHash(block1, block2) {
@@ -216,9 +216,30 @@ describe('Merkle module', () => {
     });
 
     it('Solidity SHA3: Exceeding block size limit', () => {
-        const data = ['This value is more than 32 bytes ' +
-                      'and Merkle tree construction should fail ' +
-                      'for soliditySha3 hash function', 'B', 'C', 'D'];
+        const data = [
+            {
+                data: 'This value is more than 32 bytes ' +
+                        'and Merkle tree construction should fail ' +
+                        'for soliditySha3 hash function',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+            {
+                data: 'C',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'D',
+                objectIndex: 2,
+                blockIndex: 0,
+            },
+        ];
 
         try {
             const tree = new Merkle(data, 'soliditySha3');
@@ -229,23 +250,48 @@ describe('Merkle module', () => {
     });
 
     it('SHA3: Constructing trivial tree', () => {
-        const data = ['A'];
+        const data = [{
+            data: 'A',
+            objectIndex: 0,
+            blockIndex: 0,
+        }];
         const tree = new Merkle(data, 'sha3');
 
-        const leafHash = sha3LeafHash('A', 0);
+        const leafHash = sha3LeafHash('A', 0,0);
         assert.equal(tree.getRoot(), `0x${sha3InternalHash(leafHash, leafHash)}`);
 
         expect(tree).to.be.an.instanceof(Merkle);
     });
 
     it('SHA3: Constructing tree with even number of leaves', () => {
-        const data = ['A', 'B', 'C', 'D'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+            {
+                data: 'D',
+                objectIndex: 2,
+                blockIndex: 0,
+            },
+        ]
         const tree = new Merkle(data, 'sha3');
 
-        const leafHash1 = sha3LeafHash('A', 0);
-        const leafHash2 = sha3LeafHash('B', 1);
-        const leafHash3 = sha3LeafHash('C', 2);
-        const leafHash4 = sha3LeafHash('D', 3);
+        const leafHash1 = sha3LeafHash('A', 0,0);
+        const leafHash2 = sha3LeafHash('B', 0,1);
+        const leafHash3 = sha3LeafHash('C', 1,0);
+        const leafHash4 = sha3LeafHash('D', 2,0);
 
         const internalHash1 = sha3InternalHash(leafHash1, leafHash2);
         const internalHash2 = sha3InternalHash(leafHash3, leafHash4);
@@ -260,12 +306,28 @@ describe('Merkle module', () => {
 
 
     it('SHA3: Constructing tree with odd number of leaves', () => {
-        const data = ['A', 'B', 'C'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+        ]
         const tree = new Merkle(data, 'sha3');
 
-        const leafHash1 = sha3LeafHash('A', 0);
-        const leafHash2 = sha3LeafHash('B', 1);
-        const leafHash3 = sha3LeafHash('C', 2);
+        const leafHash1 = sha3LeafHash('A', 0, 0);
+        const leafHash2 = sha3LeafHash('B', 0, 1);
+        const leafHash3 = sha3LeafHash('C', 1, 0);
 
         const internalHash1 = sha3InternalHash(leafHash1, leafHash2);
         const internalHash2 = sha3InternalHash(leafHash3, leafHash3);
@@ -279,12 +341,28 @@ describe('Merkle module', () => {
     });
 
     it('SHA3: Constructing tree with odd number of leaves', () => {
-        const data = ['A', 'B', 'C'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+        ]
         const tree = new Merkle(data, 'sha3');
 
-        const leafHash1 = sha3LeafHash('A', 0);
-        const leafHash2 = sha3LeafHash('B', 1);
-        const leafHash3 = sha3LeafHash('C', 2);
+        const leafHash1 = sha3LeafHash('A', 0, 0);
+        const leafHash2 = sha3LeafHash('B', 0, 1);
+        const leafHash3 = sha3LeafHash('C', 1, 0);
 
         const internalHash1 = sha3InternalHash(leafHash1, leafHash2);
         const internalHash2 = sha3InternalHash(leafHash3, leafHash3);
@@ -298,26 +376,74 @@ describe('Merkle module', () => {
     });
 
     it('SHA3: Generate and verify valid proofs', () => {
-        const data = ['A', 'B', 'C', 'D'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+            {
+                data: 'D',
+                objectIndex: 2,
+                blockIndex: 0,
+            },
+        ]
         const tree = new Merkle(data, 'sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
-        for (let i = 0; i < data.length; i += 1) {
-            const proof = tree.createProof(i);
-            assert.equal(tree.verifyProof(proof, data[i], i), true);
-        }
+        for (const element of data) {
+            const proof = tree.createProof(element.objectIndex, element.blockIndex);
+            assert.equal(tree.verifyProof(proof, element.data, element.objectIndex, element.blockIndex), true);
+        };
     });
 
     it('SHA3: Generate and verify invalid proofs', () => {
-        const data = ['A', 'B', 'C', 'D'];
+        const data = [
+            {
+                data: 'A',
+                objectIndex: 0,
+                blockIndex: 0,
+            },
+            {
+                data: 'B',
+                objectIndex: 0,
+                blockIndex: 1,
+            },
+            {
+                data: 'C',
+                objectIndex: 1,
+                blockIndex: 0,
+            },
+            {
+                data: 'D',
+                objectIndex: 2,
+                blockIndex: 0,
+            },
+        ]
         const tree = new Merkle(data, 'sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
-        for (let i = 1; i < data.length; i += 1) {
-            const proof = tree.createProof(i - 1);
-            assert.equal(tree.verifyProof(proof, data[i], i), false);
+        const proofs = [];
+        for (const element of data) {
+            const proof = tree.createProof(element.objectIndex, element.blockIndex);
+            proofs.push(proof);
+        }
+
+        for (let i = 0; i < proofs.length; i += 1) {
+            assert.equal(tree.verifyProof(proofs[(i + 1) % proofs.length],
+                data[i].data, data[i].objectIndex, data[i].blockIndex), false);
         }
     });
 });
