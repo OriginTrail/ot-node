@@ -254,7 +254,7 @@ class ImportUtilities {
         for (const i in vertices) {
             const hash = Utilities.soliditySHA3(Utilities.sortObject({
                 identifiers: vertices[i].identifiers,
-                data: vertices[i].properties,
+                data: vertices[i].data,
             }));
             leaves.push(hash);
             hashPairs.push({
