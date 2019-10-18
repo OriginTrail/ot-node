@@ -581,6 +581,27 @@ class Ethereum {
     }
 
     /**
+     * Decodes offer task event data from offer creation event
+     * @param result Blockchain transaction receipt
+     * @returns {Object<any>}
+     */
+    decodeOfferTaskEventFromTransaction(result) {
+        let offerTaskEventInputs;
+        const offerTaskEventAbi = this.holdingContractAbi.find(element => element.name === 'OfferTask');
+        if (offerTaskEventAbi) {
+            offerTaskEventInputs = offerTaskEventAbi.inputs;
+        } else {
+            throw Error('Could not find OfferTask event interface in Holding contract abi');
+        }
+
+        return this.web3.eth.abi.decodeLog(
+            offerTaskEventInputs,
+            result.logs[0].data,
+            result.logs[0].topics,
+        );
+    }
+
+    /**
      * Finalizes offer on Blockchain
      * @returns {Promise<any>}
      */

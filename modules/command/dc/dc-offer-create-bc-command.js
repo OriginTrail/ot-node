@@ -31,6 +31,7 @@ class DCOfferCreateBcCommand extends Command {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            handler_id,
         } = command.data;
 
         const result = await this.blockchain.createOffer(
@@ -46,40 +47,19 @@ class DCOfferCreateBcCommand extends Command {
             dataSizeInBytes,
             litigationIntervalInMinutes,
         );
-        const eventData = await this.blockchain.web3.eth.abi.decodeLog(
-            [
-                {
-                    indexed: false,
-                    name: 'dataSetId',
-                    type: 'bytes32',
-                },
-                {
-                    indexed: false,
-                    name: 'dcNodeId',
-                    type: 'bytes32',
-                },
-                {
-                    indexed: false,
-                    name: 'offerId',
-                    type: 'bytes32',
-                },
-                {
-                    indexed: false,
-                    name: 'task',
-                    type: 'bytes32',
-                },
-            ],
-            result.logs[0].data,
-            result.logs[0].topics,
-        );
+        const offerTaskEvent = await this.blockchain.decodeOfferTaskEventFromTransaction(result);
+
+        const { offerId, task } = offerTaskEvent;
 
         this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
+        offer.offer_id = offerId;
+        offer.task = task;
         offer.transaction_hash = result.transactionHash;
-        offer.status = 'PUBLISHED';
-        offer.message = 'Offer has been published to Blockchain';
-        await offer.save({ fields: ['status', 'message', 'transaction_hash'] });
+        offer.status = 'STARTED';
+        offer.message = 'Offer has been successfully started. Waiting for DHs...';
+        await offer.save({ fields: ['task', 'offer_id', 'status', 'message', 'transaction_hash'] });
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });
@@ -89,8 +69,23 @@ class DCOfferCreateBcCommand extends Command {
             dataRootHash,
         });
 
-        const { data } = command;
-        return this.continueSequence(this.pack(data), command.sequence);
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id },
+        });
+        const handler_data = JSON.parse(handler.data);
+        handler_data.offer_id = offer.offer_id;
+        handler_data.status = 'WAITING_FOR_HOLDERS';
+        await Models.handler_ids.update(
+            {
+                data: JSON.stringify(handler_data),
+            },
+            {
+                where: { handler_id },
+            },
+        );
+
+        this.logger.trace(`Offer successfully started for data set ${dataSetId}. Offer ID ${offerId}. Internal offer ID ${internalOfferId}.`);
+        return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
     /**

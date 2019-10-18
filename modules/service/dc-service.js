@@ -88,7 +88,6 @@ class DCService {
             'dcOfferPrepareCommand',
             'dcOfferCreateDbCommand',
             'dcOfferCreateBcCommand',
-            'dcOfferTaskCommand',
             'dcOfferChooseCommand'];
 
         await this.commandExecutor.add({

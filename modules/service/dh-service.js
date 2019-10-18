@@ -158,10 +158,8 @@ class DHService {
             tokenAmountPerHolder,
         };
 
-        this.logger.trace('Waiting for DC to receive offer_id before sending replication request...');
         await this.commandExecutor.add({
             name: 'dhOfferHandleCommand',
-            delay: 45000,
             data,
             transactional: false,
         });

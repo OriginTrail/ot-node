@@ -224,6 +224,15 @@ class Blockchain {
     }
 
     /**
+     * Decodes offer task event data from offer creation event
+     * @param result Blockchain transaction receipt
+     * @returns {Promise<any>}
+     */
+    decodeOfferTaskEventFromTransaction(result) {
+        return this.blockchain.decodeOfferTaskEventFromTransaction(result);
+    }
+
+    /**
      * Finalizes offer on Blockchain
      * @returns {Promise<any>}
      */
