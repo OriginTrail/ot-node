@@ -597,7 +597,7 @@ Then(/^response hash should match last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
 
     // TODO not sure if we should check for edges and vertices in apiQueryLocalImportByDataSetIdResponse
-    // TODO check that lastImport.data_set_id and sha256 calculated hash are matching
+    // TODO check that lastImport.dataset_id and sha256 calculated hash are matching
 
     const calculatedImportHash = utilities.calculateImportHash(this.state.apiQueryLocalImportByDataSetIdResponse['@graph']);
     expect(this.state.lastImport.data.dataset_id, 'Hashes should match').to.be.equal(calculatedImportHash);
