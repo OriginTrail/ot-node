@@ -479,12 +479,12 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Get original import info.
     const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
     const promises = [];
     dc.state.replications.forEach(({ internalOfferId, dhId }) => {
         if (dc.state.offers.internalIDs[internalOfferId].dataSetId ===
-            this.state.lastImport.data_set_id) {
+            this.state.lastImport.data.dataset_id) {
             const node =
                 this.state.nodes.find(node => node.state.identity === dhId);
 
@@ -496,7 +496,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                 const dhImportInfo =
                     await httpApiHelper.apiImportInfo(
                         node.state.node_rpc_url,
-                        this.state.lastImport.data_set_id,
+                        this.state.lastImport.data.dataset_id,
                     );
                 expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
@@ -522,7 +522,7 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
 
     const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
-    const dataSetId = this.state.lastImport.data_set_id;
+    const dataSetId = this.state.lastImport.data.dataset_id;
 
     // Expect DV to have data.
     expect(
@@ -532,9 +532,9 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
 
     // Get original import info.
     const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
     const dvImportInfo =
-        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data_set_id);
+        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
     if (!deepEqual(dcImportInfo, dvImportInfo)) {
         throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
@@ -590,7 +590,7 @@ Then(/^response should contain only last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
 
     expect(this.state.apiQueryLocalResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
-    expect(this.state.apiQueryLocalResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data.dataset_id);
+    expect(this.state.apiQueryLocalResponse[0], 'Response should match dataset_id').to.be.equal(this.state.lastImport.data.dataset_id);
 });
 
 Then(/^response hash should match last imported data set id$/, function () {
