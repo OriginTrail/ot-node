@@ -257,7 +257,7 @@ describe('Merkle module', () => {
         }];
         const tree = new Merkle(data, 'sha3');
 
-        const leafHash = sha3LeafHash('A', 0,0);
+        const leafHash = sha3LeafHash('A', 0, 0);
         assert.equal(tree.getRoot(), `0x${sha3InternalHash(leafHash, leafHash)}`);
 
         expect(tree).to.be.an.instanceof(Merkle);
@@ -285,13 +285,13 @@ describe('Merkle module', () => {
                 objectIndex: 2,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'sha3');
 
-        const leafHash1 = sha3LeafHash('A', 0,0);
-        const leafHash2 = sha3LeafHash('B', 0,1);
-        const leafHash3 = sha3LeafHash('C', 1,0);
-        const leafHash4 = sha3LeafHash('D', 2,0);
+        const leafHash1 = sha3LeafHash('A', 0, 0);
+        const leafHash2 = sha3LeafHash('B', 0, 1);
+        const leafHash3 = sha3LeafHash('C', 1, 0);
+        const leafHash4 = sha3LeafHash('D', 2, 0);
 
         const internalHash1 = sha3InternalHash(leafHash1, leafHash2);
         const internalHash2 = sha3InternalHash(leafHash3, leafHash4);
@@ -322,7 +322,7 @@ describe('Merkle module', () => {
                 objectIndex: 1,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
@@ -357,7 +357,7 @@ describe('Merkle module', () => {
                 objectIndex: 1,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
@@ -397,15 +397,18 @@ describe('Merkle module', () => {
                 objectIndex: 2,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
         for (const element of data) {
             const proof = tree.createProof(element.objectIndex, element.blockIndex);
-            assert.equal(tree.verifyProof(proof, element.data, element.objectIndex, element.blockIndex), true);
-        };
+            assert.equal(
+                tree.verifyProof(proof, element.data, element.objectIndex, element.blockIndex),
+                true,
+            );
+        }
     });
 
     it('SHA3: Generate and verify invalid proofs', () => {
@@ -430,7 +433,7 @@ describe('Merkle module', () => {
                 objectIndex: 2,
                 blockIndex: 0,
             },
-        ]
+        ];
         const tree = new Merkle(data, 'sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
@@ -442,8 +445,10 @@ describe('Merkle module', () => {
         }
 
         for (let i = 0; i < proofs.length; i += 1) {
-            assert.equal(tree.verifyProof(proofs[(i + 1) % proofs.length],
-                data[i].data, data[i].objectIndex, data[i].blockIndex), false);
+            assert.equal(tree.verifyProof(
+                proofs[(i + 1) % proofs.length],
+                data[i].data, data[i].objectIndex, data[i].blockIndex,
+            ), false);
         }
     });
 });
