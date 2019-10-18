@@ -1,78 +1,56 @@
 const databaseData = {};
 
 databaseData.vertices = [{
+    _key: '0xb0b07c594db5f7321d81b60b83f8bd52a09ec3d23d95a70318c40347ee4a8b26',
+    vertexType: 'Data',
     data: {
-        BusinessLocationName: {
-            EN: "Partner's Farm",
-        },
-        BusinessLocationType: 'Farm',
-        Location: {
-            Address: "Farmer's Street 01B",
-            City: 'Bytesfield',
-            Country: 'Cryptonia',
-            GeoLocation: {
-                Latitude: '00.0000',
-                Longitude: '00.0000',
+        objectType: 'vocabularyElement',
+        vocabularyType: 'urn:epcglobal:epcis:vtype:ReadPoint',
+        ___metadata: {
+            _attributes: {
+                id: 'urn:epc:id:sgln:0037000.00729.8202',
             },
-            Zip: '20000',
+            attribute: [
+                {
+                    _attributes: {
+                        id: 'urn:epcglobal:cbv:mda:site',
+                    },
+                },
+                {
+                    _attributes: {
+                        id: 'urn:epcglobal:cbv:mda:sst',
+                    },
+                },
+            ],
         },
-        bizStep: 'bizTest',
+        'urn:epcglobal:cbv:mda:site': '0037000007296',
+        'urn:epcglobal:cbv:mda:sst': '202',
     },
-    vertex_type: 'BUSINESS_LOCATION',
-    identifiers: {
-        BusinessLocationId: 'FARM_1',
-        uid: 'ot:WALLET_ID:otblid:FARM_1',
-        document_id: '1000',
-    },
-    vertex_key: '2e0b1ba163be76138d51a0b8258e97d7',
-    _key: '2e0b1ba163be76138d51a0b8258e97d7',
-    imports: [
-        1520345631,
-    ],
-    data_provider: 'WALLET_ID',
-    sender_id: 'a',
-    partner_id: [
-        'senderID',
+    datasets: [
+        '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
     ],
 },
-
 {
-    data: {
-        Location: {
-            Address: "Farmer's Street 01B",
-            City: 'Bytesfield',
-            Country: 'Cryptonia',
-            GeoLocation: {
-                Latitude: '00.0000',
-                Longitude: '00.0000',
-            },
-            Zip: '20000',
-        },
-        Name: {
-            EN: 'Partner',
-        },
-    },
-    vertex_type: 'PARTICIPANT',
-    identifiers: {
-        ParticipantId: 'PARTNER_ID',
-        uid: 'ot:WALLET_ID:otpartid:PARTNER_ID',
-    },
-    vertex_key: 'cd923bec4266a7f63b68722da254f205',
-    _key: 'cd923bec4266a7f63b68722da254f205',
-    imports: [1520345631],
-    sender_id: 'a',
+    _key: '0xd5993149b27751620ba70be97eb48a3b6222fc7129348d36b804c41985622d3e',
+    uid: 'urn:epc:id:sgln:0037000.00729.8202',
+    vertexType: 'EntityObject',
+    objectType: 'otObject',
+    datasets: [
+        '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
+    ],
 },
 ];
 
 databaseData.edges = [
     {
-        _key: '6eb743d84a605b2ab6be67a373b883d4',
-        edge_type: 'OWNED_BY',
-        data_provider: 'WALLET_ID',
-        imports: [1520345631],
-        _from: '2e0b1ba163be76138d51a0b8258e97d7',
-        _to: 'cd923bec4266a7f63b68722da254f205',
-        sender_id: 'a',
+        _key: '0x8c18e27785af981e407072ee850c3fd31cab225cd087647c7d7992df524c663a',
+        _from: '0xd5993149b27751620ba70be97eb48a3b6222fc7129348d36b804c41985622d3e',
+        _to: '0xb0b07c594db5f7321d81b60b83f8bd52a09ec3d23d95a70318c40347ee4a8b26',
+        edgeType: 'dataRelation',
+        relationType: 'HAS_DATA',
+        datasets: [
+            '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
+        ],
     },
 ];
 

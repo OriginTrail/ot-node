@@ -114,6 +114,51 @@ class OtNode extends EventEmitter {
         this.logger.log('Node configuration overridden.');
     }
 
+    /**
+     * Overrides node configuration using variables
+     * @param override - Configuration override with variables
+     */
+    overrideConfigurationVariables(override) {
+        for (const pair of override) {
+            if (pair.length === 2) {
+                const keyFrom = pair[1];
+                const keyTo = pair[0];
+                if (keyFrom in this.options.nodeConfiguration &&
+                    keyTo in this.options.nodeConfiguration) {
+                    this.options.nodeConfiguration[keyTo] = this.options.nodeConfiguration[keyFrom];
+                }
+            }
+        }
+
+        this.configFilePath = path.join(this.options.configDir, 'initial-configuration.json');
+        fs.writeFileSync(
+            this.configFilePath,
+            JSON.stringify(this.options.nodeConfiguration, null, 4),
+        );
+        execSync(`npm run setup -- --configDir=${this.options.configDir} --config ${this.configFilePath}`);
+        this.logger.log('Node configuration overridden.');
+    }
+
+    /**
+     * Removes node configuration keys
+     * @param keys - Configuration keys to be removed
+     */
+    removeConfigurationKeys(keys) {
+        for (const key of keys) {
+            if (key in this.options.nodeConfiguration) {
+                delete this.options.nodeConfiguration[key];
+            }
+        }
+
+        this.configFilePath = path.join(this.options.configDir, 'initial-configuration.json');
+        fs.writeFileSync(
+            this.configFilePath,
+            JSON.stringify(this.options.nodeConfiguration, null, 4),
+        );
+        execSync(`npm run setup -- --configDir=${this.options.configDir} --config ${this.configFilePath}`);
+        this.logger.log('Node configuration keys removed.');
+    }
+
     start() {
         assert(!this.process);
         assert(this.initialized);
@@ -182,7 +227,11 @@ class OtNode extends EventEmitter {
             // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
             // TODO: Poor man's parsing. Use regular expressions.
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
-        } else if (line.match(/[DH] Replication finished for offer ID .+/gi)) {
+        } else if (line.match(/.*Import complete/gi)) {
+            this.emit('import-complete');
+        } else if (line.match(/.*Export complete/gi)) {
+            this.emit('export-complete');
+        } else if (line.match(/.*\[DH] Replication finished for offer ID .+/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
             this.state.addedBids.push(offerId);
@@ -220,12 +269,12 @@ class OtNode extends EventEmitter {
             const offerId = line.match(offerIdRegex)[0];
         } else if (line.match(/Not enough DHs submitted/gi)) {
             this.emit('not-enough-dhs');
-        } else if (line.match(/Offer .+ finalized/gi)) {
+        } else if (line.match(/.*Offer .+ finalized/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
             this.state.offersFinalized.push(offerId);
             this.emit('offer-finalized', offerId);
-        } else if (line.match(/Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
+        } else if (line.match(/.*Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
             this.emit('dv-network-query-processed');
         } else if (line.match(/DH .+ in query ID .+ and reply ID .+ confirms possession of data imports: '.+'/)) {
             const identity = line.match(identityRegex)[0];
@@ -297,10 +346,13 @@ class OtNode extends EventEmitter {
             this.emit('deposit-command-completed');
         } else if (line.match(/Replication window for .+ is closed\. Replicated to .+ peers\. Verified .+\./gi)) {
             this.emit('replication-window-closed');
-        } else if (line.match(/Offer with internal ID .+ for data set .+ written to blockchain. Waiting for DHs\.\.\./gi)) {
+        } else if (line.match(/.*Offer with internal ID .+ for data set .+ written to blockchain. Waiting for DHs\.\.\./gi)) {
             this.emit('offer-written-blockchain');
         } else if (line.match(/Command dhPayOutCommand and ID .+ processed\./gi)) {
             this.emit('dh-pay-out-finalized');
+        } else if (line.match(/Payout for offer .+ successfully completed\./gi)) {
+            const offerId = line.match(/Payout for offer .+ successfully completed\./gi)[0].match(/Payout for offer (.*?) successfully completed\./)[1];
+            this.emit(`dh-pay-out-offer-${offerId}-completed`);
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
         } else if (line.match(/Litigation initiated for DH .+ and offer .+\./gi)) {

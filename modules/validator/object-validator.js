@@ -46,13 +46,21 @@ class ObjectValidator {
         if (message.payload == null) {
             return new Error('Payload is missing');
         }
-        const blockId = message.payload.block_id;
-        if (blockId == null) {
-            return new Error('Block ID is missing');
+        const objectIndex = message.payload.object_index;
+        if (objectIndex == null) {
+            return new Error('Object index is missing');
+        }
+        const blockIndex = message.payload.block_index;
+        if (blockIndex == null) {
+            return new Error('Block index is missing');
         }
         const datasetId = message.payload.data_set_id;
         if (datasetId == null) {
             return new Error('Data set ID is missing');
+        }
+        const offerId = message.payload.offer_id;
+        if (offerId == null) {
+            return new Error('Offer ID is missing');
         }
         const challengeId = message.payload.challenge_id;
         if (challengeId == null) {

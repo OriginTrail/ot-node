@@ -40,6 +40,38 @@ class Utilities {
     }
 
     /**
+     * Custom sorted stringify
+     * TODO think about optimization
+     * @param obj - Object to be serialized
+     * @param sortArrays - Sort array items
+     * @return {string}
+     */
+    static sortedStringify(obj, sortArrays = false) {
+        if (obj == null) {
+            return 'null';
+        }
+        if (typeof obj === 'object') {
+            const stringified = [];
+            for (const key of Object.keys(obj)) {
+                if (Array.isArray(obj)) {
+                    stringified.push(this.sortedStringify(obj[key], sortArrays));
+                } else {
+                    stringified.push(`"${key}":${this.sortedStringify(obj[key], sortArrays)}`);
+                }
+                if (sortArrays) {
+                    stringified.sort();
+                }
+            }
+            if (!Array.isArray(obj)) {
+                stringified.sort();
+                return `{${stringified.join(',')}}`;
+            }
+            return `[${stringified.join(',')}]`;
+        }
+        return `${JSON.stringify(obj)}`;
+    }
+
+    /**
      * Check if all dependencies from package.json are installed
      * @returns {Promise<any>} containing error array:
      *   error: []            // when everything is OK, error array is empty
@@ -284,7 +316,7 @@ class Utilities {
      * @return object
      */
     static sortObject(object) {
-        if (typeof object !== 'object') {
+        if (typeof object !== 'object' || object == null) {
             return object;
         }
         const sortedObj = {};
@@ -879,6 +911,17 @@ class Utilities {
             }
         });
         return map;
+    }
+
+    /**
+     * Wrap into array if necessary
+     * @return {*}
+     */
+    static arrayze(obj) {
+        if (Array.isArray(obj)) {
+            return obj;
+        }
+        return [obj];
     }
 }
 

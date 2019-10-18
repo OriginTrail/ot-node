@@ -158,6 +158,7 @@ class DHService {
             tokenAmountPerHolder,
         };
 
+        this.logger.trace('Waiting for DC to receive offer_id before sending replication request...');
         await this.commandExecutor.add({
             name: 'dhOfferHandleCommand',
             delay: 45000,
@@ -343,19 +344,29 @@ class DHService {
     /**
      * Handles one challenge
      * @param datasetId - Data set ID
-     * @param blockId - Challenge block ID
+     * @param offerId - Offer ID
+     * @param objectIndex - Challenge object index
+     * @param blockIndex - Challenge block index
      * @param challengeId - Challenge ID used for reply
      * @param litigatorNodeId - Litigator node ID
      * @return {Promise<void>}
      */
-    async handleChallenge(datasetId, blockId, challengeId, litigatorNodeId) {
-        this.logger.info(`Challenge arrived: Block ID ${blockId}, Data set ID ${datasetId}`);
-
+    async handleChallenge(
+        datasetId,
+        offerId,
+        objectIndex,
+        blockIndex,
+        challengeId,
+        litigatorNodeId,
+    ) {
+        this.logger.info(`Challenge arrived: Object index ${objectIndex}, Block index ${blockIndex}, Data set ID ${datasetId}`);
         await this.commandExecutor.add({
             name: 'dhChallengeCommand',
             data: {
-                blockId,
+                objectIndex,
+                blockIndex,
                 datasetId,
+                offerId,
                 challengeId,
                 litigatorNodeId,
             },
@@ -852,31 +863,6 @@ class DHService {
         });
 
         return vertices;
-    }
-
-    /**
-     * Returns given import's vertices and edges and decrypt them if needed.
-     *
-     * Method will return object in following format { vertices: [], edges: [] }.
-     * @param dataSetId ID of data-set.
-     * @returns {Promise<*>}
-     */
-    async getImport(dataSetId) {
-        // Check if import came from DH replication or reading replication.
-        const holdingData = await Models.holding_data.find({ where: { data_set_id: dataSetId } });
-
-        const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
-
-        if (dataInfo) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-
-            return { vertices: values[0], edges: values[1] };
-        }
-
-        throw Error(`Cannot find import for data-set ID ${dataSetId}.`);
     }
 
     async listenToBlockchainEvents() {
