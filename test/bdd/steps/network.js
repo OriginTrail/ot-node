@@ -397,11 +397,11 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
         promises.push(new Promise((acc) => {
             node.once('offer-finalized', (offerId) => {
-                if (this.state.lastReplicationOfferId !== offerId) {
-                    if (this.state.lastReplicationOfferId) {
-                        this.state.secondLastReplicationOfferId = this.state.lastReplicationOfferId;
+                if (this.state.lastReplication !== offerId) {
+                    if (this.state.lastReplication) {
+                        this.state.secondLastReplication = this.state.lastReplication;
                     }
-                    this.state.lastReplicationOfferId = offerId;
+                    this.state.lastReplication = offerId;
                 }
                 // TODO: Change API to connect internal offer ID and external offer ID.
                 acc();
@@ -954,12 +954,12 @@ Given(/^DHs should be payed out for all offers*$/, { timeout: 360000 }, function
     const promises = [];
     this.state.nodes.slice(1).forEach((node) => {
         promises.push(new Promise((acc) => {
-            node.once(`dh-pay-out-offer-${this.state.lastReplicationOfferId}-completed`, () => {
+            node.once(`dh-pay-out-offer-${this.state.lastReplication}-completed`, () => {
                 acc();
             });
         }));
         promises.push(new Promise((acc) => {
-            node.once(`dh-pay-out-offer-${this.state.secondLastReplicationOfferId}-completed`, () => {
+            node.once(`dh-pay-out-offer-${this.state.secondLastReplication}-completed`, () => {
                 acc();
             });
         }));
