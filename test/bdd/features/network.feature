@@ -23,7 +23,7 @@ Feature: Test basic network features
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
 
-  @first
+  @skip
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -44,7 +44,7 @@ Feature: Test basic network features
     Then the last import should be the same on DC and DV nodes
     Then DV's last purchase's hash should be the same as one manually calculated
 
-  @first
+  @skip
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
@@ -63,7 +63,7 @@ Feature: Test basic network features
     Given the DV purchases last import from the last query from the DC
     Then the last import should be the same on DC and DV nodes
 
-  @first
+  @skip
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
     And I setup 1 node

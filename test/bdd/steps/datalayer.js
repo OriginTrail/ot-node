@@ -87,26 +87,23 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         const myFingerprint = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
         expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-        const myEdgesVertices = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
-        // expect(myEdgesVertices, 'Should have corresponding keys').to.have.keys(['edges', 'vertices']);
+        const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
-        const calculatedImportHash = utilities.calculateImportHash(myEdgesVertices['@graph']);
+        const calculatedImportHash = utilities.calculateImportHash(dataset['@graph']);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
-        const vertices = myEdgesVertices['@graph'];
-        const edges = [];
-        vertices.forEach((vertex) => {
-            vertex.relations.forEach((edge) => {
-                edges.push(edge);
-            });
-        });
+        const dataCreator = {
+            identifiers: [
+                {
+                    identifierValue: myNode.erc725Identity,
+                    identifierType: 'ERC725',
+                    validationSchema: '/schemas/erc725-main',
+                },
+            ],
+        };
+        const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], dataset['@id'], dataCreator);
 
-        // console.log(edges[0]);
-
-        // vertices and edges are already sorted from the response
-        const myMerkle = await ImportUtilities.merkleStructure(vertices, edges);
-
-        expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
+        expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
     }
 });
 

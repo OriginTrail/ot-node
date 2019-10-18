@@ -227,7 +227,7 @@ class OtNode extends EventEmitter {
             // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
             // TODO: Poor man's parsing. Use regular expressions.
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
-        } else if (line.match(/.*\[DC] Import complete/gi)) {
+        } else if (line.match(/.*Import complete/gi)) {
             this.emit('import-complete');
         } else if (line.match(/.*Export complete/gi)) {
             this.emit('export-complete');
