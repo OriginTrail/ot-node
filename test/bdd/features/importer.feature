@@ -3,7 +3,7 @@ Feature: Test basic importer features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
+  @second
   Scenario: Check that imported GS1 dataset has a valid signature
     Given I setup 1 node
     And I start the node

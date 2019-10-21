@@ -3,7 +3,7 @@ Feature: Data layer related features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @second
+  @third
   Scenario: Check that second gs1 import does not mess up first import's hash value
     Given I setup 4 nodes
     And I start the nodes
@@ -20,7 +20,7 @@ Feature: Data layer related features
     And DC waits for last offer to get written to blockchain
     Then checking again first import's root hash should point to remembered value
 
-  @second
+  @fourth
   Scenario: Smoke check data-layer basic endpoints
     Given I setup 2 nodes
     And I start the nodes
@@ -33,7 +33,7 @@ Feature: Data layer related features
     Given I query DC node locally for last imported data set id
     Then response hash should match last imported data set id
 
-  @second
+  @first
   Scenario: Basic dataset integrity with it's xml
     Given I setup 1 node
     And I start the node
@@ -60,7 +60,7 @@ Feature: Data layer related features
     Then DH's 2 dataset hashes should match blockchain values
 
 
-  @second
+  @third
   Scenario: Dataset immutability II
     Given I setup 1 node
     And I start the node
@@ -95,7 +95,7 @@ Feature: Data layer related features
     Given I query DV node locally for last imported data set id
     Then DV's local query response should contain hashed private attributes
 
-  @second
+  @fourth
   Scenario: Remote event connection on DH and DV
     Given I setup 5 nodes
     And I start the nodes
@@ -132,7 +132,7 @@ Feature: Data layer related features
 #    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
 #    Then last consensus response should have 1 event with 1 match
 
-  @second
+  @first
   Scenario: Latest datalayer import and data read query
     Given I setup 1 node
     And I start the node
@@ -156,7 +156,7 @@ Feature: Data layer related features
     Given DC node makes local query with previous json query
     Then response should contain only last imported data set id
 
-  @second
+  @third
   Scenario: Graph level data encryption
     Given the replication difficulty is 0
     And I setup 4 nodes

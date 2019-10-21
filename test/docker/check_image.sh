@@ -15,8 +15,7 @@ docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 --network hos
 sleep 180
 # docker container inspect mynode
 # docker network inspect host
-docker exec mynode /bin/sh -c "curl -X POST http://127.0.0.1:8900/api/import -F importtype=GS1 -F importfile=@/ot-node/current/importers/xml_examples/Retail/03_Pink_to_Orange_shipment.xml -F replicate=true" > $TRAVIS_BUILD_DIR/importResult.json
+docker exec mynode /bin/sh -c "curl -X POST http://127.0.0.1:8900/api/latest/import -F standard_id=GS1-EPCIS -F file=@/ot-node/importers/xml_examples/Retail/03_Pink_to_orange_shipment.xml -F replicate=true" > $TRAVIS_BUILD_DIR/importResult.json
 cat $TRAVIS_BUILD_DIR/importResult.json
-# TODO better asserts that import response has two keys, data_set_id and replication_id
-grep -q 'data_set_id' $TRAVIS_BUILD_DIR/importResult.json
-grep -q 'replication_id' $TRAVIS_BUILD_DIR/importResult.json
+# TODO better asserts that import response has one key, handler_id
+grep -q 'handler_id' $TRAVIS_BUILD_DIR/importResult.json
