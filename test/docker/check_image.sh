@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -ev
-
+ls
 docker ps -a
 docker build --file $TRAVIS_BUILD_DIR/Dockerfile.development -t myimage:latest .
 docker images
