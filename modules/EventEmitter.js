@@ -545,6 +545,9 @@ class EventEmitter {
                             },
                         },
                     );
+                    logger.info('Import complete');
+                    logger.info(`Root hash: ${root_hash}`);
+                    logger.info(`Data set ID: ${data_set_id}`);
                     remoteControl.importSucceeded();
                 }
             } catch (error) {
@@ -648,12 +651,6 @@ class EventEmitter {
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
                     dataSizeInBytes, litigationIntervalInMinutes, handler_id,
                 );
-
-                data.response.status(201);
-                data.response.send({
-                    replication_id: replicationId,
-                    data_set_id: dataSetId,
-                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 notifyError(error);
@@ -721,6 +718,7 @@ class EventEmitter {
             const { handler_id, formatted_dataset } = data;
 
             if (!formatted_dataset) {
+                logger.info(`Export failed for export handler_id: ${handler_id}`);
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',
@@ -741,6 +739,7 @@ class EventEmitter {
                     notifyError(error);
                 }
             } else {
+                logger.info(`Export complete for export handler_id: ${handler_id}`);
                 await Models.handler_ids.update(
                     {
                         status: 'COMPLETED',
@@ -1037,6 +1036,7 @@ class EventEmitter {
                 }
                 await dhService.handleChallenge(
                     message.payload.data_set_id,
+                    message.payload.offer_id,
                     message.payload.object_index,
                     message.payload.block_index,
                     message.payload.challenge_id,

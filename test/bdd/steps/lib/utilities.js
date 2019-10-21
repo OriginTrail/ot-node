@@ -122,11 +122,11 @@ function denormalizeHex(number) {
     return number;
 }
 
-function findVertexIdValue(verticesArray, vertex_type, sender_id, id_type, id_value) {
+function findVertexIdValue(verticesArray, id_type, id_value) {
     const response = [];
     verticesArray.forEach((element) => {
-        if (Object.keys(element).toString() === '_key,id_type,id_value,sender_id,vertex_type') {
-            if (element.vertex_type === vertex_type && element.sender_id === sender_id && element.id_type === id_type && element.id_value === id_value) {
+        if (Object.keys(element).toString() === '@id,@type,identifiers,properties,relations') {
+            if (element.identifiers[0]['@type'] === id_type && element.identifiers[0]['@value'] === id_value) {
                 response.push(element);
             }
         }
@@ -134,11 +134,11 @@ function findVertexIdValue(verticesArray, vertex_type, sender_id, id_type, id_va
     return response;
 }
 
-function findVertexUid(verticesArray, vertex_type, sender_id, uid, data) {
+function findVertexUid(verticesArray, uid) {
     const response = [];
     verticesArray.forEach((element) => {
-        if (Object.keys(element).toString() === '_key,data,sender_id,uid,vertex_type') {
-            if (element.vertex_type === vertex_type && element.sender_id === sender_id && element.uid === uid && _.isEqual(element.data, data)) {
+        if (Object.keys(element).toString() === '@id,@type,identifiers,properties,relations') {
+            if (element['@id'] === uid) {
                 response.push(element);
             }
         }

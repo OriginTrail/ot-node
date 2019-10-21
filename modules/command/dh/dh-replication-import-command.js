@@ -44,7 +44,7 @@ class DhReplicationImportCommand extends Command {
             encColor,
         } = command.data;
         const { decryptedDataset, encryptedMap } =
-            await ImportUtilities.decryptDataset(otJson, litigationPublicKey, encColor);
+            await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphHash(decryptedDataset['@graph']);
 
@@ -77,6 +77,7 @@ class DhReplicationImportCommand extends Command {
 
         const holdingData = await Models.holding_data.findOne({
             where: {
+                offer_id: offerId,
                 data_set_id: dataSetId,
                 color: encColor,
                 source_wallet: dcWallet,
@@ -95,6 +96,7 @@ class DhReplicationImportCommand extends Command {
                 distribution_epk: distributionEpk,
                 transaction_hash: transactionHash,
                 color: encColor,
+                offer_id: offerId,
             };
             await Models.holding_data.create(newHoldingEntry);
         }
@@ -105,13 +107,13 @@ class DhReplicationImportCommand extends Command {
             },
         });
 
+        const importResult = await this.importer.importOTJSON(decryptedDataset, encryptedMap);
+
+        if (importResult.error) {
+            throw Error(importResult.error);
+        }
+
         if (dataInfo == null) {
-            const importResult = await this.importer.importOTJSON(decryptedDataset, encryptedMap);
-
-            if (importResult.error) {
-                throw Error(importResult.error);
-            }
-
             const dataSize = bytes(JSON.stringify(otJson));
             await Models.data_info.create({
                 data_set_id: dataSetId,

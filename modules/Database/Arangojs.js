@@ -96,8 +96,9 @@ class ArangoJS {
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
-                       FILTER v.vertex_type == 'EVENT'
-                       AND v.sender_id == @sender_id
+                       FILTER v.vertexType == 'Data'
+                       AND v.data.objectType='ObjectEvent'
+                       AND v.senderId == @sender_id
                        AND v.encrypted == null
                        RETURN v`;
 
@@ -121,7 +122,7 @@ class ArangoJS {
 
         for (const event of ownershipEvents) {
             const query = `FOR v, e IN 1..1 OUTBOUND @senderEventKey ot_edges
-            FILTER e.edge_type == 'EVENT_CONNECTION'
+            FILTER e.edgeType == 'EVENT_CONNECTION'
             RETURN v`;
             promises.push(this.runQuery(query, { senderEventKey: `ot_vertices/${event.side1._key}` }));
         }
@@ -164,28 +165,27 @@ class ArangoJS {
             let filter = `LET v_res${count} = (
                                             FOR v${count} IN ot_vertices
                                         LET objects = (
-                                            FOR w${count}, e IN 1..1
-                                        OUTBOUND v${count}._id ot_edges
-                                        FILTER e.edge_type == "IDENTIFIES"
+                                            FOR e IN ot_edges
+                                        FILTER e._from == v${count}._id
+                                        AND e.edgeType=='IdentifierValue'
                                         AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        AND v${count}.encrypted == ${encColor}
-                                        RETURN w${count})
+                                        RETURN e._to)
                              `;
 
             switch (opcode) {
             case 'EQ':
-                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == @id_type${count}
-                                     AND v${count}.id_value == @id_value${count}
+                filter += `FILTER v${count}.vertexType == "Identifier"
+                                     AND v${count}.identifierType == @id_type${count}
+                                     AND v${count}.identifierValue == @id_value${count}
                                      AND v${count}.encrypted == ${encColor}
                                      `;
                 params[`id_type${count}`] = id_type;
                 params[`id_value${count}`] = id_value;
                 break;
             case 'IN':
-                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == @id_type${count}
-                                     AND  @id_value${count} IN v${count}.id_value
+                filter += `FILTER v${count}.vertexType == "IDENTIFIER"
+                                     AND v${count}.identifierType == @id_type${count}
+                                     AND  @id_value${count} IN v${count}.identifierValue
                                      AND v${count}.encrypted == ${encColor}
                                      `;
 
@@ -627,6 +627,14 @@ class ArangoJS {
                                 .filter(datasetId => !existing.datasets.includes(datasetId)));
 
                     existing.datasets.concat(document.datasets);
+                }
+                if (document.encrypted) {
+                    if (!existing.encrypted) {
+                        existing.encrypted = {};
+                    }
+                    for (const key of Object.keys(document.encrypted)) {
+                        existing.encrypted[key] = document.encrypted[key];
+                    }
                 }
                 return this.updateDocument(collectionName, existing);
             }

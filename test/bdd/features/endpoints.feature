@@ -3,7 +3,7 @@ Feature: API endpoints features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
+  @skip
   Scenario: Smoke check /api/consensus endpoint
     Given I setup 1 node
     And I start the node
@@ -15,7 +15,7 @@ Feature: API endpoints features
     Given DC calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
     Then last consensus response should have 1 event with 1 match
 
-  @first
+  @skip
   Scenario: API calls should be forbidden
     Given I setup 1 node
     And I override configuration for all nodes
@@ -24,7 +24,7 @@ Feature: API endpoints features
     And I use 1st node as DC
     Then API calls will be forbidden
 
-  @first
+  @skip
   Scenario: API calls should not be authorized
     Given I setup 1 node
     And I override configuration for all nodes

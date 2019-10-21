@@ -26,6 +26,7 @@ class DHChallengeCommand extends Command {
             objectIndex,
             blockIndex,
             datasetId,
+            offerId,
             challengeId,
             litigatorNodeId,
         } = command.data;
@@ -33,7 +34,7 @@ class DHChallengeCommand extends Command {
         const holdingData = await models.holding_data.findOne({
             limit: 1,
             where: {
-                data_set_id: datasetId,
+                offer_id: offerId,
 
             },
             order: [
@@ -52,6 +53,7 @@ class DHChallengeCommand extends Command {
         const otObject = await this.otJsonImporter.getImportedOtObject(
             datasetId,
             objectIndex,
+            offerId,
             color,
         );
 

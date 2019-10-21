@@ -58,6 +58,10 @@ class ObjectValidator {
         if (datasetId == null) {
             return new Error('Data set ID is missing');
         }
+        const offerId = message.payload.offer_id;
+        if (offerId == null) {
+            return new Error('Offer ID is missing');
+        }
         const challengeId = message.payload.challenge_id;
         if (challengeId == null) {
             return new Error('Challenge ID is missing');
