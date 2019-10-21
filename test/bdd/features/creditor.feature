@@ -3,7 +3,7 @@ Feature: Parent identity creditor features
   Background: Setup local blockchain and bootstraps
     Given the blockchain is set up
     And 1 bootstrap is running
-  @second
+  @first
   Scenario: Expect node to add a sub-identity
     Given I setup 2 nodes
     And I start the nodes

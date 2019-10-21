@@ -3,13 +3,13 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
+  @third
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
-  @first
+  @fourth
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -104,11 +104,11 @@ Feature: Test basic network features
     When DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then everything should be ok
 
-  @first
+  @second
   Scenario: Bootstraps should have /api/info route enabled
     Then 1st bootstrap should reply on info route
 
-  @first
+  @third
   Scenario: DH payout scenario
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -123,7 +123,7 @@ Feature: Test basic network features
     And DC waits for holding time
     Then selected DHes should be payed out
 
-  @first
+  @fourth
   Scenario: DH with disabled auto-payouts
     Given the replication difficulty is 0
     And I setup 5 nodes
