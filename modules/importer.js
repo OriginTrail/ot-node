@@ -5,6 +5,7 @@ const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const graphConverter = require('./Database/graph-converter');
 const Utilities = require('./Utilities');
+const bytes = require('utf8-length');
 
 class Importer {
     constructor(ctx) {
@@ -212,16 +213,13 @@ class Importer {
      * @return {Promise<>}
      */
     afterImport(result, unpack = false) {
-        this.log.info('[DC] Import complete');
         this.remoteControl.importRequestData();
         let {
             vertices, edges,
         } = result;
-
         if (unpack) {
             ImportUtilities.unpackKeys(vertices, edges);
         }
-
         const {
             data_set_id, wallet, root_hash,
         } = result;
@@ -229,8 +227,6 @@ class Importer {
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        this.log.info(`Root hash: ${root_hash}`);
-        this.log.info(`Data set ID: ${data_set_id}`);
         return {
             data_set_id,
             root_hash,
@@ -275,8 +271,10 @@ class Importer {
                 document: otJsonDoc,
             });
             this.remoteControl.importRequestData();
+            const response = await this.afterImport(result);
+            response.otjson_size = bytes(JSON.stringify(otJsonDoc));
             return {
-                response: await this.afterImport(result),
+                response,
                 error: null,
             };
         } catch (error) {
@@ -314,8 +312,10 @@ class Importer {
                 document,
                 encryptedMap,
             });
+            const response = this.afterImport(result);
+            response.otjson_size = bytes(JSON.stringify(document));
             return {
-                response: this.afterImport(result),
+                response,
                 error: null,
             };
         } catch (error) {

@@ -231,9 +231,9 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
 
     await systemDb.query(`FOR v IN ot_vertices
             UPDATE { _key: v._key, 
-                '${this.state.lastImport.data_set_id}': {
+                '${this.state.lastImport.dataset_id}': {
                     data:
-                        REVERSE(v['${this.state.lastImport.data_set_id}'].data)
+                        REVERSE(v['${this.state.lastImport.dataset_id}'].data)
                        } 
             } IN ot_vertices`);
 
@@ -377,7 +377,7 @@ Then(
         const offer = await Models.sequelize.models.offers.findOne({
             where: {
                 offer_id: lastOfferId,
-                data_set_id: this.state.lastImport.data_set_id,
+                data_set_id: this.state.lastImport.dataset_id,
             },
         });
 

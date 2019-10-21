@@ -8,8 +8,8 @@ const { expect } = require('chai');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
-Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, importType) {
-    expect(importType, 'importType can only be GS1 or WOT.').to.satisfy(val => (val === 'GS1' || val === 'WOT'));
+Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/, async function (importFilePath, importType) {
+    expect(importType, 'importType can only be GS1-EPCIS or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -17,17 +17,94 @@ Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
 
-
     const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
 
-    expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet', 'root_hash']);
+    expect(importResponse).to.have.keys(['handler_id']);
 
     // sometimes there is a need to remember import before the last one
-    if (this.state.lastImport) {
-        this.state.secondLastImport = this.state.lastImport;
+    if (this.state.lastImportHandler) {
+        this.state.secondLastImportHandler = this.state.lastImportHandler;
     }
-    this.state.lastImport = importResponse;
+    this.state.lastImportHandler = importResponse.handler_id;
 });
+
+Given(/^DC waits for import to finish$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const promise = new Promise((acc) => {
+        dc.once('import-complete', async () => {
+            if (this.state.lastImport) {
+                this.state.secondLastImport = this.state.lastImport;
+            }
+
+            this.state.lastImport = await httpApiHelper.apiImportResult(host, this.state.lastImportHandler);
+            acc();
+        });
+    });
+
+    return promise;
+});
+
+Given(/^DC exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/, async function (exportType) {
+    expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON'));
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const { dataset_id } = this.state.lastImport.data;
+
+    const exportResponse = await httpApiHelper.apiExport(host, dataset_id, exportType);
+
+    expect(exportResponse).to.have.keys(['handler_id']);
+
+    // sometimes there is a need to remember export before the last one
+    if (this.state.lastExportHandler) {
+        this.state.secondLastExportHandler = this.state.lastExportHandler;
+    }
+    this.state.lastExportHandler = exportResponse.handler_id;
+});
+
+Given(/^DC waits for export to finish$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const promise = new Promise((acc) => {
+        dc.once('export-complete', async () => {
+            if (this.state.lastExport) {
+                this.state.secondLastExport = this.state.lastExport;
+            }
+
+            this.state.lastExport = await httpApiHelper.apiExportResult(host, this.state.lastExportHandler);
+            acc();
+        });
+    });
+
+    return promise;
+});
+
+Given(/^response should return same dataset_ids as second last import and last import$/, async function () {
+    expect(!!this.state.lastImportHandler, 'Last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.secondLastImportHandler, 'Second last imports handler_id not defined. Use other step to define it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const response = await httpApiHelper.apiQueryLocal(host, this.state.jsonQuery);
+    this.state.apiQueryLocalResponse = response;
+    const importIds = [this.state.secondLastImport.data.dataset_id, this.state.lastImport.data.dataset_id];
+    // TODO fix message
+    expect(response.filter(val => importIds.includes(val) !== false).length, 'Response not good.').to.be.equal(2);
+});
+
 
 Given(/^DC initiates the replication for last imported dataset$/, { timeout: 60000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
@@ -36,17 +113,19 @@ Given(/^DC initiates the replication for last imported dataset$/, { timeout: 600
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    const response =
-        await httpApiHelper.apiReplication(
-            dc.state.node_rpc_url,
-            this.state.lastImport.data_set_id,
-        );
+    const host = dc.state.node_rpc_url;
 
-    if (!response.replication_id) {
-        throw Error(`Failed to replicate. Got reply: ${JSON.stringify(response)}`);
+    let response;
+    try {
+        response =
+            await httpApiHelper.apiReplication(
+                host,
+                this.state.lastImport.data.dataset_id,
+            );
+        this.state.lastReplicationHandler = response;
+    } catch (e) {
+        throw Error(`Failed to initiate replicate. Got reply: ${JSON.stringify(response)}`);
     }
-
-    this.state.lastReplication = response;
 });
 
 Given(/^I create json query with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (path, value, opcode) {
@@ -92,12 +171,12 @@ Given(/^(DC|DH|DV) node makes local query with previous json query$/, async func
 
 Given(/^I query ([DC|DH|DV]+) node locally for last imported data set id$/, async function (targetNode) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastImport.data_set_id, 'Last imports data set id seems not defined').to.be.equal(true);
+    expect(!!this.state.lastImport.data.dataset_id, 'Last imports data set id seems not defined').to.be.equal(true);
     expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
     expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
 
     const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
-    const lastDataSetId = this.state.lastImport.data_set_id;
+    const lastDataSetId = this.state.lastImport.data.dataset_id;
 
     const response = await httpApiHelper.apiQueryLocalImportByDataSetId(host, lastDataSetId);
     this.state.apiQueryLocalImportByDataSetIdResponse = response;
@@ -138,7 +217,7 @@ Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last
     const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const queryId = this.state.lastQueryNetworkId;
-    const dataSetId = this.state[whichImport].data_set_id;
+    const dataSetId = this.state[whichImport].data.dataset_id;
     let sellerNode;
 
     const confirmationsSoFar =

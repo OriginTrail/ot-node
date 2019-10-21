@@ -5,6 +5,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
+const { sha3_256 } = require('js-sha3');
 
 class EventEmitter {
     /**
@@ -480,6 +481,8 @@ class EventEmitter {
                 total_documents,
                 wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
+                edges,
+                otjson_size,
             } = response;
 
             try {
@@ -521,6 +524,8 @@ class EventEmitter {
                         response: data.response,
                     });
                 } else {
+                    const graphObject = {};
+                    Object.assign(graphObject, { vertices, edges });
                     await Models.handler_ids.update(
                         {
                             status: 'COMPLETED',
@@ -528,10 +533,11 @@ class EventEmitter {
                                 dataset_id: data_set_id,
                                 import_time: importTimestamp.valueOf(),
                                 dataset_size_in_bytes: dataSize,
-                                otjson_size_in_bytes: 0, // TODO calculate otjson size in bytes
+                                otjson_size_in_bytes: otjson_size,
                                 root_hash,
-                                data_hash: '0x0', // TODO calculate data dash
-                                total_graph_entities: 0, // TODO calculate total graph entites
+                                data_hash: Utilities.normalizeHex(sha3_256(`${graphObject}`)),
+                                total_graph_entities: vertices.length
+                                    + edges.length,
                             }),
                         },
                         {
@@ -540,6 +546,9 @@ class EventEmitter {
                             },
                         },
                     );
+                    logger.info('Import complete');
+                    logger.info(`Root hash: ${root_hash}`);
+                    logger.info(`Data set ID: ${data_set_id}`);
                     remoteControl.importSucceeded();
                 }
             } catch (error) {
@@ -731,6 +740,7 @@ class EventEmitter {
             const { handler_id, formatted_dataset } = data;
 
             if (!formatted_dataset) {
+                logger.info(`Export failed for export handler_id: ${handler_id}`);
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',
@@ -751,6 +761,7 @@ class EventEmitter {
                     notifyError(error);
                 }
             } else {
+                logger.info(`Export complete for export handler_id: ${handler_id}`);
                 await Models.handler_ids.update(
                     {
                         status: 'COMPLETED',
@@ -1047,7 +1058,9 @@ class EventEmitter {
                 }
                 await dhService.handleChallenge(
                     message.payload.data_set_id,
-                    message.payload.block_id,
+                    message.payload.offer_id,
+                    message.payload.object_index,
+                    message.payload.block_index,
                     message.payload.challenge_id,
                     message.payload.litigator_id,
                 );

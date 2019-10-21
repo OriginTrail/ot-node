@@ -347,6 +347,26 @@ class GraphStorage {
     }
 
     /**
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param fromKey
+     * @returns {Promise<any>}
+     */
+    async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findDocumentsByImportIdAndOtObjectId(importId, objectId).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Gets edges by import ID from the underlying database
      * @param datasetId - Dataset ID
      * @param encColor - Encrypted color
