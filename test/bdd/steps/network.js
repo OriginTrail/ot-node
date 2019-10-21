@@ -10,6 +10,7 @@ const sleep = require('sleep-async')().Promise;
 const request = require('request');
 const _ = require('lodash');
 const { deepEqual } = require('jsprim');
+const path = require('path');
 
 const OtNode = require('./lib/otnode');
 const ImportUtilities = require('../../../modules/ImportUtilities');
@@ -354,6 +355,29 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
     expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+});
+
+Then(/^the last exported dataset contains imported data$/, async function () {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const ot_logo = utilities.base64_encode(path.resolve(__dirname, '../../../importers/xml_examples/Retail/ot_logo.svg'));
+    const { dc } = this.state;
+
+    const response = await httpApiHelper.apiExportResult(dc.state.node_rpc_url, this.state.lastExportHandler);
+
+    expect(response.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    expect(response.data, 'response.data should have the formatted_dataset field')
+        .to.have.keys(['formatted_dataset']);
+
+    expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    expect(response.data.formatted_dataset['@graph']
+        .find(x => x['@id'] === 'urn:ot:object:product:id:Product_1').properties['urn:ot:object:product:description'])
+        .to.be.equal(ot_logo);
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {

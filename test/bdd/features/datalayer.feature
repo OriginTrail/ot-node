@@ -171,3 +171,14 @@ Feature: Data layer related features
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     Then DHs should be payed out for all offers
+
+  @fourth
+  Scenario: Import and export of an arbitrary data
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_image_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    Then the last exported dataset contains imported data

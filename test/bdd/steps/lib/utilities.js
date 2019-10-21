@@ -4,6 +4,7 @@ const { sha3_256 } = require('js-sha3');
 const _ = require('lodash');
 const BN = require('bn.js');
 const Web3 = require('web3');
+const fs = require('fs');
 
 // TODO: use 3rd party.
 const MerkleTree = require('../../../../modules/Merkle');
@@ -85,6 +86,19 @@ function _generateDatasetSummary(dataset) {
 }
 
 // Public functions.
+
+/**
+ * Function to encode file data to base64 encoded string
+ * @param file
+ * @return {string}
+ * @private
+ */
+function base64_encode(file) {
+    // read binary data
+    const bitmap = fs.readFileSync(file);
+    // convert binary data to base64 encoded string
+    return Buffer.from(bitmap).toString('base64');
+}
 
 /**
  * Calculate dataset ID from a given graph.
@@ -223,4 +237,5 @@ module.exports = {
     isZeroHash,
     verifySignature,
     calculateRootHash,
+    base64_encode,
 };
