@@ -21,7 +21,7 @@ class RestAPIServiceV2 {
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
-
+        this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'graph');
         this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
@@ -50,7 +50,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
+            await this._checkForHandlerStatus(req, res);
         });
 
         server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
@@ -58,7 +58,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
+            await this._checkForHandlerStatus(req, res);
         });
 
         server.post(`/api/${this.version_id}/export`, async (req, res) => {
@@ -66,16 +66,15 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
+            await this._checkForHandlerStatus(req, res);
         });
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
-            const msg = [];
-            this.stanards.forEach(standard =>
-                msg.push(standard));
-            res.send({
-                message: msg,
-            });
+            this._getStandards(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/get_element_issuer_identity/:element_id`, async (req, res) => {
+            await this._getElementIssuerIdentity(req, res);
         });
 
         /** Local query routes */
@@ -277,7 +276,7 @@ class RestAPIServiceV2 {
         });
     }
 
-    async _check_for_handler_status(req, res) {
+    async _checkForHandlerStatus(req, res) {
         const handler_object = await Models.handler_ids.findOne({
             where: {
                 handler_id: req.params.handler_id,
@@ -503,6 +502,50 @@ class RestAPIServiceV2 {
         });
 
         this.emitter.emit('api-export-request', { dataset_id, handler_id, standard: this.mapping_standards_for_event.get(standard_id) });
+    }
+
+    /**
+     * Get all supported standards
+     * @param req
+     * @param res
+     * @private
+     */
+    _getStandards(req, res) {
+        const msg = [];
+        this.stanards.forEach(standard =>
+            msg.push(standard));
+        res.send({
+            message: msg,
+        });
+    }
+
+    /**
+     * Returns element issuer identity
+     * @param req
+     * @param res
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _getElementIssuerIdentity(req, res) {
+        this.logger.api('GET: Element issuer identity request received.');
+        const elementId = req.params.element_id;
+        if (!elementId) {
+            res.status(400);
+            res.send({
+                message: 'Param element_id is required.',
+            });
+            return;
+        }
+        const result = await this.graphStorage.findIssuerIdentityForElementId(elementId);
+        if (result) {
+            res.status(200);
+            res.send(result);
+        } else {
+            res.status(400);
+            res.send({
+                message: 'Unable to find requested data',
+            });
+        }
     }
 }
 

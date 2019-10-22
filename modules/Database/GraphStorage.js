@@ -429,6 +429,25 @@ class GraphStorage {
     }
 
     /**
+     * Returns data creator identity for vertex with elementId
+     * @param elementId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForElementId(elementId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findIssuerIdentityForElementId(elementId).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      *
      * @param className
      * @returns {Promise<string | undefined>}
