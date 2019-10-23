@@ -81,22 +81,19 @@ describe('GraphStorage module', () => {
         }
     });
 
-    it('addDocument()', async () => {
+    it('adding vertex and edges should save in collections', async () => {
         try {
-            const res_v1 = await myGraphStorage.addDocument('ot_vertices', vertexOne);
-            const res_v2 = await myGraphStorage.addDocument('ot_vertices', vertexTwo);
+            const res_v1 = await myGraphStorage.addVertex(vertexOne);
+            const res_v2 = await myGraphStorage.addVertex(vertexTwo);
 
             assert.equal(res_v1._key, vertexOne._key);
             assert.equal(res_v2._key, vertexTwo._key);
 
-            const _edge = Utilities.copyObject(edgeOne);
-            _edge._from = `ot_vertices/${edgeOne._from}`;
-            _edge._to = `ot_vertices/${edgeOne._to}`;
+            const res = await myGraphStorage.addEdge(edgeOne);
 
-            const res = await myGraphStorage.addDocument('ot_edges', _edge);
-            assert.equal(res._key, _edge._key);
+            assert.equal(res._key, edgeOne._key);
         } catch (error) {
-            assert.isTrue(!!error === false);
+            assert.isTrue(!!error);
         }
     });
 
