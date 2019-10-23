@@ -537,7 +537,7 @@ class RestAPIServiceV2 {
             return;
         }
         const result = await this.graphStorage.findIssuerIdentityForElementId(elementId);
-        if (result) {
+        if (result && result.length > 0) {
             res.status(200);
             res.send(result);
         } else {

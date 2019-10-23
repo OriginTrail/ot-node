@@ -969,3 +969,13 @@ Given(/^DHs should be payed out for all offers*$/, { timeout: 360000 }, function
         done();
     });
 });
+
+Then(/^DC should return identity for element id: "(\S+)"$/, async function (elementId) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const response = await httpApiHelper.apiGetElementIssuerIdentity(host, elementId);
+    expect(response[0], 'Should have key called events').to.have.all.keys('identifierType', 'identifierValue', 'validationSchema');
+});
