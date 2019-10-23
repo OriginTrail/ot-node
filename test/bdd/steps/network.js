@@ -3,7 +3,7 @@
 const {
     And, But, Given, Then, When,
 } = require('cucumber');
-const { expect } = require('chai');
+const { assert, expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
@@ -17,6 +17,8 @@ const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
 const Models = require('../../../models');
+const fs = require('fs');
+const xmljs = require('xml-js');
 
 // Identity difficulty 8.
 const bootstrapIdentity = {
@@ -354,6 +356,42 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
     expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+});
+
+Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async function (importedFilePath) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const { dc } = this.state;
+
+    const response = await httpApiHelper.apiExportResult(dc.state.node_rpc_url, this.state.lastExportHandler);
+
+    expect(response, 'response should contain data and status keys').to.have.keys([
+        'data', 'status',
+    ]);
+
+    expect(response.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    expect(response.data, 'response.data should have the formatted_dataset field')
+        .to.have.keys(['formatted_dataset']);
+
+    const exportedXml = xmljs.xml2js(response.data.formatted_dataset, {
+        compact: true,
+        spaces: 4,
+    });
+    let originalXml = await fs.readFileSync(importedFilePath, 'utf8');
+    originalXml = xmljs.xml2js(originalXml, {
+        compact: true,
+        spaces: 4,
+    });
+
+    assert.deepEqual(
+        utilities.stringifyWithoutComments(exportedXml),
+        utilities.stringifyWithoutComments(originalXml),
+        'Exported file not equal to imported one!',
+    );
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {

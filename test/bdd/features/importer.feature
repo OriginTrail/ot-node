@@ -14,7 +14,7 @@ Feature: Test basic importer features
     And DC waits for export to finish
     Then the last exported dataset signature should belong to DC
 
-  @this
+  @third
   Scenario: Check that exported GS1 dataset is the same as the one imported
     Given I setup 1 node
     And I start the node
