@@ -14,14 +14,11 @@ class DcConvertToOtJson extends Command {
      * @param command
      */
     async execute(command) {
-        const { standard_id, document, handler_id } = command.data;
-        let otJsonDoc;
+        const { standard_id } = command.data;
         // TODO Implement other standards converting
         if (standard_id === 'gs1') {
             await this.importService.sendToOtjsonConverterWorker(command.data);
-            // otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(document);
         }
-        // return this.continueSequence(this.pack({ otJsonDoc, handler_id }), command.sequence);
         return Command.empty();
     }
 

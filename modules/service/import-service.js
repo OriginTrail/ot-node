@@ -43,12 +43,9 @@ class ImportService {
 
         forked.send(JSON.stringify({
             document, encryptedMap, wallet, handler_id,
-        }), () => {
-            console.log('Child process starting');
-        });
+        }));
 
         forked.on('message', async (response) => {
-            console.log('Child process finished');
             const parsedData = JSON.parse(response);
             const commandData = {
                 parsedData,

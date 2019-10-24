@@ -98,7 +98,6 @@ const constants = {
 Object.freeze(constants);
 
 process.on('message', async (dataFromParent) => {
-    console.log('Worker started.');
     const {
         document, encryptedMap, wallet, handler_id,
     } = JSON.parse(dataFromParent);
@@ -318,7 +317,6 @@ process.on('message', async (dataFromParent) => {
 
     // process.send(JSON.stringify(response));
     process.send(JSON.stringify(response), () => {
-        console.log('Poslao sam caletu');
         process.exit(0);
     });
 });

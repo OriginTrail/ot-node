@@ -684,6 +684,7 @@ class EventEmitter {
 
                 let command;
                 if (data.standard_id === 'graph') {
+                    commandData.document = JSON.parse(data.content);
                     command = 'dcConvertToGraphCommand';
                 } else {
                     command = 'dcConvertToOtJsonCommand';
