@@ -4,12 +4,11 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
-class ImportToOtjson extends Command {
+class DcWriteToDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.importer = ctx.importer;
-        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.otJsonImporter = ctx.otJsonImporter;
     }
 
     /**
@@ -17,17 +16,17 @@ class ImportToOtjson extends Command {
      * @param command
      */
     async execute(command) {
-        const { standard_id, document } = command.data;
-        let otJsonDoc;
-        if (standard_id === 'gs1') {
-            otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(document);
-            // console.log(otJsonDoc);
-        }
-        return this.continueSequence({ data: otJsonDoc }, command.sequence);
+        await this.otJsonImporter.writeToDb({
+            data: command.data.dbData,
+        });
+
+        return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
     pack(data) {
-        Object.assign(data, { data });
+        Object.assign(data, {
+            afterImportData: data.afterImportData,
+        });
         return data;
     }
 
@@ -38,7 +37,7 @@ class ImportToOtjson extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcImportToOtJsonCommand',
+            name: 'dcWriteToDbCommand',
             delay: 0,
             transactional: false,
         };
@@ -47,4 +46,4 @@ class ImportToOtjson extends Command {
     }
 }
 
-module.exports = ImportToOtjson;
+module.exports = DcWriteToDbCommand;

@@ -17,8 +17,9 @@ class ImportLogCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { data } = command.data;
-        console.log(data);
+        // const { vertices, edges, metadata } = command.data;
+        console.log('================');
+        console.log(command.data);
         return this.continueSequence({}, command.sequence);
     }
 

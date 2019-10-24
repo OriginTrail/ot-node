@@ -663,6 +663,14 @@ class EventEmitter {
             }
         });
 
+        this._on('finalized-import', async (result) => {
+            if (result.error != null) {
+                await processImport(null, result.error, {});
+            } else {
+                const data = { handler_id: result.response.handler_id };
+                await processImport(result.response, null, data);
+            }
+        });
 
         this._on('api-gs1-import-request', async (data) => {
             try {
@@ -671,11 +679,12 @@ class EventEmitter {
                 const commandData = {
                     standard_id: 'gs1',
                     document: data.content,
+                    handler_id: data.handler_id,
                 };
 
                 const commandSequence = [
-                    'dcImportToOtJsonCommand',
-                    'dcImporterLoggerCommand',
+                    'dcConvertToOtJsonCommand',
+                    'dcConvertToGraphCommand',
                 ];
 
                 await this.commandExecutor.add({
