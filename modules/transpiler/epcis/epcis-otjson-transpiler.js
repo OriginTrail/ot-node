@@ -258,7 +258,7 @@ class EpcisOtJsonTranspiler {
                     otVocabulary.properties.children = utilities.arrayze(compressedChildren.id);
                     otVocabulary.properties.children.forEach(id => otVocabulary.relations.push({
                         '@type': 'otRelation',
-                        direction: 'direct', // think about direction
+                        direction: 'direct', // TODO think about direction
                         linkedObject: {
                             '@id': id,
                         },
@@ -266,6 +266,11 @@ class EpcisOtJsonTranspiler {
                             relationType: 'HAS_CHILD',
                         },
                     }));
+                }
+
+                if (vocabularyElement.extension) {
+                    const compressedExtension = this._compressText(vocabularyElement.extension);
+                    otVocabulary.properties.extension = compressedExtension;
                 }
                 result.push(otVocabulary);
             }
@@ -308,6 +313,14 @@ class EpcisOtJsonTranspiler {
                     id: this._decompressText(otChildren),
                 };
             }
+
+            const { extension: otExtension } = otVocabularyElement.properties;
+            if (otExtension) {
+                const decompressedExtension = this._decompressText(otExtension);
+                vocabularyElement.extension =
+                    this._completeExtend(vocabularyElement.extension, decompressedExtension);
+            }
+
             elementsByType[type].push(vocabularyElement);
         }
 
@@ -653,6 +666,48 @@ class EpcisOtJsonTranspiler {
         return {
             _text: object,
         };
+    }
+
+    /**
+     * Utility function that extends an object which can contain an array of objects
+     * @param target - object to which the extension will happen
+     * @param source - object from which values will be taken
+     * @return {*}
+     * @private
+     */
+    _completeExtend(target, source) {
+        if (Array.isArray(target)) {
+            const clone = [];
+            if (target.length > source.length) {
+                for (let i = 0; i < source.length; i += 1) {
+                    clone.push(this._completeExtend(target[i], source[i]));
+                }
+            } else {
+                for (let i = 0; i < target.length; i += 1) {
+                    clone.push(this._completeExtend(target[i], source[i]));
+                }
+                for (let i = target.length; i < source.length; i += 1) {
+                    clone.push(source[i]);
+                }
+            }
+            return clone;
+        } else if (typeof target === 'object') {
+            const clone = {};
+            for (const key of Object.keys(target)) {
+                if (source[key]) {
+                    clone[key] = this._completeExtend(target[key], source[key]);
+                } else {
+                    clone[key] = (target[key]);
+                }
+            }
+            for (const key of Object.keys(source)) {
+                if (!target[key]) {
+                    clone[key] = (source[key]);
+                }
+            }
+            return clone;
+        }
+        return source;
     }
 
     /**
