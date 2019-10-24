@@ -6,6 +6,7 @@ class DcConvertToOtJson extends Command {
         this.logger = ctx.logger;
         this.importer = ctx.importer;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -17,9 +18,11 @@ class DcConvertToOtJson extends Command {
         let otJsonDoc;
         // TODO Implement other standards converting
         if (standard_id === 'gs1') {
-            otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(document);
+            await this.importService.sendToOtjsonConverterWorker(command.data);
+            // otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(document);
         }
-        return this.continueSequence(this.pack({ otJsonDoc, handler_id }), command.sequence);
+        // return this.continueSequence(this.pack({ otJsonDoc, handler_id }), command.sequence);
+        return Command.empty();
     }
 
     pack(data) {

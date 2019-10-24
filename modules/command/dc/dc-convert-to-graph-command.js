@@ -13,7 +13,7 @@ class DcConvertToGraphCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const result = await this.importService.sendToWorker(command.data);
+        await this.importService.sendToWorker(command.data);
         return Command.empty();
     }
 

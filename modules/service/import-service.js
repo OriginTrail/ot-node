@@ -5,104 +5,6 @@ const { sha3_256 } = require('js-sha3');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 
-// Helper functions.
-
-/**
- * Returns value of '@id' property.
- * @param jsonLdObject JSON-LD object.
- * @return {string}
- * @private
- */
-function _id(jsonLdObject) {
-    return jsonLdObject['@id'];
-}
-
-/**
- * Returns value of '@type' property.
- * @param jsonLdObject JSON-LD object.
- * @return {string}
- * @private
- */
-function _type(jsonLdObject) {
-    return jsonLdObject['@type'];
-}
-
-/**
- * Returns value of '@value' property.
- * @param jsonLdObject JSON-LD object.
- * @return {string}
- * @private
- */
-function _value(jsonLdObject) {
-    return jsonLdObject['@value'];
-}
-
-/**
- * Returns value of '@graph' property.
- * @param OT-JSON document object.
- * @return [Object]
- * @private
- */
-function _graph(document) {
-    return document['@graph'];
-}
-
-/**
- * Calculate SHA3 from input objects and return normalized hex string.
- * @param rest An array of input data concatenated before calculating the hash.
- * @return {string} Normalized hash string.
- * @private
- */
-function _keyFrom(...rest) {
-    return Utilities.normalizeHex(sha3_256([...rest].reduce(
-        (acc, argument) => {
-            acc += Utilities.stringify(argument, 0);
-            return acc;
-        },
-        '',
-    )));
-}
-
-/**
- * Constants used in graph creation.
- * @type {{
- * relationType: {
- *  identifies: string, hasData: string, identifiedBy: string, connectionDownstream: string},
- *  vertexType: {
- *  entityObject: string, identifier: string, data: string, connector: string},
- * edgeType: {
- *  connectorRelation: string, dataRelation: string, otRelation: string,
- *  identifierRelation: string},
- * objectType: {
- *  otConnector: string, otObject: string}}}
- */
-const constants = {
-    vertexType: {
-        entityObject: 'EntityObject',
-        identifier: 'Identifier',
-        data: 'Data',
-        connector: 'Connector',
-    },
-    edgeType: {
-        identifierRelation: 'IdentifierRelation',
-        dataRelation: 'dataRelation',
-        otRelation: 'otRelation',
-        connectorRelation: 'ConnectorRelation',
-    },
-    objectType: {
-        otObject: 'otObject',
-        otConnector: 'otConnector',
-    },
-    relationType: {
-        identifies: 'IDENTIFIES',
-        identifiedBy: 'IDENTIFIED_BY',
-        hasData: 'HAS_DATA',
-        connectionDownstream: 'CONNECTION_DOWNSTREAM',
-    },
-};
-Object.freeze(constants);
-
-
 class ImportService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -112,6 +14,7 @@ class ImportService {
         this.otJsonImporter = ctx.otJsonImporter;
 
         this.commandExecutor = ctx.commandExecutor;
+        this.config = ctx.config;
     }
 
     /**
@@ -138,16 +41,23 @@ class ImportService {
 
         const forked = fork('modules/worker/graph-converter-worker.js');
 
-        forked.send(JSON.stringify({ document, encryptedMap, wallet, handler_id }), () => {
-            console.log('Poslao detetu input.');
+        forked.send(JSON.stringify({
+            document, encryptedMap, wallet, handler_id,
+        }), () => {
+            console.log('Child process starting');
         });
 
         forked.on('message', async (response) => {
-            console.log('Wuuhuuu, dete mi je mrtvo.');
+            console.log('Child process finished');
             const parsedData = JSON.parse(response);
             const commandData = {
                 parsedData,
             };
+
+            /**
+             * dbData is used in dc-write-to-db-command
+             * afterImportData is ready on this level and it is used in dc-after-import-command
+             */
 
             Object.assign(commandData, {
                 dbData: {
@@ -182,6 +92,51 @@ class ImportService {
                 transactional: false,
             });
         });
+    }
+
+    async sendToOtjsonConverterWorker(data) {
+        const {
+            document,
+            standard_id,
+            handler_id,
+        } = data;
+
+        /**
+         * New sequence is created to avoid database operations for communication between commands
+         */
+        if (standard_id === 'gs1') {
+            const forked = fork('modules/worker/otjson-converter-worker.js');
+
+            const config = {
+                blockchain: {
+                    network_id: this.config.blockchain.network_id,
+                    hub_contract_address: this.config.blockchain.hub_contract_address,
+                },
+                erc725Identity: this.config.erc725Identity,
+            };
+
+            forked.send(JSON.stringify({ config, xml: document }));
+
+            forked.on('message', async (response) => {
+                const otjson = JSON.parse(response);
+                const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
+                const commandData = {
+                    document: signedOtjson,
+                    handler_id,
+                };
+
+                const commandSequence = [
+                    'dcConvertToGraphCommand',
+                ];
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
+                });
+            });
+        }
     }
 }
 

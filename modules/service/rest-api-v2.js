@@ -335,12 +335,13 @@ class RestAPIServiceV2 {
                     content,
                     contact: req.contact,
                     response: res,
+                    standard_id: this.mapping_standards_for_event.get(standard_id),
                 };
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
                 queryObject.handler_id = inserted_object.dataValues.handler_id;
-                this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
+                this.emitter.emit('api-import-request', queryObject);
                 res.status(200);
                 res.send({
                     handler_id: inserted_object.dataValues.handler_id,

@@ -672,19 +672,18 @@ class EventEmitter {
             }
         });
 
-        this._on('api-gs1-import-request', async (data) => {
+        this._on('api-import-request', async (data) => {
             try {
                 logger.debug('GS1 import triggered');
 
                 const commandData = {
-                    standard_id: 'gs1',
+                    standard_id: data.standard_id,
                     document: data.content,
                     handler_id: data.handler_id,
                 };
 
                 const commandSequence = [
                     'dcConvertToOtJsonCommand',
-                    'dcConvertToGraphCommand',
                 ];
 
                 await this.commandExecutor.add({
