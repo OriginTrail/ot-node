@@ -914,11 +914,13 @@ class ArangoJS {
                                 FOR v IN ot_vertices
                                 FILTER v._key == @elementId
                                 RETURN v.datasets[0]
-                              )
-                            
-                            for d in ot_datasets
-                            filter d._key == dataset_id[0]
-                            return d.datasetHeader.dataCreator.identifiers[0]`;
+                            )
+                            let identity = ( 
+                                for d in ot_datasets
+                                filter d._key == dataset_id[0]
+                                return d.datasetHeader.dataCreator.identifiers[0]
+                            )
+                            return unique(identity)[0]`;
         const params = { elementId };
         return this.runQuery(queryString, params);
     }
