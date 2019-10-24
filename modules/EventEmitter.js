@@ -674,7 +674,7 @@ class EventEmitter {
 
         this._on('api-import-request', async (data) => {
             try {
-                logger.debug('GS1 import triggered');
+                logger.debug('Import triggered');
 
                 const commandData = {
                     standard_id: data.standard_id,
@@ -682,8 +682,15 @@ class EventEmitter {
                     handler_id: data.handler_id,
                 };
 
+                let command;
+                if (data.standard_id === 'graph') {
+                    command = 'dcConvertToGraphCommand';
+                } else {
+                    command = 'dcConvertToOtJsonCommand';
+                }
+
                 const commandSequence = [
-                    'dcConvertToOtJsonCommand',
+                    command,
                 ];
 
                 await this.commandExecutor.add({
