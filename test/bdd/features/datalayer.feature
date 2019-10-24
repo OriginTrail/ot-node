@@ -181,4 +181,4 @@ Feature: Data layer related features
     And DC waits for import to finish
     When DC exports the last imported dataset as OT-JSON
     And DC waits for export to finish
-    Then the last exported dataset contains imported data
+    Then the last exported dataset should contain "../../../importers/xml_examples/Retail/ot_logo.svg" data as "urn:ot:object:product:id:Product_1"

@@ -93,7 +93,7 @@ function _generateDatasetSummary(dataset) {
  * @return {string}
  * @private
  */
-function base64_encode(file) {
+function base64Encode(file) {
     // read binary data
     const bitmap = fs.readFileSync(file);
     // convert binary data to base64 encoded string
@@ -237,5 +237,5 @@ module.exports = {
     isZeroHash,
     verifySignature,
     calculateRootHash,
-    base64_encode,
+    base64_encode: base64Encode,
 };

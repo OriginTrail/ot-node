@@ -357,11 +357,11 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 });
 
-Then(/^the last exported dataset contains imported data$/, async function () {
+Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
 
-    const ot_logo = utilities.base64_encode(path.resolve(__dirname, '../../../importers/xml_examples/Retail/ot_logo.svg'));
+    const ot_logo = utilities.base64_encode(path.resolve(__dirname, filePath));
     const { dc } = this.state;
 
     const response = await httpApiHelper.apiExportResult(dc.state.node_rpc_url, this.state.lastExportHandler);
@@ -376,7 +376,7 @@ Then(/^the last exported dataset contains imported data$/, async function () {
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
     expect(response.data.formatted_dataset['@graph']
-        .find(x => x['@id'] === 'urn:ot:object:product:id:Product_1').properties['urn:ot:object:product:description'])
+        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:description'])
         .to.be.equal(ot_logo);
 });
 
