@@ -477,11 +477,12 @@ class RestAPIServiceV2 {
             },
         });
 
-        if (requested_dataset === undefined) {
+        if (requested_dataset === null) {
             res.status(400);
             res.send({
                 message: 'Data set does not exist',
             });
+            return;
         }
 
         const dataset_id = requested_dataset.dataValues.data_set_id;

@@ -249,7 +249,7 @@ class OtJsonImporter {
                         relationEdge._from = entityVertex._key;
                         relationEdge._to = _keyFrom(dataCreator, _id(relation.linkedObject));
                         relationEdge.edgeType = constants.edgeType.otRelation;
-                        relationEdge.relationType = relation.properties.relationType;
+                        relationEdge.relationType = relation.relationType;
                         relationEdge._key = _keyFrom(
                             dataCreator,
                             relationEdge._from,
@@ -295,7 +295,7 @@ class OtJsonImporter {
                         relationEdge._key =
                             _keyFrom(dataCreator, relationEdge._from, relationEdge._to);
                         relationEdge.edgeType = constants.edgeType.otRelation;
-                        relationEdge.relationType = relation.properties.relationType;
+                        relationEdge.relationType = relation.relationType;
                         relationEdge.properties = relation.properties;
                         relationEdge.datasets = [datasetId];
                         edges.push(relationEdge);

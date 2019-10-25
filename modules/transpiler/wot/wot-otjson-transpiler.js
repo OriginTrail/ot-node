@@ -145,7 +145,6 @@ class WotOtJsonTranspiler {
                 const id = `0x${sha3_256(`${things.thing.name}.${things.thing.id}.${property.id}`, null, 0)}`;
                 otObject.relations.push(createRelation(id, {
                     type: property.id,
-                    relationType: 'PART_OF',
                 }));
             }
 
@@ -196,7 +195,6 @@ class WotOtJsonTranspiler {
             for (const obj of thing.customFields) {
                 otObject.relations.push(createRelation(obj.id, {
                     type: obj.type,
-                    relationType: 'PART_OF',
                 }));
             }
         }
