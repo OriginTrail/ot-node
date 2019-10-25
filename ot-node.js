@@ -23,6 +23,7 @@ const GS1Utilities = require('./modules/importer/gs1-utilities');
 const OTJsonImporter = require('./modules/importer/ot-json-importer');
 const WOTImporter = require('./modules/importer/wot-importer');
 const EpcisOtJsonTranspiler = require('./modules/transpiler/epcis/epcis-otjson-transpiler');
+const WotOtJsonTranspiler = require('./modules/transpiler/wot/wot-otjson-transpiler');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -363,6 +364,7 @@ class OTNode {
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             otJsonImporter: awilix.asClass(OTJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),

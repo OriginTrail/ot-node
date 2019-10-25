@@ -18,6 +18,7 @@ class Importer {
         this.helper = ctx.gs1Utilities;
 
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -243,16 +244,26 @@ class Importer {
 
     async _importWOT(document) {
         try {
-            const result = await this.wotImporter.parse(document);
+            const otJsonDoc = this.wotOtJsonTranspiler.convertToOTJson(document);
+            const result = await this.otJsonImporter.importFile({
+                document: otJsonDoc,
+            });
+            this.remoteControl.importRequestData();
+            const response = await this.afterImport(result);
+            response.otjson_size = bytes(JSON.stringify(otJsonDoc));
             return {
-                response: result,
+                response,
                 error: null,
             };
         } catch (error) {
-            this.log.error(`Import error: ${error}.`);
+            if (error.toString().match(/^Error: \[Transpilation Error].*/)) {
+                this.log.error(`${error}.`);
+            } else {
+                this.log.error(`Import error: ${error}.\n${error.stack}`);
+            }
             this.remoteControl.importError(`Import error: ${error}.`);
             this.notifyError(error);
-            const errorObject = { message: error.toString(), status: error.status };
+            const errorObject = { type: error.name, message: error.toString(), status: 400 };
             return {
                 response: null,
                 error: errorObject,

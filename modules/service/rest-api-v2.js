@@ -20,12 +20,13 @@ class RestAPIServiceV2 {
         this.emitter = ctx.emitter;
 
         this.version_id = 'v2.0';
-        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
+        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'graph');
         this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
         this.mapping_standards_for_event.set('graph', 'graph');
+        this.mapping_standards_for_event.set('wot', 'wot');
     }
 
     /**

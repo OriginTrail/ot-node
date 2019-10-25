@@ -101,6 +101,7 @@ class WotOtJsonTranspiler {
                 ],
             };
             otObject.properties = property.values;
+            otObject.relations = [];
 
             result.push(otObject);
         }
@@ -133,6 +134,7 @@ class WotOtJsonTranspiler {
 
             const createRelation = (id, data) => ({
                 '@type': 'otRelation',
+                relationType: 'PART_OF',
                 direction: 'direct', // think about direction
                 linkedObject: {
                     '@id': id,
@@ -143,6 +145,7 @@ class WotOtJsonTranspiler {
                 const id = `0x${sha3_256(`${things.thing.name}.${things.thing.id}.${property.id}`, null, 0)}`;
                 otObject.relations.push(createRelation(id, {
                     type: property.id,
+                    relationType: 'PART_OF',
                 }));
             }
 
@@ -181,6 +184,7 @@ class WotOtJsonTranspiler {
 
         const createRelation = (id, data) => ({
             '@type': 'otRelation',
+            relationType: 'PART_OF',
             direction: 'direct', // think about direction
             linkedObject: {
                 '@id': id,
@@ -192,6 +196,7 @@ class WotOtJsonTranspiler {
             for (const obj of thing.customFields) {
                 otObject.relations.push(createRelation(obj.id, {
                     type: obj.type,
+                    relationType: 'PART_OF',
                 }));
             }
         }
@@ -234,6 +239,8 @@ class WotOtJsonTranspiler {
                         '@type': obj.type,
                     };
 
+                    otObject.relations = [];
+
                     results.push(otObject);
                 }
             }
@@ -274,17 +281,17 @@ class WotOtJsonTranspiler {
 
         const graph = utilities.copyObject(otjson['@graph']);
 
-        const otProperties = graph.filter(x => x.relations === undefined && !['readPoint', 'observedObject'].includes(x.properties['@type']));
+        const otProperties = graph.filter(x => x.relations.length === 0 && !['readPoint', 'observedObject'].includes(x.properties['@type']));
         if (otProperties.length > 0) {
             json.things.properties = this._convertPropertiesToJson(otProperties);
         }
 
-        const otThing = graph.filter(x => x.relations !== undefined);
+        const otThing = graph.filter(x => x.relations.length > 0);
         if (otThing.length > 0) {
             json.things.thing = this._convertThingToJson(otThing[0]);
         }
 
-        const otCustomFields = graph.filter(x => x.relations === undefined && ['readPoint', 'observedObject'].includes(x.properties['@type']));
+        const otCustomFields = graph.filter(x => x.relations.length === 0 && ['readPoint', 'observedObject'].includes(x.properties['@type']));
         if (otCustomFields.length > 0) {
             json.things.thing.customFields = this._convertCustomFieldsToJson(otCustomFields);
         }

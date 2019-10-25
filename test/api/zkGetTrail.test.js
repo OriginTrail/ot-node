@@ -17,6 +17,7 @@ const Product = require('../../modules/Product');
 const Utilities = require('../../modules/Utilities');
 const OtJsonImporter = require('../../modules/importer/ot-json-importer');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
+const WotOtJsonTranspiler = require('../../modules/transpiler/wot/wot-otjson-transpiler');
 
 
 const defaultConfig = require('../../config/config.json').development;
@@ -85,6 +86,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             notifyError: awilix.asValue(() => {}),
             otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             web3: awilix.asValue(web3),
         });
         await graphStorage.connect();

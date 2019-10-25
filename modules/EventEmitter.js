@@ -21,6 +21,7 @@ class EventEmitter {
         this.appState = ctx.appState;
         this.otJsonImporter = ctx.otJsonImporter;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -769,6 +770,15 @@ class EventEmitter {
                     case 'gs1': {
                         const formatted_dataset =
                             this.epcisOtJsonTranspiler.convertFromOTJson(result);
+                        await processExport(
+                            null,
+                            { formatted_dataset, handler_id: data.handler_id },
+                        );
+                        break;
+                    }
+                    case 'wot': {
+                        const formatted_dataset =
+                            this.wotOtJsonTranspiler.convertFromOTJson(result);
                         await processExport(
                             null,
                             { formatted_dataset, handler_id: data.handler_id },
