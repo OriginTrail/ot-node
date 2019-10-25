@@ -206,6 +206,29 @@ async function apiReplicationResult(nodeRpcUrl, handler_id) {
     });
 }
 
+/**
+ * Fetch /api/latest/get_element_issuer_identity
+ * @param nodeRpcUrl nodeRpcUrl URL in following format http://host:port
+ * @param elementId
+ * @returns {Promise}
+ */
+async function apiGetElementIssuerIdentity(nodeRpcUrl, elementId) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/get_element_issuer_identity/${elementId}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
 
 /**
  * @typedef {Object} Import
@@ -626,4 +649,5 @@ module.exports = {
     apiTrail,
     apiNodeInfo,
     apiBalance,
+    apiGetElementIssuerIdentity,
 };

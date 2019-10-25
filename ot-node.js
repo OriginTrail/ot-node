@@ -514,6 +514,7 @@ class OTNode {
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
         });
 
         const transport = container.resolve('transport');

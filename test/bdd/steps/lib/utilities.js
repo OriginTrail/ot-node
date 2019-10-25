@@ -4,13 +4,14 @@ const { sha3_256 } = require('js-sha3');
 const _ = require('lodash');
 const BN = require('bn.js');
 const Web3 = require('web3');
+const fs = require('fs');
 
 // TODO: use 3rd party.
 const MerkleTree = require('../../../../modules/Merkle');
 
 // Private functions.
 
-function _sortedStringify(obj) {
+function _sortedStringify(obj, sortArrays = false) {
     if (obj == null) {
         return 'null';
     }
@@ -18,9 +19,12 @@ function _sortedStringify(obj) {
         const stringified = [];
         for (const key of Object.keys(obj)) {
             if (!Array.isArray(obj)) {
-                stringified.push(`"${key}":${_sortedStringify(obj[key])}`);
+                stringified.push(`"${key}":${_sortedStringify(obj[key], sortArrays)}`);
             } else {
-                stringified.push(_sortedStringify(obj[key]));
+                stringified.push(_sortedStringify(obj[key], sortArrays));
+            }
+            if (sortArrays) {
+                stringified.sort();
             }
         }
         if (!Array.isArray(obj)) {
@@ -85,6 +89,19 @@ function _generateDatasetSummary(dataset) {
 }
 
 // Public functions.
+
+/**
+ * Function to encode file data to base64 encoded string
+ * @param file
+ * @return {string}
+ * @private
+ */
+function base64Encode(file) {
+    // read binary data
+    const bitmap = fs.readFileSync(file);
+    // convert binary data to base64 encoded string
+    return Buffer.from(bitmap).toString('base64');
+}
 
 /**
  * Calculate dataset ID from a given graph.
@@ -214,6 +231,45 @@ function calculateRootHash(otJson) {
     return merkle.getRoot();
 }
 
+/**
+ * Is leaf node in the original JSON document
+ * @param object - Original JSON document
+ * @return {boolean}
+ * @private
+ */
+function _isLeaf(object) {
+    return object._text != null;
+}
+
+/**
+ * Remove comments from raw json
+ */
+function _removeCommentsAndTrimTexts(obj) {
+    if (typeof obj === 'object' || Array.isArray((obj))) {
+        if (_isLeaf(obj)) {
+            obj._text = obj._text.trim();
+        }
+        if (obj._comment) {
+            delete obj._comment;
+        }
+        for (const key of Object.keys(obj)) {
+            obj[key] = _removeCommentsAndTrimTexts(obj[key]);
+        }
+    }
+    Object.keys(obj).forEach(k => (obj[k] === undefined ? delete obj[k] : '')); // remove undefined
+    return obj;
+}
+
+/**
+ * Creates a strings from a json derived from an xml file and removes its comments
+ * @param obj
+ * @returns {string}
+ */
+function stringifyWithoutComments(obj) {
+    const object = _removeCommentsAndTrimTexts(obj);
+    return _sortedStringify(object, true);
+}
+
 module.exports = {
     calculateImportHash,
     normalizeHex,
@@ -223,4 +279,6 @@ module.exports = {
     isZeroHash,
     verifySignature,
     calculateRootHash,
+    base64_encode: base64Encode,
+    stringifyWithoutComments,
 };
