@@ -24,9 +24,9 @@ class RestAPIServiceV2 {
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
-        this.mapping_standards_for_event.set('ot-json', 'graph');
+        this.mapping_standards_for_event.set('ot-json', 'ot-json');
         this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
-        this.mapping_standards_for_event.set('graph', 'graph');
+        this.mapping_standards_for_event.set('graph', 'ot-json');
     }
 
     async _startImport(standard_id, content, handler_id) {
@@ -37,7 +37,7 @@ class RestAPIServiceV2 {
         };
 
         let command;
-        if (standard_id === 'graph') {
+        if (standard_id === 'ot-json') {
             commandData.document = JSON.parse(content);
             command = 'dcConvertToGraphCommand';
         } else {

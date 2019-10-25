@@ -683,7 +683,7 @@ class EventEmitter {
                 };
 
                 let command;
-                if (data.standard_id === 'graph') {
+                if (data.standard_id === 'ot-json') {
                     commandData.document = JSON.parse(data.content);
                     command = 'dcConvertToGraphCommand';
                 } else {

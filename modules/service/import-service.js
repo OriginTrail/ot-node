@@ -1,14 +1,9 @@
 const { fork } = require('child_process');
-
-const { sha3_256 } = require('js-sha3');
-
-const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 
 class ImportService {
     constructor(ctx) {
         this.logger = ctx.logger;
-        this.emitter = ctx.emitter;
         this.blockchain = ctx.blockchain;
         this.web3 = ctx.web3;
         this.otJsonImporter = ctx.otJsonImporter;
@@ -24,7 +19,7 @@ class ImportService {
      * @param difficulty
      * @param offerId
      */
-    async sendToWorker(data) {
+    async startGraphConverterWorker(data) {
         const {
             document,
             handler_id,
@@ -50,12 +45,6 @@ class ImportService {
             const commandData = {
                 parsedData,
             };
-
-            /**
-             * dbData is used in dc-write-to-db-command
-             * afterImportData is ready on this level and it is used in dc-after-import-command
-             */
-
             Object.assign(commandData, {
                 dbData: {
                     vertices: parsedData.vertices,
@@ -92,49 +81,46 @@ class ImportService {
         });
     }
 
-    async sendToOtjsonConverterWorker(data) {
+    async startOtjsonConverterWorker(data) {
         const {
             document,
-            standard_id,
             handler_id,
         } = data;
 
         /**
          * New sequence is created to avoid database operations for communication between commands
          */
-        if (standard_id === 'gs1') {
-            const forked = fork('modules/worker/otjson-converter-worker.js');
+        const forked = fork('modules/worker/otjson-converter-worker.js');
 
-            const config = {
-                blockchain: {
-                    network_id: this.config.blockchain.network_id,
-                    hub_contract_address: this.config.blockchain.hub_contract_address,
-                },
-                erc725Identity: this.config.erc725Identity,
+        const config = {
+            blockchain: {
+                network_id: this.config.blockchain.network_id,
+                hub_contract_address: this.config.blockchain.hub_contract_address,
+            },
+            erc725Identity: this.config.erc725Identity,
+        };
+
+        forked.send(JSON.stringify({ config, xml: document }));
+
+        forked.on('message', async (response) => {
+            const otjson = JSON.parse(response);
+            const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
+            const commandData = {
+                document: signedOtjson,
+                handler_id,
             };
 
-            forked.send(JSON.stringify({ config, xml: document }));
-
-            forked.on('message', async (response) => {
-                const otjson = JSON.parse(response);
-                const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
-                const commandData = {
-                    document: signedOtjson,
-                    handler_id,
-                };
-
-                const commandSequence = [
-                    'dcConvertToGraphCommand',
-                ];
-                await this.commandExecutor.add({
-                    name: commandSequence[0],
-                    sequence: commandSequence.slice(1),
-                    delay: 0,
-                    data: commandData,
-                    transactional: false,
-                });
+            const commandSequence = [
+                'dcConvertToGraphCommand',
+            ];
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: commandData,
+                transactional: false,
             });
-        }
+        });
     }
 }
 

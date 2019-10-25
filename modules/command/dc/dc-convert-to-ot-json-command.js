@@ -17,7 +17,9 @@ class DcConvertToOtJson extends Command {
         const { standard_id } = command.data;
         // TODO Implement other standards converting
         if (standard_id === 'gs1') {
-            await this.importService.sendToOtjsonConverterWorker(command.data);
+            await this.importService.startOtjsonConverterWorker(command.data);
+        } else {
+            // throw error not supported
         }
         return Command.empty();
     }

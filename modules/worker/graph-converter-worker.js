@@ -1,6 +1,5 @@
 const { sha3_256 } = require('js-sha3');
 const Utilities = require('../Utilities');
-const ImportUtilities = require('../ImportUtilities');
 
 /**
  * Returns value of '@id' property.
@@ -30,16 +29,6 @@ function _type(jsonLdObject) {
  */
 function _value(jsonLdObject) {
     return jsonLdObject['@value'];
-}
-
-/**
- * Returns value of '@graph' property.
- * @param OT-JSON document object.
- * @return [Object]
- * @private
- */
-function _graph(document) {
-    return document['@graph'];
 }
 
 /**
@@ -314,8 +303,6 @@ process.on('message', async (dataFromParent) => {
         deduplicateVertices,
         handler_id,
     };
-
-    // process.send(JSON.stringify(response));
     process.send(JSON.stringify(response), () => {
         process.exit(0);
     });
