@@ -7,6 +7,7 @@ class DcConvertToOtJson extends Command {
         this.importer = ctx.importer;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.importService = ctx.importService;
+        this.commandExercutor = ctx.commandExecutor;
     }
 
     /**
@@ -16,8 +17,11 @@ class DcConvertToOtJson extends Command {
     async execute(command) {
         const { standard_id } = command.data;
         // TODO Implement other standards converting
+        if (standard_id === 'ot-json') {
+            return this.continueSequence({ data: command.data }, command.sequence);
+        }
         if (standard_id === 'gs1') {
-            await this.importService.startOtjsonConverterWorker(command.data);
+            await this.importService.startOtjsonConverterWorker(command);
         } else {
             // throw error not supported
         }

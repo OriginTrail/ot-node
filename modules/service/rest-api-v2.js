@@ -35,17 +35,12 @@ class RestAPIServiceV2 {
             document: content,
             handler_id,
         };
-
-        let command;
-        if (standard_id === 'ot-json') {
-            commandData.document = JSON.parse(content);
-            command = 'dcConvertToGraphCommand';
-        } else {
-            command = 'dcConvertToOtJsonCommand';
-        }
-
         const commandSequence = [
-            command,
+            'dcConvertToOtJsonCommand',
+            'dcConvertToGraphCommand',
+            'dcWriteToDbCommand',
+            'dcAfterImportCommand',
+            'dcFinalizeImportCommand',
         ];
 
         await this.commandExecutor.add({

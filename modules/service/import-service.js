@@ -19,12 +19,12 @@ class ImportService {
      * @param difficulty
      * @param offerId
      */
-    async startGraphConverterWorker(data) {
+    async startGraphConverterWorker(command) {
         const {
             document,
             handler_id,
             encryptedMap,
-        } = data;
+        } = command.data;
 
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
@@ -65,15 +65,9 @@ class ImportService {
                 },
             });
 
-            const commandSequence = [
-                'dcWriteToDbCommand',
-                'dcAfterImportCommand',
-                'dcFinalizeImportCommand',
-            ];
-
             await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
+                name: command.sequence[0],
+                sequence: command.sequence.slice(1),
                 delay: 0,
                 data: commandData,
                 transactional: false,
@@ -81,11 +75,11 @@ class ImportService {
         });
     }
 
-    async startOtjsonConverterWorker(data) {
+    async startOtjsonConverterWorker(command) {
         const {
             document,
             handler_id,
-        } = data;
+        } = command.data;
 
         /**
          * New sequence is created to avoid database operations for communication between commands
@@ -110,12 +104,9 @@ class ImportService {
                 handler_id,
             };
 
-            const commandSequence = [
-                'dcConvertToGraphCommand',
-            ];
             await this.commandExecutor.add({
-                name: commandSequence[0],
-                sequence: commandSequence.slice(1),
+                name: command.sequence[0],
+                sequence: command.sequence.slice(1),
                 delay: 0,
                 data: commandData,
                 transactional: false,
