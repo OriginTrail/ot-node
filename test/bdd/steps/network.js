@@ -3,13 +3,14 @@
 const {
     And, But, Given, Then, When,
 } = require('cucumber');
-const { expect } = require('chai');
+const { assert, expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
 const request = require('request');
 const _ = require('lodash');
 const { deepEqual } = require('jsprim');
+const path = require('path');
 
 const OtNode = require('./lib/otnode');
 const ImportUtilities = require('../../../modules/ImportUtilities');
@@ -17,6 +18,8 @@ const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
 const Models = require('../../../models');
+const fs = require('fs');
+const xmljs = require('xml-js');
 
 // Identity difficulty 8.
 const bootstrapIdentity = {
@@ -141,6 +144,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             local_network_only: true,
             dc_choose_time: 120000, // 2 minute
             initial_deposit_amount: '10000000000000000000000',
+            commandExecutorVerboseLoggingEnabled: true,
         };
 
         const newNode = new OtNode({
@@ -311,17 +315,107 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
 
     const myNode = this.state[nodeType.toLowerCase()];
 
-    const response = await httpApiHelper.apiImportInfo(myNode.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const response = await httpApiHelper.apiImportInfo(myNode.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
-    expect(response, 'response should contain root_hash, import, transaction and data_provider_wallet keys').to.have.keys([
-        'root_hash', 'import',
+    expect(response, 'response should contain root_hash, dataSetId, document, transaction and data_provider_wallet keys').to.have.keys([
+        'dataSetId', 'root_hash', 'document',
         'transaction', 'data_provider_wallet',
     ]);
 
-    expect(response.import, 'response.import should contain vertices and edges').to.have.keys(['vertices', 'edges']);
+    expect(response.document, 'response.document should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    const calculatedImportHash = utilities.calculateImportHash(response.import);
-    expect(calculatedImportHash, `Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`).to.be.equal(this.state.lastImport.data_set_id);
+    expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+
+    const calculatedRootHash = utilities.calculateRootHash(response.document);
+    const calculateDatasetId = utilities.calculateImportHash(response.document['@graph']);
+    expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
+    expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
+});
+
+Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async function (nodeType) {
+    expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
+    expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const myNode = this.state[nodeType.toLowerCase()];
+
+    const response = await httpApiHelper.apiExportResult(myNode.state.node_rpc_url, this.state.lastExportHandler);
+
+    expect(response, 'response should contain data and status keys').to.have.keys([
+        'data', 'status',
+    ]);
+
+    expect(response.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    expect(response.data, 'response.data should have the formatted_dataset field')
+        .to.have.keys(['formatted_dataset']);
+
+    expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+});
+
+Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const ot_logo = utilities.base64_encode(path.resolve(__dirname, filePath));
+    const { dc } = this.state;
+
+    const response = await httpApiHelper.apiExportResult(dc.state.node_rpc_url, this.state.lastExportHandler);
+
+    expect(response.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    expect(response.data, 'response.data should have the formatted_dataset field')
+        .to.have.keys(['formatted_dataset']);
+
+    expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    expect(response.data.formatted_dataset['@graph']
+        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:description'])
+        .to.be.equal(ot_logo);
+});
+
+Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async function (importedFilePath) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const { dc } = this.state;
+
+    const response = await httpApiHelper.apiExportResult(dc.state.node_rpc_url, this.state.lastExportHandler);
+
+    expect(response, 'response should contain data and status keys').to.have.keys([
+        'data', 'status',
+    ]);
+
+    expect(response.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    expect(response.data, 'response.data should have the formatted_dataset field')
+        .to.have.keys(['formatted_dataset']);
+
+    const exportedXml = xmljs.xml2js(response.data.formatted_dataset, {
+        compact: true,
+        spaces: 4,
+    });
+    let originalXml = await fs.readFileSync(importedFilePath, 'utf8');
+    originalXml = xmljs.xml2js(originalXml, {
+        compact: true,
+        spaces: 4,
+    });
+
+    assert.deepEqual(
+        utilities.stringifyWithoutComments(exportedXml),
+        utilities.stringifyWithoutComments(originalXml),
+        'Exported file not equal to imported one!',
+    );
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {
@@ -329,26 +423,33 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
 
     const { dc } = this.state;
 
-    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
-    expect(myFingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    const fingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
+    expect(fingerprint).to.have.keys(['root_hash']);
+    expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
 
-    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
     // vertices and edges are already sorted from the response
-    const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices, myApiImportInfo.import.edges);
 
-    expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
+    const calculatedDataSetId = utilities.calculateImportHash(importInfo.document['@graph']);
+    const calculatedRootHash = utilities.calculateRootHash(importInfo.document);
+
+    expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
+        .to.be.equal(calculatedRootHash);
+    expect(this.state.lastImport.data.root_hash, 'Root hash from last import and manually calculated should match')
+        .to.be.equal(calculatedRootHash);
+    expect(this.state.lastImport.data.dataset_id, 'Dataset ID and manually calculated ID should match')
+        .to.be.equal(calculatedDataSetId);
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -358,6 +459,12 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
         promises.push(new Promise((acc) => {
             node.once('offer-finalized', (offerId) => {
+                if (this.state.lastReplication !== offerId) {
+                    if (this.state.lastReplication) {
+                        this.state.secondLastReplication = this.state.lastReplication;
+                    }
+                    this.state.lastReplication = offerId;
+                }
                 // TODO: Change API to connect internal offer ID and external offer ID.
                 acc();
             });
@@ -369,7 +476,7 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 
 Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 1200000 }, function (nodeIndex) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
@@ -392,7 +499,7 @@ Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 
 Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -405,8 +512,8 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     ).to.equal(this.state.nodes.reduce((acc, node) => acc + node.isRunning, -1)); // Start from -1. DC is not counted.
 
     // Get offer ID for last import.
-    const lastOfferId =
-        dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
+    const response = await httpApiHelper.apiReplicationResult(dc.state.node_rpc_url, this.state.lastReplicationHandler.handler_id);
+    const lastOfferId = response.data.offer_id;
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
@@ -434,12 +541,12 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Get original import info.
     const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
     const promises = [];
     dc.state.replications.forEach(({ internalOfferId, dhId }) => {
         if (dc.state.offers.internalIDs[internalOfferId].dataSetId ===
-            this.state.lastImport.data_set_id) {
+            this.state.lastImport.data.dataset_id) {
             const node =
                 this.state.nodes.find(node => node.state.identity === dhId);
 
@@ -451,7 +558,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                 const dhImportInfo =
                     await httpApiHelper.apiImportInfo(
                         node.state.node_rpc_url,
-                        this.state.lastImport.data_set_id,
+                        this.state.lastImport.data.dataset_id,
                     );
                 expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
@@ -477,7 +584,7 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
 
     const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
-    const dataSetId = this.state.lastImport.data_set_id;
+    const dataSetId = this.state.lastImport.data.dataset_id;
 
     // Expect DV to have data.
     expect(
@@ -487,9 +594,9 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
 
     // Get original import info.
     const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
     const dvImportInfo =
-        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data_set_id);
+        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
     if (!deepEqual(dcImportInfo, dvImportInfo)) {
         throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
@@ -508,7 +615,7 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
     const myFingerprint =
         await httpApiHelper.apiFingerprint(
             dc.state.node_rpc_url,
-            this.state.lastImport.data_set_id,
+            this.state.lastImport.data.dataset_id,
         );
     expect(myFingerprint).to.have.keys(['root_hash']);
     expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
@@ -528,7 +635,7 @@ Then(/^checking again first import's root hash should point to remembered value$
     const firstImportFingerprint =
         await httpApiHelper.apiFingerprint(
             dc.state.node_rpc_url,
-            this.state.lastMinusOneImport.data_set_id,
+            this.state.lastMinusOneImport.data.dataset_id,
         );
     expect(firstImportFingerprint).to.have.keys(['root_hash']);
     expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
@@ -545,16 +652,17 @@ Then(/^response should contain only last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
 
     expect(this.state.apiQueryLocalResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
-    expect(this.state.apiQueryLocalResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data_set_id);
+    expect(this.state.apiQueryLocalResponse[0], 'Response should match dataset_id').to.be.equal(this.state.lastImport.data.dataset_id);
 });
 
 Then(/^response hash should match last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
 
-    expect(Object.keys(this.state.apiQueryLocalImportByDataSetIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
-    // check that lastImport.data_set_id and sha256 calculated hash are matching
-    const calculatedImportHash = utilities.calculateImportHash(this.state.apiQueryLocalImportByDataSetIdResponse);
-    expect(this.state.lastImport.data_set_id, 'Hashes should match').to.be.equal(calculatedImportHash);
+    // TODO not sure if we should check for edges and vertices in apiQueryLocalImportByDataSetIdResponse
+    // TODO check that lastImport.dataset_id and sha256 calculated hash are matching
+
+    const calculatedImportHash = utilities.calculateImportHash(this.state.apiQueryLocalImportByDataSetIdResponse['@graph']);
+    expect(this.state.lastImport.data.dataset_id, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
 
 Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nodeCount, done) {
@@ -584,6 +692,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                 },
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',
+                commandExecutorVerboseLoggingEnabled: true,
             },
             appDataBaseDir: this.parameters.appDataBaseDir,
         });
@@ -628,7 +737,7 @@ Then(/^all nodes with (last import|second last import) should answer to last net
         promises.push(new Promise(async (accept) => {
             const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
             body.find((importInfo) => {
-                if (importInfo.data_set_id === this.state[whichImport].data_set_id) {
+                if (importInfo.data_set_id === this.state[whichImport].data.dataset_id) {
                     nodeCandidates.push(node.state.identity);
                     return true;
                 }
@@ -652,7 +761,7 @@ Then(/^all nodes with (last import|second last import) should answer to last net
         // const intervalHandler;
         const intervalHandler = setInterval(async () => {
             const confirmationsSoFar =
-                dv.nodeConfirmsForDataSetId(queryId, this.state[whichImport].data_set_id);
+                dv.nodeConfirmsForDataSetId(queryId, this.state[whichImport].data.dataset_id);
             if (Date.now() - startTime > 60000) {
                 clearTimeout(intervalHandler);
                 reject(Error('Not enough confirmations for query. ' +
@@ -702,7 +811,7 @@ Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, 
 Given(/^DC waits for replication window to close$/, { timeout: 180000 }, function (done) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -716,7 +825,7 @@ Given(/^DC waits for replication window to close$/, { timeout: 180000 }, functio
 Given(/^DC waits for last offer to get written to blockchain$/, { timeout: 180000 }, function (done) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -782,6 +891,15 @@ Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function
 
     for (const node of this.state.nodes) {
         node.overrideConfiguration(configurationOverride);
+        this.logger.log(`Configuration updated for node ${node.id}`);
+    }
+    done();
+});
+
+Given(/^I override configuration using variables for all nodes*$/, { timeout: 120000 }, function (configuration, done) {
+    const configurationOverride = configuration.raw();
+    for (const node of this.state.nodes) {
+        node.overrideConfigurationVariables(configurationOverride);
         this.logger.log(`Configuration updated for node ${node.id}`);
     }
     done();
@@ -890,4 +1008,36 @@ Given('I wait for DC to fail to finalize last offer', { timeout: 600000 }, funct
     }));
 
     Promise.all(promises).then(() => done());
+});
+
+Given(/^DHs should be payed out for all offers*$/, { timeout: 360000 }, function (done) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const promises = [];
+    this.state.nodes.slice(1).forEach((node) => {
+        promises.push(new Promise((acc) => {
+            node.once(`dh-pay-out-offer-${this.state.lastReplication}-completed`, () => {
+                acc();
+            });
+        }));
+        promises.push(new Promise((acc) => {
+            node.once(`dh-pay-out-offer-${this.state.secondLastReplication}-completed`, () => {
+                acc();
+            });
+        }));
+    });
+
+    Promise.all(promises).then(() => {
+        done();
+    });
+});
+
+Then(/^DC should return identity for element id: "(\S+)"$/, async function (elementId) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const response = await httpApiHelper.apiGetElementIssuerIdentity(host, elementId);
+    expect(response[0], 'Should have key called events').to.have.all.keys('identifierType', 'identifierValue', 'validationSchema');
 });

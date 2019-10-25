@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument schemaVersion="1.2"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:example0="http://ns.example.com/epcis0" xmlns:example1="http://ns.example.com/epcis1"
+	xmlns:example2="http://ns.example.com/epcis2" xmlns:example3="http://ns.example.com/epcis3"
+	xmlns:example="http://ns.example.com/epcis" creationDate="2013-06-04T14:59:02.099+02:00"
+	xmlns:epcis="urn:epcglobal:epcis:xsd:1">
+	<EPCISBody>
+		<EventList>
+			<TransactionEvent>
+				<eventTime>2005-04-03T20:33:31.116-06:00</eventTime>
+				<eventTimeZoneOffset>-06:00</eventTimeZoneOffset>
+				<bizTransactionList>
+					<bizTransaction type="urn:epcglobal:cbv:btt:po">http://transaction.acme.com/po/12345678</bizTransaction>
+				</bizTransactionList>
+				<parentID>urn:epc:id:sscc:0614141.1234567890</parentID>
+				<epcList>
+					<epc>urn:epc:id:sgtin:0614141.107346.2017</epc>
+					<epc>urn:epc:id:sgtin:0614141.107346.2018</epc>
+				</epcList>
+				<action>ADD</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:in_transit</disposition>
+				<readPoint>
+					<id>urn:epc:id:sgln:0614141.07346.1234</id>
+				</readPoint>
+				<bizLocation>
+					<id>urn:epc:id:sgln:0614141.00888.0</id>
+				</bizLocation>
+				<extension>
+					<quantityList>
+						<quantityElement>
+							<epcClass>urn:epc:class:lgtin:4012345.011111.4444</epcClass>
+							<quantity>10</quantity>
+							<uom>KGM</uom>
+						</quantityElement>
+					</quantityList>
+					<sourceList>
+						<source type="urn:epcglobal:cbv:sdt:possessing_party">urn:epc:id:sgln:4012345.00001.0</source>
+						<source type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:4012345.00225.0</source>
+					</sourceList>
+					<destinationList>
+						<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:0614141.00001.0</destination>
+						<destination type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:0614141.00777.0</destination>
+					</destinationList>
+				</extension>
+				<example0:a xsi:type="xsd:int">15</example0:a>
+				<example0:b>
+					<example1:c xsi:type="xsd:double">20.5</example1:c>
+				</example0:b>
+				<example0:h>
+					<example1:d xsi:type="xsd:boolean">true</example1:d>
+					<example1:e>
+						<example2:f xsi:type="xsd:dateTime">2013-06-08T14:58:56.591Z</example2:f>
+					</example1:e>
+					<example1:g xsi:type="xsd:long">50</example1:g>
+				</example0:h>
+			</TransactionEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>

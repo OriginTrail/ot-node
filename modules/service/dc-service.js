@@ -30,7 +30,7 @@ class DCService {
      */
     async createOffer(
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-        dataSizeInBytes, litigationIntervalInMinutes,
+        dataSizeInBytes, litigationIntervalInMinutes, handler_id,
     ) {
         const offer = await models.offers.create({
             data_set_id: dataSetId,
@@ -82,6 +82,7 @@ class DCService {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            handler_id,
         };
         const commandSequence = [
             'dcOfferPrepareCommand',
@@ -356,9 +357,8 @@ class DCService {
      * @returns {Promise<void>}
      */
     async _sendReplication(offer, wallet, identity, dhIdentity, response) {
-        const colors = ['red', 'green', 'blue'];
-        const color = colors[Utilities.getRandomInt(2)];
-        const colorNumber = this.replicationService.castColorToNumber(color);
+        const colorNumber = Utilities.getRandomInt(2);
+        const color = this.replicationService.castNumberToColor(colorNumber);
 
         const replication = await this.replicationService.loadReplication(offer.id, color);
         await models.replicated_data.create({
@@ -375,7 +375,7 @@ class DCService {
             distribution_root_hash: replication.distributionRootHash,
             distribution_epk: replication.distributionEpk,
             status: 'STARTED',
-            color: colorNumber.toNumber(),
+            color: colorNumber,
         });
 
         const toSign = [
@@ -391,8 +391,7 @@ class DCService {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
-            edges: replication.edges,
-            litigation_vertices: replication.litigationVertices,
+            otJson: replication.otJson,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,
@@ -403,7 +402,7 @@ class DCService {
             distribution_signature: distributionSignature.signature,
             transaction_hash: offer.transaction_hash,
             distributionSignature,
-            color: colorNumber.toNumber(),
+            color: colorNumber,
         };
 
         // send replication to DH

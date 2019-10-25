@@ -26,6 +26,7 @@ class DcOfferMiningCompletedCommand extends Command {
             solution,
             success,
             isReplacement,
+            handler_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
@@ -98,7 +99,7 @@ class DcOfferMiningCompletedCommand extends Command {
                     throw new Error(message);
                 }
             }
-            const commandData = { offerId, solution };
+            const commandData = { offerId, solution, handler_id };
             const commandSequence = ['dcOfferFinalizeCommand'];
             return {
                 commands: [

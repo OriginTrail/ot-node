@@ -1083,7 +1083,7 @@ class Ethereum {
      * Get Profile minimum stake
      */
     async getProfileMinimumStake() {
-        this.log.trace('Get replication modifier from blockchain');
+        this.log.trace('Get minimum stake from blockchain');
         return this.profileContract.methods.minimalStake().call({
             from: this.config.wallet_address,
         });
@@ -1109,6 +1109,25 @@ class Ethereum {
         return this.profileStorageContract.methods.profile(identity).call({
             from: this.config.wallet_address,
         });
+    }
+
+    /**
+     * Set node ID
+     * @param identity
+     * @param nodeId
+     */
+    async setNodeId(identity, nodeId) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.profileContractAddress,
+        };
+
+        this.log.trace(`Calling - setNodeId(${identity}, ${nodeId})`);
+        return this.transactions.queueTransaction(
+            this.profileContractAbi, 'setNodeId',
+            [identity, nodeId], options,
+        );
     }
 
     /**

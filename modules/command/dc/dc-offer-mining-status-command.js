@@ -21,6 +21,7 @@ class DcOfferMiningStatusCommand extends Command {
             offerId,
             isReplacement,
             dhIdentity,
+            handler_id,
         } = command.data;
 
         const mined = await Models.miner_tasks.findOne({
@@ -49,6 +50,7 @@ class DcOfferMiningStatusCommand extends Command {
                                 success: true,
                                 dhIdentity,
                                 excludedDHs: command.data.excludedDHs,
+                                handler_id,
                             },
                             transactional: false,
                         },
@@ -63,6 +65,7 @@ class DcOfferMiningStatusCommand extends Command {
                             data: {
                                 offerId,
                                 isReplacement,
+                                handler_id,
                                 success: false,
                             },
                             transactional: false,

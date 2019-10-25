@@ -5,6 +5,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
+const { sha3_256 } = require('js-sha3');
 
 class EventEmitter {
     /**
@@ -15,8 +16,11 @@ class EventEmitter {
         this.ctx = ctx;
         this.product = ctx.product;
         this.web3 = ctx.web3;
+        this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.appState = ctx.appState;
+        this.otJsonImporter = ctx.otJsonImporter;
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -139,23 +143,65 @@ class EventEmitter {
             });
         });
 
+        this._on('api-trail-entity', (data) => {
+            logger.info(`Get enitity trail triggered with query ${JSON.stringify(data.query)}`);
+
+            this.graphStorage
+                .findEntitiesTraversalPath(
+                    data.query.startVertex,
+                    data.query.depth,
+                    data.query.includeOnly,
+                    data.query.excludeOnly,
+                ).then((res) => {
+                    if (res.length === 0) {
+                        data.response.status(204);
+                    } else {
+                        data.response.status(200);
+                    }
+                    data.response.send(res);
+                }).catch((error) => {
+                    logger.error(`Failed to get trail for query ${JSON.stringify(data.query)}`);
+                    notifyError(error);
+                    data.response.status(500);
+                    data.response.send({
+                        message: error,
+                    });
+                });
+        });
+
         this._on('api-query-local-import', async (data) => {
-            const { data_set_id: dataSetId } = data;
+            const { data_set_id: dataSetId, format, encryption } = data;
             logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const result = await dhService.getImport(dataSetId);
+                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId, encryption);
 
-                if (result.vertices.length === 0) {
+                if (datasetOtJson == null) {
                     data.response.status(204);
                 } else {
                     data.response.status(200);
                 }
 
-                const normalizedImport = ImportUtilities
-                    .normalizeImport(dataSetId, result.vertices, result.edges);
+                let formattedDataset = '';
 
-
-                data.response.send(normalizedImport);
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                    data.response.send({});
+                } else if (encryption == null) {
+                    switch (format) {
+                    case 'otjson':
+                        formattedDataset = datasetOtJson;
+                        break;
+                    case 'epcis':
+                        formattedDataset = this.epcisOtJsonTranspiler
+                            .convertFromOTJson(datasetOtJson);
+                        break;
+                    default:
+                        throw Error('Invalid response format.');
+                    }
+                    data.response.send(formattedDataset);
+                } else {
+                    data.response.send(formattedDataset);
+                }
             } catch (error) {
                 logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
@@ -181,7 +227,7 @@ class EventEmitter {
         });
 
         this._on('api-import-info', async (data) => {
-            const { dataSetId } = data;
+            const { dataSetId, responseFormat } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
                 const dataInfo =
@@ -196,29 +242,26 @@ class EventEmitter {
                     return;
                 }
 
-                const result = await dhService.getImport(dataSetId);
+                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId);
+                let formattedDataset = null;
 
-                // Check if packed to fix issue with double classes.
-                const filtered = result.vertices.filter(v => v._dc_key);
-                if (filtered.length > 0) {
-                    result.vertices = filtered;
-                    ImportUtilities.unpackKeys(result.vertices, result.edges);
-                }
-
-                if (result.vertices.length === 0) {
+                if (datasetOtJson == null) {
                     data.response.status(204);
-                    data.response.send(result);
+                    data.response.send({});
                 } else {
+                    switch (responseFormat) {
+                    case 'otjson': formattedDataset = datasetOtJson; break;
+                    case 'epcis': formattedDataset = this.epcisOtJsonTranspiler.convertFromOTJson(datasetOtJson); break;
+                    default: throw Error('Invalid response format.');
+                    }
+
                     const transactionHash = await ImportUtilities
                         .getTransactionHash(dataSetId, dataInfo.origin);
 
                     data.response.status(200);
                     data.response.send({
-                        import: ImportUtilities.normalizeImport(
-                            dataSetId,
-                            result.vertices,
-                            result.edges,
-                        ),
+                        dataSetId,
+                        document: formattedDataset,
                         root_hash: dataInfo.root_hash,
                         transaction: transactionHash,
                         data_provider_wallet: dataInfo.data_provider_wallet,
@@ -407,16 +450,22 @@ class EventEmitter {
         });
 
         const processImport = async (response, error, data) => {
-            if (response === null) {
-                if (typeof (error.status) !== 'number') {
-                    // TODO investigate why we get non numeric error.status
-                    data.response.status(500);
-                } else {
-                    data.response.status(error.status);
-                }
-                data.response.send({
-                    message: error.message,
-                });
+            const { handler_id } = data;
+
+            if (!response) {
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error: error.message,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
                 remoteControl.importFailed(error);
 
                 if (error.type !== 'ImporterError') {
@@ -431,26 +480,38 @@ class EventEmitter {
                 total_documents,
                 wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
+                edges,
+                otjson_size,
             } = response;
 
             try {
                 const dataSize = bytes(JSON.stringify(vertices));
+                const importTimestamp = new Date();
                 await Models.data_info
                     .create({
                         data_set_id,
                         root_hash,
                         data_provider_wallet: config.node_wallet,
-                        import_timestamp: new Date(),
+                        import_timestamp: importTimestamp,
                         total_documents,
                         data_size: dataSize,
                         origin: 'IMPORTED',
-                    }).catch((error) => {
+                    }).catch(async (error) => {
                         logger.error(error);
                         notifyError(error);
-                        data.response.status(500);
-                        data.response.send({
-                            message: error,
-                        });
+                        await Models.handler_ids.update(
+                            {
+                                status: 'FAILED',
+                                data: JSON.stringify({
+                                    error,
+                                }),
+                            },
+                            {
+                                where: {
+                                    handler_id,
+                                },
+                            },
+                        );
                         remoteControl.importFailed(error);
                     });
 
@@ -462,21 +523,49 @@ class EventEmitter {
                         response: data.response,
                     });
                 } else {
-                    data.response.status(201);
-                    data.response.send({
-                        message: 'Import success',
-                        data_set_id,
-                        wallet: config.node_wallet,
-                    });
+                    const graphObject = {};
+                    Object.assign(graphObject, { vertices, edges });
+                    await Models.handler_ids.update(
+                        {
+                            status: 'COMPLETED',
+                            data: JSON.stringify({
+                                dataset_id: data_set_id,
+                                import_time: importTimestamp.valueOf(),
+                                dataset_size_in_bytes: dataSize,
+                                otjson_size_in_bytes: otjson_size,
+                                root_hash,
+                                data_hash: Utilities.normalizeHex(sha3_256(`${graphObject}`)),
+                                total_graph_entities: vertices.length
+                                    + edges.length,
+                            }),
+                        },
+                        {
+                            where: {
+                                handler_id,
+                            },
+                        },
+                    );
+                    logger.info('Import complete');
+                    logger.info(`Root hash: ${root_hash}`);
+                    logger.info(`Data set ID: ${data_set_id}`);
                     remoteControl.importSucceeded();
                 }
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
                 notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error,
-                });
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
                 remoteControl.importFailed(error);
             }
         };
@@ -493,7 +582,7 @@ class EventEmitter {
                     offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for interanl ID ${replicationId}`);
+                logger.error(`There is no offer for internal ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
                     message: 'Replication not found',
@@ -528,6 +617,7 @@ class EventEmitter {
                 holdingTimeInMinutes,
                 tokenAmountPerHolder,
                 litigationIntervalInMinutes,
+                handler_id,
             } = data;
 
             let {
@@ -559,14 +649,8 @@ class EventEmitter {
 
                 const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes,
+                    dataSizeInBytes, litigationIntervalInMinutes, handler_id,
                 );
-
-                data.response.status(201);
-                data.response.send({
-                    replication_id: replicationId,
-                    data_set_id: dataSetId,
-                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 notifyError(error);
@@ -582,14 +666,11 @@ class EventEmitter {
         this._on('api-gs1-import-request', async (data) => {
             try {
                 logger.debug('GS1 import triggered');
-                const responseObject = await importer.importXMLgs1(data.content);
-                const { error } = responseObject;
-                const { response } = responseObject;
-
-                if (response === null) {
-                    await processImport(null, error, data);
+                const result = await importer.importXMLgs1(data.content);
+                if (result.error != null) {
+                    await processImport(null, result.error, data);
                 } else {
-                    await processImport(response, null, data);
+                    await processImport(result.response, null, data);
                 }
             } catch (error) {
                 await processImport(null, error, data);
@@ -610,6 +691,103 @@ class EventEmitter {
                 }
             } catch (error) {
                 await processImport(null, error, data);
+            }
+        });
+
+        this._on('api-graph-import-request', async (data) => {
+            try {
+                logger.debug('Graph import triggered');
+                const dataset = ImportUtilities
+                    .prepareDataset(
+                        ImportUtilities.formatGraph(JSON.parse(data.content)),
+                        this.config,
+                        this.web3,
+                    );
+                const result = await importer.importOTJSON(dataset);
+                if (result.error != null) {
+                    await processImport(null, result.error, data);
+                } else {
+                    await processImport(result.response, null, data);
+                }
+            } catch (error) {
+                await processImport(null, error, data);
+            }
+        });
+
+        const processExport = async (error, data) => {
+            const { handler_id, formatted_dataset } = data;
+
+            if (!formatted_dataset) {
+                logger.info(`Export failed for export handler_id: ${handler_id}`);
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error: error.message,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+                // TODO notify Houston
+                // remoteControl.exportFailed(error);
+
+                if (error.type !== 'ExporterError') {
+                    notifyError(error);
+                }
+            } else {
+                logger.info(`Export complete for export handler_id: ${handler_id}`);
+                await Models.handler_ids.update(
+                    {
+                        status: 'COMPLETED',
+                        data: JSON.stringify({
+                            formatted_dataset,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+            }
+        };
+
+        this._on('api-export-request', async (data) => {
+            try {
+                logger.debug('Export triggered');
+
+                const result = await this.otJsonImporter.getImport(data.dataset_id);
+
+                if (result.error != null) {
+                    await processExport(result.error, data);
+                } else {
+                    switch (data.standard) {
+                    case 'gs1': {
+                        const formatted_dataset =
+                            this.epcisOtJsonTranspiler.convertFromOTJson(result);
+                        await processExport(
+                            null,
+                            { formatted_dataset, handler_id: data.handler_id },
+                        );
+                        break;
+                    }
+                    case 'graph': {
+                        await processExport(
+                            null,
+                            { formatted_dataset: result, handler_id: data.handler_id },
+                        );
+                        break;
+                    }
+                    default:
+                        throw new Error('Export for unsuported standard');
+                    }
+                }
+            } catch (error) {
+                await processExport(error, data);
             }
         });
 
@@ -858,7 +1036,9 @@ class EventEmitter {
                 }
                 await dhService.handleChallenge(
                     message.payload.data_set_id,
-                    message.payload.block_id,
+                    message.payload.offer_id,
+                    message.payload.object_index,
+                    message.payload.block_index,
                     message.payload.challenge_id,
                     message.payload.litigator_id,
                 );

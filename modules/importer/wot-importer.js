@@ -1,8 +1,8 @@
 const uuidv4 = require('uuid/v4');
-const Utilities = require('./Utilities');
-const ImportUtilities = require('./ImportUtilities');
 
-const GraphConverter = require('./Database/graph-converter');
+const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
+const GraphConverter = require('../Database/graph-converter');
 
 /**
  * Web Of Things model importer
@@ -92,10 +92,9 @@ class WOTImporter {
                 edges,
             );
 
-        const objectClasses = await this.db.findObjectClassVertices();
         const dataSetId = ImportUtilities.importHash(
             tmpDataSetId,
-            denormalizedVertices.concat(objectClasses),
+            denormalizedVertices,
             denormalizedEdges,
         );
 

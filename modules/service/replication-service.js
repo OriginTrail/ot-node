@@ -24,6 +24,7 @@ class ReplicationService {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationCache = {};
+        this.otJsonImporter = ctx.otJsonImporter;
     }
 
     /**
@@ -37,44 +38,42 @@ class ReplicationService {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
 
-        const [edges, vertices] = await Promise.all([
-            this.graphStorage.findEdgesByImportId(offer.data_set_id),
-            this.graphStorage.findVerticesByImportId(offer.data_set_id),
-        ]);
+        const otJson = await this.otJsonImporter.getImport(offer.data_set_id);
+        const flavor = {
+            [COLOR.RED]: otJson,
+            [COLOR.BLUE]: Utilities.copyObject(otJson),
+            [COLOR.GREEN]: Utilities.copyObject(otJson),
+        };
 
         const that = this;
         this.replicationCache[internalOfferId] = {};
         return Promise.all([COLOR.RED, COLOR.BLUE, COLOR.GREEN]
             .map(async (color) => {
+                const document = flavor[color];
+
+
                 const litigationKeyPair = Encryption.generateKeyPair(512);
-                const litEncVertices = ImportUtilities.immutableEncryptVertices(
-                    vertices,
-                    litigationKeyPair.privateKey,
-                );
-
-                ImportUtilities.sort(litEncVertices);
-                const litigationBlocks = this.challengeService.getBlocks(litEncVertices);
-                const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
-                const litRootHash = litigationBlocksMerkleTree.getRoot();
-
                 const distributionKeyPair = Encryption.generateKeyPair(512);
-                const distEncVertices = ImportUtilities.immutableEncryptVertices(
-                    vertices,
-                    distributionKeyPair.privateKey,
-                );
-                const distMerkleStructure = await ImportUtilities.merkleStructure(
-                    distEncVertices,
-                    edges,
-                );
-                const distRootHash = distMerkleStructure.tree.getRoot();
+
+                const encryptedDataset =
+                    ImportUtilities.encryptDataset(document, litigationKeyPair.privateKey);
+
+                const distEncDataset =
+                    ImportUtilities.encryptDataset(document, distributionKeyPair.privateKey);
+
+                const litRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
+
+                const distRootHash = ImportUtilities.calculateDatasetRootHash(distEncDataset['@graph'], distEncDataset['@id'], distEncDataset.datasetHeader.dataCreator);
 
                 const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-                const distributionEpkChecksum = Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
+                // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+                // TODO Why are there zeroes here
+                const distributionEpkChecksum =
+                 Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
                 const replication = {
                     color,
-                    edges,
-                    litigationVertices: litEncVertices,
+                    otJson: encryptedDataset,
                     litigationPublicKey: litigationKeyPair.publicKey,
                     litigationPrivateKey: litigationKeyPair.privateKey,
                     distributionPublicKey: distributionKeyPair.publicKey,
@@ -104,6 +103,27 @@ class ReplicationService {
             return new BN(2, 10);
         default:
             throw new Error(`Failed to cast color ${color}`);
+        }
+    }
+
+    /**
+     * Cast number to color
+     * @param colorNumber: allowed numbers:
+     * 0 - RED
+     * 1 - GREEN
+     * 2 - BLUE
+     * @returns {string}
+     */
+    castNumberToColor(colorNumber) {
+        switch (colorNumber) {
+        case 0:
+            return COLOR.RED;
+        case 1:
+            return COLOR.GREEN;
+        case 2:
+            return COLOR.BLUE;
+        default:
+            throw new Error(`Failed to cast number to color ${colorNumber}, allowed number 0, 1, 2`);
         }
     }
 
@@ -154,7 +174,6 @@ class ReplicationService {
         const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
         this.logger.trace(`Loaded replication from file for offer internal ID ${internalOfferId} and color ${color}`);
-        return JSON.parse(await Utilities.fileContents(colorFilePath));
     }
 
     /**

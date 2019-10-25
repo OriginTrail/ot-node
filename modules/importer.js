@@ -1,25 +1,31 @@
+const Queue = require('better-queue');
+
 // External modules
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
-const Queue = require('better-queue');
 const graphConverter = require('./Database/graph-converter');
 const Utilities = require('./Utilities');
+const bytes = require('utf8-length');
 
 class Importer {
     constructor(ctx) {
-        this.gs1Importer = ctx.gs1Importer;
         this.wotImporter = ctx.wotImporter;
+        this.otJsonImporter = ctx.otJsonImporter;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
         this.helper = ctx.gs1Utilities;
 
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
             let response;
             if (type === 'JSON') {
                 response = await this._importJSON(data);
+            } else if (type === 'OTJSON') {
+                response = await this._importOTJSON(data);
             } else if (type === 'WOT_JSON_FILE') {
                 response = await this._importWOT(data);
             } else if (type === 'GS1_XML_FILE') {
@@ -192,6 +198,7 @@ class Importer {
         }
 
         return {
+            total_documents: jsonDocument['@graph'].length,
             vertices,
             edges,
             data_set_id: dataSetId,
@@ -205,32 +212,25 @@ class Importer {
      * @param result  Import result
      * @return {Promise<>}
      */
-    async afterImport(result, unpack = false) {
-        this.log.info('[DC] Import complete');
+    afterImport(result, unpack = false) {
         this.remoteControl.importRequestData();
         let {
             vertices, edges,
         } = result;
-
         if (unpack) {
             ImportUtilities.unpackKeys(vertices, edges);
         }
-
         const {
-            data_set_id, wallet,
+            data_set_id, wallet, root_hash,
         } = result;
 
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
 
-        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
-
-        this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
-        this.log.info(`Data set ID: ${data_set_id}`);
         return {
             data_set_id,
-            root_hash: merkle.tree.getRoot(),
-            total_documents: merkle.hashPairs.length,
+            root_hash,
+            total_documents: 1,
             vertices,
             edges,
             wallet,
@@ -245,7 +245,7 @@ class Importer {
         try {
             const result = await this.wotImporter.parse(document);
             return {
-                response: await this.afterImport(result),
+                response: result,
                 error: null,
             };
         } catch (error) {
@@ -266,14 +266,66 @@ class Importer {
 
     async _importXMLgs1(ot_xml_document) {
         try {
-            const result = await this.gs1Importer.parseGS1(ot_xml_document);
+            const otJsonDoc = this.epcisOtJsonTranspiler.convertToOTJson(ot_xml_document);
+            const result = await this.otJsonImporter.importFile({
+                document: otJsonDoc,
+            });
+            this.remoteControl.importRequestData();
+            const response = await this.afterImport(result);
+            response.otjson_size = bytes(JSON.stringify(otJsonDoc));
             return {
-                response: await this.afterImport(result),
+                response,
                 error: null,
             };
         } catch (error) {
-            this.log.error(`Import error: ${error}.\n${error.stack}`);
+            if (error.toString().match(/^Error: \[Transpilation Error].*/)) {
+                this.log.error(`${error}.`);
+            } else {
+                this.log.error(`Import error: ${error}.\n${error.stack}`);
+            }
             this.remoteControl.importError(`Import error: ${error}.`);
+            this.notifyError(error);
+            const errorObject = { type: error.name, message: error.toString(), status: 400 };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        }
+    }
+
+    async importOTJSON(document, encryptedMap) {
+        return this._import('OTJSON', {
+            document,
+            encryptedMap,
+        });
+    }
+
+    async _importOTJSON(data) {
+        this.log.info('Entering importOTJSON');
+        const {
+            document,
+            encryptedMap,
+        } = data;
+
+        try {
+            const result = await this.otJsonImporter.importFile({
+                document,
+                encryptedMap,
+            });
+            const response = this.afterImport(result);
+            response.otjson_size = bytes(JSON.stringify(document));
+            return {
+                response,
+                error: null,
+            };
+        } catch (error) {
+            if (error.toString().match(/^Error: \[Validation Error].*/)) {
+                this.log.error(`${error}.`);
+            } else {
+                this.log.error(`Import error: ${error}.\n${error.stack}`);
+            }
+            this.remoteControl.importError(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { type: error.name, message: error.toString(), status: 400 };
             return {
                 response: null,
