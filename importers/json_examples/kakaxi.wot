@@ -1,0 +1,226 @@
+{
+  "things":
+    {
+      "thing": {
+        "id": "557",
+        "name": "Kakaxi",
+        "description": "Red Shed Malting - Canola",
+        "tags": [
+          "kakaxi",
+          "canola",
+          "WoT"
+        ],
+        "customFields": 
+          [
+          {
+            "type": "readPoint",
+            "id": "urn:epc:id:sgln:Building_1",
+          },
+          {
+            "type":"observedObject",
+            "id": "urn:epc:id:sgtin:Batch_1"
+          }
+        ]
+      },
+      "model": {
+        "links": {
+          "product": {
+            "link": "https://kakaxi.me/",
+            "title": "Kakaxi"
+          },
+          "properties": {
+            "link": "/#techspecs",
+            "title": "Tech Specs",
+            "resources": {
+              "temperature": {
+                "name": "Temperature Sensor",
+                "description": "A temperature sensor.",
+                "values": {
+                  "temp": {
+                    "name": "Temperature sensor",
+                    "description": "The temperature in celsius",
+                    "unit": "celsius",
+                    "customFields": {}
+                  }
+                },
+                "tags": [
+                  "sensor",
+                  "public"
+                ]
+              },
+              "humidity": {
+                "name": "Humidity Sensor",
+                "description": "A humidity sensor.",
+                "values": {
+                  "h": {
+                    "name": "Humidity",
+                    "description": "Percentage of Humidity",
+                    "unit": "percent",
+                    "customFields": {}
+                  }
+                },
+                "tags": [
+                  "sensor",
+                  "public"
+                ]
+              },
+              "solar_radiation": {
+                "name": "Solar Radiation",
+                "description": "A solar radiation sensor.",
+                "values": {
+                  "solar_radiation": {
+                    "name": "Solar Radiation",
+                    "description": "Solar Radiation",
+                    "unit": "watt",
+                    "customFields": {}
+                  }
+                },
+                "tags": [
+                  "sensor",
+                  "public"
+                ]
+              },
+              "power_feeding": {
+                "name": "Power Feeding",
+                "description": "A power feeding device.",
+                "values": {
+                  "power_feeding": {
+                    "name": "Power Feeding",
+                    "description": "A power feeding device.",
+                    "unit": "percentage",
+                    "customFields": {}
+                  }
+                },
+                "tags": [
+                  "device",
+                  "public"
+                ]
+              },
+              "rainfall": {
+                "name": "Rainfall",
+                "description": "A rainfall sensor.",
+                "values": {
+                  "power_feeding": {
+                    "name": "Rainfall",
+                    "description": "A rainfall sensor.",
+                    "unit": "mm",
+                    "customFields": {}
+                  }
+                },
+                "tags": [
+                  "sensor",
+                  "public"
+                ]
+              },
+              "camera": {
+                "name": "Camera",
+                "description": "A camera device.",
+                "values": {
+                  "power_feeding": {
+                    "name": "Camera",
+                    "description": "A camera device.",
+                    "unit": "image",
+                    "customFields": {}
+                  }
+                },
+                "tags": [
+                  "device",
+                  "public"
+                ]
+              }
+            }
+          },
+          "actions": {
+            "link": "/actions",
+            "title": "Actions of this Web Thing",
+            "resources": {
+              "ledState": {
+                "values": {
+                  "ledId": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "state": {
+                    "type": "boolean",
+                    "required": true
+                  }
+                }
+              }
+            }
+          },
+          "type": {
+            "link": "https://kakaxi.me/#overview",
+            "title": "Kakaxi"
+          },
+          "help": {
+            "link": "https://kakaxi.me/#company",
+            "title": "Documentation"
+          },
+          "ui": {
+            "link": "https://kakaxi.me/showcases",
+            "title": "User Interface"
+          }
+        }
+      },
+      "properties": [
+        {
+          "id": "solar_radiation",
+          "name": "Solar Radiation",
+          "values": [
+            {"1558461600": 263.7},
+            {"1558465200": 59.08}
+          ]
+        },
+        {
+          "id": "humidity",
+          "name": "Humidity",
+          "values": [
+            {"1558461600": 57.29},
+            {"1558465200": 54.9}
+          ]
+        },
+        {
+          "id": "temperature",
+          "name": "Temperature",
+          "values": [
+            {"1558461600": 10.69},
+            {"1558465200": 11.6}
+          ]
+        },
+        {
+          "id": "power_feeding",
+          "name": "Power Feeding",
+          "values": [
+            {"1558461600": 82},
+            {"1558465200": 88}
+          ]
+        },
+        {
+          "id": "rainfall",
+          "name": "Rainfall",
+          "values": [
+            {"1558461600": 0},
+            {"1558465200": 0}
+          ]
+        },
+        {
+          "id": "image",
+          "name": "Image",
+          "values": [
+            {"1558461600": "https://s3-us-west-1.amazonaws.com/files.kakaxi.me/interval_photos/production/red_shed_malting/k_169635ac/259206.jpg"},
+            {"1558465200": "https://s3-us-west-1.amazonaws.com/files.kakaxi.me/interval_photos/production/red_shed_malting/k_169635ac/259209.jpg"}
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "sign_in",
+          "name": "Sign In"
+        },
+        {
+          "id": "devices",
+          "name": "Devices"
+        }
+      ]
+    }
+  }
