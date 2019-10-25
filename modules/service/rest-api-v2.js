@@ -18,6 +18,7 @@ class RestAPIServiceV2 {
         this.logger = ctx.logger;
         this.apiUtilities = ctx.apiUtilities;
         this.emitter = ctx.emitter;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
@@ -26,6 +27,34 @@ class RestAPIServiceV2 {
         this.mapping_standards_for_event.set('ot-json', 'graph');
         this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
         this.mapping_standards_for_event.set('graph', 'graph');
+    }
+
+    async _startImport(standard_id, content, handler_id) {
+        const commandData = {
+            standard_id,
+            document: content,
+            handler_id,
+        };
+
+        let command;
+        if (standard_id === 'graph') {
+            commandData.document = JSON.parse(content);
+            command = 'dcConvertToGraphCommand';
+        } else {
+            command = 'dcConvertToOtJsonCommand';
+        }
+
+        const commandSequence = [
+            command,
+        ];
+
+        await this.commandExecutor.add({
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
+            data: commandData,
+            transactional: false,
+        });
     }
 
     /**
@@ -323,24 +352,18 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const standard_id = req.body.standard_id.toLowerCase();
+        const standard_id =
+            this.mapping_standards_for_event.get(req.body.standard_id.toLowerCase());
 
         // Check if file is provided
         if (req.files !== undefined && req.files.file !== undefined) {
             const inputFile = req.files.file.path;
             try {
                 const content = await utilities.fileContents(inputFile);
-                const queryObject = {
-                    content,
-                    contact: req.contact,
-                    response: res,
-                    standard_id: this.mapping_standards_for_event.get(standard_id),
-                };
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                queryObject.handler_id = inserted_object.dataValues.handler_id;
-                this.emitter.emit('api-import-request', queryObject);
+                this._startImport(standard_id, content, inserted_object.dataValues.handler_id);
                 res.status(200);
                 res.send({
                     handler_id: inserted_object.dataValues.handler_id,
