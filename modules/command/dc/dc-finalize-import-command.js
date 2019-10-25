@@ -21,7 +21,7 @@ class DcFinalizeImport extends Command {
      */
     async execute(command) {
         const { response, error } = command.data;
-        this._finalizeImport(response, error);
+        await this._finalizeImport(response, error);
         return Command.empty();
     }
 
