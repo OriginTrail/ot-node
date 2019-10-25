@@ -61,7 +61,7 @@ class DCChallengesCommand extends Command {
                 });
             });
         } catch (e) {
-            this.logger.error(`Failed to process dcChallengesCommand. ${e}`);
+            this.logger.error(`Failed to process dcChallengesCommand. ${e.stack}`);
         }
         return Command.repeat();
     }
@@ -75,7 +75,7 @@ class DCChallengesCommand extends Command {
         const challenges = await models.challenges.findAll({
             where: {
                 status: 'PENDING',
-                start_time: { [models.Sequelize.Op.gte]: Date.now() },
+                start_time: { [models.Sequelize.Op.lte]: Date.now() },
             },
         });
 

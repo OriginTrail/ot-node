@@ -18,6 +18,7 @@ class DCOfferReplacementCompletedCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -61,13 +62,17 @@ class DCOfferReplacementCompletedCommand extends Command {
 
                 const holder = await models.replicated_data.findOne({
                     where: {
+                        offer_id: offerId,
                         dh_identity: utilities.normalizeHex(chosenHolder),
                     },
                 });
 
+                holder.status = 'HOLDING';
+                await holder.save({ fields: ['status'] });
+
                 const startTime = Date.now();
                 const endTime = startTime +
-                    (offer.holding_time_in_minutes * 60 * 1000); // TODO fix end time
+                    (offer.holding_time_in_minutes * 60 * 1000);
                 const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
 
                 const encryptedVertices = importUtilities.immutableEncryptVertices(
@@ -92,9 +97,6 @@ class DCOfferReplacementCompletedCommand extends Command {
                         status: 'PENDING',
                     }));
 
-                holder.status = 'HOLDING';
-                await holder.save({ fields: ['status'] });
-
                 // clear old replicated data
                 await models.replicated_data.destroy({
                     where: {
@@ -107,6 +109,9 @@ class DCOfferReplacementCompletedCommand extends Command {
 
                 offer.global_status = 'ACTIVE';
                 await offer.save({ fields: ['global_status'] });
+                this.remoteControl.offerUpdate({
+                    offer_id: offerId,
+                });
 
                 this.logger.important(`Successfully replaced DH ${dhIdentity} with DH ${chosenHolder} for offer ${offerId}`);
                 return Command.empty();

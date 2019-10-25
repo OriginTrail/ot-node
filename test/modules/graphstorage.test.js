@@ -81,6 +81,22 @@ describe('GraphStorage module', () => {
         }
     });
 
+    it('adding vertex and edges should save in collections', async () => {
+        try {
+            const res_v1 = await myGraphStorage.addVertex(vertexOne);
+            const res_v2 = await myGraphStorage.addVertex(vertexTwo);
+
+            assert.equal(res_v1._key, vertexOne._key);
+            assert.equal(res_v2._key, vertexTwo._key);
+
+            const res = await myGraphStorage.addEdge(edgeOne);
+
+            assert.equal(res._key, edgeOne._key);
+        } catch (error) {
+            assert.isTrue(!!error);
+        }
+    });
+
     it('identify()', async () => {
         if (selectedDatabase.provider === 'arangodb') {
             assert.equal(myGraphStorage.identify(), 'ArangoJS');
@@ -135,29 +151,27 @@ describe('GraphStorage module', () => {
         assert.containsAllKeys(await myGraphStorage.addEdge(edgeOne), ['_key']);
     });
 
-    it.skip('findVerticesByImportId() ', async () => {
+    it('findVerticesByImportId() ', async () => {
         // precondition
         await myGraphStorage.addVertex(vertexOne);
 
-        await myGraphStorage.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
-            assert.deepEqual(response[0].data, vertexOne.data);
-            assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
-            assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
-            assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
-            assert.deepEqual(response[0].imports, vertexOne.imports);
-            assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        await myGraphStorage.findVerticesByImportId(vertexOne.datasets[0]).then((response) => {
+            const vertexOneCopy = Utilities.copyObject(vertexOne);
+            delete vertexOneCopy.datasets;
+            assert.deepEqual(response[0], vertexOneCopy);
         });
     });
 
     it('call to findVerticesByImportId() from invalid storage should fail', async () => {
         try {
-            const result = await myInvalidGraphStorage.findVerticesByImportId(vertexOne.imports[0]);
+            await myInvalidGraphStorage.findVerticesByImportId(vertexOne.datasets[0]);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
         }
     });
 
-    it('test virtualGraph', async () => {
+    // TODO enable this test when DL2 importer is in place
+    it.skip('test virtualGraph', async () => {
         // precondition
         const responseVertexOne = await myGraphStorage.addVertex(vertexOne);
         const responseVertexTwo = await myGraphStorage.addVertex(vertexTwo);

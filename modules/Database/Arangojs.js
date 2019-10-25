@@ -21,20 +21,31 @@ class ArangoJS {
         this.db = new Database(`http://${host}:${port}`);
         this.db.useDatabase(database);
         this.db.useBasicAuth(username, password);
+
+        this.dbInfo = {
+            username, password, database, host, port,
+        };
     }
 
     /**
      * Initialize database
      * @return {Promise<void>}
      */
-    async initialize(allowedClasses) {
+    async initialize() {
+        // Create database if doesn't exist.
+        const listOfDatabases = await this.db.listDatabases();
+        if (!listOfDatabases.includes(this.dbInfo.database)) {
+            await
+            this.db.createDatabase(
+                this.dbInfo.database,
+                [{ username: this.dbInfo.username, passwd: this.dbInfo.password, active: true }],
+            );
+        }
+
+        this.db.useDatabase(this.dbInfo.database);
+        await this.createCollection('ot_datasets');
         await this.createCollection('ot_vertices');
         await this.createEdgeCollection('ot_edges');
-
-        await Promise.all(allowedClasses.map(className => this.addVertex({
-            _key: className,
-            vertex_type: 'CLASS',
-        })));
     }
 
     /**
@@ -52,12 +63,7 @@ class ArangoJS {
             const filters = [];
             for (const key in queryObject) {
                 if (key.match(/^[\w\d]+$/g) !== null) {
-                    let searchKey;
-                    if (key !== 'vertex_type' && key !== 'edge_type' && key !== '_key') {
-                        searchKey = `identifiers.${key}`;
-                    } else {
-                        searchKey = key;
-                    }
+                    const searchKey = key;
                     const param = `param${count}`;
                     filters.push(`v.${searchKey} == @param${count}`);
 
@@ -90,8 +96,9 @@ class ArangoJS {
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
-                       FILTER v.vertex_type == 'EVENT'
-                       AND v.sender_id == @sender_id
+                       FILTER v.vertexType == 'Data'
+                       AND v.data.objectType='ObjectEvent'
+                       AND v.senderId == @sender_id
                        AND v.encrypted == null
                        RETURN v`;
 
@@ -115,7 +122,7 @@ class ArangoJS {
 
         for (const event of ownershipEvents) {
             const query = `FOR v, e IN 1..1 OUTBOUND @senderEventKey ot_edges
-            FILTER e.edge_type == 'EVENT_CONNECTION'
+            FILTER e.edgeType == 'EVENT_CONNECTION'
             RETURN v`;
             promises.push(this.runQuery(query, { senderEventKey: `ot_vertices/${event.side1._key}` }));
         }
@@ -158,28 +165,27 @@ class ArangoJS {
             let filter = `LET v_res${count} = (
                                             FOR v${count} IN ot_vertices
                                         LET objects = (
-                                            FOR w${count}, e IN 1..1
-                                        OUTBOUND v${count}._id ot_edges
-                                        FILTER e.edge_type == "IDENTIFIES"
+                                            FOR e IN ot_edges
+                                        FILTER e._from == v${count}._id
+                                        AND e.edgeType=='IdentifierValue'
                                         AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        AND v${count}.encrypted == ${encColor}
-                                        RETURN w${count})
+                                        RETURN e._to)
                              `;
 
             switch (opcode) {
             case 'EQ':
-                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == @id_type${count}
-                                     AND v${count}.id_value == @id_value${count}
+                filter += `FILTER v${count}.vertexType == "Identifier"
+                                     AND v${count}.identifierType == @id_type${count}
+                                     AND v${count}.identifierValue == @id_value${count}
                                      AND v${count}.encrypted == ${encColor}
                                      `;
                 params[`id_type${count}`] = id_type;
                 params[`id_value${count}`] = id_value;
                 break;
             case 'IN':
-                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                     AND v${count}.id_type == @id_type${count}
-                                     AND  @id_value${count} IN v${count}.id_value
+                filter += `FILTER v${count}.vertexType == "IDENTIFIER"
+                                     AND v${count}.identifierType == @id_type${count}
+                                     AND  @id_value${count} IN v${count}.identifierValue
                                      AND v${count}.encrypted == ${encColor}
                                      `;
 
@@ -222,6 +228,69 @@ class ArangoJS {
     }
 
     /**
+     *
+     * @param {Object} startVertexKey
+     * @param {Number} depth
+     * @param {Array.<string>} includeOnly
+     * @param {Array.<string>} excludeOnly
+     * @return {Promise<void>}
+     */
+    async findEntitiesTraversalPath(startVertexKey, depth, includeOnly, excludeOnly) {
+        if (startVertexKey == null || typeof startVertexKey !== 'string') {
+            throw Error('Must include a valid start vertex.');
+        }
+        if (includeOnly != null && !Array.isArray(includeOnly)) {
+            throw Error('Invalid param.');
+        }
+        if (excludeOnly != null && !Array.isArray(excludeOnly)) {
+            throw Error('Invalid param.');
+        }
+        if (depth == null || !Number.isInteger(depth)) {
+            throw Error('Invalid param.');
+        }
+        const includeOnlyValid = includeOnly != null && includeOnly.length > 0;
+        const excludeOnlyValid = excludeOnly != null && excludeOnly.length > 0;
+
+        const queryString = `let vertices = (FOR v, e, p IN 0..@depth ANY CONCAT('ot_vertices/', @startVertex) ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                ${includeOnlyValid ? 'FILTER p.edges[*].relationType ALL IN @includeOnly' : ''}
+                                ${excludeOnlyValid ? 'FILTER p.edges[*].relationType ALL NOT IN @excludeOnly' : ''}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN v)
+                                
+                            let edges = (FOR v, e, p IN 0..@depth ANY CONCAT('ot_vertices/', @startVertex) ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                ${includeOnlyValid ? 'FILTER p.edges[*].relationType ALL IN @includeOnly' : ''}
+                                ${excludeOnlyValid ? 'FILTER p.edges[*].relationType ALL NOT IN @excludeOnly' : ''}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN e)
+                            RETURN {vertices, edges}`;
+
+        const params = {
+            startVertex: startVertexKey,
+            depth,
+        };
+
+        if (includeOnlyValid) {
+            params.includeOnly = includeOnly;
+        }
+        if (excludeOnlyValid) {
+            params.excludeOnly = excludeOnly;
+        }
+
+        const rawGraph = await this.runQuery(queryString, params);
+        return ArangoJS.convertToVirtualGraph(rawGraph);
+    }
+
+    /**
      * Finds traversal path starting from particular vertex
      * @param startVertex       Starting vertex
      * @param depth             Explicit traversal depth
@@ -231,26 +300,30 @@ class ArangoJS {
         if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
-        const queryString = `FOR vertex, edge, path
-            IN 1 .. ${depth}
-            OUTBOUND 'ot_vertices/${startVertex._key}'
-            ot_edges
-            OPTIONS {bfs: false, uniqueVertices: 'path'}
-            FILTER edge.edge_type != 'IDENTIFIES'
-            AND edge.edge_type != 'IDENTIFIED_BY'
-            AND edge._to != 'ot_vertices/Actor'
-            AND edge._to != 'ot_vertices/Product'
-            AND edge._to != 'ot_vertices/Location'
-            AND edge._to != 'ot_vertices/Transport'
-            AND edge._to != 'ot_vertices/Transformation'
-            AND edge._to != 'ot_vertices/Observation'
-            AND edge._to != 'ot_vertices/Ownership'
-            AND vertex.vertex_type != 'CLASS'
-            AND vertex.vertex_type != 'IDENTIFIER'
-            RETURN path`;
+        const relationTypes = ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC'];
+
+        const queryString = `let vertices = (FOR v, e, p IN 0..${depth} ANY 'ot_vertices/${startVertex._key}' ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                FILTER p.edges[*].relationType ALL IN ${relationTypes}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN v)
+                                
+                            let edges = (FOR v, e, p IN 0..${depth} ANY 'ot_vertices/${startVertex._key}' ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                FILTER p.edges[*].relationType ALL IN ${relationTypes}
+                                FILTER p.edges[*].edgeType ALL != 'IdentifierRelation'
+                                RETURN e)
+                            RETURN {vertices, edges}`;
 
         const rawGraph = await this.runQuery(queryString);
-
         return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 
@@ -512,6 +585,15 @@ class ArangoJS {
     }
 
     /**
+     * Add dataset metadata
+     * @param metadata Dataset metadata
+     * @returns {Promise<any>}
+     */
+    async addDatasetMetadata(metadata) {
+        return this.addDocument('ot_datasets', metadata);
+    }
+
+    /**
      * Inserts edge into ArangoDB graph database
      * @param {vertex} - document
      * @returns {Promise<any>}
@@ -538,7 +620,22 @@ class ArangoJS {
             const response = await this.findDocuments(collectionName, { _key: document._key });
             if (response.length > 0) {
                 const existing = ArangoJS._normalize(response[0]);
-                Object.assign(existing, document);
+                if (existing.datasets != null && document.datasets != null) {
+                    existing.datasets =
+                        existing.datasets
+                            .concat(document.datasets
+                                .filter(datasetId => !existing.datasets.includes(datasetId)));
+
+                    existing.datasets.concat(document.datasets);
+                }
+                if (document.encrypted) {
+                    if (!existing.encrypted) {
+                        existing.encrypted = {};
+                    }
+                    for (const key of Object.keys(document.encrypted)) {
+                        existing.encrypted[key] = document.encrypted[key];
+                    }
+                }
                 return this.updateDocument(collectionName, existing);
             }
         }
@@ -664,22 +761,29 @@ class ArangoJS {
     }
 
     /**
+     * Finds metadata by dataset ID
+     * @return {Promise<*>}
+     * @param datasetId
+     */
+    async findMetadataByImportId(datasetId) {
+        const queryString = 'FOR v IN ot_datasets FILTER v._key == @datasetId RETURN v';
+        return this.runQuery(queryString, { datasetId });
+    }
+
+    /**
      * Finds vertices by dataset ID
      * @param {string} data_id - Dataset ID
-     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
      * @return {Promise<*>}
      */
-    async findVerticesByImportId(data_id, encColor = null) {
+    async findVerticesByImportId(data_id) {
         const queryString = `FOR v IN ot_vertices 
-                            FILTER v.datasets != null 
-                            AND POSITION(v.datasets, @importId, false)  != false 
-                            AND (v.encrypted == ${encColor})
-                            SORT v._key RETURN v`;
-
+                        FILTER v.datasets != null 
+                        AND POSITION(v.datasets, @importId, false)  != false 
+                        SORT v._key RETURN v`;
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
 
-        const normalizedVertices = normalizeGraph(data_id, vertices, []).vertices;
+        const normalizedVertices = normalizeGraph(data_id, vertices, []).vertices; // ???
 
         if (normalizedVertices.length === 0) {
             return [];
@@ -691,43 +795,73 @@ class ArangoJS {
             return normalizedVertices;
         }
 
-        const objectClasses = await this.findObjectClassVertices();
-
-        return normalizedVertices.concat(objectClasses);
+        return normalizedVertices;
     }
 
     /**
-     * Finds object vertices.
-     * TODO We need to change the query. This is not the appropriate way.
-     * @return {Promise<any>}
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param objectKey
+     * @returns {Promise<any>}
      */
-    async findObjectClassVertices() {
-        const queryString = 'FOR v IN ot_vertices ' +
-            'FILTER v.vertex_type == "CLASS" ' +
-            'AND v.datasets == null ' +
-            'AND v._dc_key == null ' +
-            'SORT v._key ' +
-            'RETURN v';
-        return this.runQuery(queryString, {});
+    async findDocumentsByImportIdAndOtObjectId(importId, objectKey) {
+        const queryString = `LET rootObject = (
+                                RETURN document('ot_vertices', @objectKey)
+                            )
+                            
+                            LET relatedObjects = (
+                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                    AND POSITION(e.datasets, @importId, false) != false
+                                    AND POSITION(v.datasets, @importId, false) != false
+                                RETURN {
+                                    "vertex": v,
+                                    "edge": e
+                                }
+                            )
+                            
+                            RETURN {
+                                "rootObject": rootObject[0],
+                                "relatedObjects": relatedObjects
+                            }`;
+
+        const result = await this.runQuery(queryString, {
+            importId,
+            objectKey,
+        });
+
+        return result[0];
     }
 
     /**
      * Find edges by dataset ID
      * @param {string} data_id - Dataset ID
-     * @param {?number} encColor - Encrypted color (0=RED,1=GREEN,2=BLUE)
      * @return {Promise<void>}
      */
-    async findEdgesByImportId(data_id, encColor = null) {
+    async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
                 'AND POSITION(v.datasets, @importId, false) != false ' +
-                `AND v.encrypted == ${encColor} ` +
                 'SORT v._key ' +
                 'RETURN v';
 
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);
         return normalizeGraph(data_id, [], edges).edges;
+    }
+
+    async findEdgesByImportIdAndFromId(importId, fromId) {
+        const queryString = `FOR v IN ot_edges 
+            FILTER v.datasets != null AND v._from== @fromId
+            AND POSITION(v.datasets, @importId, false) != false
+            SORT v._key 
+            RETURN v`;
+
+        const params = { importId, fromId };
+        const edges = await this.runQuery(queryString, params);
+        return normalizeGraph(importId, [], edges).edges;
     }
 
     /**
@@ -768,6 +902,27 @@ class ArangoJS {
             }
             return false;
         });
+    }
+
+    /**
+     * Returns data creator identity for vertex with elementId
+     * @param elementId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForElementId(elementId) {
+        const queryString = `let dataset_id = (
+                                FOR v IN ot_vertices
+                                FILTER v._key == @elementId
+                                RETURN v.datasets[0]
+                            )
+                            let identity = ( 
+                                for d in ot_datasets
+                                filter d._key == dataset_id[0]
+                                return d.datasetHeader.dataCreator.identifiers[0]
+                            )
+                            return unique(identity)[0]`;
+        const params = { elementId };
+        return this.runQuery(queryString, params);
     }
 
     /**

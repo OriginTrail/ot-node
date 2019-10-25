@@ -60,6 +60,15 @@ class Blockchain {
     }
 
     /**
+     * Set node ID
+     * @param identity
+     * @param nodeId
+     */
+    async setNodeId(identity, nodeId) {
+        return this.blockchain.setNodeId(identity, nodeId);
+    }
+
+    /**
      * Creates node profile on the Bidding contract
      * @param managementWallet - Management wallet
      * @param profileNodeId - Network node ID
@@ -227,10 +236,11 @@ class Blockchain {
         confirmation3,
         encryptionType,
         holders,
+        parentIdentity,
     ) {
         return this.blockchain.finalizeOffer(
             blockchainIdentity, offerId, shift, confirmation1,
-            confirmation2, confirmation3, encryptionType, holders,
+            confirmation2, confirmation3, encryptionType, holders, parentIdentity,
         );
     }
 
@@ -298,8 +308,8 @@ class Blockchain {
         return this.blockchain.getTotalStakedAmount();
     }
 
-    async getTotalIncome() {
-        return this.blockchain.getTotalIncome();
+    async getTotalPayouts(identity) {
+        return this.blockchain.getTotalPayouts(identity);
     }
 
     /**
@@ -481,20 +491,6 @@ class Blockchain {
     }
 
     /**
-     * PayOut for multiple offers.
-     * @returns {Promise<any>}
-     */
-    payOutMultiple(
-        blockchainIdentity,
-        offerIds,
-    ) {
-        return this.blockchain.payOutMultiple(
-            blockchainIdentity,
-            offerIds,
-        );
-    }
-
-    /**
      * Get offer by ID
      * @param offerId - offer ID
      * @return {Promise<*>}
@@ -567,6 +563,38 @@ class Blockchain {
      */
     async getLitigationReplacementTask(offerId, holderIdentity) {
         return this.blockchain.getLitigationReplacementTask(offerId, holderIdentity);
+    }
+
+    /**
+     * Get staked amount for the holder
+     */
+    async getHolderStakedAmount(offerId, holderIdentity) {
+        return this.blockchain.getHolderStakedAmount(offerId, holderIdentity);
+    }
+
+    /**
+     * Get paid amount for the holder
+     */
+    async getHolderPaidAmount(offerId, holderIdentity) {
+        return this.blockchain.getHolderPaidAmount(offerId, holderIdentity);
+    }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
+    }
+
+    /**
+     * Check that the identity key has a specific purpose
+     * @param identity - identity address
+     * @param key - identity key
+     * @param pupose - purpose to verify
+     * @return {Promise<any>}
+     */
+    async keyHasPurpose(identity, key, purpose) {
+        return this.blockchain.keyHasPurpose(identity, key, purpose);
     }
 }
 

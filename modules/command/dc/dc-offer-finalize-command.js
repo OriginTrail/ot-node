@@ -20,6 +20,7 @@ class DCOfferFinalizeCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -30,6 +31,7 @@ class DCOfferFinalizeCommand extends Command {
         const {
             offerId,
             solution,
+            handler_id,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -49,6 +51,24 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
+        const parentIdentity = this.config.parentIdentity ?
+            Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
+
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id },
+        });
+        const handler_data = JSON.parse(handler.data);
+        handler_data.status = 'FINALIZING_OFFER';
+        await Models.handler_ids.update(
+            {
+                data: JSON.stringify(handler_data),
+            },
+            {
+                where: { handler_id },
+            },
+        );
+
+
         await this.blockchain.finalizeOffer(
             Utilities.normalizeHex(this.config.erc725Identity),
             offerId,
@@ -58,13 +78,15 @@ class DCOfferFinalizeCommand extends Command {
             confirmations[2],
             colors,
             nodeIdentifiers,
+            parentIdentity,
         );
+
         return {
             commands: [
                 {
                     name: 'dcOfferFinalizedCommand',
                     period: 5000,
-                    data: { offerId },
+                    data: { offerId, nodeIdentifiers, handler_id },
                 },
             ],
         };
@@ -106,18 +128,34 @@ class DCOfferFinalizeCommand extends Command {
         }
 
         let errorMessage = err.message;
-        const hasFunds = await this.dcService
-            .hasProfileBalanceForOffer(offer.token_amount_per_holder);
-        if (!hasFunds) {
-            errorMessage = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+        if (this.config.parentIdentity) {
+            const hasPermission = await this.profileService.hasParentPermission();
+            if (!hasPermission) {
+                errorMessage = 'Identity does not have permission to use parent identity funds!';
+            } else {
+                const hasFunds = await this.dcService
+                    .parentHasProfileBalanceForOffer(offer.token_amount_per_holder);
+                if (!hasFunds) {
+                    errorMessage = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
+                }
+            }
+        } else {
+            const hasFunds = await this.dcService
+                .hasProfileBalanceForOffer(offer.token_amount_per_holder);
+            if (!hasFunds) {
+                errorMessage = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+            }
         }
         this.logger.error(`Offer ${offerId} has not been finalized. ${errorMessage}`);
 
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized. ${errorMessage}`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
-        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 

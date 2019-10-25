@@ -91,7 +91,7 @@ AfterAll(async function () {
 
     const listOfDatabases = await systemDb.listDatabases();
 
-    const logger = this;
+    const { logger } = this;
     const skipDbs = ['_system', 'origintrail', 'origintrail-develop', 'origintrail-staging', 'origintrail-stable'];
     await forEach(
         listOfDatabases.filter((dbName => !skipDbs.includes(dbName))),
@@ -99,8 +99,8 @@ AfterAll(async function () {
             try {
                 await systemDb.dropDatabase(databaseItem);
             } catch (error) {
-                logger.log(`Oops, failed to delete database: ${databaseItem}`);
-                logger.log(error);
+                logger.error(`Oops, failed to delete database: ${databaseItem}`);
+                logger.error(error);
             }
         },
     );

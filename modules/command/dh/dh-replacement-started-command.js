@@ -30,6 +30,7 @@ class DHReplacementStartedCommand extends Command {
             if (event) {
                 const {
                     offerId,
+                    holderIdentity,
                     challengerIdentity,
                     litigationRootHash,
                 } = JSON.parse(event.data);
@@ -49,12 +50,12 @@ class DHReplacementStartedCommand extends Command {
                 }
 
                 await this.dhService.handleReplacement(
-                    offerId, challengerIdentity,
-                    litigationRootHash,
+                    offerId, challengerIdentity, holderIdentity,
+                    litigationRootHash, challengerIdentity,
                 );
             }
         } catch (e) {
-            this.logger.error(`Failed to process ReplacementStartedCommand command. ${e}`);
+            this.logger.error(`Failed to process ReplacementStartedCommand command. ${e.message}.\n${e.stack}`);
         }
 
         return Command.repeat();
@@ -72,7 +73,11 @@ class DHReplacementStartedCommand extends Command {
                 event: 'LitigationCompleted',
                 finished: 0,
             },
+            order: [
+                ['timestamp', 'DESC'],
+            ],
         });
+
         if (events) {
             const event = events.find((e) => {
                 const {
@@ -104,7 +109,7 @@ class DHReplacementStartedCommand extends Command {
                     this.logger.warn(`I haven't been penalized for offer ${offerId}`);
                     bid.status = 'CHOSEN';
                 }
-                await event.save({ fields: ['status'] });
+                await bid.save({ fields: ['status'] });
                 return true;
             }
         }

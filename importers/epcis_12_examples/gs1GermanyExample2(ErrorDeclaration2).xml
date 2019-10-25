@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	schemaVersion="1.2" creationDate="2016-05-03T14:59:02.099+02:00"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<EPCISBody>
+		<EventList>
+			<ObjectEvent>
+				<eventTime>2016-07-01T14:58:56.591Z</eventTime>
+				<eventTimeZoneOffset>+02:00</eventTimeZoneOffset>
+				<epcList>
+					<epc>urn:epc:id:sgtin:4012345.011111.ABCD</epc>
+				</epcList>
+				<action>DELETE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:destroying</bizStep>
+				<readPoint>
+					<id>urn:epc:id:sgln:4054738.99901.0</id>
+				</readPoint>
+			</ObjectEvent>
+			<ObjectEvent>
+				<eventTime>2016-07-01T14:58:56.591Z</eventTime>
+				<eventTimeZoneOffset>+02:00</eventTimeZoneOffset>
+				<baseExtension>
+					<errorDeclaration>
+						<declarationTime>2016-05-03T14:58:56.591Z</declarationTime>
+						<reason>urn:epcglobal:cbv:er:did_not_occur</reason>
+						<correctiveEventIDs>
+							<correctiveEventID>urn:uuid:a38f7ca1-e48f-4a75-a9b9-06888d8a5cc8</correctiveEventID>
+						</correctiveEventIDs>
+					</errorDeclaration>
+				</baseExtension>
+				<epcList>
+					<epc>urn:epc:id:sgtin:4012345.011111.ABCD</epc>
+				</epcList>
+				<action>DELETE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:destroying</bizStep>
+				<readPoint>
+					<id>urn:epc:id:sgln:4054738.99902.0</id>
+				</readPoint>
+			</ObjectEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>

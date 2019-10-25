@@ -134,7 +134,11 @@ class DVDataReadResponseFreeCommand extends Command {
         this.logger.info(`Data set ID ${dataSetId} imported successfully.`);
         this.logger.trace(`DataSet ${dataSetId} purchased for query ID ${networkQueryResponse.query_id}, ` +
             `reply ID ${replyId}.`);
-        this.remoteControl.readNotification(`Data set ID ${dataSetId} imported successfully.`);
+        this.remoteControl.readNotification({
+            dataSetId,
+            queryId: networkQueryResponse.query_id,
+            replyId: networkQueryResponse.reply_id,
+        });
 
         return Command.empty();
     }

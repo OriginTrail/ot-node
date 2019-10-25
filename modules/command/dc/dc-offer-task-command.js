@@ -12,6 +12,7 @@ class DcOfferTaskCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -19,7 +20,7 @@ class DcOfferTaskCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { dataSetId, internalOfferId } = command.data;
+        const { dataSetId, internalOfferId, handler_id } = command.data;
 
         const dataSetIdNorm = Utilities.normalizeHex(dataSetId.toString('hex').padStart(64, '0'));
         const event = await Models.events.findOne({
@@ -52,6 +53,23 @@ class DcOfferTaskCommand extends Command {
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
             await offer.save({ fields: ['task', 'offer_id', 'status', 'message'] });
+            this.remoteControl.offerUpdate({
+                id: internalOfferId,
+            });
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+            const handler_data = JSON.parse(handler.data);
+            handler_data.offer_id = offer.offer_id;
+            handler_data.status = 'WAITING_FOR_HOLDERS';
+            await Models.handler_ids.update(
+                {
+                    data: JSON.stringify(handler_data),
+                },
+                {
+                    where: { handler_id },
+                },
+            );
 
             this.logger.trace(`Offer successfully started for data set ${dataSetIdNorm}. Offer ID ${eventOfferId}. Internal offer ID ${internalOfferId}.`);
             return this.continueSequence(this.pack(command.data), command.sequence);
@@ -69,8 +87,12 @@ class DcOfferTaskCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

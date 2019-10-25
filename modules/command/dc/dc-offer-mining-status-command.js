@@ -9,6 +9,7 @@ class DcOfferMiningStatusCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -20,6 +21,7 @@ class DcOfferMiningStatusCommand extends Command {
             offerId,
             isReplacement,
             dhIdentity,
+            handler_id,
         } = command.data;
 
         const mined = await Models.miner_tasks.findOne({
@@ -48,6 +50,7 @@ class DcOfferMiningStatusCommand extends Command {
                                 success: true,
                                 dhIdentity,
                                 excludedDHs: command.data.excludedDHs,
+                                handler_id,
                             },
                             transactional: false,
                         },
@@ -62,6 +65,7 @@ class DcOfferMiningStatusCommand extends Command {
                             data: {
                                 offerId,
                                 isReplacement,
+                                handler_id,
                                 success: false,
                             },
                             transactional: false,
@@ -84,8 +88,12 @@ class DcOfferMiningStatusCommand extends Command {
         const { offerId } = command.data;
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
@@ -101,8 +109,12 @@ class DcOfferMiningStatusCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

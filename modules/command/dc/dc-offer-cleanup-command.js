@@ -10,6 +10,7 @@ class DCOfferCleanupCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -29,6 +30,9 @@ class DCOfferCleanupCommand extends Command {
         offer.status = 'COMPLETED';
         offer.global_status = 'COMPLETED';
         await offer.save({ fields: ['status', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         this.replicationService.cleanup(offer.id);
         this.logger.info(`Offer ${offerId} replication data cleanup successful`);

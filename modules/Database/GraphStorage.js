@@ -99,6 +99,29 @@ class GraphStorage {
     }
 
     /**
+     *
+     * @param {Object} startVertex
+     * @param {Number} depth
+     * @param {Array.<string>} includeOnly
+     * @param {Array.<string>} excludeOnly
+     * @return {Promise<void>}
+     */
+    findEntitiesTraversalPath(startVertex, depth, includeOnly, excludeOnly) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findEntitiesTraversalPath(startVertex, depth, includeOnly, excludeOnly)
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
      * Finds traversal path starting from particular vertex
      * @param depth             Traversal depth
      * @param startVertex       Starting vertex
@@ -139,6 +162,26 @@ class GraphStorage {
     }
 
     /**
+     * Gets all the stored connector with given ID.
+     * @param {String} connectorId - The ID of the connector.
+     * @return {Promise<Array>}
+     */
+    findConnectors(connectorId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findDocuments('ot_vertices', { connectionId: connectorId })
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
      * Add vertex
      * @param vertex Vertex data
      * @returns {Promise<any>}
@@ -168,6 +211,45 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.addEdge(edge).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Add document to collection
+     * @param collectionName
+     * @param document
+     * @returns {Promise}
+     */
+    addDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.addDocument(collectionName, document).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Add dataset metadata
+     * @param metadata Dataset metadata
+     * @returns {Promise<any>}
+     */
+    addDatasetMetadata(metadata) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.addDatasetMetadata(metadata).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -245,20 +327,6 @@ class GraphStorage {
     }
 
     /**
-     * Finds all object classes
-     * @return {Promise<*>}
-     */
-    async findObjectClassVertices() {
-        const classes = await this.db.findObjectClassVertices();
-        if (classes.length === 0) {
-            this.notifyError(new Error('Missing class vertices'));
-            await this.__initDatabase__();
-            return this.db.findObjectClassVertices();
-        }
-        return classes;
-    }
-
-    /**
      * Get list of vertices by import ID
      * @param importId - Import ID
      * @param encColor - Encrypted color
@@ -270,6 +338,26 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findVerticesByImportId(importId, encColor).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param fromKey
+     * @returns {Promise<any>}
+     */
+    async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findDocumentsByImportIdAndOtObjectId(importId, objectId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -299,6 +387,25 @@ class GraphStorage {
     }
 
     /**
+     * Gets metadata about import ID from the underlying database
+     * @param datasetId - Dataset ID
+     * @returns {Promise}
+     */
+    findMetadataByImportId(datasetId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findMetadataByImportId(datasetId).then((result) => {
+                    resolve(result[0]);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Find event based on ID and bizStep
      * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
      * @param senderId    Sender ID
@@ -313,6 +420,25 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findEvent(senderId, partnerId, documentId, bizStep).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Returns data creator identity for vertex with elementId
+     * @param elementId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForElementId(elementId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findIssuerIdentityForElementId(elementId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

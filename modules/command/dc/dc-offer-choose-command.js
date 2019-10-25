@@ -16,6 +16,7 @@ class DCOfferChooseCommand extends Command {
         this.minerService = ctx.minerService;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -28,12 +29,16 @@ class DCOfferChooseCommand extends Command {
             excludedDHs,
             isReplacement,
             dhIdentity,
+            handler_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'CHOOSING';
         offer.message = 'Choosing wallets for offer';
         await offer.save({ fields: ['status', 'message'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
 
         const replications = await models.replicated_data.findAll({
             where: {
@@ -46,7 +51,8 @@ class DCOfferChooseCommand extends Command {
 
         const verifiedReplications = replications.filter(r => r.status === 'VERIFIED');
         if (excludedDHs == null) {
-            this.logger.notify(`Replication window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
+            const action = isReplacement === true ? 'Replacement' : 'Replication';
+            this.logger.notify(`${action} window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
         }
 
         let identities = verifiedReplications
@@ -71,6 +77,19 @@ class DCOfferChooseCommand extends Command {
             task = offer.task;
             difficulty = await this.blockchain.getOfferDifficulty(offer.offer_id);
         }
+        const handler = await models.handler_ids.findOne({
+            where: { handler_id },
+        });
+        const handler_data = JSON.parse(handler.data);
+        handler_data.status = 'MINING_SOLUTION';
+        await models.handler_ids.update(
+            {
+                data: JSON.stringify(handler_data),
+            },
+            {
+                where: { handler_id },
+            },
+        );
 
         await this.minerService.sendToMiner(
             task,
@@ -89,6 +108,7 @@ class DCOfferChooseCommand extends Command {
                         excludedDHs,
                         isReplacement,
                         dhIdentity,
+                        handler_id,
                     },
                 },
             ],
@@ -104,9 +124,12 @@ class DCOfferChooseCommand extends Command {
         const { internalOfferId } = command.data;
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
-
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            id: internalOfferId,
+        });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

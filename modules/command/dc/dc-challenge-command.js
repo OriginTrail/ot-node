@@ -32,24 +32,30 @@ class DCChallengeCommand extends Command {
             },
         });
 
-        this.logger.trace(`Sending challenge to ${challenge.dh_id}. Offer ID ${challenge.offer_id}, block ID ${challenge.block_id}.`);
+        this.logger.trace(`Sending challenge to ${challenge.dh_id}. Offer ID ${challenge.offer_id}, object_index ${challenge.object_index}, block_index ${challenge.block_index}.`);
 
         challenge.end_time = new Date().getTime() + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
 
         await this.transport.challengeRequest({
             payload: {
                 data_set_id: challenge.data_set_id,
-                block_id: challenge.block_id,
+                offer_id: challenge.offer_id,
+                object_index: challenge.object_index,
+                block_index: challenge.block_index,
                 challenge_id: challenge.id,
                 litigator_id: this.config.identity,
             },
         }, challenge.dh_id);
 
+        let checkCommandDelay = this.config.challengeResponseTimeMills;
+        if (checkCommandDelay == null) {
+            checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        }
         return {
             commands: [
                 {
                     name: 'dcChallengeCheckCommand',
-                    delay: constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS,
+                    delay: checkCommandDelay,
                     data: {
                         dhId: challenge.dh_id,
                         dhIdentity: challenge.dh_identity,

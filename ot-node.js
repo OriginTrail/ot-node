@@ -18,9 +18,11 @@ const path = require('path');
 const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
-const GS1Importer = require('./modules/GS1Importer');
-const GS1Utilities = require('./modules/GS1Utilities');
-const WOTImporter = require('./modules/WOTImporter');
+const SchemaValidator = require('./modules/validator/schema-validator');
+const GS1Utilities = require('./modules/importer/gs1-utilities');
+const OTJsonImporter = require('./modules/importer/ot-json-importer');
+const WOTImporter = require('./modules/importer/wot-importer');
+const EpcisOtJsonTranspiler = require('./modules/transpiler/epcis/epcis-otjson-transpiler');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -40,8 +42,8 @@ const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
-const RestAPIService = require('./modules/service/rest-api-service');
-const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
+const RestApiController = require('./modules/service/rest-api-controller');
+const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -81,6 +83,11 @@ try {
 
     if (!config.management_wallet) {
         console.error('Please provide a valid management wallet.');
+        process.abort();
+    }
+
+    if (!config.blockchain.rpc_server_url) {
+        console.error('Please provide a valid RPC server URL.');
         process.abort();
     }
 } catch (error) {
@@ -149,10 +156,16 @@ process.on('warning', (warning) => {
 });
 
 process.on('exit', (code) => {
-    if (code !== 0) {
-        log.error(`Whoops, terminating with code: ${code}`);
-    } else {
+    switch (code) {
+    case 0:
         log.debug(`Normal exiting with code: ${code}`);
+        break;
+    case 4:
+        log.trace('Exiting because of update.');
+        break;
+    default:
+        log.error(`Whoops, terminating with code: ${code}`);
+        break;
     }
 });
 
@@ -283,18 +296,8 @@ class OTNode {
         config.erc725Identity = '';
         Object.seal(config);
 
-        // check for Updates
-        try {
-            log.info('Checking for updates');
-            await Utilities.checkForUpdates(config.autoUpdater);
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
         const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+            new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
 
         const appState = {};
         if (config.is_bootstrap_node) {
@@ -353,11 +356,13 @@ class OTNode {
             appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
+            schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
-            gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
+            otJsonImporter: awilix.asClass(OTJsonImporter).singleton(),
+            epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
@@ -369,7 +374,7 @@ class OTNode {
             importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
             challengeService: awilix.asClass(ChallengeService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
@@ -419,7 +424,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runMigration(blockchain);
+            await this._runMigration();
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -433,14 +438,13 @@ class OTNode {
         const profile = await blockchain.getProfile(config.erc725Identity);
 
         if (!profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
-            throw Error('ERC725 profile not created for this node ID. ' +
-                `My identity ${config.identity}, profile's node id: ${profile.nodeId}.`);
+            await blockchain.setNodeId(config.erc725Identity, config.identity.toLowerCase());
         }
 
         // Initialise API
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restApiController');
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
@@ -466,28 +470,11 @@ class OTNode {
      * @deprecated
      * @private
      */
-    async _runMigration(blockchain) {
+    async _runMigration() {
         const migrationsStartedMills = Date.now();
         log.info('Initializing code migrations...');
 
-        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
-        const migrationDir = path.join(config.appDataPath, 'migrations');
-        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
-        if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
-
-            try {
-                await migration.run();
-                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
-
-                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
-            } catch (e) {
-                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
-                console.log(e);
-                notifyBugsnag(e);
-                process.exit(1);
-            }
-        }
+        // Note: add migrations here
 
         log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
@@ -524,7 +511,8 @@ class OTNode {
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
         });
 
         const transport = container.resolve('transport');
@@ -545,9 +533,9 @@ class OTNode {
             approvalService.handleApprovalEvent(eventData);
         });
 
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restApiController');
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
@@ -563,16 +551,18 @@ class OTNode {
     listenBlockchainEvents(blockchain) {
         log.info('Starting blockchain event listener');
 
-        const delay = 10000;
+        const delay = 20000;
         let working = false;
         let deadline = Date.now();
-        setInterval(() => {
+        setInterval(async () => {
             if (!working && Date.now() > deadline) {
                 working = true;
-                blockchain.getAllPastEvents('HOLDING_CONTRACT');
-                blockchain.getAllPastEvents('PROFILE_CONTRACT');
-                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
-                blockchain.getAllPastEvents('LITIGATION_CONTRACT');
+                await blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                await blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                await blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                await blockchain.getAllPastEvents('LITIGATION_CONTRACT');
+                await blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
+                await blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -581,19 +571,26 @@ class OTNode {
 }
 
 
-console.log(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
-console.log('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
-console.log('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
-console.log('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
-console.log('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
-console.log(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
+log.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
+log.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
+log.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
+log.info('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
+log.info('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
+log.info(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
 
-console.log('======================================================');
-console.log(`             OriginTrail Node v${pjson.version}`);
-console.log('======================================================');
-console.log('');
+log.info('======================================================');
+log.info(`             OriginTrail Node v${pjson.version}`);
+log.info('======================================================');
+log.info('');
 
-const otNode = new OTNode();
-otNode.bootstrap().then(() => {
-    log.info('OT Node started');
-});
+
+function main() {
+    const otNode = new OTNode();
+    otNode.bootstrap().then(() => {
+        log.info('OT Node started');
+    });
+}
+
+// Make sure the Sequelize meta table is migrated before running main.
+const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
+migrationSequelizeMeta.run().then(main);

@@ -1,7 +1,6 @@
 const { fork } = require('child_process');
 const Models = require('../../models/index');
-
-const DEFAULT_DIFFICULTY = 1;
+const { MinerError } = require('../errors');
 
 class MinerService {
     constructor(ctx) {
@@ -25,7 +24,7 @@ class MinerService {
             forked.send({
                 offerId,
                 wallets,
-                difficulty: DEFAULT_DIFFICULTY, // TODO take from configuration
+                difficulty,
                 task,
                 type: 'TASK',
             });
@@ -35,7 +34,7 @@ class MinerService {
                 if (parsed.success) {
                     this.emitter.emit('int-miner-solution', null, parsed);
                 } else {
-                    this.emitter.emit('int-miner-solution', new Error(`Cannot find a solution for offer ${offerId}`), null);
+                    this.emitter.emit('int-miner-solution', new MinerError(`Cannot find a solution for offer ${offerId}`, offerId), null);
                 }
             });
 

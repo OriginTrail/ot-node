@@ -13,6 +13,7 @@ class DcOfferMiningCompletedCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -25,6 +26,7 @@ class DcOfferMiningCompletedCommand extends Command {
             solution,
             success,
             isReplacement,
+            handler_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
@@ -58,6 +60,9 @@ class DcOfferMiningCompletedCommand extends Command {
             offer.status = 'MINED';
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
+            this.remoteControl.offerUpdate({
+                offer_id: offerId,
+            });
 
             if (isReplacement) {
                 return {
@@ -70,13 +75,31 @@ class DcOfferMiningCompletedCommand extends Command {
                 };
             }
 
-            const hasFunds = await this.dcService
-                .hasProfileBalanceForOffer(offer.token_amount_per_holder);
-            if (!hasFunds) {
-                throw new Error('Not enough tokens. To replicate data please deposit more tokens to your profile');
-            }
+            if (this.config.parentIdentity) {
+                const hasPermission = await this.profileService.hasParentPermission();
+                if (!hasPermission) {
+                    const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';
+                    this.logger.warn(message);
+                    throw new Error(message);
+                }
 
-            const commandData = { offerId, solution };
+                const hasFunds = await
+                this.dcService.parentHasProfileBalanceForOffer(offer.token_amount_per_holder);
+                if (!hasFunds) {
+                    const message = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
+                    this.logger.warn(message);
+                    throw new Error(message);
+                }
+            } else {
+                const hasFunds =
+                    await this.dcService.hasProfileBalanceForOffer(offer.token_amount_per_holder);
+                if (!hasFunds) {
+                    const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+                    this.logger.warn(message);
+                    throw new Error(message);
+                }
+            }
+            const commandData = { offerId, solution, handler_id };
             const commandSequence = ['dcOfferFinalizeCommand'];
             return {
                 commands: [
@@ -91,8 +114,12 @@ class DcOfferMiningCompletedCommand extends Command {
         this.logger.warn(`Offer ${offer.offer_id} has no solution.`);
 
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = 'Failed to find solution for DHs provided';
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
@@ -107,8 +134,12 @@ class DcOfferMiningCompletedCommand extends Command {
         const { offerId } = command.data;
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
+        this.remoteControl.offerUpdate({
+            offer_id: offerId,
+        });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

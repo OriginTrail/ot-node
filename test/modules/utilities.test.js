@@ -27,7 +27,7 @@ describe('Utilities module', () => {
                     'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
                     'dc_token_amount_per_holder', 'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes', 'dh_min_token_price',
-                    'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval', 'litigationEnabled'],
+                    'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -37,23 +37,29 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.blockchain, [
                     'blockchain_title', 'network_id', 'gas_limit', 'gas_price',
-                    'hub_contract_address', 'rpc_node_host', 'rpc_node_port', 'plugins'],
+                    'hub_contract_address', 'plugins'],
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
                 config.network, [
-                    'id', 'hostname', 'bootstraps',
+                    'id', 'hostname', 'bootstraps', 'churnPlugin',
                     'remoteWhitelist', 'identityDifficulty',
                     'solutionDifficulty',
                 ],
                 `Some config items are missing in config.network for environment '${environment}'`,
             );
             assert.hasAllKeys(
+                config.network.churnPlugin, [
+                    'cooldownBaseTimeout', 'cooldownMultiplier', 'cooldownResetTime',
+                ],
+                `Some config items are missing in config.network.churnPlugin for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
                 config.bugSnag, ['releaseStage'],
                 `Some config items are missing in config.bugSnag for environment '${environment}'`,
             );
             assert.hasAllKeys(
-                config.autoUpdater, ['repo', 'branch'],
+                config.autoUpdater, ['archiveUrl', 'enabled', 'packageJsonUrl'],
                 `Some config items are missing in config.autoUpdater for environment '${environment}'`,
             );
         });
@@ -90,7 +96,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'hub_contract_address', 'rpc_node_host', 'rpc_node_port']);
+                'gas_price', 'hub_contract_address']);
             assert.equal(config.blockchain.blockchain_title, 'Ethereum');
         });
     });
