@@ -79,6 +79,7 @@ class ImportService {
             const commandSequence = [
                 'dcWriteToDbCommand',
                 'dcAfterImportCommand',
+                'dcFinalizeImportCommand',
             ];
 
             await this.commandExecutor.add({

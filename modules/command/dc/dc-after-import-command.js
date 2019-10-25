@@ -19,16 +19,14 @@ class DcAfterImport extends Command {
     async execute(command) {
         const { afterImportData } = command.data;
         const response = await this.importer.afterImport(afterImportData);
-
         response.handler_id = afterImportData.handler_id;
-        const result = { response, error: null };
-        this.emitter.emit('finalized-import', result);
-        return this.continueSequence(result, command.sequence);
+        return this.continueSequence({ response, error: null }, command.sequence);
     }
 
     pack(data) {
         Object.assign(data, {
-            msg: data,
+            response: data,
+            error: null,
         });
         return data;
     }
