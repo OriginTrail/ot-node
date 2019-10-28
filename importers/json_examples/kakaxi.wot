@@ -14,11 +14,11 @@
           [
           {
             "type": "readPoint",
-            "id": "urn:epc:id:sgln:Building_1"
+            "id": "urn:ot:object:location:id:0000000593"
           },
           {
             "type":"observedObject",
-            "id": "urn:epc:id:sgtin:Batch_1"
+            "id": "urn:ot:object:product:id:0000000593-200384"
           }
         ]
       },
