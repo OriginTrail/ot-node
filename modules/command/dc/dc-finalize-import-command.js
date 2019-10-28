@@ -19,9 +19,9 @@ class DcFinalizeImport extends Command {
      * @param command
      */
     async execute(command) {
-        const { afterImportData } = command.data;
-        const response = await this._unpackKeysAndSortVertices(afterImportData);
-        response.handler_id = afterImportData.handler_id;
+        const data = command.data.afterImportData;
+        const response = await this._unpackKeysAndSortVertices(data);
+        response.handler_id = data.afterImportData.handler_id;
 
         await this._finalizeImport(response);
         return Command.empty();
