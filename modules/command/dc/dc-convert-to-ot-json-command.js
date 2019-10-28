@@ -15,9 +15,8 @@ class DcConvertToOtJson extends Command {
         const { standard_id } = command.data;
         if (standard_id === 'ot-json') {
             return this.continueSequence({ data: command.data }, command.sequence);
-        } else {
-            await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
         }
+        await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
         return Command.empty();
     }
 
