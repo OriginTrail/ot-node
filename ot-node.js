@@ -457,7 +457,6 @@ class OTNode {
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
             await remoteControl.connect();
-
         }
 
         const commandExecutor = container.resolve('commandExecutor');
