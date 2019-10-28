@@ -19,6 +19,7 @@ class ImportWorkerController {
      * @param offerId
      */
     async startGraphConverterWorker(command) {
+        this.logger.info('Starting graph converter worker');
         const {
             document,
             handler_id,
@@ -40,6 +41,11 @@ class ImportWorkerController {
         }));
 
         forked.on('message', async (response) => {
+            if (response.error) {
+                await this._sendErrorToFinalizeCommand(response.error, handler_id);
+                forked.kill();
+                return;
+            }
             const parsedData = JSON.parse(response);
             const commandData = {
                 dbData: {
@@ -68,10 +74,12 @@ class ImportWorkerController {
                 data: commandData,
                 transactional: false,
             });
+            forked.kill();
         });
     }
 
     async startOtjsonConverterWorker(command, standardId) {
+        this.logger.info('Starting ot-json converter worker');
         const { document, handler_id } = command.data;
 
         const forked = fork('modules/worker/otjson-converter-worker.js');
@@ -80,7 +88,9 @@ class ImportWorkerController {
 
         forked.on('message', async (response) => {
             if (response.error) {
-                throw new Error(response.error);
+                await this._sendErrorToFinalizeCommand(response.error, handler_id);
+                forked.kill();
+                return;
             }
             const otjson = JSON.parse(response);
             const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
@@ -88,7 +98,6 @@ class ImportWorkerController {
                 document: signedOtjson,
                 handler_id,
             };
-
             await this.commandExecutor.add({
                 name: command.sequence[0],
                 sequence: command.sequence.slice(1),
@@ -96,8 +105,20 @@ class ImportWorkerController {
                 data: commandData,
                 transactional: false,
             });
+            forked.kill();
+        });
+    }
+
+    async _sendErrorToFinalizeCommand(error, handler_id) {
+        await this.commandExecutor.add({
+            name: 'dcFinalizeImportCommand',
+            delay: 0,
+            transactional: false,
+            data: {
+                error,
+                handler_id,
+            },
         });
     }
 }
-
 module.exports = ImportWorkerController;

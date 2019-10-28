@@ -12,6 +12,7 @@ class DcFinalizeImport extends Command {
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -19,7 +20,11 @@ class DcFinalizeImport extends Command {
      * @param command
      */
     async execute(command) {
-        const { afterImportData } = command.data;
+        const { afterImportData, error } = command.data;
+        if (error) {
+            await this._processError(error, command.data.handler_id);
+            return Command.empty();
+        }
         const response = await this._unpackKeysAndSortVertices(afterImportData);
         response.handler_id = afterImportData.handler_id;
 
@@ -42,30 +47,30 @@ class DcFinalizeImport extends Command {
         return command;
     }
 
-    async _finalizeImport(response, error) {
-        const { handler_id } = response;
-        if (error != null) {
-            await Models.handler_ids.update(
-                {
-                    status: 'FAILED',
-                    data: JSON.stringify({
-                        error: error.message,
-                    }),
+    async _processError(error, handlerId) {
+        this.logger.error(error.message);
+        await Models.handler_ids.update(
+            {
+                status: 'FAILED',
+                data: JSON.stringify({
+                    error: error.message,
+                }),
+            },
+            {
+                where: {
+                    handler_id: handlerId,
                 },
-                {
-                    where: {
-                        handler_id,
-                    },
-                },
-            );
-            this.remoteControl.importFailed(error);
+            },
+        );
+        this.remoteControl.importFailed(error);
 
-            if (error.type !== 'ImporterError') {
-                this.notifyError(error);
-            }
-            return;
+        if (error.type !== 'ImporterError') {
+            this.notifyError(error);
         }
+    }
 
+    async _finalizeImport(response) {
+        const { handler_id } = response;
         const {
             data_set_id,
             root_hash,

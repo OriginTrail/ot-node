@@ -8,6 +8,7 @@ class DcWriteToDbCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -15,9 +16,22 @@ class DcWriteToDbCommand extends Command {
      * @param command
      */
     async execute(command) {
-        await this.writeToDb({
-            data: command.data.dbData,
-        });
+        try {
+            this.logger.info('Importing data to database');
+            await this.writeToDb({
+                data: command.data.dbData,
+            });
+        } catch (error) {
+            await this.commandExecutor.add({
+                name: 'dcFinalizeImportCommand',
+                delay: 0,
+                transactional: false,
+                data: {
+                    error,
+                },
+            });
+            return Command.empty();
+        }
         return this.continueSequence(command.data, command.sequence);
     }
 
