@@ -1,14 +1,13 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
-
 const Command = require('../command');
+const { forEachSeries } = require('p-iteration');
 const Utilities = require('../../Utilities');
-const Models = require('../../../models/index');
+const { sha3_256 } = require('js-sha3');
 
 class DcWriteToDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.otJsonImporter = ctx.otJsonImporter;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -16,18 +15,14 @@ class DcWriteToDbCommand extends Command {
      * @param command
      */
     async execute(command) {
-        await this.otJsonImporter.writeToDb({
+        await this.writeToDb({
             data: command.data.dbData,
         });
-
-        return this.continueSequence(this.pack(command.data), command.sequence);
-    }
-
-    pack(data) {
+        const data = {};
         Object.assign(data, {
-            afterImportData: data.afterImportData,
+            afterImportData: command.data,
         });
-        return data;
+        return this.continueSequence(data, command.sequence);
     }
 
     /**
@@ -43,6 +38,88 @@ class DcWriteToDbCommand extends Command {
         };
         Object.assign(command, map);
         return command;
+    }
+
+    async writeToDb(data) {
+        const {
+            vertices, edges, metadata, datasetId, header, dataCreator,
+        } = data.data;
+
+        await forEachSeries(vertices, vertex => this.graphStorage.addVertex(vertex));
+        await forEachSeries(edges, edge => this.graphStorage.addEdge(edge));
+
+        await forEachSeries(vertices.filter(vertex => vertex.vertexType === 'Connector'), async (vertex) => {
+            // Connect to other connectors if available.
+            const relatedConnectors = await this.graphStorage.findConnectors(vertex.connectionId);
+
+            await forEachSeries(
+                relatedConnectors.filter(v => v._key !== vertex._key),
+                async (relatedVertex) => {
+                    // Check if there is connection is expected and if so check connection.
+                    if (relatedVertex.expectedConnectionCreators != null) {
+                        let hasConnection = false;
+                        relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
+                            const expectedErc725 = this._value(expectedCreator);
+
+                            if (dataCreator === expectedErc725) {
+                                hasConnection = true;
+                            }
+                        });
+
+                        if (!hasConnection) {
+                            // None of mentioned pointed to data creator.
+                            this.log.warn(`Dataset ${datasetId} has invalid connectors (${vertex.connectionId}).`);
+                            return;
+                        }
+                    }
+
+                    await this.graphStorage.addEdge({
+                        _key: this._keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                        _from: vertex._key,
+                        _to: relatedVertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+
+                    // Other way. This time host node is the data creator.
+                    await this.graphStorage.addEdge({
+                        _key: this._keyFrom(this.me, relatedVertex._key, vertex._key),
+                        _from: relatedVertex._key,
+                        _to: vertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+                },
+            );
+        });
+
+        await this.graphStorage.addDatasetMetadata(metadata);
+    }
+
+    /**
+     * Calculate SHA3 from input objects and return normalized hex string.
+     * @param rest An array of input data concatenated before calculating the hash.
+     * @return {string} Normalized hash string.
+     * @private
+     */
+    _keyFrom(...rest) {
+        return Utilities.normalizeHex(sha3_256([...rest].reduce(
+            (acc, argument) => {
+                acc += Utilities.stringify(argument, 0);
+                return acc;
+            },
+            '',
+        )));
+    }
+
+    /**
+     * Returns value of '@value' property.
+     * @param jsonLdObject JSON-LD object.
+     * @return {string}
+     * @private
+     */
+    _value(jsonLdObject) {
+        return jsonLdObject['@value'];
     }
 }
 

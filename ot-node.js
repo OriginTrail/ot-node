@@ -44,7 +44,7 @@ const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
 const RestApiController = require('./modules/service/rest-api-controller');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
-const ImportService = require('./modules/service/import-service');
+const ImportWorkerController = require('./modules/worker/import-worker-controller');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -377,7 +377,7 @@ class OTNode {
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),
             challengeService: awilix.asClass(ChallengeService).singleton(),
-            importService: awilix.asClass(ImportService).singleton(),
+            importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();

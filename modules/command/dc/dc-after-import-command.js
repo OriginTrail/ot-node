@@ -1,15 +1,12 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
-
 const Command = require('../command');
-const Utilities = require('../../Utilities');
-const Models = require('../../../models/index');
+const ImportUtilities = require('../../ImportUtilities');
+const Graph = require('../../Graph');
 
 class DcAfterImport extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.importer = ctx.importer;
-        this.emitter = ctx.emitter;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -18,7 +15,7 @@ class DcAfterImport extends Command {
      */
     async execute(command) {
         const { afterImportData } = command.data;
-        const response = await this.importer.afterImport(afterImportData);
+        const response = await this.afterImport(afterImportData);
         response.handler_id = afterImportData.handler_id;
         return this.continueSequence({ response, error: null }, command.sequence);
     }
@@ -29,6 +26,37 @@ class DcAfterImport extends Command {
             error: null,
         });
         return data;
+    }
+
+    /**
+     * Process successfull import
+     * @param unpack  Unpack keys
+     * @param result  Import result
+     * @return {Promise<>}
+     */
+    afterImport(result, unpack = false) {
+        this.remoteControl.importRequestData();
+        let {
+            vertices, edges,
+        } = result;
+        if (unpack) {
+            ImportUtilities.unpackKeys(vertices, edges);
+        }
+        const {
+            data_set_id, wallet, root_hash,
+        } = result;
+
+        edges = Graph.sortVertices(edges);
+        vertices = Graph.sortVertices(vertices);
+
+        return {
+            data_set_id,
+            root_hash,
+            total_documents: 1,
+            vertices,
+            edges,
+            wallet,
+        };
     }
 
     /**

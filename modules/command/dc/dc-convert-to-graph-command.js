@@ -5,7 +5,7 @@ class DcConvertToGraphCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.otJsonImporter = ctx.otJsonImporter;
-        this.importService = ctx.importService;
+        this.importWorkerController = ctx.importWorkerController;
     }
 
     /**
@@ -13,7 +13,7 @@ class DcConvertToGraphCommand extends Command {
      * @param command
      */
     async execute(command) {
-        await this.importService.startGraphConverterWorker(command);
+        await this.importWorkerController.startGraphConverterWorker(command);
         return Command.empty();
     }
 

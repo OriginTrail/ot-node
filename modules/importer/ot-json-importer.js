@@ -134,57 +134,58 @@ class OtJsonImporter {
             },
         };
     }
-
-    async convertToGraph(data) {
-        try {
-            const {
-                document,
-                encryptedMap,
-            } = data;
-
-            // TODO: validate document here.
-            await this._validate(document);
-
-            // Extract wallet from signature.
-            //     const wallet = ImportUtilities.extractDatasetSigner(
-            //     document,
-            //     this.web3,
-            // );
-
-            // await this.importService.sendToWorker(data);
-
-            // const forked = fork('modules/worker/graph-converter-worker.js');
-            //
-            // forked.send(JSON.stringify({ document, encryptedMap, wallet }), () => {
-            //     console.log('Poslao detetu input.');
-            // });
-            //
-            // forked.on('message', (response) => {
-            //     console.log('Primio od deteta:');
-            //     this.emitter.emit('dobio-od-deteta', response);
-            //     console.log(JSON.parse(response));
-            // });
-        } catch (e) {
-            console.log('Puklo');
-        }
-
-
-        // TODO: Check for datasetHeader.dataIntegrity.* proof here.
-
-        // TODO enable commit operation
-        // contents.vertices.map((v) => {
-        //     v.inTransaction = true;
-        //     return v;
-        // });
-        // contents.edges.map((e) => {
-        //     e.inTransaction = true;
-        //     return e;
-        // });
-    }
+    //
+    // async convertToGraph(data) {
+    //     try {
+    //         const {
+    //             document,
+    //             encryptedMap,
+    //         } = data;
+    //
+    //         // TODO: validate document here.
+    //         await this._validate(document);
+    //
+    //         // Extract wallet from signature.
+    //         //     const wallet = ImportUtilities.extractDatasetSigner(
+    //         //     document,
+    //         //     this.web3,
+    //         // );
+    //
+    //         // await this.importService.sendToWorker(data);
+    //
+    //         // const forked = fork('modules/worker/graph-converter-worker.js');
+    //         //
+    //         // forked.send(JSON.stringify({ document, encryptedMap, wallet }), () => {
+    //         //     console.log('Poslao detetu input.');
+    //         // });
+    //         //
+    //         // forked.on('message', (response) => {
+    //         //     console.log('Primio od deteta:');
+    //         //     this.emitter.emit('dobio-od-deteta', response);
+    //         //     console.log(JSON.parse(response));
+    //         // });
+    //     } catch (e) {
+    //         console.log('Puklo');
+    //     }
+    //
+    //
+    //     // TODO: Check for datasetHeader.dataIntegrity.* proof here.
+    //
+    //     // TODO enable commit operation
+    //     // contents.vertices.map((v) => {
+    //     //     v.inTransaction = true;
+    //     //     return v;
+    //     // });
+    //     // contents.edges.map((e) => {
+    //     //     e.inTransaction = true;
+    //     //     return e;
+    //     // });
+    // }
 
     async writeToDb(data) {
-
-        const { vertices, edges, metadata, datasetId, header, dataCreator} = data.data;
+        const {
+            vertices, edges, metadata, datasetId, header, dataCreator,
+        } = data.data;
 
         await forEachSeries(vertices, vertex => this.db.addVertex(vertex));
         await forEachSeries(edges, edge => this.db.addEdge(edge));

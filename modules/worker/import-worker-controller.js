@@ -1,10 +1,9 @@
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
 
-class ImportService {
+class ImportWorkerController {
     constructor(ctx) {
         this.logger = ctx.logger;
-        this.blockchain = ctx.blockchain;
         this.web3 = ctx.web3;
         this.otJsonImporter = ctx.otJsonImporter;
 
@@ -43,9 +42,6 @@ class ImportService {
         forked.on('message', async (response) => {
             const parsedData = JSON.parse(response);
             const commandData = {
-                parsedData,
-            };
-            Object.assign(commandData, {
                 dbData: {
                     vertices: parsedData.vertices,
                     edges: parsedData.edges,
@@ -63,7 +59,7 @@ class ImportService {
                     data_set_id: parsedData.datasetId,
                     handler_id: parsedData.handler_id,
                 },
-            });
+            };
 
             await this.commandExecutor.add({
                 name: command.sequence[0],
@@ -75,26 +71,15 @@ class ImportService {
         });
     }
 
-    async startOtjsonConverterWorker(command) {
+    async startOtjsonConverterWorker(command, standardId) {
         const {
             document,
             handler_id,
         } = command.data;
 
-        /**
-         * New sequence is created to avoid database operations for communication between commands
-         */
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
-        const config = {
-            blockchain: {
-                network_id: this.config.blockchain.network_id,
-                hub_contract_address: this.config.blockchain.hub_contract_address,
-            },
-            erc725Identity: this.config.erc725Identity,
-        };
-
-        forked.send(JSON.stringify({ config, xml: document }));
+        forked.send(JSON.stringify({ config: this.config, xml: document, standardId }));
 
         forked.on('message', async (response) => {
             const otjson = JSON.parse(response);
@@ -115,4 +100,4 @@ class ImportService {
     }
 }
 
-module.exports = ImportService;
+module.exports = ImportWorkerController;
