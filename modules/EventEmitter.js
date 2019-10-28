@@ -813,7 +813,7 @@ class EventEmitter {
                         );
                         break;
                     }
-                    case 'graph': {
+                    case 'ot-json': {
                         await processExport(
                             null,
                             { formatted_dataset: result, handler_id: data.handler_id },

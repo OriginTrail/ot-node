@@ -445,6 +445,7 @@ class OTNode {
 
         // Initialise API
         const restApiController = container.resolve('restApiController');
+
         try {
             await restApiController.startRPC();
         } catch (err) {
@@ -453,10 +454,10 @@ class OTNode {
             notifyBugsnag(err);
             process.exit(1);
         }
-
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
             await remoteControl.connect();
+
         }
 
         const commandExecutor = container.resolve('commandExecutor');
@@ -490,7 +491,7 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
