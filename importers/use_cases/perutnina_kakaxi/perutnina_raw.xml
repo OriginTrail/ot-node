@@ -1,0 +1,821 @@
+<origintrail_export version="1">
+  <provider>
+    <id>SLO_PERUTNINA_PTUJ_2015</id>
+  </provider>
+  <product_origin_data>
+    <origin>
+      <facility type="factory">
+        <internal_facility_id>1000</internal_facility_id>
+        <address>Potrčeva cesta 10</address>
+        <city>Ptuj</city>
+        <country_code>SI</country_code>
+        <latitude>46.422372</latitude>
+        <longitude>15.874779</longitude>
+        <owner_name>
+          <general>Perutnina Ptuj</general>
+          <si>Perutnina Ptuj d.d.</si>
+          <en>Perutnina Ptuj Ltd</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Celi trup</type>
+        <internal_product_id>000000000000003687</internal_product_id>
+        <internal_product_name>PPR Pišč. IK Promo Pack SV cca.1,6/4,8kg</internal_product_name>
+        <codes>
+          <ean13>2200320000003</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Celi trup</type>
+        <internal_product_id>000000000000003079</internal_product_id>
+        <internal_product_name>PPR Piščanec z dod.drob.6,4kg IK</internal_product_name>
+        <codes>
+          <ean13>2223068000005</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Celi trup</type>
+        <internal_product_id>000000000000003687</internal_product_id>
+        <internal_product_name>PPR Pišč. IK Promo Pack SV cca.1,6/4,8kg</internal_product_name>
+        <codes>
+          <ean13>2604172000004</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Celi trup</type>
+        <internal_product_id>000000000000003079</internal_product_id>
+        <internal_product_name>PPR Piščanec z dod.drob.6,4kg IK</internal_product_name>
+        <codes>
+          <ean13>2623068000003</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Celi trup</type>
+        <internal_product_id>000000000000003395</internal_product_id>
+        <internal_product_name>PPR Piš.z dod.drob.cca.1,6kg/11,2kg AT</internal_product_name>
+        <codes>
+          <ean13>2732416000005</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Stegna pi</type>
+        <internal_product_id>000000000000003077</internal_product_id>
+        <internal_product_name>PPR Piščančja stegna BKK 500g/4kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977030778</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>File pišč</type>
+        <internal_product_id>000000000000003078</internal_product_id>
+        <internal_product_name>PPR Piščančji file 500g/4kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977030785</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Krače piš</type>
+        <internal_product_id>000000000000003080</internal_product_id>
+        <internal_product_name>PPR Piščančje krače 500g/4kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977030808</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Peruti pi</type>
+        <internal_product_id>000000000000003081</internal_product_id>
+        <internal_product_name>PPR Piščančje peruti 500g/4kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977030815</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>File pišč</type>
+        <internal_product_id>000000000000003082</internal_product_id>
+        <internal_product_name>PPR Pišč.file zrezek 500g/4kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977030822</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Peruti pi</type>
+        <internal_product_id>000000000000003083</internal_product_id>
+        <internal_product_name>PPR Piš.peruti zg.del 500g/4kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977030839</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>File pišč</type>
+        <internal_product_id>000000000000003150</internal_product_id>
+        <internal_product_name>PPR Piščančji file 500g/2kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977031508</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Stegna pi</type>
+        <internal_product_id>000000000000003151</internal_product_id>
+        <internal_product_name>PPR Piščanja stegna BKK 500g/2kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977031515</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Bedra piš</type>
+        <internal_product_id>000000000000003256</internal_product_id>
+        <internal_product_name>PPR Piščančja bedra KA 550g/4,4kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977032567</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Peruti pi</type>
+        <internal_product_id>000000000000003391</internal_product_id>
+        <internal_product_name>PPR Piščančje peruti SV 500g/7,5kg AT</internal_product_name>
+        <codes>
+          <ean13>3838977033915</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Krače piš</type>
+        <internal_product_id>000000000000003393</internal_product_id>
+        <internal_product_name>PPR Piščančje krače SV 500g/7,5kg AT</internal_product_name>
+        <codes>
+          <ean13>3838977033939</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Stegna pi</type>
+        <internal_product_id>000000000000003394</internal_product_id>
+        <internal_product_name>PPR Pišč.stegna BKK 500g/7,5kg AT</internal_product_name>
+        <codes>
+          <ean13>3838977033946</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>File pišč</type>
+        <internal_product_id>000000000000003678</internal_product_id>
+        <internal_product_name>PPR Piš.mini file SV KA IK 800g/6,4kg SI</internal_product_name>
+        <codes>
+          <ean13>3838977036787</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Peruti pi</type>
+        <internal_product_id>000000000000003680</internal_product_id>
+        <internal_product_name>PPR Pišč.peru. BŠ SV KA IK 800g/6,4kg SI</internal_product_name>
+        <codes>
+          <ean13>3838977036800</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Krače piš</type>
+        <internal_product_id>000000000000003681</internal_product_id>
+        <internal_product_name>PPR Pišč. krače SV KA IK 800g/6,4kg SI</internal_product_name>
+        <codes>
+          <ean13>3838977036817</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>Mešani pi</type>
+        <internal_product_id>000000000000003689</internal_product_id>
+        <internal_product_name>PPR Piščanec razrezan za poh. 1kg/6kg IK</internal_product_name>
+        <codes>
+          <ean13>3838977036893</ean13>
+        </codes>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Perut. meso in izd</category>
+        <type>File pišč</type>
+        <internal_product_id>000000000000003721</internal_product_id>
+        <internal_product_name>PPR Pišč.file zrezki KA 500g/7,5kg AT</internal_product_name>
+        <codes>
+          <ean13>3838977037210</ean13>
+        </codes>
+      </product_meta_data>
+    </origin>
+    <origin>
+      <facility type="farm">
+        <internal_facility_id>0000000593</internal_facility_id>
+        <address>Sodinci 28</address>
+        <city>Velika Nedelja</city>
+        <country_code>SI</country_code>
+        <latitude>46.4307192</latitude>
+        <longitude>16.0748670</longitude>
+        <owner_name>
+          <general>Krabonja Peter</general>
+          <si>Krabonja Peter</si>
+          <en>Krabonja Peter</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200383</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni M</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200384</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni S</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200385</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni V</internal_product_name>
+      </product_meta_data>
+    </origin>
+    <origin>
+      <facility type="farm">
+        <internal_facility_id>0000001108</internal_facility_id>
+        <address>Boreci 9</address>
+        <city>Križevci pri Ljutomeru</city>
+        <country_code>SI</country_code>
+        <latitude>46.5598355</latitude>
+        <longitude>16.1409577</longitude>
+        <owner_name>
+          <general>PZP, farma Boreci</general>
+          <si>PZP, farma Boreci</si>
+          <en>PZP, farma Boreci</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200383</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni M</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200384</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni S</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200385</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni V</internal_product_name>
+      </product_meta_data>
+    </origin>
+    <origin>
+      <facility type="farm">
+        <internal_facility_id>0000001111</internal_facility_id>
+        <address>Boreci 9</address>
+        <city>Križevci pri Ljutomeru</city>
+        <country_code>SI</country_code>
+        <latitude>46.5598355</latitude>
+        <longitude>16.1409577</longitude>
+        <owner_name>
+          <general>PZP, farma Boreci</general>
+          <si>PZP, farma Boreci</si>
+          <en>PZP, farma Boreci</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200383</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni M</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200384</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni S</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200385</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni V</internal_product_name>
+      </product_meta_data>
+    </origin>
+    <origin>
+      <facility type="farm">
+        <internal_facility_id>0000001262</internal_facility_id>
+        <address>Boreci 9</address>
+        <city>Križevci pri Ljutomeru</city>
+        <country_code>SI</country_code>
+        <latitude>46.5598355</latitude>
+        <longitude>16.1409577</longitude>
+        <owner_name>
+          <general>PZP, farma Boreci</general>
+          <si>PZP, farma Boreci</si>
+          <en>PZP, farma Boreci</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200383</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni M</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200384</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni S</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200385</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni V</internal_product_name>
+      </product_meta_data>
+    </origin>
+    <origin>
+      <facility type="farm">
+        <internal_facility_id>0000001264</internal_facility_id>
+        <address>Boreci 9</address>
+        <city>Križevci pri Ljutomeru</city>
+        <country_code>SI</country_code>
+        <latitude>46.5598355</latitude>
+        <longitude>16.1409577</longitude>
+        <owner_name>
+          <general>PZP, farma Boreci</general>
+          <si>PZP, farma Boreci</si>
+          <en>PZP, farma Boreci</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200383</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni M</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200384</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni S</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200385</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni V</internal_product_name>
+      </product_meta_data>
+    </origin>
+    <origin>
+      <facility type="farm">
+        <internal_facility_id>0000001714</internal_facility_id>
+        <address>Formin 54a</address>
+        <city>Gorišnica</city>
+        <country_code>SI</country_code>
+        <latitude>46.3972928</latitude>
+        <longitude>16.0500509</longitude>
+        <owner_name>
+          <general>Podgoršek Anica</general>
+          <si>Podgoršek Anica</si>
+          <en>Podgoršek Anica</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200383</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni M</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200384</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni S</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200385</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni V</internal_product_name>
+      </product_meta_data>
+    </origin>
+    <origin>
+      <facility type="farm">
+        <internal_facility_id>0000001716</internal_facility_id>
+        <address>Formin 54a</address>
+        <city>Gorišnica</city>
+        <country_code>SI</country_code>
+        <latitude>46.3972928</latitude>
+        <longitude>16.0500509</longitude>
+        <owner_name>
+          <general>Podgoršek Anica</general>
+          <si>Podgoršek Anica</si>
+          <en>Podgoršek Anica</en>
+        </owner_name>
+      </facility>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200383</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni M</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200384</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni S</internal_product_name>
+      </product_meta_data>
+      <product_meta_data>
+        <category>Piščanci</category>
+        <type>Ostali piščanci</type>
+        <internal_product_id>200385</internal_product_id>
+        <internal_product_name>Brojlerji vzrejeni V</internal_product_name>
+      </product_meta_data>
+    </origin>
+  </product_origin_data>
+  <trail>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700795</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977036893</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000000593</internal_facility_id>
+          <internal_product_id>000000000000200384</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700369</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977032567</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001108</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700445</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977030785</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001111</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700445</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977031508</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001111</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977030778</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977030808</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977030815</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977030822</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977031515</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977036817</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977033915</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977033939</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977033946</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700340</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977037210</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001262</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-11T00:00:00+02:00</expiration_date>
+        <lot>1201700337</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>2623068000003</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001264</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-11T00:00:00+02:00</expiration_date>
+        <lot>1201700337</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>2223068000005</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001264</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700337</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977036787</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001264</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-11T00:00:00+02:00</expiration_date>
+        <lot>1201700337</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>2604172000004</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001264</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-11T00:00:00+02:00</expiration_date>
+        <lot>1201700337</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>2200320000003</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001264</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-12T00:00:00+02:00</expiration_date>
+        <lot>1201700337</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>2732416000005</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001264</internal_facility_id>
+          <internal_product_id>000000000000200385</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-14T00:00:00+02:00</expiration_date>
+        <lot>1201700381</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977030839</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001714</internal_facility_id>
+          <internal_product_id>000000000000200384</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700573</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977036800</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001716</internal_facility_id>
+          <internal_product_id>000000000000200384</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+    <product>
+      <production_info>
+        <expiration_date>2019-09-15T00:00:00+02:00</expiration_date>
+        <lot>1201700573</lot>
+        <production_line_number />
+      </production_info>
+      <codes>
+        <ean13>3838977033915</ean13>
+      </codes>
+      <ingredients>
+        <ingredient_product>
+          <internal_facility_id>0000001716</internal_facility_id>
+          <internal_product_id>000000000000200384</internal_product_id>
+        </ingredient_product>
+      </ingredients>
+    </product>
+  </trail>
+</origintrail_export>
