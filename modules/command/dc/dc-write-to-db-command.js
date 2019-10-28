@@ -18,11 +18,7 @@ class DcWriteToDbCommand extends Command {
         await this.writeToDb({
             data: command.data.dbData,
         });
-        const data = {};
-        Object.assign(data, {
-            afterImportData: command.data,
-        });
-        return this.continueSequence(data, command.sequence);
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**

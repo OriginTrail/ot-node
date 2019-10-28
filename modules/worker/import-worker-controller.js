@@ -72,16 +72,16 @@ class ImportWorkerController {
     }
 
     async startOtjsonConverterWorker(command, standardId) {
-        const {
-            document,
-            handler_id,
-        } = command.data;
+        const { document, handler_id } = command.data;
 
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
         forked.send(JSON.stringify({ config: this.config, xml: document, standardId }));
 
         forked.on('message', async (response) => {
+            if (response.error) {
+                throw new Error(response.error);
+            }
             const otjson = JSON.parse(response);
             const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
             const commandData = {

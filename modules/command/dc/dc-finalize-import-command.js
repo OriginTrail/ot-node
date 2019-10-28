@@ -19,9 +19,9 @@ class DcFinalizeImport extends Command {
      * @param command
      */
     async execute(command) {
-        const data = command.data.afterImportData;
-        const response = await this._unpackKeysAndSortVertices(data);
-        response.handler_id = data.afterImportData.handler_id;
+        const { afterImportData } = command.data;
+        const response = await this._unpackKeysAndSortVertices(afterImportData);
+        response.handler_id = afterImportData.handler_id;
 
         await this._finalizeImport(response);
         return Command.empty();
@@ -166,10 +166,10 @@ class DcFinalizeImport extends Command {
         this.remoteControl.importRequestData();
         const {
             data_set_id, wallet, root_hash,
-        } = result.afterImportData;
+        } = result;
         let {
             vertices, edges,
-        } = result.afterImportData;
+        } = result;
         if (unpack) {
             ImportUtilities.unpackKeys(vertices, edges);
         }

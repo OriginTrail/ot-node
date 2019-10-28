@@ -7,7 +7,8 @@ process.on('message', (data) => {
         const transpiler = new EpcisOtJsonTranspiler({ config: data.config });
         stringifiedJson = transpiler.convertToOTJson(data.xml);
     } else {
-        // throw error standard not supported
+        process.send({ error: `Unsupported standardId: ${data.standardId}` });
+        return;
     }
     process.send(stringifiedJson);
 });
