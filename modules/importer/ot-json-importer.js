@@ -5,6 +5,8 @@ const Utilities = require('../Utilities');
 const SchemaValidator = require('../validator/schema-validator');
 const ImportUtilities = require('../ImportUtilities');
 
+const { fork } = require('child_process');
+
 // Helper functions.
 
 /**
@@ -131,6 +133,109 @@ class OtJsonImporter {
                 ],
             },
         };
+    }
+    //
+    // async convertToGraph(data) {
+    //     try {
+    //         const {
+    //             document,
+    //             encryptedMap,
+    //         } = data;
+    //
+    //         // TODO: validate document here.
+    //         await this._validate(document);
+    //
+    //         // Extract wallet from signature.
+    //         //     const wallet = ImportUtilities.extractDatasetSigner(
+    //         //     document,
+    //         //     this.web3,
+    //         // );
+    //
+    //         // await this.importService.sendToWorker(data);
+    //
+    //         // const forked = fork('modules/worker/graph-converter-worker.js');
+    //         //
+    //         // forked.send(JSON.stringify({ document, encryptedMap, wallet }), () => {
+    //         //     console.log('Poslao detetu input.');
+    //         // });
+    //         //
+    //         // forked.on('message', (response) => {
+    //         //     console.log('Primio od deteta:');
+    //         //     this.emitter.emit('dobio-od-deteta', response);
+    //         //     console.log(JSON.parse(response));
+    //         // });
+    //     } catch (e) {
+    //         console.log('Puklo');
+    //     }
+    //
+    //
+    //     // TODO: Check for datasetHeader.dataIntegrity.* proof here.
+    //
+    //     // TODO enable commit operation
+    //     // contents.vertices.map((v) => {
+    //     //     v.inTransaction = true;
+    //     //     return v;
+    //     // });
+    //     // contents.edges.map((e) => {
+    //     //     e.inTransaction = true;
+    //     //     return e;
+    //     // });
+    // }
+
+    async writeToDb(data) {
+        const {
+            vertices, edges, metadata, datasetId, header, dataCreator,
+        } = data.data;
+
+        await forEachSeries(vertices, vertex => this.db.addVertex(vertex));
+        await forEachSeries(edges, edge => this.db.addEdge(edge));
+
+        await forEachSeries(vertices.filter(vertex => vertex.vertexType === 'Connector'), async (vertex) => {
+            // Connect to other connectors if available.
+            const relatedConnectors = await this.db.findConnectors(vertex.connectionId);
+
+            await forEachSeries(
+                relatedConnectors.filter(v => v._key !== vertex._key),
+                async (relatedVertex) => {
+                    // Check if there is connection is expected and if so check connection.
+                    if (relatedVertex.expectedConnectionCreators != null) {
+                        let hasConnection = false;
+                        relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
+                            const expectedErc725 = _value(expectedCreator);
+
+                            if (dataCreator === expectedErc725) {
+                                hasConnection = true;
+                            }
+                        });
+
+                        if (!hasConnection) {
+                            // None of mentioned pointed to data creator.
+                            this.log.warn(`Dataset ${datasetId} has invalid connectors (${vertex.connectionId}).`);
+                            return;
+                        }
+                    }
+
+                    await this.db.addEdge({
+                        _key: _keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                        _from: vertex._key,
+                        _to: relatedVertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+
+                    // Other way. This time host node is the data creator.
+                    await this.db.addEdge({
+                        _key: _keyFrom(this.me, relatedVertex._key, vertex._key),
+                        _from: relatedVertex._key,
+                        _to: vertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+                },
+            );
+        });
+
+        await this.db.addDatasetMetadata(metadata);
     }
 
     /**

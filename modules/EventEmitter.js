@@ -22,6 +22,7 @@ class EventEmitter {
         this.otJsonImporter = ctx.otJsonImporter;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
+        this.commandExecutor = ctx.commandExecutor;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -663,16 +664,53 @@ class EventEmitter {
             }
         });
 
+        this._on('finalized-import', async (result) => {
+            if (result.error != null) {
+                await processImport(null, result.error, {});
+            } else {
+                const data = { handler_id: result.response.handler_id };
+                await processImport(result.response, null, data);
+            }
+        });
 
-        this._on('api-gs1-import-request', async (data) => {
+        this._on('api-import-request', async (data) => {
             try {
-                logger.debug('GS1 import triggered');
-                const result = await importer.importXMLgs1(data.content);
-                if (result.error != null) {
-                    await processImport(null, result.error, data);
+                logger.debug('Import triggered');
+
+                const commandData = {
+                    standard_id: data.standard_id,
+                    document: data.content,
+                    handler_id: data.handler_id,
+                };
+
+                let command;
+                if (data.standard_id === 'ot-json') {
+                    commandData.document = JSON.parse(data.content);
+                    command = 'dcConvertToGraphCommand';
                 } else {
-                    await processImport(result.response, null, data);
+                    command = 'dcConvertToOtJsonCommand';
                 }
+
+                const commandSequence = [
+                    command,
+                ];
+
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
+                });
+
+                // const result = {error : 'Hardcoded'}
+
+                // const result = await importer.importXMLgs1(data.content);
+                // if (result.error != null) {
+                //     await processImport(null, result.error, data);
+                // } else {
+                //     await processImport(result.response, null, data);
+                // }
             } catch (error) {
                 await processImport(null, error, data);
             }

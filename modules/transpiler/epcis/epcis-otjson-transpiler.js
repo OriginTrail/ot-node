@@ -78,9 +78,14 @@ class EpcisOtJsonTranspiler {
 
         otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
-        const signedOtjson = importUtilities.signDataset(otjson, this.config, this.web3);
-
-        return signedOtjson;
+        // Until we update all routes to work with commands, keep this web3 implementation
+        let result;
+        if (this.web3) {
+            result = importUtilities.signDataset(otjson, this.config, this.web3);
+        } else {
+            result = importUtilities.sortStringifyDataset(otjson);
+        }
+        return result;
     }
 
     /**
