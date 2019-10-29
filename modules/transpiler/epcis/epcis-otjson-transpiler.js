@@ -440,6 +440,92 @@ class EpcisOtJsonTranspiler {
             }
         }
 
+        if (compressed.childEPCs && compressed.childEPCs.epc) {
+            for (const epc of compressed.childEPCs.epc) {
+                otObject.relations.push(createRelation(epc, {
+                    relationType: 'CHILD_EPC',
+                }));
+            }
+        }
+
+        if (compressed.sourceList) {
+            const sources = compressed.sourceList.source;
+            for (let i = 0; i < sources.length; i += 1) {
+                const data = {
+                    relationType: 'SOURCE',
+                };
+                const type = this._extractType(otObject.properties.___metadata, 'sourceList.source', i);
+                if (type) {
+                    Object.assign(data, {
+                        type,
+                    });
+                }
+                otObject.relations.push(createRelation(sources[i], data));
+            }
+        }
+
+        if (compressed.destinationList) {
+            const destinations = compressed.destinationList.destination;
+            for (let i = 0; i < destinations.length; i += 1) {
+                const data = {
+                    relationType: 'DESTINATION',
+                };
+                const type = this._extractType(otObject.properties.___metadata, 'destinationList.destination', i);
+                if (type) {
+                    Object.assign(data, {
+                        type,
+                    });
+                }
+                otObject.relations.push(createRelation(destinations[i], data));
+            }
+        }
+
+        if (compressed.inputEPCList && compressed.inputEPCList.epc) {
+            for (const epc of compressed.inputEPCList.epc) {
+                otObject.relations.push(createRelation(epc, {
+                    relationType: 'INPUT_EPC',
+                }));
+            }
+        }
+
+        if (compressed.inputQuantityList && compressed.inputQuantityList.quantityElement) {
+            for (const inputEPC of compressed.inputQuantityList.quantityElement) {
+                const data = {
+                    relationType: 'INPUT_EPC_QUANTITY',
+                    quantity: inputEPC.quantity,
+                };
+                if (inputEPC.uom) {
+                    Object.assign(data, {
+                        uom: inputEPC.uom,
+                    });
+                }
+                otObject.relations.push(createRelation(inputEPC.epcClass, data));
+            }
+        }
+
+        if (compressed.outputEPCList && compressed.outputEPCList.epc) {
+            for (const epc of compressed.outputEPCList.epc) {
+                otObject.relations.push(createRelation(epc, {
+                    relationType: 'OUTPUT_EPC',
+                }));
+            }
+        }
+
+        if (compressed.outputQuantityList && compressed.outputQuantityList.quantityElement) {
+            for (const outputEPC of compressed.outputQuantityList.quantityElement) {
+                const data = {
+                    relationType: 'OUTPUT_EPC_QUANTITY',
+                    quantity: outputEPC.quantity,
+                };
+                if (outputEPC.uom) {
+                    Object.assign(data, {
+                        uom: outputEPC.uom,
+                    });
+                }
+                otObject.relations.push(createRelation(outputEPC.epcClass, data));
+            }
+        }
+
         if (compressed.extension) {
             if (compressed.extension.quantityList) {
                 for (const epc of compressed.extension.quantityList.quantityElement) {
