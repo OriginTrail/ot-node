@@ -31,7 +31,7 @@ class DcConvertToGraphCommand extends Command {
     }
 
     /**
-     * Builds default dcOfferCreateDbCommand
+     * Builds default dcConvertToGraphCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

@@ -26,51 +26,8 @@ class DcFinalizeImport extends Command {
             return Command.empty();
         }
         const response = await this._unpackKeysAndSortVertices(afterImportData);
-        response.handler_id = afterImportData.handler_id;
 
-        await this._finalizeImport(response);
-        return Command.empty();
-    }
-
-    /**
-     * Builds default dcOfferCreateDbCommand
-     * @param map
-     * @returns {{add, data: *, delay: *, deadline: *}}
-     */
-    default(map) {
-        const command = {
-            name: 'dcFinalizeImportCommand',
-            delay: 0,
-            transactional: false,
-        };
-        Object.assign(command, map);
-        return command;
-    }
-
-    async _processError(error, handlerId) {
-        this.logger.error(error.message);
-        await Models.handler_ids.update(
-            {
-                status: 'FAILED',
-                data: JSON.stringify({
-                    error: error.message,
-                }),
-            },
-            {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
-        );
-        this.remoteControl.importFailed(error);
-
-        if (error.type !== 'ImporterError') {
-            this.notifyError(error);
-        }
-    }
-
-    async _finalizeImport(response) {
-        const { handler_id } = response;
+        const { handler_id } = afterImportData;
         const {
             data_set_id,
             root_hash,
@@ -128,7 +85,7 @@ class DcFinalizeImport extends Command {
                         root_hash,
                         data_hash: dataHash,
                         total_graph_entities: vertices.length
-                                    + edges.length,
+                            + edges.length,
                     }),
                 },
                 {
@@ -158,6 +115,44 @@ class DcFinalizeImport extends Command {
                 },
             );
             this.remoteControl.importFailed(error);
+        }
+        return Command.empty();
+    }
+
+    /**
+     * Builds default dcFinalizeImportCommand
+     * @param map
+     * @returns {{add, data: *, delay: *, deadline: *}}
+     */
+    default(map) {
+        const command = {
+            name: 'dcFinalizeImportCommand',
+            delay: 0,
+            transactional: false,
+        };
+        Object.assign(command, map);
+        return command;
+    }
+
+    async _processError(error, handlerId) {
+        this.logger.error(error.message);
+        await Models.handler_ids.update(
+            {
+                status: 'FAILED',
+                data: JSON.stringify({
+                    error: error.message,
+                }),
+            },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+        this.remoteControl.importFailed(error);
+
+        if (error.type !== 'ImporterError') {
+            this.notifyError(error);
         }
     }
 

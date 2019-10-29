@@ -34,7 +34,7 @@ class DcConvertToOtJson extends Command {
     }
 
     /**
-     * Builds default dcOfferCreateDbCommand
+     * Builds default dcConvertToOtJsonCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

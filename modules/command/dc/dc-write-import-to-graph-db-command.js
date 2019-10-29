@@ -3,7 +3,7 @@ const { forEachSeries } = require('p-iteration');
 const Utilities = require('../../Utilities');
 const { sha3_256 } = require('js-sha3');
 
-class DcWriteToDbCommand extends Command {
+class DcWriteImportToGraphDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -42,7 +42,7 @@ class DcWriteToDbCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcWriteToDbCommand',
+            name: 'DcWriteImportToGraphDbCommand',
             delay: 0,
             transactional: false,
         };
@@ -84,7 +84,7 @@ class DcWriteToDbCommand extends Command {
                     }
 
                     await this.graphStorage.addEdge({
-                        _key: this._keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                        _key: Utilities.keyFrom(dataCreator, vertex._key, relatedVertex._key),
                         _from: vertex._key,
                         _to: relatedVertex._key,
                         relationType: 'CONNECTION_DOWNSTREAM',
@@ -93,7 +93,7 @@ class DcWriteToDbCommand extends Command {
 
                     // Other way. This time host node is the data creator.
                     await this.graphStorage.addEdge({
-                        _key: this._keyFrom(this.me, relatedVertex._key, vertex._key),
+                        _key: Utilities.keyFrom(this.me, relatedVertex._key, vertex._key),
                         _from: relatedVertex._key,
                         _to: vertex._key,
                         relationType: 'CONNECTION_DOWNSTREAM',
@@ -106,21 +106,6 @@ class DcWriteToDbCommand extends Command {
         await this.graphStorage.addDatasetMetadata(metadata);
     }
 
-    /**
-     * Calculate SHA3 from input objects and return normalized hex string.
-     * @param rest An array of input data concatenated before calculating the hash.
-     * @return {string} Normalized hash string.
-     * @private
-     */
-    _keyFrom(...rest) {
-        return Utilities.normalizeHex(sha3_256([...rest].reduce(
-            (acc, argument) => {
-                acc += Utilities.stringify(argument, 0);
-                return acc;
-            },
-            '',
-        )));
-    }
 
     /**
      * Returns value of '@value' property.
@@ -133,4 +118,4 @@ class DcWriteToDbCommand extends Command {
     }
 }
 
-module.exports = DcWriteToDbCommand;
+module.exports = DcWriteImportToGraphDbCommand;

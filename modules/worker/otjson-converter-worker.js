@@ -5,7 +5,7 @@ process.on('message', (data) => {
     let stringifiedJson;
     if (data.standardId === 'gs1') {
         const transpiler = new EpcisOtJsonTranspiler({ config: data.config });
-        stringifiedJson = transpiler.convertToOTJson(data.xml);
+        stringifiedJson = transpiler.convertToOTJson(data.document);
     } else {
         process.send({ error: `Unsupported standardId: ${data.standardId}` });
         return;

@@ -20,6 +20,7 @@ const path = require('path');
 const rimraf = require('rimraf');
 
 const logger = require('./logger');
+const { sha3_256 } = require('js-sha3');
 
 class Utilities {
     /**
@@ -676,6 +677,22 @@ class Utilities {
             return `0x${number}`;
         }
         return number;
+    }
+
+    /**
+     * Calculate SHA3 from input objects and return normalized hex string.
+     * @param rest An array of input data concatenated before calculating the hash.
+     * @return {string} Normalized hash string.
+     * @private
+     */
+    static keyFrom(...rest) {
+        return Utilities.normalizeHex(sha3_256([...rest].reduce(
+            (acc, argument) => {
+                acc += Utilities.stringify(argument, 0);
+                return acc;
+            },
+            '',
+        )));
     }
 
     /**
