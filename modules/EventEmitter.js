@@ -21,6 +21,7 @@ class EventEmitter {
         this.appState = ctx.appState;
         this.otJsonImporter = ctx.otJsonImporter;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.commandExecutor = ctx.commandExecutor;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -663,20 +664,6 @@ class EventEmitter {
         });
 
 
-        this._on('api-gs1-import-request', async (data) => {
-            try {
-                logger.debug('GS1 import triggered');
-                const result = await importer.importXMLgs1(data.content);
-                if (result.error != null) {
-                    await processImport(null, result.error, data);
-                } else {
-                    await processImport(result.response, null, data);
-                }
-            } catch (error) {
-                await processImport(null, error, data);
-            }
-        });
-
         this._on('api-wot-import-request', async (data) => {
             try {
                 logger.debug('WOT import triggered');
@@ -775,7 +762,7 @@ class EventEmitter {
                         );
                         break;
                     }
-                    case 'graph': {
+                    case 'ot-json': {
                         await processExport(
                             null,
                             { formatted_dataset: result, handler_id: data.handler_id },

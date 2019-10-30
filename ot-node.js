@@ -44,6 +44,7 @@ const ImportController = require('./modules/controller/import-controller');
 const APIUtilities = require('./modules/api-utilities');
 const RestApiController = require('./modules/service/rest-api-controller');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
+const ImportWorkerController = require('./modules/worker/import-worker-controller');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -376,6 +377,7 @@ class OTNode {
             replicationService: awilix.asClass(ReplicationService).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),
             challengeService: awilix.asClass(ChallengeService).singleton(),
+            importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -443,6 +445,7 @@ class OTNode {
 
         // Initialise API
         const restApiController = container.resolve('restApiController');
+
         try {
             await restApiController.startRPC();
         } catch (err) {
@@ -451,7 +454,6 @@ class OTNode {
             notifyBugsnag(err);
             process.exit(1);
         }
-
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
             await remoteControl.connect();
@@ -488,7 +490,7 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
