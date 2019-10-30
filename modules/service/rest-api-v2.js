@@ -1,15 +1,8 @@
-const fs = require('fs');
-const ip = require('ip');
-const restify = require('restify');
-const corsMiddleware = require('restify-cors-middleware');
-
-const Utilities = require('../Utilities');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 
 const utilities = require('../Utilities');
 const Models = require('../../models');
-const uuidv4 = require('uuid/v4');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -18,14 +11,15 @@ class RestAPIServiceV2 {
         this.logger = ctx.logger;
         this.apiUtilities = ctx.apiUtilities;
         this.emitter = ctx.emitter;
+        this.commandExecutor = ctx.commandExecutor;
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
-        this.mapping_standards_for_event.set('ot-json', 'graph');
+        this.mapping_standards_for_event.set('ot-json', 'ot-json');
         this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
-        this.mapping_standards_for_event.set('graph', 'graph');
+        this.mapping_standards_for_event.set('graph', 'ot-json');
     }
 
     /**
@@ -323,23 +317,41 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const standard_id = req.body.standard_id.toLowerCase();
+        const standard_id =
+            this.mapping_standards_for_event.get(req.body.standard_id.toLowerCase());
 
-        // Check if file is provided
+        let fileContent;
         if (req.files !== undefined && req.files.file !== undefined) {
             const inputFile = req.files.file.path;
+            fileContent = await utilities.fileContents(inputFile);
+        } else if (req.body.file !== undefined) {
+            fileContent = req.body.file;
+        }
+
+        if (fileContent) {
             try {
-                const content = await utilities.fileContents(inputFile);
-                const queryObject = {
-                    content,
-                    contact: req.contact,
-                    response: res,
-                };
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                queryObject.handler_id = inserted_object.dataValues.handler_id;
-                this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
+                const commandData = {
+                    standard_id,
+                    document: fileContent,
+                    handler_id: inserted_object.dataValues.handler_id,
+                };
+                const commandSequence = [
+                    'dcConvertToOtJsonCommand',
+                    'dcConvertToGraphCommand',
+                    'dcWriteImportToGraphDbCommand',
+                    'dcFinalizeImportCommand',
+                ];
+
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
+                });
                 res.status(200);
                 res.send({
                     handler_id: inserted_object.dataValues.handler_id,
@@ -350,24 +362,7 @@ class RestAPIServiceV2 {
                     message: 'No import data provided',
                 });
             }
-        } else if (req.body.file !== undefined) {
-            // Check if import data is provided in request body
-            const queryObject = {
-                content: req.body.file,
-                contact: req.contact,
-                response: res,
-            };
-            const inserted_object = await Models.handler_ids.create({
-                status: 'PENDING',
-            });
-            queryObject.handler_id = inserted_object.dataValues.handler_id;
-            this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
-            res.status(200);
-            res.send({
-                handler_id: inserted_object.dataValues.handler_id,
-            });
         } else {
-            // No import data provided
             res.status(400);
             res.send({
                 message: 'No import data provided',

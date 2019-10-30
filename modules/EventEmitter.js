@@ -21,6 +21,7 @@ class EventEmitter {
         this.appState = ctx.appState;
         this.otJsonImporter = ctx.otJsonImporter;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.commandExecutor = ctx.commandExecutor;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -449,127 +450,6 @@ class EventEmitter {
             }
         });
 
-        const processImport = async (response, error, data) => {
-            const { handler_id } = data;
-
-            if (!response) {
-                await Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({
-                            error: error.message,
-                        }),
-                    },
-                    {
-                        where: {
-                            handler_id,
-                        },
-                    },
-                );
-                remoteControl.importFailed(error);
-
-                if (error.type !== 'ImporterError') {
-                    notifyError(error);
-                }
-                return;
-            }
-
-            const {
-                data_set_id,
-                root_hash,
-                total_documents,
-                wallet, // TODO: Sender's wallet is ignored for now.
-                vertices,
-                edges,
-                otjson_size,
-            } = response;
-
-            try {
-                const dataSize = bytes(JSON.stringify(vertices));
-                const importTimestamp = new Date();
-                await Models.data_info
-                    .create({
-                        data_set_id,
-                        root_hash,
-                        data_provider_wallet: config.node_wallet,
-                        import_timestamp: importTimestamp,
-                        total_documents,
-                        data_size: dataSize,
-                        origin: 'IMPORTED',
-                    }).catch(async (error) => {
-                        logger.error(error);
-                        notifyError(error);
-                        await Models.handler_ids.update(
-                            {
-                                status: 'FAILED',
-                                data: JSON.stringify({
-                                    error,
-                                }),
-                            },
-                            {
-                                where: {
-                                    handler_id,
-                                },
-                            },
-                        );
-                        remoteControl.importFailed(error);
-                    });
-
-                if (data.replicate) {
-                    this.emit('api-create-offer', {
-                        dataSetId: data_set_id,
-                        dataSizeInBytes: dataSize,
-                        dataRootHash: root_hash,
-                        response: data.response,
-                    });
-                } else {
-                    const graphObject = {};
-                    Object.assign(graphObject, { vertices, edges });
-                    await Models.handler_ids.update(
-                        {
-                            status: 'COMPLETED',
-                            data: JSON.stringify({
-                                dataset_id: data_set_id,
-                                import_time: importTimestamp.valueOf(),
-                                dataset_size_in_bytes: dataSize,
-                                otjson_size_in_bytes: otjson_size,
-                                root_hash,
-                                data_hash: Utilities.normalizeHex(sha3_256(`${graphObject}`)),
-                                total_graph_entities: vertices.length
-                                    + edges.length,
-                            }),
-                        },
-                        {
-                            where: {
-                                handler_id,
-                            },
-                        },
-                    );
-                    logger.info('Import complete');
-                    logger.info(`Root hash: ${root_hash}`);
-                    logger.info(`Data set ID: ${data_set_id}`);
-                    remoteControl.importSucceeded();
-                }
-            } catch (error) {
-                logger.error(`Failed to register import. Error ${error}.`);
-                notifyError(error);
-                await Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({
-                            error,
-                        }),
-                    },
-                    {
-                        where: {
-                            handler_id,
-                        },
-                    },
-                );
-                remoteControl.importFailed(error);
-            }
-        };
-
         this._on('api-offer-status', async (data) => {
             const { replicationId } = data;
             logger.info(`Offer status for internal ID ${replicationId} triggered.`);
@@ -662,58 +542,6 @@ class EventEmitter {
             }
         });
 
-
-        this._on('api-gs1-import-request', async (data) => {
-            try {
-                logger.debug('GS1 import triggered');
-                const result = await importer.importXMLgs1(data.content);
-                if (result.error != null) {
-                    await processImport(null, result.error, data);
-                } else {
-                    await processImport(result.response, null, data);
-                }
-            } catch (error) {
-                await processImport(null, error, data);
-            }
-        });
-
-        this._on('api-wot-import-request', async (data) => {
-            try {
-                logger.debug('WOT import triggered');
-                const responseObject = await importer.importWOT(data.content);
-                const { error } = responseObject;
-                const { response } = responseObject;
-
-                if (response == null) {
-                    await processImport(null, error, data);
-                } else {
-                    await processImport(response, null, data);
-                }
-            } catch (error) {
-                await processImport(null, error, data);
-            }
-        });
-
-        this._on('api-graph-import-request', async (data) => {
-            try {
-                logger.debug('Graph import triggered');
-                const dataset = ImportUtilities
-                    .prepareDataset(
-                        ImportUtilities.formatGraph(JSON.parse(data.content)),
-                        this.config,
-                        this.web3,
-                    );
-                const result = await importer.importOTJSON(dataset);
-                if (result.error != null) {
-                    await processImport(null, result.error, data);
-                } else {
-                    await processImport(result.response, null, data);
-                }
-            } catch (error) {
-                await processImport(null, error, data);
-            }
-        });
-
         const processExport = async (error, data) => {
             const { handler_id, formatted_dataset } = data;
 
@@ -775,7 +603,7 @@ class EventEmitter {
                         );
                         break;
                     }
-                    case 'graph': {
+                    case 'ot-json': {
                         await processExport(
                             null,
                             { formatted_dataset: result, handler_id: data.handler_id },
