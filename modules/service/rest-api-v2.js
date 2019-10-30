@@ -1,15 +1,8 @@
-const fs = require('fs');
-const ip = require('ip');
-const restify = require('restify');
-const corsMiddleware = require('restify-cors-middleware');
-
-const Utilities = require('../Utilities');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 
 const utilities = require('../Utilities');
 const Models = require('../../models');
-const uuidv4 = require('uuid/v4');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
