@@ -440,14 +440,6 @@ class EpcisOtJsonTranspiler {
             }
         }
 
-        if (compressed.childEPCs && compressed.childEPCs.epc) {
-            for (const epc of compressed.childEPCs.epc) {
-                otObject.relations.push(createRelation(epc, {
-                    relationType: 'CHILD_EPC',
-                }));
-            }
-        }
-
         if (compressed.sourceList) {
             const sources = compressed.sourceList.source;
             for (let i = 0; i < sources.length; i += 1) {
