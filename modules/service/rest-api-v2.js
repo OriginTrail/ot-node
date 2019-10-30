@@ -13,6 +13,8 @@ class RestAPIServiceV2 {
         this.emitter = ctx.emitter;
         this.commandExecutor = ctx.commandExecutor;
 
+        this.graphStorage = ctx.graphStorage;
+
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
         this.graphStorage = ctx.graphStorage;
@@ -77,7 +79,9 @@ class RestAPIServiceV2 {
          * Get trail from database
          * @param QueryObject - ex. {uid: abc:123}
          */
-        server.get(`/api/${this.version_id}/trail`, (req, res, next) => { });
+        server.post(`/api/${this.version_id}/trail`, async (req, res, next) => {
+            await this._getTrail(req, res);
+        });
 
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
@@ -267,6 +271,48 @@ class RestAPIServiceV2 {
                     message: error,
                 });
             }
+        });
+    }
+
+    async _getTrail(req, res) {
+        this.logger.api('GET: Trail request received.');
+
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        if (req.body.identifier_types === undefined ||
+            req.body.identifier_ids === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { identifier_types, identifier_ids } = req.body;
+
+        const depth = req.body.depth === undefined ?
+            this.graphStorage.getDatabaseInfo().max_path_length :
+            req.body.depth;
+
+        // TODO connectionTypes
+        const connectionTypes = req.body.connectionTypes === undefined ?
+            ['dummy', 'dummy', 'dummy'] :
+            req.body.connectionTypes;
+
+        const { vertices, edges, proofs } =
+            await this.graphStorage.findTrail({
+                identifier_types, identifier_ids, depth, connectionTypes,
+            });
+
+        res.status(200);
+        res.send({
+            vertices, edges, proofs,
         });
     }
 

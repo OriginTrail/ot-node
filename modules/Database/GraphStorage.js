@@ -66,6 +66,20 @@ class GraphStorage {
         });
     }
 
+    findTrail(queryObject) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.findTrail(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     /**
      * Finds imports IDs based on data location query
      *

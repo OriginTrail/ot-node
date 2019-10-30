@@ -94,6 +94,33 @@ class ArangoJS {
         return [];
     }
 
+    async findTrail(queryObject) {
+        const {
+            identifier_types,
+            identifier_ids,
+            depth,
+            connectionTypes,
+        } = queryObject;
+
+        // TODO implement query
+        console.log('Ovde opicim query');
+        console.log(queryObject);
+
+        return {
+            vertices: ['dummy'],
+            edges: ['dummy_again', 'and_again'],
+            proofs: [
+                {
+                    dataset_id: 'dummy_id',
+                    proof: {
+                        data: 'dummy_proof_object',
+                    },
+                },
+            ],
+        };
+    }
+
+
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
                        FILTER v.vertexType == 'Data'
