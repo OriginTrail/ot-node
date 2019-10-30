@@ -29,7 +29,7 @@
             "title": "Kakaxi"
           },
           "properties": {
-            "link": "/#techspecs",
+            "link": "/techspecs",
             "title": "Tech Specs",
             "resources": {
               "temperature": {
@@ -149,11 +149,11 @@
             }
           },
           "type": {
-            "link": "https://kakaxi.me/#overview",
+            "link": "https://kakaxi.me/overview",
             "title": "Kakaxi"
           },
           "help": {
-            "link": "https://kakaxi.me/#company",
+            "link": "https://kakaxi.me/company",
             "title": "Documentation"
           },
           "ui": {
