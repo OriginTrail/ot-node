@@ -79,14 +79,6 @@ describe('WOT OT JSON transpiler tests', () => {
             web3,
             config,
         });
-
-        // importer = new EpcisOtJsonImporter({
-        //     graphStorage,
-        //     logger,
-        //     config,
-        //     notifyError: {},
-        //     web3,
-        // });
     });
     describe('Convert WOT JSON into OT-JSON and vice versa', () => {
         it(
