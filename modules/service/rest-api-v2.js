@@ -349,7 +349,7 @@ class RestAPIServiceV2 {
                 const commandSequence = [
                     'dcConvertToOtJsonCommand',
                     'dcConvertToGraphCommand',
-                    'dcWriteToDbCommand',
+                    'dcWriteImportToGraphDbCommand',
                     'dcFinalizeImportCommand',
                 ];
 

@@ -664,57 +664,6 @@ class EventEmitter {
             }
         });
 
-        this._on('finalized-import', async (result) => {
-            if (result.error != null) {
-                await processImport(null, result.error, {});
-            } else {
-                const data = { handler_id: result.response.handler_id };
-                await processImport(result.response, null, data);
-            }
-        });
-
-        this._on('api-import-request', async (data) => {
-            try {
-                logger.debug('Import triggered');
-
-                const commandData = {
-                    standard_id: data.standard_id,
-                    document: data.content,
-                    handler_id: data.handler_id,
-                };
-
-                let command;
-                if (data.standard_id === 'ot-json') {
-                    commandData.document = JSON.parse(data.content);
-                    command = 'dcConvertToGraphCommand';
-                } else {
-                    command = 'dcConvertToOtJsonCommand';
-                }
-
-                const commandSequence = [
-                    command,
-                ];
-
-                await this.commandExecutor.add({
-                    name: commandSequence[0],
-                    sequence: commandSequence.slice(1),
-                    delay: 0,
-                    data: commandData,
-                    transactional: false,
-                });
-
-                // const result = {error : 'Hardcoded'}
-
-                // const result = await importer.importXMLgs1(data.content);
-                // if (result.error != null) {
-                //     await processImport(null, result.error, data);
-                // } else {
-                //     await processImport(result.response, null, data);
-                // }
-            } catch (error) {
-                await processImport(null, error, data);
-            }
-        });
 
         this._on('api-wot-import-request', async (data) => {
             try {
@@ -823,7 +772,7 @@ class EventEmitter {
                         );
                         break;
                     }
-                    case 'graph': {
+                    case 'ot-json': {
                         await processExport(
                             null,
                             { formatted_dataset: result, handler_id: data.handler_id },

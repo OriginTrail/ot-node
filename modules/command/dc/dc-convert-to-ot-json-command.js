@@ -5,6 +5,7 @@ class DcConvertToOtJson extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.importWorkerController = ctx.importWorkerController;
+        this.commandExecutor = ctx.command;
     }
 
     /**
@@ -16,12 +17,25 @@ class DcConvertToOtJson extends Command {
         if (standard_id === 'ot-json') {
             return this.continueSequence({ data: command.data }, command.sequence);
         }
+        try {
+            await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
+        } catch (error) {
+            await this.commandExecutor.add({
+                name: 'dcFinalizeImportCommand',
+                delay: 0,
+                transactional: false,
+                data: {
+                    error,
+                    handler_id: command.data.handler_id,
+                },
+            });
+        }
         await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
         return Command.empty();
     }
 
     /**
-     * Builds default dcOfferCreateDbCommand
+     * Builds default dcConvertToOtJsonCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
