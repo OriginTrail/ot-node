@@ -429,10 +429,10 @@ class EpcisOtJsonTranspiler {
         otObject.properties.___metadata = this._extractMetadata(event);
         const compressed = this._compressText(event);
 
-        const createRelation = (id, relationType, data) => ({
+        const createRelation = (id, relType, data) => ({
             '@type': 'otRelation',
             direction: 'direct', // think about direction
-            relationType: relationType,
+            relationType: relType,
             linkedObject: {
                 '@id': id,
             },

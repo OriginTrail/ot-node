@@ -105,8 +105,6 @@ class OtJsonImporter {
         this.web3 = ctx.web3;
 
         this.schemaValidator = new SchemaValidator(ctx);
-
-
     }
 
 
