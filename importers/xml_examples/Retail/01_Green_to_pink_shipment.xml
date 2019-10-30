@@ -98,43 +98,48 @@
 	<EPCISBody>
 		<EventList>
 			<ObjectEvent>
-				<!-- Transport Shipment-->
-				<eventTime>2018-01-01T01:00:00.000-04:00</eventTime>
-				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset>
-				<epcList>
-					<epc>urn:epc:id:sgtin:Batch_1</epc>
-				</epcList>
-				<action>OBSERVE</action>
-				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
-				<disposition>urn:epcglobal:cbv:disp:active</disposition>
-				<readPoint>
-					<id>urn:epc:id:sgln:Building_Green_V2</id>
-				</readPoint>
-				<bizLocation>
-					<id>urn:epc:id:sgln:Building_Green</id>
-				</bizLocation>
+			<!-- Transport Shipment-->
+			<eventTime>2018-01-01T01:00:00.000-04:00</eventTime>
+			<eventTimeZoneOffset>-04:00</eventTimeZoneOffset>
+			<epcList>
+				<epc>urn:epc:id:sgtin:Batch_1</epc>
+			</epcList>
+			<action>OBSERVE</action>
+			<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+			<disposition>urn:epcglobal:cbv:disp:active</disposition>
+			<readPoint>
+				<id>urn:epc:id:sgln:Building_Green_V2</id>
+			</readPoint>
+			<bizLocation>
+				<id>urn:epc:id:sgln:Building_Green</id>
+			</bizLocation>
+			<bizTransactionList>
+				<bizTransaction>
+					id1:12345
+				</bizTransaction>
+			</bizTransactionList>
+			<extension>
+				<quantityList>
+					<quantityElement>
+						<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
+						<quantity>10</quantity>
+						<uom>KG</uom>
+					</quantityElement>
+				</quantityList>
 				<extension>
-					<quantityList>
-						<quantityElement>
-							<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
-							<quantity>10</quantity>
-							<uom>KG</uom>
-						</quantityElement>
-					</quantityList>
-					<extension>
-						<documentId>1</documentId>
-						<OTEventClass>urn:ot:event:Transport</OTEventClass>
-						<OTEventClass>urn:ot:event:Ownership</OTEventClass>
-						<OTEventType>Sales</OTEventType>
-						<sourceList>
-							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>
-						</sourceList>
-						<destinationList>
-							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink</destination>
-						</destinationList>
-					</extension>
+					<documentId>1</documentId>
+					<OTEventClass>urn:ot:event:Transport</OTEventClass>
+					<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+					<OTEventType>Sales</OTEventType>
+					<sourceList>
+						<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>
+					</sourceList>
+					<destinationList>
+						<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink</destination>
+					</destinationList>
 				</extension>
-			</ObjectEvent>
+			</extension>
+		</ObjectEvent>
 		</EventList>
 	</EPCISBody>
 </epcis:EPCISDocument>

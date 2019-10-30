@@ -264,11 +264,11 @@ class EpcisOtJsonTranspiler {
                     otVocabulary.properties.children.forEach(id => otVocabulary.relations.push({
                         '@type': 'otRelation',
                         direction: 'direct', // TODO think about direction
+                        relationType: 'HAS_CHILD',
                         linkedObject: {
                             '@id': id,
                         },
                         properties: {
-                            relationType: 'HAS_CHILD',
                         },
                     }));
                 }
@@ -429,9 +429,10 @@ class EpcisOtJsonTranspiler {
         otObject.properties.___metadata = this._extractMetadata(event);
         const compressed = this._compressText(event);
 
-        const createRelation = (id, data) => ({
+        const createRelation = (id, relationType, data) => ({
             '@type': 'otRelation',
             direction: 'direct', // think about direction
+            relationType: relationType,
             linkedObject: {
                 '@id': id,
             },
@@ -439,8 +440,7 @@ class EpcisOtJsonTranspiler {
         });
         if (compressed.epcList && compressed.epcList.epc) {
             for (const epc of compressed.epcList.epc) {
-                otObject.relations.push(createRelation(epc, {
-                    relationType: 'EPC',
+                otObject.relations.push(createRelation(epc, 'EPC', {
                 }));
             }
         }
@@ -448,8 +448,7 @@ class EpcisOtJsonTranspiler {
         if (compressed.extension) {
             if (compressed.extension.quantityList) {
                 for (const epc of compressed.extension.quantityList.quantityElement) {
-                    otObject.relations.push(createRelation(epc.epcClass, {
-                        relationType: 'EPC_QUANTITY',
+                    otObject.relations.push(createRelation(epc.epcClass, 'EPC_QUANTITY', {
                         quantity: epc.quantity,
                         uom: epc.uom,
                     }));
@@ -460,7 +459,6 @@ class EpcisOtJsonTranspiler {
                 for (const childEPCs of compressed.extension.childQuantityList) {
                     for (const childEPC of childEPCs.quantityElement) {
                         const data = {
-                            relationType: 'CHILD_EPC_QUANTITY',
                             quantity: childEPC.quantity,
                         };
                         if (childEPC.uom) {
@@ -468,7 +466,7 @@ class EpcisOtJsonTranspiler {
                                 uom: childEPC.uom,
                             });
                         }
-                        otObject.relations.push(createRelation(childEPC.epcClass, data));
+                        otObject.relations.push(createRelation(childEPC.epcClass, 'CHILD_EPC_QUANTITY', data));
                     }
                 }
             }
@@ -477,7 +475,6 @@ class EpcisOtJsonTranspiler {
                 const sources = compressed.extension.sourceList.source;
                 for (let i = 0; i < sources.length; i += 1) {
                     const data = {
-                        relationType: 'SOURCE',
                     };
                     const type = this._extractType(otObject.properties.___metadata, 'extension.sourceList.source', i);
                     if (type) {
@@ -485,7 +482,7 @@ class EpcisOtJsonTranspiler {
                             type,
                         });
                     }
-                    otObject.relations.push(createRelation(sources[i], data));
+                    otObject.relations.push(createRelation(sources[i], 'SOURCE', data));
                 }
             }
 
@@ -493,7 +490,6 @@ class EpcisOtJsonTranspiler {
                 const destinations = compressed.extension.destinationList.destination;
                 for (let i = 0; i < destinations.length; i += 1) {
                     const data = {
-                        relationType: 'DESTINATION',
                     };
                     const type = this._extractType(otObject.properties.___metadata, 'extension.destinationList.destination', i);
                     if (type) {
@@ -501,7 +497,7 @@ class EpcisOtJsonTranspiler {
                             type,
                         });
                     }
-                    otObject.relations.push(createRelation(destinations[i], data));
+                    otObject.relations.push(createRelation(destinations[i], 'DESTINATION', data));
                 }
             }
         }
@@ -509,30 +505,23 @@ class EpcisOtJsonTranspiler {
         if (compressed.bizLocation) {
             otObject.relations.push(createRelation(
                 compressed.bizLocation.id,
-                {
-                    relationType: 'BIZ_LOCATION',
-                },
+                'BIZ_LOCATION',
+                {},
             ));
         }
 
         if (compressed.readPoint) {
-            otObject.relations.push(createRelation(compressed.readPoint.id, {
-                relationType: 'READ_POINT',
-            }));
+            otObject.relations.push(createRelation(compressed.readPoint.id, 'READ_POINT', {}));
         }
 
         if (compressed.parentID) {
-            otObject.relations.push(createRelation(compressed.parentID, {
-                relationType: 'PARENT_EPC',
-            }));
+            otObject.relations.push(createRelation(compressed.parentID, 'PARENT_EPC', {}));
         }
 
         if (compressed.childEPCs) {
             for (const childEPCs of compressed.childEPCs) {
                 for (const childEPC of childEPCs.epc) {
-                    otObject.relations.push(createRelation(childEPC, {
-                        relationType: 'CHILD_EPC',
-                    }));
+                    otObject.relations.push(createRelation(childEPC, 'CHILD_EPC', {}));
                 }
             }
         }
@@ -602,16 +591,23 @@ class EpcisOtJsonTranspiler {
                 connectors.push({
                     '@id': `urn:uuid:${uuidv4()}`,
                     '@type': 'otConnector',
-                    connectionId: bizTransaction,
+                    connectionId: bizTransaction.split(':')[1],
+                    expectedConnectionCreators: [
+                        {
+                            '@type': 'ERC725',
+                            '@value': bizTransaction.split(':')[0], // this.config.erc725Identity,
+                            validationSchema: '../ethereum-erc',
+                        },
+                    ],
                     relations: [
                         {
                             '@type': 'otRelation',
                             direction: 'reverse',
+                            relationType: 'CONNECTOR_FOR',
                             linkedObject: {
                                 '@id': eventId,
                             },
                             properties: {
-                                relationType: 'CONNECTOR_FOR',
                             },
                         },
                     ],

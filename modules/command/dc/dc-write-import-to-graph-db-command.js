@@ -8,6 +8,19 @@ class DcWriteImportToGraphDbCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
+        this.config = ctx.config;
+
+        this.me = {
+            dataCreator: {
+                identifiers: [
+                    {
+                        identifierValue: this.config.erc725Identity,
+                        identifierType: 'ERC725',
+                        validationSchema: '/schemas/erc725-main',
+                    },
+                ],
+            },
+        };
         this.commandExecutor = ctx.commandExecutor;
     }
 

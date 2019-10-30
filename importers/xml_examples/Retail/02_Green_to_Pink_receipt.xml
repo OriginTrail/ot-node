@@ -113,6 +113,11 @@
 				<bizLocation>
 					<id>urn:epc:id:sgln:Building_Pink</id>
 				</bizLocation>
+				<bizTransactionList>
+					<bizTransaction>
+						id2:test123
+					</bizTransaction>
+				</bizTransactionList>
 				<extension>
 					<quantityList>
 						<quantityElement>			 

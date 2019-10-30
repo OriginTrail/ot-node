@@ -106,18 +106,7 @@ class OtJsonImporter {
 
         this.schemaValidator = new SchemaValidator(ctx);
 
-        // TODO: use creditor information from config.
-        this.me = {
-            dataCreator: {
-                identifiers: [
-                    {
-                        identifierValue: '0x00624f564D433Db4449Ee10Cdc2cCcdcf46beb68',
-                        identifierType: 'ERC725',
-                        validationSchema: '/schemas/erc725-main',
-                    },
-                ],
-            },
-        };
+
     }
 
 
