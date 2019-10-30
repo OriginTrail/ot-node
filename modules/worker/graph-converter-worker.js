@@ -182,7 +182,7 @@ process.on('message', async (dataFromParent) => {
                     relationEdge._from = entityVertex._key;
                     relationEdge._to = Utilities.keyFrom(dataCreator, _id(relation.linkedObject));
                     relationEdge.edgeType = constants.edgeType.otRelation;
-                    relationEdge.relationType = relation.properties.relationType;
+                    relationEdge.relationType = relation.relationType;
                     relationEdge._key = Utilities.keyFrom(
                         dataCreator,
                         relationEdge._from,
@@ -228,7 +228,7 @@ process.on('message', async (dataFromParent) => {
                     relationEdge._key =
                             Utilities.keyFrom(dataCreator, relationEdge._from, relationEdge._to);
                     relationEdge.edgeType = constants.edgeType.otRelation;
-                    relationEdge.relationType = relation.properties.relationType;
+                    relationEdge.relationType = relation.relationType;
                     relationEdge.properties = relation.properties;
                     relationEdge.datasets = [datasetId];
                     edges.push(relationEdge);
