@@ -429,10 +429,10 @@ class EpcisOtJsonTranspiler {
         otObject.properties.___metadata = this._extractMetadata(event);
         const compressed = this._compressText(event);
 
-        const createRelation = (id, relationType, data) => ({
+        const createRelation = (id, relType, data) => ({
             '@type': 'otRelation',
             direction: 'direct', // think about direction
-            relationType: relationType,
+            relationType: relType,
             linkedObject: {
                 '@id': id,
             },
@@ -448,7 +448,7 @@ class EpcisOtJsonTranspiler {
         if (compressed.extension) {
             if (compressed.extension.quantityList) {
                 for (const epc of compressed.extension.quantityList.quantityElement) {
-                    otObject.relations.push(createRelation(epc.epcClass,'EPC_QUANTITY', {
+                    otObject.relations.push(createRelation(epc.epcClass, 'EPC_QUANTITY', {
                         quantity: epc.quantity,
                         uom: epc.uom,
                     }));
@@ -466,7 +466,7 @@ class EpcisOtJsonTranspiler {
                                 uom: childEPC.uom,
                             });
                         }
-                        otObject.relations.push(createRelation(childEPC.epcClass,'CHILD_EPC_QUANTITY', data));
+                        otObject.relations.push(createRelation(childEPC.epcClass, 'CHILD_EPC_QUANTITY', data));
                     }
                 }
             }
@@ -482,7 +482,7 @@ class EpcisOtJsonTranspiler {
                             type,
                         });
                     }
-                    otObject.relations.push(createRelation(sources[i],'SOURCE', data));
+                    otObject.relations.push(createRelation(sources[i], 'SOURCE', data));
                 }
             }
 
@@ -497,7 +497,7 @@ class EpcisOtJsonTranspiler {
                             type,
                         });
                     }
-                    otObject.relations.push(createRelation(destinations[i],'DESTINATION', data));
+                    otObject.relations.push(createRelation(destinations[i], 'DESTINATION', data));
                 }
             }
         }
@@ -511,17 +511,17 @@ class EpcisOtJsonTranspiler {
         }
 
         if (compressed.readPoint) {
-            otObject.relations.push(createRelation(compressed.readPoint.id, 'READ_POINT',{}));
+            otObject.relations.push(createRelation(compressed.readPoint.id, 'READ_POINT', {}));
         }
 
         if (compressed.parentID) {
-            otObject.relations.push(createRelation(compressed.parentID, 'PARENT_EPC',{}));
+            otObject.relations.push(createRelation(compressed.parentID, 'PARENT_EPC', {}));
         }
 
         if (compressed.childEPCs) {
             for (const childEPCs of compressed.childEPCs) {
                 for (const childEPC of childEPCs.epc) {
-                    otObject.relations.push(createRelation(childEPC, 'CHILD_EPC',{}));
+                    otObject.relations.push(createRelation(childEPC, 'CHILD_EPC', {}));
                 }
             }
         }
