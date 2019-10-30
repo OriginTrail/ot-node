@@ -29,6 +29,7 @@ const awilix = require('awilix');
 const logger = require('../../modules/logger');
 const OtJsonImporter = require('../../modules/importer/ot-json-importer');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
+const WotOtJsonTranspiler = require('../../modules/transpiler/wot/wot-otjson-transpiler');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -111,6 +112,7 @@ describe('GS1 Importer tests', () => {
             wotImporter: awilix.asClass(WOTImporter),
             otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             remoteControl: awilix.asValue({
                 importRequestData: () => {
                 },
