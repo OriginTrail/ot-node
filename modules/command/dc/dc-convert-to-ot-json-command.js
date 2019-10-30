@@ -30,7 +30,6 @@ class DcConvertToOtJson extends Command {
                 },
             });
         }
-        await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
         return Command.empty();
     }
 
