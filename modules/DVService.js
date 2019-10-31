@@ -99,12 +99,13 @@ class DVService {
         }
 
         try {
-            await this.importer.importJSON({
-                vertices: message.encryptedData.vertices,
-                edges: message.encryptedData.edges,
-                import_id: importId,
-                wallet: data_provider_wallet,
-            }, true);
+            // TODO refactor with new importer
+            // await this.importer.importJSON({
+            //     vertices: message.encryptedData.vertices,
+            //     edges: message.encryptedData.edges,
+            //     import_id: importId,
+            //     wallet: data_provider_wallet,
+            // }, true);
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);

@@ -140,16 +140,16 @@ class DHReplacementImportCommand extends Command {
             },
         });
 
-        if (holdingData == null) {
-            // import does not exist
-
-            await this.importer.importJSON({
-                dataSetId,
-                vertices: litigationVertices,
-                edges,
-                wallet: dcWallet,
-            }, true, encColor);
-        }
+        // if (holdingData == null) {
+        //     // import does not exist
+        //
+        //     await this.importer.importJSON({
+        //         dataSetId,
+        //         vertices: litigationVertices,
+        //         edges,
+        //         wallet: dcWallet,
+        //     }, true, encColor);
+        // }
 
         // Store holding information and generate keys for eventual data replication.
         await Models.holding_data.create({
@@ -172,12 +172,13 @@ class DHReplacementImportCommand extends Command {
         });
 
         if (dataInfo == null) {
-            let importResult = await this.importer.importJSON({
-                dataSetId,
-                vertices: decryptedVertices,
-                edges,
-                wallet: dcWallet,
-            }, false);
+            // TODO refactor with new importer
+            // let importResult = await this.importer.importJSON({
+            //     dataSetId,
+            //     vertices: decryptedVertices,
+            //     edges,
+            //     wallet: dcWallet,
+            // }, false);
 
             if (importResult.error) {
                 throw Error(importResult.error);

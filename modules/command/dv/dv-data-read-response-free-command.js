@@ -99,12 +99,13 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         try {
-            await this.importer.importJSON({
-                vertices: message.data.vertices,
-                edges: message.data.edges,
-                dataSetId,
-                wallet: dcWallet,
-            }, false);
+            // TODO refactor with new importer
+            // await this.importer.importJSON({
+            //     vertices: message.data.vertices,
+            //     edges: message.data.edges,
+            //     dataSetId,
+            //     wallet: dcWallet,
+            // }, false);
         } catch (error) {
             this.logger.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);
