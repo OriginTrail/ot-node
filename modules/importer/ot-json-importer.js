@@ -450,6 +450,20 @@ class OtJsonImporter {
         };
     }
 
+    packTrailData(data) {
+        let otObjects = [];
+
+        data.forEach((object) => {
+            const { rootObject, relatedObjects } = object;
+
+            const tmpObject = this._createObjectGraph(rootObject, relatedObjects);
+
+            otObjects.push(tmpObject);
+        });
+
+        return otObjects;
+    }
+
     async getImport(datasetId, encColor = null) {
         if (![null, 'red', 'green', 'blue'].includes(encColor)) {
             throw Error('Invalid encryption color.');

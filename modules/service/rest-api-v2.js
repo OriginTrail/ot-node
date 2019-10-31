@@ -14,6 +14,7 @@ class RestAPIServiceV2 {
         this.commandExecutor = ctx.commandExecutor;
 
         this.graphStorage = ctx.graphStorage;
+        this.otJsonImporter = ctx.otJsonImporter;
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
@@ -314,7 +315,7 @@ class RestAPIServiceV2 {
             ['dummy', 'dummy', 'dummy'] :
             req.body.connectionTypes;
 
-        const { vertices, edges, proofs } =
+        const trail =
             await this.graphStorage.findTrail({
                 identifier_types: utilities.arrayze(identifier_types),
                 identifier_ids: utilities.arrayze(identifier_ids),
@@ -322,10 +323,10 @@ class RestAPIServiceV2 {
                 connectionTypes,
             });
 
+        const response = this.otJsonImporter.packTrailData(trail);
+
         res.status(200);
-        res.send({
-            vertices, edges, proofs,
-        });
+        res.send(response);
     }
 
     async _checkForHandlerStatus(req, res) {
