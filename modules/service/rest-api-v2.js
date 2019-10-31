@@ -315,10 +315,20 @@ class RestAPIServiceV2 {
             ['dummy', 'dummy', 'dummy'] :
             req.body.connectionTypes;
 
+        const keys = [];
+
+        const typesArray = utilities.arrayze(identifier_types);
+        const idsArray = utilities.arrayze(identifier_ids);
+
+        const length = typesArray.length;
+
+        for (let i = 0; i < length; i++) {
+            keys.push(utilities.keyFrom(typesArray[i], idsArray[i]));
+        }
+
         const trail =
             await this.graphStorage.findTrail({
-                identifier_types: utilities.arrayze(identifier_types),
-                identifier_ids: utilities.arrayze(identifier_ids),
+                keys,
                 depth,
                 connectionTypes,
             });
