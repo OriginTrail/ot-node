@@ -102,22 +102,51 @@ class ArangoJS {
             connectionTypes,
         } = queryObject;
 
-        // TODO implement query
-        console.log('Ovde opicim query');
+        console.log('Sada picim query');
         console.log(queryObject);
 
-        return {
-            vertices: ['dummy'],
-            edges: ['dummy_again', 'and_again'],
-            proofs: [
-                {
-                    dataset_id: 'dummy_id',
-                    proof: {
-                        data: 'dummy_proof_object',
-                    },
-                },
-            ],
-        };
+
+        const queryString = `// Get identifier
+                            LET identifierObject = (
+                                FOR v IN ot_vertices
+                                FILTER v.identifierType == @identifierType
+                                AND v.identifierValue == @identifierValue
+                                RETURN v
+                            )
+                            // Fetch the start entity for trail
+                            LET startObject = (
+                                FOR v, e IN 1..1 OUTBOUND identifierObject[0] ot_edges
+                                FILTER e.edgeType == 'IdentifierRelation'
+                                RETURN v
+                            )
+                            LET trailObjects = (
+                                FOR v, e, p IN 1..@depth ANY startObject[0] ot_edges
+                                FILTER p.edges[-1].relationType in ['INPUT_EPC', 'OUTPUT_EPC','PARENT_EPC','CHILD_EPC','EPC']
+                                RETURN DISTINCT v
+                            )
+                            FOR trailObject in trailObjects
+                                LET objectsRelated = (
+                                    FOR v, e in 1..1 OUTBOUND trailObject ot_edges
+                                    FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                        AND e.datasets != null
+                                        AND v.datasets != null
+                                        AND LENGTH(INTERSECTION(e.datasets, v.datasets, trailObject.datasets)) > 0
+                                    RETURN  {
+                                        "vertex": v,
+                                        "edge": e
+                                    })
+                            RETURN {
+                                "rootObject": trailObject,
+                                "relatedObjects": objectsRelated
+                            }`;
+
+        const result = await this.runQuery(queryString, {
+            identifierType: identifier_types[0],
+            identifierValue: identifier_ids[0],
+            depth,
+        });
+
+        return result;
     }
 
 
