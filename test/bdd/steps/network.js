@@ -402,7 +402,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(response.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
 
-    if (this.state.lastExportType === 'GS1') {
+    if (this.state.lastExportType === 'GS1-EPCIS') {
         const exportedXml = xmljs.xml2js(response.data.formatted_dataset, {
             compact: true,
             spaces: 4,
