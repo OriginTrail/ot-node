@@ -275,7 +275,7 @@ class RestAPIServiceV2 {
     }
 
     async _getTrail(req, res) {
-        this.logger.api('GET: Trail request received.');
+        this.logger.api('POST: Trail request received.');
 
         if (req.body === undefined) {
             res.status(400);
@@ -296,6 +296,15 @@ class RestAPIServiceV2 {
 
         const { identifier_types, identifier_ids } = req.body;
 
+        if (utilities.arrayze(identifier_types).length !==
+            utilities.arrayze(identifier_ids).length) {
+            res.status(400);
+            res.send({
+                message: 'Identifier array length mismatch',
+            });
+            return;
+        }
+
         const depth = req.body.depth === undefined ?
             this.graphStorage.getDatabaseInfo().max_path_length :
             req.body.depth;
@@ -307,7 +316,10 @@ class RestAPIServiceV2 {
 
         const { vertices, edges, proofs } =
             await this.graphStorage.findTrail({
-                identifier_types, identifier_ids, depth, connectionTypes,
+                identifier_types: utilities.arrayze(identifier_types),
+                identifier_ids: utilities.arrayze(identifier_ids),
+                depth,
+                connectionTypes,
             });
 
         res.status(200);
