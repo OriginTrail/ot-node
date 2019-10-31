@@ -323,7 +323,7 @@ class RestAPIServiceV2 {
                 connectionTypes,
             });
 
-        const response = this.otJsonImporter.packTrailData(trail);
+        const response = await this.otJsonImporter.packTrailData(trail);
 
         res.status(200);
         res.send(response);

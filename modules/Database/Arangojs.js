@@ -102,10 +102,6 @@ class ArangoJS {
             connectionTypes,
         } = queryObject;
 
-        console.log('Sada picim query');
-        console.log(queryObject);
-
-
         const queryString = `// Get identifier
                             LET identifierObject = (
                                 FOR v IN ot_vertices

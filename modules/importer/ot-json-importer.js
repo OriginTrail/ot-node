@@ -450,13 +450,13 @@ class OtJsonImporter {
         };
     }
 
-    packTrailData(data) {
+    async packTrailData(data) {
         let otObjects = [];
 
-        data.forEach((object) => {
+        data.forEach(async (object) => {
             const { rootObject, relatedObjects } = object;
 
-            const tmpObject = this._createObjectGraph(rootObject, relatedObjects);
+            const tmpObject = await this._createObjectGraph(rootObject, relatedObjects);
 
             otObjects.push(tmpObject);
         });
