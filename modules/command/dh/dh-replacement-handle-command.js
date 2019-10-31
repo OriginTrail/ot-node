@@ -180,6 +180,8 @@ class DHReplacementImportCommand extends Command {
             //     wallet: dcWallet,
             // }, false);
 
+            let importResult;
+
             if (importResult.error) {
                 throw Error(importResult.error);
             }

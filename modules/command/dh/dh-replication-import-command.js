@@ -108,9 +108,9 @@ class DhReplicationImportCommand extends Command {
         });
 
         const importResult = await this.otJsonImporter.importFile({
-                document: decryptedDataset,
-                encryptedMap,
-            });
+            document: decryptedDataset,
+            encryptedMap,
+        });
 
         if (importResult.error) {
             throw Error(importResult.error);
