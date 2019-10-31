@@ -28,8 +28,7 @@ class WotOtJsonTranspiler {
             throw Error(`[Transpilation Error] Failed to validate schema. ${validate.errors}`);
         }
 
-        const rawJson = this._removeCommentsAndTrimTexts(wotJson);
-        const json = JSON.parse(rawJson);
+        const json = JSON.parse(wotJson);
         const otjson = {
             '@graph': [],
         };
@@ -94,10 +93,10 @@ class WotOtJsonTranspiler {
                 '@type': 'otObject',
                 '@id': id,
                 identifiers: [{
-                    '@type': 'uuid',
+                    '@type': 'id',
                     '@value': id,
                 }, {
-                    '@type': 'id',
+                    '@type': 'internal_id',
                     '@value': property.id,
                 }, {
                     '@type': 'name',
@@ -140,7 +139,7 @@ class WotOtJsonTranspiler {
             const createRelation = (id, data) => ({
                 '@type': 'otRelation',
                 relationType: 'PART_OF',
-                direction: 'direct', // think about direction
+                direction: 'reverse', // think about direction
                 linkedObject: {
                     '@id': id,
                 },
@@ -172,7 +171,7 @@ class WotOtJsonTranspiler {
             '@type': 'otObject',
             '@id': id,
             identifiers: [{
-                '@type': 'uuid',
+                '@type': 'id',
                 '@value': id,
             },
             ],
@@ -204,7 +203,6 @@ class WotOtJsonTranspiler {
             }
         }
 
-        // Object.assign(otObject.properties, thing);
         return otObject;
     }
 
@@ -233,7 +231,7 @@ class WotOtJsonTranspiler {
                         '@type': 'otObject',
                         '@id': obj.id,
                         identifiers: [{
-                            '@type': 'uuid',
+                            '@type': 'id',
                             '@value': obj.id,
                         },
                         ],
@@ -250,25 +248,6 @@ class WotOtJsonTranspiler {
         }
 
         return results;
-    }
-
-    /**
-     * Remove comments from raw json
-     */
-    _removeCommentsAndTrimTexts(obj) {
-        if (typeof obj === 'object' || Array.isArray((obj))) {
-            if (this._isLeaf(obj)) {
-                obj._text = obj._text.trim();
-            }
-            if (obj._comment) {
-                delete obj._comment;
-            }
-            for (const key of Object.keys(obj)) {
-                obj[key] = this._removeCommentsAndTrimTexts(obj[key]);
-            }
-        }
-        Object.keys(obj).forEach(k => (obj[k] === undefined ? delete obj[k] : '')); // remove undefined
-        return obj;
     }
 
     /**
@@ -310,8 +289,8 @@ class WotOtJsonTranspiler {
         for (const otProperty of otProperties) {
             const { properties } = otProperty;
             const property = {
-                id: otProperty.identifiers.filter(x => x['@type'] === 'id')[0]['@value'],
-                name: otProperty.identifiers.filter(x => x['@type'] === 'name')[0]['@value'],
+                id: otProperty.identifiers.find(x => x['@type'] === 'internal_id')['@value'],
+                name: otProperty.identifiers.find(x => x['@type'] === 'name')['@value'],
                 values: properties,
             };
 
@@ -342,7 +321,7 @@ class WotOtJsonTranspiler {
         const customFields = [];
         for (const otCustomField of otCustomFields) {
             const customField = {
-                id: otCustomField.identifiers.filter(x => x['@type'] === 'uuid')[0]['@value'],
+                id: otCustomField.identifiers.find(x => x['@type'] === 'id')['@value'],
                 type: otCustomField.properties['@type'],
             };
 
@@ -350,16 +329,6 @@ class WotOtJsonTranspiler {
         }
 
         return customFields;
-    }
-
-    /**
-     * Is leaf node in the original JSON document
-     * @param object - Original JSON document
-     * @return {boolean}
-     * @private
-     */
-    _isLeaf(object) {
-        return object._text != null;
     }
 
     /**
@@ -377,7 +346,6 @@ class WotOtJsonTranspiler {
                     created: created.toISOString(),
                     modified: created.toISOString(),
                     standard: 'WOT',
-                    XMLversion: '1.0',
                     encoding: 'UTF-8',
                 },
                 diff: {},

@@ -15,7 +15,6 @@ class DHReplacementImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
-        this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;

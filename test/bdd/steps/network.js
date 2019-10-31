@@ -17,6 +17,7 @@ const ImportUtilities = require('../../../modules/ImportUtilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
+const modulesUtilities = require('../../../modules/Utilities');
 const Models = require('../../../models');
 const fs = require('fs');
 const xmljs = require('xml-js');
@@ -401,21 +402,29 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(response.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
 
-    const exportedXml = xmljs.xml2js(response.data.formatted_dataset, {
-        compact: true,
-        spaces: 4,
-    });
-    let originalXml = await fs.readFileSync(importedFilePath, 'utf8');
-    originalXml = xmljs.xml2js(originalXml, {
-        compact: true,
-        spaces: 4,
-    });
+    if (this.state.lastExportType === 'GS1') {
+        const exportedXml = xmljs.xml2js(response.data.formatted_dataset, {
+            compact: true,
+            spaces: 4,
+        });
+        let originalXml = await fs.readFileSync(importedFilePath, 'utf8');
+        originalXml = xmljs.xml2js(originalXml, {
+            compact: true,
+            spaces: 4,
+        });
 
-    assert.deepEqual(
-        utilities.stringifyWithoutComments(exportedXml),
-        utilities.stringifyWithoutComments(originalXml),
-        'Exported file not equal to imported one!',
-    );
+        assert.deepEqual(
+            utilities.stringifyWithoutComments(exportedXml),
+            utilities.stringifyWithoutComments(originalXml),
+            'Exported file not equal to imported one!',
+        );
+    } else {
+        const originalJson = await fs.readFileSync(importedFilePath, 'utf8');
+
+        const actual = modulesUtilities.sortedStringify(response.data.formatted_dataset, true);
+        const expected = modulesUtilities.sortedStringify(JSON.parse(originalJson), true);
+        expect(actual, 'Exported file not equal to imported one!').to.be.equal(expected);
+    }
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {

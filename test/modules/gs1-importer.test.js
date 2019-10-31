@@ -13,7 +13,6 @@ const { Database } = require('arangojs');
 const rc = require('rc');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Utilities = require('../../modules/importer/gs1-utilities');
-const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Network = require('../../modules/network/kademlia/kademlia');
@@ -28,7 +27,6 @@ const awilix = require('awilix');
 const logger = require('../../modules/logger');
 const OtJsonImporter = require('../../modules/importer/ot-json-importer');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
-const WotOtJsonTranspiler = require('../../modules/transpiler/wot/wot-otjson-transpiler');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -107,10 +105,8 @@ describe('GS1 Importer tests', () => {
             logger: awilix.asValue(logger),
             gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),
-            importer: awilix.asClass(Importer),
             otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
-            wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             remoteControl: awilix.asValue({
                 importRequestData: () => {
                 },
@@ -125,7 +121,6 @@ describe('GS1 Importer tests', () => {
         });
         await graphStorage.connect();
         gs1 = container.resolve('otJsonImporter');
-        importer = container.resolve('importer');
         epcisOtJsonTranspiler = container.resolve('epcisOtJsonTranspiler');
     });
 

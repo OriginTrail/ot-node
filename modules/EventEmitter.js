@@ -90,7 +90,6 @@ class EventEmitter {
     _initializeAPIEmitter() {
         const {
             dhService,
-            importer,
             blockchain,
             product,
             logger,
