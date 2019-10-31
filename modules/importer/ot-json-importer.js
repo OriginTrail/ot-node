@@ -258,7 +258,7 @@ class OtJsonImporter {
                             _id(relation.linkedObject),
                         );
                         relationEdge.edgeType = constants.edgeType.otRelation;
-                        relationEdge.relationType = relation.properties.relationType;
+                        relationEdge.relationType = relation.relationType;
                         relationEdge._key = Utilities.keyFrom(
                             dataCreator,
                             relationEdge._from,
@@ -313,7 +313,7 @@ class OtJsonImporter {
                             relationEdge._to,
                         );
                         relationEdge.edgeType = constants.edgeType.otRelation;
-                        relationEdge.relationType = relation.properties.relationType;
+                        relationEdge.relationType = relation.relationType;
                         relationEdge.properties = relation.properties;
                         relationEdge.datasets = [datasetId];
                         edges.push(relationEdge);
@@ -620,6 +620,7 @@ class OtJsonImporter {
                         otObject.relations.push({
                             '@type': constants.edgeType.otRelation,
                             direction: 'direct', // TODO: check this.
+                            relationType: edge.relationType,
                             linkedObject: {
                                 '@id': id,
                             },
@@ -657,6 +658,7 @@ class OtJsonImporter {
                         const newRelation = {
                             '@type': constants.edgeType.otRelation,
                             direction: 'reverse',
+                            relationType: edge.relationType,
                             linkedObject: {
                                 '@id': id,
                             },

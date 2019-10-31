@@ -21,6 +21,7 @@ class EventEmitter {
         this.appState = ctx.appState;
         this.otJsonImporter = ctx.otJsonImporter;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
         this.commandExecutor = ctx.commandExecutor;
 
         this._MAPPINGS = {};
@@ -89,7 +90,6 @@ class EventEmitter {
     _initializeAPIEmitter() {
         const {
             dhService,
-            importer,
             blockchain,
             product,
             logger,
@@ -597,6 +597,15 @@ class EventEmitter {
                     case 'gs1': {
                         const formatted_dataset =
                             this.epcisOtJsonTranspiler.convertFromOTJson(result);
+                        await processExport(
+                            null,
+                            { formatted_dataset, handler_id: data.handler_id },
+                        );
+                        break;
+                    }
+                    case 'wot': {
+                        const formatted_dataset =
+                            this.wotOtJsonTranspiler.convertFromOTJson(result);
                         await processExport(
                             null,
                             { formatted_dataset, handler_id: data.handler_id },
