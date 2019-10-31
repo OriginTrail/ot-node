@@ -96,30 +96,31 @@ class ArangoJS {
 
     async findTrail(queryObject) {
         const {
-            identifier_types,
-            identifier_ids,
+            identifierKeys,
             depth,
             connectionTypes,
         } = queryObject;
 
         const queryString = `// Get identifier
-                            LET identifierObject = (
-                                FOR v IN ot_vertices
-                                FILTER v.identifierType == @identifierType
-                                AND v.identifierValue == @identifierValue
-                                RETURN v
-                            )
+                            LET identifierObjects = DOCUMENT('ot_vertices', @identifierKeys)
+                            
                             // Fetch the start entity for trail
-                            LET startObject = (
-                                FOR v, e IN 1..1 OUTBOUND identifierObject[0] ot_edges
-                                FILTER e.edgeType == 'IdentifierRelation'
-                                RETURN v
-                            )
+                            LET startObjects = UNIQUE(FLATTEN(
+                                FOR identifierObject IN identifierObjects
+                                    LET identifiedObject = (
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    RETURN v
+                                    )
+                                RETURN identifiedObject
+                            ))
+                             
                             LET trailObjects = (
-                                FOR v, e, p IN 1..@depth ANY startObject[0] ot_edges
+                                FOR v, e, p IN 1..@depth ANY startObjects[0] ot_edges
                                 FILTER p.edges[-1].relationType in ['INPUT_EPC', 'OUTPUT_EPC','PARENT_EPC','CHILD_EPC','EPC']
                                 RETURN DISTINCT v
                             )
+                            
                             FOR trailObject in trailObjects
                                 LET objectsRelated = (
                                     FOR v, e in 1..1 OUTBOUND trailObject ot_edges
@@ -137,8 +138,7 @@ class ArangoJS {
                             }`;
 
         const result = await this.runQuery(queryString, {
-            identifierType: identifier_types[0],
-            identifierValue: identifier_ids[0],
+            identifierKeys,
             depth,
         });
 
