@@ -328,7 +328,7 @@ class RestAPIServiceV2 {
 
         const trail =
             await this.graphStorage.findTrail({
-                keys,
+                identifierKeys: keys,
                 depth,
                 connectionTypes,
             });
