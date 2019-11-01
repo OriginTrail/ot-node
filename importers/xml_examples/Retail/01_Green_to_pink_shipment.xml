@@ -115,7 +115,7 @@
 			</bizLocation>
 			<bizTransactionList>
 				<bizTransaction>
-					id1:12345
+					connectionId:0x611d771aAfaa3D6Fb66c4a81D97768300a6882D5
 				</bizTransaction>
 			</bizTransactionList>
 			<extension>

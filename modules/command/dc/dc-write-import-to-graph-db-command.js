@@ -9,18 +9,6 @@ class DcWriteImportToGraphDbCommand extends Command {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
-
-        this.me = {
-            dataCreator: {
-                identifiers: [
-                    {
-                        identifierValue: this.config.erc725Identity,
-                        identifierType: 'ERC725',
-                        validationSchema: '/schemas/erc725-main',
-                    },
-                ],
-            },
-        };
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -78,22 +66,40 @@ class DcWriteImportToGraphDbCommand extends Command {
             await forEachSeries(
                 relatedConnectors.filter(v => v._key !== vertex._key),
                 async (relatedVertex) => {
-                    // Check if there is connection is expected and if so check connection.
+                    let hasConnection1 = false;
                     if (relatedVertex.expectedConnectionCreators != null) {
-                        let hasConnection = false;
                         relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
                             const expectedErc725 = this._value(expectedCreator);
 
                             if (dataCreator === expectedErc725) {
-                                hasConnection = true;
+                                hasConnection1 = true;
                             }
                         });
+                    }
 
-                        if (!hasConnection) {
-                            // None of mentioned pointed to data creator.
-                            this.log.warn(`Dataset ${datasetId} has invalid connectors (${vertex.connectionId}).`);
-                            return;
+                    let hasConnection2 = false;
+                    await Promise.all(relatedVertex.datasets.map(datasetId => new Promise(async (accept, reject) => {
+                        if (hasConnection2 === false) {
+                            const metadata = await this.graphStorage
+                                .findMetadataByImportId(datasetId);
+
+                            if (vertex.expectedConnectionCreators != null) {
+                                vertex.expectedConnectionCreators.forEach((expectedCreator) => {
+                                    const expectedErc725 = this._value(expectedCreator);
+
+                                    if (expectedErc725 === metadata.datasetHeader.dataCreator.identifiers
+                                        .find(x => x.identifierType === 'ERC725').identifierValue) {
+                                        hasConnection2 = true;
+                                    }
+                                });
+                            }
                         }
+                        accept();
+                    })));
+
+                    if (!hasConnection1 || !hasConnection2) {
+                        this.logger.warn(`Invalid connectors (${vertex.connectionId}).`);
+                        return;
                     }
 
                     await this.graphStorage.addEdge({
@@ -104,9 +110,8 @@ class DcWriteImportToGraphDbCommand extends Command {
                         edgeType: 'ConnectorRelation',
                     });
 
-                    // Other way. This time host node is the data creator.
                     await this.graphStorage.addEdge({
-                        _key: Utilities.keyFrom(this.me, relatedVertex._key, vertex._key),
+                        _key: Utilities.keyFrom(dataCreator, relatedVertex._key, vertex._key),
                         _from: relatedVertex._key,
                         _to: vertex._key,
                         relationType: 'CONNECTION_DOWNSTREAM',

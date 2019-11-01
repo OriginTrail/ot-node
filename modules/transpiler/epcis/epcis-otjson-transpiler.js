@@ -663,27 +663,27 @@ class EpcisOtJsonTranspiler {
         const eventId = otEvent['@id'];
         if (otEvent.properties.bizTransactionList) {
             for (const bizTransaction of otEvent.properties.bizTransactionList.bizTransaction) {
+                const [connectionId, erc725Identity] = bizTransaction.split(':');
                 connectors.push({
                     '@id': `urn:uuid:${uuidv4()}`,
                     '@type': 'otConnector',
-                    connectionId: bizTransaction.split(':')[1],
+                    connectionId,
                     expectedConnectionCreators: [
                         {
                             '@type': 'ERC725',
-                            '@value': bizTransaction.split(':')[0], // this.config.erc725Identity,
+                            '@value': erc725Identity,
                             validationSchema: '../ethereum-erc',
                         },
                     ],
                     relations: [
                         {
                             '@type': 'otRelation',
-                            direction: 'reverse',
+                            direction: 'direct',
                             relationType: 'CONNECTOR_FOR',
                             linkedObject: {
                                 '@id': eventId,
                             },
-                            properties: {
-                            },
+                            properties: {},
                         },
                     ],
                 });

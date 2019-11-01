@@ -402,9 +402,8 @@ class OtJsonImporter {
                         edgeType: 'ConnectorRelation',
                     });
 
-                    // Other way. This time host node is the data creator.
                     await this.db.addEdge({
-                        _key: Utilities.keyFrom(this.me, relatedVertex._key, vertex._key),
+                        _key: Utilities.keyFrom(dataCreator, relatedVertex._key, vertex._key),
                         _from: relatedVertex._key,
                         _to: vertex._key,
                         relationType: 'CONNECTION_DOWNSTREAM',
