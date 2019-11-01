@@ -450,8 +450,29 @@ class OtJsonImporter {
         };
     }
 
+    getMerkleProofs(objectIdsArray, dataset_id) {
+        // TODO implement generating merkle proofs
+        // call merkle module
+
+        const hardcodedProofs = ['neki_dokaz', 'neki_dokaz', 'neki_dokaz'];
+
+        const response = this._packMerkleData(hardcodedProofs, objectIdsArray);
+
+        return response;
+    }
+
+    _packMerkleData(proofs, objectIds) {
+        const data = [];
+
+        for (let i = 0; i < proofs.length; i += 1) {
+            data.push({ proof: proofs[i], object_id: objectIds[i] });
+        }
+
+        return data;
+    }
+
     async packTrailData(data) {
-        let otObjects = [];
+        const otObjects = [];
 
         data.forEach(async (object) => {
             const { rootObject, relatedObjects } = object;

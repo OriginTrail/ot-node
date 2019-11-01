@@ -84,6 +84,13 @@ class RestAPIServiceV2 {
             await this._getTrail(req, res);
         });
 
+        /*
+        * Get MerkleProofs
+        * */
+        server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res, next) => {
+            await this._getMerkleProofs(req, res);
+        });
+
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
             const nodeId = req.params.node_id;
@@ -320,9 +327,9 @@ class RestAPIServiceV2 {
         const typesArray = utilities.arrayze(identifier_types);
         const idsArray = utilities.arrayze(identifier_ids);
 
-        const length = typesArray.length;
+        const { length } = typesArray;
 
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; i += 1) {
             keys.push(utilities.keyFrom(typesArray[i], idsArray[i]));
         }
 
@@ -334,6 +341,35 @@ class RestAPIServiceV2 {
             });
 
         const response = await this.otJsonImporter.packTrailData(trail);
+
+        res.status(200);
+        res.send(response);
+    }
+
+    async _getMerkleProofs(req, res) {
+        this.logger.api('POST: Get Merkle proofs request received.');
+
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        if (req.body.object_ids === undefined ||
+            req.body.dataset_id === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { object_ids, dataset_id } = req.body;
+
+        const response =
+            this.otJsonImporter.getMerkleProofs(utilities.arrayze(object_ids), dataset_id);
 
         res.status(200);
         res.send(response);
