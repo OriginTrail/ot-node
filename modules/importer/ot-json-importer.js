@@ -4,6 +4,7 @@ const { forEach, forEachSeries } = require('p-iteration');
 const Utilities = require('../Utilities');
 const SchemaValidator = require('../validator/schema-validator');
 const ImportUtilities = require('../ImportUtilities');
+const MerkleTree = require('../Merkle');
 
 const { fork } = require('child_process');
 
@@ -450,15 +451,35 @@ class OtJsonImporter {
         };
     }
 
-    getMerkleProofs(objectIdsArray, dataset_id) {
-        // TODO implement generating merkle proofs
-        // call merkle module
+    /**
+     * Constructs Merkle proofs for objectIds for the dataset
+     * @param objectIdsArray id values of objects for which the proofs need to be generated
+     * @param datasetId The dataset id to which the objects belong to
+     * @returns {Promise<[]>}
+     */
+    async getMerkleProofs(objectIdsArray, datasetId) {
+        const otjson = await this.getImport(datasetId);
 
-        const hardcodedProofs = ['neki_dokaz', 'neki_dokaz', 'neki_dokaz'];
+        ImportUtilities.sortGraphRecursively(_graph(otjson));
 
-        const response = this._packMerkleData(hardcodedProofs, objectIdsArray);
+        const merkleTree = ImportUtilities.createDistributionMerkleTree(
+            _graph(otjson),
+            datasetId,
+            otjson.datasetHeader.dataCreator,
+        );
 
-        return response;
+        const proofs = [];
+
+        for (const objectId of objectIdsArray) {
+            const objectIndex =
+                _graph(otjson).findIndex(graphObject => _id(graphObject) === objectId);
+
+            const proof = merkleTree.createProof(objectIndex + 1);
+
+            proofs.push(proof);
+        }
+
+        return this._packMerkleData(proofs, objectIdsArray);
     }
 
     _packMerkleData(proofs, objectIds) {
@@ -489,9 +510,12 @@ class OtJsonImporter {
         if (![null, 'red', 'green', 'blue'].includes(encColor)) {
             throw Error('Invalid encryption color.');
         }
-        const vertices = await this.db.findVerticesByImportId(datasetId);
-        const edges = await this.db.findEdgesByImportId(datasetId);
-        const metadata = await this.db.findMetadataByImportId(datasetId);
+
+        const {
+            vertices,
+            edges,
+            metadata,
+        } = await this.db.getDatasetWithVerticesAndEdges(datasetId);
 
         // TODO: Check if date with specified encryption exists
         if (encColor != null) {

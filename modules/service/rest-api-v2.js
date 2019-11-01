@@ -369,7 +369,7 @@ class RestAPIServiceV2 {
         const { object_ids, dataset_id } = req.body;
 
         const response =
-            this.otJsonImporter.getMerkleProofs(utilities.arrayze(object_ids), dataset_id);
+            await this.otJsonImporter.getMerkleProofs(utilities.arrayze(object_ids), dataset_id);
 
         res.status(200);
         res.send(response);

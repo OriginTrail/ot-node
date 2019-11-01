@@ -834,11 +834,10 @@ class ArangoJS {
                             LET datasetEdges = DOCUMENT('ot_edges', datasetMetadata.edges)
 
                             RETURN {
-                                datasetHeader: datasetMetadata.datasetHeader,
-                                    signature: datasetMetadata.signature,
-                                    datasetVertices,
-                                    datasetEdges
-                            };`;
+                                metadata: datasetMetadata,
+                                vertices: datasetVertices,
+                                edges: datasetEdges
+                            }`;
         return this.runQuery(queryString, { datasetId });
     }
 

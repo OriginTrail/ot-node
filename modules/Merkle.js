@@ -5,18 +5,18 @@ const Utilities = require('./Utilities');
 const { sha3_256 } = require('js-sha3');
 
 class MerkleTree {
-    generateLeafHash(leaf, objectIndex, blockIndex) {
+    generateLeafHash(leaf, index) {
         switch (this.hashFunction) {
         case 'soliditySha3':
             if (Buffer.from(`${leaf}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
                 throw Error('Block size is larger than 32 bytes.');
             }
             return abi.soliditySHA3(
-                ['bytes32', 'uint256', 'uint256'],
-                [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), objectIndex, blockIndex],
+                ['bytes32', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
             ).toString('hex');
 
-        case 'sha3': return sha3_256(`${leaf}${objectIndex}${blockIndex}`);
+        case 'sha3': return sha3_256(`${leaf}${index}`);
         default: throw Error('Invalid hash function!');
         }
     }
@@ -43,12 +43,7 @@ class MerkleTree {
         this.hashFunction = hashFunction;
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
-            const hash = this.generateLeafHash(
-                leaves[i].data,
-                leaves[i].objectIndex,
-                leaves[i].blockIndex,
-            );
-
+            const hash = this.generateLeafHash(leaves[i], i);
             leavesHashes.push(hash);
         }
 
@@ -86,17 +81,14 @@ class MerkleTree {
         return `0x${this.rootHash}`;
     }
 
-    createProof(leafObjectIndex, leafBlockIndex) {
+    createProof(index) {
         const { levels } = this;
 
         let currentLevel = 1;
 
         const proof = [];
 
-        const leafNumber =
-            levels[0].findIndex(element =>
-                element.objectIndex === leafObjectIndex && element.blockIndex === leafBlockIndex);
-        let i = leafNumber;
+        let i = index;
 
         while (currentLevel < levels.length - 1) {
             if (i % 2 === 1) {
@@ -114,17 +106,14 @@ class MerkleTree {
         return proof;
     }
 
-    verifyProof(proof, data, objectIndex, blockIndex) {
-        let leafNumber =
-            this.levels[0].findIndex(element =>
-                element.objectIndex === objectIndex && element.blockIndex === blockIndex);
-        let h = this.generateLeafHash(data, objectIndex, blockIndex);
+    verifyProof(proof, data, index) {
+        let h = this.generateLeafHash(data, index);
         let j = this.levels.length - 1;
         let k = 0;
         let r = 0;
 
         while (j > 1) {
-            r = leafNumber % 2;
+            r = index % 2;
             if (r % 2 === 0) {
                 h = this.generateInternalHash(h, proof[k]);
             } else {
@@ -132,7 +121,7 @@ class MerkleTree {
             }
 
             k += 1;
-            leafNumber = Math.trunc(leafNumber / 2);
+            index = Math.trunc(index / 2);
             j -= 1;
         }
         return h === this.rootHash;

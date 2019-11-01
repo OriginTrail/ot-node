@@ -324,7 +324,7 @@ class ImportUtilities {
         };
     }
 
-    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+    static createDistributionMerkleTree(graph, datasetId, datasetCreator) {
         const datasetSummary =
             this.calculateDatasetSummary(graph, datasetId, datasetCreator);
 
@@ -335,10 +335,19 @@ class ImportUtilities {
             stringifiedGraph.push(Utilities.sortedStringify(obj));
         }
 
-        const merkle = new MerkleTree(
+        return new MerkleTree(
             [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
             'sha3',
         );
+    }
+
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const merkle = ImportUtilities.createDistributionMerkleTree(
+            graph,
+            datasetId,
+            datasetCreator,
+        );
+
         return merkle.getRoot();
     }
 
