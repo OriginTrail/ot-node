@@ -667,14 +667,19 @@ class EpcisOtJsonTranspiler {
                 connectors.push({
                     '@id': `urn:uuid:${uuidv4()}`,
                     '@type': 'otConnector',
-                    connectionId,
-                    expectedConnectionCreators: [
-                        {
-                            '@type': 'ERC725',
-                            '@value': erc725Identity,
-                            validationSchema: '../ethereum-erc',
-                        },
-                    ],
+                    identifiers: [{
+                        '@type': 'id',
+                        '@value': connectionId,
+                    }],
+                    properties: {
+                        expectedConnectionCreators: [
+                            {
+                                '@type': 'ERC725',
+                                '@value': erc725Identity,
+                                validationSchema: '../ethereum-erc',
+                            },
+                        ],
+                    },
                     relations: [
                         {
                             '@type': 'otRelation',
