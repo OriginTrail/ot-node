@@ -420,6 +420,25 @@ class GraphStorage {
     }
 
     /**
+     * Retrieves all elements of a dataset ID
+     * @param datasetId - Dataset ID
+     * @returns {Promise}
+     */
+    getDatasetWithVerticesAndEdges(datasetId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getDatasetWithVerticesAndEdges(datasetId).then((result) => {
+                    resolve(result[0]);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Find event based on ID and bizStep
      * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
      * @param senderId    Sender ID

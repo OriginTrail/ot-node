@@ -818,7 +818,27 @@ class ArangoJS {
      * @param datasetId
      */
     async findMetadataByImportId(datasetId) {
-        const queryString = 'FOR v IN ot_datasets FILTER v._key == @datasetId RETURN v';
+        const queryString = 'RETURN DOCUMENT(\'ot_datasets\', @datasetId)';
+        return this.runQuery(queryString, { datasetId });
+    }
+
+    /**
+     * Retrieves all elements of a dataset ID
+     * @return {Promise<*>}
+     * @param datasetId
+     */
+    async getDatasetWithVerticesAndEdges(datasetId) {
+        const queryString = `LET datasetMetadata = DOCUMENT('ot_datasets', @datasetId)
+
+                            LET datasetVertices = DOCUMENT('ot_vertices', datasetMetadata.vertices)
+                            LET datasetEdges = DOCUMENT('ot_edges', datasetMetadata.edges)
+
+                            RETURN {
+                                datasetHeader: datasetMetadata.datasetHeader,
+                                    signature: datasetMetadata.signature,
+                                    datasetVertices,
+                                    datasetEdges
+                            };`;
         return this.runQuery(queryString, { datasetId });
     }
 
