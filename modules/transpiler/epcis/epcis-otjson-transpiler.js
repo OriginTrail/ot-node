@@ -440,8 +440,7 @@ class EpcisOtJsonTranspiler {
         });
         if (compressed.epcList && compressed.epcList.epc) {
             for (const epc of compressed.epcList.epc) {
-                otObject.relations.push(createRelation(epc, 'EPC', {
-                }));
+                otObject.relations.push(createRelation(epc, 'EPC', {}));
             }
         }
 
@@ -552,8 +551,7 @@ class EpcisOtJsonTranspiler {
             if (compressed.extension.sourceList) {
                 const sources = compressed.extension.sourceList.source;
                 for (let i = 0; i < sources.length; i += 1) {
-                    const data = {
-                    };
+                    const data = {};
                     const type = this._extractType(otObject.properties.___metadata, 'extension.sourceList.source', i);
                     if (type) {
                         Object.assign(data, {
@@ -567,8 +565,7 @@ class EpcisOtJsonTranspiler {
             if (compressed.extension.destinationList) {
                 const destinations = compressed.extension.destinationList.destination;
                 for (let i = 0; i < destinations.length; i += 1) {
-                    const data = {
-                    };
+                    const data = {};
                     const type = this._extractType(otObject.properties.___metadata, 'extension.destinationList.destination', i);
                     if (type) {
                         Object.assign(data, {

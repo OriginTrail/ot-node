@@ -13,8 +13,6 @@ const { Database } = require('arangojs');
 const rc = require('rc');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Utilities = require('../../modules/importer/gs1-utilities');
-const WOTImporter = require('../../modules/importer/wot-importer');
-const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Network = require('../../modules/network/kademlia/kademlia');
@@ -108,8 +106,6 @@ describe('GS1 Importer tests', () => {
             logger: awilix.asValue(logger),
             gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),
-            importer: awilix.asClass(Importer),
-            wotImporter: awilix.asClass(WOTImporter),
             otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
@@ -127,7 +123,6 @@ describe('GS1 Importer tests', () => {
         });
         await graphStorage.connect();
         gs1 = container.resolve('otJsonImporter');
-        importer = container.resolve('importer');
         epcisOtJsonTranspiler = container.resolve('epcisOtJsonTranspiler');
     });
 

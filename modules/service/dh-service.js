@@ -18,7 +18,6 @@ class DHService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
-        this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.transport = ctx.transport;
         this.web3 = ctx.web3;

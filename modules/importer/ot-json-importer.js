@@ -607,6 +607,7 @@ class OtJsonImporter {
                         otObject.relations.push({
                             '@type': constants.edgeType.otRelation,
                             direction: 'direct', // TODO: check this.
+                            relationType: edge.relationType,
                             linkedObject: {
                                 '@id': id,
                             },
@@ -644,6 +645,7 @@ class OtJsonImporter {
                         const newRelation = {
                             '@type': constants.edgeType.otRelation,
                             direction: 'reverse',
+                            relationType: edge.relationType,
                             linkedObject: {
                                 '@id': id,
                             },

@@ -84,7 +84,7 @@ class ImportWorkerController {
 
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
-        forked.send(JSON.stringify({ config: this.config, document, standardId }));
+        forked.send(JSON.stringify({ config: this.config, dataset: document, standardId }));
 
         forked.on('message', async (response) => {
             if (response.error) {

@@ -25,6 +25,17 @@ Feature: Test basic importer features
     And DC waits for export to finish
     Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
 
+  @fourth
+  Scenario: Check that exported WOT dataset is the same as the one imported
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/json_examples/kakaxi.wot" as WOT
+    And DC waits for import to finish
+    When DC exports the last imported dataset as WOT
+    And DC waits for export to finish
+    Then the last exported dataset data should be the same as "importers/json_examples/kakaxi.wot"
+
 #  @skip
 #  Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
 #    Given I setup 1 node
