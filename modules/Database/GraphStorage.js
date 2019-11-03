@@ -533,6 +533,25 @@ class GraphStorage {
     }
 
     /**
+     * Returns data creator identity for dataset ID
+     * @param datasetId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForDatasetId(datasetId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findIssuerIdentityForDatasetId(datasetId).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Mimics commit opertaion
      * Removes inTransaction fields
      * @return {Promise<void>}
