@@ -330,17 +330,22 @@ class RestAPIServiceV2 {
             keys.push(utilities.keyFrom(typesArray[i], idsArray[i]));
         }
 
-        const trail =
-            await this.graphStorage.findTrail({
-                identifierKeys: keys,
-                depth,
-                connectionTypes,
-            });
+        try {
+            const trail =
+                await this.graphStorage.findTrail({
+                    identifierKeys: keys,
+                    depth,
+                    connectionTypes,
+                });
 
-        const response = await this.otJsonImporter.packTrailData(trail);
+            const response = await this.otJsonImporter.packTrailData(trail);
 
-        res.status(200);
-        res.send(response);
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            res.status(400);
+            res.send(e);
+        }
     }
 
     async _getMerkleProofs(req, res) {
