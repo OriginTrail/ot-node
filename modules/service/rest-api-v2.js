@@ -294,7 +294,7 @@ class RestAPIServiceV2 {
         }
 
         if (req.body.identifier_types === undefined ||
-            req.body.identifier_ids === undefined) {
+            req.body.identifier_values === undefined) {
             res.status(400);
             res.send({
                 message: 'Bad request',
@@ -302,10 +302,10 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const { identifier_types, identifier_ids } = req.body;
+        const { identifier_types, identifier_values } = req.body;
 
-        if (utilities.arrayze(JSON.parse(identifier_types)).length !==
-            utilities.arrayze(JSON.parse(identifier_ids)).length) {
+        if (utilities.arrayze(identifier_types).length !==
+            utilities.arrayze(identifier_values).length) {
             res.status(400);
             res.send({
                 message: 'Identifier array length mismatch',
@@ -317,17 +317,17 @@ class RestAPIServiceV2 {
             this.graphStorage.getDatabaseInfo().max_path_length :
             parseInt(req.body.depth, 10);
 
-        const { connectionTypes } = req.body;
+        const { connection_types } = req.body;
 
         const keys = [];
 
-        const typesArray = utilities.arrayze(JSON.parse(identifier_types));
-        const idsArray = utilities.arrayze(JSON.parse(identifier_ids));
+        const typesArray = utilities.arrayze(identifier_types);
+        const valuesArray = utilities.arrayze(identifier_values);
 
         const { length } = typesArray;
 
         for (let i = 0; i < length; i += 1) {
-            keys.push(utilities.keyFrom(typesArray[i], idsArray[i]));
+            keys.push(utilities.keyFrom(typesArray[i], valuesArray[i]));
         }
 
         try {
@@ -335,7 +335,7 @@ class RestAPIServiceV2 {
                 await this.graphStorage.findTrail({
                     identifierKeys: keys,
                     depth,
-                    connectionTypes,
+                    connectionTypes: connection_types,
                 });
 
             const response = await this.otJsonImporter.packTrailData(trail);
