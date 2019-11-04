@@ -68,61 +68,67 @@ class DcWriteImportToGraphDbCommand extends Command {
             // Connect to other connectors if available.
 
             const connectorIdentifierVertexKey = Utilities.keyFrom('id', identifierValue);
-            const relatedConnectors = await this.graphStorage.findConnectors(connectorIdentifierVertexKey);
+            const relatedConnectors =
+                await this.graphStorage.findConnectors(connectorIdentifierVertexKey);
 
-            await forEachSeries(relatedConnectors.filter(v => v._key !== vertex._key), async (relatedVertex) => {
-                let hasConnection1 = false;
-                if (relatedVertex.expectedConnectionCreators != null) {
-                    relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
-                        const expectedErc725 = this._value(expectedCreator);
+            await forEachSeries(
+                relatedConnectors.filter(v => v._key !== vertex._key),
+                async (relatedVertex) => {
+                    let hasConnection1 = false;
+                    if (relatedVertex.expectedConnectionCreators != null) {
+                        relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
+                            const expectedErc725 = this._value(expectedCreator);
 
-                        if (dataCreator === expectedErc725) {
-                            hasConnection1 = true;
-                        }
-                    });
-                }
-
-                let hasConnection2 = false;
-                await Promise.all(relatedVertex.datasets.map(datasetId => new Promise(async (accept, reject) => {
-                    if (hasConnection2 === false) {
-                        const metadata = await this.graphStorage
-                            .findMetadataByImportId(datasetId);
-
-                        if (data.expectedConnectionCreators != null) {
-                            data.expectedConnectionCreators.forEach((expectedCreator) => {
-                                const expectedErc725 = this._value(expectedCreator);
-
-                                if (expectedErc725 === metadata.datasetHeader.dataCreator.identifiers
-                                    .find(x => x.identifierType === 'ERC725').identifierValue) {
-                                    hasConnection2 = true;
-                                }
-                            });
-                        }
+                            if (dataCreator === expectedErc725) {
+                                hasConnection1 = true;
+                            }
+                        });
                     }
-                    accept();
-                })));
 
-                if (!hasConnection1 || !hasConnection2) {
-                    this.logger.warn(`Invalid connectors (${identifierValue}).`);
-                    return;
-                }
+                    let hasConnection2 = false;
+                    await Promise.all(relatedVertex.datasets
+                        .map(datasetId => new Promise(async (accept, reject) => {
+                            if (hasConnection2 === false) {
+                                const metadata = await this.graphStorage
+                                    .findMetadataByImportId(datasetId);
 
-                await this.graphStorage.addEdge({
-                    _key: Utilities.keyFrom(dataCreator, vertex._key, relatedVertex._key),
-                    _from: vertex._key,
-                    _to: relatedVertex._key,
-                    relationType: 'CONNECTION_DOWNSTREAM',
-                    edgeType: 'ConnectorRelation',
-                });
+                                if (data.expectedConnectionCreators != null) {
+                                    data.expectedConnectionCreators.forEach((expectedCreator) => {
+                                        const expectedErc725 = this._value(expectedCreator);
 
-                await this.graphStorage.addEdge({
-                    _key: Utilities.keyFrom(dataCreator, relatedVertex._key, vertex._key),
-                    _from: relatedVertex._key,
-                    _to: vertex._key,
-                    relationType: 'CONNECTION_DOWNSTREAM',
-                    edgeType: 'ConnectorRelation',
-                });
-            });
+                                        if (expectedErc725 ===
+                                            metadata.datasetHeader.dataCreator.identifiers
+                                                .find(x => x.identifierType === 'ERC725').identifierValue) {
+                                            hasConnection2 = true;
+                                        }
+                                    });
+                                }
+                            }
+                            accept();
+                        })));
+
+                    if (!hasConnection1 || !hasConnection2) {
+                        this.logger.warn(`Invalid connectors (${identifierValue}).`);
+                        return;
+                    }
+
+                    await this.graphStorage.addEdge({
+                        _key: Utilities.keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                        _from: vertex._key,
+                        _to: relatedVertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+
+                    await this.graphStorage.addEdge({
+                        _key: Utilities.keyFrom(dataCreator, relatedVertex._key, vertex._key),
+                        _from: relatedVertex._key,
+                        _to: vertex._key,
+                        relationType: 'CONNECTION_DOWNSTREAM',
+                        edgeType: 'ConnectorRelation',
+                    });
+                },
+            );
         });
 
         await this.graphStorage.addDatasetMetadata(metadata);

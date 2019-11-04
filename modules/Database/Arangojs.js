@@ -78,7 +78,6 @@ class ArangoJS {
     }
 
 
-
     /**
      * Find set of documents with _key, vertex_type and identifiers values
      * @param queryObject       Query for getting documents
