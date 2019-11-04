@@ -910,9 +910,10 @@ class ArangoJS {
      * @returns {Promise}
      */
     async findIssuerIdentityForDatasetId(datasetId) {
-        const queryString = `for d in ot_datasets
-                            filter d._key == @datasetId
-                            return d.datasetHeader.dataCreator.identifiers[0]`;
+        const queryString = `let dataset_info = (
+                                return document('ot_datasets', @datasetId) 
+                            )
+                            return dataset_info[0].datasetHeader.dataCreator.identifiers[0]`;
         const params = { datasetId };
         return this.runQuery(queryString, params);
     }
