@@ -12,6 +12,8 @@ class RestAPIServiceV2 {
         this.apiUtilities = ctx.apiUtilities;
         this.emitter = ctx.emitter;
         this.commandExecutor = ctx.commandExecutor;
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
@@ -70,6 +72,10 @@ class RestAPIServiceV2 {
 
         server.get(`/api/${this.version_id}/get_element_issuer_identity/:element_id`, async (req, res) => {
             await this._getElementIssuerIdentity(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/get_connection_types/:standard_id`, async (req, res) => {
+            await this._getConnectionTypes(req, res);
         });
 
         /** Local query routes */
@@ -514,6 +520,22 @@ class RestAPIServiceV2 {
         res.send({
             message: msg,
         });
+    }
+
+    _getConnectionTypes(req, res) {
+        const standard_id = req.params.standard_id.toLocaleLowerCase();
+        if (standard_id === 'gs1') {
+            res.status(200);
+            res.send({ connection_types: this.epcisOtJsonTranspiler.getConnectionTypes() });
+        } else if (standard_id === 'wot') {
+            res.status(200);
+            res.send({ connection_types: this.wotOtJsonTranspiler.getConnectionTypes() });
+        } else {
+            res.status(400);
+            res.send({
+                message: 'Invalid type request',
+            });
+        }
     }
 
     /**
