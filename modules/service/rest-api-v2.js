@@ -304,8 +304,8 @@ class RestAPIServiceV2 {
 
         const { identifier_types, identifier_ids } = req.body;
 
-        if (utilities.arrayze(identifier_types).length !==
-            utilities.arrayze(identifier_ids).length) {
+        if (utilities.arrayze(JSON.parse(identifier_types)).length !==
+            utilities.arrayze(JSON.parse(identifier_ids)).length) {
             res.status(400);
             res.send({
                 message: 'Identifier array length mismatch',
@@ -315,17 +315,14 @@ class RestAPIServiceV2 {
 
         const depth = req.body.depth === undefined ?
             this.graphStorage.getDatabaseInfo().max_path_length :
-            req.body.depth;
+            parseInt(req.body.depth, 10);
 
-        // TODO connectionTypes
-        const connectionTypes = req.body.connectionTypes === undefined ?
-            ['dummy', 'dummy', 'dummy'] :
-            req.body.connectionTypes;
+        const { connectionTypes } = req.body;
 
         const keys = [];
 
-        const typesArray = utilities.arrayze(identifier_types);
-        const idsArray = utilities.arrayze(identifier_ids);
+        const typesArray = utilities.arrayze(JSON.parse(identifier_types));
+        const idsArray = utilities.arrayze(JSON.parse(identifier_ids));
 
         const { length } = typesArray;
 

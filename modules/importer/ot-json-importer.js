@@ -493,17 +493,16 @@ class OtJsonImporter {
     }
 
     async packTrailData(data) {
-        const otObjects = [];
-
-        data.forEach(async (object) => {
+        const promises = [];
+        for (const object of data) {
             const { rootObject, relatedObjects } = object;
 
-            const tmpObject = await this._createObjectGraph(rootObject, relatedObjects);
+            promises.push(this._createObjectGraph(rootObject, relatedObjects));
+        }
 
-            otObjects.push(tmpObject);
-        });
+        const reconstructedObjects = await Promise.all(promises);
 
-        return otObjects;
+        return reconstructedObjects.filter(reconstructedObject => reconstructedObject != null);
     }
 
     async getImport(datasetId, encColor = null) {
