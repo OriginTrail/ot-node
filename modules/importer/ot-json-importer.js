@@ -499,7 +499,7 @@ class OtJsonImporter {
                         })));
 
                     if (!hasConnection1 || !hasConnection2) {
-                        this.logger.warn(`Invalid connectors (${identifierValue}).`);
+                        this.log.warn(`Invalid connectors (${identifierValue}).`);
                         return;
                     }
 
@@ -1017,6 +1017,16 @@ class OtJsonImporter {
                 throw Error('[Validation Error] OT-JSON relations not valid');
             }
         });
+    }
+
+    /**
+     * Returns value of '@value' property.
+     * @param jsonLdObject JSON-LD object.
+     * @return {string}
+     * @private
+     */
+    _value(jsonLdObject) {
+        return jsonLdObject['@value'];
     }
 }
 
