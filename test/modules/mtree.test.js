@@ -255,7 +255,7 @@ describe('Merkle module', () => {
             objectIndex: 0,
             blockIndex: 0,
         }];
-        const tree = new Merkle(data, 'sha3');
+        const tree = new Merkle(data, 'litigation','sha3');
 
         const leafHash = sha3LeafHash('A', 0, 0);
         assert.equal(tree.getRoot(), `0x${sha3InternalHash(leafHash, leafHash)}`);
@@ -286,7 +286,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'sha3');
+        const tree = new Merkle(data, 'litigation','sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
         const leafHash2 = sha3LeafHash('B', 0, 1);
@@ -323,7 +323,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'sha3');
+        const tree = new Merkle(data, 'litigation','sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
         const leafHash2 = sha3LeafHash('B', 0, 1);
@@ -358,7 +358,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'sha3');
+        const tree = new Merkle(data, 'litigation','sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
         const leafHash2 = sha3LeafHash('B', 0, 1);
@@ -398,7 +398,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'sha3');
+        const tree = new Merkle(data, 'litigation','sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
@@ -434,7 +434,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'sha3');
+        const tree = new Merkle(data, 'litigation','sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 

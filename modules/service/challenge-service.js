@@ -1,5 +1,6 @@
 const constants = require('../constants');
 const importUtilities = require('../ImportUtilities');
+const Merkle = require('../Merkle');
 
 class ChallengeService {
     constructor(ctx) {
@@ -116,6 +117,14 @@ class ChallengeService {
             }
         }
         return blocks;
+    }
+
+    getLitigationRootHash(encryptedGraphData, blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+        const blocks = this.getBlocks(encryptedGraphData, blockSizeInBytes);
+
+        const litigationMerkleTree = new Merkle(blocks, 'litigation');
+
+        return litigationMerkleTree.getRoot();
     }
 }
 

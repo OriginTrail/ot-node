@@ -337,6 +337,7 @@ class ImportUtilities {
 
         return new MerkleTree(
             [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
+            'distribution',
             'sha3',
         );
     }

@@ -510,11 +510,9 @@ class OtJsonImporter {
             throw Error('Invalid encryption color.');
         }
 
-        const {
-            vertices,
-            edges,
-            metadata,
-        } = await this.db.getDatasetWithVerticesAndEdges(datasetId);
+        const vertices = await this.db.findVerticesByImportId(datasetId);
+        const edges = await this.db.findEdgesByImportId(datasetId);
+        const metadata = await this.db.findMetadataByImportId(datasetId);
 
         // TODO: Check if date with specified encryption exists
         if (encColor != null) {

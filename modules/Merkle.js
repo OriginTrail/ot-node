@@ -21,6 +21,22 @@ class MerkleTree {
         }
     }
 
+    generateLitigationLeafHash(data, objectIndex, blockIndex) {
+        switch (this.hashFunction) {
+            case 'soliditySha3':
+                if (Buffer.from(`${data}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+                    throw Error(`Block size is larger than ${constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES} bytes.`);
+                }
+                return abi.soliditySHA3(
+                    ['bytes32', 'uint256', 'uint256'],
+                    [Utilities.normalizeHex(Buffer.from(`${data}`, 'utf8').toString('hex')), objectIndex, blockIndex],
+                ).toString('hex');
+
+            case 'sha3': return sha3_256(`${data}${objectIndex}${blockIndex}`);
+            default: throw Error('Invalid hash function!');
+        }
+    }
+
     generateInternalHash(block1, block2) {
         switch (this.hashFunction) {
         case 'soliditySha3':
@@ -37,14 +53,27 @@ class MerkleTree {
         }
     }
 
-    constructor(leaves, hashFunction = 'soliditySha3') {
+    constructor(leaves, type = 'distribution', hashFunction = 'soliditySha3') {
         this.levels = [];
         this.levels.push(leaves);
         this.hashFunction = hashFunction;
+        this.type = type;
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
-            const hash = this.generateLeafHash(leaves[i], i);
-            leavesHashes.push(hash);
+            switch (this.type) {
+                case "distribution":
+                    leavesHashes.push(this.generateLeafHash(leaves[i], i));
+                    break;
+                case 'litigation':
+                    leavesHashes.push(this.generateLitigationLeafHash(
+                        leaves[i].data,
+                        leaves[i].objectIndex,
+                        leaves[i].blockIndex,
+                    ));
+                    break;
+                default:
+                    throw Error(`Unsupported Merkle tree type: ${type}`);
+            }
         }
 
         this.levels.push(leavesHashes);
@@ -81,14 +110,24 @@ class MerkleTree {
         return `0x${this.rootHash}`;
     }
 
-    createProof(index) {
+    createProof(firstIndex, secondIndex = null) {
+        let i;
         const { levels } = this;
+        switch (this.type) {
+            case 'distribution':
+                i = firstIndex;
+                break;
+            case 'litigation':
+                i = levels[0].findIndex(element =>
+                    element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+                break;
+            default:
+                throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        }
 
         let currentLevel = 1;
 
         const proof = [];
-
-        let i = index;
 
         while (currentLevel < levels.length - 1) {
             if (i % 2 === 1) {
@@ -106,14 +145,30 @@ class MerkleTree {
         return proof;
     }
 
-    verifyProof(proof, data, index) {
-        let h = this.generateLeafHash(data, index);
+    verifyProof(proof, data, firstIndex, secondIndex = null) {
+        let h;
+        let leafNumber;
+        const { levels } = this;
+        switch (this.type) {
+            case 'distribution':
+                leafNumber = firstIndex;
+                h = this.generateLeafHash(data, firstIndex);
+                break;
+            case 'litigation':
+                h = this.generateLitigationLeafHash(data, firstIndex, secondIndex);
+                leafNumber = levels[0].findIndex(element =>
+                    element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+                break;
+            default:
+                throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        }
+
         let j = this.levels.length - 1;
         let k = 0;
         let r = 0;
 
         while (j > 1) {
-            r = index % 2;
+            r = leafNumber % 2;
             if (r % 2 === 0) {
                 h = this.generateInternalHash(h, proof[k]);
             } else {
@@ -121,7 +176,7 @@ class MerkleTree {
             }
 
             k += 1;
-            index = Math.trunc(index / 2);
+            leafNumber = Math.trunc(leafNumber / 2);
             j -= 1;
         }
         return h === this.rootHash;
