@@ -273,15 +273,10 @@ class OtJsonImporter {
                         _id(otObject),
                     ),
                     uid: _id(otObject),
-                    // connectionId: otObject.connectionId,
                     vertexType: constants.vertexType.connector,
                     objectType: constants.objectType.otConnector,
                     datasets: [datasetId],
                 };
-                // if (otObject.expectedConnectionCreators != null) {
-                //     connectorVertex.expectedConnectionCreators =
-                //         otObject.expectedConnectionCreators;
-                // }
 
                 vertices.push(connectorVertex);
 
