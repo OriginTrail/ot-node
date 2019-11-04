@@ -38,8 +38,8 @@ describe('Merkle module', () => {
             objectIndex: 0,
             blockIndex: 0,
         }];
-        const tree1 = new Merkle(block);
-        const tree2 = new Merkle(block, 'soliditySha3');
+        const tree1 = new Merkle(block, 'litigation', 'soliditySha3');
+        const tree2 = new Merkle(block, 'litigation', 'soliditySha3');
 
         const leafHash = solidityLeafHash('A', 0, 0);
 
@@ -72,7 +72,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'soliditySha3');
+        const tree = new Merkle(data, 'litigation', 'soliditySha3');
 
         const leafHash1 = solidityLeafHash('A', 0, 0);
         const leafHash2 = solidityLeafHash('B', 0, 1);
@@ -109,7 +109,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'soliditySha3');
+        const tree = new Merkle(data, 'litigation', 'soliditySha3');
 
         const leafHash1 = solidityLeafHash('A', 0, 0);
         const leafHash2 = solidityLeafHash('B', 0, 1);
@@ -149,7 +149,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'soliditySha3');
+        const tree = new Merkle(data, 'litigation', 'soliditySha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
@@ -185,7 +185,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'soliditySha3');
+        const tree = new Merkle(data, 'litigation', 'soliditySha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
@@ -218,7 +218,7 @@ describe('Merkle module', () => {
     it('Solidity SHA3: Exceeding block size limit', () => {
         const data = [
             {
-                data: 'This value is more than 32 bytes ' +
+                data: 'This value is more than 31 bytes ' +
                         'and Merkle tree construction should fail ' +
                         'for soliditySha3 hash function',
                 objectIndex: 0,
@@ -242,10 +242,10 @@ describe('Merkle module', () => {
         ];
 
         try {
-            const tree = new Merkle(data, 'soliditySha3');
+            const tree = new Merkle(data, 'litigation', 'soliditySha3');
             assert.equal(true, false);
         } catch (err) {
-            assert.equal(err.message, 'Block size is larger than 32 bytes.');
+            assert.equal(err.message, 'Block size is larger than 31 bytes.');
         }
     });
 
@@ -255,7 +255,7 @@ describe('Merkle module', () => {
             objectIndex: 0,
             blockIndex: 0,
         }];
-        const tree = new Merkle(data, 'litigation','sha3');
+        const tree = new Merkle(data, 'litigation', 'sha3');
 
         const leafHash = sha3LeafHash('A', 0, 0);
         assert.equal(tree.getRoot(), `0x${sha3InternalHash(leafHash, leafHash)}`);
@@ -286,7 +286,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'litigation','sha3');
+        const tree = new Merkle(data, 'litigation', 'sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
         const leafHash2 = sha3LeafHash('B', 0, 1);
@@ -323,7 +323,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'litigation','sha3');
+        const tree = new Merkle(data, 'litigation', 'sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
         const leafHash2 = sha3LeafHash('B', 0, 1);
@@ -358,7 +358,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'litigation','sha3');
+        const tree = new Merkle(data, 'litigation', 'sha3');
 
         const leafHash1 = sha3LeafHash('A', 0, 0);
         const leafHash2 = sha3LeafHash('B', 0, 1);
@@ -398,7 +398,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'litigation','sha3');
+        const tree = new Merkle(data, 'litigation', 'sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 
@@ -434,7 +434,7 @@ describe('Merkle module', () => {
                 blockIndex: 0,
             },
         ];
-        const tree = new Merkle(data, 'litigation','sha3');
+        const tree = new Merkle(data, 'litigation', 'sha3');
 
         expect(tree).to.be.an.instanceof(Merkle);
 

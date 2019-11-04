@@ -132,3 +132,23 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
     });
 });
 
+Then(
+    /^the traversal from batch "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
+    { timeout: 120000 },
+    async function (batch, connectionTypes, numberOfObjects) {
+        expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+        const { dc } = this.state;
+
+        const host = dc.state.node_rpc_url;
+        const trail = await httpApiHelper.apiTrail(host, {
+            identifier_types: ['id'],
+            identifier_values: [batch],
+            depth: 4,
+            connection_types: [connectionTypes],
+        });
+
+        expect(trail, 'should not be null').to.not.be.undefined;
+        expect(trail, 'should be an Array').to.be.an.instanceof(Array);
+        expect(trail.length, `should be ${numberOfObjects} trail(s)`).to.be.equal(numberOfObjects);
+    },
+);

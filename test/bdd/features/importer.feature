@@ -25,6 +25,25 @@ Feature: Test basic importer features
     And DC waits for export to finish
     Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
 
+  @third
+  Scenario: Check that trail returns the expected number of objects
+    Given I setup 1 node
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/xml_examples/Retail/02_Green_to_pink_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/xml_examples/Retail/03_Pink_to_Orange_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/xml_examples/Retail/04_Pink_to_Orange_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/xml_examples/Retail/05_Pink_to_Red_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/xml_examples/Retail/06_Pink_to_Red_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Then the traversal from batch "urn:epc:id:sgtin:Batch_1" with connection types "EPC" should contain 3 objects
+
 #  @skip
 #  Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
 #    Given I setup 1 node

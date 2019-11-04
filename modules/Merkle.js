@@ -23,17 +23,17 @@ class MerkleTree {
 
     generateLitigationLeafHash(data, objectIndex, blockIndex) {
         switch (this.hashFunction) {
-            case 'soliditySha3':
-                if (Buffer.from(`${data}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
-                    throw Error(`Block size is larger than ${constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES} bytes.`);
-                }
-                return abi.soliditySHA3(
-                    ['bytes32', 'uint256', 'uint256'],
-                    [Utilities.normalizeHex(Buffer.from(`${data}`, 'utf8').toString('hex')), objectIndex, blockIndex],
-                ).toString('hex');
+        case 'soliditySha3':
+            if (Buffer.from(`${data}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+                throw Error(`Block size is larger than ${constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES} bytes.`);
+            }
+            return abi.soliditySHA3(
+                ['bytes32', 'uint256', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${data}`, 'utf8').toString('hex')), objectIndex, blockIndex],
+            ).toString('hex');
 
-            case 'sha3': return sha3_256(`${data}${objectIndex}${blockIndex}`);
-            default: throw Error('Invalid hash function!');
+        case 'sha3': return sha3_256(`${data}${objectIndex}${blockIndex}`);
+        default: throw Error('Invalid hash function!');
         }
     }
 
@@ -61,18 +61,18 @@ class MerkleTree {
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
             switch (this.type) {
-                case "distribution":
-                    leavesHashes.push(this.generateLeafHash(leaves[i], i));
-                    break;
-                case 'litigation':
-                    leavesHashes.push(this.generateLitigationLeafHash(
-                        leaves[i].data,
-                        leaves[i].objectIndex,
-                        leaves[i].blockIndex,
-                    ));
-                    break;
-                default:
-                    throw Error(`Unsupported Merkle tree type: ${type}`);
+            case 'distribution':
+                leavesHashes.push(this.generateLeafHash(leaves[i], i));
+                break;
+            case 'litigation':
+                leavesHashes.push(this.generateLitigationLeafHash(
+                    leaves[i].data,
+                    leaves[i].objectIndex,
+                    leaves[i].blockIndex,
+                ));
+                break;
+            default:
+                throw Error(`Unsupported Merkle tree type: ${type}`);
             }
         }
 
@@ -114,15 +114,15 @@ class MerkleTree {
         let i;
         const { levels } = this;
         switch (this.type) {
-            case 'distribution':
-                i = firstIndex;
-                break;
-            case 'litigation':
-                i = levels[0].findIndex(element =>
-                    element.objectIndex === firstIndex && element.blockIndex === secondIndex);
-                break;
-            default:
-                throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        case 'distribution':
+            i = firstIndex;
+            break;
+        case 'litigation':
+            i = levels[0].findIndex(element =>
+                element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+            break;
+        default:
+            throw Error(`Unsupported Merkle tree type: ${this.type}`);
         }
 
         let currentLevel = 1;
@@ -150,17 +150,17 @@ class MerkleTree {
         let leafNumber;
         const { levels } = this;
         switch (this.type) {
-            case 'distribution':
-                leafNumber = firstIndex;
-                h = this.generateLeafHash(data, firstIndex);
-                break;
-            case 'litigation':
-                h = this.generateLitigationLeafHash(data, firstIndex, secondIndex);
-                leafNumber = levels[0].findIndex(element =>
-                    element.objectIndex === firstIndex && element.blockIndex === secondIndex);
-                break;
-            default:
-                throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        case 'distribution':
+            leafNumber = firstIndex;
+            h = this.generateLeafHash(data, firstIndex);
+            break;
+        case 'litigation':
+            h = this.generateLitigationLeafHash(data, firstIndex, secondIndex);
+            leafNumber = levels[0].findIndex(element =>
+                element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+            break;
+        default:
+            throw Error(`Unsupported Merkle tree type: ${this.type}`);
         }
 
         let j = this.levels.length - 1;

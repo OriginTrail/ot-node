@@ -120,10 +120,10 @@ class ArangoJS {
                             ))
                              
                             LET trailObjects = (
-                                FOR v, e, p IN 1..@depth ANY startObjects[0] ot_edges`;
+                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
         if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
             queryString += `
-                            FILTER p.edges[-1].relationType in @connectionTypes`;
+                            FILTER p.edges[*].relationType ALL in @connectionTypes`;
             queryParams.connectionTypes = connectionTypes;
         }
         queryString += `
