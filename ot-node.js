@@ -515,6 +515,8 @@ class OTNode {
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
+            epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
         });
 
         const transport = container.resolve('transport');
