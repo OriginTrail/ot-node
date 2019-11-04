@@ -502,7 +502,17 @@ class OtJsonImporter {
 
         const reconstructedObjects = await Promise.all(promises);
 
-        return reconstructedObjects.filter(reconstructedObject => reconstructedObject != null);
+        const otObjects = [];
+
+        for (let i = 0; i < reconstructedObjects.length; i += 1) {
+            if (reconstructedObjects[i]) {
+                otObjects.push({
+                    otObject: reconstructedObjects[i],
+                    datasets: data[i].rootObject.datasets,
+                });
+            }
+        }
+        return otObjects;
     }
 
     async getImport(datasetId, encColor = null) {
