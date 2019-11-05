@@ -663,7 +663,7 @@ class OtJsonImporter {
                         properties: relatedObject.edge.properties,
                     });
                 }
-            }ß
+            }
         }
 
         return otObject;
