@@ -1,6 +1,6 @@
 const BN = require('../../../node_modules/bn.js/lib/bn');
 const bytes = require('utf8-length');
-
+const { sha3_256 } = require('js-sha3');
 const Command = require('../command');
 const MerkleTree = require('../../Merkle');
 const Encryption = require('../../Encryption');
@@ -15,7 +15,7 @@ class DhReplicationImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
-        this.importer = ctx.importer;
+        this.otJsonImporter = ctx.otJsonImporter;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
@@ -108,7 +108,10 @@ class DhReplicationImportCommand extends Command {
             },
         });
 
-        const importResult = await this.importer.importOTJSON(decryptedDataset, encryptedMap);
+        const importResult = await this.otJsonImporter.importFile({
+            document: decryptedDataset,
+            encryptedMap,
+        });
 
         if (importResult.error) {
             throw Error(importResult.error);
@@ -116,6 +119,7 @@ class DhReplicationImportCommand extends Command {
 
         if (dataInfo == null) {
             const dataSize = bytes(JSON.stringify(otJson));
+            const dataHash = Utilities.normalizeHex(sha3_256(`${otJson}`));
             await Models.data_info.create({
                 data_set_id: dataSetId,
                 total_documents: otJson['@graph'].length,
@@ -128,6 +132,8 @@ class DhReplicationImportCommand extends Command {
                 data_provider_wallet: dcWallet, // TODO: rename to data_creator_wallet
                 import_timestamp: new Date(),
                 data_size: dataSize,
+                otjson_size_in_bytes: dataSize,
+                data_hash: dataHash,
                 origin: 'HOLDING',
             });
         }

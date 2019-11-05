@@ -185,7 +185,7 @@ class GraphStorage {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findDocuments('ot_vertices', { connectionId: connectorId })
+                this.db.findConnectors(connectorId)
                     .then((result) => {
                         resolve(result);
                     }).catch((err) => {
@@ -557,6 +557,25 @@ class GraphStorage {
                 reject(Error('Method not implemented for Neo4j database yet'));
             } else {
                 this.db.getDocumentsCount(collectionName).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Returns data creator identity for dataset ID
+     * @param datasetId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForDatasetId(datasetId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findIssuerIdentityForDatasetId(datasetId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

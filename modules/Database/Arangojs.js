@@ -77,6 +77,37 @@ class ArangoJS {
         return this.runQuery(queryString, params);
     }
 
+
+    /**
+     * Find set of documents with _key, vertex_type and identifiers values
+     * @param queryObject       Query for getting documents
+     * @returns {Promise<any>}
+     */
+    async findConnectors(objectKey) {
+        const queryString = `LET identifier = (
+                                RETURN document('ot_vertices', @objectKey)
+                            )
+                                                        
+                            LET otConnector = (
+                                FOR v, e IN 1..1 OUTBOUND identifier[0] ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                RETURN v
+                            )
+                            
+                                FOR c in otConnector
+                                FOR v, e IN 1..1 OUTBOUND c ot_edges
+                                FILTER e.edgeType IN ['dataRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                RETURN {"_key":c._key, "expectedConnectionCreators":v.data.expectedConnectionCreators, "datasets": c.datasets  }`;
+
+        const result = await this.runQuery(queryString, { objectKey });
+
+        return result;
+    }
+
     /**
      * Finds imports IDs based on data location query
      *
@@ -980,6 +1011,20 @@ class ArangoJS {
             }
             return false;
         });
+    }
+
+    /**
+     * Returns data creator identity for dataset ID
+     * @param datasetId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForDatasetId(datasetId) {
+        const queryString = `let dataset_info = (
+                                return document('ot_datasets', @datasetId) 
+                            )
+                            return dataset_info[0].datasetHeader.dataCreator.identifiers[0]`;
+        const params = { datasetId };
+        return this.runQuery(queryString, params);
     }
 
     /**

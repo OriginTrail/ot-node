@@ -25,7 +25,7 @@ class DcConvertToOtJson extends Command {
                 delay: 0,
                 transactional: false,
                 data: {
-                    error,
+                    error: { message: error.message },
                     handler_id: command.data.handler_id,
                 },
             });

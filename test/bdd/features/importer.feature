@@ -60,6 +60,18 @@ Feature: Test basic importer features
     And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1"
     And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1_PINKSHIP2"
     And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1_PINKSHIP1"
+
+  @fourth
+  Scenario: Check that exported WOT dataset is the same as the one imported
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/json_examples/kakaxi.wot" as WOT
+    And DC waits for import to finish
+    When DC exports the last imported dataset as WOT
+    And DC waits for export to finish
+    Then the last exported dataset data should be the same as "importers/json_examples/kakaxi.wot"
+
 #  @skip
 #  Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
 #    Given I setup 1 node

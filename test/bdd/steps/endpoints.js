@@ -8,8 +8,8 @@ const { expect } = require('chai');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
-Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/, { timeout: 20000 }, async function (importFilePath, importType) {
-    expect(importType, 'importType can only be GS1-EPCIS or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON'));
+Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 20000 }, async function (importFilePath, importType) {
+    expect(importType, 'importType can only be GS1-EPCIS or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -28,7 +28,7 @@ Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/, { timeout: 200
     this.state.lastImportHandler = importResponse.handler_id;
 });
 
-Given(/^DC waits for import to finish$/, { timeout: 30000 }, async function () {
+Given(/^DC waits for import to finish$/, { timeout: 1200000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -50,8 +50,8 @@ Given(/^DC waits for import to finish$/, { timeout: 30000 }, async function () {
     return promise;
 });
 
-Given(/^DC exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/, async function (exportType) {
-    expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON'));
+Given(/^DC exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, async function (exportType) {
+    expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
 
@@ -68,9 +68,10 @@ Given(/^DC exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON]+)$/
         this.state.secondLastExportHandler = this.state.lastExportHandler;
     }
     this.state.lastExportHandler = exportResponse.handler_id;
+    this.state.lastExportType = exportType;
 });
 
-Given(/^DC waits for export to finish$/, async function () {
+Given(/^DC waits for export to finish$/, { timeout: 1200000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
 

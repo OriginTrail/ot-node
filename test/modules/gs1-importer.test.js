@@ -13,8 +13,6 @@ const { Database } = require('arangojs');
 const rc = require('rc');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Utilities = require('../../modules/importer/gs1-utilities');
-const WOTImporter = require('../../modules/importer/wot-importer');
-const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Network = require('../../modules/network/kademlia/kademlia');
@@ -107,8 +105,6 @@ describe('GS1 Importer tests', () => {
             logger: awilix.asValue(logger),
             gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),
-            importer: awilix.asClass(Importer),
-            wotImporter: awilix.asClass(WOTImporter),
             otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             remoteControl: awilix.asValue({
@@ -125,7 +121,6 @@ describe('GS1 Importer tests', () => {
         });
         await graphStorage.connect();
         gs1 = container.resolve('otJsonImporter');
-        importer = container.resolve('importer');
         epcisOtJsonTranspiler = container.resolve('epcisOtJsonTranspiler');
     });
 
@@ -222,6 +217,15 @@ describe('GS1 Importer tests', () => {
 
             assert.equal(verticesCount1, verticesCount2, '# of docs should remain constant after re-import');
             assert.equal(edgesCount1, edgesCount2, '# of edges should remain constant after re-import');
+        });
+    });
+
+    describe('OT-JSON file after transpilation should have a connector in graph structure', async () => {
+        it('check if a connector exists in scenario of Green_to_pink_shipment.xml', async () => {
+            const shipment = path.join(__dirname, '../../importers/xml_examples/Retail/01_Green_to_pink_shipment.xml');
+
+            const otJson = epcisOtJsonTranspiler.convertToOTJson(await Utilities.fileContents(shipment));
+            assert.equal(otJson['@graph'].filter(x => x['@type'] === 'otConnector').length, 1, 'connector should exist in otJson');
         });
     });
 

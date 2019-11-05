@@ -16,14 +16,13 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        blockchain, web3, config, graphStorage, importer, logger, remoteControl,
+        blockchain, web3, config, graphStorage, logger, remoteControl,
         notifyError,
     }) {
         this.blockchain = blockchain;
         this.web3 = web3;
         this.config = config;
         this.graphStorage = graphStorage;
-        this.importer = importer;
         this.log = logger;
         this.remoteControl = remoteControl;
         this.notifyError = notifyError;
@@ -100,12 +99,13 @@ class DVService {
         }
 
         try {
-            await this.importer.importJSON({
-                vertices: message.encryptedData.vertices,
-                edges: message.encryptedData.edges,
-                import_id: importId,
-                wallet: data_provider_wallet,
-            }, true);
+            // TODO refactor with new importer
+            // await this.importer.importJSON({
+            //     vertices: message.encryptedData.vertices,
+            //     edges: message.encryptedData.edges,
+            //     import_id: importId,
+            //     wallet: data_provider_wallet,
+            // }, true);
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);
