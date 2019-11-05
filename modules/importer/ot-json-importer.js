@@ -624,13 +624,8 @@ class OtJsonImporter {
             otObject = {
                 '@type': constants.objectType.otConnector,
                 '@id': graphObject.uid,
-                // connectionId: graphObject.connectionId,
                 relations: [],
             };
-
-            // if (graphObject.expectedConnectionCreators != null) {
-            //     otObject.expectedConnectionCreators = graphObject.expectedConnectionCreators;
-            // }
 
             for (const relatedObject of relatedObjects) {
                 // Check for identifiers.
@@ -668,26 +663,7 @@ class OtJsonImporter {
                         properties: relatedObject.edge.properties,
                     });
                 }
-            }
-
-            // for (const relatedObject of relatedObjects) {
-            //     // Check for relations.
-            //     if (relatedObject.edge.edgeType === constants.edgeType.otRelation) {
-            //         const newRelation = {
-            //             '@type': constants.edgeType.otRelation,
-            //             direction: 'reverse', // TODO: check this.
-            //             linkedObject: {
-            //                 '@id': relatedObject.vertex.uid,
-            //             },
-            //         };
-            //
-            //         if (relatedObject.edge.properties != null) {
-            //             newRelation.properties = relatedObject.edge.properties;
-            //         }
-            //
-            //         otObject.relations.push(newRelation);
-            //     }
-            // }
+            }ß
         }
 
         return otObject;
@@ -768,13 +744,7 @@ class OtJsonImporter {
                 const otConnector = {
                     '@type': constants.objectType.otConnector,
                     '@id': connectorVertex.uid,
-                    // connectionId: connectorVertex.connectionId,
                 };
-
-                // if (connectorVertex.expectedConnectionCreators != null) {
-                //     otConnector.expectedConnectionCreators =
-                //         connectorVertex.expectedConnectionCreators;
-                // }
 
                 edges.filter(edge => (edge.edgeType === constants.edgeType.identifierRelation &&
                     edge._to === connectorVertex._key))
@@ -830,32 +800,6 @@ class OtJsonImporter {
                             properties: edge.properties,
                         });
                     });
-
-                // // Check for relations.
-                // edges.filter(edge => (edge.edgeType === constants.edgeType.otRelation
-                // && edge._from === connectorVertex._key))
-                //     .forEach((edge) => {
-                //         if (otConnector.relations == null) {
-                //             otConnector.relations = [];
-                //         }
-                //
-                //         // Find original vertex to get the @id.
-                //         const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
-                //
-                //
-                //         const newRelation = {
-                //             '@type': constants.edgeType.otRelation,
-                //             direction: 'reverse',
-                //             relationType: edge.relationType,
-                //             linkedObject: {
-                //                 '@id': id,
-                //             },
-                //         };
-                //         if (edge.properties != null) {
-                //             newRelation.properties = edge.properties;
-                //         }
-                //         otConnector.relations.push(newRelation);
-                //     });
 
                 documentGraph.push(otConnector);
             });
