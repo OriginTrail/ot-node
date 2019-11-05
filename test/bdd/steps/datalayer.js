@@ -147,7 +147,7 @@ Then(
             depth: 10,
         };
 
-        const trail = httpApiHelper.apiTrail(host, trailParams);
+        const trail = await httpApiHelper.apiTrail(host, trailParams);
 
         expect(trail, 'should not be null').to.not.be.undefined;
         expect(trail, 'should be an Array').to.be.an.instanceof(Array);
