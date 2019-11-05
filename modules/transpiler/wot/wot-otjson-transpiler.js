@@ -8,6 +8,7 @@ class WotOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
         this.web3 = ctx.web3;
+        this.connectionTypes = ['PART OF'];
     }
 
     /**
@@ -351,6 +352,10 @@ class WotOtJsonTranspiler {
                 diff: {},
             },
         };
+    }
+
+    getConnectionTypes() {
+        return this.connectionTypes;
     }
 }
 
