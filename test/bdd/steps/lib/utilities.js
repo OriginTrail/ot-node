@@ -225,6 +225,7 @@ function calculateRootHash(otJson) {
 
     const merkle = new MerkleTree(
         [_sortedStringify(datasetSummary), ...stringifiedGraph],
+        'distribution',
         'sha3',
     );
 
