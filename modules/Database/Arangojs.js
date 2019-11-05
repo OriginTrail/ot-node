@@ -106,11 +106,12 @@ class ArangoJS {
             depth,
         };
         let queryString = `// Get identifier
-                            LET identifierObjects = DOCUMENT('ot_vertices', @identifierKeys)
+                            LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
                             
                             // Fetch the start entity for trail
                             LET startObjects = UNIQUE(FLATTEN(
                                 FOR identifierObject IN identifierObjects
+                                    FILTER identifierObject != null
                                     LET identifiedObject = (
                                     FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
                                     FILTER e.edgeType == 'IdentifierRelation'
@@ -120,6 +121,7 @@ class ArangoJS {
                             ))
                              
                             LET trailObjects = (
+                                FILTER startObjects[0] != null
                                 FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
         if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
             queryString += `
@@ -131,6 +133,7 @@ class ArangoJS {
                             )
                             
                             FOR trailObject in trailObjects
+                                FILTER trailObject != null
                                 LET objectsRelated = (
                                     FOR v, e in 1..1 OUTBOUND trailObject ot_edges
                                     FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
@@ -145,7 +148,6 @@ class ArangoJS {
                                 "rootObject": trailObject,
                                 "relatedObjects": objectsRelated
                             }`;
-
         const result = await this.runQuery(queryString, queryParams);
         return result;
     }
