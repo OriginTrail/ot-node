@@ -27,7 +27,7 @@ class DcWriteImportToGraphDbCommand extends Command {
                 delay: 0,
                 transactional: false,
                 data: {
-                    error,
+                    error: { message: error.message },
                 },
             });
             return Command.empty();
