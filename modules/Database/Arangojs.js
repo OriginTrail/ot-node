@@ -905,6 +905,20 @@ class ArangoJS {
     }
 
     /**
+     * Returns data creator identity for dataset ID
+     * @param datasetId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForDatasetId(datasetId) {
+        const queryString = `let dataset_info = (
+                                return document('ot_datasets', @datasetId) 
+                            )
+                            return dataset_info[0].datasetHeader.dataCreator.identifiers[0]`;
+        const params = { datasetId };
+        return this.runQuery(queryString, params);
+    }
+
+    /**
      * Returns data creator identity for vertex with elementId
      * @param elementId
      * @returns {Promise}
