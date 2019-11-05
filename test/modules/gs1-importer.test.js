@@ -220,6 +220,15 @@ describe('GS1 Importer tests', () => {
         });
     });
 
+    describe('OT-JSON file after transpilation should have a connector in graph structure', async () => {
+        it('check if a connector exists in scenario of Green_to_pink_shipment.xml', async () => {
+            const shipment = path.join(__dirname, '../../importers/xml_examples/Retail/01_Green_to_pink_shipment.xml');
+
+            const otJson = epcisOtJsonTranspiler.convertToOTJson(await Utilities.fileContents(shipment));
+            assert.equal(otJson['@graph'].filter(x => x['@type'] === 'otConnector').length, 1, 'connector should exist in otJson');
+        });
+    });
+
     describe('OT-JSON files before and after import should be the same', async () => {
         inputXmlFiles.forEach((inputFile) => {
             it(

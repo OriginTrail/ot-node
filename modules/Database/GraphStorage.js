@@ -171,7 +171,7 @@ class GraphStorage {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findDocuments('ot_vertices', { connectionId: connectorId })
+                this.db.findConnectors(connectorId)
                     .then((result) => {
                         resolve(result);
                     }).catch((err) => {
