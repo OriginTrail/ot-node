@@ -5,7 +5,7 @@ class ImportWorkerController {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.web3 = ctx.web3;
-        this.importerService = ctx.importerService;
+        this.importService = ctx.importService;
 
         this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
@@ -32,7 +32,7 @@ class ImportWorkerController {
             this.web3,
         );
 
-        await this.importerService.validateDocument(document);
+        await this.importService.validateDocument(document);
 
         const forked = fork('modules/worker/graph-converter-worker.js');
 
