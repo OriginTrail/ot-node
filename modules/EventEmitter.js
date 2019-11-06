@@ -19,7 +19,7 @@ class EventEmitter {
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.appState = ctx.appState;
-        this.otJsonImporter = ctx.otJsonImporter;
+        this.importService = ctx.importService;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
         this.commandExecutor = ctx.commandExecutor;
@@ -170,48 +170,48 @@ class EventEmitter {
                 });
         });
 
-        this._on('api-query-local-import', async (data) => {
-            const { data_set_id: dataSetId, format, encryption } = data;
-            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
-            try {
-                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId, encryption);
-
-                if (datasetOtJson == null) {
-                    data.response.status(204);
-                } else {
-                    data.response.status(200);
-                }
-
-                let formattedDataset = '';
-
-                if (datasetOtJson == null) {
-                    data.response.status(204);
-                    data.response.send({});
-                } else if (encryption == null) {
-                    switch (format) {
-                    case 'otjson':
-                        formattedDataset = datasetOtJson;
-                        break;
-                    case 'epcis':
-                        formattedDataset = this.epcisOtJsonTranspiler
-                            .convertFromOTJson(datasetOtJson);
-                        break;
-                    default:
-                        throw Error('Invalid response format.');
-                    }
-                    data.response.send(formattedDataset);
-                } else {
-                    data.response.send(formattedDataset);
-                }
-            } catch (error) {
-                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
-                notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error,
-                });
-            }
-        });
+        // this._on('api-query-local-import', async (data) => {
+        //     const { data_set_id: dataSetId, format, encryption } = data;
+        //     logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
+        //     try {
+        //         const datasetOtJson = await this.otJsonImporter.getImport(dataSetId, encryption);
+        //
+        //         if (datasetOtJson == null) {
+        //             data.response.status(204);
+        //         } else {
+        //             data.response.status(200);
+        //         }
+        //
+        //         let formattedDataset = '';
+        //
+        //         if (datasetOtJson == null) {
+        //             data.response.status(204);
+        //             data.response.send({});
+        //         } else if (encryption == null) {
+        //             switch (format) {
+        //             case 'otjson':
+        //                 formattedDataset = datasetOtJson;
+        //                 break;
+        //             case 'epcis':
+        //                 formattedDataset = this.epcisOtJsonTranspiler
+        //                     .convertFromOTJson(datasetOtJson);
+        //                 break;
+        //             default:
+        //                 throw Error('Invalid response format.');
+        //             }
+        //             data.response.send(formattedDataset);
+        //         } else {
+        //             data.response.send(formattedDataset);
+        //         }
+        //     } catch (error) {
+        //         logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
+        //         notifyError(error);
+        //         data.response.status(500);
+        //         data.response.send({
+        //             message: error,
+        //         });
+        //     }
+        // });
 
         this._on('api-consensus-events', async (data) => {
             const { sender_id, response } = data;
@@ -224,57 +224,6 @@ class EventEmitter {
                 console.log(err);
                 response.status(400);
                 response.send({ message: 'Bad Request' });
-            }
-        });
-
-        this._on('api-import-info', async (data) => {
-            const { dataSetId, responseFormat } = data;
-            logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
-            try {
-                const dataInfo =
-                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
-
-                if (!dataInfo) {
-                    logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
-                    data.response.status(404);
-                    data.response.send({
-                        message: `Import data for data set ID ${dataSetId} does not exist`,
-                    });
-                    return;
-                }
-
-                const datasetOtJson = await this.otJsonImporter.getImport(dataSetId);
-                let formattedDataset = null;
-
-                if (datasetOtJson == null) {
-                    data.response.status(204);
-                    data.response.send({});
-                } else {
-                    switch (responseFormat) {
-                    case 'otjson': formattedDataset = datasetOtJson; break;
-                    case 'epcis': formattedDataset = this.epcisOtJsonTranspiler.convertFromOTJson(datasetOtJson); break;
-                    default: throw Error('Invalid response format.');
-                    }
-
-                    const transactionHash = await ImportUtilities
-                        .getTransactionHash(dataSetId, dataInfo.origin);
-
-                    data.response.status(200);
-                    data.response.send({
-                        dataSetId,
-                        document: formattedDataset,
-                        root_hash: dataInfo.root_hash,
-                        transaction: transactionHash,
-                        data_provider_wallet: dataInfo.data_provider_wallet,
-                    });
-                }
-            } catch (error) {
-                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
-                notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error.toString(),
-                });
             }
         });
 
@@ -588,7 +537,7 @@ class EventEmitter {
             try {
                 logger.debug('Export triggered');
 
-                const result = await this.otJsonImporter.getImport(data.dataset_id);
+                const result = await this.importService.getImport(data.dataset_id);
 
                 if (result.error != null) {
                     await processExport(result.error, data);

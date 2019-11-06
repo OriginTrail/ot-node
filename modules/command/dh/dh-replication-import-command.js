@@ -15,7 +15,7 @@ class DhReplicationImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
-        this.otJsonImporter = ctx.otJsonImporter;
+        this.importService = ctx.importService;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
@@ -107,7 +107,7 @@ class DhReplicationImportCommand extends Command {
             },
         });
 
-        const importResult = await this.otJsonImporter.importFile({
+        const importResult = await this.importService.importFile({
             document: decryptedDataset,
             encryptedMap,
         });

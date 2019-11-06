@@ -1,14 +1,7 @@
-const { sha3_256 } = require('js-sha3');
-const { forEach, forEachSeries } = require('p-iteration');
-
-const Utilities = require('../Utilities');
-const SchemaValidator = require('../validator/schema-validator');
 const ImportUtilities = require('../ImportUtilities');
-
-const { fork } = require('child_process');
-
-// Helper functions.
-
+const Utilities = require('../Utilities');
+const { sha3_256 } = require('js-sha3');
+const { forEachSeries } = require('p-iteration');
 /**
  * Returns value of '@id' property.
  * @param jsonLdObject JSON-LD object.
@@ -49,20 +42,6 @@ function _graph(document) {
     return document['@graph'];
 }
 
-
-/**
- * Constants used in graph creation.
- * @type {{
- * relationType: {
- *  identifies: string, hasData: string, identifiedBy: string, connectionDownstream: string},
- *  vertexType: {
- *  entityObject: string, identifier: string, data: string, connector: string},
- * edgeType: {
- *  connectorRelation: string, dataRelation: string, otRelation: string,
- *  identifierRelation: string},
- * objectType: {
- *  otConnector: string, otObject: string}}}
- */
 const constants = {
     vertexType: {
         entityObject: 'EntityObject',
@@ -89,24 +68,40 @@ const constants = {
 };
 Object.freeze(constants);
 
-/**
- *
- */
-class OtJsonImporter {
-    /**
-     * Default constructor. Creates instance of otJsonImporter.
-     * @param ctx IoC context
-     */
+class ImportService {
     constructor(ctx) {
         this.db = ctx.graphStorage;
-        this.log = ctx.logger;
-        this.config = ctx.config;
-        this.notifyError = ctx.notifyError;
+        this.schemaValidator = ctx.schemaValidator;
         this.web3 = ctx.web3;
-
-        this.schemaValidator = new SchemaValidator(ctx);
     }
 
+    async getImport(datasetId, encColor = null) {
+        if (![null, 'red', 'green', 'blue'].includes(encColor)) {
+            throw Error('Invalid encryption color.');
+        }
+        const vertices = await this.db.findVerticesByImportId(datasetId);
+        const edges = await this.db.findEdgesByImportId(datasetId);
+        const metadata = await this.db.findMetadataByImportId(datasetId);
+
+        // TODO: Check if date with specified encryption exists
+        if (encColor != null) {
+            vertices.filter(v => v.encrypted != null)
+                .forEach(v => v.data = v.encrypted[encColor.charAt(0)]);
+        }
+
+        const document = {
+            '@id': datasetId,
+            '@type': 'Dataset',
+            '@graph': await this._createDocumentGraph(vertices, edges),
+        };
+
+        document.datasetHeader = metadata.datasetHeader;
+        document.signature = metadata.signature;
+
+
+        ImportUtilities.sortStringifyDataset(document);
+        return document;
+    }
 
     /**
      * Imports OTJSON document
@@ -122,7 +117,7 @@ class OtJsonImporter {
         } = data;
 
         // TODO: validate document here.
-        await this._validate(document);
+        await this.validateDocument(document);
 
         const datasetId = _id(document);
         const header = document.datasetHeader;
@@ -214,7 +209,7 @@ class OtJsonImporter {
                         datasets: [datasetId],
                     };
                     if (encryptedMap && encryptedMap.objects &&
-                        encryptedMap.objects[_id(otObject)]) {
+                            encryptedMap.objects[_id(otObject)]) {
                         dataVertex.encrypted = encryptedMap.objects[_id(otObject)];
                     }
                     vertices.push(dataVertex);
@@ -255,10 +250,10 @@ class OtJsonImporter {
                         relationEdge.properties = relation.properties;
                         relationEdge.datasets = [datasetId];
                         if (encryptedMap && encryptedMap.relations &&
-                            encryptedMap.relations[_id(otObject)]) {
+                                encryptedMap.relations[_id(otObject)]) {
                             const relationKey = sha3_256(Utilities.stringify(relation, 0));
                             relationEdge.encrypted =
-                                encryptedMap.relations[_id(otObject)][relationKey];
+                                    encryptedMap.relations[_id(otObject)][relationKey];
                         }
                         edges.push(relationEdge);
                     });
@@ -345,7 +340,7 @@ class OtJsonImporter {
                         datasets: [datasetId],
                     };
                     if (encryptedMap && encryptedMap.objects &&
-                        encryptedMap.objects[_id(otObject)]) {
+                            encryptedMap.objects[_id(otObject)]) {
                         dataVertex.encrypted = encryptedMap.objects[_id(otObject)];
                     }
                     vertices.push(dataVertex);
@@ -488,8 +483,8 @@ class OtJsonImporter {
                                         const expectedErc725 = this._value(expectedCreator);
 
                                         if (expectedErc725 ===
-                                    metadata.datasetHeader.dataCreator.identifiers
-                                        .find(x => x.identifierType === 'ERC725').identifierValue) {
+                                            metadata.datasetHeader.dataCreator.identifiers
+                                                .find(x => x.identifierType === 'ERC725').identifierValue) {
                                             hasConnection2 = true;
                                         }
                                     });
@@ -543,130 +538,6 @@ class OtJsonImporter {
             data_set_id: datasetId,
             wallet,
         };
-    }
-
-    async getImport(datasetId, encColor = null) {
-        if (![null, 'red', 'green', 'blue'].includes(encColor)) {
-            throw Error('Invalid encryption color.');
-        }
-        const vertices = await this.db.findVerticesByImportId(datasetId);
-        const edges = await this.db.findEdgesByImportId(datasetId);
-        const metadata = await this.db.findMetadataByImportId(datasetId);
-
-        // TODO: Check if date with specified encryption exists
-        if (encColor != null) {
-            vertices.filter(v => v.encrypted != null)
-                .forEach(v => v.data = v.encrypted[encColor.charAt(0)]);
-        }
-
-        const document = {
-            '@id': datasetId,
-            '@type': 'Dataset',
-            '@graph': await this._createDocumentGraph(vertices, edges),
-        };
-
-        document.datasetHeader = metadata.datasetHeader;
-        document.signature = metadata.signature;
-
-
-        ImportUtilities.sortStringifyDataset(document);
-        return document;
-    }
-
-    async _createObjectGraph(graphObject, relatedObjects) {
-        let otObject;
-        if (graphObject.vertexType === constants.vertexType.entityObject) {
-            otObject = {
-                '@type': constants.objectType.otObject,
-                '@id': graphObject.uid,
-                identifiers: [],
-                relations: [],
-            };
-
-            for (const relatedObject of relatedObjects) {
-                // Check for identifiers.
-                // Relation 'IDENTIFIED_BY' goes form entityVertex to identifierVertex.
-                if (relatedObject.edge.edgeType === constants.edgeType.identifierRelation) {
-                    if (relatedObject.edge.autogenerated != null) {
-                        otObject.identifiers.push({
-                            '@type': relatedObject.vertex.identifierType,
-                            '@value': relatedObject.vertex.identifierValue,
-                            autogenerated: relatedObject.edge.autogenerated,
-                        });
-                    } else {
-                        otObject.identifiers.push({
-                            '@type': relatedObject.vertex.identifierType,
-                            '@value': relatedObject.vertex.identifierValue,
-                        });
-                    }
-                }
-
-                // Check for properties.
-                // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
-                if (relatedObject.edge.edgeType === constants.edgeType.dataRelation) {
-                    otObject.properties = Utilities.copyObject(relatedObject.vertex.data);
-                }
-
-
-                // Check for relations.
-                if (relatedObject.edge.edgeType === constants.edgeType.otRelation) {
-                    otObject.relations.push({
-                        '@type': constants.edgeType.otRelation,
-                        direction: 'direct', // TODO: check this.
-                        linkedObject: {
-                            '@id': relatedObject.vertex.uid,
-                        },
-                        properties: relatedObject.edge.properties,
-                    });
-                }
-            }
-        } else if (graphObject.vertexType === constants.vertexType.connector) {
-            otObject = {
-                '@type': constants.objectType.otConnector,
-                '@id': graphObject.uid,
-                relations: [],
-            };
-
-            for (const relatedObject of relatedObjects) {
-                // Check for identifiers.
-                // Relation 'IDENTIFIED_BY' goes form entityVertex to identifierVertex.
-                if (relatedObject.edge.edgeType === constants.edgeType.identifierRelation) {
-                    if (relatedObject.edge.autogenerated != null) {
-                        otObject.identifiers.push({
-                            '@type': relatedObject.vertex.identifierType,
-                            '@value': relatedObject.vertex.identifierValue,
-                            autogenerated: relatedObject.edge.autogenerated,
-                        });
-                    } else {
-                        otObject.identifiers.push({
-                            '@type': relatedObject.vertex.identifierType,
-                            '@value': relatedObject.vertex.identifierValue,
-                        });
-                    }
-                }
-
-                // Check for properties.
-                // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
-                if (relatedObject.edge.edgeType === constants.edgeType.dataRelation) {
-                    otObject.properties = Utilities.copyObject(relatedObject.vertex.data);
-                }
-
-
-                // Check for relations.
-                if (relatedObject.edge.edgeType === constants.edgeType.otRelation) {
-                    otObject.relations.push({
-                        '@type': constants.edgeType.otRelation,
-                        direction: 'direct', // TODO: check this.
-                        linkedObject: {
-                            '@id': relatedObject.vertex.uid,
-                        },
-                        properties: relatedObject.edge.properties,
-                    });
-                }
-            }
-        }
-
-        return otObject;
     }
 
     async _createDocumentGraph(vertices, edges) {
@@ -807,7 +678,6 @@ class OtJsonImporter {
         return documentGraph;
     }
 
-
     async getImportedOtObject(datasetId, objectIndex, offerId = null, color = null) {
         // get metadata id using otObjectId
         const metadata = await this.db.findMetadataByImportId(datasetId);
@@ -840,22 +710,109 @@ class OtJsonImporter {
         return otObject;
     }
 
+    async _createObjectGraph(graphObject, relatedObjects) {
+        let otObject;
+        if (graphObject.vertexType === constants.vertexType.entityObject) {
+            otObject = {
+                '@type': constants.objectType.otObject,
+                '@id': graphObject.uid,
+                identifiers: [],
+                relations: [],
+            };
+
+            for (const relatedObject of relatedObjects) {
+                // Check for identifiers.
+                // Relation 'IDENTIFIED_BY' goes form entityVertex to identifierVertex.
+                if (relatedObject.edge.edgeType === constants.edgeType.identifierRelation) {
+                    if (relatedObject.edge.autogenerated != null) {
+                        otObject.identifiers.push({
+                            '@type': relatedObject.vertex.identifierType,
+                            '@value': relatedObject.vertex.identifierValue,
+                            autogenerated: relatedObject.edge.autogenerated,
+                        });
+                    } else {
+                        otObject.identifiers.push({
+                            '@type': relatedObject.vertex.identifierType,
+                            '@value': relatedObject.vertex.identifierValue,
+                        });
+                    }
+                }
+
+                // Check for properties.
+                // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
+                if (relatedObject.edge.edgeType === constants.edgeType.dataRelation) {
+                    otObject.properties = Utilities.copyObject(relatedObject.vertex.data);
+                }
+
+
+                // Check for relations.
+                if (relatedObject.edge.edgeType === constants.edgeType.otRelation) {
+                    otObject.relations.push({
+                        '@type': constants.edgeType.otRelation,
+                        direction: 'direct', // TODO: check this.
+                        linkedObject: {
+                            '@id': relatedObject.vertex.uid,
+                        },
+                        properties: relatedObject.edge.properties,
+                    });
+                }
+            }
+        } else if (graphObject.vertexType === constants.vertexType.connector) {
+            otObject = {
+                '@type': constants.objectType.otConnector,
+                '@id': graphObject.uid,
+                relations: [],
+            };
+
+            for (const relatedObject of relatedObjects) {
+                // Check for identifiers.
+                // Relation 'IDENTIFIED_BY' goes form entityVertex to identifierVertex.
+                if (relatedObject.edge.edgeType === constants.edgeType.identifierRelation) {
+                    if (relatedObject.edge.autogenerated != null) {
+                        otObject.identifiers.push({
+                            '@type': relatedObject.vertex.identifierType,
+                            '@value': relatedObject.vertex.identifierValue,
+                            autogenerated: relatedObject.edge.autogenerated,
+                        });
+                    } else {
+                        otObject.identifiers.push({
+                            '@type': relatedObject.vertex.identifierType,
+                            '@value': relatedObject.vertex.identifierValue,
+                        });
+                    }
+                }
+
+                // Check for properties.
+                // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
+                if (relatedObject.edge.edgeType === constants.edgeType.dataRelation) {
+                    otObject.properties = Utilities.copyObject(relatedObject.vertex.data);
+                }
+
+
+                // Check for relations.
+                if (relatedObject.edge.edgeType === constants.edgeType.otRelation) {
+                    otObject.relations.push({
+                        '@type': constants.edgeType.otRelation,
+                        direction: 'direct', // TODO: check this.
+                        linkedObject: {
+                            '@id': relatedObject.vertex.uid,
+                        },
+                        properties: relatedObject.edge.properties,
+                    });
+                }
+            }
+        }
+
+        return otObject;
+    }
+
+
     /**
      * Validates the OT-JSON document's metadata to be in valid OT-JSON format.
      * @param document OT-JSON document.
      * @private
      */
-    async _validate(document) {
-        // Test root level of the document.
-        // Expected:
-        // {
-        //     @id: '',
-        //     @type: 'Dataset',
-        //     datasetHeader: {},
-        //     @graph: [],
-        //     signature: {}
-        // }
-
+    async validateDocument(document) {
         if (document == null) {
             throw Error('[Validation Error] Document cannot be null.');
         }
@@ -962,16 +919,6 @@ class OtJsonImporter {
             }
         });
     }
-
-    /**
-     * Returns value of '@value' property.
-     * @param jsonLdObject JSON-LD object.
-     * @return {string}
-     * @private
-     */
-    _value(jsonLdObject) {
-        return jsonLdObject['@value'];
-    }
 }
 
-module.exports = OtJsonImporter;
+module.exports = ImportService;

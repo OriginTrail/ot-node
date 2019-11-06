@@ -30,8 +30,7 @@ class RestAPIServiceV2 {
      */
     _exposeAPIRoutes(server) {
         const {
-            importController, dcController, transport, emitter,
-            blockchain, web3, config,
+            transport, emitter,
         } = this.ctx;
 
         this._registerNodeInfoRoute(server, false);
