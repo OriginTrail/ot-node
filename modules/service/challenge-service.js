@@ -102,7 +102,7 @@ class ChallengeService {
         let block = String();
 
         for (let i = 0; i < vertices.length; i += 1) {
-            const data = JSON.stringify(utilities.sortedStringify(vertices[i],true));
+            const data = JSON.stringify(utilities.sortedStringify(vertices[i], true));
 
             if (data) {
                 for (let j = 0; j < data.length; j += blockSizeInBytes) {
