@@ -296,16 +296,10 @@ class RestAPIServiceV2 {
     async _getTrail(req, res) {
         this.logger.api('POST: Trail request received.');
 
-        if (req.body === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        if (req.body.identifier_types === undefined ||
-            req.body.identifier_values === undefined) {
+        if (req.body === undefined ||
+            req.body.identifier_types === undefined ||
+            req.body.identifier_values === undefined
+        ) {
             res.status(400);
             res.send({
                 message: 'Bad request',
