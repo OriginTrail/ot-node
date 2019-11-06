@@ -95,7 +95,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         const dataCreator = {
             identifiers: [
                 {
-                    identifierValue: myNode.erc725Identity.toLowerCase(),
+                    identifierValue: dataset.datasetHeader.dataCreator.identifiers[0].identifierValue,
                     identifierType: 'ERC725',
                     validationSchema: '/schemas/erc725-main',
                 },
