@@ -32,7 +32,7 @@ Feature: Test basic importer features
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
     And DC waits for import to finish
-    And DC imports "importers/xml_examples/Retail/02_Green_to_pink_receipt.xml" as GS1-EPCIS
+    And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
     And DC waits for import to finish
     Then the traversal from id "urn:epc:id:sgtin:Batch_1" with connection types "EPC" should contain 3 objects
 
