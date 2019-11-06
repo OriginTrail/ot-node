@@ -613,6 +613,7 @@ class OtJsonImporter {
                     otObject.relations.push({
                         '@type': constants.edgeType.otRelation,
                         direction: 'direct', // TODO: check this.
+                        relationType: relatedObject.edge.relationType,
                         linkedObject: {
                             '@id': relatedObject.vertex.uid,
                         },
@@ -657,6 +658,7 @@ class OtJsonImporter {
                     otObject.relations.push({
                         '@type': constants.edgeType.otRelation,
                         direction: 'direct', // TODO: check this.
+                        relationType: relatedObject.edge.relationType,
                         linkedObject: {
                             '@id': relatedObject.vertex.uid,
                         },
@@ -823,14 +825,16 @@ class OtJsonImporter {
 
         for (const object of result.relatedObjects) {
             if (object.vertex.vertexType === constants.vertexType.data
-                && object.vertex.data != null) {
+                && object.vertex.data !== undefined) {
                 object.vertex.data = object.vertex.encrypted[offerId][color];
             }
         }
 
         for (const object of result.relatedObjects) {
             if (object.edge.edgeType === constants.edgeType.otRelation
-                && object.edge.properties != null) {
+                && object.edge.properties != null && object.edge.properties !== {}) {
+                console.log(JSON.stringify(object));
+                console.log(object.edge.properties);
                 object.edge.properties = object.edge.encrypted[offerId][color];
             }
         }
