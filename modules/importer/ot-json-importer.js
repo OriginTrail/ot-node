@@ -4,6 +4,7 @@ const { forEach, forEachSeries } = require('p-iteration');
 const Utilities = require('../Utilities');
 const SchemaValidator = require('../validator/schema-validator');
 const ImportUtilities = require('../ImportUtilities');
+const MerkleTree = require('../Merkle');
 
 const { fork } = require('child_process');
 
@@ -545,10 +546,75 @@ class OtJsonImporter {
         };
     }
 
+    /**
+     * Constructs Merkle proofs for objectIds for the dataset
+     * @param objectIdsArray id values of objects for which the proofs need to be generated
+     * @param datasetId The dataset id to which the objects belong to
+     * @returns {Promise<[]>}
+     */
+    async getMerkleProofs(objectIdsArray, datasetId) {
+        const otjson = await this.getImport(datasetId);
+
+        ImportUtilities.sortGraphRecursively(_graph(otjson));
+
+        const merkleTree = ImportUtilities.createDistributionMerkleTree(
+            _graph(otjson),
+            datasetId,
+            otjson.datasetHeader.dataCreator,
+        );
+
+        const proofs = [];
+
+        for (const objectId of objectIdsArray) {
+            const objectIndex =
+                _graph(otjson).findIndex(graphObject => _id(graphObject) === objectId);
+
+            const proof = merkleTree.createProof(objectIndex + 1);
+
+            proofs.push(proof);
+        }
+
+        return this._packMerkleData(proofs, objectIdsArray);
+    }
+
+    _packMerkleData(proofs, objectIds) {
+        const data = [];
+
+        for (let i = 0; i < proofs.length; i += 1) {
+            data.push({ proof: proofs[i], object_id: objectIds[i] });
+        }
+
+        return data;
+    }
+
+    async packTrailData(data) {
+        const promises = [];
+        for (const object of data) {
+            const { rootObject, relatedObjects } = object;
+
+            promises.push(this._createObjectGraph(rootObject, relatedObjects));
+        }
+
+        const reconstructedObjects = await Promise.all(promises);
+
+        const otObjects = [];
+
+        for (let i = 0; i < reconstructedObjects.length; i += 1) {
+            if (reconstructedObjects[i]) {
+                otObjects.push({
+                    otObject: reconstructedObjects[i],
+                    datasets: data[i].rootObject.datasets,
+                });
+            }
+        }
+        return otObjects;
+    }
+
     async getImport(datasetId, encColor = null) {
         if (![null, 'red', 'green', 'blue'].includes(encColor)) {
             throw Error('Invalid encryption color.');
         }
+
         const vertices = await this.db.findVerticesByImportId(datasetId);
         const edges = await this.db.findEdgesByImportId(datasetId);
         const metadata = await this.db.findMetadataByImportId(datasetId);

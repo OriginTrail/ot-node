@@ -95,7 +95,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         const dataCreator = {
             identifiers: [
                 {
-                    identifierValue: myNode.erc725Identity,
+                    identifierValue: dataset.datasetHeader.dataCreator.identifiers[0].identifierValue,
                     identifierType: 'ERC725',
                     validationSchema: '/schemas/erc725-main',
                 },
@@ -132,3 +132,57 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
     });
 });
 
+Then(
+    /^the traversal from id "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
+    { timeout: 120000 },
+    async function (id, connectionTypes, expectedNumberOfObjects) {
+        expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+        const { dc } = this.state;
+
+        const host = dc.state.node_rpc_url;
+        const trailParams = {
+            identifier_types: ['id'],
+            identifier_values: [id],
+            connection_types: connectionTypes.split(','),
+            depth: 10,
+        };
+
+        const trail = await httpApiHelper.apiTrail(host, trailParams);
+
+        expect(trail, 'should not be null').to.not.be.undefined;
+        expect(trail, 'should be an Array').to.be.an.instanceof(Array);
+        expect(
+            trail.length,
+            `Traversal result should contain ${expectedNumberOfObjects} object(s)`,
+        ).to.be.equal(expectedNumberOfObjects);
+
+        this.state.lastTrail = trail;
+    },
+);
+
+Then(
+    /^the last traversal should contain (\d+) objects with type "(\S+)" and value "(\S+)"/,
+    async function (expectedNumberOfObjects, keySequenceString, value) {
+        expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
+        const { lastTrail } = this.state;
+
+        const keySequenceArray = keySequenceString.split('.');
+
+        const filteredTrail = lastTrail.filter((trailElement) => {
+            let property = trailElement;
+            for (const key of keySequenceArray) {
+                if (!property[key]) {
+                    return false;
+                }
+                property = property[key];
+            }
+            return property === value;
+        });
+
+        expect(filteredTrail, 'should be an Array').to.be.an.instanceof(Array);
+        expect(
+            filteredTrail.length,
+            `Traversal should contain ${expectedNumberOfObjects} of selected objects`,
+        ).to.be.equal(expectedNumberOfObjects);
+    },
+);

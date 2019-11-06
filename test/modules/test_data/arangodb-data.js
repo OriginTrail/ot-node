@@ -39,6 +39,15 @@ databaseData.vertices = [{
         '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
     ],
 },
+{
+    _key: '0x7818ea29a95335230539a56907cdddda6519c43b151c68685073b92de1749971',
+    identifierValue: 'urn:epc:id:sgln:0037000.00729.1234',
+    vertexType: 'Identifier',
+    identifierType: 'id',
+    datasets: [
+        '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
+    ],
+},
 ];
 
 databaseData.edges = [
@@ -48,6 +57,16 @@ databaseData.edges = [
         _to: '0xb0b07c594db5f7321d81b60b83f8bd52a09ec3d23d95a70318c40347ee4a8b26',
         edgeType: 'dataRelation',
         relationType: 'HAS_DATA',
+        datasets: [
+            '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
+        ],
+    },
+    {
+        _key: '0x1238ea29a95335230539a56907cdddda6519c43b151c68685073b92de1749971',
+        _from: '0x7818ea29a95335230539a56907cdddda6519c43b151c68685073b92de1749971',
+        _to: '0xd5993149b27751620ba70be97eb48a3b6222fc7129348d36b804c41985622d3e',
+        edgeType: 'IdentifierRelation',
+        relationType: 'IDENTIFIED_BY',
         datasets: [
             '0xe6386173e8f4e59038db10677d7b066e8a924703ddc13426ea5f22e05600aea9',
         ],

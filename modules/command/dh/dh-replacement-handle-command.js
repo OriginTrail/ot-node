@@ -94,7 +94,7 @@ class DHReplacementImportCommand extends Command {
 
         ImportUtilities.sort(litigationVertices);
         const litigationBlocks = this.challengeService.getBlocks(litigationVertices);
-        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks, 'litigation');
         const calculatedLitigationRootHash = litigationBlocksMerkleTree.getRoot();
 
         if (litigationRootHash !== calculatedLitigationRootHash) {

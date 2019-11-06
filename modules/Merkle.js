@@ -5,51 +5,27 @@ const Utilities = require('./Utilities');
 const { sha3_256 } = require('js-sha3');
 
 class MerkleTree {
-    generateLeafHash(leaf, objectIndex, blockIndex) {
-        switch (this.hashFunction) {
-        case 'soliditySha3':
-            if (Buffer.from(`${leaf}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
-                throw Error('Block size is larger than 32 bytes.');
-            }
-            return abi.soliditySHA3(
-                ['bytes32', 'uint256', 'uint256'],
-                [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), objectIndex, blockIndex],
-            ).toString('hex');
-
-        case 'sha3': return sha3_256(`${leaf}${objectIndex}${blockIndex}`);
-        default: throw Error('Invalid hash function!');
-        }
-    }
-
-    generateInternalHash(block1, block2) {
-        switch (this.hashFunction) {
-        case 'soliditySha3':
-            return abi.soliditySHA3(
-                ['bytes32', 'bytes32'],
-                [
-                    Utilities.normalizeHex(`${block1}`),
-                    Utilities.normalizeHex(`${block2}`),
-                ],
-            ).toString('hex');
-
-        case 'sha3': return sha3_256(`${Utilities.normalizeHex(block1)}${Utilities.normalizeHex(block2)}`);
-        default: throw Error('Invalid hash function!');
-        }
-    }
-
-    constructor(leaves, hashFunction = 'soliditySha3') {
+    constructor(leaves, type = 'distribution', hashFunction = 'soliditySha3') {
         this.levels = [];
         this.levels.push(leaves);
         this.hashFunction = hashFunction;
+        this.type = type;
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
-            const hash = this.generateLeafHash(
-                leaves[i].data,
-                leaves[i].objectIndex,
-                leaves[i].blockIndex,
-            );
-
-            leavesHashes.push(hash);
+            switch (this.type) {
+            case 'distribution':
+                leavesHashes.push(this._generateDistributionLeafHash(leaves[i], i));
+                break;
+            case 'litigation':
+                leavesHashes.push(this._generateLitigationLeafHash(
+                    leaves[i].data,
+                    leaves[i].objectIndex,
+                    leaves[i].blockIndex,
+                ));
+                break;
+            default:
+                throw Error(`Unsupported Merkle tree type: ${type}`);
+            }
         }
 
         this.levels.push(leavesHashes);
@@ -61,13 +37,13 @@ class MerkleTree {
             let i = 0;
             while (i < currentLevel.length) {
                 if (i + 1 < currentLevel.length) {
-                    const hash = this.generateInternalHash(
+                    const hash = this._generateInternalHash(
                         currentLevel[i],
                         currentLevel[i + 1],
                     );
                     nextLevel.push(hash);
                 } else {
-                    const hash = this.generateInternalHash(
+                    const hash = this._generateInternalHash(
                         currentLevel[i],
                         currentLevel[i],
                     );
@@ -86,17 +62,24 @@ class MerkleTree {
         return `0x${this.rootHash}`;
     }
 
-    createProof(leafObjectIndex, leafBlockIndex) {
+    createProof(firstIndex, secondIndex = null) {
+        let i;
         const { levels } = this;
+        switch (this.type) {
+        case 'distribution':
+            i = firstIndex;
+            break;
+        case 'litigation':
+            i = levels[0].findIndex(element =>
+                element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+            break;
+        default:
+            throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        }
 
         let currentLevel = 1;
 
         const proof = [];
-
-        const leafNumber =
-            levels[0].findIndex(element =>
-                element.objectIndex === leafObjectIndex && element.blockIndex === leafBlockIndex);
-        let i = leafNumber;
 
         while (currentLevel < levels.length - 1) {
             if (i % 2 === 1) {
@@ -114,11 +97,24 @@ class MerkleTree {
         return proof;
     }
 
-    verifyProof(proof, data, objectIndex, blockIndex) {
-        let leafNumber =
-            this.levels[0].findIndex(element =>
-                element.objectIndex === objectIndex && element.blockIndex === blockIndex);
-        let h = this.generateLeafHash(data, objectIndex, blockIndex);
+    verifyProof(proof, data, firstIndex, secondIndex = null) {
+        let h;
+        let leafNumber;
+        const { levels } = this;
+        switch (this.type) {
+        case 'distribution':
+            leafNumber = firstIndex;
+            h = this._generateDistributionLeafHash(data, firstIndex);
+            break;
+        case 'litigation':
+            h = this._generateLitigationLeafHash(data, firstIndex, secondIndex);
+            leafNumber = levels[0].findIndex(element =>
+                element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+            break;
+        default:
+            throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        }
+
         let j = this.levels.length - 1;
         let k = 0;
         let r = 0;
@@ -126,9 +122,9 @@ class MerkleTree {
         while (j > 1) {
             r = leafNumber % 2;
             if (r % 2 === 0) {
-                h = this.generateInternalHash(h, proof[k]);
+                h = this._generateInternalHash(h, proof[k]);
             } else {
-                h = this.generateInternalHash(proof[k], h);
+                h = this._generateInternalHash(proof[k], h);
             }
 
             k += 1;
@@ -136,6 +132,54 @@ class MerkleTree {
             j -= 1;
         }
         return h === this.rootHash;
+    }
+
+    _generateDistributionLeafHash(leaf, index) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            if (Buffer.from(`${leaf}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+                throw Error(`Block size is larger than ${constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES} bytes.`);
+            }
+            return abi.soliditySHA3(
+                ['bytes32', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
+            ).toString('hex');
+
+        case 'sha3': return sha3_256(`${leaf}${index}`);
+        default: throw Error('Invalid hash function!');
+        }
+    }
+
+    _generateLitigationLeafHash(data, objectIndex, blockIndex) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            if (Buffer.from(`${data}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+                throw Error(`Block size is larger than ${constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES} bytes.`);
+            }
+            return abi.soliditySHA3(
+                ['bytes32', 'uint256', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${data}`, 'utf8').toString('hex')), objectIndex, blockIndex],
+            ).toString('hex');
+
+        case 'sha3': return sha3_256(`${data}${objectIndex}${blockIndex}`);
+        default: throw Error('Invalid hash function!');
+        }
+    }
+
+    _generateInternalHash(block1, block2) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            return abi.soliditySHA3(
+                ['bytes32', 'bytes32'],
+                [
+                    Utilities.normalizeHex(`${block1}`),
+                    Utilities.normalizeHex(`${block2}`),
+                ],
+            ).toString('hex');
+
+        case 'sha3': return sha3_256(`${Utilities.normalizeHex(block1)}${Utilities.normalizeHex(block2)}`);
+        default: throw Error('Invalid hash function!');
+        }
     }
 }
 

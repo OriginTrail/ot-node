@@ -510,6 +510,7 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
+            otJsonImporter: awilix.asClass(OTJsonImporter).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
