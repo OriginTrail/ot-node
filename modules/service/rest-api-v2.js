@@ -30,7 +30,7 @@ class RestAPIServiceV2 {
      */
     _exposeAPIRoutes(server) {
         const {
-            transport, emitter,
+            transport, emitter, blockchain, web3, config,
         } = this.ctx;
 
         this._registerNodeInfoRoute(server, false);
@@ -126,6 +126,27 @@ class RestAPIServiceV2 {
 
             const { type } = req.body;
             emitter.emit(type, req, res);
+        });
+
+        server.post(`/api/${this.version_id}/query/local`, (req, res, next) => {
+            this.logger.api('POST: Local query request received.');
+
+            let error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
+            }
+
+            const queryObject = req.body.query;
+            error = RestAPIValidator.validateSearchQuery(queryObject);
+            if (error) {
+                return next(error);
+            }
+
+            // TODO: Decrypt returned vertices
+            emitter.emit('api-query', {
+                query: queryObject,
+                response: res,
+            });
         });
 
         /** Network queries & read requests, to be refactored */
@@ -232,6 +253,81 @@ class RestAPIServiceV2 {
 
             emitter.emit('api-payout', {
                 offerId: req.query.offer_id,
+                response: res,
+            });
+        });
+
+        /** Get root hash for provided data query
+         * @param Query params: data_set_id
+         */
+        server.get(`/api/${this.version_id}/fingerprint`, (req, res) => {
+            this.logger.api('GET: Fingerprint request received.');
+
+            const queryObject = req.query;
+            emitter.emit('api-get_root_hash', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
+            this.logger.api('GET: import_info.');
+
+            const queryObject = req.query;
+            if (queryObject.data_set_id == null) {
+                res.send({ status: 400, message: 'Missing parameter!', data: [] });
+                return;
+            }
+
+            this.emitter.emit('api-import-info', {
+                dataSetId: queryObject.data_set_id,
+                responseFormat: queryObject.format || 'otjson',
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/balance`, async (req, res) => {
+            this.logger.api('Get balance.');
+
+            try {
+                const humanReadable = req.query.humanReadable === 'true';
+
+                const walletEthBalance = await web3.eth.getBalance(config.node_wallet);
+                const walletTokenBalance = await utilities.getTracTokenBalance(
+                    web3,
+                    config.node_wallet,
+                    blockchain.getTokenContractAddress(),
+                    false,
+                );
+                const profile = await blockchain.getProfile(config.erc725Identity);
+                const profileMinimalStake = await blockchain.getProfileMinimumStake();
+
+                const body = {
+                    wallet: {
+                        address: config.node_wallet,
+                        ethBalance: humanReadable ? web3.utils.fromWei(walletEthBalance, 'ether') : walletEthBalance,
+                        tokenBalance: humanReadable ? web3.utils.fromWei(walletTokenBalance, 'ether') : walletTokenBalance,
+                    },
+                    profile: {
+                        staked: humanReadable ? web3.utils.fromWei(profile.stake, 'ether') : profile.stake,
+                        reserved: humanReadable ? web3.utils.fromWei(profile.stakeReserved, 'ether') : profile.stakeReserved,
+                        minimalStake: humanReadable ? web3.utils.fromWei(profileMinimalStake, 'ether') : profileMinimalStake,
+                    },
+                };
+
+                res.status(200);
+                res.send(body);
+            } catch (error) {
+                this.logger.error(`Failed to get balance. ${error.message}.`);
+                res.status(503);
+                res.send({});
+            }
+        });
+
+        server.get(`/api/${this.version_id}/imports_info`, (req, res) => {
+            this.logger.api('GET: List imports request received.');
+
+            emitter.emit('api-imports-info', {
                 response: res,
             });
         });

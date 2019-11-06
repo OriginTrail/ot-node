@@ -440,6 +440,57 @@ class EventEmitter {
             }
         });
 
+        this._on('api-import-info', async (data) => {
+            const { dataSetId, responseFormat } = data;
+            logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
+            try {
+                const dataInfo =
+                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
+
+                if (!dataInfo) {
+                    logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
+                    data.response.status(404);
+                    data.response.send({
+                        message: `Import data for data set ID ${dataSetId} does not exist`,
+                    });
+                    return;
+                }
+
+                const datasetOtJson = await this.importService.getImport(dataSetId);
+                let formattedDataset = null;
+
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                    data.response.send({});
+                } else {
+                    switch (responseFormat) {
+                    case 'otjson': formattedDataset = datasetOtJson; break;
+                    case 'epcis': formattedDataset = this.epcisOtJsonTranspiler.convertFromOTJson(datasetOtJson); break;
+                    default: throw Error('Invalid response format.');
+                    }
+
+                    const transactionHash = await ImportUtilities
+                        .getTransactionHash(dataSetId, dataInfo.origin);
+
+                    data.response.status(200);
+                    data.response.send({
+                        dataSetId,
+                        document: formattedDataset,
+                        root_hash: dataInfo.root_hash,
+                        transaction: transactionHash,
+                        data_provider_wallet: dataInfo.data_provider_wallet,
+                    });
+                }
+            } catch (error) {
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
+                notifyError(error);
+                data.response.status(500);
+                data.response.send({
+                    message: error.toString(),
+                });
+            }
+        });
+
         this._on('api-create-offer', async (data) => {
             const {
                 dataSetId,

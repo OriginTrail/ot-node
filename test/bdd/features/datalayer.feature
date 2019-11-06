@@ -33,7 +33,7 @@ Feature: Data layer related features
     Given I query DC node locally for last imported data set id
     Then response hash should match last imported data set id
 
-  @djordje
+  @first
   Scenario: Basic dataset integrity with it's xml
     Given I setup 1 node
     And I start the node
