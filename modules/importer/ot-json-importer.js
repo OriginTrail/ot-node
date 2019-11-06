@@ -679,6 +679,7 @@ class OtJsonImporter {
                     otObject.relations.push({
                         '@type': constants.edgeType.otRelation,
                         direction: 'direct', // TODO: check this.
+                        relationType: relatedObject.edge.relationType,
                         linkedObject: {
                             '@id': relatedObject.vertex.uid,
                         },
@@ -723,6 +724,7 @@ class OtJsonImporter {
                     otObject.relations.push({
                         '@type': constants.edgeType.otRelation,
                         direction: 'direct', // TODO: check this.
+                        relationType: relatedObject.edge.relationType,
                         linkedObject: {
                             '@id': relatedObject.vertex.uid,
                         },

@@ -1,6 +1,8 @@
 const constants = require('../constants');
 const importUtilities = require('../ImportUtilities');
 const Merkle = require('../Merkle');
+const utilities = require('../Utilities');
+
 
 class ChallengeService {
     constructor(ctx) {
@@ -55,6 +57,7 @@ class ChallengeService {
         for (let i = 0; i < numberOfTests; i += 1) {
             testBlockId = Math.floor(Math.random() * blocks.length);
             const answer = blocks[testBlockId].data;
+
             tests.push({
                 testIndex: testBlockId,
                 objectIndex: blocks[testBlockId].objectIndex,
@@ -77,6 +80,8 @@ class ChallengeService {
         blockIndex, encryptedObject,
         blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
+        encryptedObject = utilities.sortedStringify(encryptedObject, true);
+
         let answer = JSON.stringify(encryptedObject).substring(
             blockIndex * blockSizeInBytes,
             (blockIndex + 1) * blockSizeInBytes,
@@ -99,7 +104,7 @@ class ChallengeService {
         let block = String();
 
         for (let i = 0; i < vertices.length; i += 1) {
-            const data = JSON.stringify(vertices[i]);
+            const data = JSON.stringify(utilities.sortedStringify(vertices[i], true));
 
             if (data) {
                 for (let j = 0; j < data.length; j += blockSizeInBytes) {

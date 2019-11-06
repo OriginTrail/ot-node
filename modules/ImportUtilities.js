@@ -161,15 +161,17 @@ class ImportUtilities {
             if (obj.relations != null) {
                 encryptedMap.relations[obj['@id']] = {};
                 for (const rel of obj.relations) {
-                    const encryptedProperties = rel.properties;
-                    rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
-                    if (encryptionColor != null) {
-                        const encColor = colorMap[encryptionColor];
-                        const relationKey = sha3_256(Utilities.stringify(rel, 0));
-                        encryptedMap.relations[obj['@id']][relationKey] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
-                            encryptedProperties;
+                    if (rel.properties != null) {
+                        const encryptedProperties = rel.properties;
+                        rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
+                        if (encryptionColor != null) {
+                            const encColor = colorMap[encryptionColor];
+                            const relationKey = sha3_256(Utilities.stringify(rel, 0));
+                            encryptedMap.relations[obj['@id']][relationKey] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
+                                encryptedProperties;
+                        }
                     }
                 }
             }
