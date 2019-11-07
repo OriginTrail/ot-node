@@ -516,6 +516,7 @@ class OTNode {
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
+            importService: awilix.asClass(ImportService).singleton(),
         });
 
         const transport = container.resolve('transport');
