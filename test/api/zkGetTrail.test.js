@@ -17,7 +17,7 @@ const Utilities = require('../../modules/Utilities');
 const ImportService = require('../../modules/service/import-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 const WotOtJsonTranspiler = require('../../modules/transpiler/wot/wot-otjson-transpiler');
-
+const SchemaValidator = require('../../modules/validator/schema-validator');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -81,6 +81,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             wotImporter: awilix.asClass(WOTImporter),
             product: awilix.asClass(Product),
             config: awilix.asValue(config),
+            schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             notifyError: awilix.asValue(() => {}),
             importService: awilix.asClass(ImportService).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
