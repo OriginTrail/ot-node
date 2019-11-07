@@ -161,15 +161,17 @@ class ImportUtilities {
             if (obj.relations != null) {
                 encryptedMap.relations[obj['@id']] = {};
                 for (const rel of obj.relations) {
-                    const encryptedProperties = rel.properties;
-                    rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
-                    if (encryptionColor != null) {
-                        const encColor = colorMap[encryptionColor];
-                        const relationKey = sha3_256(Utilities.stringify(rel, 0));
-                        encryptedMap.relations[obj['@id']][relationKey] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
-                            encryptedProperties;
+                    if (rel.properties != null) {
+                        const encryptedProperties = rel.properties;
+                        rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
+                        if (encryptionColor != null) {
+                            const encColor = colorMap[encryptionColor];
+                            const relationKey = sha3_256(Utilities.stringify(rel, 0));
+                            encryptedMap.relations[obj['@id']][relationKey] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
+                                encryptedProperties;
+                        }
                     }
                 }
             }
@@ -324,7 +326,7 @@ class ImportUtilities {
         };
     }
 
-    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+    static createDistributionMerkleTree(graph, datasetId, datasetCreator) {
         const datasetSummary =
             this.calculateDatasetSummary(graph, datasetId, datasetCreator);
 
@@ -335,10 +337,20 @@ class ImportUtilities {
             stringifiedGraph.push(Utilities.sortedStringify(obj));
         }
 
-        const merkle = new MerkleTree(
+        return new MerkleTree(
             [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
+            'distribution',
             'sha3',
         );
+    }
+
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const merkle = ImportUtilities.createDistributionMerkleTree(
+            graph,
+            datasetId,
+            datasetCreator,
+        );
+
         return merkle.getRoot();
     }
 

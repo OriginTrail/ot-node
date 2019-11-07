@@ -532,20 +532,25 @@ async function apiConsensus(nodeRpcUrl, senderId) {
  */
 
 /**
- * Fetch /api/trail/{{query}}
+ * Fetch /api/latest/trail/
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {object} query Query to be searched for starting vertex
  * @return {Promise.<TrailResponse>}
  */
-async function apiTrail(nodeRpcUrl, query) {
+async function apiTrail(nodeRpcUrl, params) {
     return new Promise((accept, reject) => {
         request(
             {
-                method: 'GET',
-                qs: query,
+                method: 'POST',
+                body: {
+                    identifier_types: params.identifier_types,
+                    identifier_values: params.identifier_values,
+                    depth: params.depth,
+                    connection_types: params.connection_types,
+                },
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/trail`,
+                uri: `${nodeRpcUrl}/api/latest/trail`,
                 json: true,
             },
             (err, res, body) => {

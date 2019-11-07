@@ -15,6 +15,9 @@ class RestAPIServiceV2 {
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
 
+        this.graphStorage = ctx.graphStorage;
+        this.importService = ctx.importService;
+
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.graphStorage = ctx.graphStorage;
@@ -87,7 +90,16 @@ class RestAPIServiceV2 {
          * Get trail from database
          * @param QueryObject - ex. {uid: abc:123}
          */
-        server.get(`/api/${this.version_id}/trail`, (req, res, next) => { });
+        server.post(`/api/${this.version_id}/trail`, async (req, res, next) => {
+            await this._getTrail(req, res);
+        });
+
+        /*
+        * Get MerkleProofs
+        * */
+        server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res, next) => {
+            await this._getMerkleProofs(req, res);
+        });
 
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
@@ -374,6 +386,95 @@ class RestAPIServiceV2 {
                 });
             }
         });
+    }
+
+    async _getTrail(req, res) {
+        this.logger.api('POST: Trail request received.');
+
+        if (req.body === undefined ||
+            req.body.identifier_types === undefined ||
+            req.body.identifier_values === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { identifier_types, identifier_values } = req.body;
+
+        if (utilities.arrayze(identifier_types).length !==
+            utilities.arrayze(identifier_values).length) {
+            res.status(400);
+            res.send({
+                message: 'Identifier array length mismatch',
+            });
+            return;
+        }
+
+        const depth = req.body.depth === undefined ?
+            this.graphStorage.getDatabaseInfo().max_path_length :
+            parseInt(req.body.depth, 10);
+
+        const { connection_types } = req.body;
+
+        const keys = [];
+
+        const typesArray = utilities.arrayze(identifier_types);
+        const valuesArray = utilities.arrayze(identifier_values);
+
+        const { length } = typesArray;
+
+        for (let i = 0; i < length; i += 1) {
+            keys.push(utilities.keyFrom(typesArray[i], valuesArray[i]));
+        }
+
+        try {
+            const trail =
+                await this.graphStorage.findTrail({
+                    identifierKeys: keys,
+                    depth,
+                    connectionTypes: connection_types,
+                });
+
+            const response = await this.importService.packTrailData(trail);
+
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            res.status(400);
+            res.send(e);
+        }
+    }
+
+    async _getMerkleProofs(req, res) {
+        this.logger.api('POST: Get Merkle proofs request received.');
+
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        if (req.body.object_ids === undefined ||
+            req.body.dataset_id === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { object_ids, dataset_id } = req.body;
+
+        const response =
+            await this.importService.getMerkleProofs(utilities.arrayze(object_ids), dataset_id);
+
+        res.status(200);
+        res.send(response);
     }
 
     async _checkForHandlerStatus(req, res) {

@@ -54,7 +54,6 @@ class DHChallengeCommand extends Command {
             offerId,
             color,
         );
-
         const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
 
         this.logger.info(`Calculated answer for dataset ${datasetId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);

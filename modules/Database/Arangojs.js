@@ -125,6 +125,65 @@ class ArangoJS {
         return [];
     }
 
+    async findTrail(queryObject) {
+        const {
+            identifierKeys,
+            depth,
+            connectionTypes,
+        } = queryObject;
+
+        const queryParams = {
+            identifierKeys,
+            depth,
+        };
+        let queryString = `// Get identifier
+                            LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
+                            
+                            // Fetch the start entity for trail
+                            LET startObjects = UNIQUE(FLATTEN(
+                                FOR identifierObject IN identifierObjects
+                                    FILTER identifierObject != null
+                                    LET identifiedObject = (
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    RETURN v
+                                    )
+                                RETURN identifiedObject
+                            ))
+                             
+                            LET trailObjects = (
+                                FILTER startObjects[0] != null
+                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
+        if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
+            queryString += `
+                            FILTER p.edges[*].relationType ALL in @connectionTypes`;
+            queryParams.connectionTypes = connectionTypes;
+        }
+        queryString += `
+                            RETURN DISTINCT v
+                            )
+                            
+                            FOR trailObject in trailObjects
+                                FILTER trailObject != null
+                                LET objectsRelated = (
+                                    FOR v, e in 1..1 OUTBOUND trailObject ot_edges
+                                    FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                        AND e.datasets != null
+                                        AND v.datasets != null
+                                        AND LENGTH(INTERSECTION(e.datasets, v.datasets, trailObject.datasets)) > 0
+                                    RETURN  {
+                                        "vertex": v,
+                                        "edge": e
+                                    })
+                            RETURN {
+                                "rootObject": trailObject,
+                                "relatedObjects": objectsRelated
+                            }`;
+        const result = await this.runQuery(queryString, queryParams);
+        return result;
+    }
+
+
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
                        FILTER v.vertexType == 'Data'
@@ -797,7 +856,26 @@ class ArangoJS {
      * @param datasetId
      */
     async findMetadataByImportId(datasetId) {
-        const queryString = 'FOR v IN ot_datasets FILTER v._key == @datasetId RETURN v';
+        const queryString = 'RETURN DOCUMENT(\'ot_datasets\', @datasetId)';
+        return this.runQuery(queryString, { datasetId });
+    }
+
+    /**
+     * Retrieves all elements of a dataset ID
+     * @return {Promise<*>}
+     * @param datasetId
+     */
+    async getDatasetWithVerticesAndEdges(datasetId) {
+        const queryString = `LET datasetMetadata = DOCUMENT('ot_datasets', @datasetId)
+
+                            LET datasetVertices = DOCUMENT('ot_vertices', datasetMetadata.vertices)
+                            LET datasetEdges = DOCUMENT('ot_edges', datasetMetadata.edges)
+
+                            RETURN {
+                                metadata: datasetMetadata,
+                                vertices: datasetVertices,
+                                edges: datasetEdges
+                            }`;
         return this.runQuery(queryString, { datasetId });
     }
 
