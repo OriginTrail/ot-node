@@ -74,7 +74,7 @@ async function handleModification(keyname) {
             // eslint-disable-next-line no-await-in-loop
             await updateFileInfo(timestamp, filename);
         }
-        createNewBackup(timestamp, keyname);
+        createNewBackup(new Date(timestamp).toISOString(), keyname);
         console.log(`Modification have occurred in ${keyname}`);
     } else {
         console.log(`There was no modification in ${keyname}`);
