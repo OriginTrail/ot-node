@@ -184,6 +184,49 @@ class EventEmitter {
             }
         });
 
+        this._on('api-query-local-import', async (data) => {
+            const { data_set_id: dataSetId, format, encryption } = data;
+            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
+            try {
+                const datasetOtJson = await this.importService.getImport(dataSetId, encryption);
+
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
+
+                let formattedDataset = '';
+
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                    data.response.send({});
+                } else if (encryption == null) {
+                    switch (format) {
+                    case 'otjson':
+                        formattedDataset = datasetOtJson;
+                        break;
+                    case 'epcis':
+                        formattedDataset = this.epcisOtJsonTranspiler
+                            .convertFromOTJson(datasetOtJson);
+                        break;
+                    default:
+                        throw Error('Invalid response format.');
+                    }
+                    data.response.send(formattedDataset);
+                } else {
+                    data.response.send(formattedDataset);
+                }
+            } catch (error) {
+                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
+                notifyError(error);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                });
+            }
+        });
+
         this._on('api-imports-info', async (data) => {
             logger.debug('Get import ids');
             try {

@@ -161,6 +161,26 @@ class RestAPIServiceV2 {
             });
         });
 
+        server.get(`/api/${this.version_id}/query/local/import/:data_set_id`, (req, res) => {
+            this.logger.api('GET: Local import request received.');
+
+            if (!req.params.data_set_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-query-local-import', {
+                data_set_id: req.params.data_set_id,
+                format: ((req.query && req.query.format) || 'otjson'),
+                encryption: req.query.encryption,
+                request: req,
+                response: res,
+            });
+        });
+
         /** Network queries & read requests, to be refactored */
 
         server.post(`/api/${this.version_id}/query/network`, (req, res, next) => {

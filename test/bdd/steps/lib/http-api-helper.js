@@ -346,7 +346,7 @@ async function apiQueryLocalImportByDataSetId(nodeRpcUrl, dataSetId) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local/import/${dataSetId}`,
+                uri: `${nodeRpcUrl}/api/latest/query/local/import/${dataSetId}`,
                 json: true,
             },
             (err, res, body) => {
