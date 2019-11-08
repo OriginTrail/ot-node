@@ -692,6 +692,7 @@ class OtJsonImporter {
                 '@type': constants.objectType.otConnector,
                 '@id': graphObject.uid,
                 relations: [],
+                identifiers: [],
             };
 
             for (const relatedObject of relatedObjects) {
