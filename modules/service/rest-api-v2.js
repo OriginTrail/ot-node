@@ -18,6 +18,8 @@ class RestAPIServiceV2 {
         this.graphStorage = ctx.graphStorage;
         this.otJsonImporter = ctx.otJsonImporter;
 
+        this.backupService = ctx.backupService;
+
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.graphStorage = ctx.graphStorage;
@@ -93,6 +95,10 @@ class RestAPIServiceV2 {
          */
         server.post(`/api/${this.version_id}/trail`, async (req, res, next) => {
             await this._getTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/restore_backup`, async (req, res) => {
+            await this._restoreBackup(req, res);
         });
 
         /*
@@ -351,6 +357,31 @@ class RestAPIServiceV2 {
             res.status(400);
             res.send(e);
         }
+    }
+
+    async _restoreBackup(req, res) {
+        this.logger.api('POST: Restore backup request received.');
+
+        if (req.body === undefined ||
+            req.body.date === undefined ||
+            req.body.content === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { date, content } = req.body;
+
+        // TODO
+        const result = await this.backupService.restoreBackup(date, content);
+
+        res.status(200);
+        res.send({
+            result,
+        });
     }
 
     async _getMerkleProofs(req, res) {
