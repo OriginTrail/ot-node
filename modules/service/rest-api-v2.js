@@ -375,8 +375,7 @@ class RestAPIServiceV2 {
 
         const { date, content } = req.body;
 
-        // TODO
-        const result = await this.backupService.restoreBackup(date, content);
+        const result = await this.backupService.restoreBackup(content, date);
 
         res.status(200);
         res.send({

@@ -45,6 +45,7 @@ const APIUtilities = require('./modules/api-utilities');
 const RestApiController = require('./modules/service/rest-api-controller');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
+const BackupService = require('./modules/service/backup-service');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -378,6 +379,7 @@ class OTNode {
             restApiController: awilix.asClass(RestApiController).singleton(),
             challengeService: awilix.asClass(ChallengeService).singleton(),
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
+            backupService: awilix.asClass(BackupService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -518,6 +520,7 @@ class OTNode {
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
+            backupService: awilix.asClass(BackupService).singleton(),
         });
 
         const transport = container.resolve('transport');

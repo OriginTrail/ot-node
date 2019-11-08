@@ -10,12 +10,6 @@ const backupService = new BackupService();
 const keynameMap = backupService.getMap();
 const backupPath = backupService.getBackupPath();
 
-// const configPath = '../config/config.json';
-//
-// const keynameMap = new Map();
-// keynameMap.set('kademlia-identity', ['../../config/DCG/identity-test.json', '../../config/DCG/kademlia-test.crt', '../../config/DCG/kademlia-test.key']);
-// keynameMap.set('node-config', ['../config/config-test.json']);
-
 function extractNameFromPath(path) {
     const n = path.lastIndexOf('/');
     return path.slice(n + 1);
@@ -74,7 +68,6 @@ async function checkForModification(keyname) {
 
 async function handleModification(keyname) {
     const timestamp = await checkForModification(keyname);
-    console.log(timestamp);
     if (timestamp > -1) {
         for (const path of keynameMap.get(keyname)) {
             const filename = extractNameFromPath(path);
@@ -89,7 +82,6 @@ async function handleModification(keyname) {
 }
 
 async function main() {
-    console.log('STARTING BACKUP');
     if (argv.configDir) {
         Models.sequelize.options.storage = path.join(argv.configDir, 'system.db');
     }
@@ -100,7 +92,4 @@ async function main() {
     await Promise.all(promises);
 }
 
-main();
-
-// eslint-disable-next-line import/prefer-default-export
 module.exports = main;

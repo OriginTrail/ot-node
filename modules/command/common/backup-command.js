@@ -19,7 +19,7 @@ class BackupCommand extends Command {
     async execute(command) {
         await backupScript();
         // this.logger.log('BACKUP FINISHED');
-        console.log('BACKUP FINISHED');
+        this.logger.log('Node backup finished');
         return Command.repeat();
     }
 
@@ -33,6 +33,7 @@ class BackupCommand extends Command {
             name: 'backupCommand',
             data: {
             },
+            // TODO find optimal time for backing up
             period: 45 * 1000,
             // constants.DEFAULT_COMMAND_CLEANUP_TIME_MILLS,
             transactional: false,
