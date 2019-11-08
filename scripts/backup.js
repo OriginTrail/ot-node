@@ -6,6 +6,8 @@ const BackupService = require('../modules/service/backup-service');
 
 // const backupPath = '../Backup';
 
+// NOT USED, ALL LOGIC IMPLEMENTED IN SERVICE
+
 const backupService = new BackupService();
 const keynameMap = backupService.getMap();
 const backupPath = backupService.getBackupPath();
