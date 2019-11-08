@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const argv = require('minimist')(process.argv.slice(2));
+const Models = require('../../models');
 
 class BackupService {
     constructor() {
@@ -10,6 +12,10 @@ class BackupService {
         this.pathMap = new Map();
         this._initializePathMap();
         this.backupPath = 'Backup';
+
+        if (argv.configDir) {
+            Models.sequelize.options.storage = path.join(argv.configDir, 'system.db');
+        }
     }
 
     _initializePathMap() {
@@ -44,6 +50,80 @@ class BackupService {
         });
 
         return 'ok';
+    }
+
+    async checkFileInfo(filename) {
+        const configInfo = await Models.node_data.find({ where: { key: filename } });
+        return configInfo;
+    }
+
+    async updateFileInfo(timestamp, filename) {
+        await Models.node_data.update(
+            {
+                value: timestamp,
+            },
+            {
+                where: {
+                    key: filename,
+                },
+            },
+        );
+    }
+
+    createNewBackup(timestamp, keyname) {
+        fs.mkdirSync(`${this.backupPath}/${keyname}/${timestamp}`, (err) => {
+            if (err) throw err;
+        });
+        for (const path of this.keynameMap.get(keyname)) {
+            const filename = this.extractNameFromPath(path);
+            fs.copyFile(path, `${this.backupPath}/${keyname}/${timestamp}/${filename}`, (err) => {
+                if (err) throw err;
+            });
+        }
+    }
+
+    async checkForModification(keyname) {
+        let max_timestamp = -1;
+        for (const path of this.keynameMap.get(keyname)) {
+            const filename = this.extractNameFromPath(path);
+            const stat = fs.statSync(path);
+            // eslint-disable-next-line no-await-in-loop
+            const configInfo = await this.checkFileInfo(filename);
+            // console.log(filename);
+
+            const modificationTime = new Date(stat.mtime).getTime();
+            const previousModificationTime = configInfo.value;
+
+            if (modificationTime > previousModificationTime) {
+                if (modificationTime > max_timestamp) {
+                    max_timestamp = modificationTime;
+                }
+            }
+        }
+        return max_timestamp;
+    }
+
+    async handleModification(keyname) {
+        const timestamp = await this.checkForModification(keyname);
+        if (timestamp > -1) {
+            for (const path of this.keynameMap.get(keyname)) {
+                const filename = this.extractNameFromPath(path);
+                // eslint-disable-next-line no-await-in-loop
+                await this.updateFileInfo(timestamp, filename);
+            }
+            this.createNewBackup(new Date(timestamp).toISOString(), keyname);
+            console.log(`Modification have occurred in ${keyname}`);
+        } else {
+            console.log(`There was no modification in ${keyname}`);
+        }
+    }
+
+    async run() {
+        const promises = [];
+        this.keynameMap.forEach((value, key) => {
+            promises.push(this.handleModification(key));
+        });
+        await Promise.all(promises);
     }
 
     getMap() {

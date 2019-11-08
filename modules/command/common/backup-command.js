@@ -10,6 +10,7 @@ class BackupCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.backupService = ctx.backupService;
     }
 
     /**
@@ -17,7 +18,7 @@ class BackupCommand extends Command {
      * @param command
      */
     async execute(command) {
-        await backupScript();
+        await this.backupService.run();
         // this.logger.log('BACKUP FINISHED');
         this.logger.log('Node backup finished');
         return Command.repeat();
