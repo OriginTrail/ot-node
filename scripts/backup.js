@@ -2,13 +2,19 @@ const fs = require('fs');
 const Models = require('../models');
 const argv = require('minimist')(process.argv.slice(2));
 const path = require('path');
+const BackupService = require('../modules/service/backup-service');
 
-const backupPath = '../Backup';
-const configPath = '../config/config.json';
+// const backupPath = '../Backup';
 
-const keynameMap = new Map();
-keynameMap.set('kademlia-identity', ['../../config/DCG/identity-test.json', '../../config/DCG/kademlia-test.crt', '../../config/DCG/kademlia-test.key']);
-keynameMap.set('node-config', ['../config/config-test.json']);
+const backupService = new BackupService();
+const keynameMap = backupService.getMap();
+const backupPath = backupService.getBackupPath();
+
+// const configPath = '../config/config.json';
+//
+// const keynameMap = new Map();
+// keynameMap.set('kademlia-identity', ['../../config/DCG/identity-test.json', '../../config/DCG/kademlia-test.crt', '../../config/DCG/kademlia-test.key']);
+// keynameMap.set('node-config', ['../config/config-test.json']);
 
 function extractNameFromPath(path) {
     const n = path.lastIndexOf('/');
@@ -83,6 +89,7 @@ async function handleModification(keyname) {
 }
 
 async function main() {
+    console.log('STARTING BACKUP');
     if (argv.configDir) {
         Models.sequelize.options.storage = path.join(argv.configDir, 'system.db');
     }
@@ -94,3 +101,6 @@ async function main() {
 }
 
 main();
+
+// eslint-disable-next-line import/prefer-default-export
+module.exports = main;
