@@ -589,8 +589,6 @@ class ImportService {
     async _createObjectGraph(graphObject, relatedObjects) {
         const otObject = this._constructOtObject(relatedObjects);
         otObject['@id'] = graphObject.uid;
-        otObject.identifiers = [];
-        otObject.relations = [];
         if (graphObject.vertexType === constants.vertexType.entityObject) {
             otObject['@type'] = constants.objectType.otObject;
         } else if (graphObject.vertexType === constants.vertexType.connector) {
@@ -602,6 +600,8 @@ class ImportService {
 
     _constructOtObject(relatedObjects) {
         const otObject = {};
+        otObject.identifiers = [];
+        otObject.relations = [];
         for (const relatedObject of relatedObjects) {
             // Check for identifiers.
             // Relation 'IDENTIFIED_BY' goes form entityVertex to identifierVertex.
