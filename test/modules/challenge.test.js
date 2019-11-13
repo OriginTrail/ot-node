@@ -10,11 +10,11 @@ const challengeService = new ChallengeService({ logger });
 
 // Global declarations.
 const vertexData = [
-    { vertexKey: 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' }, //89
-    { vertexKey: 'vertex1', data: ' ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation' }, //85
-    { vertexKey: 'vertex2', data: ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis' }, //62
-    { vertexKey: 'vertex3', data: ' aute irure dolor in reprehenderit in voluptate velit esse cillum' }, //65
-    { vertexKey: 'vertex4', data: ' dolore eu fugiat' }, //17
+    { vertexKey: 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' },
+    { vertexKey: 'vertex1', data: ' ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation' },
+    { vertexKey: 'vertex2', data: ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis' },
+    { vertexKey: 'vertex3', data: ' aute irure dolor in reprehenderit in voluptate velit esse cillum' },
+    { vertexKey: 'vertex4', data: ' dolore eu fugiat' },
     { vertexKey: 'vertex5', data: ' nulla pariatur. Excepteur sint occaecat cupidatat non proident' },
     { vertexKey: 'vertex6', data: ', sunt in culpa qui officia deserunt ' },
     { vertexKey: 'vertex7', data: 'mollit' },
