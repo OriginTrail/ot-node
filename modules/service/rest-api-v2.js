@@ -363,6 +363,16 @@ class RestAPIServiceV2 {
                 response: res,
             });
         });
+
+        server.get(`/api/${this.version_id}/dump/rt`, (req, res) => {
+            this.logger.api('Dumping routing table');
+            const message = transport.dumpContacts();
+
+            res.status(200);
+            res.send({
+                message,
+            });
+        });
     }
 
     /**
