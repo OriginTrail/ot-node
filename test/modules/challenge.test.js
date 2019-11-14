@@ -34,13 +34,13 @@ function checkChallenges(tests, startTime, endTime, expectedBlockSize) {
         expect(test.time).to.be.greaterThan(startTime, `Test time: ${new Date(test.time)}, start time: ${new Date(startTime)}`);
         expect(test.time).to.be.lessThan(endTime, `Test time: ${new Date(test.time)}, end time: ${new Date(endTime)}`);
         expect(test.time).to.be.greaterThan(previousTestTime);
-        expect(test.answer).to.equal(blocks[test.block_id]);
+        expect(test.answer).to.equal(blocks.find(x => x.objectIndex === test.objectIndex && x.blockIndex === test.blockIndex).data);
 
         previousTestTime = test.time;
     });
 }
 
-describe.skip('Challenge service tests', () => {
+describe('Challenge service tests', () => {
     describe('Challenge generation', () => {
         const startTime = new Date('May 1, 2018 03:24:00').getTime();
         const endTime = new Date('January 1, 2019 00:24:00').getTime();
@@ -73,12 +73,12 @@ describe.skip('Challenge service tests', () => {
 
     describe('Challenge answers', () => {
         it('answerTestQuestion() should return correct block chunk', () => {
-            expect(challengeService.answerChallengeQuestion(10, vertexData, 32)).to.be.equal('ulla pariatur. Excepteur sint oc');
-            expect(challengeService.answerChallengeQuestion(8, vertexData, 32)).to.be.equal(' reprehenderit in voluptate veli');
-            expect(challengeService.answerChallengeQuestion(6, vertexData, 32)).to.be.equal('isi ut aliquip ex ea commodo con');
-            expect(challengeService.answerChallengeQuestion(13, vertexData, 32)).to.be.equal('t mollit anim  id est laborum');
-            expect(challengeService.answerChallengeQuestion(2, vertexData, 32)).to.be.equal('eiusmod tempor incididunt ut lab');
-            expect(challengeService.answerChallengeQuestion(4, vertexData, 32)).to.be.equal('nim ad minim veniam, quis nostru');
+            expect(challengeService.answerChallengeQuestion(10, vertexData)).to.be.equal('r sint occaecat cupidatat non p');
+            expect(challengeService.answerChallengeQuestion(8, vertexData)).to.be.equal('vertexKey\\":\\"vertex9\\"},{\\"dat');
+            expect(challengeService.answerChallengeQuestion(6, vertexData)).to.be.equal('\\",\\"vertexKey\\":\\"vertex4\\"},{');
+            expect(challengeService.answerChallengeQuestion(13, vertexData)).to.be.equal('ris nisi ut aliquip ex ea commo');
+            expect(challengeService.answerChallengeQuestion(2, vertexData)).to.be.equal(' aute irure dolor in reprehende');
+            expect(challengeService.answerChallengeQuestion(4, vertexData)).to.be.equal('lum\\",\\"vertexKey\\":\\"vertex3\\"');
         });
     })
 });

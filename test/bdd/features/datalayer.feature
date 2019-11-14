@@ -182,3 +182,18 @@ Feature: Data layer related features
     When DC exports the last imported dataset as OT-JSON
     And DC waits for export to finish
     Then the last exported dataset should contain "../../../importers/xml_examples/Retail/ot_logo.svg" data as "urn:ot:object:product:id:Product_1"
+
+
+  @first
+  Scenario: Challenge request-response test
+    Given I setup 4 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And I use 3th node as DH
+    And DC imports "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    Then DC should send a challenge request
+    Then DH should send the challenge response
+    Then DC should verify the response

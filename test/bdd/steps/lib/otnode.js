@@ -385,8 +385,17 @@ class OtNode extends EventEmitter {
             this.emit('dh-litigation-replacement-received');
         } else if (line.match(/Successfully replaced DH .+ with DH .+ for offer .+/gi)) {
             this.emit('dc-litigation-replacement-completed');
-        } else if (line.match(/Challenge answer .+ sent to .+\./gi)) {
-            this.emit('dh-challenge-sent');
+        } else if (line.match(/Calculated answer for dataset .+, color .+, object index .+, and block index .+ is .+/gi)) {
+            const answer =
+                line.match(/Calculated answer for dataset .+, color .+, object index .+, and block index .+ is .+/gi)[0]
+                    .match(new RegExp('is (.*)'))[1];
+            this.emit('dh-challenge-sent', answer);
+        } else if (line.match(/Sending challenge to .+ Offer ID .+, object_index .+, block_index .+/gi)) {
+            const dhIdentity = line.match(/Sending challenge to .+ Offer ID .+, object_index .+, block_index .+/gi)[0].match(new RegExp('to (.*). Offer ID'))[1];
+            this.emit(`dc-challenge-sent-${dhIdentity}`);
+        } else if (line.match(/Challenge response arrived for challenge .+\. Answer .+/gi)) {
+            const answer = line.match(/Challenge response arrived for challenge .+\. Answer .+/gi)[0].match(new RegExp('Answer (.*)'))[1];
+            this.emit(`dc-challenge-verified-${answer}`);
         } else if (line.match(/Not chosen as a replacement for offer .+\./gi)) {
             this.emit('dh-not-chosen-as-replacement');
         } else if (line.match(/Chosen as a replacement for offer .+\./gi)) {
