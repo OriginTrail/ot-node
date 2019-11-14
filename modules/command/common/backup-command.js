@@ -1,7 +1,7 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
-const backupScript = require('../../../scripts/backup');
+const backupScript = require('../../../scripts/auto-backup');
 
 /**
  * Increases approval for Bidding contract on blockchain
