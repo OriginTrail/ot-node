@@ -8,7 +8,7 @@ class BackupService {
         this.keynameMap = new Map();
         // TODO identify rotures based on configurations of existing nodes
         this.keynameMap.set('kademlia-identity', ['../config/DCG/identity-test.json', '../config/DCG/kademlia-test.crt', '../config/DCG/kademlia-test.key']);
-        this.keynameMap.set('node-config', ['config/config-test.json']);
+        this.keynameMap.set('node-config', ['config/config.json']);
 
         this.pathMap = new Map();
         this._initializePathMap();
