@@ -4,52 +4,70 @@ const argv = require('minimist')(process.argv.slice(2));
 const { exec } = require('child_process');
 
 if (!argv.config) {
-    throw Error('Please provide config parameter');
+    argv.config = '.origintrail_noderc';
+}
+
+if (!argv.configDir) {
+    argv.configDir = '../data/';
 }
 
 if (!argv.restore_directory) {
-    throw Error('Please provide backup_directory parameter');
+    argv.restore_directory = '../backup/';
 }
 
 console.log('Restore OT node...');
 
-const configPath = argv.config.slice(0, argv.config.lastIndexOf('/'));
+const configPath = argv.config.lastIndexOf('/') === -1 ? '' : argv.config.slice(0, argv.config.lastIndexOf('/'));
 const configName = argv.config.slice(argv.config.lastIndexOf('/') + 1);
-const configDirectory = `${configName.split('.').slice(0, -1).join('.')}-config`;
-const databaseDirectory = `${configName.split('.').slice(0, -1).join('.')}-database`;
+const configDirectory = argv.configDir.replace(/\/$/, '');
 const restorePath = argv.restore_directory.replace(/\/$/, '');
 
 console.log('Setup path variables...');
 
-const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db', configName];
-const configFile = JSON.parse(fs.readFileSync(`${configPath}/${configName}`));
+const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db', '.origintrail_noderc'];
+const configFile = JSON.parse(fs.readFileSync(`${restorePath}/.origintrail_noderc`));
 
-if (!fs.existsSync(`${restorePath}`)) {
-    console.log(`Directory ${restorePath} does not exist. Creating...`);
-    mkdirp.sync(`${restorePath}`);
+if (!fs.existsSync(`${configPath}`)) {
+    console.log(`Directory ${configPath} does not exist. Creating...`);
+    mkdirp.sync(`${configPath}`);
 }
 
-console.log(`Creating ${restorePath}/${configDirectory} directory...`);
-mkdirp.sync(`${restorePath}/${configDirectory}`, (err) => { if (err) throw err; });
+if (!fs.existsSync(`${configDirectory}`)) {
+    console.log(`Directory ${configDirectory} does not exist. Creating...`);
+    mkdirp.sync(`${configDirectory}`);
+}
 
 for (const file of files) {
-    let src = `${configPath}/${configDirectory}/${file}`;
-    let dest = `${restorePath}/${configDirectory}/${file}`;
-    if (file === configName) {
-        src = `${configPath}/${file}`;
-        dest = `${restorePath}/${file}`;
+    const src = `${restorePath}/${file}`;
+    let dest = `${configDirectory}/${file}`;
+    if (file === '.origintrail_noderc') {
+        if (configPath !== '') {
+            dest = `${configPath}/${configName}`;
+        } else {
+            dest = `${configName}`;
+        }
     }
-
-    console.log(`Restore: ${src} -> ${dest}`);
-    fs.copyFile(src, dest, (err) => { if (err) throw err; });
+    if (fs.existsSync(src)) {
+        console.log(`Restore: ${src} -> ${dest}`);
+        fs.copyFileSync(src, dest, (err) => {
+            if (err) throw err;
+        });
+    }
 }
 
 console.log('Database import...');
 
+if (!configFile.database.provider) {
+    configFile.database.provider = 'arangodb';
+}
+if (!configFile.database.database) {
+    configFile.database.database = 'origintrail';
+}
+
 switch (configFile.database.provider) {
 case 'arangodb':
     exec(
-        `arangorestore --server.database ${configFile.database.database} --server.username ${configFile.database.username} --server.password ${configFile.database.password === '' ? '\'\'' : configFile.database.password} --input-directory '${configPath}/${databaseDirectory}/arangodb/' --overwrite true`,
+        `arangorestore --server.database ${configFile.database.database} --server.username ${configFile.database.username} --server.password ${configFile.database.password === '' ? '\'\'' : configFile.database.password} --input-directory '${restorePath}/arangodb/' --overwrite true`,
         (error, stdout, stderr) => {
             console.log(`${stdout}`);
             if (error !== null) {
