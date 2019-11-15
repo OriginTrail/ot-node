@@ -2,6 +2,18 @@ const mkdirp = require('mkdirp');
 const fs = require('fs');
 const argv = require('minimist')(process.argv.slice(2));
 const { exec } = require('child_process');
+require('dotenv').config();
+
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'production';
+} else if (['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) < 0) {
+    throw Error(`Unsupported environment '${process.env.NODE_ENV}'`);
+}
+
+const configjson = require('../config/config.json');
+
+const defaultConfig = configjson[process.env.NODE_ENV];
 
 if (!argv.config) {
     argv.config = '.origintrail_noderc';
@@ -9,6 +21,10 @@ if (!argv.config) {
 
 if (!argv.configDir) {
     argv.configDir = '../data/';
+}
+
+if (!argv.certs) {
+    argv.certs = '../certs/';
 }
 
 if (!argv.restore_directory) {
@@ -20,11 +36,14 @@ console.log('Restore OT node...');
 const configPath = argv.config.lastIndexOf('/') === -1 ? '' : argv.config.slice(0, argv.config.lastIndexOf('/'));
 const configName = argv.config.slice(argv.config.lastIndexOf('/') + 1);
 const configDirectory = argv.configDir.replace(/\/$/, '');
+const certsDirectory = argv.certs.replace(/\/$/, '');
 const restorePath = argv.restore_directory.replace(/\/$/, '');
 
 console.log('Setup path variables...');
 
-const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db', '.origintrail_noderc'];
+const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db', 'erc725_identity.json', configName];
+const certs = ['fullchain.pem', 'privkey.pem'];
+
 const configFile = JSON.parse(fs.readFileSync(`${restorePath}/.origintrail_noderc`));
 
 if (!fs.existsSync(`${configPath}`)) {
@@ -35,6 +54,11 @@ if (!fs.existsSync(`${configPath}`)) {
 if (!fs.existsSync(`${configDirectory}`)) {
     console.log(`Directory ${configDirectory} does not exist. Creating...`);
     mkdirp.sync(`${configDirectory}`);
+}
+
+if (!fs.existsSync(`${certsDirectory}`)) {
+    console.log(`Directory ${certsDirectory} does not exist. Creating...`);
+    mkdirp.sync(`${certsDirectory}`);
 }
 
 for (const file of files) {
@@ -55,13 +79,32 @@ for (const file of files) {
     }
 }
 
+for (const cert of certs) {
+    const src = `${restorePath}/${cert}`;
+    const dest = `${certsDirectory}/${cert}`;
+
+    if (fs.existsSync(src)) {
+        console.log(`Restore: ${src} -> ${dest}`);
+        fs.copyFileSync(src, dest, (err) => {
+            if (err) throw err;
+        });
+    }
+}
+
 console.log('Database import...');
 
-if (!configFile.database.provider) {
-    configFile.database.provider = 'arangodb';
+
+if (!configFile.database) {
+    configFile.database = defaultConfig.database;
 }
-if (!configFile.database.database) {
-    configFile.database.database = 'origintrail';
+if (!configFile.database.provider) {
+    configFile.database.provider = defaultConfig.database.provider;
+}
+if (!configFile.database.username) {
+    configFile.database.username = defaultConfig.database.username;
+}
+if (configFile.database.password === undefined) {
+    configFile.database.password = defaultConfig.database.password;
 }
 
 switch (configFile.database.provider) {
