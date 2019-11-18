@@ -74,6 +74,7 @@ class ImportService {
         this.db = ctx.graphStorage;
         this.schemaValidator = ctx.schemaValidator;
         this.web3 = ctx.web3;
+        this.log = ctx.logger;
     }
 
     async getImport(datasetId, encColor = null) {
