@@ -32,7 +32,8 @@ contract Litigation {
 
     event ReplacementStarted(bytes32 offerId, address holderIdentity, address challengerIdentity, bytes32 litigationRootHash);
 
-    function initiateLitigation(bytes32 offerId, address holderIdentity, address challengerIdentity, uint requestedDataIndex, bytes32[] hashArray)
+    function initiateLitigation(bytes32 offerId, address holderIdentity, address challengerIdentity,
+        uint requestedObjectIndex, uint requestedBlockIndex, bytes32[] hashArray)
     public returns (bool newLitigationInitiated){
         HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
         LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
@@ -67,7 +68,8 @@ contract Litigation {
 
         // Write litigation information into the storage
         litigationStorage.setLitigationLitigatorIdentity(offerId, holderIdentity, challengerIdentity);
-        litigationStorage.setLitigationRequestedDataIndex(offerId, holderIdentity, requestedDataIndex);
+        litigationStorage.setLitigationRequestedObjectIndex(offerId, holderIdentity, requestedObjectIndex);
+        litigationStorage.setLitigationRequestedBlockIndex(offerId, holderIdentity, requestedBlockIndex);
         litigationStorage.setLitigationHashArray(offerId, holderIdentity, hashArray);
         
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
@@ -91,7 +93,15 @@ contract Litigation {
             "The interval for answering has passed, cannot answer litigation!");
 
         // Write answer data into the hash
-        litigationStorage.setLitigationRequestedData(offerId, holderIdentity, keccak256(abi.encodePacked(requestedData, litigationStorage.getLitigationRequestedDataIndex(offerId, holderIdentity))));
+        litigationStorage.setLitigationRequestedData(
+            offerId,
+            holderIdentity,
+            keccak256(abi.encodePacked(
+                requestedData,
+                litigationStorage.getLitigationRequestedObjectIndex(offerId, holderIdentity),
+                litigationStorage.getLitigationRequestedBlockIndex(offerId, holderIdentity)
+            ))
+        );
 
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.answered);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
@@ -222,9 +232,10 @@ contract Litigation {
         
         uint256 i = 0;
         uint256 mask = 1;
-        uint256 requestedDataIndex = litigationStorage.getLitigationRequestedDataIndex(offerId, holderIdentity);
+        uint256 requestedObjectIndex = litigationStorage.getLitigationRequestedObjectIndex(offerId, holderIdentity);
+        uint256 requestedBlockIndex = litigationStorage.getLitigationRequestedBlockIndex(offerId, holderIdentity);
         bytes32 answerHash = litigationStorage.getLitigationRequestedData(offerId, holderIdentity);
-        bytes32 proofHash = keccak256(abi.encodePacked(proofData, requestedDataIndex));
+        bytes32 proofHash = keccak256(abi.encodePacked(proofData, requestedObjectIndex, requestedBlockIndex));
         bytes32[] memory hashArray = litigationStorage.getLitigationHashArray(offerId, holderIdentity);
 
         // ako je bit 1 on je levo
