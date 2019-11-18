@@ -21,7 +21,7 @@ const path = require('path');
 async function apiImportInfo(nodeRpcUrl, dataSetId) {
     return new Promise((accept, reject) => {
         request(
-            `${nodeRpcUrl}/api/import_info?data_set_id=${dataSetId}`,
+            `${nodeRpcUrl}/api/latest/import_info?data_set_id=${dataSetId}`,
             { json: true },
             (err, res, body) => {
                 if (err) {
@@ -52,7 +52,7 @@ async function apiFingerprint(nodeRpcUrl, datSetId) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/fingerprint?data_set_id=${datSetId}`,
+                uri: `${nodeRpcUrl}/api/latest/fingerprint?data_set_id=${datSetId}`,
                 json: true,
             },
             (err, res, body) => {
@@ -287,7 +287,7 @@ async function apiImportsInfo(nodeRpcUrl) {
         request({
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            url: `${nodeRpcUrl}/api/imports_info`,
+            url: `${nodeRpcUrl}/api/latest/imports_info`,
             json: true,
         }, (error, response, body) => {
             if (error) {
@@ -312,7 +312,7 @@ async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local`,
+                uri: `${nodeRpcUrl}/api/latest/query/local`,
                 json: true,
                 body: jsonQuery,
             },
@@ -346,7 +346,7 @@ async function apiQueryLocalImportByDataSetId(nodeRpcUrl, dataSetId) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local/import/${dataSetId}`,
+                uri: `${nodeRpcUrl}/api/latest/query/local/import/${dataSetId}`,
                 json: true,
             },
             (err, res, body) => {
@@ -414,7 +414,7 @@ async function apiQueryNetwork(nodeRpcUrl, jsonQuery) {
         request(
             {
                 method: 'POST',
-                uri: `${nodeRpcUrl}/api/query/network`,
+                uri: `${nodeRpcUrl}/api/latest/query/network`,
                 json: true,
                 body: jsonQuery,
             },
@@ -620,7 +620,7 @@ async function apiBalance(nodeRpcUrl, humanReadable) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/balance?humanReadable=${humanReadable}`,
+                uri: `${nodeRpcUrl}/api/latest/balance?humanReadable=${humanReadable}`,
                 json: true,
             },
             (err, res, body) => {

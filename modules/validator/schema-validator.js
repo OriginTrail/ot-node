@@ -6,25 +6,9 @@ const ethutils = require('ethereumjs-util');
 const importUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const web3 = require('web3');
-// const Buffer = require('buffer');
-/**
- * Constants used to select various schemas.
- * @type {{
- * relationType: {
- *  identifies: string, hasData: string, identifiedBy: string, connectionDownstream: string},
- *  vertexType: {
- *  entityObject: string, identifier: string, data: string, connector: string},
- * edgeType: {
- *  connectorRelation: string, dataRelation: string, otRelation: string,
- *  identifierRelation: string},
- * objectType: {
- *  otConnector: string, otObject: string}}}
- */
-
 
 class SchemaValidator {
     constructor(ctx) {
-        // this.blockchain = ctx.blockchain;
         this.config = ctx.config;
         this.supportedSchemas = { '/schemas/erc725-main': () => this._validateERC725Schema };
     }
@@ -85,15 +69,6 @@ class SchemaValidator {
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('[Validation Error] Wrong format of data creator.');
         }
-
-        const erc725Identity = ERCIdentifier.identifierValue;
-
-        // const walletPurposes = await this.blockchain.getWalletPurposes(erc725Identity, signer);
-        //
-        // if (!walletPurposes.includes('4')) {
-        //     throw Error(`Signer ${signer} does not have encryption approval for the ` +
-        //         `ERC-725 identity ${erc725Identity} specified in the dataset header!`);
-        // }
 
         return null;
     }

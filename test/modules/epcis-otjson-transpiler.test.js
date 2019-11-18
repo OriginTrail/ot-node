@@ -21,8 +21,7 @@ const Utilities = require('../../modules/Utilities');
 const logger = require('../../modules/logger');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 
-const ImportUtilities = require('../../modules/ImportUtilities');
-const EpcisOtJsonImporter = require('../../modules/importer/ot-json-importer');
+const ImportService = require('../../modules/service/import-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 
 const defaultConfig = require('../../config/config.json').development;
@@ -81,12 +80,8 @@ describe('EPCIS OT JSON transpiler tests', () => {
             config,
         });
 
-        importer = new EpcisOtJsonImporter({
+        importer = new ImportService({
             graphStorage,
-            logger,
-            config,
-            notifyError: {},
-            web3,
         });
     });
 

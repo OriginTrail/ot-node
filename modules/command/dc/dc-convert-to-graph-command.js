@@ -3,8 +3,6 @@ const Command = require('../command');
 class DcConvertToGraphCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
-        this.otJsonImporter = ctx.otJsonImporter;
         this.importWorkerController = ctx.importWorkerController;
         this.commandExecutor = ctx.commandExecutor;
     }
