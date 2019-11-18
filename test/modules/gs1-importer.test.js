@@ -22,11 +22,11 @@ const Product = require('../../modules/Product');
 const Storage = require('../../modules/Storage');
 const models = require('../../models');
 const Web3 = require('web3');
-const fs = require('fs');
 const awilix = require('awilix');
 const logger = require('../../modules/logger');
-const OtJsonImporter = require('../../modules/importer/ot-json-importer');
+const ImportService = require('../../modules/service/import-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
+const SchemaValidator = require('../../modules/validator/schema-validator');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -35,7 +35,7 @@ describe('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
     let graphStorage;
     let systemDb;
-    let gs1;
+    let importService;
     let importer;
     let epcisOtJsonTranspiler;
 
@@ -105,7 +105,8 @@ describe('GS1 Importer tests', () => {
             logger: awilix.asValue(logger),
             gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),
-            otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
+            schemaValidator: awilix.asClass(SchemaValidator).singleton(),
+            importService: awilix.asClass(ImportService).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             remoteControl: awilix.asValue({
                 importRequestData: () => {
@@ -120,7 +121,7 @@ describe('GS1 Importer tests', () => {
             notifyError: awilix.asFunction(() => {}),
         });
         await graphStorage.connect();
-        gs1 = container.resolve('otJsonImporter');
+        importService = container.resolve('importService');
         epcisOtJsonTranspiler = container.resolve('epcisOtJsonTranspiler');
     });
 
@@ -131,7 +132,7 @@ describe('GS1 Importer tests', () => {
                 it(
                     `should correctly parse and import ${path.basename(test.args[0])} file ${i}th time`,
                     // eslint-disable-next-line no-loop-func
-                    async () => gs1.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0]))),
+                    async () => importService.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0]))),
                 );
             }
         });
@@ -173,7 +174,7 @@ describe('GS1 Importer tests', () => {
         it.skip('check keys immutability on GraphExample_3.xml', async () => {
             const myGraphExample3 = path.join(__dirname, 'test_xml/GraphExample_3.xml');
 
-            await gs1.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
+            await importService.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
             const firstImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
             assert.equal(firstImportVerticesCount, 14, 'There should be 14 vertices');
 
@@ -181,7 +182,7 @@ describe('GS1 Importer tests', () => {
             assert.equal(firstImportVerticesKeys.length, firstImportVerticesCount);
 
             // re-import into same db instance
-            await gs1.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
+            await importService.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
             const secondImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
             assert.equal(secondImportVerticesCount, 14, 'There should be 14 vertices');
 
@@ -198,7 +199,7 @@ describe('GS1 Importer tests', () => {
         it('check total graph nodes count in scenario of GraphExample_3.xml', async () => {
             const myGraphExample3 = path.join(__dirname, 'test_xml/GraphExample_3.xml');
 
-            await gs1.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
+            await importService.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
             const verticesCount1 = await graphStorage.getDocumentsCount('ot_vertices');
             assert.isNumber(verticesCount1);
             assert.isTrue(verticesCount1 >= 0, 'we expect positive number of vertices');
@@ -206,7 +207,7 @@ describe('GS1 Importer tests', () => {
             assert.isNumber(edgesCount1);
             assert.isTrue(edgesCount1 >= 0, 'we expect positive number of edges');
 
-            await gs1.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
+            await importService.importFile(convertToImportDoc(await Utilities.fileContents(myGraphExample3)));
             const verticesCount2 = await graphStorage.getDocumentsCount('ot_vertices');
             assert.isTrue(verticesCount2 >= 0, 'we expect positive number of vertices');
             assert.isNumber(verticesCount2);
@@ -240,11 +241,11 @@ describe('GS1 Importer tests', () => {
 
                     const {
                         data_set_id,
-                    } = await gs1.importFile({
+                    } = await importService.importFile({
                         document: otJson,
                     });
 
-                    const otJsonFromDb = await gs1.getImport(data_set_id);
+                    const otJsonFromDb = await importService.getImport(data_set_id);
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
                     assert.deepEqual(otJson, otJsonFromDb);
 
@@ -352,8 +353,8 @@ describe('GS1 Importer tests', () => {
             it(
                 `should generate the same graph for subsequent ${path.basename(test.args[0])} imports`,
                 async () => {
-                    const import1Result = await gs1.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0])));
-                    const import2Result = await gs1.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0])));
+                    const import1Result = await importService.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0])));
+                    const import2Result = await importService.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0])));
                     checkImportResults(import1Result, import2Result);
 
                     const processedResult1 = await importer.afterImport(import1Result);
@@ -374,7 +375,7 @@ describe('GS1 Importer tests', () => {
 
             for (let i = 0; i < imports.length; i += 1) {
                 // eslint-disable-next-line no-await-in-loop
-                const result = await gs1.importFile(convertToImportDoc(await Utilities.fileContents(imports[i].args[0])));
+                const result = await importService.importFile(convertToImportDoc(await Utilities.fileContents(imports[i].args[0])));
                 importResults.push(result);
             }
 
@@ -542,7 +543,7 @@ describe('GS1 Importer tests', () => {
 
         inputXmlFiles.forEach((test) => {
             it(`content/traversal check for ${path.basename(test.args[0])}`, async () => {
-                await gs1.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0])));
+                await importService.importFile(convertToImportDoc(await Utilities.fileContents(test.args[0])));
                 await checkSpecificVerticeContent(`${test.args[0]}`);
             });
         });
@@ -554,28 +555,28 @@ describe('GS1 Importer tests', () => {
         const xmlWithoutCreationDateAndTime = path.join(__dirname, 'test_xml/withoutCreationDateAndTime.xml');
         const xmlWithoutSenderContactinfo = path.join(__dirname, 'test_xml/withoutSenderContactInfo.xml');
 
-        it('exceptionally, case xmlWithoutQuantityList should import with success', async () => expect(gs1.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutQuantityList)))).to.be.fulfilled);
+        it('exceptionally, case xmlWithoutQuantityList should import with success', async () => expect(importService.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutQuantityList)))).to.be.fulfilled);
 
-        it('and throw an error related to missing bizStep', async () => expect(gs1.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutBizStep)))).to.be.rejectedWith(TypeError, "Cannot read property 'replace' of undefined"));
+        it('and throw an error related to missing bizStep', async () => expect(importService.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutBizStep)))).to.be.rejectedWith(TypeError, "Cannot read property 'replace' of undefined"));
 
         it('and throw an error related to missing CreationDateAndTime', async () => {
             const rejectionMessage = 'Failed to validate schema. Error: Element \'{http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}DocumentIdentification\': Missing child element(s). Expected is one of ( {http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}MultipleType, {http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}CreationDateAndTime ).\n';
-            return expect(gs1.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutCreationDateAndTime)))).to.be.rejectedWith(Error, rejectionMessage);
+            return expect(importService.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutCreationDateAndTime)))).to.be.rejectedWith(Error, rejectionMessage);
         });
 
-        it('and throw an error releted to missing SenderContactInformation', async () => expect(gs1.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutSenderContactinfo)))).to.be.rejectedWith(Error, "Cannot read property 'EmailAddress' of undefined"));
+        it('and throw an error releted to missing SenderContactInformation', async () => expect(importService.importFile(convertToImportDoc(await Utilities.fileContents(xmlWithoutSenderContactinfo)))).to.be.rejectedWith(Error, "Cannot read property 'EmailAddress' of undefined"));
     });
 
     describe.skip('Double event identifiers should fail', () => {
         const xmlDoubleIds = path.join(__dirname, 'test_xml/DoubleEventId.xml');
 
-        it('Should fail to import double event identifiers', async () => expect(gs1.importFile(convertToImportDoc(await Utilities.fileContents(xmlDoubleIds)))).to.rejectedWith(Error, 'Double event identifiers'));
+        it('Should fail to import double event identifiers', async () => expect(importService.importFile(convertToImportDoc(await Utilities.fileContents(xmlDoubleIds)))).to.rejectedWith(Error, 'Double event identifiers'));
     });
 
     describe('Multiple same identifiers for different vertices should import correctly', () => {
         const xmlDoubleIds = path.join(__dirname, 'test_xml/MultipleIdentifiers.xml');
 
-        it('Should import without error', async () => expect(gs1.importFile(convertToImportDoc(await Utilities.fileContents(xmlDoubleIds)))).to.be.fulfilled);
+        it('Should import without error', async () => expect(importService.importFile(convertToImportDoc(await Utilities.fileContents(xmlDoubleIds)))).to.be.fulfilled);
     });
 
     afterEach('Drop DB', async () => {

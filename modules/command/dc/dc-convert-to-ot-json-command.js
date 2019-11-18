@@ -1,6 +1,6 @@
 const Command = require('../command');
 
-class DcConvertToOtJson extends Command {
+class DcConvertToOtJsonCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -49,4 +49,4 @@ class DcConvertToOtJson extends Command {
     }
 }
 
-module.exports = DcConvertToOtJson;
+module.exports = DcConvertToOtJsonCommand;

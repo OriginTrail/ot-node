@@ -5,14 +5,8 @@ const corsMiddleware = require('restify-cors-middleware');
 
 const Utilities = require('../Utilities');
 const pjson = require('../../package.json');
-const RestAPIValidator = require('../validator/rest-api-validator');
-
-const utilities = require('../Utilities');
-const Models = require('../../models');
-const uuidv4 = require('uuid/v4');
 
 const RestApiV2 = require('./rest-api-v2');
-const RestApiV1 = require('./rest-api-v1');
 
 class RestApiController {
     constructor(ctx) {
@@ -24,7 +18,7 @@ class RestApiController {
 
         this.version_id = 'controller';
 
-        this.restApis = [new RestApiV2(ctx, true), new RestApiV1(ctx, true)];
+        this.restApis = [new RestApiV2(ctx, true)];
         [this.defaultRestApi] = this.restApis;
     }
 
