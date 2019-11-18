@@ -446,7 +446,7 @@ class ImportService {
                     let hasConnection1 = false;
                     if (relatedVertex.expectedConnectionCreators != null) {
                         relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
-                            const expectedErc725 = this._value(expectedCreator);
+                            const expectedErc725 = _value(expectedCreator);
 
                             if (dataCreator === expectedErc725) {
                                 hasConnection1 = true;
@@ -463,7 +463,7 @@ class ImportService {
 
                                 if (data.expectedConnectionCreators != null) {
                                     data.expectedConnectionCreators.forEach((expectedCreator) => {
-                                        const expectedErc725 = this._value(expectedCreator);
+                                        const expectedErc725 = _value(expectedCreator);
 
                                         if (expectedErc725 ===
                                             metadata.datasetHeader.dataCreator.identifiers
