@@ -483,6 +483,64 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     return Promise.all(promises);
 });
 
+Then(/^DC should send a challenge request$/, { timeout: 1200000 }, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const { dh } = this.state;
+
+    const promises = [];
+    promises.push(new Promise((acc) => {
+        dc.once(`dc-challenge-sent-${dh.state.identity}`, () => {
+            acc();
+        });
+    }));
+
+    return Promise.all(promises);
+});
+
+Then(/^DH should send the challenge response$/, { timeout: 1200000 }, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dh } = this.state;
+    const promises = [];
+
+    promises.push(new Promise((acc) => {
+        dh.once('dh-challenge-sent', (answer) => {
+            console.log('received and replied');
+            if (this.state.lastCalculatedAnswer == null) {
+                this.state.lastCalculatedAnswer = {};
+            }
+            this.state.lastCalculatedAnswer[dh.state.identity] = answer;
+            acc();
+        });
+    }));
+
+    return Promise.all(promises);
+});
+
+Then(/^DC should verify the response$/, { timeout: 1200000 }, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const { dh } = this.state;
+    const answer = this.state.lastCalculatedAnswer[dh.state.identity];
+    const promises = [];
+    promises.push(new Promise((acc) => {
+        dc.once(`dc-challenge-verified-${answer}`, () => {
+            acc();
+        });
+    }));
+
+    return Promise.all(promises);
+});
+
 Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 1200000 }, function (nodeIndex) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
