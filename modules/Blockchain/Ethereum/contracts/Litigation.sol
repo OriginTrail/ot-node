@@ -25,7 +25,7 @@ contract Litigation {
     }
 
 	/*    ----------------------------- LITIGATION -----------------------------     */
-    event LitigationInitiated(bytes32 offerId, address holderIdentity, uint requestedDataIndex);
+    event LitigationInitiated(bytes32 offerId, address holderIdentity, uint requestedObjectIndex, uint requestedBlockIndex);
     event LitigationAnswered(bytes32 offerId, address holderIdentity);
     event LitigationTimedOut(bytes32 offerId, address holderIdentity);
     event LitigationCompleted(bytes32 offerId, address holderIdentity, bool DH_was_penalized);
@@ -42,8 +42,11 @@ contract Litigation {
 
         LitigationStorage.LitigationStatus litigationStatus = litigationStorage.getLitigationStatus(offerId, holderIdentity);
 
-        uint256 timestamp = litigationStorage.getLitigationTimestamp(offerId, holderIdentity);
-        uint256 litigationIntervalInSeconds = holdingStorage.getOfferLitigationIntervalInMinutes(offerId).mul(60);
+        uint256[] memory parameters = new uint256[](2);
+        // Set parameters[0] as timestamp
+        parameters[0] = litigationStorage.getLitigationTimestamp(offerId, holderIdentity);
+        // Set parameters[1] as the litigationIntervalInSeconds
+        parameters[1] = holdingStorage.getOfferLitigationIntervalInMinutes(offerId).mul(60);
 
         require(litigationStatus != LitigationStorage.LitigationStatus.replacing,
             "The selected holder is already being replaced, cannot initiate litigation!");
@@ -56,13 +59,13 @@ contract Litigation {
             ,"Cannot initate litigation for a completed offer!");
 
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
-            require(timestamp + litigationIntervalInSeconds.mul(3) < block.timestamp, 
+            require(parameters[0] + parameters[1].mul(3) < block.timestamp,
                 "The litigation is initiated and awaiting holder response, cannot initiate another litigation!");
         } else if(litigationStatus == LitigationStorage.LitigationStatus.answered) {
-            require(timestamp + litigationIntervalInSeconds.mul(2) < block.timestamp, 
+            require(parameters[0] + parameters[1].mul(2) < block.timestamp,
                 "The litigation is answered and awaiting previous litigator response, cannot initiate another litigation!");
         } else if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
-            require(timestamp + litigationIntervalInSeconds < block.timestamp, 
+            require(parameters[0] + parameters[1] < block.timestamp,
                 "The litigation interval has not passed yet, cannot initiate another litigation!");
         }
 
@@ -75,7 +78,7 @@ contract Litigation {
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-        emit LitigationInitiated(offerId, holderIdentity, requestedDataIndex);
+        emit LitigationInitiated(offerId, holderIdentity, requestedObjectIndex, requestedBlockIndex);
         return true;
     }
     
@@ -110,7 +113,7 @@ contract Litigation {
         return true;
     }
 
-    function completeLitigation(bytes32 offerId, address holderIdentity, address litigatorIdentity, bytes32 proofData)
+    function completeLitigation(bytes32 offerId, address holderIdentity, address litigatorIdentity, bytes32 proofData, uint256 leafIndex)
     public returns (bool DH_was_penalized){
         HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
         LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
@@ -162,7 +165,7 @@ contract Litigation {
            "The time window for completing the answered litigation has passed!");
         
 
-        if(calculateMerkleTrees(offerId, holderIdentity, proofData, bytes32(parameters[3]))) {
+        if(calculateMerkleTrees(offerId, holderIdentity, proofData, bytes32(parameters[3]), leafIndex)) {
             // DH has the reRquested data -> Set litigation as completed, no transfer of tokens
             litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
@@ -236,31 +239,37 @@ contract Litigation {
 //        emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytes32(litigationRootHash));
     }
 
-    function calculateMerkleTrees(bytes32 offerId, address holderIdentity, bytes32 proofData, bytes32 litigationRootHash)
+    function calculateMerkleTrees(bytes32 offerId, address holderIdentity, bytes32 proofData, bytes32 litigationRootHash, uint256 leafIndex)
     internal returns (bool DHAnsweredCorrectly) {
         LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
-        
-        uint256 i = 0;
-        uint256 mask = 1;
-        uint256 requestedObjectIndex = litigationStorage.getLitigationRequestedObjectIndex(offerId, holderIdentity);
-        uint256 requestedBlockIndex = litigationStorage.getLitigationRequestedBlockIndex(offerId, holderIdentity);
+
+
+        uint256[] memory parameters = new uint256[](2);
+        // set parameters[0] as the index
+        parameters[0] = 0;
+        // set parameters[1] as a basic bit for masking
+        parameters[1] = 1;
         bytes32 answerHash = litigationStorage.getLitigationRequestedData(offerId, holderIdentity);
-        bytes32 proofHash = keccak256(abi.encodePacked(proofData, requestedObjectIndex, requestedBlockIndex));
+        bytes32 proofHash = keccak256(abi.encodePacked(
+            proofData,
+            litigationStorage.getLitigationRequestedObjectIndex(offerId, holderIdentity),
+            litigationStorage.getLitigationRequestedBlockIndex(offerId, holderIdentity)
+        ));
         bytes32[] memory hashArray = litigationStorage.getLitigationHashArray(offerId, holderIdentity);
 
         // ako je bit 1 on je levo
-        while (i < hashArray.length){
-            uint256 selectedBit = mask << i;
-            selectedBit = selectedBit & requestedDataIndex;
+        while (parameters[0] < hashArray.length){
+            uint256 selectedBit = parameters[1] << parameters[0];
+            selectedBit = selectedBit & leafIndex;
             if(selectedBit != 0) {
-                proofHash = keccak256(abi.encodePacked(hashArray[i], proofHash));
-                answerHash = keccak256(abi.encodePacked(hashArray[i], answerHash));
+                proofHash = keccak256(abi.encodePacked(hashArray[parameters[0]], proofHash));
+                answerHash = keccak256(abi.encodePacked(hashArray[parameters[0]], answerHash));
             }
             else {
-                proofHash = keccak256(abi.encodePacked(proofHash, hashArray[i]));
-                answerHash = keccak256(abi.encodePacked(answerHash, hashArray[i]));
+                proofHash = keccak256(abi.encodePacked(proofHash, hashArray[parameters[0]]));
+                answerHash = keccak256(abi.encodePacked(answerHash, hashArray[parameters[0]]));
             }
-            i = i + 1;
+            parameters[0] = parameters[0] + 1;
         }
         return (answerHash == litigationRootHash || proofHash != litigationRootHash);
     }
