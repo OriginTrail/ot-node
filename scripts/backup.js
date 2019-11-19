@@ -8,7 +8,8 @@ if (!process.env.NODE_ENV) {
     // Environment not set. Use the production.
     process.env.NODE_ENV = 'production';
 } else if (['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) < 0) {
-    throw Error(`Unsupported environment '${process.env.NODE_ENV}'`);
+    console.error(`Unsupported environment '${process.env.NODE_ENV}'`);
+    return 1;
 }
 
 const configjson = require('../config/config.json');
@@ -59,7 +60,7 @@ if (fs.existsSync(`${backupPath}/${timestamp}`)) {
 }
 
 console.log(`Creating ${backupPath}/${timestamp} directories...`);
-mkdirp.sync(`${backupPath}/${timestamp}`, (err) => { if (err) throw err; });
+mkdirp.sync(`${backupPath}/${timestamp}`, (err) => { if (err) { console.error(err); return 1; } });
 
 for (const file of files) {
     let src = `${configDirectory}/${file}`;
@@ -75,7 +76,7 @@ for (const file of files) {
 
     if (fs.existsSync(src)) {
         console.log(`Backup: ${src} -> ${dest}`);
-        fs.copyFileSync(src, dest, (err) => { if (err) throw err; });
+        fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
     }
 }
 
@@ -85,12 +86,11 @@ for (const cert of certs) {
 
     if (fs.existsSync(src)) {
         console.log(`Backup: ${src} -> ${dest}`);
-        fs.copyFileSync(src, dest, (err) => { if (err) throw err; });
+        fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
     }
 }
 
 console.log('Database export...');
-
 
 if (!configFile.database) {
     configFile.database = defaultConfig.database;
@@ -113,12 +113,14 @@ case 'arangodb':
             console.log(`${stdout}`);
             if (error !== null) {
                 console.error(`${error}`);
-            } else {
-                console.log('Backup finished.');
+                return 1;
             }
+            console.log('Backup finished.');
         },
     );
     break;
 default:
     break;
 }
+
+return 0;

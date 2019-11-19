@@ -8,7 +8,8 @@ if (!process.env.NODE_ENV) {
     // Environment not set. Use the production.
     process.env.NODE_ENV = 'production';
 } else if (['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) < 0) {
-    throw Error(`Unsupported environment '${process.env.NODE_ENV}'`);
+    console.error(`Unsupported environment '${process.env.NODE_ENV}'`);
+    return 1;
 }
 
 const configjson = require('../config/config.json');
@@ -74,7 +75,10 @@ for (const file of files) {
     if (fs.existsSync(src)) {
         console.log(`Restore: ${src} -> ${dest}`);
         fs.copyFileSync(src, dest, (err) => {
-            if (err) throw err;
+            if (err) {
+                console.error(err);
+                return 1;
+            }
         });
     }
 }
@@ -86,13 +90,15 @@ for (const cert of certs) {
     if (fs.existsSync(src)) {
         console.log(`Restore: ${src} -> ${dest}`);
         fs.copyFileSync(src, dest, (err) => {
-            if (err) throw err;
+            if (err) {
+                console.error(err);
+                return 1;
+            }
         });
     }
 }
 
 console.log('Database import...');
-
 
 if (!configFile.database) {
     configFile.database = defaultConfig.database;
@@ -114,12 +120,14 @@ case 'arangodb':
         (error, stdout, stderr) => {
             console.log(`${stdout}`);
             if (error !== null) {
-                console.log(`Error: ${error}`);
-            } else {
-                console.log('Restore finished.');
+                console.error(`${error}`);
+                return 1;
             }
+            console.log('Restore finished.');
         },
     );
     break;
 default:
 }
+
+return 0;
