@@ -14,10 +14,10 @@ const GS1Utilities = require('../../modules/importer/gs1-utilities');
 const WOTImporter = require('../../modules/importer/wot-importer');
 const Product = require('../../modules/Product');
 const Utilities = require('../../modules/Utilities');
-const OtJsonImporter = require('../../modules/importer/ot-json-importer');
+const ImportService = require('../../modules/service/import-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 const WotOtJsonTranspiler = require('../../modules/transpiler/wot/wot-otjson-transpiler');
-
+const SchemaValidator = require('../../modules/validator/schema-validator');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -27,7 +27,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     const databaseName = 'zk-test';
     let graphStorage;
     let systemDb;
-    let gs1;
+    let importService;
     let product;
     let epcisOtJsonTranspiler;
 
@@ -81,14 +81,15 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             wotImporter: awilix.asClass(WOTImporter),
             product: awilix.asClass(Product),
             config: awilix.asValue(config),
+            schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             notifyError: awilix.asValue(() => {}),
-            otJsonImporter: awilix.asClass(OtJsonImporter).singleton(),
+            importService: awilix.asClass(ImportService).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             web3: awilix.asValue(web3),
         });
         await graphStorage.connect();
-        gs1 = container.resolve('otJsonImporter');
+        importService = container.resolve('importService');
         epcisOtJsonTranspiler = container.resolve('epcisOtJsonTranspiler');
         product = container.resolve('product');
     });
@@ -97,7 +98,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
         let queryObject;
         let myTrail;
         it(`zero knowledge status check for EVENT in ${path.basename(xmlFile.args[0])} file`, async () => {
-            await gs1.importFile({
+            await importService.importFile({
                 document:
                     epcisOtJsonTranspiler
                         .convertToOTJson(await Utilities.fileContents(xmlFile.args[0])),

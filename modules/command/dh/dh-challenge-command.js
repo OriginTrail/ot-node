@@ -1,7 +1,5 @@
 const Command = require('../command');
-const importUtilities = require('../../ImportUtilities');
 const models = require('../../../models/index');
-const importUtilitites = require('../../ImportUtilities');
 
 /**
  * Handles one data challenge
@@ -14,7 +12,7 @@ class DHChallengeCommand extends Command {
         this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
-        this.otJsonImporter = ctx.otJsonImporter;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -50,7 +48,7 @@ class DHChallengeCommand extends Command {
         const colorIndex = holdingData.color;
         const color = colors[colorIndex];
 
-        const otObject = await this.otJsonImporter.getImportedOtObject(
+        const otObject = await this.importService.getImportedOtObject(
             datasetId,
             objectIndex,
             offerId,

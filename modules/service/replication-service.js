@@ -24,7 +24,7 @@ class ReplicationService {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.replicationCache = {};
-        this.otJsonImporter = ctx.otJsonImporter;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -38,7 +38,7 @@ class ReplicationService {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
 
-        const otJson = await this.otJsonImporter.getImport(offer.data_set_id);
+        const otJson = await this.importService.getImport(offer.data_set_id);
         const flavor = {
             [COLOR.RED]: otJson,
             [COLOR.BLUE]: Utilities.copyObject(otJson),
