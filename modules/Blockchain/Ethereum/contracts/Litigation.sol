@@ -188,20 +188,30 @@ contract Litigation {
         amountToTransfer = amountToTransfer.mul(litigationStorage.getLitigationTimestamp(offerId, holderIdentity).sub(holdingStorage.getHolderPaymentTimestamp(offerId, holderIdentity)));
         // Divide the tokenAmountPerHolder by the total time
         amountToTransfer = amountToTransfer.div(holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60));
+        uint256 amountToRetrieve = 1 - amountToTransfer;
 
         require(holdingStorage.getHolderPaidAmount(offerId, holderIdentity).add(amountToTransfer) < holdingStorage.getHolderStakedAmount(offerId, holderIdentity),
             "Holder considered to successfully completed offer, cannot complete litigation!");
 
         // Increase previous holder Stake
         profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).add(amountToTransfer));
-        
+        // Increase offer creator Stake
+        profileStorage.setStake(holdingStorage.getOfferCreator(offerId), profileStorage.getStake(holdingStorage.getOfferCreator(offerId).add(amountToRetrieve));
+
+
+        // Decrease previous holder Stake
+        profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).sub(amountToRetrieve));
         // Decrease offer creator Stake
         uint256 temp = profileStorage.getStake(holdingStorage.getOfferCreator(offerId));
         profileStorage.setStake(holdingStorage.getOfferCreator(offerId), temp.sub(amountToTransfer));
-        
+
+
         // Decrease offer creator Stake reserved
         temp = profileStorage.getStakeReserved(holdingStorage.getOfferCreator(offerId));
-        profileStorage.setStakeReserved(holdingStorage.getOfferCreator(offerId), temp.sub(amountToTransfer));
+        profileStorage.setStakeReserved(holdingStorage.getOfferCreator(offerId), temp.sub(amountToTransfer).sub(amountToRetrieve));
+
+        // Decrease previous holder Stake
+        profileStorage.setStakeReserved(holderIdentity, profileStorage.getStakeReserved(holderIdentity).sub(amountToRetrieve).sub(amountToTransfer));
         
         // Increase holder paid amount
         temp = holdingStorage.getHolderPaidAmount(offerId, holderIdentity);
@@ -210,20 +220,20 @@ contract Litigation {
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-        uint256 difficulty;
-        if(holdingStorage.getDifficultyOverride() != 0) difficulty = holdingStorage.getDifficultyOverride();
-        else {
-            if(logs2(profileStorage.activeNodes()) <= 4) difficulty = 1;
-            else {
-                difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
-            }
-        }
-        litigationStorage.setLitigationReplacementDifficulty(offerId, holderIdentity, difficulty);
-            // Calculate and set task
-        litigationStorage.setLitigationReplacementTask(offerId, holderIdentity, blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1));
+//        uint256 difficulty;
+//        if(holdingStorage.getDifficultyOverride() != 0) difficulty = holdingStorage.getDifficultyOverride();
+//        else {
+//            if(logs2(profileStorage.activeNodes()) <= 4) difficulty = 1;
+//            else {
+//                difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
+//            }
+//        }
+//        litigationStorage.setLitigationReplacementDifficulty(offerId, holderIdentity, difficulty);
+//            // Calculate and set task
+//        litigationStorage.setLitigationReplacementTask(offerId, holderIdentity, blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1));
 
         emit LitigationCompleted(offerId, holderIdentity, true);
-        emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytes32(litigationRootHash));
+//        emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytes32(litigationRootHash));
     }
 
     function calculateMerkleTrees(bytes32 offerId, address holderIdentity, bytes32 proofData, bytes32 litigationRootHash)
