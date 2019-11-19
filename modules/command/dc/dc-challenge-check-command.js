@@ -57,9 +57,14 @@ class DCChallengeCheckCommand extends Command {
         bugsnag.notify(bugsnagMessage, {
             user: {
                 id: challenge.dh_id,
-                dcIdentity: this.config.identity,
-                dhIdentity,
-                challengeId: challenge.id,
+                dc_identity: this.config.identity,
+                dh_identity: dhIdentity,
+                challenge_id: challenge.id,
+                data_set_id: challenge.data_set_id,
+                object_index: challenge.object_index,
+                block_index: challenge.block_index,
+                expected_answer: challenge.expected_answer,
+                answer: challenge.answer,
             },
             severity: 'info',
         });
