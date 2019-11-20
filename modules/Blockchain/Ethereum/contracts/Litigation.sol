@@ -74,14 +74,14 @@ contract Litigation {
         litigationStorage.setLitigationRequestedObjectIndex(offerId, holderIdentity, requestedObjectIndex);
         litigationStorage.setLitigationRequestedBlockIndex(offerId, holderIdentity, requestedBlockIndex);
         litigationStorage.setLitigationHashArray(offerId, holderIdentity, hashArray);
-        
+
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
         emit LitigationInitiated(offerId, holderIdentity, requestedObjectIndex, requestedBlockIndex);
         return true;
     }
-    
+
     function answerLitigation(bytes32 offerId, address holderIdentity, bytes32 requestedData)
     public returns (bool answer_accepted){
         HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
@@ -90,9 +90,9 @@ contract Litigation {
 
         LitigationStorage.LitigationStatus litigationStatus = litigationStorage.getLitigationStatus(offerId, holderIdentity);
 
-        require(litigationStatus == LitigationStorage.LitigationStatus.initiated, 
+        require(litigationStatus == LitigationStorage.LitigationStatus.initiated,
             "Litigation status is not set to initiated, cannot send answer!");
-        require(litigationStorage.getLitigationTimestamp(offerId, holderIdentity) + holdingStorage.getOfferLitigationIntervalInMinutes(offerId).mul(60) >= block.timestamp, 
+        require(litigationStorage.getLitigationTimestamp(offerId, holderIdentity) + holdingStorage.getOfferLitigationIntervalInMinutes(offerId).mul(60) >= block.timestamp,
             "The interval for answering has passed, cannot answer litigation!");
 
         // Write answer data into the hash
@@ -118,7 +118,7 @@ contract Litigation {
         HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
         LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
         ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
-        
+
         require(holdingStorage.getOfferCreator(offerId) == litigatorIdentity, "Challenger identity not equal to offer creator identity!");
         require(ERC725(litigatorIdentity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)),2), "Sender does not have action purpose set!");
         require(litigationStorage.getLitigationLitigatorIdentity(offerId, holderIdentity) == litigatorIdentity, "Litigation can only be completed by the litigator who initiated the litigation!");
@@ -150,20 +150,20 @@ contract Litigation {
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
             // Litigator claims that the DH is inactive
             // Verify that the asnwer window has passes and that the completion window has not passed
-            require(parameters[0] + parameters[1].mul(2) >= block.timestamp, 
+            require(parameters[0] + parameters[1].mul(2) >= block.timestamp,
                 "The time window for completing the unanswered litigation has passed!");
-            require(parameters[0] + parameters[1] < block.timestamp, 
+            require(parameters[0] + parameters[1] < block.timestamp,
                 "The answer window has not passed, cannot complete litigation yet!");
 
             // DH is considered inactive, replace him regardless of the proofData
             startReplacement(offerId, holderIdentity, litigatorIdentity, parameters[3]);
             return true;
         }
-        
+
         // The litigation status is answered, verify that the completion is happening during the completion time frame
-        require(parameters[0] + parameters[1] >= block.timestamp, 
+        require(parameters[0] + parameters[1] >= block.timestamp,
            "The time window for completing the answered litigation has passed!");
-        
+
 
         if(calculateMerkleTrees(offerId, holderIdentity, proofData, bytes32(parameters[3]), leafIndex)) {
             // DH has the reRquested data -> Set litigation as completed, no transfer of tokens
@@ -184,7 +184,7 @@ contract Litigation {
         HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
         LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
         ProfileStorage profileStorage = ProfileStorage(hub.getContractAddress("ProfileStorage"));
- 
+
         // Pay the previous holder
         uint256 amountToTransfer = holdingStorage.getOfferTokenAmountPerHolder(offerId);
         // Multiply the tokenAmountPerHolder by the time the the holder held the data
