@@ -38,10 +38,15 @@ class DHLitigationInitiatedCommand extends Command {
 
                     const {
                         offerId,
-                        requestedDataIndex,
+                        requestedObjectIndex,
+                        requestedBlockIndex,
                     } = JSON.parse(event.data);
 
-                    await this.dhService.handleLitigation(offerId, requestedDataIndex);
+                    await this.dhService.handleLitigation(
+                        offerId,
+                        requestedObjectIndex,
+                        requestedBlockIndex,
+                    );
                 }
             }
         } catch (e) {

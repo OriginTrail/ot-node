@@ -91,7 +91,7 @@ class DCChallengeCommand extends Command {
             throw new Error(`Failed to find challenge ${challenge_id}`);
         }
 
-        this.logger.info(`Failed to send challenge for block ${challenge.block_id} to DH ${challenge.dh_id}.`);
+        this.logger.info(`Failed to send challenge for object ${challenge.object_index} and block ${challenge.block_index} to DH ${challenge.dh_id}.`);
         return {
             commands: [
                 {
@@ -99,7 +99,8 @@ class DCChallengeCommand extends Command {
                     period: 5000,
                     data: {
                         offerId: challenge.offer_id,
-                        blockId: challenge.block_id,
+                        objectIndex: challenge.object_index,
+                        blockIndex: challenge.block_index,
                         dhIdentity: challenge.dh_identity,
                         litigationPrivateKey,
                     },

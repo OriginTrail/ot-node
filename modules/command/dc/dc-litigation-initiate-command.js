@@ -3,6 +3,7 @@ const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 const MerkleTree = require('../../Merkle');
 const importUtilities = require('../../ImportUtilities');
+const importService = require('../../service/import-service');
 
 /**
  * Initiates litigation from the DC side
@@ -14,6 +15,7 @@ class DCLitigationInitiateCommand extends Command {
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
+        this.importService = ctx.importService;
         this.challengeService = ctx.challengeService;
         this.remoteControl = ctx.remoteControl;
     }
@@ -27,7 +29,8 @@ class DCLitigationInitiateCommand extends Command {
         const {
             offerId,
             dhIdentity,
-            blockId,
+            objectIndex,
+            blockIndex,
             litigationPrivateKey,
         } = command.data;
 
@@ -35,13 +38,13 @@ class DCLitigationInitiateCommand extends Command {
 
         if (offer.global_status === 'COMPLETED') {
             // offer has already been completed
-            this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity}, object index ${objectIndex} and block index ${blockIndex}`);
             return Command.empty();
         }
 
         if (offer.global_status === 'FAILED') {
             // offer has already been failed
-            this.logger.warn(`Offer ${offerId} has already been failed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            this.logger.warn(`Offer ${offerId} has already been failed. Skipping litigation for DH identity ${dhIdentity}, object index ${objectIndex} and block index ${blockIndex}`);
             return Command.empty();
         }
 
@@ -74,14 +77,15 @@ class DCLitigationInitiateCommand extends Command {
         );
 
         await this.blockchain.initiateLitigation(
-            offerId, dhIdentity, dcIdentity, blockId,
+            offerId, dhIdentity, dcIdentity, objectIndex, blockIndex,
             merkleProof,
         );
         return {
             commands: [{
                 name: 'dcLitigationInitiatedCommand',
                 data: {
-                    blockId,
+                    objectIndex,
+                    blockIndex,
                     offerId,
                     dhIdentity,
                 },

@@ -13,6 +13,8 @@ class DHLitigationAnswerCommand extends Command {
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
+        this.importService = ctx.importService;
+        this.replicationService = ctx.replicationService;
         this.challengeService = ctx.challengeService;
     }
 
@@ -23,29 +25,37 @@ class DHLitigationAnswerCommand extends Command {
     async execute(command) {
         const {
             offerId,
-            blockId,
+            objectIndex,
+            blockIndex,
             dataSetId,
         } = command.data;
 
-        const holdingData = await models.holding_data.findAll({
+        const holdingData = await models.holding_data.findOne({
             where: {
-                data_set_id: dataSetId,
+                offer_id: offerId,
             },
         });
 
-        if (holdingData.length === 0) {
-            throw new Error(`Failed to find holding data for data set ${dataSetId}`);
+        if (holdingData == null) {
+            throw new Error(`Failed to find holding data for offer ${offerId}`);
         }
 
-        const vertices = await this.graphStorage
-            .findVerticesByImportId(dataSetId, holdingData[0].color);
+        const color = this.replicationService.castNumberToColor(holdingData.color);
 
-        importUtilities.unpackKeys(vertices, []);
-        const rawAnswer = this.challengeService.answerChallengeQuestion(blockId, vertices);
-        const answer = utilities.normalizeHex(Buffer.from(rawAnswer, 'utf-8').toString('hex').padStart(64, '0'));
+        const otObject = await this.importService.getImportedOtObject(
+            dataSetId,
+            objectIndex,
+            offerId,
+            color,
+        );
+
+        const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
+        const rawAnswer = utilities.normalizeHex(Buffer.from(answer, 'utf-8').toString('hex').padStart(64, '0'));
+
+        this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
 
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
-        await this.blockchain.answerLitigation(offerId, dhIdentity, answer);
+        await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer);
         return {
             commands: [
                 {

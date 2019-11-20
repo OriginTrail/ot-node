@@ -19,7 +19,8 @@ class DCLitigationAnsweredCommand extends Command {
         const {
             offerId,
             dhIdentity,
-            blockId,
+            blockIndex,
+            objectIndex,
         } = command.data;
 
         const events = await models.events.findAll({
@@ -55,7 +56,8 @@ class DCLitigationAnsweredCommand extends Command {
                             data: {
                                 offerId,
                                 dhIdentity,
-                                blockId,
+                                blockIndex,
+                                objectIndex,
                             },
                             retries: 3,
                             name: 'dcLitigationCompleteCommand',
@@ -75,9 +77,11 @@ class DCLitigationAnsweredCommand extends Command {
         const {
             offerId,
             dhIdentity,
-            blockId,
+            objectIndex,
+            blockIndex,
         } = command.data;
 
+        this.logger.log(`Litigation answer window timed out for offer ${offerId} and holder ${dhIdentity}`);
         const replicatedData = await models.replicated_data.findOne({
             where: { offer_id: offerId, dh_identity: dhIdentity },
         });
@@ -90,7 +94,8 @@ class DCLitigationAnsweredCommand extends Command {
                     data: {
                         offerId,
                         dhIdentity,
-                        blockId,
+                        objectIndex,
+                        blockIndex,
                     },
                     retries: 3,
                     name: 'dcLitigationCompleteCommand',

@@ -375,11 +375,12 @@ class DHService {
     /**
      * Handle started litigated
      * @param offerId - Offer ID
-     * @param blockId - Block ID
+     * @param objectIndex - Index of the selected object from the sorted OT dataset
+     * @param blockIndex - Index of the selected block from the sorted object
      * @return {Promise<void>}
      */
-    async handleLitigation(offerId, blockId) {
-        this.logger.warn(`Litigation initiated for offer ${offerId} and block ID ${blockId}.`);
+    async handleLitigation(offerId, objectIndex, blockIndex) {
+        this.logger.warn(`Litigation initiated for offer ${offerId}, object index ${objectIndex} and block index ${blockIndex}.`);
 
         const bid = await Models.bids.findOne({
             where: { offer_id: offerId },
@@ -393,7 +394,8 @@ class DHService {
             name: 'dhLitigationAnswerCommand',
             data: {
                 offerId,
-                blockId,
+                objectIndex,
+                blockIndex,
                 dataSetId: bid.data_set_id,
             },
         });
