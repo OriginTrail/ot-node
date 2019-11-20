@@ -3,7 +3,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const async = require('async');
 const levelup = require('levelup');
 const encoding = require('encoding-down');
-const kadence = require('@kadenceproject/kadence');
+const kadence = require('@deadcanaries/kadence');
 const fs = require('fs');
 const path = require('path');
 const utilities = require('../../Utilities');
@@ -13,8 +13,9 @@ const leveldown = require('leveldown');
 const PeerCache = require('./peer-cache');
 const ip = require('ip');
 const uuidv4 = require('uuid/v4');
+const secp256k1 = require('secp256k1');
 
-const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+const KadenceUtils = require('@deadcanaries/kadence/lib/utils.js');
 const { IncomingMessage, OutgoingMessage } = require('./logger');
 
 const pjson = require('../../../package.json');
@@ -55,46 +56,61 @@ class Kademlia {
         await this.kademliaUtilities.setSelfSignedCertificate();
 
         this.log.info('Getting the identity');
-        const identityFilePath = path.join(
-            this.config.appDataPath,
-            this.config.identity_filepath,
+        // const identityFilePath = path.join(
+        //     this.config.appDataPath,
+        //     this.config.identity_filepath,
+        // );
+        // if (fs.existsSync(identityFilePath)) {
+        //     const identityFileContent =
+        //         JSON.parse(fs.readFileSync(identityFilePath).toString());
+        //     this.xprivkey = identityFileContent.xprivkey;
+        //     this.index = identityFileContent.index;
+        // } else {
+        //     this.log.info('Identity not provided, generating new one...');
+        //     // this.xprivkey = kadence.utils.generatePrivateKey();
+        //     this.xprivkey = kadence.utils.getRandomKeyString();
+        //
+        //     const [xprivkey, childIndex] = await this.kademliaUtilities.solveIdentity(
+        //         this.xprivkey,
+        //         kadence.constants.HD_KEY_DERIVATION_PATH,
+        //     );
+        //     this.index = childIndex;
+        //     fs.writeFileSync(identityFilePath, JSON.stringify({
+        //         xprivkey: this.xprivkey,
+        //         index: this.index,
+        //     }));
+        // }
+        this.privkey = kadence.utils.generatePrivateKey();
+        this.publkey = secp256k1.publicKeyCreate(this.privkey);
+        this.identity = kadence.utils.toPublicKeyHash(this.publkey).toString('hex');
+        const identity = new kadence.eclipse.EclipseIdentity(
+            this.publkey
         );
-        if (fs.existsSync(identityFilePath)) {
-            const identityFileContent =
-                JSON.parse(fs.readFileSync(identityFilePath).toString());
-            this.xprivkey = identityFileContent.xprivkey;
-            this.index = identityFileContent.index;
-        } else {
-            this.log.info('Identity not provided, generating new one...');
-            this.xprivkey = kadence.utils.toHDKeyFromSeed().privateExtendedKey;
-            const [xprivkey, childIndex] = await this.kademliaUtilities.solveIdentity(
-                this.xprivkey,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-            );
-            this.index = childIndex;
-            fs.writeFileSync(identityFilePath, JSON.stringify({
-                xprivkey: this.xprivkey,
-                index: this.index,
-            }));
-        }
-        this.identity = new kadence.eclipse.EclipseIdentity(
-            this.xprivkey,
-            this.index,
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-        );
+        await identity.solve();
 
+        /*const [fingerprint, contact] = request.contact;
+    const identity = new EclipseIdentity(
+      Buffer.from(contact.pubkey || '', 'hex'),
+      contact.nonce,
+      Buffer.from(contact.proof || '', 'hex')
+    );
+
+    try {
+      assert(identity.fingerprint.toString('hex') === fingerprint,
+        'Fingerprint does not match the proof hash');
+      assert(identity.validate(),
+        'Identity proof is invalid or does not satisfy the difficulty');
+    } catch (err) {
+      return next(err);
+    }*/
         this.log.info('Checking the identity');
-        // Check if identity is valid
-        this.kademliaUtilities.checkIdentity(this.identity);
+        this.kademliaUtilities.checkIdentity(identity);
 
-        const { childKey } = this.kademliaUtilities.getIdentityKeys(
-            this.xprivkey,
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-            this.index,
-        );
-        this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
+        this.eclipseIdentity = identity;
 
         this.log.notify(`My network identity: ${this.identity}`);
+        this.log.notify(`My network fingerprint: ${this.eclipseIdentity.fingerprint.toString('hex')}`);
+
         this.config.identity = this.identity;
     }
 
@@ -106,11 +122,11 @@ class Kademlia {
         return new Promise(async (resolve) => {
             this.log.info('Initializing network');
 
-            const { parentKey } = this.kademliaUtilities.getIdentityKeys(
-                this.xprivkey,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-                this.index,
-            );
+            // const { parentKey } = this.kademliaUtilities.getIdentityKeys(
+            //     this.xprivkey,
+            //     kadence.constants.HD_KEY_DERIVATION_PATH,
+            //     this.index,
+            // );
 
             const { hostname } = this.config.network;
             if (!this.config.local_network_only && !this.config.traverse_nat_enabled) {
@@ -125,8 +141,8 @@ class Kademlia {
                 hostname,
                 protocol: 'https:',
                 port: this.config.node_port,
-                xpub: parentKey.publicExtendedKey,
-                index: this.index,
+                pubkey: this.publkey,
+                proof: this.eclipseIdentity.proof,
                 agent: kadence.version.protocol,
                 wallet: this.config.node_wallet,
                 network_id: this.config.network.id,
@@ -173,7 +189,7 @@ class Kademlia {
             });
 
             this.log.info('Starting OT Node...');
-            this.node.eclipse = this.node.plugin(kadence.eclipse());
+            this.node.eclipse = this.node.plugin(kadence.eclipse(this.eclipseIdentity));
             this.node.quasar = this.node.plugin(kadence.quasar());
 
             const quasarPublish = function (topic, contents, options = {}, callback = () => null) {
@@ -225,11 +241,10 @@ class Kademlia {
                 )));
             this.log.info('Peercache initialised');
 
-            this.node.spartacus = this.node.plugin(kadence.spartacus(
-                this.xprivkey,
-                this.index,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-            ));
+            // this.node.spartacus = this.node.plugin(kadence.spartacus(
+            //     this.privkey, {checkPublicKeyHash: false}
+            // ));
+
             this.log.info('Spartacus initialised');
 
             this.node.hashcash = this.node.plugin(kadence.hashcash({

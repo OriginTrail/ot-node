@@ -1,5 +1,5 @@
 const Datastore = require('nedb');
-const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+const KadenceUtils = require('@deadcanaries/kadence/lib/utils.js');
 
 /**
  * Keeps track of seen contacts in a compact file so they can be used as

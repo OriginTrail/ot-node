@@ -7,7 +7,7 @@ const boscar = require('boscar');
 const hdkey = require('hdkey');
 const deasync = require('deasync-promise');
 const utilities = require('../../Utilities');
-const kadence = require('@kadenceproject/kadence');
+const kadence = require('@deadcanaries/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
 const Control = require('../../Control');
@@ -65,7 +65,7 @@ class KademliaUtils {
     * Mining a new identity
     * @return {Promise<void>}
     */
-    async solveIdentity(xprivkey, path) {
+    async solveIdentity(xprivkey, path = 'm/5273/0') {
         const events = new EventEmitter();
         const start = Date.now();
         let time;
@@ -118,7 +118,8 @@ class KademliaUtils {
         }
 
         for (let c = 0; c < cpus; c += 1) {
-            const index = Math.floor(kadence.constants.MAX_NODE_INDEX / cpus) * c;
+            const MAX_NODE_INDEX = (Math.pow(2, 31) - 1);
+            const index = Math.floor(MAX_NODE_INDEX / cpus) * c;
             const solver = this.forkIdentityDerivationSolver(c, xprivkey, index, path, events);
 
             this.solvers.push(solver);

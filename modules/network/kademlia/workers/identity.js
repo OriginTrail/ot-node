@@ -1,4 +1,4 @@
-const kadence = require('@kadenceproject/kadence');
+const kadence = require('@deadcanaries/kadence');
 const readLine = require('readline');
 
 process.once('message', ([xprv, index, path, options]) => {
@@ -7,7 +7,7 @@ process.once('message', ([xprv, index, path, options]) => {
         kadence.constants.IDENTITY_DIFFICULTY = options.identityDifficulty;
     }
 
-    const identity = new kadence.eclipse.EclipseIdentity(xprv, index, path);
+    const identity = new kadence.eclipse.EclipseIdentity(xprv);
 
     let attempts = 0;
     const start = Date.now();
