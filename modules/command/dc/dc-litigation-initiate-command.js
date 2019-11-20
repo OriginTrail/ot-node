@@ -58,17 +58,20 @@ class DCLitigationInitiateCommand extends Command {
         });
 
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
-        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
+        const otJson = await this.importService.getImport(offer.data_set_id);
 
-        const encryptedVertices = importUtilities.immutableEncryptVertices(
-            vertices,
+        const encryptedGraph = importUtilities.encryptDataset(
+            otJson,
             litigationPrivateKey,
         );
 
-        importUtilities.sort(encryptedVertices);
-        const litigationBlocks = this.challengeService.getBlocks(encryptedVertices);
-        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
-        const merkleProof = litigationBlocksMerkleTree.createProof(blockId);
+        importUtilities.sortGraphRecursively(encryptedGraph['@graph']);
+
+        const merkleProof = this.challengeService.createChallengeProof(
+            encryptedGraph['@graph'],
+            blockIndex,
+            objectIndex,
+        );
 
         await this.blockchain.initiateLitigation(
             offerId, dhIdentity, dcIdentity, blockId,
