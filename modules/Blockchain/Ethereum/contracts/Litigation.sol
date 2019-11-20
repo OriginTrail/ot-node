@@ -220,23 +220,10 @@ contract Litigation {
         temp = holdingStorage.getHolderPaidAmount(offerId, holderIdentity);
         holdingStorage.setHolderPaidAmount(offerId, holderIdentity, temp.add(amountToTransfer));
 
-        litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replacing);
+        litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-//        uint256 difficulty;
-//        if(holdingStorage.getDifficultyOverride() != 0) difficulty = holdingStorage.getDifficultyOverride();
-//        else {
-//            if(logs2(profileStorage.activeNodes()) <= 4) difficulty = 1;
-//            else {
-//                difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
-//            }
-//        }
-//        litigationStorage.setLitigationReplacementDifficulty(offerId, holderIdentity, difficulty);
-//            // Calculate and set task
-//        litigationStorage.setLitigationReplacementTask(offerId, holderIdentity, blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1));
-
         emit LitigationCompleted(offerId, holderIdentity, true);
-//        emit ReplacementStarted(offerId, holderIdentity, litigatorIdentity, bytes32(litigationRootHash));
     }
 
     function calculateMerkleTrees(bytes32 offerId, address holderIdentity, bytes32 proofData, bytes32 litigationRootHash, uint256 leafIndex)
