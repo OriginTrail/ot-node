@@ -191,34 +191,41 @@ contract Litigation {
         amountToTransfer = amountToTransfer.mul(litigationStorage.getLitigationTimestamp(offerId, holderIdentity).sub(holdingStorage.getHolderPaymentTimestamp(offerId, holderIdentity)));
         // Divide the tokenAmountPerHolder by the total time
         amountToTransfer = amountToTransfer.div(holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60));
-        uint256 amountToRetrieve = 1 - amountToTransfer;
 
         require(holdingStorage.getHolderPaidAmount(offerId, holderIdentity).add(amountToTransfer) < holdingStorage.getHolderStakedAmount(offerId, holderIdentity),
             "Holder considered to successfully completed offer, cannot complete litigation!");
 
-        // Increase previous holder Stake
+        // Pay the previous holder
+            // Increase previous holder Stake
         profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).add(amountToTransfer));
-        // Increase offer creator Stake
-        profileStorage.setStake(holdingStorage.getOfferCreator(offerId), profileStorage.getStake(holdingStorage.getOfferCreator(offerId).add(amountToRetrieve));
+            // Decrease offer creator Stake
+        profileStorage.setStake(litigatorIdentity, profileStorage.getStake(litigatorIdentity).sub(amountToTransfer));
+            // Decrease offer creator Stake reserved
+        profileStorage.setStakeReserved(litigatorIdentity, profileStorage.getStakeReserved(litigatorIdentity).sub(amountToTransfer));
+            // Set previous holder paid amount
+        holdingStorage.setHolderPaidAmount(
+            offerId,
+            holderIdentity,
+            holdingStorage.getHolderPaidAmount(offerId, holderIdentity).add(amountToTransfer)
+        );
 
+        // Calculate the remaining amount of tokens
+        amountToTransfer = holdingStorage.getHolderStakedAmount(offerId, holderIdentity).sub(holdingStorage.getHolderPaidAmount(offerId, holderIdentity));
 
-        // Decrease previous holder Stake
-        profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).sub(amountToRetrieve));
-        // Decrease offer creator Stake
-        uint256 temp = profileStorage.getStake(holdingStorage.getOfferCreator(offerId));
-        profileStorage.setStake(holdingStorage.getOfferCreator(offerId), temp.sub(amountToTransfer));
+        // Unlock previous holder stake
+        profileStorage.setStakeReserved(
+            holderIdentity,
+            profileStorage.getStakeReserved(holderIdentity).sub(holdingStorage.getHolderStakedAmount(offerId, holderIdentity))
+        );
 
+        // Give the offer creator the reward for litigation
+            // Decrease previous holder Stake
+        profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).sub(amountToTransfer));
+            // Increase offer creator Stake
+        profileStorage.setStake(litigatorIdentity, profileStorage.getStake(litigatorIdentity).sub(amountToTransfer));
 
-        // Decrease offer creator Stake reserved
-        temp = profileStorage.getStakeReserved(holdingStorage.getOfferCreator(offerId));
-        profileStorage.setStakeReserved(holdingStorage.getOfferCreator(offerId), temp.sub(amountToTransfer).sub(amountToRetrieve));
-
-        // Decrease previous holder Stake
-        profileStorage.setStakeReserved(holderIdentity, profileStorage.getStakeReserved(holderIdentity).sub(amountToRetrieve).sub(amountToTransfer));
-        
-        // Increase holder paid amount
-        temp = holdingStorage.getHolderPaidAmount(offerId, holderIdentity);
-        holdingStorage.setHolderPaidAmount(offerId, holderIdentity, temp.add(amountToTransfer));
+        // Unlock offer creator's remaining tokens reserved for payment
+        profileStorage.setStakeReserved(litigatorIdentity, profileStorage.getStakeReserved(litigatorIdentity).sub(amountToTransfer));
 
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
