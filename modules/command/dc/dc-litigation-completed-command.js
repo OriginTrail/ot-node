@@ -2,7 +2,7 @@ const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 
-class DCLitigationCompleted extends Command {
+class DCLitigationCompletedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -132,4 +132,4 @@ class DCLitigationCompleted extends Command {
     }
 }
 
-module.exports = DCLitigationCompleted;
+module.exports = DCLitigationCompletedCommand;
