@@ -167,7 +167,14 @@ Given(/^(DC|DH|DV) node makes local query with previous json query$/, async func
     const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const response = await httpApiHelper.apiQueryLocal(host, this.state.jsonQuery);
+    if (this.state.apiQueryLocalResponse) {
+        this.state.apiLastQueryLocalResponse = this.state.apiQueryLocalResponse;
+    }
     this.state.apiQueryLocalResponse = response;
+});
+
+Given(/^the last two queries should return the same object$/, async function () {
+    expect(this.state.apiQueryLocalResponse[0]).to.be.equal(this.state.apiLastQueryLocalResponse[0]);
 });
 
 Given(/^I query ([DC|DH|DV]+) node locally for last imported data set id$/, async function (targetNode) {

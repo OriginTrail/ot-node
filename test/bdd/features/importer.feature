@@ -61,7 +61,7 @@ Feature: Test basic importer features
     And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1_PINKSHIP2"
     And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1_PINKSHIP1"
 
-  @fourth
+  @first
   Scenario: Check that exported WOT dataset is the same as the one imported
     Given I setup 1 node
     And I start the node
@@ -71,6 +71,30 @@ Feature: Test basic importer features
     When DC exports the last imported dataset as WOT
     And DC waits for export to finish
     Then the last exported dataset data should be the same as "importers/json_examples/kakaxi.wot"
+
+  @first
+  Scenario: Fetching entity by different identifiers
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/perutnina_kakaxi/perutnina_gs1.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Given I create json query with path: "lot", value: "1201700337" and opcode: "EQ"
+    Given DC node makes local query with previous json query
+    Given I create json query with path: "id", value: "urn:ot:object:batch:id:2223068000005:2019-09-11T00:00:00+02:00:1201700337" and opcode: "EQ"
+    Given DC node makes local query with previous json query
+    Then the last two queries should return the same object
+
+  @second
+  Scenario: Check that simple trail returns objects from two datasets which are connected via connectors
+    Given I setup 1 node
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/connectors/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC imports "importers/use_cases/connectors/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Then the traversal from id "connectionId" with connection types "CONNECTION_DOWNSTREAM" should contain 2 objects
 
 #  @skip
 #  Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
