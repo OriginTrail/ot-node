@@ -61,7 +61,7 @@ class Kademlia {
         );
 
         if (fs.existsSync(identityFilePath)) {
-            this.log.info('Using old identity...');
+            this.log.info('Using existing identity...');
             const identityFileContent =
                 JSON.parse(fs.readFileSync(identityFilePath).toString());
             this.privateKey = Buffer.from(identityFileContent.privateKey, 'hex');
