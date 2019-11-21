@@ -371,7 +371,7 @@ class ImportUtilities {
             }
         });
         graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-        return Utilities.sortedStringify(graph);
+        return Utilities.sortedStringify(graph, true);
     }
 
     /**
