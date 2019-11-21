@@ -89,7 +89,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
         const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
-        const calculatedImportHash = utilities.calculateImportHash(dataset['@graph']);
+        const calculatedImportHash = ImportUtilities.calculateGraphHash(dataset['@graph']);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         const dataCreator = {

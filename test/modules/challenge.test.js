@@ -10,16 +10,16 @@ const challengeService = new ChallengeService({ logger });
 
 // Global declarations.
 const vertexData = [
-    { vertexKey: 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' },
-    { vertexKey: 'vertex1', data: ' ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation' },
-    { vertexKey: 'vertex2', data: ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis' },
-    { vertexKey: 'vertex3', data: ' aute irure dolor in reprehenderit in voluptate velit esse cillum' },
-    { vertexKey: 'vertex4', data: ' dolore eu fugiat' },
-    { vertexKey: 'vertex5', data: ' nulla pariatur. Excepteur sint occaecat cupidatat non proident' },
-    { vertexKey: 'vertex6', data: ', sunt in culpa qui officia deserunt ' },
-    { vertexKey: 'vertex7', data: 'mollit' },
-    { vertexKey: 'vertex8', data: ' anim ' },
-    { vertexKey: 'vertex9', data: ' id est laborum' },
+    { '@id': 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' },
+    { '@id': 'vertex1', data: ' ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation' },
+    { '@id': 'vertex2', data: ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis' },
+    { '@id': 'vertex3', data: ' aute irure dolor in reprehenderit in voluptate velit esse cillum' },
+    { '@id': 'vertex4', data: ' dolore eu fugiat' },
+    { '@id': 'vertex5', data: ' nulla pariatur. Excepteur sint occaecat cupidatat non proident' },
+    { '@id': 'vertex6', data: ', sunt in culpa qui officia deserunt ' },
+    { '@id': 'vertex7', data: 'mollit' },
+    { '@id': 'vertex8', data: ' anim ' },
+    { '@id': 'vertex9', data: ' id est laborum' },
 ];
 
 /**
@@ -73,12 +73,12 @@ describe('Challenge service tests', () => {
 
     describe('Challenge answers', () => {
         it('answerTestQuestion() should return correct block chunk', () => {
-            expect(challengeService.answerChallengeQuestion(10, vertexData)).to.be.equal('r sint occaecat cupidatat non p');
-            expect(challengeService.answerChallengeQuestion(8, vertexData)).to.be.equal('vertexKey\\":\\"vertex9\\"},{\\"dat');
-            expect(challengeService.answerChallengeQuestion(6, vertexData)).to.be.equal('\\",\\"vertexKey\\":\\"vertex4\\"},{');
-            expect(challengeService.answerChallengeQuestion(13, vertexData)).to.be.equal('ris nisi ut aliquip ex ea commo');
-            expect(challengeService.answerChallengeQuestion(2, vertexData)).to.be.equal(' aute irure dolor in reprehende');
-            expect(challengeService.answerChallengeQuestion(4, vertexData)).to.be.equal('lum\\",\\"vertexKey\\":\\"vertex3\\"');
+            expect(challengeService.answerChallengeQuestion(10, vertexData)).to.be.equal('ip ex ea commodo consequat. Dui');
+            expect(challengeService.answerChallengeQuestion(8, vertexData)).to.be.equal('{\\"@id\\":\\"vertex2\\",\\"data\\":\\');
+            expect(challengeService.answerChallengeQuestion(6, vertexData)).to.be.equal('aliqua. Ut enim ad minim veniam');
+            expect(challengeService.answerChallengeQuestion(13, vertexData)).to.be.equal('ehenderit in voluptate velit es');
+            expect(challengeService.answerChallengeQuestion(2, vertexData)).to.be.equal('consectetur adipiscing elit, se');
+            expect(challengeService.answerChallengeQuestion(4, vertexData)).to.be.equal('"},{\\"@id\\":\\"vertex1\\",\\"data\\');
         });
     })
 });
