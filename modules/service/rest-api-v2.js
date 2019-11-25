@@ -3,6 +3,7 @@ const RestAPIValidator = require('../validator/rest-api-validator');
 const ImportUtilities = require('../ImportUtilities');
 const utilities = require('../Utilities');
 const Models = require('../../models');
+const uuidv4 = require('uuid/v4');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -183,7 +184,7 @@ class RestAPIServiceV2 {
 
         /** Network queries & read requests, to be refactored */
 
-        server.post(`/api/${this.version_id}/query/network`, (req, res, next) => {
+        server.post(`/api/${this.version_id}/query/network`, async (req, res, next) => {
             this.logger.api('POST: Network query request received.');
 
             let error = RestAPIValidator.validateBodyRequired(req.body);
@@ -197,13 +198,10 @@ class RestAPIServiceV2 {
                 return next(error);
             }
 
-            emitter.emit('api-network-query', {
-                query,
-                response: res,
-            });
+            await this._queryNetwork(query, res);
         });
 
-        server.get(`/api/${this.version_id}/query/network/:query_id`, (req, res) => {
+        server.get(`/api/${this.version_id}/query/network/:query_id`, async (req, res) => {
             this.logger.api('GET: Query for status request received.');
 
             if (!req.params.query_id) {
@@ -213,10 +211,8 @@ class RestAPIServiceV2 {
                 });
                 return;
             }
-            emitter.emit('api-network-query-status', {
-                id: req.params.query_id,
-                response: res,
-            });
+
+            await this._getNetworkQueryStatus(req.params.query_id, res);
         });
 
         server.get(`/api/${this.version_id}/query/:query_id/responses`, (req, res) => {
@@ -416,6 +412,70 @@ class RestAPIServiceV2 {
                 });
             }
         });
+    }
+
+    async _getNetworkQueryStatus(id, response) {
+        this.logger.info(`Query of network status triggered with ID ${id}`);
+        try {
+            const networkQuery = await Models.network_queries.find({ where: { id } });
+            if (networkQuery.status === 'FINISHED') {
+                try {
+                    const vertices = await this.dhService.dataLocationQuery(id);
+
+                    response.status(200);
+                    response.send({
+                        status: `${networkQuery.status}`,
+                        query_id: networkQuery.id,
+                        vertices,
+                    });
+                } catch (error) {
+                    this.logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+                    // TODO notifyError
+                    // notifyError(error);
+                    response.status(500);
+                    response.send({
+                        error: 'Fail to process.',
+                        query_id: networkQuery.id,
+                    });
+                }
+            } else {
+                response.status(200);
+                response.send({
+                    status: `${networkQuery.status}`,
+                    query_id: networkQuery.id,
+                });
+            }
+        } catch (e) {
+            // TODO handle error
+            console.log(e);
+        }
+    }
+
+    async _queryNetwork(query, response) {
+        this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
+
+        const queryId = uuidv4();
+
+        try {
+            await this.commandExecutor.add({
+                name: 'dvQueryNetworkCommand',
+                delay: 0,
+                data: {
+                    queryId,
+                    query,
+                },
+                transactional: false,
+            });
+
+            response.status(201);
+            response.send({
+                message: 'Query sent successfully.',
+                query_id: queryId,
+            });
+        } catch (e) {
+            this.logger.error(`Failed query network. ${e}.`);
+            // TODO notifyError()
+        }
     }
 
     async _getTrail(req, res) {

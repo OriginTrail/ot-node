@@ -10,26 +10,27 @@ class DVController {
         this.commandExecutor = ctx.commandExecutor;
     }
 
+    // Redundant code
     /**
      * Sends query to the network.
      * @param query Query
      * @returns {Promise<*>}
      */
-    async queryNetwork(query) {
-        const queryId = uuidv4();
-
-        await this.commandExecutor.add({
-            name: 'dvQueryNetworkCommand',
-            delay: 0,
-            data: {
-                queryId,
-                query,
-            },
-            transactional: false,
-        });
-
-        return queryId;
-    }
+    // async queryNetwork(query) {
+    //     const queryId = uuidv4();
+    //
+    //     await this.commandExecutor.add({
+    //         name: 'dvQueryNetworkCommand',
+    //         delay: 0,
+    //         data: {
+    //             queryId,
+    //             query,
+    //         },
+    //         transactional: false,
+    //     });
+    //
+    //     return queryId;
+    // }
 
     /**
      * Handles network queries and chose lowest offer if any.
