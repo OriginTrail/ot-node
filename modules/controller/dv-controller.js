@@ -15,7 +15,7 @@ class DVController {
      * @param query Query
      * @returns {Promise<*>}
      */
-    async queryNetwork(query) {
+    async queryNetwork(query, response) {
         this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
 
         const queryId = uuidv4();
@@ -30,9 +30,13 @@ class DVController {
                 },
                 transactional: false,
             });
-        } catch (e) {
-            this.logger.error(`Failed query network. ${e}.`);
-            // TODO notifyError()
+        } catch (error) {
+            this.logger.error(`Failed query network. ${error}.`);
+            response.status(400);
+            response.send({
+                message: error.message,
+            });
+            return;
         }
 
         return queryId;
