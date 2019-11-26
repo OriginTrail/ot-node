@@ -10,27 +10,91 @@ class DVController {
         this.commandExecutor = ctx.commandExecutor;
     }
 
-    // Redundant code
     /**
      * Sends query to the network.
      * @param query Query
      * @returns {Promise<*>}
      */
-    // async queryNetwork(query) {
-    //     const queryId = uuidv4();
-    //
-    //     await this.commandExecutor.add({
-    //         name: 'dvQueryNetworkCommand',
-    //         delay: 0,
-    //         data: {
-    //             queryId,
-    //             query,
-    //         },
-    //         transactional: false,
-    //     });
-    //
-    //     return queryId;
-    // }
+    async queryNetwork(query) {
+        this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
+
+        const queryId = uuidv4();
+
+        try {
+            await this.commandExecutor.add({
+                name: 'dvQueryNetworkCommand',
+                delay: 0,
+                data: {
+                    queryId,
+                    query,
+                },
+                transactional: false,
+            });
+        } catch (e) {
+            this.logger.error(`Failed query network. ${e}.`);
+            // TODO notifyError()
+        }
+
+        return queryId;
+    }
+
+    async handleNetworkQueryStatus(id, response) {
+        this.logger.info(`Query of network status triggered with ID ${id}`);
+        try {
+            const networkQuery = await Models.network_queries.find({ where: { id } });
+            if (networkQuery.status === 'FINISHED') {
+                try {
+                    const vertices = await this.dhService.dataLocationQuery(id);
+
+                    response.status(200);
+                    response.send({
+                        status: `${networkQuery.status}`,
+                        query_id: networkQuery.id,
+                        vertices,
+                    });
+                } catch (error) {
+                    this.logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+                    // TODO notifyError
+                    // notifyError(error);
+                    response.status(500);
+                    response.send({
+                        error: 'Fail to process.',
+                        query_id: networkQuery.id,
+                    });
+                }
+            } else {
+                response.status(200);
+                response.send({
+                    status: `${networkQuery.status}`,
+                    query_id: networkQuery.id,
+                });
+            }
+        } catch (e) {
+            // TODO handle error
+            console.log(e);
+        }
+    }
+
+    async getNetworkQueryResponses(query_id, response) {
+        this.logger.info(`Query for network response triggered with query ID ${query_id}`);
+
+        let responses = await Models.network_query_responses.findAll({
+            where: {
+                query_id,
+            },
+        });
+
+        responses = responses.map(response => ({
+            datasets: JSON.parse(response.imports),
+            data_size: response.data_size,
+            data_price: response.data_price,
+            stake_factor: response.stake_factor,
+            reply_id: response.reply_id,
+        }));
+
+        response.status(200);
+        response.send(responses);
+    }
 
     /**
      * Handles network queries and chose lowest offer if any.

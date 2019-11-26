@@ -3,7 +3,6 @@ const RestAPIValidator = require('../validator/rest-api-validator');
 const ImportUtilities = require('../ImportUtilities');
 const utilities = require('../Utilities');
 const Models = require('../../models');
-const uuidv4 = require('uuid/v4');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -15,6 +14,9 @@ class RestAPIServiceV2 {
         this.commandExecutor = ctx.commandExecutor;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
+
+        this.dvController = ctx.dvController;
+        this.remoteControl = ctx.remoteControl;
 
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
@@ -183,7 +185,6 @@ class RestAPIServiceV2 {
         });
 
         /** Network queries & read requests, to be refactored */
-        // KAKO DA VRACAM RESPONSE IZ KOMANDE???
         server.post(`/api/${this.version_id}/query/network`, async (req, res, next) => {
             this.logger.api('POST: Network query request received.');
 
@@ -198,7 +199,15 @@ class RestAPIServiceV2 {
                 return next(error);
             }
 
-            await this._queryNetwork(query, res);
+            this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
+
+            const queryId = await this.dvController.queryNetwork(query);
+
+            res.status(201);
+            res.send({
+                message: 'Query sent successfully.',
+                query_id: queryId,
+            });
         });
 
         server.get(`/api/${this.version_id}/query/network/:query_id`, async (req, res) => {
@@ -212,7 +221,7 @@ class RestAPIServiceV2 {
                 return;
             }
 
-            await this._getNetworkQueryStatus(req.params.query_id, res);
+            await this.dvController.handleNetworkQueryStatus(req.params.query_id, res);
         });
 
         server.get(`/api/${this.version_id}/query/:query_id/responses`, async (req, res) => {
@@ -226,10 +235,10 @@ class RestAPIServiceV2 {
                 return;
             }
 
-            await this._getNetworkQueryResponses(req.params.query_id, res);
+            await this.dvController.getNetworkQueryResponses(req.params.query_id, res);
         });
 
-        server.post(`/api/${this.version_id}/read/network`, (req, res) => {
+        server.post(`/api/${this.version_id}/read/network`, async (req, res) => {
             this.logger.api('POST: Network read request received.');
 
             if (req.body == null || req.body.query_id == null || req.body.reply_id == null
@@ -240,12 +249,7 @@ class RestAPIServiceV2 {
             }
             const { query_id, reply_id, data_set_id } = req.body;
 
-            emitter.emit('api-choose-offer', {
-                query_id,
-                reply_id,
-                data_set_id,
-                response: res,
-            });
+            await this._handleReadNetwork(query_id, reply_id, data_set_id, res);
         });
 
         server.get(`/api/${this.version_id}/consensus/:sender_id`, (req, res) => {
@@ -412,88 +416,45 @@ class RestAPIServiceV2 {
         });
     }
 
-    async _getNetworkQueryResponses(query_id, response) {
-        this.logger.info(`Query for network response triggered with query ID ${query_id}`);
+    async _handleReadNetwork(query_id, reply_id, dataset_id, response) {
+        const failFunction = (error) => {
+            this.logger.warn(error);
+            response.status(400);
+            response.send({
+                message: 'Failed to handle query',
+                data: [],
+            });
+        };
+        this.logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${dataset_id}`);
 
-        let responses = await Models.network_query_responses.findAll({
+        // TODO: Load offer reply from DB
+        const offer = await Models.network_query_responses.findOne({
             where: {
                 query_id,
+                reply_id,
             },
         });
 
-        responses = responses.map(response => ({
-            datasets: JSON.parse(response.imports),
-            data_size: response.data_size,
-            data_price: response.data_price,
-            stake_factor: response.stake_factor,
-            reply_id: response.reply_id,
-        }));
-
-        response.status(200);
-        response.send(responses);
-    }
-
-    async _getNetworkQueryStatus(id, response) {
-        this.logger.info(`Query of network status triggered with ID ${id}`);
-        try {
-            const networkQuery = await Models.network_queries.find({ where: { id } });
-            if (networkQuery.status === 'FINISHED') {
-                try {
-                    const vertices = await this.dhService.dataLocationQuery(id);
-
-                    response.status(200);
-                    response.send({
-                        status: `${networkQuery.status}`,
-                        query_id: networkQuery.id,
-                        vertices,
-                    });
-                } catch (error) {
-                    this.logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
-                    // TODO notifyError
-                    // notifyError(error);
-                    response.status(500);
-                    response.send({
-                        error: 'Fail to process.',
-                        query_id: networkQuery.id,
-                    });
-                }
-            } else {
-                response.status(200);
-                response.send({
-                    status: `${networkQuery.status}`,
-                    query_id: networkQuery.id,
-                });
-            }
-        } catch (e) {
-            // TODO handle error
-            console.log(e);
+        if (offer == null) {
+            response.status(400);
+            response.send({ message: 'Reply not found' });
+            return;
         }
-    }
-
-    async _queryNetwork(query, response) {
-        this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
-
-        const queryId = uuidv4();
-
         try {
-            await this.commandExecutor.add({
-                name: 'dvQueryNetworkCommand',
-                delay: 0,
-                data: {
-                    queryId,
-                    query,
-                },
-                transactional: false,
-            });
-
-            response.status(201);
+            this.dvController.handleDataReadRequest(query_id, dataset_id, reply_id);
+            this.logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+            this.remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+            response.status(200);
             response.send({
-                message: 'Query sent successfully.',
-                query_id: queryId,
+                message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
             });
         } catch (e) {
-            this.logger.error(`Failed query network. ${e}.`);
+            const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
+            response.status(500);
+            response.send({ message });
+            failFunction(message);
             // TODO notifyError()
+            // notifyError(e);
         }
     }
 
