@@ -103,27 +103,28 @@ class EventEmitter {
             commandExecutor,
         } = this.ctx;
 
-        this._on('api-network-query-responses', async (data) => {
-            const { query_id } = data;
-            logger.info(`Query for network response triggered with query ID ${query_id}`);
-
-            let responses = await Models.network_query_responses.findAll({
-                where: {
-                    query_id,
-                },
-            });
-
-            responses = responses.map(response => ({
-                datasets: JSON.parse(response.imports),
-                data_size: response.data_size,
-                data_price: response.data_price,
-                stake_factor: response.stake_factor,
-                reply_id: response.reply_id,
-            }));
-
-            data.response.status(200);
-            data.response.send(responses);
-        });
+        // Redundant code
+        // this._on('api-network-query-responses', async (data) => {
+        //     const { query_id } = data;
+        //     logger.info(`Query for network response triggered with query ID ${query_id}`);
+        //
+        //     let responses = await Models.network_query_responses.findAll({
+        //         where: {
+        //             query_id,
+        //         },
+        //     });
+        //
+        //     responses = responses.map(response => ({
+        //         datasets: JSON.parse(response.imports),
+        //         data_size: response.data_size,
+        //         data_price: response.data_price,
+        //         stake_factor: response.stake_factor,
+        //         reply_id: response.reply_id,
+        //     }));
+        //
+        //     data.response.status(200);
+        //     data.response.send(responses);
+        // });
 
         this._on('api-trail', (data) => {
             logger.info(`Get trail triggered with query ${JSON.stringify(data.query)}`);

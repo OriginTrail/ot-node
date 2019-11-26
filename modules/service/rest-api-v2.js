@@ -183,7 +183,7 @@ class RestAPIServiceV2 {
         });
 
         /** Network queries & read requests, to be refactored */
-
+        // KAKO DA VRACAM RESPONSE IZ KOMANDE???
         server.post(`/api/${this.version_id}/query/network`, async (req, res, next) => {
             this.logger.api('POST: Network query request received.');
 
@@ -215,7 +215,7 @@ class RestAPIServiceV2 {
             await this._getNetworkQueryStatus(req.params.query_id, res);
         });
 
-        server.get(`/api/${this.version_id}/query/:query_id/responses`, (req, res) => {
+        server.get(`/api/${this.version_id}/query/:query_id/responses`, async (req, res) => {
             this.logger.api('GET: Local query responses request received.');
 
             if (!req.params.query_id) {
@@ -225,10 +225,8 @@ class RestAPIServiceV2 {
                 });
                 return;
             }
-            emitter.emit('api-network-query-responses', {
-                query_id: req.params.query_id,
-                response: res,
-            });
+
+            await this._getNetworkQueryResponses(req.params.query_id, res);
         });
 
         server.post(`/api/${this.version_id}/read/network`, (req, res) => {
@@ -412,6 +410,27 @@ class RestAPIServiceV2 {
                 });
             }
         });
+    }
+
+    async _getNetworkQueryResponses(query_id, response) {
+        this.logger.info(`Query for network response triggered with query ID ${query_id}`);
+
+        let responses = await Models.network_query_responses.findAll({
+            where: {
+                query_id,
+            },
+        });
+
+        responses = responses.map(response => ({
+            datasets: JSON.parse(response.imports),
+            data_size: response.data_size,
+            data_price: response.data_price,
+            stake_factor: response.stake_factor,
+            reply_id: response.reply_id,
+        }));
+
+        response.status(200);
+        response.send(responses);
     }
 
     async _getNetworkQueryStatus(id, response) {
