@@ -222,7 +222,7 @@ contract Litigation {
             // Decrease previous holder Stake
         profileStorage.setStake(holderIdentity, profileStorage.getStake(holderIdentity).sub(amountToTransfer));
             // Increase offer creator Stake
-        profileStorage.setStake(litigatorIdentity, profileStorage.getStake(litigatorIdentity).sub(amountToTransfer));
+        profileStorage.setStake(litigatorIdentity, profileStorage.getStake(litigatorIdentity).add(amountToTransfer));
 
         // Unlock offer creator's remaining tokens reserved for payment
         profileStorage.setStakeReserved(litigatorIdentity, profileStorage.getStakeReserved(litigatorIdentity).sub(amountToTransfer));
