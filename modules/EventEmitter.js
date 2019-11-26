@@ -327,47 +327,48 @@ class EventEmitter {
         //         });
         // });
 
-        this._on('api-choose-offer', async (data) => {
-            const failFunction = (error) => {
-                logger.warn(error);
-                data.response.status(400);
-                data.response.send({
-                    message: 'Failed to handle query',
-                    data: [],
-                });
-            };
-            const { query_id, reply_id, data_set_id } = data;
-            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
-
-            // TODO: Load offer reply from DB
-            const offer = await Models.network_query_responses.findOne({
-                where: {
-                    query_id,
-                    reply_id,
-                },
-            });
-
-            if (offer == null) {
-                data.response.status(400);
-                data.response.send({ message: 'Reply not found' });
-                return;
-            }
-            try {
-                dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
-                logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                data.response.status(200);
-                data.response.send({
-                    message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
-                });
-            } catch (e) {
-                const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
-                data.response.status(500);
-                data.response.send({ message });
-                failFunction(message);
-                notifyError(e);
-            }
-        });
+        // Redundant code
+        // this._on('api-choose-offer', async (data) => {
+        //     const failFunction = (error) => {
+        //         logger.warn(error);
+        //         data.response.status(400);
+        //         data.response.send({
+        //             message: 'Failed to handle query',
+        //             data: [],
+        //         });
+        //     };
+        //     const { query_id, reply_id, data_set_id } = data;
+        //     logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
+        //
+        //     // TODO: Load offer reply from DB
+        //     const offer = await Models.network_query_responses.findOne({
+        //         where: {
+        //             query_id,
+        //             reply_id,
+        //         },
+        //     });
+        //
+        //     if (offer == null) {
+        //         data.response.status(400);
+        //         data.response.send({ message: 'Reply not found' });
+        //         return;
+        //     }
+        //     try {
+        //         dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
+        //         logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+        //         remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+        //         data.response.status(200);
+        //         data.response.send({
+        //             message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
+        //         });
+        //     } catch (e) {
+        //         const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
+        //         data.response.status(500);
+        //         data.response.send({ message });
+        //         failFunction(message);
+        //         notifyError(e);
+        //     }
+        // });
 
         // Redundant code
         // this._on('api-network-query-status', async (data) => {

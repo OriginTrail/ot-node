@@ -17,6 +17,7 @@ class DHDataReadRequestFreeCommand extends Command {
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.notifyError = ctx.notifyError;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -68,6 +69,7 @@ class DHDataReadRequestFreeCommand extends Command {
 
             let edges;
             let vertices;
+            let encColor;
             if (dataInfo.origin === 'HOLDING') { // DH has the data
                 // Get replication key and then encrypt data.
                 const holdingDataModels = await Models.holding_data.findAll({
@@ -79,30 +81,38 @@ class DHDataReadRequestFreeCommand extends Command {
                     [holdingDataModel] = holdingDataModels; // take the first one
                 }
 
-                const encColor = holdingDataModel !== null ? holdingDataModel.color : null;
-                const verticesPromise
-                    = this.graphStorage.findVerticesByImportId(importId, encColor);
-                const edgesPromise
-                    = this.graphStorage.findEdgesByImportId(importId, encColor);
-
-                [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
-                ImportUtilities.unpackKeys(vertices, edges);
-
-                const holdingData = holdingDataModel.get({ plain: true });
-                const dataPublicKey = holdingData.litigation_public_key;
-
-                Graph.decryptVertices(
-                    vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
-                    dataPublicKey,
-                );
+                // encColor = holdingDataModel !== null ? holdingDataModel.color : null;
+                //
+                //
+                //
+                // const verticesPromise
+                //     = this.graphStorage.findVerticesByImportId(importId, encColor);
+                // const edgesPromise
+                //     = this.graphStorage.findEdgesByImportId(importId, encColor);
+                //
+                // [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
+                //
+                // ImportUtilities.unpackKeys(vertices, edges);
+                //
+                // const holdingData = holdingDataModel.get({ plain: true });
+                // const dataPublicKey = holdingData.litigation_public_key;
+                //
+                // Graph.decryptVertices(
+                //     vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                //     dataPublicKey,
+                // );
             } else { // DC or DV
-                const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-                const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
-                [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
+                // const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+                // const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+                // [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
+                //
+                // ImportUtilities.unpackKeys(vertices, edges);
             }
 
-            ImportUtilities.deleteInternal(edges);
-            ImportUtilities.deleteInternal(vertices);
+            const document = await this.importService.getImport(importId);
+
+            // ImportUtilities.deleteInternal(edges);
+            // ImportUtilities.deleteInternal(vertices);
 
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
@@ -131,10 +141,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 nodeId: this.config.identity,
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
-                data: {
-                    vertices,
-                    edges,
-                },
+                document,
                 data_set_id: importId, // TODO: Temporal. Remove it.
                 transaction_hash: transactionHash,
             };

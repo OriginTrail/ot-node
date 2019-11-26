@@ -6,6 +6,8 @@ const ImportUtilities = require('../../ImportUtilities');
 const Graph = require('../../Graph');
 const Utilities = require('../../Utilities');
 
+const uuidv4 = require('uuid/v4');
+
 /**
  * Handles data read response for free.
  */
@@ -18,6 +20,7 @@ class DVDataReadResponseFreeCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -71,8 +74,9 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
+        const { document, encryptedData } = message;
         // Calculate root hash and check is it the same on the SC.
-        const { vertices, edges } = message.data;
+        // const { vertices, edges } = message.data;
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
         if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
@@ -83,12 +87,12 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
+        // ImportUtilities.sort(vertices);
+        // ImportUtilities.sort(edges);
 
-        ImportUtilities.sort(vertices);
-        ImportUtilities.sort(edges);
-
-        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
-        const rootHash = merkle.tree.getRoot();
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
+            // await ImportUtilities.merkleStructure(vertices, edges);
+        // const rootHash = merkle.tree.getRoot();
 
         if (fingerprint !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
@@ -97,15 +101,27 @@ class DVDataReadResponseFreeCommand extends Command {
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
+        const handler_id = uuidv4();
 
         try {
-            // TODO refactor with new importer
-            // await this.importer.importJSON({
-            //     vertices: message.data.vertices,
-            //     edges: message.data.edges,
-            //     dataSetId,
-            //     wallet: dcWallet,
-            // }, false);
+            const commandData = {
+                document,
+                handler_id,
+            };
+
+            const commandSequence = [
+                'dcConvertToGraphCommand',
+                'dcWriteImportToGraphDbCommand',
+                'dcFinalizeImportCommand',
+            ];
+
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: commandData,
+                transactional: false,
+            });
         } catch (error) {
             this.logger.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);
@@ -114,10 +130,10 @@ class DVDataReadResponseFreeCommand extends Command {
             return Command.empty();
         }
 
-        const dataSize = bytes(JSON.stringify(vertices));
+        const dataSize = bytes(JSON.stringify(document));
         await Models.data_info.create({
             data_set_id: dataSetId,
-            total_documents: vertices.length,
+            total_documents: document['@graph'].length,
             root_hash: rootHash,
             data_provider_wallet: dcWallet,
             import_timestamp: new Date(),
