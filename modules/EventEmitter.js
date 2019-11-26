@@ -312,7 +312,8 @@ class EventEmitter {
 
         // Redundant code
         // this._on('api-network-query', (data) => {
-        //     logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
+        //     logger
+        //     .info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
         //
         //     dvController.queryNetwork(data.query)
         //         .then((queryId) => {
@@ -338,7 +339,9 @@ class EventEmitter {
         //         });
         //     };
         //     const { query_id, reply_id, data_set_id } = data;
-        //     logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
+        //     logger.info
+        //     (`Choose offer triggered with query ID ${query_id},
+        //     reply ID ${reply_id} and import ID ${data_set_id}`);
         //
         //     // TODO: Load offer reply from DB
         //     const offer = await Models.network_query_responses.findOne({
@@ -356,13 +359,15 @@ class EventEmitter {
         //     try {
         //         dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
         //         logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-        //         remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+        //         remoteControl
+        //         .offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
         //         data.response.status(200);
         //         data.response.send({
         //             message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
         //         });
         //     } catch (e) {
-        //         const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
+        //         const message =
+        //         `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
         //         data.response.status(500);
         //         data.response.send({ message });
         //         failFunction(message);
@@ -386,7 +391,8 @@ class EventEmitter {
         //                 vertices,
         //             });
         //         } catch (error) {
-        //             logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+        //             logger
+        //             .info(`Failed to process network query status for ID ${id}. ${error}.`);
         //             notifyError(error);
         //             response.status(500);
         //             response.send({

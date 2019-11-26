@@ -91,7 +91,7 @@ class DVDataReadResponseFreeCommand extends Command {
         // ImportUtilities.sort(edges);
 
         const rootHash = ImportUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
-            // await ImportUtilities.merkleStructure(vertices, edges);
+        // await ImportUtilities.merkleStructure(vertices, edges);
         // const rootHash = merkle.tree.getRoot();
 
         if (fingerprint !== rootHash) {
