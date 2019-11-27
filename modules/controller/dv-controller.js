@@ -70,7 +70,7 @@ class DVController {
         });
 
         responses = responses.map(response => ({
-            datasets: JSON.parse(response.imports),
+            datasets: JSON.parse(response.data_set_ids),
             data_size: response.data_size,
             data_price: response.data_price,
             stake_factor: response.stake_factor,
