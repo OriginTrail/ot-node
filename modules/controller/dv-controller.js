@@ -46,36 +46,17 @@ class DVController {
         this.logger.info(`Query of network status triggered with ID ${id}`);
         try {
             const networkQuery = await Models.network_queries.find({ where: { id } });
-            if (networkQuery.status === 'FINISHED') {
-                try {
-                    const vertices = await this.dhService.dataLocationQuery(id);
-
-                    response.status(200);
-                    response.send({
-                        status: `${networkQuery.status}`,
-                        query_id: networkQuery.id,
-                        vertices,
-                    });
-                } catch (error) {
-                    this.logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
-                    // TODO notifyError
-                    // notifyError(error);
-                    response.status(500);
-                    response.send({
-                        error: 'Fail to process.',
-                        query_id: networkQuery.id,
-                    });
-                }
-            } else {
-                response.status(200);
-                response.send({
-                    status: `${networkQuery.status}`,
-                    query_id: networkQuery.id,
-                });
-            }
-        } catch (e) {
-            // TODO handle error
-            console.log(e);
+            response.status(200);
+            response.send({
+                status: networkQuery.status,
+                query_id: networkQuery.id,
+            });
+        } catch (error) {
+            console.log(error);
+            response.status(400);
+            response.send({
+                error: `Fail to process network query status for ID ${id}.`,
+            });
         }
     }
 
