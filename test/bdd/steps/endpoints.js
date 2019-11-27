@@ -28,6 +28,25 @@ Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout:
     this.state.lastImportHandler = importResponse.handler_id;
 });
 
+
+Then(/^DC checks status of the last import$/, { timeout: 1200000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    this.state.lastImportStatus = await httpApiHelper.apiImportResult(host, this.state.lastImportHandler);
+});
+
+Then(/^The last import status should be "([^"]*)"$/, { timeout: 1200000 }, async function (status) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(this.state.lastImportStatus.status).to.be.equal(status);
+});
+
 Given(/^DC waits for import to finish$/, { timeout: 1200000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);

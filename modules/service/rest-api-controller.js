@@ -25,7 +25,7 @@ class RestApiController {
     async startRPC() {
         const options = {
             name: 'RPC server',
-            version: pjson.version,
+            version: pjson.version, maxBodySize: 10 * 1024 * 1024 * 1024, maxFieldsSize: 10 * 1024 * 1024 * 1024, limit: '2000mb',
             formatters: {
                 'application/json': (req, res, body) => {
                     res.set('content-type', 'application/json; charset=utf-8');
@@ -85,7 +85,7 @@ class RestApiController {
 
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
-        server.use(restify.plugins.bodyParser());
+        server.use(restify.plugins.bodyParser({ maxBodySize: 10 * 1024 * 1024 * 1024, maxFieldsSize: 10 * 1024 * 1024 * 1024, limit: '2000mb' }));
         server.pre(parseLatest);
         const cors = corsMiddleware({
             preflightMaxAge: 5, // Optional

@@ -271,6 +271,49 @@ function stringifyWithoutComments(obj) {
     return _sortedStringify(object, true);
 }
 
+function generateInternalHash(block1, block2) {
+    return sha3_256(`${normalizeHex(block1)}${normalizeHex(block2)}`);
+}
+
+function generateLeafHash(leaf, index) {
+    return sha3_256(`${leaf}${index}`);
+}
+
+function validateProof(otObject, dataset_id, proofData) {
+    const { proof, object_id, object_index } = proofData;
+
+
+    const graph = [otObject];
+    _sortGraphRecursively(graph);
+    const objectText = _sortedStringify(graph[0]);
+
+    const leafHash = generateLeafHash(objectText, object_index);
+
+
+    let leafIndex = object_index;
+    let currentLevelHash = leafHash;
+    let nextLevelHash;
+    for (let i = 0; i < proof.length; i += 1) {
+        let outputString = '\tHashing ';
+        if (leafIndex % 2 === 0) {
+            outputString += `${this.normalizeHex(currentLevelHash)} `
+                + `with ${this.normalizeHex(proof[i])} `;
+            nextLevelHash = generateInternalHash(currentLevelHash, proof[i])
+        } else {
+            outputString += `${this.normalizeHex(proof[i])} `
+                + `with ${this.normalizeHex(currentLevelHash)} `;
+            nextLevelHash = generateInternalHash(proof[i], currentLevelHash);
+        }
+        outputString += `and generated hash ${this.normalizeHex(nextLevelHash)}`;
+
+        currentLevelHash = nextLevelHash;
+        leafIndex = Math.trunc(leafIndex / 2);
+    }
+
+    // const fingerprint = await contracts.holdingStorageContract.methods.fingerprint(dataset_id).call();
+    return this.normalizeHex(currentLevelHash);
+}
+
 module.exports = {
     calculateImportHash,
     normalizeHex,
@@ -282,4 +325,5 @@ module.exports = {
     calculateRootHash,
     base64_encode: base64Encode,
     stringifyWithoutComments,
+    validateProof,
 };

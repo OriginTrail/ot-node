@@ -380,7 +380,7 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
     expect(response.data.formatted_dataset['@graph']
-        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:description'])
+        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:batch:image'])
         .to.be.equal(ot_logo);
 });
 

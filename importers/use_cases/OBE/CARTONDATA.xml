@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2019-11-18T10:11:48Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+    <EPCISHeader>
+        <sbdh:StandardBusinessDocumentHeader>
+            <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+            <sbdh:Sender>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:OBE</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>OBE</sbdh:Contact>
+                    <sbdh:EmailAddress>mlawn@obeorganic.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Sender>
+            <sbdh:Receiver>
+                <sbdh:Identifier Authority="OriginTrail">OriginTrail</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>OriginTrail</sbdh:Contact>
+                    <sbdh:EmailAddress>support@origin-trail.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Receiver>
+            <sbdh:DocumentIdentification>
+                <sbdh:Standard>GS1</sbdh:Standard>
+                <sbdh:TypeVersion>V1.3</sbdh:TypeVersion>
+                <sbdh:InstanceIdentifier>CertificationEventpqqi</sbdh:InstanceIdentifier>
+                <sbdh:Type>Shipment</sbdh:Type>
+                <sbdh:CreationDateAndTime>2019-11-18T10:11:48Z</sbdh:CreationDateAndTime>
+            </sbdh:DocumentIdentification>
+            <sbdh:BusinessScope>
+                <sbdh:Scope>
+                    <sbdh:Type>BusinessProcess</sbdh:Type>
+                    <sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
+                    <sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+                </sbdh:Scope>
+            </sbdh:BusinessScope>
+        </sbdh:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="urn:epcglobal:epcis:vtype:BusinessLocation">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgln:7253416794747">
+                                <attribute id="http://epcis.example.com/mda/latitude">42.431824</attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude">-76.463564</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:2267838726198">
+                                <attribute id="http://epcis.example.com/mda/latitude">42.362563</attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude">-76.616573</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:3327568635862">
+                                <attribute id="http://epcis.example.com/mda/latitude">42.235579</attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude">-77.565168</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:3327566712348">
+                                <attribute id="http://epcis.example.com/mda/latitude">41.931593</attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude">-75.072272</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    <Vocabulary type="urn:epcglobal:epcis:vtype:EPCClass">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:idpat:sgtin:pi-182713122019-10-21">
+                                <attribute id="urn:ot:object:location:category">Product</attribute>
+                                <attribute id="urn:ot:object:location:description">Johnson Farm Beef</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:idpat:sgtin:pi-123484372019-10-23">
+                                <attribute id="urn:ot:object:location:category">Product</attribute>
+                                <attribute id="urn:ot:object:location:description">Jordan Farm Beef</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:idpat:sgtin:pi-123874832019-10-23">
+                                <attribute id="urn:ot:object:location:category">Product</attribute>
+                                <attribute id="urn:ot:object:location:description">Nash Farm Beef</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                </VocabularyList>
+            </EPCISMasterData>
+        </extension>
+    </EPCISHeader>
+    <EPCISBody>
+        <EventList>
+            <extension>
+                <TransformationEvent>
+                    <eventTime>2019-10-21T00:00:00</eventTime>
+                    <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                    <inputEPCList>
+                            <epc>urn:epc:idpat:sgtin:pi-182713122019-10-21</epc>
+                    </inputEPCList>
+                    <outputEPCList>
+                            <epc>1234567890000000001</epc>
+                            <epc>1234567890000000002</epc>
+                            <epc>1234567890000000003</epc>
+                            <epc>1234567890000000004</epc>
+                            <epc>1234567890000000005</epc>
+                            <epc>1234567890000000006</epc>
+                            <epc>1234567890000000007</epc>
+                            <epc>1234567890000000008</epc>
+                            <epc>1234567890000000009</epc>
+                            <epc>1234567890000000010</epc>
+                            <epc>1234567890000000011</epc>
+                            <epc>1234567890000000012</epc>
+                            <epc>1234567890000000013</epc>
+                            <epc>1234567890000000014</epc>
+                    </outputEPCList>
+                    <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                    <disposition>urn:epcglobal:cbv:disp:active</disposition>
+                    <readPoint>
+                        <id>urn:epc:id:sgln:7253416794747</id>
+                    </readPoint>
+                    <bizLocation>
+                        <id>urn:epc:id:sgln:7253416794747</id>
+                    </bizLocation>
+                </TransformationEvent>
+            </extension>
+            <extension>
+                <TransformationEvent>
+                    <eventTime>2019-10-23T00:00:00</eventTime>
+                    <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                    <inputEPCList>
+                            <epc>urn:epc:idpat:sgtin:pi-123484372019-10-23</epc>
+                    </inputEPCList>
+                    <outputEPCList>
+                            <epc>1234567890000000015</epc>
+                            <epc>1234567890000000016</epc>
+                            <epc>1234567890000000017</epc>
+                            <epc>1234567890000000018</epc>
+                            <epc>1234567890000000019</epc>
+                            <epc>1234567890000000020</epc>
+                            <epc>1234567890000000021</epc>
+                            <epc>1234567890000000022</epc>
+                            <epc>1234567890000000023</epc>
+                            <epc>1234567890000000024</epc>
+                            <epc>1234567890000000025</epc>
+                            <epc>1234567890000000026</epc>
+                            <epc>1234567890000000027</epc>
+                            <epc>1234567890000000028</epc>
+                            <epc>1234567890000000029</epc>
+                            <epc>1234567890000000030</epc>
+                            <epc>1234567890000000031</epc>
+                            <epc>1234567890000000032</epc>
+                            <epc>1234567890000000033</epc>
+                            <epc>1234567890000000034</epc>
+                            <epc>1234567890000000035</epc>
+                            <epc>1234567890000000036</epc>
+                            <epc>1234567890000000037</epc>
+                            <epc>1234567890000000038</epc>
+                            <epc>1234567890000000039</epc>
+                    </outputEPCList>
+                    <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                    <disposition>urn:epcglobal:cbv:disp:active</disposition>
+                    <readPoint>
+                        <id>urn:epc:id:sgln:7253416794747</id>
+                    </readPoint>
+                    <bizLocation>
+                        <id>urn:epc:id:sgln:7253416794747</id>
+                    </bizLocation>
+                </TransformationEvent>
+            </extension>
+            <extension>
+                <TransformationEvent>
+                    <eventTime>2019-10-23T00:00:00</eventTime>
+                    <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                    <inputEPCList>
+                            <epc>urn:epc:idpat:sgtin:pi-123874832019-10-23</epc>
+                    </inputEPCList>
+                    <outputEPCList>
+                            <epc>1234567890000000015</epc>
+                            <epc>1234567890000000016</epc>
+                            <epc>1234567890000000017</epc>
+                            <epc>1234567890000000018</epc>
+                            <epc>1234567890000000019</epc>
+                            <epc>1234567890000000020</epc>
+                            <epc>1234567890000000021</epc>
+                            <epc>1234567890000000022</epc>
+                            <epc>1234567890000000023</epc>
+                            <epc>1234567890000000024</epc>
+                            <epc>1234567890000000025</epc>
+                            <epc>1234567890000000026</epc>
+                            <epc>1234567890000000027</epc>
+                            <epc>1234567890000000028</epc>
+                            <epc>1234567890000000029</epc>
+                            <epc>1234567890000000030</epc>
+                            <epc>1234567890000000031</epc>
+                            <epc>1234567890000000032</epc>
+                            <epc>1234567890000000033</epc>
+                            <epc>1234567890000000034</epc>
+                            <epc>1234567890000000035</epc>
+                            <epc>1234567890000000036</epc>
+                            <epc>1234567890000000037</epc>
+                            <epc>1234567890000000038</epc>
+                            <epc>1234567890000000039</epc>
+                    </outputEPCList>
+                    <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                    <disposition>urn:epcglobal:cbv:disp:active</disposition>
+                    <readPoint>
+                        <id>urn:epc:id:sgln:7253416794747</id>
+                    </readPoint>
+                    <bizLocation>
+                        <id>urn:epc:id:sgln:7253416794747</id>
+                    </bizLocation>
+                </TransformationEvent>
+            </extension>
+            <AggregationEvent>
+                <eventTime>2019-10-22T00:00:00</eventTime>
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                <parentID>100678</parentID>
+                <childEPCs>
+                        <epc>1234567890000000001</epc>
+                        <epc>1234567890000000002</epc>
+                        <epc>1234567890000000003</epc>
+                        <epc>1234567890000000004</epc>
+                        <epc>1234567890000000005</epc>
+                        <epc>1234567890000000006</epc>
+                        <epc>1234567890000000007</epc>
+                        <epc>1234567890000000008</epc>
+                        <epc>1234567890000000009</epc>
+                        <epc>1234567890000000010</epc>
+                        <epc>1234567890000000011</epc>
+                        <epc>1234567890000000012</epc>
+                        <epc>1234567890000000013</epc>
+                        <epc>1234567890000000014</epc>
+                </childEPCs>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:packing</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:7253416794747</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:7253416794747</id>
+                </bizLocation>
+            </AggregationEvent>
+            <AggregationEvent>
+                <eventTime>2019-10-24T00:00:00</eventTime>
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                <parentID>100679</parentID>
+                <childEPCs>
+                        <epc>1234567890000000015</epc>
+                        <epc>1234567890000000016</epc>
+                        <epc>1234567890000000017</epc>
+                        <epc>1234567890000000018</epc>
+                        <epc>1234567890000000019</epc>
+                        <epc>1234567890000000020</epc>
+                        <epc>1234567890000000021</epc>
+                        <epc>1234567890000000022</epc>
+                        <epc>1234567890000000023</epc>
+                        <epc>1234567890000000024</epc>
+                        <epc>1234567890000000025</epc>
+                        <epc>1234567890000000026</epc>
+                        <epc>1234567890000000027</epc>
+                        <epc>1234567890000000028</epc>
+                        <epc>1234567890000000029</epc>
+                        <epc>1234567890000000030</epc>
+                        <epc>1234567890000000031</epc>
+                        <epc>1234567890000000032</epc>
+                        <epc>1234567890000000033</epc>
+                        <epc>1234567890000000034</epc>
+                        <epc>1234567890000000035</epc>
+                        <epc>1234567890000000036</epc>
+                        <epc>1234567890000000037</epc>
+                        <epc>1234567890000000038</epc>
+                        <epc>1234567890000000039</epc>
+                </childEPCs>
+                <action>ADD</action>
+                
+                <bizStep>urn:epcglobal:cbv:bizstep:packing</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:7253416794747</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:7253416794747</id>
+                </bizLocation>
+            </AggregationEvent>
+            <ObjectEvent>
+                <eventTime>2019-10-22T00:00:00</eventTime>
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                <epcList>
+                    <epc>100678</epc>
+                </epcList>
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:7253416794747</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:7253416794747</id>
+                </bizLocation>
+            </ObjectEvent>
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>

@@ -146,3 +146,24 @@ Feature: Test basic importer features
 #    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
 #    And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
 #    Then the traversal from batch "urn:epc:id:sgtin:Batch_1" should contain 1 trail and 2 vertices of type EVENT
+
+  @third
+  Scenario: Return all data related to a specific identifier
+    Given I setup 4 node
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/OBE/ORDER100678.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    Then the traversal from id "100678" with connection types "EPC" should contain 5 objects
+    And I calculate and validate the proof of the last traversal
+
+  @fourth
+  Scenario: Check import non-blocking API
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    Then DC checks status of the last import
+    And The last import status should be "PENDING"
