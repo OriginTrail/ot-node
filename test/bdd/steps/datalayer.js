@@ -187,7 +187,7 @@ Then(
     },
 );
 
-Then(/^I calculate and validate the proof of the last traversal/,{ timeout: 120000 }, async function () {
+Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;

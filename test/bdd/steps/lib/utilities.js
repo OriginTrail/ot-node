@@ -298,7 +298,7 @@ function validateProof(otObject, dataset_id, proofData) {
         if (leafIndex % 2 === 0) {
             outputString += `${this.normalizeHex(currentLevelHash)} `
                 + `with ${this.normalizeHex(proof[i])} `;
-            nextLevelHash = generateInternalHash(currentLevelHash, proof[i])
+            nextLevelHash = generateInternalHash(currentLevelHash, proof[i]);
         } else {
             outputString += `${this.normalizeHex(proof[i])} `
                 + `with ${this.normalizeHex(currentLevelHash)} `;

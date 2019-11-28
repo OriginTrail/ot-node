@@ -5,7 +5,7 @@ const {
 } = require('cucumber');
 const BN = require('bn.js');
 const { expect } = require('chai');
-const fs  = require('fs');
+const fs = require('fs');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
