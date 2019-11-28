@@ -388,11 +388,13 @@ contract('Litigation testing', async (accounts) => {
         );
 
         assert(
+            // eslint-disable-next-line max-len
             finalDcState.stakeReserved.eq(initialDcState.stakeReserved.sub(initialOfferState.tokenAmountPerHolder)),
             `Initial creator reserved amount differs from expected! Got ${finalDcState.stakeReserved.toString()} but expected ${(initialDcState.stakeReserved.sub(initialOfferState.tokenAmountPerHolder)).toString()}!`,
         );
 
         assert(
+            // eslint-disable-next-line max-len
             finalDcState.stake.eq(initialDcState.stake.sub(holderPaidAmount).add(tokenAmountPerHolder.sub(holderPaidAmount))),
             `Initial creator amount differs from expected! Got ${finalDcState.stake.toString()} but expected ${initialDcState.stake.sub(holderPaidAmount).add(tokenAmountPerHolder.sub(holderPaidAmount)).toString()}!`,
         );
