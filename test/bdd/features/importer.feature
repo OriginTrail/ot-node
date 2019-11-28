@@ -169,7 +169,7 @@ Feature: Test basic importer features
     And The last import status should be "PENDING"
 
   @first
-  Scenario: Check that exported GS1 dataset is the same as the one imported
+  Scenario: Get issuer identity
     Given I setup 1 node
     And I start the node
     And I use 1st node as DC
