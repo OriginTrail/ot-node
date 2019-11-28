@@ -548,20 +548,10 @@ class ImportService {
 
             const proof = merkleTree.createProof(objectIndex + 1);
 
-            proofs.push(proof);
+            proofs.push({ object_id: objectId, object_index: objectIndex + 1, proof });
         }
 
-        return this._packMerkleData(proofs, objectIdsArray);
-    }
-
-    _packMerkleData(proofs, objectIds) {
-        const data = [];
-
-        for (let i = 0; i < proofs.length; i += 1) {
-            data.push({ proof: proofs[i], object_id: objectIds[i] });
-        }
-
-        return data;
+        return proofs;
     }
 
     async packTrailData(data) {
