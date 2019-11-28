@@ -21,30 +21,9 @@ class DVDataReadRequestCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
-        const { queryId, dataSetId, replyId } = command.data;
-        /*
-            dataReadRequestObject = {
-            message: {
-                id: REPLY_ID
-                wallet: DV_WALLET,
-                nodeId: KAD_ID,
-                import_id: IMPORT_ID,
-            },
-            messageSignature: {
-                c: …,
-                r: …,
-                s: …
-            }
-            }
-         */
-
-        const dataInfo = await Models.data_info.findOne({
-            where: { data_set_id: dataSetId },
-        });
-        if (dataInfo) {
-            this.logger.trace(`I've already stored data for data set ID ${dataSetId}. Purchase ignored.`);
-            return Command.empty();
-        }
+        const {
+            queryId, dataSetId, replyId, handlerId,
+        } = command.data;
 
         const offer = await Models.network_query_responses.findOne({
             where: {
@@ -58,8 +37,8 @@ class DVDataReadRequestCommand extends Command {
             data_set_id: dataSetId,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
+            handler_id: handlerId,
         };
-
         const dataReadRequestObject = {
             message,
             messageSignature: Utilities.generateRsvSignature(

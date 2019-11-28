@@ -99,16 +99,20 @@ class RestAPIServiceV2 {
             await this._networkQuery(req, res);
         });
 
-        server.get(`/api/${this.version_id}/query/network/:query_id`, async (req, res) => {
+        server.get(`/api/${this.version_id}/query/network/result/:query_id`, async (req, res) => {
             await this._networkQueryStatus(req, res);
         });
 
-        server.get(`/api/${this.version_id}/query/:query_id/responses`, async (req, res) => {
+        server.get(`/api/${this.version_id}/query/network/responses/:query_id`, async (req, res) => {
             await this._networkQueryResponse(req, res);
         });
 
         server.post(`/api/${this.version_id}/read/network`, async (req, res) => {
             await this._readNetwork(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/read/network/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
         });
 
         /** Network related routes */
@@ -356,48 +360,6 @@ class RestAPIServiceV2 {
         });
     }
 
-    async _handleReadNetwork(query_id, reply_id, dataset_id, response) {
-        const failFunction = (error) => {
-            this.logger.warn(error);
-            response.status(400);
-            response.send({
-                message: 'Failed to handle query',
-                data: [],
-            });
-        };
-        this.logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${dataset_id}`);
-
-        // TODO: Load offer reply from DB
-        const offer = await Models.network_query_responses.findOne({
-            where: {
-                query_id,
-                reply_id,
-            },
-        });
-
-        if (offer == null) {
-            response.status(400);
-            response.send({ message: 'Reply not found' });
-            return;
-        }
-        try {
-            this.dvController.handleDataReadRequest(query_id, dataset_id, reply_id);
-            this.logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-            this.remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-            response.status(200);
-            response.send({
-                message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
-            });
-        } catch (e) {
-            const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
-            response.status(500);
-            response.send({ message });
-            failFunction(message);
-            // TODO notifyError()
-            // notifyError(e);
-        }
-    }
-
     async _getTrail(req, res) {
         this.logger.api('POST: Trail request received.');
 
@@ -556,12 +518,12 @@ class RestAPIServiceV2 {
         if (req.body == null || req.body.query_id == null || req.body.reply_id == null
             || req.body.data_set_id == null) {
             res.status(400);
-            res.send({ message: 'Bad request' });
+            res.send({ message: 'Params query_id, reply_id and data_set_id are required.' });
             return;
         }
         const { query_id, reply_id, data_set_id } = req.body;
 
-        await this._handleReadNetwork(query_id, reply_id, data_set_id, res);
+        await this.dvController.handleDataReadRequest(query_id, data_set_id, reply_id, res);
     }
 
     async _checkForHandlerStatus(req, res) {
@@ -575,7 +537,7 @@ class RestAPIServiceV2 {
             this.logger.info('Invalid request');
             res.status(404);
             res.send({
-                message: 'This data set does not exist in the database',
+                message: 'Unable to find data with given parameters!',
             });
             return;
         }

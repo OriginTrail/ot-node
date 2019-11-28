@@ -53,6 +53,7 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             wallet: dhWallet,
             transaction_hash,
+            handler_id,
         } = message;
 
         // Find the particular reply.
@@ -74,7 +75,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
-        const { document, encryptedData } = message;
+        const { document } = message;
         // Calculate root hash and check is it the same on the SC.
         // const { vertices, edges } = message.data;
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
@@ -87,12 +88,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        // ImportUtilities.sort(vertices);
-        // ImportUtilities.sort(edges);
-
         const rootHash = ImportUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
-        // await ImportUtilities.merkleStructure(vertices, edges);
-        // const rootHash = merkle.tree.getRoot();
 
         if (fingerprint !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
@@ -101,12 +97,12 @@ class DVDataReadResponseFreeCommand extends Command {
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
-        const handler_id = uuidv4();
 
         try {
             const commandData = {
                 document,
                 handler_id,
+                purchased: true,
             };
 
             const commandSequence = [
@@ -129,17 +125,6 @@ class DVDataReadResponseFreeCommand extends Command {
             await networkQuery.save({ fields: ['status'] });
             return Command.empty();
         }
-
-        const dataSize = bytes(JSON.stringify(document));
-        await Models.data_info.create({
-            data_set_id: dataSetId,
-            total_documents: document['@graph'].length,
-            root_hash: rootHash,
-            data_provider_wallet: dcWallet,
-            import_timestamp: new Date(),
-            data_size: dataSize,
-            origin: 'PURCHASED',
-        });
 
         // Store holding information and generate keys for eventual data replication.
         await Models.purchased_data.create({

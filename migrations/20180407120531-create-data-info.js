@@ -28,10 +28,6 @@ module.exports = {
             allowNull: false,
             type: Sequelize.DATE,
         },
-        data_size: {
-            allowNull: false,
-            type: Sequelize.INTEGER,
-        },
         origin: {
             allowNull: false,
             type: Sequelize.STRING,

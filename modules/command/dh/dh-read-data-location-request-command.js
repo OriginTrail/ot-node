@@ -92,9 +92,9 @@ class DHReadDataLocationRequestCommand extends Command {
                 },
             },
         });
-
+        var size = 0;
         const importObjects = replicatedImportIds.map((dataSetId) => {
-            const size = dataInfos.find(di => di.data_set_id === dataSetId).data_size;
+            size = dataInfos.find(di => di.data_set_id === dataSetId).otjson_size_in_bytes;
             return {
                 data_set_id: dataSetId,
                 size,
@@ -130,6 +130,7 @@ class DHReadDataLocationRequestCommand extends Command {
             nodeId,
             imports: importObjects,
             dataPrice,
+            dataSize: size,
             stakeFactor: this.config.read_stake_factor,
         };
 

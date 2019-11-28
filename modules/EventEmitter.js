@@ -530,7 +530,7 @@ class EventEmitter {
                 }
 
                 if (dataSizeInBytes == null) {
-                    dataSizeInBytes = dataset.data_size;
+                    dataSizeInBytes = dataset.otjson_size_in_bytes;
                 }
 
                 if (dataRootHash == null) {
