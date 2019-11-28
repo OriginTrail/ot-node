@@ -167,3 +167,13 @@ Feature: Test basic importer features
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
     Then DC checks status of the last import
     And The last import status should be "PENDING"
+
+  @first
+  Scenario: Check that exported GS1 dataset is the same as the one imported
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/OBE/CARTONDATA.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Then DC gets issuer id for element "1234567890000000015"
+    And DC should be the issuer for the selected element

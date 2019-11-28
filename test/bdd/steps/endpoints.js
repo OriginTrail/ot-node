@@ -5,6 +5,7 @@ const {
 } = require('cucumber');
 const BN = require('bn.js');
 const { expect } = require('chai');
+const fs  = require('fs');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
@@ -304,4 +305,26 @@ Given(/^default initial token amount should be deposited on (\d+)[st|nd|rd|th]+ 
     const initialDepositAmount = new BN(this.state.nodes[nodeIndex - 1].options.nodeConfiguration.initial_deposit_amount);
 
     expect(staked.toString()).to.be.equal(initialDepositAmount.toString());
+});
+
+
+Then(/^DC gets issuer id for element "([^"]*)"$/, { timeout: 120000 }, async function (elementId) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    this.state.elementIssuer = await httpApiHelper.apiGetElementIssuerIdentity(host, elementId);
+});
+
+Then(/^DC should be the issuer for the selected element$/, { timeout: 120000 }, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    const erc725 = JSON.parse(fs.readFileSync(`${dc.options.configDir}/${dc.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+    expect(this.state.elementIssuer[0].identifiers[0].identifierValue.toUpperCase()).to.be.equal(erc725.identity.toUpperCase());
 });
