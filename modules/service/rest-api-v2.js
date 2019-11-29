@@ -15,6 +15,9 @@ class RestAPIServiceV2 {
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
 
+        this.dvController = ctx.dvController;
+        this.remoteControl = ctx.remoteControl;
+
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
 
@@ -84,21 +87,32 @@ class RestAPIServiceV2 {
             await this._getDatasetInfo(req, res);
         });
 
-        /** Local query routes */
-        // TODO Add remaining query routes
-        /**
-         * Get trail from database
-         * @param QueryObject - ex. {uid: abc:123}
-         */
-        server.post(`/api/${this.version_id}/trail`, async (req, res, next) => {
+        server.post(`/api/${this.version_id}/trail`, async (req, res) => {
             await this._getTrail(req, res);
         });
 
-        /*
-        * Get MerkleProofs
-        * */
-        server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res, next) => {
+        server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res) => {
             await this._getMerkleProofs(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/query/network`, async (req, res) => {
+            await this._networkQuery(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/query/network/result/:query_id`, async (req, res) => {
+            await this._networkQueryStatus(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/query/network/responses/:query_id`, async (req, res) => {
+            await this._networkQueryResponse(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/read/network`, async (req, res) => {
+            await this._readNetwork(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/read/network/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
         });
 
         /** Network related routes */
@@ -181,78 +195,6 @@ class RestAPIServiceV2 {
             });
         });
 
-        /** Network queries & read requests, to be refactored */
-
-        server.post(`/api/${this.version_id}/query/network`, (req, res, next) => {
-            this.logger.api('POST: Network query request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const { query } = req.body;
-            error = RestAPIValidator.validateSearchQuery(query);
-            if (error) {
-                return next(error);
-            }
-
-            emitter.emit('api-network-query', {
-                query,
-                response: res,
-            });
-        });
-
-        server.get(`/api/${this.version_id}/query/network/:query_id`, (req, res) => {
-            this.logger.api('GET: Query for status request received.');
-
-            if (!req.params.query_id) {
-                res.status(400);
-                res.send({
-                    message: 'Param required.',
-                });
-                return;
-            }
-            emitter.emit('api-network-query-status', {
-                id: req.params.query_id,
-                response: res,
-            });
-        });
-
-        server.get(`/api/${this.version_id}/query/:query_id/responses`, (req, res) => {
-            this.logger.api('GET: Local query responses request received.');
-
-            if (!req.params.query_id) {
-                res.status(400);
-                res.send({
-                    message: 'Param query_id is required.',
-                });
-                return;
-            }
-            emitter.emit('api-network-query-responses', {
-                query_id: req.params.query_id,
-                response: res,
-            });
-        });
-
-        server.post(`/api/${this.version_id}/read/network`, (req, res) => {
-            this.logger.api('POST: Network read request received.');
-
-            if (req.body == null || req.body.query_id == null || req.body.reply_id == null
-                || req.body.data_set_id == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-                return;
-            }
-            const { query_id, reply_id, data_set_id } = req.body;
-
-            emitter.emit('api-choose-offer', {
-                query_id,
-                reply_id,
-                data_set_id,
-                response: res,
-            });
-        });
 
         server.get(`/api/${this.version_id}/consensus/:sender_id`, (req, res) => {
             this.logger.api('GET: Consensus check events request received.');
@@ -507,6 +449,82 @@ class RestAPIServiceV2 {
         res.send(response);
     }
 
+    async _networkQuery(req, res) {
+        this.logger.api('POST: Network query request received.');
+
+        let error = RestAPIValidator.validateBodyRequired(req.body);
+        if (error) {
+            res.status(400);
+            res.send({
+                message: error.message,
+            });
+            return;
+        }
+
+        const { query } = req.body;
+        error = RestAPIValidator.validateSearchQuery(query);
+        if (error) {
+            res.status(400);
+            res.send({
+                message: error.message,
+            });
+            return;
+        }
+
+        this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
+
+        const queryId = await this.dvController.queryNetwork(query, res);
+
+        if (queryId) {
+            res.status(200);
+            res.send({
+                query_id: queryId,
+            });
+        }
+    }
+
+    async _networkQueryStatus(req, res) {
+        this.logger.api('GET: Query for status request received.');
+
+        if (!req.params.query_id) {
+            res.status(400);
+            res.send({
+                message: 'Missing Query ID parameter.',
+            });
+            return;
+        }
+
+        await this.dvController.handleNetworkQueryStatus(req.params.query_id, res);
+    }
+
+    async _networkQueryResponse(req, res) {
+        this.logger.api('GET: Local query responses request received.');
+
+        if (!req.params.query_id) {
+            res.status(400);
+            res.send({
+                message: 'Param query_id is required.',
+            });
+            return;
+        }
+
+        await this.dvController.getNetworkQueryResponses(req.params.query_id, res);
+    }
+
+    async _readNetwork(req, res) {
+        this.logger.api('POST: Network read request received.');
+
+        if (req.body == null || req.body.reply_id == null
+            || req.body.data_set_id == null) {
+            res.status(400);
+            res.send({ message: 'Params reply_id and data_set_id are required.' });
+            return;
+        }
+        const { reply_id, data_set_id } = req.body;
+
+        await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
+    }
+
     async _checkForHandlerStatus(req, res) {
         const handler_object = await Models.handler_ids.findOne({
             where: {
@@ -518,7 +536,7 @@ class RestAPIServiceV2 {
             this.logger.info('Invalid request');
             res.status(404);
             res.send({
-                message: 'This data set does not exist in the database',
+                message: 'Unable to find data with given parameters!',
             });
             return;
         }
