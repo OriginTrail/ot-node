@@ -87,12 +87,11 @@ class DVController {
      * @param dataSetId
      * @param replyId
      */
-    async handleDataReadRequest(query_id, data_set_id, reply_id, res) {
-        this.logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
+    async handleDataReadRequest(data_set_id, reply_id, res) {
+        this.logger.info(`Choose offer triggered with reply ID ${reply_id} and import ID ${data_set_id}`);
 
         const offer = await Models.network_query_responses.findOne({
             where: {
-                query_id,
                 reply_id,
             },
         });
@@ -114,7 +113,6 @@ class DVController {
                 return;
             }
             const handler_data = {
-                query_id,
                 data_set_id,
                 reply_id,
             };
@@ -135,7 +133,6 @@ class DVController {
                 name: 'dvDataReadRequestCommand',
                 delay: 0,
                 data: {
-                    queryId: query_id,
                     dataSetId: data_set_id,
                     replyId: reply_id,
                     handlerId: inserted_object.dataValues.handler_id,

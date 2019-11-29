@@ -478,7 +478,6 @@ class RestAPIServiceV2 {
         if (queryId) {
             res.status(200);
             res.send({
-                message: 'Query sent successfully.',
                 query_id: queryId,
             });
         }
@@ -515,15 +514,15 @@ class RestAPIServiceV2 {
     async _readNetwork(req, res) {
         this.logger.api('POST: Network read request received.');
 
-        if (req.body == null || req.body.query_id == null || req.body.reply_id == null
+        if (req.body == null || req.body.reply_id == null
             || req.body.data_set_id == null) {
             res.status(400);
-            res.send({ message: 'Params query_id, reply_id and data_set_id are required.' });
+            res.send({ message: 'Params reply_id and data_set_id are required.' });
             return;
         }
-        const { query_id, reply_id, data_set_id } = req.body;
+        const { reply_id, data_set_id } = req.body;
 
-        await this.dvController.handleDataReadRequest(query_id, data_set_id, reply_id, res);
+        await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
     }
 
     async _checkForHandlerStatus(req, res) {

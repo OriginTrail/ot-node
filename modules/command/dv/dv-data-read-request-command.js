@@ -22,12 +22,11 @@ class DVDataReadRequestCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            queryId, dataSetId, replyId, handlerId,
+            dataSetId, replyId, handlerId,
         } = command.data;
 
         const offer = await Models.network_query_responses.findOne({
             where: {
-                query_id: queryId,
                 reply_id: replyId,
             },
         });

@@ -77,7 +77,6 @@ class DVDataReadResponseFreeCommand extends Command {
 
         const { document } = message;
         // Calculate root hash and check is it the same on the SC.
-        // const { vertices, edges } = message.data;
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
         if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
@@ -132,7 +131,7 @@ class DVDataReadResponseFreeCommand extends Command {
             transaction_hash,
         });
 
-        this.logger.info(`Data set ID ${dataSetId} imported successfully.`);
+        this.logger.info(`Data set ID ${dataSetId} import started.`);
         this.logger.trace(`DataSet ${dataSetId} purchased for query ID ${networkQueryResponse.query_id}, ` +
             `reply ID ${replyId}.`);
         this.remoteControl.readNotification({
