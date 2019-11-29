@@ -1,5 +1,6 @@
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
+const bytes = require('utf8-length');
 
 class ImportWorkerController {
     constructor(ctx) {
@@ -24,6 +25,7 @@ class ImportWorkerController {
             document,
             handler_id,
             encryptedMap,
+            purchased,
         } = command.data;
 
         // Extract wallet from signature.
@@ -33,6 +35,8 @@ class ImportWorkerController {
         );
 
         await this.importService.validateDocument(document);
+
+        const otjson_size_in_bytes = bytes(JSON.stringify(document));
 
         const forked = fork('modules/worker/graph-converter-worker.js');
 
@@ -64,6 +68,8 @@ class ImportWorkerController {
                     edges: parsedData.deduplicateVertices,
                     data_set_id: parsedData.datasetId,
                     handler_id: parsedData.handler_id,
+                    otjson_size_in_bytes,
+                    purchased,
                 },
             };
 

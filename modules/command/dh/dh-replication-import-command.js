@@ -118,11 +118,11 @@ class DhReplicationImportCommand extends Command {
         }
 
         if (dataInfo == null) {
-            const dataSize = bytes(JSON.stringify(otJson));
+            const dataSize = bytes(JSON.stringify(decryptedDataset));
             const dataHash = Utilities.normalizeHex(sha3_256(`${otJson}`));
             await Models.data_info.create({
                 data_set_id: dataSetId,
-                total_documents: otJson['@graph'].length,
+                total_documents: decryptedDataset['@graph'].length,
                 root_hash: decryptedGraphRootHash,
                 // TODO: add field data_provider_id: 'Perutnina Ptuj ERC...'
                 // otjson.datasetHeader.dataProvider || 'Unknown'
@@ -131,7 +131,6 @@ class DhReplicationImportCommand extends Command {
                 // TODO: add field data_creator_id_type: 'ERC725' || 'Unknown'
                 data_provider_wallet: dcWallet, // TODO: rename to data_creator_wallet
                 import_timestamp: new Date(),
-                data_size: dataSize,
                 otjson_size_in_bytes: dataSize,
                 data_hash: dataHash,
                 origin: 'HOLDING',

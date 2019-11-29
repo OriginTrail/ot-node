@@ -53,7 +53,7 @@ class DcWriteImportToGraphDbCommand extends Command {
 
     async writeToDb(data) {
         const {
-            vertices, edges, metadata, datasetId, header, dataCreator,
+            vertices, edges, metadata, dataCreator,
         } = data.data;
 
         await forEachSeries(vertices, vertex => this.graphStorage.addVertex(vertex));
