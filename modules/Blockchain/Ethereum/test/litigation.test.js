@@ -10,7 +10,6 @@ const Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 const Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
 const Litigation = artifacts.require('Litigation'); // eslint-disable-line no-undef
 const Replacement = artifacts.require('Replacement'); // eslint-disable-line no-undef
-const MockLitigation = artifacts.require('MockLitigation'); // eslint-disable-line no-undef
 
 const ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
 const HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
