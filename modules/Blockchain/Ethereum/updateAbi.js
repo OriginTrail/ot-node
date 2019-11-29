@@ -15,7 +15,6 @@ var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line
 var LitigationStorage = artifacts.require('LitigationStorage'); // eslint-disable-line no-undef
 
 var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
-var MockLitigation = artifacts.require('MockLitigation'); // eslint-disable-line no-undef
 var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
