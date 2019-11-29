@@ -420,12 +420,12 @@ class EventEmitter {
         });
 
         this._on('api-payout', async (data) => {
-            const { offerId } = data;
+            const { offerId, urgent } = data;
 
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await profileService.payOut(offerId);
+                await profileService.payOut(offerId, urgent);
 
                 data.response.status(200);
                 data.response.send({
@@ -498,6 +498,7 @@ class EventEmitter {
                 tokenAmountPerHolder,
                 litigationIntervalInMinutes,
                 handler_id,
+                urgent,
             } = data;
 
             let {
@@ -520,7 +521,7 @@ class EventEmitter {
                 }
 
                 if (dataSizeInBytes == null) {
-                    dataSizeInBytes = dataset.data_size;
+                    dataSizeInBytes = dataset.otjson_size_in_bytes;
                 }
 
                 if (dataRootHash == null) {
@@ -529,7 +530,7 @@ class EventEmitter {
 
                 const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes, handler_id,
+                    dataSizeInBytes, litigationIntervalInMinutes, handler_id, urgent,
                 );
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);

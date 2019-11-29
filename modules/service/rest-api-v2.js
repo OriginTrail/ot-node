@@ -633,6 +633,7 @@ class RestAPIServiceV2 {
                 data_lifespan: req.body.data_lifespan,
                 total_token_amount: req.body.total_token_amount,
                 response: res,
+                urgent: req.body.urgent,
             };
             const handler_data = {
                 data_lifespan: queryObject.data_lifespan,
