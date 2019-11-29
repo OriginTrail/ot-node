@@ -10,7 +10,7 @@ describe('Merkle module', () => {
     function solidityLitigationLeafHash(leaf, objectIndex, blockIndex) {
         return abi.soliditySHA3(
             ['bytes32', 'uint256', 'uint256'],
-            [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), objectIndex, blockIndex],
+            [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex').padStart(64, '0')), objectIndex, blockIndex],
         ).toString('hex');
     }
 

@@ -2,7 +2,7 @@ const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 
-class DCLitigationCompleted extends Command {
+class DCLitigationCompletedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -42,7 +42,7 @@ class DCLitigationCompleted extends Command {
                     DH_was_penalized: penalized,
                 } = JSON.parse(event.data);
 
-                this.logger.notify(`Litigation completed for DH ${dhIdentity} and offer ${offerId}.`);
+                this.logger.important(`Litigation completed for DH ${dhIdentity} and offer ${offerId}.`);
                 if (penalized === true) {
                     this.logger.notify(`DH ${dhIdentity} was penalized for the offer ${offerId}.`);
                 } else {
@@ -132,4 +132,4 @@ class DCLitigationCompleted extends Command {
     }
 }
 
-module.exports = DCLitigationCompleted;
+module.exports = DCLitigationCompletedCommand;

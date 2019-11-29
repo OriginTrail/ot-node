@@ -73,12 +73,12 @@ describe('Challenge service tests', () => {
 
     describe('Challenge answers', () => {
         it('answerTestQuestion() should return correct block chunk', () => {
-            expect(challengeService.answerChallengeQuestion(10, vertexData)).to.be.equal('ip ex ea commodo consequat. Dui');
-            expect(challengeService.answerChallengeQuestion(8, vertexData)).to.be.equal('{\\"@id\\":\\"vertex2\\",\\"data\\":\\');
-            expect(challengeService.answerChallengeQuestion(6, vertexData)).to.be.equal('aliqua. Ut enim ad minim veniam');
-            expect(challengeService.answerChallengeQuestion(13, vertexData)).to.be.equal('ehenderit in voluptate velit es');
-            expect(challengeService.answerChallengeQuestion(2, vertexData)).to.be.equal('consectetur adipiscing elit, se');
-            expect(challengeService.answerChallengeQuestion(4, vertexData)).to.be.equal('"},{\\"@id\\":\\"vertex1\\",\\"data\\');
+            expect(challengeService.answerChallengeQuestion(10, vertexData)).to.be.equal('at. Duis"},{"@id":"vertex3","da');
+            expect(challengeService.answerChallengeQuestion(8, vertexData)).to.be.equal('"data":" ullamco laboris nisi u');
+            expect(challengeService.answerChallengeQuestion(6, vertexData)).to.be.equal('ad minim veniam, quis nostrud e');
+            expect(challengeService.answerChallengeQuestion(13, vertexData)).to.be.equal('e cillum"},{"@id":"vertex4","da');
+            expect(challengeService.answerChallengeQuestion(2, vertexData)).to.be.equal('tur adipiscing elit, sed do eiu');
+            expect(challengeService.answerChallengeQuestion(4, vertexData)).to.be.equal(':"vertex1","data":" ut labore e');
         });
     })
 });

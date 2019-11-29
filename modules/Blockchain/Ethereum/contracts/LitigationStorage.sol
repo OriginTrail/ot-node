@@ -24,7 +24,8 @@ contract LitigationStorage {
 	struct LitigationDefinition{
 		address litigatorIdentity;
 
-		uint256 requestedDataIndex;
+		uint256 requestedObjectIndex;
+		uint256 requestedBlockIndex;
 		bytes32 requestedData;
 		bytes32[] hashArray;
 		
@@ -41,9 +42,13 @@ contract LitigationStorage {
 	public onlyContracts {
 		litigation[offerId][holderIdentity].litigatorIdentity = litigatorIdentity;
 	}
-	function setLitigationRequestedDataIndex (bytes32 offerId, address holderIdentity, uint256 requestedDataIndex)
+	function setLitigationRequestedObjectIndex (bytes32 offerId, address holderIdentity, uint256 requestedObjectIndex)
 	public onlyContracts {
-		litigation[offerId][holderIdentity].requestedDataIndex = requestedDataIndex;
+		litigation[offerId][holderIdentity].requestedObjectIndex = requestedObjectIndex;
+	}
+	function setLitigationRequestedBlockIndex (bytes32 offerId, address holderIdentity, uint256 requestedBlockIndex)
+	public onlyContracts {
+		litigation[offerId][holderIdentity].requestedBlockIndex = requestedBlockIndex;
 	}
 	function setLitigationRequestedData (bytes32 offerId, address holderIdentity, bytes32 requestedData)
 	public onlyContracts {
@@ -74,9 +79,13 @@ contract LitigationStorage {
 	public view returns (address litigatorIdentity){
 		return litigation[offerId][holderIdentity].litigatorIdentity;
 	}
-	function getLitigationRequestedDataIndex (bytes32 offerId, address holderIdentity)
-	public view returns (uint256 requestedDataIndex){
-		return litigation[offerId][holderIdentity].requestedDataIndex;
+	function getLitigationRequestedObjectIndex (bytes32 offerId, address holderIdentity)
+	public view returns (uint256 requestedObjectIndex){
+		return litigation[offerId][holderIdentity].requestedObjectIndex;
+	}
+	function getLitigationRequestedBlockIndex (bytes32 offerId, address holderIdentity)
+	public view returns (uint256 requestedBlockIndex){
+		return litigation[offerId][holderIdentity].requestedBlockIndex;
 	}
 	function getLitigationRequestedData (bytes32 offerId, address holderIdentity)
 	public view returns (bytes32 requestedData){

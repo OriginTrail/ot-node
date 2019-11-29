@@ -230,12 +230,17 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
     systemDb.useDatabase(databaseName);
 
     await systemDb.query(`FOR v IN ot_vertices
-            UPDATE { _key: v._key, 
-                '${this.state.lastImport.dataset_id}': {
-                    data:
-                        REVERSE(v['${this.state.lastImport.dataset_id}'].data)
-                       } 
+            UPDATE { _key: v._key,
+                uid: "corrupted",
+                identifierType: "corrupted",
+                identifierValue: "corrupted",
+                vertexType: "corrupted",
+                data: "corrupted",
+                datasets: "corrupted",
+                objectType: "corrupted"
             } IN ot_vertices`);
+
+    // await systemDb.query('FOR u IN ot_vertices REMOVE { _key: u._key } IN ot_vertices');
 
     this.state.holdersToLitigate.push(node);
 });
@@ -271,7 +276,7 @@ Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeo
                 "requestedDataIndex":"203"
             }
          */
-        expect(event).to.have.keys(['0', '1', '2', 'offerId', 'holderIdentity', 'requestedDataIndex']);
+        expect(event).to.have.keys(['0', '1', '2', '3', 'offerId', 'holderIdentity', 'requestedBlockIndex', 'requestedObjectIndex']);
 
         // Find node
         Models.sequelize.options.storage = dc.systemDbPath;
@@ -279,7 +284,8 @@ Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeo
         const challenge = await Models.sequelize.models.challenges.findOne({
             where: {
                 dh_id: node.state.identity,
-                block_id: Number(event.requestedDataIndex),
+                block_index: Number(event.requestedBlockIndex),
+                object_index: Number(event.requestedObjectIndex),
                 offer_id: event.offerId,
             },
         });
@@ -341,7 +347,7 @@ Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeo
 });
 
 Then(
-    /^the last offer's status for (\d+)[st|nd|rd|th]+ node should be active$/,
+    /^the last replication status for (\d+)[st|nd|rd|th]+ node should be holding$/,
     { timeout: 300000 },
     async function (nodeIndex) {
         expect(nodeIndex, 'Invalid node index').to.be.greaterThan(0);
@@ -359,7 +365,7 @@ Then(
         const node = this.state.nodes[nodeIndex - 1];
 
         const lastOfferId =
-            dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
+            dc.state.offers.internalIDs[Object.keys(dc.state.offers.internalIDs)[0]].offerId;
 
         Models.sequelize.options.storage = dc.systemDbPath;
         await Models.sequelize.sync();
@@ -373,14 +379,5 @@ Then(
         });
 
         expect(replicated_data.status).to.equal('HOLDING');
-
-        const offer = await Models.sequelize.models.offers.findOne({
-            where: {
-                offer_id: lastOfferId,
-                data_set_id: this.state.lastImport.dataset_id,
-            },
-        });
-
-        expect(offer.global_status).to.equal('ACTIVE');
     },
 );
