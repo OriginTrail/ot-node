@@ -95,23 +95,23 @@ class RestAPIServiceV2 {
             await this._getMerkleProofs(req, res);
         });
 
-        server.post(`/api/${this.version_id}/query/network`, async (req, res) => {
+        server.post(`/api/${this.version_id}/network/query`, async (req, res) => {
             await this._networkQuery(req, res);
         });
 
-        server.get(`/api/${this.version_id}/query/network/result/:query_id`, async (req, res) => {
+        server.get(`/api/${this.version_id}/network/query/result/:query_id`, async (req, res) => {
             await this._networkQueryStatus(req, res);
         });
 
-        server.get(`/api/${this.version_id}/query/network/responses/:query_id`, async (req, res) => {
-            await this._networkQueryResponse(req, res);
+        server.get(`/api/${this.version_id}/network/query/responses/:query_id`, async (req, res) => {
+            await this._networkQueryResponses(req, res);
         });
 
-        server.post(`/api/${this.version_id}/read/network`, async (req, res) => {
+        server.post(`/api/${this.version_id}/network/read`, async (req, res) => {
             await this._readNetwork(req, res);
         });
 
-        server.get(`/api/${this.version_id}/read/network/result/:handler_id`, async (req, res) => {
+        server.get(`/api/${this.version_id}/network/read/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
         });
 
@@ -497,7 +497,7 @@ class RestAPIServiceV2 {
         await this.dvController.handleNetworkQueryStatus(req.params.query_id, res);
     }
 
-    async _networkQueryResponse(req, res) {
+    async _networkQueryResponses(req, res) {
         this.logger.api('GET: Local query responses request received.');
 
         if (!req.params.query_id) {

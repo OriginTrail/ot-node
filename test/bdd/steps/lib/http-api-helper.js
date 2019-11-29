@@ -414,7 +414,7 @@ async function apiQueryNetwork(nodeRpcUrl, jsonQuery) {
         request(
             {
                 method: 'POST',
-                uri: `${nodeRpcUrl}/api/latest/query/network`,
+                uri: `${nodeRpcUrl}/api/latest/network/query`,
                 json: true,
                 body: jsonQuery,
             },
@@ -441,7 +441,7 @@ async function apiQueryNetworkResponses(nodeRpcUrl, queryNetworkId) {
         request(
             {
                 method: 'GET',
-                uri: `${nodeRpcUrl}/api/query/${queryNetworkId}/responses`,
+                uri: `${nodeRpcUrl}/api/latest/network/query/responses/${queryNetworkId}`,
                 json: true,
             },
             (err, res, body) => {
@@ -475,7 +475,7 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
         request(
             {
                 method: 'POST',
-                uri: `${nodeRpcUrl}/api/latest/read/network`,
+                uri: `${nodeRpcUrl}/api/latest/network/read`,
                 json: true,
                 body: {
                     query_id: queryId,
