@@ -10,7 +10,8 @@ Feature: Protocol related issues.
     Given I setup 7 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     # Stop the node to avoid replication.
     When I stop the 7th node

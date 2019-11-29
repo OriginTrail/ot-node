@@ -23,7 +23,7 @@ Feature: Test basic network features
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
 
-  @skip
+  @dl2
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes

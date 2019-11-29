@@ -475,7 +475,7 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
         request(
             {
                 method: 'POST',
-                uri: `${nodeRpcUrl}/api/read/network`,
+                uri: `${nodeRpcUrl}/api/latest/read/network`,
                 json: true,
                 body: {
                     query_id: queryId,
