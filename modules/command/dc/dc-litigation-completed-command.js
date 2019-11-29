@@ -42,7 +42,7 @@ class DCLitigationCompletedCommand extends Command {
                     DH_was_penalized: penalized,
                 } = JSON.parse(event.data);
 
-                this.logger.notify(`Litigation completed for DH ${dhIdentity} and offer ${offerId}.`);
+                this.logger.important(`Litigation completed for DH ${dhIdentity} and offer ${offerId}.`);
                 if (penalized === true) {
                     this.logger.notify(`DH ${dhIdentity} was penalized for the offer ${offerId}.`);
                 } else {

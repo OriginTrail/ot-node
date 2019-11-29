@@ -3,7 +3,7 @@ Feature: Test various litigation scenarios
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @skip
+  @first
   Scenario: Test litigation for one holder which is not responding
     Given the replication difficulty is 0
     And I setup 4 nodes
@@ -28,7 +28,7 @@ Feature: Test various litigation scenarios
     Then Litigator should delay other litigations while one is running
     Then 1st holder to litigate should answer litigation
     Then Litigator node should have completed litigation
-    Then 1st started holder should have been penalized
+    Then 1st started holder should not have been penalized
 #    Then Litigator should have started replacement for penalized holder
 #    Then I wait for 4 replacement replications to finish
 #    Then I wait for replacement to be completed
@@ -39,7 +39,7 @@ Feature: Test various litigation scenarios
 #    Then I wait for 3 replacement replications to finish
 #    Then I wait for replacement to be completed
 
-  @skip
+  @second
   Scenario: Test litigation for one holder which has failed to answer challenge but succeeded to answer litigation (wrongly)
     Given the replication difficulty is 0
     And I setup 4 nodes
@@ -62,12 +62,12 @@ Feature: Test various litigation scenarios
     And I wait for litigation initiation
     Then 1st holder to litigate should answer litigation
     Then Litigator node should have completed litigation
-    Then 1st started holder should have been penalized
+    Then 1st started holder should not have been penalized
 #    Then Litigator should have started replacement for penalized holder
 #    Then I wait for 3 replacement replications to finish
 #    Then I wait for replacement to be completed
 
-  @litigation
+  @third
   Scenario: Test litigation for one holder which has failed to answer challenge but succeeded to answer litigation (correctly)
     Given the replication difficulty is 0
     And I setup 4 node
@@ -94,7 +94,7 @@ Feature: Test various litigation scenarios
     Then Litigator node should have completed litigation
     Then 1st started holder should not have been penalized
 
-  @skip
+  @fourth
   Scenario: Test litigation case where same new nodes will apply for same offer
     Given the replication difficulty is 0
     And I setup 4 nodes
@@ -122,7 +122,7 @@ Feature: Test various litigation scenarios
 #    Then I wait for 3 replacement replications to finish
 #    Then I wait for replacement to be completed
 
-  @skip
+  @first
   Scenario: Test litigation case
     Given the replication difficulty is 0
     And I setup 4 nodes
@@ -141,4 +141,4 @@ Feature: Test various litigation scenarios
     And I wait for replications to finish
     When I wait for litigation initiation
     And I simulate true litigation answer for 4th node
-    Then the last offer's status for 4th node should be active
+    Then the last replication status for 4th node should be holding
