@@ -130,17 +130,18 @@ class Blockchain {
      * @param offerId - Offer ID
      * @param holderIdentity - DH identity
      * @param litigatorIdentity - Litigator identity
-     * @param requestedDataIndex - Block ID
+     * @param requestedObjectIndex - Order number of the object from the OT-dataset
+     * @param requestedBlockIndex - Order number of the block inside the sorted object
      * @param hashArray - Merkle proof
      * @return {Promise<any>}
      */
     async initiateLitigation(
         offerId, holderIdentity, litigatorIdentity,
-        requestedDataIndex, hashArray,
+        requestedObjectIndex, requestedBlockIndex, hashArray,
     ) {
         return this.blockchain.initiateLitigation(
             offerId,
-            holderIdentity, litigatorIdentity, requestedDataIndex, hashArray,
+            holderIdentity, litigatorIdentity, requestedObjectIndex, requestedBlockIndex, hashArray,
         );
     }
 
@@ -150,12 +151,13 @@ class Blockchain {
      * @param holderIdentity - DH identity
      * @param challengerIdentity - DC identity
      * @param proofData - answer
+     * @param leafIndex - the number of the block in the lowest level of the merkle tree
      * @return {Promise<void>}
      */
-    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData) {
+    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData, leafIndex) {
         return this.blockchain.completeLitigation(
             offerId, holderIdentity,
-            challengerIdentity, proofData,
+            challengerIdentity, proofData, leafIndex,
         );
     }
 

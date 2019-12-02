@@ -1287,13 +1287,14 @@ class Ethereum {
      * @param offerId - Offer ID
      * @param holderIdentity - DH identity
      * @param litigatorIdentity - Litigator identity
-     * @param requestedDataIndex - Block ID
+     * @param requestedObjectIndex - Order number of the object from the OT-dataset
+     * @param requestedBlockIndex - Order number of the block inside the sorted object
      * @param hashArray - Merkle proof
      * @return {Promise<any>}
      */
     async initiateLitigation(
         offerId, holderIdentity, litigatorIdentity,
-        requestedDataIndex, hashArray,
+        requestedObjectIndex, requestedBlockIndex, hashArray,
     ) {
         const gasPrice = await this.getGasPrice();
         const options = {
@@ -1302,10 +1303,17 @@ class Ethereum {
             to: this.litigationContractAddress,
         };
 
-        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedDataIndex=${requestedDataIndex}, hashArray=${hashArray})`);
+        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedObjectIndex=${requestedObjectIndex}, requestedBlockIndex=${requestedBlockIndex}, hashArray=${hashArray})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi, 'initiateLitigation',
-            [offerId, holderIdentity, litigatorIdentity, requestedDataIndex, hashArray], options,
+            [
+                offerId,
+                holderIdentity,
+                litigatorIdentity,
+                requestedObjectIndex,
+                requestedBlockIndex,
+                hashArray,
+            ], options,
         );
     }
 
@@ -1315,9 +1323,10 @@ class Ethereum {
      * @param holderIdentity - DH identity
      * @param challengerIdentity - DC identity
      * @param proofData - answer
+     * @param leafIndex - the number of the block in the lowest level of the merkle tree
      * @return {Promise<void>}
      */
-    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData) {
+    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData, leafIndex) {
         const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
@@ -1325,10 +1334,10 @@ class Ethereum {
             to: this.litigationContractAddress,
         };
 
-        this.log.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData})`);
+        this.log.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData}, leafIndex=${leafIndex})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi, 'completeLitigation',
-            [offerId, holderIdentity, challengerIdentity, proofData], options,
+            [offerId, holderIdentity, challengerIdentity, proofData, leafIndex], options,
         );
     }
 

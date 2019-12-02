@@ -158,7 +158,7 @@ class MerkleTree {
             }
             return abi.soliditySHA3(
                 ['bytes32', 'uint256', 'uint256'],
-                [Utilities.normalizeHex(Buffer.from(`${data}`, 'utf8').toString('hex')), objectIndex, blockIndex],
+                [Utilities.normalizeHex(Buffer.from(`${data}`, 'utf8').toString('hex').padStart(64, '0')), objectIndex, blockIndex],
             ).toString('hex');
 
         case 'sha3': return sha3_256(`${data}${objectIndex}${blockIndex}`);

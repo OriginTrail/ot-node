@@ -12,6 +12,7 @@ class DHChallengeCommand extends Command {
         this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
+        this.replicationService = ctx.replicationService;
         this.importService = ctx.importService;
     }
 
@@ -30,23 +31,16 @@ class DHChallengeCommand extends Command {
         } = command.data;
 
         const holdingData = await models.holding_data.findOne({
-            limit: 1,
             where: {
                 offer_id: offerId,
-
             },
-            order: [
-                ['id', 'DESC'],
-            ],
         });
 
         if (holdingData == null) {
-            throw new Error(`Failed to find holding data for data set ${datasetId}`);
+            throw new Error(`Failed to find holding data for offer ${offerId}`);
         }
 
-        const colors = ['red', 'green', 'blue'];
-        const colorIndex = holdingData.color;
-        const color = colors[colorIndex];
+        const color = this.replicationService.castNumberToColor(holdingData.color);
 
         const otObject = await this.importService.getImportedOtObject(
             datasetId,
