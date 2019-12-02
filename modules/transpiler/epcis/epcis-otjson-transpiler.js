@@ -389,9 +389,11 @@ class EpcisOtJsonTranspiler {
             }
         }
 
-        if (root.extension && root.extension.TransformationEvent) {
-            for (const event of root.extension.TransformationEvent) {
-                results.push(this._convertEventFromJson(event, 'TransformationEvent'));
+        if (root.extension) {
+            for (const eventList of root.extension) {
+                for (const event of eventList.TransformationEvent) {
+                    results.push(this._convertEventFromJson(event, 'TransformationEvent'));
+                }
             }
         }
         return results;
