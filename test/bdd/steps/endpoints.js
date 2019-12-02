@@ -48,21 +48,25 @@ Then(/^The last import status should be "([^"]*)"$/, { timeout: 1200000 }, async
     expect(this.state.lastImportStatus.status).to.be.equal(status);
 });
 
-Given(/^DC waits for import to finish$/, { timeout: 1200000 }, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+Given(/^(DC|DV|DV2) waits for import to finish$/, { timeout: 1200000 }, async function (targetNode) {
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+    const target = this.state[targetNode.toLowerCase()];
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const promise = new Promise((acc) => {
-        dc.once('import-complete', async () => {
-            if (this.state.lastImport) {
-                this.state.secondLastImport = this.state.lastImport;
-            }
+        target.once('import-complete', async () => {
+            // at this moment, DV|DV2 should not update state.lastImport since his import is referred to network read operation
+            // maybe it should be changed in the future
+            if (targetNode.toLowerCase() === 'dc') {
+                if (this.state.lastImport) {
+                    this.state.secondLastImport = this.state.lastImport;
+                }
 
-            this.state.lastImport = await httpApiHelper.apiImportResult(host, this.state.lastImportHandler);
+                this.state.lastImport = await httpApiHelper.apiImportResult(host, this.state.lastImportHandler);
+            }
             acc();
         });
     });
@@ -70,13 +74,13 @@ Given(/^DC waits for import to finish$/, { timeout: 1200000 }, async function ()
     return promise;
 });
 
-Given(/^DC exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, async function (exportType) {
+Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, async function (targetNode, exportType) {
     expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(targetNode, 'Node type can only be DC, DV2 or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
+    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
 
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
     const { dataset_id } = this.state.lastImport.data;
 
     const exportResponse = await httpApiHelper.apiExport(host, dataset_id, exportType);
@@ -91,15 +95,16 @@ Given(/^DC exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]
     this.state.lastExportType = exportType;
 });
 
-Given(/^DC waits for export to finish$/, { timeout: 1200000 }, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async function (targetNode) {
+    expect(targetNode, 'Node type can only be DC, DV2 or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
+    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
 
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+    const target = this.state[targetNode.toLowerCase()];
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const promise = new Promise((acc) => {
-        dc.once('export-complete', async () => {
+        target.once('export-complete', async () => {
             if (this.state.lastExport) {
                 this.state.secondLastExport = this.state.lastExport;
             }

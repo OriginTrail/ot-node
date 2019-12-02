@@ -650,7 +650,6 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
-    const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const dataSetId = this.state.lastImport.data.dataset_id;
 
@@ -660,17 +659,9 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
         `Data-set ${dataSetId} was not purchased.`,
     ).to.have.key(dataSetId);
 
-    // Get original import info.
-    const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-    const dvImportInfo =
-        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-
-    if (!deepEqual(dcImportInfo, dvImportInfo)) {
-        throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
+    if (!deepEqual(this.state.lastExport.data.formatted_dataset, this.state.secondLastExport.data.formatted_dataset)) {
+        throw Error(`Objects not equal: ${JSON.stringify(this.state.lastExport)} and ${JSON.stringify(this.state.secondLastExport)}`);
     }
-    expect(dcImportInfo.transaction, 'DC transaction hash should be defined').to.not.be.undefined;
-    expect(dvImportInfo.transaction, 'DV/DV2 transaction hash should be defined').to.not.be.undefined;
 });
 
 Given(/^I remember previous import's fingerprint value$/, async function () {
@@ -803,15 +794,10 @@ Then(/^all nodes with (last import|second last import) should answer to last net
     const nodeCandidates = [];
     this.state.nodes.forEach((node) => {
         promises.push(new Promise(async (accept) => {
-            const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
-            body.find((importInfo) => {
-                if (importInfo.data_set_id === this.state[whichImport].data.dataset_id) {
-                    nodeCandidates.push(node.state.identity);
-                    return true;
-                }
-                return false;
-            });
-            // TODO check that nodeCandidates [] elements are all unique values, there must not be dupes
+            const body = await httpApiHelper.apiGetDatasetInfo(node.state.node_rpc_url, this.state[whichImport].data.dataset_id);
+            if (body.dataset_id === this.state[whichImport].data.dataset_id) {
+                nodeCandidates.push(node.state.identity);
+            }
             accept();
         }));
     });

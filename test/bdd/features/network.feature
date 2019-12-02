@@ -23,7 +23,7 @@ Feature: Test basic network features
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
 
-  @skip
+  @first
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -41,10 +41,14 @@ Feature: Test basic network features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from a DH
+    And DV waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
-    Then DV's last purchase's hash should be the same as one manually calculated
 
-  @skip
+  @second
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
@@ -61,9 +65,14 @@ Feature: Test basic network features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from the DC
+    And DV waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
 
-  @skip
+  @third
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
@@ -80,6 +89,11 @@ Feature: Test basic network features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from the DC
+    And DV waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
     Given I additionally setup 1 node
     And I start additional nodes
@@ -87,7 +101,16 @@ Feature: Test basic network features
     Given DV2 publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV2
     Given the DV2 purchases last import from the last query from a DV
+    And DV2 waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV2 exports the last imported dataset as OT-JSON
+    And DV2 waits for export to finish
     Then the last import should be the same on DC and DV2 nodes
 
   @first

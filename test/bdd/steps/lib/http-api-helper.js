@@ -181,6 +181,24 @@ async function apiExportResult(nodeRpcUrl, handler_id) {
     });
 }
 
+
+async function apiGetDatasetInfo(nodeRpcUrl, dataset_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/get_dataset_info/${dataset_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
 /**
  * Fetch /api/latest/import/result
  * @typedef {Object} ImportResult
@@ -687,4 +705,5 @@ module.exports = {
     apiNodeInfo,
     apiBalance,
     apiGetElementIssuerIdentity,
+    apiGetDatasetInfo,
 };
