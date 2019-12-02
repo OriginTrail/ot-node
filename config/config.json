@@ -57,6 +57,8 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
       "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
       "plugins": [
         {
@@ -96,10 +98,8 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
-    "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
     "dc_choose_time": 1200000,
@@ -165,6 +165,8 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
       "hub_contract_address": "0xA272797Bfc59946388D89CdB6821dEeC927E0E36",
       "plugins": [
         {
@@ -204,10 +206,8 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "1",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 1440,
-    "dh_min_token_price": "1",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,
@@ -273,6 +273,8 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
       "hub_contract_address": "0x6C314872A7e97A6F1dC7De2dc43D28500dd36f22",
       "plugins": [
         {
@@ -312,10 +314,8 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
-    "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,
@@ -381,6 +381,8 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
       "hub_contract_address": "0x53F5b26EB263B96ffA83468F78DA738a3961644A",
       "plugins": [
         {
@@ -423,10 +425,8 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
-    "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,
@@ -492,6 +492,8 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
       "hub_contract_address": "0xa287d7134fb40bef071c932286bd2cd01efccf30",
       "plugins": [
         {
@@ -534,10 +536,8 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 10080,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
-    "dh_min_token_price": "20000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,

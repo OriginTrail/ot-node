@@ -379,58 +379,6 @@ class EventEmitter {
             }
         });
 
-        this._on('api-create-offer', async (data) => {
-            const {
-                dataSetId,
-                holdingTimeInMinutes,
-                tokenAmountPerHolder,
-                litigationIntervalInMinutes,
-                handler_id,
-                urgent,
-            } = data;
-
-            let {
-                dataRootHash,
-                dataSizeInBytes,
-            } = data;
-
-            try {
-                logger.info(`Preparing to create offer for data set ${dataSetId}`);
-
-                const dataset = await Models.data_info.findOne({
-                    where: { data_set_id: dataSetId },
-                });
-                if (dataset == null) {
-                    data.response.status(404);
-                    data.response.send({
-                        message: 'This data set does not exist in the database',
-                    });
-                    return;
-                }
-
-                if (dataSizeInBytes == null) {
-                    dataSizeInBytes = dataset.otjson_size_in_bytes;
-                }
-
-                if (dataRootHash == null) {
-                    dataRootHash = dataset.root_hash;
-                }
-
-                const replicationId = await dcService.createOffer(
-                    dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes, handler_id, urgent,
-                );
-            } catch (error) {
-                logger.error(`Failed to create offer. ${error}.`);
-                notifyError(error);
-                data.response.status(405);
-                data.response.send({
-                    message: `Failed to start offer. ${error}.`,
-                });
-                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
-            }
-        });
-
         const processExport = async (error, data) => {
             const { handler_id, formatted_dataset } = data;
 

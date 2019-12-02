@@ -2,6 +2,7 @@ const {
     describe, before, beforeEach, it,
 } = require('mocha');
 const PricingService = require('../../../modules/service/pricing-service');
+const TracPriceService = require('../../../modules/service/trac-price-service');
 const awilix = require('awilix');
 const defaultConfig = require('../../../config/config.json').mariner;
 const rc = require('rc');
@@ -44,7 +45,7 @@ class Web3Mock {
     }
 }
 
-describe('Gas price service test', () => {
+describe('Pricing service test', () => {
     beforeEach('Setup container', async () => {
         // Create the container and set the injectionMode to PROXY (which is also the default).
         process.env.NODE_ENV = 'mariner';
@@ -62,6 +63,7 @@ describe('Gas price service test', () => {
             logger: awilix.asValue(logger),
             gasStationService: awilix.asValue(gasStationService),
             web3: awilix.asValue(web3ServiceMock),
+            tracPriceService: awilix.asValue(TracPriceService),
         });
         pricingService = new PricingService(container.cradle);
     });

@@ -1,5 +1,7 @@
 const constants = require('../constants');
-const BN = require('bn.js');
+
+const minutesInDay = 60 * 24;
+const basePayoutGas = 200000;
 
 class PricingService {
     constructor(ctx) {
@@ -7,28 +9,37 @@ class PricingService {
         this.config = ctx.config;
         this.gasStationService = ctx.gasStationService;
         this.web3 = ctx.web3;
+        this.tracPriceService = ctx.tracPriceService;
     }
 
-    calculateOfferPrice(holdingTimeInMinutes, dataSizeInBytes) {
-        // 2*base_payout_trac+PriceFactor*SQRT(2*filesize*jobDuration)
-
+    async calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes) {
+        if (!dataSizeInBytes) {
+            throw new Error('Calculate offer price method called. Data size in bytes not defined!');
+        }
         if (!holdingTimeInMinutes) {
-            holdingTimeInMinutes = new BN(this.config.dc_holding_time_in_minutes, 10);
+            throw new Error('Calculate offer price method called. Holding time in minutes not defined!');
         }
 
-        // TODO calculate base payout using some oracle
-        const basePayoutTrac = 18;
+        const basePayoutTrac = await this._calculateBasePayoutInTrac();
 
-        const holdingTimeInDays = holdingTimeInMinutes.div(new BN(1440));
+        const holdingTimeInDays = holdingTimeInMinutes / minutesInDay;
         const dataSizeInMb = dataSizeInBytes / 1000000;
 
-        // TODO get price facotr from configuration
-        const priceFactor = 2;
+        const priceFactor = this.config.blockchain.price_factor;
 
-        // const price = (2 * basePayoutTrac) + (priceFactor *
-        // Math.sqrt(2 * holdingTimeInDays * dataSizeInMb));
-        //
-        // return price;
+        const price = (2 * basePayoutTrac) + (priceFactor *
+        Math.sqrt(2 * holdingTimeInDays * dataSizeInMb));
+        this.logger.trace(`Calculated offer price for data size: ${dataSizeInMb}mb, and holding time: ${holdingTimeInDays} days, PRICE: ${price}TRAC`);
+        return price;
+    }
+
+    async _calculateBasePayoutInTrac() {
+        const tracInEth = await this.tracPriceService.getTracPriceInEth();
+
+        const gasPriceInGwei = await this.getGasPrice() / 1000000000;
+        const basePayoutInEth = (basePayoutGas * gasPriceInGwei) / 1000000000;
+
+        return basePayoutInEth / tracInEth;
     }
 
     async getGasPrice() {

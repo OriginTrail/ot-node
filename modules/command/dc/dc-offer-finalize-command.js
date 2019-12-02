@@ -2,6 +2,7 @@ const BN = require('../../../node_modules/bn.js/lib/bn');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 const Models = require('../../../models/index');
 

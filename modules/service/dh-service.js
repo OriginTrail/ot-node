@@ -24,6 +24,7 @@ class DHService {
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+        this.pricingService = ctx.pricingService;
 
         const that = this;
         this.queue = new Queue((async (args, cb) => {
@@ -99,18 +100,22 @@ class DHService {
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
 
         const format = d3.formatPrefix(',.6~s', 1e6);
-        const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
+        const myOfferPrice = await this.pricingService.calculateOfferPriceinTrac(
+            dataSetSizeInBytes,
+            holdingTimeInMinutes,
+        );
+        const dhMinTokenPrice = new BN(myOfferPrice, 10);
         const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
         const dhMinLitigationIntervalInMinutes =
             new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
 
         const formatMaxPrice = format(tokenAmountPerHolder);
-        const formatMyPrice = format(this.config.dh_min_token_price);
+        const formatMyPrice = format(dhMinTokenPrice);
 
         if (dhMinTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
             this.logger.info(`Offer ${offerId} too cheap for me.`);
-            this.logger.info(`Maximum price offered ${formatMaxPrice}[mTRAC] per byte/min`);
-            this.logger.info(`My price ${formatMyPrice}[mTRAC] per byte/min`);
+            this.logger.info(`Maximum price offered ${formatMaxPrice}[mTRAC]`);
+            this.logger.info(`My price ${formatMyPrice}[mTRAC]`);
             return;
         }
 

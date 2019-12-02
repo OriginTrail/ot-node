@@ -1,10 +1,14 @@
 const axios = require('axios');
 
 class GasStationService {
+    constructor(ctx) {
+        this.logger = ctx.logger;
+    }
+
     async getGasPrice() {
         const response = await axios.get('https://ethgasstation.info/json/ethgasAPI.json')
             .catch((err) => {
-                this.log.warn(err);
+                this.logger.warn(err);
                 return undefined;
             });
         if (response) {
