@@ -104,18 +104,17 @@ class DHService {
             dataSetSizeInBytes,
             holdingTimeInMinutes,
         );
-        const dhMinTokenPrice = new BN(myOfferPrice, 10);
+        const dhTokenPrice = new BN(myOfferPrice, 10);
         const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
         const dhMinLitigationIntervalInMinutes =
             new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
 
-        const formatMaxPrice = format(tokenAmountPerHolder);
-        const formatMyPrice = format(dhMinTokenPrice);
-
-        if (dhMinTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
+        const formatMyPrice = format(dhTokenPrice);
+        const formatTokenAmountPerHolder = format(tokenAmountPerHolder);
+        if (dhTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
             this.logger.info(`Offer ${offerId} too cheap for me.`);
-            this.logger.info(`Maximum price offered ${formatMaxPrice}[mTRAC]`);
-            this.logger.info(`My price ${formatMyPrice}[mTRAC]`);
+            this.logger.info(`Price offered ${formatTokenAmountPerHolder}[mTRAC]`);
+            this.logger.info(`My price for offer ${offerId}, ${formatMyPrice}[mTRAC]`);
             return;
         }
         if (dhMaxHoldingTimeInMinutes.lt(new BN(holdingTimeInMinutes, 10))) {

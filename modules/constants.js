@@ -51,4 +51,10 @@ exports.TRAC_PRICE_IN_ETH_VALIDITY_TIME_IN_MILLS = 30 * 60 * 1000; // 30 min
  *
  * @constant {number} AVERAGE_GAS_PRICE_MULTIPLIER - gas price multiplier
  */
-exports.AVERAGE_GAS_PRICE_MULTIPLIER = 1.2; // 30 min
+exports.AVERAGE_GAS_PRICE_MULTIPLIER = 1.2;
+
+/**
+ *
+ * @constant {number} BASE_PAYOUT_GAS - Gas used for payout
+ */
+exports.BASE_PAYOUT_GAS = 150000;

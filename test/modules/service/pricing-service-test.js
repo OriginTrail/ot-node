@@ -14,12 +14,16 @@ const constants = require('../../../modules/constants');
 let pricingService;
 let gasStationService;
 let web3ServiceMock;
+let tracPriceService;
 
 const defaultConfigGasPrice = 30000000000;
 const defaultGasStationGasPrice = 20000000000;
 const defaultWeb3GasPrice = 10000000000;
+
 const dataSizeInBytes = 1000;
+const bigDataSizeInBytes = 100000;
 const holdingTimeInMinutes = 60;
+const longHoldingTimeInMinutes = 60000000;
 let config;
 
 class GasStationServiceMock {
@@ -65,7 +69,7 @@ describe('Pricing service test', () => {
             logger: awilix.asValue(logger),
             gasStationService: awilix.asValue(gasStationService),
             web3: awilix.asValue(web3ServiceMock),
-            tracPriceService: awilix.asValue(TracPriceService),
+            tracPriceService: awilix.asClass(TracPriceService),
         });
         pricingService = new PricingService(container.cradle);
     });
@@ -95,7 +99,7 @@ describe('Pricing service test', () => {
 
     it('Get gas price - env is mariner, axios returns undefined - expect web3 value is used', async () => {
         gasStationService.gasPrice = undefined;
-        pricingService.axiosService = gasStationService;
+        pricingService.gasStationService = gasStationService;
         const gasPrice = await pricingService.getGasPrice();
         assert.equal(gasPrice, defaultWeb3GasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default web3');
         assert.equal(config.blockchain.gas_price, defaultWeb3GasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default web3');
@@ -113,7 +117,40 @@ describe('Pricing service test', () => {
         assert.closeTo(config.blockchain.gas_price_last_update_timestamp, now, 1000, 'Timestamp should not be changed');
     });
 
-    it('Calculate offer price in trac, data size in bytes not provided - expect error', async () => {
-        expect(pricingService.calculateOfferPriceinTrac.bind(null, holdingTimeInMinutes)).to.throw('Calculate offer price method called. Data size in bytes not defined!');
+    it('Calculate offer price in trac - data size in bytes not provided - expect error', async () => {
+        var message = '';
+        try {
+            await pricingService.calculateOfferPriceinTrac(null, holdingTimeInMinutes);
+            expect().to.throw();
+        } catch (error) {
+            // eslint-disable-next-line prefer-destructuring
+            message = error.message;
+        }
+        assert.equal(message, 'Calculate offer price method called. Data size in bytes not defined!');
+    });
+
+    it('Calculate offer price in trac - holding time in minutes not provided - expect error', async () => {
+        var message = '';
+        try {
+            await pricingService.calculateOfferPriceinTrac(dataSizeInBytes, null);
+            expect().to.throw();
+        } catch (error) {
+            // eslint-disable-next-line prefer-destructuring
+            message = error.message;
+        }
+        assert.equal(message, 'Calculate offer price method called. Holding time in minutes not defined!');
+    });
+
+    it('Calculate offer price in trac - env is mariner, expect valid value is returned', async () => {
+        process.env.NODE_ENV = 'mariner';
+        const price = await pricingService
+            .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
+        assert.equal(price, 126.24546639474057);
+        const bigDataPrice = await pricingService
+            .calculateOfferPriceinTrac(bigDataSizeInBytes, holdingTimeInMinutes);
+        assert.isAbove(bigDataPrice, price);
+        const longDataPrice = await pricingService
+            .calculateOfferPriceinTrac(dataSizeInBytes, longHoldingTimeInMinutes);
+        assert.isAbove(longDataPrice, price);
     });
 });

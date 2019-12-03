@@ -1,7 +1,6 @@
 const constants = require('../constants');
 
 const minutesInDay = 60 * 24;
-const basePayoutGas = 200000;
 
 class PricingService {
     constructor(ctx) {
@@ -20,16 +19,16 @@ class PricingService {
             throw new Error('Calculate offer price method called. Holding time in minutes not defined!');
         }
 
-        const basePayoutTrac = await this._calculateBasePayoutInTrac();
+        const basePayoutCostInTrac = await this._calculateBasePayoutInTrac();
 
         const holdingTimeInDays = holdingTimeInMinutes / minutesInDay;
         const dataSizeInMb = dataSizeInBytes / 1000000;
 
         const priceFactor = this.config.blockchain.price_factor;
 
-        const price = (2 * basePayoutTrac) + (priceFactor *
+        const price = (2 * basePayoutCostInTrac) + (priceFactor *
         Math.sqrt(2 * holdingTimeInDays * dataSizeInMb));
-        this.logger.trace(`Calculated offer price for data size: ${dataSizeInMb}mb, and holding time: ${holdingTimeInDays} days, PRICE: ${price}TRAC`);
+        this.logger.trace(`Calculated offer price for data size: ${dataSizeInMb}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${price}TRAC`);
         return price;
     }
 
@@ -37,7 +36,7 @@ class PricingService {
         const tracInEth = await this.tracPriceService.getTracPriceInEth();
 
         const gasPriceInGwei = await this.getGasPrice() / 1000000000;
-        const basePayoutInEth = (basePayoutGas * gasPriceInGwei) / 1000000000;
+        const basePayoutInEth = (constants.BASE_PAYOUT_GAS * gasPriceInGwei) / 1000000000;
 
         return basePayoutInEth / tracInEth;
     }
