@@ -141,11 +141,11 @@ describe('Pricing service test', () => {
         assert.equal(message, 'Calculate offer price method called. Holding time in minutes not defined!');
     });
 
-    it('Calculate offer price in trac - env is mariner, expect valid value is returned', async () => {
-        process.env.NODE_ENV = 'mariner';
+    it('Calculate offer price in trac - env is development, expect valid value is returned', async () => {
+        process.env.NODE_ENV = 'development';
         const price = await pricingService
             .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
-        assert.equal(price, 126.24546639474057);
+        assert.equal(price, 180.0182574185835);
         const bigDataPrice = await pricingService
             .calculateOfferPriceinTrac(bigDataSizeInBytes, holdingTimeInMinutes);
         assert.isAbove(bigDataPrice, price);
