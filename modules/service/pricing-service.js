@@ -22,13 +22,13 @@ class PricingService {
         const basePayoutCostInTrac = await this._calculateBasePayoutInTrac();
 
         const holdingTimeInDays = holdingTimeInMinutes / minutesInDay;
-        const dataSizeInMb = dataSizeInBytes / 1000000;
+        const dataSizeInMB = dataSizeInBytes / 1000000;
 
         const priceFactor = this.config.blockchain.price_factor;
 
         const price = (2 * basePayoutCostInTrac) + (priceFactor *
-        Math.sqrt(2 * holdingTimeInDays * dataSizeInMb));
-        this.logger.trace(`Calculated offer price for data size: ${dataSizeInMb}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${price}TRAC`);
+        Math.sqrt(2 * holdingTimeInDays * dataSizeInMB));
+        this.logger.trace(`Calculated offer price for data size: ${dataSizeInMB}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${price}TRAC`);
         return price;
     }
 
