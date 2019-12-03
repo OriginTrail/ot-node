@@ -104,7 +104,9 @@
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600,
+    "dcReputationCutoffValue": 0
   },
   "staging": {
     "identity": null,
@@ -211,7 +213,9 @@
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600,
+    "dcReputationCutoffValue": 0
   },
   "stable": {
     "identity": null,
@@ -318,7 +322,9 @@
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600,
+    "dcReputationCutoffValue": 0
   },
   "production": {
     "identity": null,
@@ -428,7 +434,9 @@
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600,
+    "dcReputationCutoffValue": 0
   },
   "mariner": {
     "identity": null,
@@ -538,6 +546,8 @@
     "dc_choose_time": 1200000,
     "requireApproval": true,
     "litigationEnabled": false,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600,
+    "dcReputationCutoffValue": 0
   }
 }
