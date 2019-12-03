@@ -184,13 +184,3 @@ Feature: Test basic network features
     And I start additional nodes
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
-
-  @second
-  Scenario: Check that get element issuer identity returns valid ERC725 identity
-    Given I setup 1 node
-    And I start the node
-    And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
-    And DC waits for import to finish
-#    this test should be updated once we have trail route implemented
-    Then DC should return identity for element id: "0x7586e08bdbd72761455e909cac2954cfb34e93b19e7c79c535df31fbdee4bfd5"
