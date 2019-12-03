@@ -476,7 +476,7 @@ class OTNode {
         log.info('Initializing code migrations...');
 
         // Note: add migrations here
-        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
+        const m1PayoutAllMigrationFilename = '1_m1PayoutAllMigrationFile';
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
