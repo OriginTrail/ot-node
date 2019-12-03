@@ -41,6 +41,7 @@ const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const APIUtilities = require('./modules/api-utilities');
 const RestApiController = require('./modules/service/rest-api-controller');
+const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
@@ -424,7 +425,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runMigration();
+            await this._runMigration(blockchain);
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -470,11 +471,29 @@ class OTNode {
      * @deprecated
      * @private
      */
-    async _runMigration() {
+    async _runMigration(blockchain) {
         const migrationsStartedMills = Date.now();
         log.info('Initializing code migrations...');
 
         // Note: add migrations here
+        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
+
+            try {
+                await migration.run();
+                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
 
         log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
