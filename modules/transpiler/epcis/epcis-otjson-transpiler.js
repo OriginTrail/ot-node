@@ -390,8 +390,14 @@ class EpcisOtJsonTranspiler {
         }
 
         if (root.extension) {
-            for (const eventList of root.extension) {
-                for (const event of eventList.TransformationEvent) {
+            if (Array.isArray(root.extension)) {
+                for (const eventList of root.extension) {
+                    for (const event of eventList.TransformationEvent) {
+                        results.push(this._convertEventFromJson(event, 'TransformationEvent'));
+                    }
+                }
+            } else {
+                for (const event of root.extension.TransformationEvent) {
                     results.push(this._convertEventFromJson(event, 'TransformationEvent'));
                 }
             }
