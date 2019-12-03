@@ -61,7 +61,7 @@ class Ethereum {
             .Contract(this.holdingContractAbi, this.holdingContractAddress);
 
         // Old Holding contract data
-        const oldHoldingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding.json');
+        const oldHoldingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/old-holding.json');
         this.oldHoldingContractAddress = await this._getOldHoldingContractAddress();
         this.oldHoldingContractAbi = JSON.parse(oldHoldingAbiFile);
         this.oldHoldingContract = new this.web3.eth
