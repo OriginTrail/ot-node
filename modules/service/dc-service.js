@@ -253,8 +253,8 @@ class DCService {
     async handleReplicationRequest(offerId, wallet, identity, dhIdentity, response) {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
-        if (!offerId || !wallet) {
-            const message = 'Asked replication without providing offer ID or wallet.';
+        if (!offerId || !wallet || !dhIdentity) {
+            const message = 'Asked replication without providing offer ID or wallet or identity.';
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
             return;
@@ -279,6 +279,20 @@ class DCService {
             const message = `Replication request for offer external ${offerId} that is not in STARTED state.`;
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
+        }
+
+        const reputationModel = await models.reputation_data.findAll({
+            where: {
+                dh_identity: dhIdentity,
+            },
+        });
+        if (reputationModel) {
+            const dhReputation = reputationModel.get({ plain: true });
+            if (dhReputation.value < this.config.dcReputationCutoffValue) {
+                const message = `Replication request from holder identity ${dhIdentity} with unacceptable reputation.`;
+                this.logger.info(message);
+                await this.transport.sendResponse(response, { status: 'fail', message });
+            }
         }
 
         await this._sendReplication(offer, wallet, identity, dhIdentity, response);
