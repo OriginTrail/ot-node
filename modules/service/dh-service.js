@@ -118,7 +118,6 @@ class DHService {
             this.logger.info(`My price ${formatMyPrice}[mTRAC]`);
             return;
         }
-
         if (dhMaxHoldingTimeInMinutes.lt(new BN(holdingTimeInMinutes, 10))) {
             this.logger.info(`Holding time for the offer ${offerId} is greater than my holding time defined.`);
             return;
@@ -129,6 +128,7 @@ class DHService {
             return;
         }
 
+        this.logger.info(`Accepting offer with price: ${myOfferPrice} TRAC.`);
         const offer = await this.blockchain.getOffer(offerId);
         const bid = await Models.bids.create({
             offer_id: offerId,

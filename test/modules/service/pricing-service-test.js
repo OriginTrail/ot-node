@@ -8,7 +8,7 @@ const defaultConfig = require('../../../config/config.json').mariner;
 const rc = require('rc');
 const pjson = require('../../../package.json');
 const logger = require('../../../modules/logger');
-const { assert } = require('chai');
+const { assert, expect } = require('chai');
 const constants = require('../../../modules/constants');
 
 let pricingService;
@@ -18,6 +18,8 @@ let web3ServiceMock;
 const defaultConfigGasPrice = 30000000000;
 const defaultGasStationGasPrice = 20000000000;
 const defaultWeb3GasPrice = 10000000000;
+const dataSizeInBytes = 1000;
+const holdingTimeInMinutes = 60;
 let config;
 
 class GasStationServiceMock {
@@ -109,5 +111,9 @@ describe('Pricing service test', () => {
         assert.equal(config.blockchain.gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default axios');
         const now = new Date().getTime();
         assert.closeTo(config.blockchain.gas_price_last_update_timestamp, now, 1000, 'Timestamp should not be changed');
+    });
+
+    it('Calculate offer price in trac, data size in bytes not provided - expect error', async () => {
+        expect(pricingService.calculateOfferPriceinTrac.bind(null, holdingTimeInMinutes)).to.throw('Calculate offer price method called. Data size in bytes not defined!');
     });
 });
