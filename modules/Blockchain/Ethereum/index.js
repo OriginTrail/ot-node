@@ -551,11 +551,11 @@ class Ethereum {
         const options = {
             gasLimit,
             gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.holdingContractAddress,
+            to: this.oldHoldingContractAddress,
         };
         this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
         return this.transactions.queueTransaction(
-            this.holdingContractAbi, 'payOutMultiple',
+            this.oldHoldingContractAbi, 'payOutMultiple',
             [
                 blockchainIdentity,
                 offerIds,
