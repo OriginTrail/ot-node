@@ -63,7 +63,7 @@ class Ethereum {
             .Contract(this.holdingContractAbi, this.holdingContractAddress);
 
         // Old Holding contract data
-        const oldHoldingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding.json');
+        const oldHoldingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/old-holding.json');
         this.oldHoldingContractAddress = await this._getOldHoldingContractAddress();
         this.oldHoldingContractAbi = JSON.parse(oldHoldingAbiFile);
         this.oldHoldingContract = new this.web3.eth
@@ -546,6 +546,32 @@ class Ethereum {
         };
         this.log.trace(`payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
         return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', [blockchainIdentity, offerId], options);
+    }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    async payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        const gasLimit = offerIds.length * 200000;
+        const gasPrice = await this.getGasPrice(true);
+        const options = {
+            gasLimit,
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.oldHoldingContractAddress,
+        };
+        this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
+        return this.transactions.queueTransaction(
+            this.oldHoldingContractAbi, 'payOutMultiple',
+            [
+                blockchainIdentity,
+                offerIds,
+            ],
+            options,
+        );
     }
 
     /**

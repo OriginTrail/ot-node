@@ -195,6 +195,20 @@ class Blockchain {
     }
 
     /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        return this.blockchain.payOutMultiple(
+            blockchainIdentity,
+            offerIds,
+        );
+    }
+
+    /**
      * Creates offer for the data storing on the Ethereum blockchain.
      * @returns {Promise<any>} Return choose start-time.
      */
