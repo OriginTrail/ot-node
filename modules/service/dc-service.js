@@ -16,6 +16,7 @@ class DCService {
         this.commandExecutor = ctx.commandExecutor;
         this.replicationService = ctx.replicationService;
         this.profileService = ctx.profileService;
+        this.pricingService = ctx.pricingService;
     }
 
     /**
@@ -30,7 +31,7 @@ class DCService {
      */
     async createOffer(
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-        dataSizeInBytes, litigationIntervalInMinutes, handler_id,
+        dataSizeInBytes, litigationIntervalInMinutes, handler_id, urgent,
     ) {
         const offer = await models.offers.create({
             data_set_id: dataSetId,
@@ -40,11 +41,12 @@ class DCService {
         });
 
         if (!holdingTimeInMinutes) {
-            holdingTimeInMinutes = new BN(this.config.dc_holding_time_in_minutes, 10);
+            holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
         }
 
         if (!tokenAmountPerHolder) {
-            tokenAmountPerHolder = new BN(this.config.dc_token_amount_per_holder, 10);
+            tokenAmountPerHolder = await this.pricingService
+                .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
         }
 
         if (!litigationIntervalInMinutes) {
@@ -83,6 +85,7 @@ class DCService {
             dataSizeInBytes,
             litigationIntervalInMinutes,
             handler_id,
+            urgent,
         };
         const commandSequence = [
             'dcOfferPrepareCommand',

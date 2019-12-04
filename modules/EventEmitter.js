@@ -103,28 +103,6 @@ class EventEmitter {
             commandExecutor,
         } = this.ctx;
 
-        this._on('api-network-query-responses', async (data) => {
-            const { query_id } = data;
-            logger.info(`Query for network response triggered with query ID ${query_id}`);
-
-            let responses = await Models.network_query_responses.findAll({
-                where: {
-                    query_id,
-                },
-            });
-
-            responses = responses.map(response => ({
-                datasets: JSON.parse(response.imports),
-                data_size: response.data_size,
-                data_price: response.data_price,
-                stake_factor: response.stake_factor,
-                reply_id: response.reply_id,
-            }));
-
-            data.response.status(200);
-            data.response.send(responses);
-        });
-
         this._on('api-trail', (data) => {
             logger.info(`Get trail triggered with query ${JSON.stringify(data.query)}`);
             product.getTrailByQuery(data.query).then((res) => {
@@ -309,96 +287,6 @@ class EventEmitter {
             });
         });
 
-        this._on('api-network-query', (data) => {
-            logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-
-            dvController.queryNetwork(data.query)
-                .then((queryId) => {
-                    data.response.status(201);
-                    data.response.send({
-                        message: 'Query sent successfully.',
-                        query_id: queryId,
-                    });
-                }).catch((error) => {
-                    logger.error(`Failed query network. ${error}.`);
-                    notifyError(error);
-                });
-        });
-
-        this._on('api-choose-offer', async (data) => {
-            const failFunction = (error) => {
-                logger.warn(error);
-                data.response.status(400);
-                data.response.send({
-                    message: 'Failed to handle query',
-                    data: [],
-                });
-            };
-            const { query_id, reply_id, data_set_id } = data;
-            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
-
-            // TODO: Load offer reply from DB
-            const offer = await Models.network_query_responses.findOne({
-                where: {
-                    query_id,
-                    reply_id,
-                },
-            });
-
-            if (offer == null) {
-                data.response.status(400);
-                data.response.send({ message: 'Reply not found' });
-                return;
-            }
-            try {
-                dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
-                logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                data.response.status(200);
-                data.response.send({
-                    message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
-                });
-            } catch (e) {
-                const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
-                data.response.status(500);
-                data.response.send({ message });
-                failFunction(message);
-                notifyError(e);
-            }
-        });
-
-        this._on('api-network-query-status', async (data) => {
-            const { id, response } = data;
-            logger.info(`Query of network status triggered with ID ${id}`);
-            const networkQuery = await Models.network_queries.find({ where: { id } });
-            if (networkQuery.status === 'FINISHED') {
-                try {
-                    const vertices = await dhService.dataLocationQuery(id);
-
-                    response.status(200);
-                    response.send({
-                        status: `${networkQuery.status}`,
-                        query_id: networkQuery.id,
-                        vertices,
-                    });
-                } catch (error) {
-                    logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
-                    notifyError(error);
-                    response.status(500);
-                    response.send({
-                        error: 'Fail to process.',
-                        query_id: networkQuery.id,
-                    });
-                }
-            } else {
-                response.status(200);
-                response.send({
-                    status: `${networkQuery.status}`,
-                    query_id: networkQuery.id,
-                });
-            }
-        });
-
         this._on('api-offer-status', async (data) => {
             const { replicationId } = data;
             logger.info(`Offer status for internal ID ${replicationId} triggered.`);
@@ -420,12 +308,12 @@ class EventEmitter {
         });
 
         this._on('api-payout', async (data) => {
-            const { offerId } = data;
+            const { offerId, urgent } = data;
 
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await profileService.payOut(offerId);
+                await profileService.payOut(offerId, urgent);
 
                 data.response.status(200);
                 data.response.send({
@@ -488,57 +376,6 @@ class EventEmitter {
                 data.response.send({
                     message: error.toString(),
                 });
-            }
-        });
-
-        this._on('api-create-offer', async (data) => {
-            const {
-                dataSetId,
-                holdingTimeInMinutes,
-                tokenAmountPerHolder,
-                litigationIntervalInMinutes,
-                handler_id,
-            } = data;
-
-            let {
-                dataRootHash,
-                dataSizeInBytes,
-            } = data;
-
-            try {
-                logger.info(`Preparing to create offer for data set ${dataSetId}`);
-
-                const dataset = await Models.data_info.findOne({
-                    where: { data_set_id: dataSetId },
-                });
-                if (dataset == null) {
-                    data.response.status(404);
-                    data.response.send({
-                        message: 'This data set does not exist in the database',
-                    });
-                    return;
-                }
-
-                if (dataSizeInBytes == null) {
-                    dataSizeInBytes = dataset.data_size;
-                }
-
-                if (dataRootHash == null) {
-                    dataRootHash = dataset.root_hash;
-                }
-
-                const replicationId = await dcService.createOffer(
-                    dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes, handler_id,
-                );
-            } catch (error) {
-                logger.error(`Failed to create offer. ${error}.`);
-                notifyError(error);
-                data.response.status(405);
-                data.response.send({
-                    message: `Failed to start offer. ${error}.`,
-                });
-                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
             }
         });
 
@@ -938,7 +775,13 @@ class EventEmitter {
                 logger.warn(returnMessage);
                 return;
             }
-            await dhService.handleDataReadRequestFree(message);
+            await this.commandExecutor.add({
+                name: 'dhDataReadRequestFreeCommand',
+                transactional: false,
+                data: {
+                    message,
+                },
+            });
         });
 
         // async

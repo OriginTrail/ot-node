@@ -38,23 +38,14 @@ class DVHandleNetworkQueryResponsesCommand extends Command {
         const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
 
         if (!lowestOffer) {
-            this.logger.info('Didn\'t find answer or no one replied.');
-            this.remoteControl.answerNotFound('Didn\'t find answer or no one replied.');
-            networkQuery.status = 'FINISHED';
-            await networkQuery.save({ fields: ['status'] });
-        } else {
-            // Finish auction.
-            networkQuery.status = 'PROCESSING';
-            await networkQuery.save({ fields: ['status'] });
-        }
-
-        if (!lowestOffer) {
             this.logger.info(`No offers for query ${queryId} handled.`);
             this.remoteControl.noOffersForQuery(`No offers for query ${queryId} handled.`);
         } else {
             this.logger.info(`Offers for query ${queryId} are collected`);
             this.remoteControl.networkQueryOffersCollected();
         }
+        networkQuery.status = 'FINISHED';
+        await networkQuery.save({ fields: ['status'] });
 
         return Command.empty();
     }

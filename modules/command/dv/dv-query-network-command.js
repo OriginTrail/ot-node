@@ -23,42 +23,12 @@ class DVQueryNetworkCommand extends Command {
     async execute(command, transaction) {
         const { queryId, query } = command.data;
 
-        /*
-            Expected dataLocationRequestObject:
-            dataLocationRequestObject = {
-                message: {
-                    id: ID,
-                    wallet: DV_WALLET,
-                    nodeId: KAD_ID
-                    query: [
-                              {
-                                path: _path,
-                                value: _value,
-                                opcode: OPCODE
-                              },
-                              ...
-                    ]
-                }
-                messageSignature: {
-                    v: …,
-                    r: …,
-                    s: …
-                }
-             }
-         */
-
-        let networkQuery = await Models.network_queries.findOne({
-            where: { id: queryId },
+        const networkQuery = await Models.network_queries.create({
+            id: queryId,
+            query,
         });
-
         if (!networkQuery) {
-            networkQuery = await Models.network_queries.create({
-                id: queryId,
-                query,
-            });
-            if (!networkQuery) {
-                throw Error('Failed to store network query.');
-            }
+            throw Error('Failed to store network query.');
         }
 
         const dataLocationRequestObject = {

@@ -49,7 +49,7 @@ class DVDataLocationResponseCommand extends Command {
                 query_id: queryId,
                 wallet,
                 node_id: nodeId,
-                imports: JSON.stringify(imports),
+                data_set_ids: JSON.stringify(imports),
                 data_price: dataPrice,
                 stake_factor: stakeFactor,
                 reply_id: replyId,

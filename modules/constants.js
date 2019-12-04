@@ -36,3 +36,25 @@ exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
  * @constant {number} DEFAULT_COMMAND_REPEAT_IN_MILLS - Default repeat interval
  */
 exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
+/**
+ *
+ * @constant {number} GAS_PRICE_VALIDITY_TIME_IN_MILLS - gas price maximum validity time
+ */
+exports.GAS_PRICE_VALIDITY_TIME_IN_MILLS = 30 * 60 * 1000; // 30 min
+/**
+ *
+ * @constant {number} TRAC_PRICE_IN_ETH_VALIDITY_TIME_IN_MILLS - trac price maximum validity time
+ */
+exports.TRAC_PRICE_IN_ETH_VALIDITY_TIME_IN_MILLS = 30 * 60 * 1000; // 30 min
+
+/**
+ *
+ * @constant {number} AVERAGE_GAS_PRICE_MULTIPLIER - gas price multiplier
+ */
+exports.AVERAGE_GAS_PRICE_MULTIPLIER = 1.2;
+
+/**
+ *
+ * @constant {number} BASE_PAYOUT_GAS - Gas used for payout
+ */
+exports.BASE_PAYOUT_GAS = 150000;

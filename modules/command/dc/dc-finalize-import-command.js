@@ -27,52 +27,49 @@ class DcFinalizeImport extends Command {
         }
         const response = await this._unpackKeysAndSortVertices(afterImportData);
 
-        const { handler_id } = afterImportData;
+        const {
+            handler_id, otjson_size_in_bytes, total_documents, purchased,
+        } = afterImportData;
         const {
             data_set_id,
             root_hash,
-            total_documents,
             wallet, // TODO: Sender's wallet is ignored for now.
             vertices,
             edges,
-            otjson_size,
         } = response;
 
         try {
-            const dataSize = bytes(JSON.stringify(vertices));
             const importTimestamp = new Date();
             const graphObject = {};
             Object.assign(graphObject, { vertices, edges });
             const dataHash = Utilities.normalizeHex(sha3_256(`${graphObject}`));
-            await Models.data_info
-                .create({
-                    data_set_id,
-                    root_hash,
-                    data_provider_wallet: this.config.node_wallet,
-                    import_timestamp: importTimestamp,
-                    total_documents,
-                    data_size: dataSize,
-                    origin: 'IMPORTED',
-                    otjson_size_in_bytes: otjson_size,
-                    data_hash: dataHash,
-                }).catch(async (error) => {
-                    this.logger.error(error);
-                    this.notifyError(error);
-                    await Models.handler_ids.update(
-                        {
-                            status: 'FAILED',
-                            data: JSON.stringify({
-                                error,
-                            }),
+            await Models.data_info.create({
+                data_set_id,
+                root_hash,
+                data_provider_wallet: this.config.node_wallet,
+                import_timestamp: importTimestamp,
+                total_documents,
+                origin: purchased ? 'PURCHASED' : 'IMPORTED',
+                otjson_size_in_bytes,
+                data_hash: dataHash,
+            }).catch(async (error) => {
+                this.logger.error(error);
+                this.notifyError(error);
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
                         },
-                        {
-                            where: {
-                                handler_id,
-                            },
-                        },
-                    );
-                    this.remoteControl.importFailed(error);
-                });
+                    },
+                );
+                this.remoteControl.importFailed(error);
+            });
 
             await Models.handler_ids.update(
                 {
@@ -80,8 +77,7 @@ class DcFinalizeImport extends Command {
                     data: JSON.stringify({
                         dataset_id: data_set_id,
                         import_time: importTimestamp.valueOf(),
-                        dataset_size_in_bytes: dataSize,
-                        otjson_size_in_bytes: otjson_size,
+                        otjson_size_in_bytes,
                         root_hash,
                         data_hash: dataHash,
                         total_graph_entities: vertices.length

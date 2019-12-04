@@ -9,6 +9,7 @@ const { expect } = require('chai');
 const httpApiHelper = require('./lib/http-api-helper');
 
 Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 20000 }, async function (importFilePath, importType) {
+    this.logger.log(`DC imports '${importFilePath}' as ${importType}.`);
     expect(importType, 'importType can only be GS1-EPCIS or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -29,6 +30,7 @@ Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout:
 });
 
 Given(/^DC waits for import to finish$/, { timeout: 1200000 }, async function () {
+    this.logger.log('DC waits for import to finish.');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -108,6 +110,7 @@ Given(/^response should return same dataset_ids as second last import and last i
 
 
 Given(/^DC initiates the replication for last imported dataset$/, { timeout: 60000 }, async function () {
+    this.logger.log('DC initiates the replication for last imported dataset');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -208,8 +211,7 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     };
     const queryNetworkResponse =
         await httpApiHelper.apiQueryNetwork(dv.state.node_rpc_url, jsonQuery);
-    expect(Object.keys(queryNetworkResponse), 'Response should have message and query_id').to.have.members(['message', 'query_id']);
-    expect(queryNetworkResponse.message, 'Message should inform about successful sending of the query').to.be.equal('Query sent successfully.');
+    expect(Object.keys(queryNetworkResponse), 'Response should have message and query_id').to.have.members(['query_id']);
     this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });

@@ -17,6 +17,7 @@ class DHDataReadRequestFreeCommand extends Command {
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.notifyError = ctx.notifyError;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -28,18 +29,8 @@ class DHDataReadRequestFreeCommand extends Command {
             message,
         } = command.data;
 
-        /*
-            message: {
-                id: REPLY_ID,
-                import_id: IMPORT_ID,
-                wallet: DH_WALLET,
-                nodeId: KAD_ID
-            }
-        */
-
-        // TODO in order to avoid getting a different import.
         const {
-            nodeId, wallet, id, data_set_id,
+            nodeId, wallet, id, data_set_id, handler_id,
         } = message;
         try {
             // Check is it mine offer.
@@ -66,64 +57,10 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
-            let edges;
-            let vertices;
-            if (dataInfo.origin === 'HOLDING') { // DH has the data
-                // Get replication key and then encrypt data.
-                const holdingDataModels = await Models.holding_data.findAll({
-                    where: { data_set_id: importId },
-                });
-
-                let holdingDataModel = null;
-                if (holdingDataModels.length > 0) {
-                    [holdingDataModel] = holdingDataModels; // take the first one
-                }
-
-                const encColor = holdingDataModel !== null ? holdingDataModel.color : null;
-                const verticesPromise
-                    = this.graphStorage.findVerticesByImportId(importId, encColor);
-                const edgesPromise
-                    = this.graphStorage.findEdgesByImportId(importId, encColor);
-
-                [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
-                ImportUtilities.unpackKeys(vertices, edges);
-
-                const holdingData = holdingDataModel.get({ plain: true });
-                const dataPublicKey = holdingData.litigation_public_key;
-
-                Graph.decryptVertices(
-                    vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
-                    dataPublicKey,
-                );
-            } else { // DC or DV
-                const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-                const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
-                [vertices, edges] = await Promise.all([verticesPromise, edgesPromise]);
-            }
-
-            ImportUtilities.deleteInternal(edges);
-            ImportUtilities.deleteInternal(vertices);
+            const document = await this.importService.getImport(importId);
 
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
-
-            /*
-            dataReadResponseObject = {
-                message: {
-                    id: REPLY_ID
-                    wallet: DH_WALLET,
-                    nodeId: KAD_ID
-                    agreementStatus: CONFIRMED/REJECTED,
-                    data_provider_wallet,
-                    encryptedData: { … }
-                },
-                messageSignature: {
-                    c: …,
-                    r: …,
-                    s: …
-               }
-            }
-             */
 
             const replyMessage = {
                 id,
@@ -131,12 +68,10 @@ class DHDataReadRequestFreeCommand extends Command {
                 nodeId: this.config.identity,
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
-                data: {
-                    vertices,
-                    edges,
-                },
-                data_set_id: importId, // TODO: Temporal. Remove it.
+                document,
+                data_set_id: importId,
                 transaction_hash: transactionHash,
+                handler_id,
             };
             const dataReadResponseObject = {
                 message: replyMessage,

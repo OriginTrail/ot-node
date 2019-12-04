@@ -166,6 +166,7 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
 }));
 
 Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
+    this.logger.log('DC waits for holding time');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
@@ -457,6 +458,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
+    this.logger.log('I wait for replication to finish');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
@@ -987,6 +989,7 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
 });
 
 Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
+    this.logger.log('Selected DHes should be payed out');
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
 
     const myPromises = [];
@@ -1000,7 +1003,7 @@ Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async functio
                     const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
                     const a = new BN(myBalance.profile.staked);
                     const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
-                    const c = new BN(node.options.nodeConfiguration.dc_token_amount_per_holder);
+                    const c = new BN(node.state.calculatedOfferPrice);
                     expect(a.sub(b).toString()).to.be.equal(c.toString());
                     accept();
                 });
