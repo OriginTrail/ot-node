@@ -153,7 +153,9 @@ class ArangoJS {
                              
                             LET trailObjects = (
                                 FILTER startObjects[0] != null
-                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
+                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges
+                                PRUNE LENGTH(p.edges) > 1 && p.edges[-2].relationType == e.relationType
+                                FILTER LENGTH(p.edges) < 1 || p.edges[-2].relationType != p.edges[-1].relationType`;
         if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
             queryString += `
                             FILTER p.edges[*].relationType ALL in @connectionTypes`;
@@ -179,6 +181,9 @@ class ArangoJS {
                                 "rootObject": trailObject,
                                 "relatedObjects": objectsRelated
                             }`;
+
+        console.log(queryString);
+        console.log(queryParams);
         const result = await this.runQuery(queryString, queryParams);
         return result;
     }
