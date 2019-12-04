@@ -77,6 +77,14 @@ class DCLitigationCompletedCommand extends Command {
                     this.remoteControl.offerUpdate({
                         offer_id: offerId,
                     });
+
+                    const reputationLog = await models.replication_data.create({
+                        dh_identity: dhIdentity,
+                        offer_id: offerId,
+                        reputation_delta: '-1',
+                        timestamp: Date.now(),
+                    });
+
                     return {
                         commands: [
                             {

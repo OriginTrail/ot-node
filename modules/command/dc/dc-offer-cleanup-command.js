@@ -37,6 +37,25 @@ class DCOfferCleanupCommand extends Command {
         this.replicationService.cleanup(offer.id);
         this.logger.info(`Offer ${offerId} replication data cleanup successful`);
 
+        const holders = await models.replicated_data.findAll({
+            where: {
+                offer_id: offer.offer_id,
+                status: 'HOLDING',
+            },
+        });
+
+        const promises = [];
+        for (const holder of holders) {
+            promises.push(models.replication_data.create({
+                dh_identity: holder.dh_identity,
+                offer_id: offerId,
+                reputation_delta: '1',
+                timestamp: Date.now(),
+            }));
+        }
+
+        const reputationResults = await Promise.all(promises);
+
         await models.replicated_data.update(
             {
                 status: 'COMPLETED',
