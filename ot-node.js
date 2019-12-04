@@ -468,7 +468,6 @@ class OTNode {
     /**
      * Run one time migration
      * Note: implement migration service
-     * @deprecated
      * @private
      */
     async _runMigration(blockchain) {
