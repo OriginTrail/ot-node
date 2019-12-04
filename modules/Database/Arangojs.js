@@ -182,8 +182,6 @@ class ArangoJS {
                                 "relatedObjects": objectsRelated
                             }`;
 
-        console.log(queryString);
-        console.log(queryParams);
         const result = await this.runQuery(queryString, queryParams);
         return result;
     }
