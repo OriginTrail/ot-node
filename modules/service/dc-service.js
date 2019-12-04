@@ -284,21 +284,39 @@ class DCService {
             await this.transport.sendResponse(response, { status: 'fail', message });
         }
 
+        const dhReputation = await this.getReputationForDh(dhIdentity);
+
+        if (dhReputation.lt(new BN(this.config.dcReputationCutoffValue))) {
+            const message = `Replication request from holder identity ${dhIdentity} with unacceptable reputation: ${dhReputation.toString()}.`;
+            this.logger.info(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+        } else {
+            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        }
+    }
+
+    /**
+     * Return reputation for received dh identity
+     * @param dhIdentity
+     * @returns {Promise<BN>}
+     */
+    async getReputationForDh(dhIdentity) {
         const reputationModel = await models.reputation_data.findAll({
             where: {
                 dh_identity: dhIdentity,
             },
         });
         if (reputationModel) {
-            const dhReputation = reputationModel.get({ plain: true });
-            if (dhReputation.value < this.config.dcReputationCutoffValue) {
-                const message = `Replication request from holder identity ${dhIdentity} with unacceptable reputation.`;
-                this.logger.info(message);
-                await this.transport.sendResponse(response, { status: 'fail', message });
-            }
+            const reputation = new BN(0, 10);
+            reputationModel.forEach((element) => {
+                const reputationDelta = element.reputation_delta;
+                if (reputationDelta) {
+                    reputation.add(new BN(reputationDelta));
+                }
+            });
+            return reputation;
         }
-
-        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        return new BN(0, 10);
     }
 
     /**
