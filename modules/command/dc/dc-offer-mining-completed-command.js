@@ -99,7 +99,9 @@ class DcOfferMiningCompletedCommand extends Command {
                     throw new Error(message);
                 }
             }
-            const commandData = { offerId, solution, handler_id };
+            const commandData = {
+                offerId, solution, handler_id, urgent: offer.urgent,
+            };
             const commandSequence = ['dcOfferFinalizeCommand'];
             return {
                 commands: [

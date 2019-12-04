@@ -18,12 +18,14 @@ class Ethereum {
         web3,
         logger,
         appState,
+        pricingService,
     }) {
         // Loading Web3
         this.appState = appState;
         this.emitter = emitter;
         this.web3 = web3;
         this.log = logger;
+        this.pricingService = pricingService;
 
         this.config = {
             wallet_address: config.node_wallet,
@@ -379,16 +381,17 @@ class Ethereum {
      * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @return {Promise<any>}
      */
-    createProfile(
+    async createProfile(
         managementWallet,
         profileNodeId,
         initialBalance,
         isSender725,
         blockchainIdentity,
     ) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
         this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
@@ -407,10 +410,11 @@ class Ethereum {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseProfileApproval(tokenAmountIncrease) {
+    async increaseProfileApproval(tokenAmountIncrease) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.tokenContractAddress,
         };
         this.log.trace(`increaseProfileApproval(amount=${tokenAmountIncrease})`);
@@ -423,10 +427,11 @@ class Ethereum {
      * @param amount
      * @return {Promise<any>}
      */
-    startTokenWithdrawal(blockchainIdentity, amount) {
+    async startTokenWithdrawal(blockchainIdentity, amount) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
         this.log.trace(`startTokenWithdrawal(blockchainIdentity=${blockchainIdentity}, amount=${amount}`);
@@ -438,10 +443,11 @@ class Ethereum {
      * @param blockchainIdentity
      * @return {Promise<any>}
      */
-    withdrawTokens(blockchainIdentity) {
+    async withdrawTokens(blockchainIdentity) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
         this.log.trace(`withdrawTokens(blockchainIdentity=${blockchainIdentity}`);
@@ -453,10 +459,11 @@ class Ethereum {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseBiddingApproval(tokenAmountIncrease) {
+    async increaseBiddingApproval(tokenAmountIncrease) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.tokenContractAddress,
         };
         this.log.notify('Increasing bidding approval');
@@ -470,10 +477,11 @@ class Ethereum {
      * @param answer - Litigation answer
      * @return {Promise<any>}
      */
-    answerLitigation(offerId, holderIdentity, answer) {
+    async answerLitigation(offerId, holderIdentity, answer) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.litigationContractAddress,
         };
         this.log.trace(`answerLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, answer=${answer})`);
@@ -496,10 +504,11 @@ class Ethereum {
      * @param proofData
      * @return {Promise<any>}
      */
-    proveLitigation(importId, dhWallet, proofData) {
+    async proveLitigation(importId, dhWallet, proofData) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.escrowContractAddress,
         };
         this.log.important(`Prove litigation for import ${importId} and DH ${dhWallet}`);
@@ -519,19 +528,20 @@ class Ethereum {
      * Pay out tokens
      * @param blockchainIdentity
      * @param offerId
+     * @param urgent
      * @returns {Promise}
      */
-    async payOut(blockchainIdentity, offerId) {
+    async payOut(blockchainIdentity, offerId, urgent) {
         let contractAddress = this.holdingContractAddress;
 
         const offer = await this.getOffer(offerId);
         if (Utilities.isZeroHash(offer['0'])) {
             contractAddress = this.oldHoldingContractAddress;
         }
-
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: contractAddress,
         };
         this.log.trace(`payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
@@ -542,7 +552,7 @@ class Ethereum {
      * Creates offer for the data storing on the Ethereum blockchain.
      * @returns {Promise<any>} Return choose start-time.
      */
-    createOffer(
+    async createOffer(
         blockchainIdentity,
         dataSetId,
         dataRootHash,
@@ -554,10 +564,12 @@ class Ethereum {
         tokenAmountPerHolder,
         dataSizeInBytes,
         litigationIntervalInMinutes,
+        urgent,
     ) {
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.holdingContractAddress,
         };
         this.log.trace(`createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
@@ -594,6 +606,7 @@ class Ethereum {
         encryptionType,
         holders,
         parentIdentity,
+        urgent,
     ) {
         let contractAddress = this.holdingContractAddress;
 
@@ -601,10 +614,10 @@ class Ethereum {
         if (Utilities.isZeroHash(offer['0'])) {
             contractAddress = this.oldHoldingContractAddress;
         }
-
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: contractAddress,
         };
 
@@ -630,7 +643,7 @@ class Ethereum {
      * Replaces holder
      * @returns {Promise<any>}
      */
-    replaceHolder(
+    async replaceHolder(
         offerId,
         holderIdentity,
         litigatorIdentity,
@@ -640,9 +653,10 @@ class Ethereum {
         confirmation3,
         holders,
     ) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.replacementContractAddress,
         };
 
@@ -905,10 +919,11 @@ class Ethereum {
      * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(importId, dhNodeId) {
+    async addBid(importId, dhNodeId) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.biddingContractAddress,
         };
 
@@ -927,9 +942,10 @@ class Ethereum {
      * @returns {Promise<any>}
      */
     async depositTokens(blockchainIdentity, amount) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
 
@@ -961,10 +977,11 @@ class Ethereum {
         return this.readingContract.methods.purchased_data(importId, wallet).call();
     }
 
-    initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
+    async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -975,10 +992,11 @@ class Ethereum {
         );
     }
 
-    sendCommitment(importId, dvWallet, commitment) {
+    async sendCommitment(importId, dvWallet, commitment) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -989,10 +1007,11 @@ class Ethereum {
         );
     }
 
-    initiateDispute(importId, dhWallet) {
+    async initiateDispute(importId, dhWallet) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1003,10 +1022,11 @@ class Ethereum {
         );
     }
 
-    confirmPurchase(importId, dhWallet) {
+    async confirmPurchase(importId, dhWallet) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1017,10 +1037,11 @@ class Ethereum {
         );
     }
 
-    cancelPurchase(importId, correspondentWallet, senderIsDh) {
+    async cancelPurchase(importId, correspondentWallet, senderIsDh) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1031,13 +1052,14 @@ class Ethereum {
         );
     }
 
-    sendProofData(
+    async sendProofData(
         importId, dvWallet, checksumLeft, checksumRight, checksumHash,
         randomNumber1, randomNumber2, decryptionKey, blockIndex,
     ) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1052,9 +1074,10 @@ class Ethereum {
     }
 
     async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1065,10 +1088,11 @@ class Ethereum {
         );
     }
 
-    payOutForReading(importId, dvWallet) {
+    async payOutForReading(importId, dvWallet, urgent) {
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.readingContractAddress,
         };
 
@@ -1117,9 +1141,10 @@ class Ethereum {
      * @param nodeId
      */
     async setNodeId(identity, nodeId) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
 
@@ -1195,10 +1220,11 @@ class Ethereum {
      * @param {string} - erc725identity
      * @param {string} - managementWallet
      */
-    transferProfile(erc725identity, managementWallet) {
+    async transferProfile(erc725identity, managementWallet) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
 
@@ -1270,9 +1296,10 @@ class Ethereum {
         offerId, holderIdentity, litigatorIdentity,
         requestedObjectIndex, requestedBlockIndex, hashArray,
     ) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.litigationContractAddress,
         };
 
@@ -1300,9 +1327,10 @@ class Ethereum {
      * @return {Promise<void>}
      */
     async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData, leafIndex) {
+        const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.litigationContractAddress,
         };
 
@@ -1427,6 +1455,20 @@ class Ethereum {
             }
         });
         return totalAmount.toString();
+    }
+
+    /**
+     * Returns gas price, throws error if not urgent and gas price higher than maximum allowed price
+     * @param urgent
+     * @returns {Promise<*|number>}
+     */
+    async getGasPrice(urgent = false) {
+        const gasPrice = await this.pricingService.getGasPrice();
+        if (gasPrice > this.config.max_allowed_gas_price && !urgent) {
+            throw new Error('Gas price higher than maximum allowed price');
+        } else {
+            return gasPrice;
+        }
     }
 }
 
