@@ -34,6 +34,8 @@ class DCLitigationInitiateCommand extends Command {
             litigationPrivateKey,
         } = command.data;
 
+        this.logger.info(`Initiating litigation for holder ${dhIdentity} and offer ${offerId}.`);
+
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
 
         if (offer.global_status === 'COMPLETED') {
