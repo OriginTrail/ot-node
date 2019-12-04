@@ -78,7 +78,7 @@ class DCLitigationCompletedCommand extends Command {
                         offer_id: offerId,
                     });
 
-                    const reputationLog = await models.replication_data.create({
+                    await models.reputation_data.create({
                         dh_identity: dhIdentity,
                         offer_id: offerId,
                         reputation_delta: '-1',
