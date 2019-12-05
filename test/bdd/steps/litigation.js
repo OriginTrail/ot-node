@@ -225,8 +225,6 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
         password,
     } = node.options.nodeConfiguration.database;
 
-    this.state.corruptedNode = node;
-
     const systemDb = new Database();
     systemDb.useBasicAuth(username, password);
     systemDb.useDatabase(databaseName);
@@ -365,80 +363,6 @@ Then(
         expect(this.state.lastReplication, 'Nothing replicated.').not.to.be.undefined;
 
         const node = this.state.nodes[nodeIndex - 1];
-
-        const lastOfferId =
-            dc.state.offers.internalIDs[Object.keys(dc.state.offers.internalIDs)[0]].offerId;
-
-        Models.sequelize.options.storage = dc.systemDbPath;
-        await Models.sequelize.sync();
-
-        const replicated_data = await Models.sequelize.models.replicated_data.findOne({
-            where: {
-                dh_id: node.state.identity,
-                dh_identity: node.erc725Identity.toLocaleLowerCase(),
-                offer_id: lastOfferId,
-            },
-        });
-
-        expect(replicated_data.status).to.equal('HOLDING');
-    },
-);
-
-Then(
-    /^the last replication status for (\d+)[st|nd|rd|th]+ holder node should not be holding$/,
-    { timeout: 300000 },
-    async function (nodeIndex) {
-        expect(nodeIndex, 'Invalid node index').to.be.greaterThan(0);
-        expect(nodeIndex, 'Invalid node index').to.be.lessThan(this.state.nodes.length + 1);
-        expect(this.state.bootstraps.length, 'No running bootstraps').to.be.greaterThan(0);
-        expect(this.state.nodes.length, 'No running nodes').to.be.greaterThan(0);
-
-        const { dc } = this.state;
-
-        expect(dc).not.to.be.undefined;
-        expect(dc.state.offers).not.to.be.undefined;
-        expect(dc.state.offers.internalIDs).not.to.be.undefined;
-        expect(this.state.lastReplication, 'Nothing replicated.').not.to.be.undefined;
-
-        const node = this.state.nodes
-            .filter(node => node.state.takenBids.length > 0)[nodeIndex - 1];
-
-        const lastOfferId =
-            dc.state.offers.internalIDs[Object.keys(dc.state.offers.internalIDs)[0]].offerId;
-
-        Models.sequelize.options.storage = dc.systemDbPath;
-        await Models.sequelize.sync();
-
-        const replicated_data = await Models.sequelize.models.replicated_data.findOne({
-            where: {
-                dh_id: node.state.identity,
-                dh_identity: node.erc725Identity.toLocaleLowerCase(),
-                offer_id: lastOfferId,
-            },
-        });
-
-        expect(replicated_data.status).to.not.equal('HOLDING');
-    },
-);
-
-Then(
-    /^the last replication status for (\d+)[st|nd|rd|th]+ holder node should be holding$/,
-    { timeout: 300000 },
-    async function (nodeIndex) {
-        expect(nodeIndex, 'Invalid node index').to.be.greaterThan(0);
-        expect(nodeIndex, 'Invalid node index').to.be.lessThan(this.state.nodes.length + 1);
-        expect(this.state.bootstraps.length, 'No running bootstraps').to.be.greaterThan(0);
-        expect(this.state.nodes.length, 'No running nodes').to.be.greaterThan(0);
-
-        const { dc } = this.state;
-
-        expect(dc).not.to.be.undefined;
-        expect(dc.state.offers).not.to.be.undefined;
-        expect(dc.state.offers.internalIDs).not.to.be.undefined;
-        expect(this.state.lastReplication, 'Nothing replicated.').not.to.be.undefined;
-
-        const node = this.state.nodes
-            .filter(node => node.state.takenBids.length > 0)[nodeIndex - 1];
 
         const lastOfferId =
             dc.state.offers.internalIDs[Object.keys(dc.state.offers.internalIDs)[0]].offerId;

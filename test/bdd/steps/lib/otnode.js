@@ -408,6 +408,9 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Replication finished for DH node .+/gi)) {
             const nodeId = line.match(identityRegex)[0];
             this.emit('dh-replication-verified', nodeId);
+        } else if (line.match(/Replication request from holder identity .+ declined! Unacceptable reputation: .+./gi)){
+            const dhIdentity = line.match(identityWithPrefixRegex)[0];
+            this.state.declinedDhIdentity = dhIdentity;
         }
     }
 
