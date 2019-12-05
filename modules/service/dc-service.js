@@ -286,8 +286,8 @@ class DCService {
 
         const dhReputation = await this.getReputationForDh(dhIdentity);
 
-        if (dhReputation.lt(new BN(this.config.dcReputationCutoffValue))) {
-            const message = `Replication request from holder identity ${dhIdentity} with unacceptable reputation: ${dhReputation.toString()}.`;
+        if (dhReputation.lt(new BN(this.config.dh_min_reputation))) {
+            const message = `Replication request from holder identity ${dhIdentity} declined! Unacceptable reputation: ${dhReputation.toString()}.`;
             this.logger.info(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
         } else {
@@ -303,15 +303,15 @@ class DCService {
     async getReputationForDh(dhIdentity) {
         const reputationModel = await models.reputation_data.findAll({
             where: {
-                dh_identity: dhIdentity,
+                dh_identity: dhIdentity.toLowerCase(),
             },
         });
         if (reputationModel) {
-            const reputation = new BN(0, 10);
+            let reputation = new BN(0, 10);
             reputationModel.forEach((element) => {
                 const reputationDelta = element.reputation_delta;
                 if (reputationDelta) {
-                    reputation.add(new BN(reputationDelta));
+                    reputation = reputation.add(new BN(reputationDelta));
                 }
             });
             return reputation;

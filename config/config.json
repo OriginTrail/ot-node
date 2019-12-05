@@ -39,7 +39,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -106,8 +106,7 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600,
-    "dcReputationCutoffValue": 0
+    "reputationWindowInMinutes": 129600
   },
   "staging": {
     "identity": null,
@@ -149,7 +148,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -259,7 +258,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -369,7 +368,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -482,7 +481,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {

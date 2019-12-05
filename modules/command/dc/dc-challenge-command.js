@@ -47,10 +47,8 @@ class DCChallengeCommand extends Command {
             },
         }, challenge.dh_id);
 
-        let checkCommandDelay = this.config.challengeResponseTimeMills;
-        if (checkCommandDelay == null) {
-            checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
-        }
+        const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+
         return {
             commands: [
                 {
