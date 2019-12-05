@@ -103,7 +103,7 @@ Feature: Test basic importer features
     And I use 1st node as DC
     And DC imports "importers/use_cases/OBE/ORDER100678.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Given DC initiates the replication for last imported dataset
+    And DC initiates the replication for last imported dataset
     And I wait for replications to finish
     Then the traversal from id "100678" with connection types "EPC" should contain 5 objects
     And I calculate and validate the proof of the last traversal
@@ -124,5 +124,5 @@ Feature: Test basic importer features
     And I use 1st node as DC
     And DC imports "importers/use_cases/OBE/CARTONDATA.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Then DC gets issuer id for element "1234567890000000015"
-    And DC should be the issuer for the selected element
+    And DC gets issuer id for element "1234567890000000015"
+    Then DC should be the issuer for the selected element
