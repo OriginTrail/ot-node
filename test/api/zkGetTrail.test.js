@@ -95,8 +95,10 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     });
 
     inputXmlFiles.forEach((xmlFile) => {
-        let queryObject;
-        let myTrail;
+        let identifierKeys;
+        let identifierTypes;
+        const depth = 5;
+
         it(`zero knowledge status check for EVENT in ${path.basename(xmlFile.args[0])} file`, async () => {
             await importService.importFile({
                 document:
@@ -105,50 +107,78 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             });
             switch (path.basename(xmlFile.args[0])) {
             case 'Transformation.xml':
-                queryObject = { uid: 'urn:ot:object:actor:id:Car.Engines:2015-03-15T00:00:00.000-04:00Z-04:00' };
+                identifierKeys = ['urn:ot:object:actor:id:Car.Engines'];
+                identifierTypes = ['id'];
                 break;
             case 'GraphExample_1.xml':
-                queryObject = { uid: 'urn:ot:object:actor:id:Company_1:2015-04-17T00:00:00.000-04:00Z-04:00' };
+                identifierKeys = ['urn:ot:object:actor:id:Company_1'];
+                identifierTypes = ['id'];
                 break;
             case 'GraphExample_2.xml':
-                queryObject = { uid: 'urn:ot:object:actor:id:Company _1:2015-03-15T00:00:00.000-04:00Z-04:00' };
+                identifierKeys = ['urn:ot:object:actor:id:Company _1'];
+                identifierTypes = ['id'];
                 break;
             case 'GraphExample_3.xml':
-                queryObject = { uid: 'urn:ot:object:actor:id:Company_2:2015-04-17T00:00:00.000-04:00Z-04:00' };
+                identifierKeys = ['urn:ot:object:actor:id:Company_2'];
+                identifierTypes = ['id'];
                 break;
             case 'GraphExample_4.xml':
+                identifierKeys = [''];
+                identifierTypes = ['id'];
                 // no event in this xml file, thus nothing to query
-                queryObject = { uid: '' };
                 break;
             default:
                 throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
             }
 
-            myTrail = await product.getTrailByQuery(queryObject);
+            const keys = [];
 
-            Object.keys(myTrail).forEach((key, index) => {
-                if (myTrail[key].vertex_type === 'EVENT') {
-                    switch (path.basename(xmlFile.args[0])) {
-                    case 'Transformation.xml':
-                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                        break;
-                    case 'GraphExample_1.xml':
-                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                        break;
-                    case 'GraphExample_2.xml':
-                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                        break;
-                    case 'GraphExample_3.xml':
-                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                        break;
-                    case 'GraphExample_4.xml':
-                        // no ZK triggered at all, thus no assert
-                        break;
-                    default:
-                        throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
-                    }
-                }
-            });
+            const typesArray = Utilities.arrayze(identifierTypes);
+            const valuesArray = Utilities.arrayze(identifierKeys);
+
+            const { length } = typesArray;
+
+            for (let i = 0; i < length; i += 1) {
+                keys.push(Utilities.keyFrom(typesArray[i], valuesArray[i]));
+            }
+
+            const trail =
+                await graphStorage.findTrail({
+                    identifierKeys: keys,
+                    depth,
+                    connectionTypes: null,
+                });
+
+            const myTrail = await importService.packTrailData(trail);
+
+            console.log(`\n${path.basename(xmlFile.args[0])}`);
+            console.log('======================');
+            console.log(myTrail)
+            // myTrail.forEach((otObject) => {
+            //     console.log(JSON.stringify(otObject));
+            //     console.log('======================');
+                // if (myTrail[key].vertex_type === 'EVENT') {
+                //     switch (path.basename(xmlFile.args[0])) {
+                //     case 'Transformation.xml':
+                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                //         break;
+                //     case 'GraphExample_1.xml':
+                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                //         break;
+                //     case 'GraphExample_2.xml':
+                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                //         break;
+                //     case 'GraphExample_3.xml':
+                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                //         break;
+                //     case 'GraphExample_4.xml':
+                //         // no ZK triggered at all, thus no assert
+                //         break;
+                //     default:
+                //         throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
+                //     }
+                // }
+            // });
         });
     });
 
