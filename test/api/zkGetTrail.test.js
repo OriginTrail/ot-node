@@ -110,23 +110,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
                 identifierKeys = ['urn:epc:id:sgtin:8635411.000333.00001'];
                 identifierTypes = ['sgtin'];
                 break;
-            // case 'GraphExample_1.xml':
-            //     identifierKeys = ['urn:ot:object:actor:id:Company_1'];
-            //     identifierTypes = ['id'];
-            //     break;
-            // case 'GraphExample_2.xml':
-            //     identifierKeys = ['urn:ot:object:actor:id:Company _1'];
-            //     identifierTypes = ['id'];
-            //     break;
-            // case 'GraphExample_3.xml':
-            //     identifierKeys = ['urn:ot:object:actor:id:Company_2'];
-            //     identifierTypes = ['id'];
-            //     break;
-            // case 'GraphExample_4.xml':
-            //     identifierKeys = [''];
-            //     identifierTypes = ['id'];
-            //     // no event in this xml file, thus nothing to query
-            //     break;
+            // TODO fix these examples 'GraphExample_1-4.xml'
             default:
                 throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
             }
@@ -150,36 +134,30 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
                 });
 
             const myTrail = await importService.packTrailData(trail);
-            const transformationTrail = myTrail.find(x => x.otObject.properties.objectType === 'TransformationEvent')
-            console.log(`\n${path.basename(xmlFile.args[0])}`);
-            console.log('======================');
-            console.log(myTrail);
-            // myTrail.forEach((otObject) => {
-            //     console.log(JSON.stringify(otObject));
-            //     console.log('======================');
-                // if (myTrail[key].vertex_type === 'EVENT') {
-                //     switch (path.basename(xmlFile.args[0])) {
-                //     case 'Transformation.xml':
-                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                //         break;
-                //     case 'GraphExample_1.xml':
-                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                //         break;
-                //     case 'GraphExample_2.xml':
-                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                //         break;
-                //     case 'GraphExample_3.xml':
-                //         assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
-                //         break;
-                //     case 'GraphExample_4.xml':
-                //         // no ZK triggered at all, thus no assert
-                //         break;
-                //     default:
-                //         throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
-                //     }
-                // }
-            // });
-        });
+
+            switch (path.basename(xmlFile.args[0])) {
+            // eslint-disable-next-line no-case-declarations
+            case 'Transformation.xml':
+                const transformationObject = myTrail.find(x => x.otObject.properties.objectType === 'TransformationEvent');
+                const { properties } = transformationObject.otObject;
+                const inputQuantityElems = properties.inputQuantityList.quantityElement;
+
+                const inputQuantitySum = inputQuantityElems
+                    .map(e => parseFloat(e.quantity))
+                    .reduce((a, b) => a + b, 0.0);
+
+                const outputQuantityElems = properties.outputQuantityList.quantityElement;
+
+                const outputQuantitySum = outputQuantityElems
+                    .map(e => parseFloat(e.quantity))
+                    .reduce((a, b) => a + b, 0.0);
+
+                assert.equal(inputQuantitySum, outputQuantitySum, 'ZK should pass');
+                break;
+            default:
+                throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
+            }
+        }).timeout(5000);
     });
 
     afterEach('Drop DB', async () => {
