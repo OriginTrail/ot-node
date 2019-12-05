@@ -153,11 +153,11 @@ class ArangoJS {
                              
                             LET trailObjects = (
                                 FILTER startObjects[0] != null
-                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges
-                                PRUNE LENGTH(p.edges) > 1 && p.edges[-2].relationType == e.relationType
-                                FILTER LENGTH(p.edges) < 1 || p.edges[-2].relationType != p.edges[-1].relationType`;
+                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
         if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
             queryString += `
+                            PRUNE LENGTH(p.edges) > 1 && p.edges[-2].relationType == e.relationType
+                            FILTER LENGTH(p.edges) < 1 || p.edges[-2].relationType != p.edges[-1].relationType
                             FILTER p.edges[*].relationType ALL in @connectionTypes`;
             queryParams.connectionTypes = connectionTypes;
         }
