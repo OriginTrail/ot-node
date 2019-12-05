@@ -186,3 +186,17 @@ Then(
         ).to.be.equal(expectedNumberOfObjects);
     },
 );
+
+Then(
+    'Corrupted node should not have last replication dataset',
+    async function () {
+        expect(!!this.state.corruptedNode, 'Corrupted node not defined. Use other step to define it.').to.be.equal(true);
+        const host = this.state.corruptedNode.node;
+        // TODO change to use get_dataset_info route
+        const result = await httpApiHelper.apiQueryLocal(host.state.node_rpc_url, this.state.lastImport.dataset_id);
+
+        console.log(result);
+
+        expect(!!result, 'Node should not have imported last dataset.').to.equal(false);
+    },
+);
