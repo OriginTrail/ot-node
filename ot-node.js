@@ -439,7 +439,10 @@ class OTNode {
         const profile = await blockchain.getProfile(config.erc725Identity);
 
         if (!profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
-            await blockchain.setNodeId(config.erc725Identity, config.identity.toLowerCase());
+            await blockchain.setNodeId(
+                config.erc725Identity,
+                Utilities.normalizeHex(config.identity.toLowerCase()),
+            );
         }
 
         // Initialise API
