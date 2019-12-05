@@ -10,6 +10,7 @@ const fs = require('fs');
 const httpApiHelper = require('./lib/http-api-helper');
 
 Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 20000 }, async function (importFilePath, importType) {
+    this.logger.log(`DC imports '${importFilePath}' as ${importType}.`);
     expect(importType, 'importType can only be GS1-EPCIS or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -29,7 +30,6 @@ Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout:
     this.state.lastImportHandler = importResponse.handler_id;
 });
 
-
 Then(/^DC checks status of the last import$/, { timeout: 1200000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -48,7 +48,9 @@ Then(/^The last import status should be "([^"]*)"$/, { timeout: 1200000 }, async
     expect(this.state.lastImportStatus.status).to.be.equal(status);
 });
 
+
 Given(/^(DC|DV|DV2) waits for import to finish$/, { timeout: 1200000 }, async function (targetNode) {
+    this.logger.log(`${targetNode} waits for import to finish.`);
     expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -70,6 +72,7 @@ Given(/^(DC|DV|DV2) waits for import to finish$/, { timeout: 1200000 }, async fu
             acc();
         });
     });
+
 
     return promise;
 });
@@ -148,6 +151,7 @@ Given(/^response should return same dataset_ids as second last import and last i
 
 
 Given(/^DC initiates the replication for last imported dataset$/, { timeout: 60000 }, async function () {
+    this.logger.log('DC initiates the replication for last imported dataset');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);

@@ -14,6 +14,7 @@ class RestAPIServiceV2 {
         this.commandExecutor = ctx.commandExecutor;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
+        this.dcController = ctx.dcController;
 
         this.dvController = ctx.dvController;
         this.remoteControl = ctx.remoteControl;
@@ -628,54 +629,7 @@ class RestAPIServiceV2 {
     async _replicateDataset(req, res) {
         this.logger.api('POST: Replication of imported data request received.');
 
-        if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
-            utilities.validateNumberParameter(req.body.data_lifespan) &&
-            utilities.validateStringParameter(req.body.total_token_amount)) {
-            const dataset = await Models.data_info.findOne({
-                /**
-                 * u tabeli data_info ovo polje se i
-                 * dalje zove data_set_id a treba dataset_id po novom apiju
-                 */
-                where: { data_set_id: req.body.dataset_id },
-            });
-            if (dataset == null) {
-                this.logger.info('Invalid request');
-                res.status(404);
-                res.send({
-                    message: 'This data set does not exist in the database',
-                });
-                return;
-            }
-            const queryObject = {
-                dataSetId: req.body.dataset_id,
-                data_lifespan: req.body.data_lifespan,
-                total_token_amount: req.body.total_token_amount,
-                response: res,
-            };
-            const handler_data = {
-                data_lifespan: queryObject.data_lifespan,
-                total_token_amount: queryObject.total_token_amount,
-                status: 'PUBLISHING_TO_BLOCKCHAIN',
-                hold: [],
-            };
-            const inserted_object = await Models.handler_ids.create({
-                status: 'PENDING',
-                data: JSON.stringify(handler_data),
-            });
-            queryObject.handler_id = inserted_object.dataValues.handler_id;
-            console.log(queryObject.handler_id);
-            this.emitter.emit('api-create-offer', queryObject);
-            res.status(200);
-            res.send({
-                handler_id: inserted_object.dataValues.handler_id,
-            });
-        } else {
-            this.logger.error('Invalid request');
-            res.status(400);
-            res.send({
-                message: 'Invalid parameters!',
-            });
-        }
+        this.dcController.handleReplicateRequest(req, res);
     }
 
     /**

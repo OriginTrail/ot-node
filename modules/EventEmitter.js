@@ -308,12 +308,12 @@ class EventEmitter {
         });
 
         this._on('api-payout', async (data) => {
-            const { offerId } = data;
+            const { offerId, urgent } = data;
 
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await profileService.payOut(offerId);
+                await profileService.payOut(offerId, urgent);
 
                 data.response.status(200);
                 data.response.send({
@@ -376,57 +376,6 @@ class EventEmitter {
                 data.response.send({
                     message: error.toString(),
                 });
-            }
-        });
-
-        this._on('api-create-offer', async (data) => {
-            const {
-                dataSetId,
-                holdingTimeInMinutes,
-                tokenAmountPerHolder,
-                litigationIntervalInMinutes,
-                handler_id,
-            } = data;
-
-            let {
-                dataRootHash,
-                dataSizeInBytes,
-            } = data;
-
-            try {
-                logger.info(`Preparing to create offer for data set ${dataSetId}`);
-
-                const dataset = await Models.data_info.findOne({
-                    where: { data_set_id: dataSetId },
-                });
-                if (dataset == null) {
-                    data.response.status(404);
-                    data.response.send({
-                        message: 'This data set does not exist in the database',
-                    });
-                    return;
-                }
-
-                if (dataSizeInBytes == null) {
-                    dataSizeInBytes = dataset.otjson_size_in_bytes;
-                }
-
-                if (dataRootHash == null) {
-                    dataRootHash = dataset.root_hash;
-                }
-
-                const replicationId = await dcService.createOffer(
-                    dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes, handler_id,
-                );
-            } catch (error) {
-                logger.error(`Failed to create offer. ${error}.`);
-                notifyError(error);
-                data.response.status(405);
-                data.response.send({
-                    message: `Failed to start offer. ${error}.`,
-                });
-                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
             }
         });
 

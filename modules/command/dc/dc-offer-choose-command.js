@@ -30,6 +30,7 @@ class DCOfferChooseCommand extends Command {
             isReplacement,
             dhIdentity,
             handler_id,
+            urgent,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
