@@ -33,10 +33,10 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
 
     const inputXmlFiles = [
         { args: [path.join(__dirname, '../modules/test_xml/Transformation.xml')] },
-        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_1.xml')] },
-        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_2.xml')] },
-        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_3.xml')] },
-        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_4.xml')] },
+        // { args: [path.join(__dirname, '../modules/test_xml/GraphExample_1.xml')] },
+        // { args: [path.join(__dirname, '../modules/test_xml/GraphExample_2.xml')] },
+        // { args: [path.join(__dirname, '../modules/test_xml/GraphExample_3.xml')] },
+        // { args: [path.join(__dirname, '../modules/test_xml/GraphExample_4.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -97,7 +97,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     inputXmlFiles.forEach((xmlFile) => {
         let identifierKeys;
         let identifierTypes;
-        const depth = 5;
+        const depth = 6;
 
         it(`zero knowledge status check for EVENT in ${path.basename(xmlFile.args[0])} file`, async () => {
             await importService.importFile({
@@ -107,26 +107,26 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             });
             switch (path.basename(xmlFile.args[0])) {
             case 'Transformation.xml':
-                identifierKeys = ['urn:ot:object:actor:id:Car.Engines'];
-                identifierTypes = ['id'];
+                identifierKeys = ['urn:epc:id:sgtin:8635411.000333.00001'];
+                identifierTypes = ['sgtin'];
                 break;
-            case 'GraphExample_1.xml':
-                identifierKeys = ['urn:ot:object:actor:id:Company_1'];
-                identifierTypes = ['id'];
-                break;
-            case 'GraphExample_2.xml':
-                identifierKeys = ['urn:ot:object:actor:id:Company _1'];
-                identifierTypes = ['id'];
-                break;
-            case 'GraphExample_3.xml':
-                identifierKeys = ['urn:ot:object:actor:id:Company_2'];
-                identifierTypes = ['id'];
-                break;
-            case 'GraphExample_4.xml':
-                identifierKeys = [''];
-                identifierTypes = ['id'];
-                // no event in this xml file, thus nothing to query
-                break;
+            // case 'GraphExample_1.xml':
+            //     identifierKeys = ['urn:ot:object:actor:id:Company_1'];
+            //     identifierTypes = ['id'];
+            //     break;
+            // case 'GraphExample_2.xml':
+            //     identifierKeys = ['urn:ot:object:actor:id:Company _1'];
+            //     identifierTypes = ['id'];
+            //     break;
+            // case 'GraphExample_3.xml':
+            //     identifierKeys = ['urn:ot:object:actor:id:Company_2'];
+            //     identifierTypes = ['id'];
+            //     break;
+            // case 'GraphExample_4.xml':
+            //     identifierKeys = [''];
+            //     identifierTypes = ['id'];
+            //     // no event in this xml file, thus nothing to query
+            //     break;
             default:
                 throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
             }
@@ -150,10 +150,10 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
                 });
 
             const myTrail = await importService.packTrailData(trail);
-
+            const transformationTrail = myTrail.find(x => x.otObject.properties.objectType === 'TransformationEvent')
             console.log(`\n${path.basename(xmlFile.args[0])}`);
             console.log('======================');
-            console.log(myTrail)
+            console.log(myTrail);
             // myTrail.forEach((otObject) => {
             //     console.log(JSON.stringify(otObject));
             //     console.log('======================');
