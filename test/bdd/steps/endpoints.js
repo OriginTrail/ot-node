@@ -95,6 +95,22 @@ Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|O
     this.state.lastExportType = exportType;
 });
 
+Then(/^the consensus check should pass for the two last imports$/, function () {
+    expect(!!this.state.lastExport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.secondLastExport, 'Second last import data not defined. Use other step to define it.').to.be.equal(true);
+    const objectEvent1 = this.state.lastExport.data.formatted_dataset['@graph'].find(x => x.properties.action === 'OBSERVE');
+    const objectEvent2 = this.state.secondLastExport.data.formatted_dataset['@graph'].find(x => x.properties.action === 'OBSERVE');
+
+    expect(objectEvent1.properties.action === objectEvent2.properties.action, 'Consensus not valid. Action is not the same.').to.be.equal(true);
+    expect(['urn:epcglobal:cbv:bizstep:shipping', 'urn:epcglobal:cbv:bizstep:receiving'].includes(objectEvent1.properties.bizStep)
+        && ['urn:epcglobal:cbv:bizstep:shipping', 'urn:epcglobal:cbv:bizstep:receiving'].includes(objectEvent2.properties.bizStep)
+        && objectEvent1.properties.bizStep !== objectEvent2.properties.bizStep , 'Invalid bizStep in consensus.').to.be.equal(true);
+    expect(JSON.stringify(objectEvent1.properties.epcList) === JSON.stringify(objectEvent2.properties.epcList), 'Invalid epcList in consensus.').to.be.equal(true);
+
+    expect(this.state.lastIssuerIdentity.identity !== this.state.secondLastIssuerIdentity).to.be.equal(true);
+
+});
+
 Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async function (targetNode) {
     expect(targetNode, 'Node type can only be DC, DV2 or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
     expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
