@@ -93,7 +93,7 @@ Feature: Test basic network features
   @first
   Scenario: DV should be able to publish network query regardless of the funds
     # Start node and let it create own profile. It needs some ETH and TRAC for that.
-    Given I setup 1 node
+    Given I setup 4 node
     And I start the node
     And I stop the node
     # Spend all the funds and try to query network.
