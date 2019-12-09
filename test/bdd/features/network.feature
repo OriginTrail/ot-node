@@ -113,7 +113,7 @@ Feature: Test basic network features
     And DV2 waits for export to finish
     Then the last import should be the same on DC and DV2 nodes
 
-  @dl2
+  @first
   Scenario: DV should be able to publish network query regardless of the funds
     # Start node and let it create own profile. It needs some ETH and TRAC for that.
     Given I setup 1 node
