@@ -118,6 +118,7 @@ Then(/^Litigator node should have completed litigation$/, { timeout: 300000 }, f
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
+    this.logger.log('Holder node should have been penalized');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -129,6 +130,7 @@ Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeou
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ started holder should not have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
+    this.logger.log('Holder node should not have been penalized');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 

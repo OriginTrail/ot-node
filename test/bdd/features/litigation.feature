@@ -28,7 +28,7 @@ Feature: Test various litigation scenarios
     Then Litigator should delay other litigations while one is running
     Then 1st holder to litigate should answer litigation
     Then Litigator node should have completed litigation
-    Then 1st started holder should not have been penalized
+    Then 1st started holder should have been penalized
 #    Then Litigator should have started replacement for penalized holder
 #    Then I wait for 4 replacement replications to finish
 #    Then I wait for replacement to be completed
@@ -117,7 +117,7 @@ Feature: Test various litigation scenarios
     When I corrupt 1st holder's database ot_vertices collection
     And I wait for litigation initiation
     Then Litigator node should have completed litigation
-    Then 1st started holder should not have been penalized
+    Then 1st started holder should have been penalized
 #    Then Litigator should have started replacement for penalized holder
 #    Then I wait for 3 replacement replications to finish
 #    Then I wait for replacement to be completed
