@@ -38,6 +38,7 @@ Given(/^I remember stopped holder[s]*$/, async function () {
 });
 
 Given(/^I wait for litigation initiation$/, { timeout: 300000 }, function (done) {
+    this.logger.log('I wait for litigation initiation');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -224,7 +225,7 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
         username,
         password,
     } = node.options.nodeConfiguration.database;
-
+    this.state.corruptedNode = node;
     const systemDb = new Database();
     systemDb.useBasicAuth(username, password);
     systemDb.useDatabase(databaseName);

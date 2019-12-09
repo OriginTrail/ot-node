@@ -191,13 +191,18 @@ Then(
     'Corrupted node should not have last replication dataset',
     async function () {
         expect(!!this.state.corruptedNode, 'Corrupted node not defined. Use other step to define it.').to.be.equal(true);
-        const host = this.state.corruptedNode.node;
+        // const host = this.state.corruptedNode;
         // TODO change to use get_dataset_info route
-        // const result = await httpApiHelper.apiQueryLocal(host.state.node_rpc_url, this.state.lastImport.dataset_id);
-        console.log('*************');
-        console.log(this.state.declinedDhIdentity);
-        console.log('*************');
+        // // const result = await httpApiHelper.apiQueryLocal(host.state.node_rpc_url, this.state.lastImport.dataset_id);
+        // console.log('*************');
+        // console.log(JSON.stringify(host.id));
+        // console.log(this.state.declinedDhIdentity);
+        // console.log('*************');
 
+        expect(
+            this.state.corruptedNode.id,
+            'Declined identity should be the one that db was corrupted.',
+        ).to.be.equal(this.state.declinedDhIdentity);
         // expect(!!result, 'Node should not have imported last dataset.').to.equal(false);
     },
 );

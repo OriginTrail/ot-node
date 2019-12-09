@@ -143,35 +143,31 @@ Feature: Test various litigation scenarios
     And I simulate true litigation answer for 4th node
     Then the last replication status for 4th node should be holding
 
-
-#  @first
-#  Scenario: DC should discriminate DH which has reputation lower than threshold
-#    Given the replication difficulty is 0
-#    And I setup 4 nodes
-#    And I override configuration for all nodes
-#      | dc_holding_time_in_minutes | 10 |
-#      | numberOfChallenges | 10 |
-#      | challengeResponseTimeMills | 5000 |
-#      | dh_min_reputation | 0 |
-#    And I start the nodes
-#    And I use 1st node as DC
-#    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
-#    And DC waits for import to finish
-#    Then DC's last import's hash should be the same as one manually calculated
-#    Given DC initiates the replication for last imported dataset
-#    And DC waits for last offer to get written to blockchain
-#    And I wait for replications to finish
-#    And I corrupt 1st holder's database ot_vertices collection
-#    When I wait for litigation initiation
-#    Then 1st holder to litigate should answer litigation
-#    When DC imports "importers/xml_examples/Retail/02_Green_to_pink_receipt.xml" as GS1-EPCIS
-#    And DC waits for import to finish
+  @first
+  Scenario: DC should discriminate DH which has reputation lower than threshold
+    Given the replication difficulty is 0
+    And I setup 5 nodes
+    And I override configuration for all nodes
+      | dc_holding_time_in_minutes | 10 |
+      | numberOfChallenges | 10 |
+      | challengeResponseTimeMills | 5000 |
+      | dh_min_reputation | 0 |
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Then DC's last import's hash should be the same as one manually calculated
+    Given DC initiates the replication for last imported dataset
+    And DC waits for last offer to get written to blockchain
+    And I wait for replications to finish
+    And I corrupt 1st holder's database ot_vertices collection
+    When I wait for litigation initiation
+    Then Litigator node should have completed litigation
+    When DC imports "importers/xml_examples/Retail/02_Green_to_pink_receipt.xml" as GS1-EPCIS
+    And DC waits for import to finish
 #    Given I additionally setup 1 node
 #    And I start additional nodes
-#    Given DC initiates the replication for last imported dataset
-#    And DC waits for last offer to get written to blockchain
-#    And I wait for replications to finish
-#    Then Corrupted node should not have last replication dataset
-#    Then the last replication status for 2nd holder node should be holding
-#    Then the last replication status for 3rd holder node should be holding
-#    Then the last replication status for 1st holder node should not be holding
+    Given DC initiates the replication for last imported dataset
+    And DC waits for last offer to get written to blockchain
+    And I wait for replications to finish
+    Then Corrupted node should not have last replication dataset
