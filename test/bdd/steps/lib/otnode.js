@@ -65,6 +65,7 @@ class OtNode extends EventEmitter {
         this.state.addedBids = []; // List of offer IDs (DH side).
         this.state.takenBids = []; // List of offer IDs (DH side).
         this.state.pendingLitigationDhIdentities = []; // List of pending litigations (DHs)
+        this.state.penalizedDHIdentities = []
         this.state.takenReplacements = []; // List of replacement offer IDs (DH side).
         // Valid replications (DH side). List of internal offer IDs and their replications DH IDs
         // in pairs. { internalOfferId, dhId }.
@@ -373,6 +374,8 @@ class OtNode extends EventEmitter {
             this.state.pendingLitigationDhIdentities.push(dhIdentity);
             this.emit('dc-litigation-pending');
         } else if (line.match(/DH .+ was penalized for the offer .+\./gi)) {
+            const dhIdentity = line.match(identityWithPrefixRegex)[0];
+            this.state.penalizedDHIdentities.push(dhIdentity);
             this.emit('dc-litigation-completed-dh-penalized');
         } else if (line.match(/DH .+ was not penalized for the offer .+\./gi)) {
             this.emit('dc-litigation-completed-dh-not-penalized');

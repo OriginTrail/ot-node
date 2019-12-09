@@ -124,6 +124,11 @@ Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeou
 
     const { dc } = this.state;
 
+    if (dc.state.penalizedDHIdentities.length > 0) {
+        done();
+        return;
+    }
+
     dc.once('dc-litigation-completed-dh-penalized', () => {
         done();
     });

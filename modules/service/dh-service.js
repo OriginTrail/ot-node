@@ -98,6 +98,25 @@ class DHService {
         }
 
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
+        if (dataSetSizeInBytes) {
+            const dataSizeInMB = dataSetSizeInBytes / 1000000;
+            if (dataSizeInMB > this.config.dh_maximum_dataset_filesize_in_mb) {
+                this.logger.info(`Data size in offer ${offerId} too big. Max allowed size is ${this.config.dh_maximum_dataset_filesize_in_mb}.`);
+                return;
+            }
+        }
+        const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
+        if (dhMaxHoldingTimeInMinutes.lt(new BN(holdingTimeInMinutes, 10))) {
+            this.logger.info(`Holding time for the offer ${offerId} is greater than my holding time defined.`);
+            return;
+        }
+
+        const dhMinLitigationIntervalInMinutes =
+            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
+        if (dhMinLitigationIntervalInMinutes.gt(new BN(litigationIntervalInMinutes, 10))) {
+            this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
+            return;
+        }
 
         const format = d3.formatPrefix(',.6~s', 1e6);
         const myOfferPrice = await this.pricingService.calculateOfferPriceinTrac(
@@ -105,9 +124,7 @@ class DHService {
             holdingTimeInMinutes,
         );
         const dhTokenPrice = new BN(myOfferPrice, 10);
-        const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
-        const dhMinLitigationIntervalInMinutes =
-            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
+
 
         const formatMyPrice = format(dhTokenPrice);
         const formatTokenAmountPerHolder = format(tokenAmountPerHolder);
@@ -115,15 +132,6 @@ class DHService {
             this.logger.info(`Offer ${offerId} too cheap for me.`);
             this.logger.info(`Price offered ${formatTokenAmountPerHolder}[mTRAC]`);
             this.logger.info(`My price for offer ${offerId}, ${formatMyPrice}[mTRAC]`);
-            return;
-        }
-        if (dhMaxHoldingTimeInMinutes.lt(new BN(holdingTimeInMinutes, 10))) {
-            this.logger.info(`Holding time for the offer ${offerId} is greater than my holding time defined.`);
-            return;
-        }
-
-        if (dhMinLitigationIntervalInMinutes.gt(new BN(litigationIntervalInMinutes, 10))) {
-            this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
             return;
         }
 
