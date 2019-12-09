@@ -215,8 +215,7 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600,
-    "dcReputationCutoffValue": 0
+    "reputationWindowInMinutes": 129600
   },
   "stable": {
     "identity": null,
@@ -325,8 +324,7 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600,
-    "dcReputationCutoffValue": 0
+    "reputationWindowInMinutes": 129600
   },
   "production": {
     "identity": null,
@@ -438,8 +436,7 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600,
-    "dcReputationCutoffValue": 0
+    "reputationWindowInMinutes": 129600
   },
   "mariner": {
     "identity": null,
@@ -551,7 +548,6 @@
     "requireApproval": true,
     "litigationEnabled": false,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600,
-    "dcReputationCutoffValue": 0
+    "reputationWindowInMinutes": 129600
   }
 }
