@@ -165,8 +165,6 @@ Feature: Test various litigation scenarios
     Then Litigator node should have completed litigation
     When DC imports "importers/xml_examples/Retail/02_Green_to_pink_receipt.xml" as GS1-EPCIS
     And DC waits for import to finish
-#    Given I additionally setup 1 node
-#    And I start additional nodes
     Given DC initiates the replication for last imported dataset
     And DC waits for last offer to get written to blockchain
     And I wait for replications to finish
