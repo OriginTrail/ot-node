@@ -94,26 +94,33 @@ Feature: Test basic importer features
     And DC waits for import to finish
     Then the traversal from id "connectionId" with connection types "CONNECTION_DOWNSTREAM" should contain 2 objects
 
-#  @skip
-#  Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
-#    Given I setup 1 node
-#    And I start the node
-#    And I use 1st node as DC
-#    And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
-#    And DC waits for import to finish
-#    Given DC initiates the replication for last imported dataset
-#    And DC waits for last offer to get written to blockchain
-#    And I remember previous import's fingerprint value
-#    And DC imports "importers/json_examples/WOT_Example_2.json" as WOT
-#    And DC waits for import to finish
-#    Then DC's last import's hash should be the same as one manually calculated
-#    Then checking again first import's root hash should point to remembered value
-#
-#  @skip
-#  Scenario: Check that WOT import is connecting to the same batch from GS1 import
-#    Given I setup 1 node
-#    And I start the node
-#    And I use 1st node as DC
-#    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
-#    And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
-#    Then the traversal from batch "urn:epc:id:sgtin:Batch_1" should contain 1 trail and 2 vertices of type EVENT
+  @third
+  Scenario: Return all data related to a specific identifier
+    Given I setup 4 node
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/OBE/ORDER100678.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    Then the traversal from id "100678" with connection types "EPC" should contain 5 objects
+    And I calculate and validate the proof of the last traversal
+
+  @fourth
+  Scenario: Check import non-blocking API
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    Then DC checks status of the last import
+    And The last import status should be "PENDING"
+
+  @first
+  Scenario: Get issuer identity
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/OBE/CARTONDATA.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And DC gets issuer id for element "1234567890000000015"
+    Then DC should be the issuer for the selected element

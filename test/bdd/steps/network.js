@@ -166,6 +166,7 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
 }));
 
 Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
+    this.logger.log('DC waits for holding time');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
@@ -306,6 +307,11 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeInd
 
     this.logger.log(`Setting node '${nodeIndex}' as ${nodeType}.`);
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
+
+    if (this.state.lastIssuerIdentity) {
+        this.state.secondLastIssuerIdentity = this.state.lastIssuerIdentity;
+    }
+    this.state.lastIssuerIdentity = JSON.parse(fs.readFileSync(`${this.state[nodeType.toLowerCase()].options.configDir}/${this.state[nodeType.toLowerCase()].options.nodeConfiguration.erc725_identity_filepath}`).toString());
 });
 
 Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one manually calculated$/, async function (nodeType) {
@@ -380,7 +386,7 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
     expect(response.data.formatted_dataset['@graph']
-        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:description'])
+        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:batch:image'])
         .to.be.equal(ot_logo);
 });
 
@@ -457,6 +463,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
+    this.logger.log('I wait for replication to finish');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
@@ -650,7 +657,6 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
-    const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const dataSetId = this.state.lastImport.data.dataset_id;
 
@@ -660,17 +666,9 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
         `Data-set ${dataSetId} was not purchased.`,
     ).to.have.key(dataSetId);
 
-    // Get original import info.
-    const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-    const dvImportInfo =
-        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-
-    if (!deepEqual(dcImportInfo, dvImportInfo)) {
-        throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
+    if (!deepEqual(this.state.lastExport.data.formatted_dataset, this.state.secondLastExport.data.formatted_dataset)) {
+        throw Error(`Objects not equal: ${JSON.stringify(this.state.lastExport)} and ${JSON.stringify(this.state.secondLastExport)}`);
     }
-    expect(dcImportInfo.transaction, 'DC transaction hash should be defined').to.not.be.undefined;
-    expect(dvImportInfo.transaction, 'DV/DV2 transaction hash should be defined').to.not.be.undefined;
 });
 
 Given(/^I remember previous import's fingerprint value$/, async function () {
@@ -803,15 +801,10 @@ Then(/^all nodes with (last import|second last import) should answer to last net
     const nodeCandidates = [];
     this.state.nodes.forEach((node) => {
         promises.push(new Promise(async (accept) => {
-            const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
-            body.find((importInfo) => {
-                if (importInfo.data_set_id === this.state[whichImport].data.dataset_id) {
-                    nodeCandidates.push(node.state.identity);
-                    return true;
-                }
-                return false;
-            });
-            // TODO check that nodeCandidates [] elements are all unique values, there must not be dupes
+            const body = await httpApiHelper.apiGetDatasetInfo(node.state.node_rpc_url, this.state[whichImport].data.dataset_id);
+            if (body.dataset_id === this.state[whichImport].data.dataset_id) {
+                nodeCandidates.push(node.state.identity);
+            }
             accept();
         }));
     });
@@ -987,6 +980,7 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
 });
 
 Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
+    this.logger.log('Selected DHes should be payed out');
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
 
     const myPromises = [];
@@ -1000,7 +994,7 @@ Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async functio
                     const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
                     const a = new BN(myBalance.profile.staked);
                     const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
-                    const c = new BN(node.options.nodeConfiguration.dc_token_amount_per_holder);
+                    const c = new BN(node.state.calculatedOfferPrice);
                     expect(a.sub(b).toString()).to.be.equal(c.toString());
                     accept();
                 });

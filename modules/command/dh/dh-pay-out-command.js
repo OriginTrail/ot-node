@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 const Models = require('../../../models/index');
 
@@ -25,6 +26,7 @@ class DhPayOutCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            urgent,
         } = command.data;
 
         const bid = await Models.bids.findOne({
@@ -48,9 +50,18 @@ class DhPayOutCommand extends Command {
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this._printBalances(blockchainIdentity);
-        await this.blockchain.payOut(blockchainIdentity, offerId);
-        this.logger.important(`Payout for offer ${offerId} successfully completed.`);
-        await this._printBalances(blockchainIdentity);
+        try {
+            await this.blockchain.payOut(blockchainIdentity, offerId, urgent);
+            this.logger.important(`Payout for offer ${offerId} successfully completed.`);
+            await this._printBalances(blockchainIdentity);
+        } catch (error) {
+            if (error.message.includes('Gas price higher than maximum allowed price')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                return Command.repeat();
+            }
+            throw error;
+        }
+
         return Command.empty();
     }
 
@@ -106,6 +117,7 @@ class DhPayOutCommand extends Command {
         const command = {
             name: 'dhPayOutCommand',
             delay: 0,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);

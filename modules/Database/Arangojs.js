@@ -1098,17 +1098,19 @@ class ArangoJS {
      * @returns {Promise}
      */
     async findIssuerIdentityForElementId(elementId) {
-        const queryString = `let dataset_id = (
+        const queryString = `let dataset_ids = (
                                 FOR v IN ot_vertices
-                                FILTER v._key == @elementId
+                                FILTER v.vertexType == "Identifier"
+                                AND v.identifierValue == @elementId
                                 RETURN v.datasets[0]
                             )
+                            
                             let identity = ( 
                                 for d in ot_datasets
-                                filter d._key == dataset_id[0]
-                                return d.datasetHeader.dataCreator.identifiers[0]
+                                filter d._key in dataset_ids
+                                return {dataset_id: d._key, identifiers: d.datasetHeader.dataCreator.identifiers}
                             )
-                            return unique(identity)[0]`;
+                            return identity[0]`;
         const params = { elementId };
         return this.runQuery(queryString, params);
     }

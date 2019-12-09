@@ -85,7 +85,10 @@ class RestApiController {
 
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
-        server.use(restify.plugins.bodyParser());
+        server.use(restify.plugins.bodyParser({
+            maxBodySize: 10 * 1024 * 1024 * 1024,
+            maxFileSize: 10 * 1024 * 1024 * 1024,
+        }));
         server.pre(parseLatest);
         const cors = corsMiddleware({
             preflightMaxAge: 5, // Optional
