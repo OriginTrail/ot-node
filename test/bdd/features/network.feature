@@ -113,10 +113,10 @@ Feature: Test basic network features
     And DV2 waits for export to finish
     Then the last import should be the same on DC and DV2 nodes
 
-  @first
+  @dl2
   Scenario: DV should be able to publish network query regardless of the funds
     # Start node and let it create own profile. It needs some ETH and TRAC for that.
-    Given I setup 4 node
+    Given I setup 1 node
     And I start the node
     And I stop the node
     # Spend all the funds and try to query network.
@@ -124,6 +124,8 @@ Feature: Test basic network features
     And the 1st node's spend all the Ethers
     And I start the node
     And I use 1st node as DV
+    Given I additionally setup 3 node
+    And I start additional nodes
     When DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then everything should be ok
 
