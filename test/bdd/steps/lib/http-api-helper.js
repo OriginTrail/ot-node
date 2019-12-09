@@ -181,6 +181,24 @@ async function apiExportResult(nodeRpcUrl, handler_id) {
     });
 }
 
+
+async function apiGetDatasetInfo(nodeRpcUrl, dataset_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/get_dataset_info/${dataset_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
 /**
  * Fetch /api/latest/import/result
  * @typedef {Object} ImportResult
@@ -565,6 +583,37 @@ async function apiTrail(nodeRpcUrl, params) {
 }
 
 /**
+ * Fetch /api/latest/get_merkle_proofs/
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {object} params datasetId and object_ids
+ * @return {Promise.<TrailResponse>}
+ */
+async function apiMerkleProofs(nodeRpcUrl, params) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                body: {
+                    dataset_id: params.dataset_id,
+                    object_ids: params.object_ids,
+                },
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/latest/get_merkle_proofs`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
  * @typedef {Object} InfoResponse
  * @property {Object} Node information
  */
@@ -652,7 +701,9 @@ module.exports = {
     apiReadNetwork,
     apiConsensus,
     apiTrail,
+    apiMerkleProofs,
     apiNodeInfo,
     apiBalance,
     apiGetElementIssuerIdentity,
+    apiGetDatasetInfo,
 };

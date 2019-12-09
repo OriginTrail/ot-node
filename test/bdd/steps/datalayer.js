@@ -201,3 +201,42 @@ Then(
         // expect(!!result, 'Node should not have imported last dataset.').to.equal(false);
     },
 );
+
+Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const { lastTrail } = this.state;
+
+    const datasetObjectMap = {};
+    for (const trailElement of lastTrail) {
+        const { otObject } = trailElement;
+
+        for (const dataset of trailElement.datasets) {
+            if (datasetObjectMap[dataset] != null) {
+                datasetObjectMap[dataset].push(otObject['@id']);
+            } else {
+                datasetObjectMap[dataset] = [otObject['@id']];
+            }
+        }
+    }
+
+    for (const dataset of Object.keys(datasetObjectMap)) {
+        const proofResponse = await httpApiHelper.apiMerkleProofs(host, {
+            dataset_id: dataset,
+            object_ids: datasetObjectMap[dataset],
+        });
+
+        for (const proofData of proofResponse) {
+            const { otObject } = lastTrail.find((element) => {
+                const { object_id } = proofData;
+                return element.otObject['@id'] === object_id;
+            });
+
+            const proof = await utilities.validateProof(otObject, dataset, proofData);
+            const myFingerprint = await httpApiHelper.apiFingerprint(host, dataset);
+            expect(proof).to.be.equal(myFingerprint.root_hash);
+        }
+    }
+});

@@ -307,6 +307,11 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeInd
 
     this.logger.log(`Setting node '${nodeIndex}' as ${nodeType}.`);
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
+
+    if (this.state.lastIssuerIdentity) {
+        this.state.secondLastIssuerIdentity = this.state.lastIssuerIdentity;
+    }
+    this.state.lastIssuerIdentity = JSON.parse(fs.readFileSync(`${this.state[nodeType.toLowerCase()].options.configDir}/${this.state[nodeType.toLowerCase()].options.nodeConfiguration.erc725_identity_filepath}`).toString());
 });
 
 Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one manually calculated$/, async function (nodeType) {
@@ -381,7 +386,7 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
     expect(response.data.formatted_dataset['@graph']
-        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:description'])
+        .find(x => x['@id'] === dataId).properties['urn:ot:object:product:batch:image'])
         .to.be.equal(ot_logo);
 });
 
@@ -652,7 +657,6 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
-    const { dc } = this.state;
     const dv = this.state[whichDV.toLowerCase()];
     const dataSetId = this.state.lastImport.data.dataset_id;
 
@@ -662,17 +666,9 @@ Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async f
         `Data-set ${dataSetId} was not purchased.`,
     ).to.have.key(dataSetId);
 
-    // Get original import info.
-    const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-    const dvImportInfo =
-        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-
-    if (!deepEqual(dcImportInfo, dvImportInfo)) {
-        throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
+    if (!deepEqual(this.state.lastExport.data.formatted_dataset, this.state.secondLastExport.data.formatted_dataset)) {
+        throw Error(`Objects not equal: ${JSON.stringify(this.state.lastExport)} and ${JSON.stringify(this.state.secondLastExport)}`);
     }
-    expect(dcImportInfo.transaction, 'DC transaction hash should be defined').to.not.be.undefined;
-    expect(dvImportInfo.transaction, 'DV/DV2 transaction hash should be defined').to.not.be.undefined;
 });
 
 Given(/^I remember previous import's fingerprint value$/, async function () {
@@ -805,15 +801,10 @@ Then(/^all nodes with (last import|second last import) should answer to last net
     const nodeCandidates = [];
     this.state.nodes.forEach((node) => {
         promises.push(new Promise(async (accept) => {
-            const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
-            body.find((importInfo) => {
-                if (importInfo.data_set_id === this.state[whichImport].data.dataset_id) {
-                    nodeCandidates.push(node.state.identity);
-                    return true;
-                }
-                return false;
-            });
-            // TODO check that nodeCandidates [] elements are all unique values, there must not be dupes
+            const body = await httpApiHelper.apiGetDatasetInfo(node.state.node_rpc_url, this.state[whichImport].data.dataset_id);
+            if (body.dataset_id === this.state[whichImport].data.dataset_id) {
+                nodeCandidates.push(node.state.identity);
+            }
             accept();
         }));
     });

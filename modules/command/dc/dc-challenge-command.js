@@ -36,16 +36,20 @@ class DCChallengeCommand extends Command {
 
         challenge.end_time = new Date().getTime() + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
 
-        await this.transport.challengeRequest({
-            payload: {
-                offer_id: challenge.offer_id,
-                data_set_id: challenge.data_set_id,
-                object_index: challenge.object_index,
-                block_index: challenge.block_index,
-                challenge_id: challenge.id,
-                litigator_id: this.config.identity,
-            },
-        }, challenge.dh_id);
+        try {
+            await this.transport.challengeRequest({
+                payload: {
+                    offer_id: challenge.offer_id,
+                    data_set_id: challenge.data_set_id,
+                    object_index: challenge.object_index,
+                    block_index: challenge.block_index,
+                    challenge_id: challenge.id,
+                    litigator_id: this.config.identity,
+                },
+            }, challenge.dh_id);
+        } catch (e) {
+            this.logger.info(`Peer with ID ${challenge.dh_id} could not be reached.`);
+        }
 
         const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
 
