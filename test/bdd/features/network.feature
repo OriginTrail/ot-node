@@ -51,7 +51,7 @@ Feature: Test basic network features
   @second
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
-    And I setup 1 node
+    And I setup 3 node
     And I start the node
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
@@ -61,7 +61,7 @@ Feature: Test basic network features
     And DC waits for replication window to close
     Given I additionally setup 1 node
     And I start additional nodes
-    And I use 2nd node as DV
+    And I use 4th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from the DC
@@ -75,7 +75,7 @@ Feature: Test basic network features
   @third
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
-    And I setup 1 node
+    And I setup 3 node
     And I start the node
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
@@ -85,7 +85,7 @@ Feature: Test basic network features
     And DC waits for replication window to close
     Given I additionally setup 1 node
     And I start additional nodes
-    And I use 2nd node as DV
+    And I use 4th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from the DC
@@ -97,7 +97,7 @@ Feature: Test basic network features
     Then the last import should be the same on DC and DV nodes
     Given I additionally setup 1 node
     And I start additional nodes
-    And I use 3rd node as DV2
+    And I use 5th node as DV2
     Given DV2 publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV2
     Given the DV2 purchases last import from the last query from a DV
