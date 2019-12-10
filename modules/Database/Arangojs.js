@@ -33,14 +33,14 @@ class ArangoJS {
      */
     async initialize() {
         // Create database if doesn't exist.
-        const listOfDatabases = await this.db.listDatabases();
-        if (!listOfDatabases.includes(this.dbInfo.database)) {
-            await
-            this.db.createDatabase(
-                this.dbInfo.database,
-                [{ username: this.dbInfo.username, passwd: this.dbInfo.password, active: true }],
-            );
-        }
+        // const listOfDatabases = await this.db.listDatabases();
+        // if (!listOfDatabases.includes(this.dbInfo.database)) {
+        //     await
+        //     this.db.createDatabase(
+        //         this.dbInfo.database,
+        //         [{ username: this.dbInfo.username, passwd: this.dbInfo.password, active: true }],
+        //     );
+        // }
 
         this.db.useDatabase(this.dbInfo.database);
         await this.createCollection('ot_datasets');
