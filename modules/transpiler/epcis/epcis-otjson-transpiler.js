@@ -487,9 +487,7 @@ class EpcisOtJsonTranspiler {
 
         if (compressed.inputEPCList && compressed.inputEPCList.epc) {
             for (const epc of compressed.inputEPCList.epc) {
-                otObject.relations.push(createRelation(epc, {
-                    relationType: 'INPUT_EPC',
-                }));
+                otObject.relations.push(createRelation(epc, 'INPUT_EPC'));
             }
         }
 
@@ -510,9 +508,7 @@ class EpcisOtJsonTranspiler {
 
         if (compressed.outputEPCList && compressed.outputEPCList.epc) {
             for (const epc of compressed.outputEPCList.epc) {
-                otObject.relations.push(createRelation(epc, {
-                    relationType: 'OUTPUT_EPC',
-                }));
+                otObject.relations.push(createRelation(epc, 'OUTPUT_EPC'));
             }
         }
 
