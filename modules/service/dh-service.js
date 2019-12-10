@@ -123,7 +123,7 @@ class DHService {
             dataSetSizeInBytes,
             holdingTimeInMinutes,
         );
-        const dhTokenPrice = new BN(myOfferPrice, 10);
+        const dhTokenPrice = new BN(myOfferPrice.toString(), 10);
 
 
         const formatMyPrice = format(dhTokenPrice);

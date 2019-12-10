@@ -147,7 +147,7 @@ class DCService {
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
-        const offerStake = new BN(tokenAmountPerHolder, 10)
+        const offerStake = new BN(tokenAmountPerHolder.toString(), 10)
             .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
