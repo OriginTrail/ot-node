@@ -65,7 +65,7 @@ class OtNode extends EventEmitter {
         this.state.addedBids = []; // List of offer IDs (DH side).
         this.state.takenBids = []; // List of offer IDs (DH side).
         this.state.pendingLitigationDhIdentities = []; // List of pending litigations (DHs)
-        this.state.penalizedDHIdentities = []
+        this.state.penalizedDHIdentities = [];
         this.state.takenReplacements = []; // List of replacement offer IDs (DH side).
         // Valid replications (DH side). List of internal offer IDs and their replications DH IDs
         // in pairs. { internalOfferId, dhId }.
