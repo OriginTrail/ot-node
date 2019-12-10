@@ -163,7 +163,7 @@ Feature: Test various litigation scenarios
     And I corrupt 1st holder's database ot_vertices collection
     When I wait for litigation initiation
     Then Litigator node should have completed litigation
-    When DC imports "importers/xml_examples/Retail/02_Green_to_pink_receipt.xml" as GS1-EPCIS
+    When DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
     And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And DC waits for last offer to get written to blockchain
