@@ -25,7 +25,7 @@ ps aux | grep -ie arangod | awk '{print $2}' | xargs kill -9
 n=0
 # timeout value for startup
 timeout=60
-while [[ (-z `curl -H 'Authorization: Basic cm9vdDo=' -s 'http://127.0.0.1:8529/_api/version' `) && (n -lt timeout) ]] ; do
+while [[ (-z `curl -H 'Authorization: Basic cm9vdDo=' -s 'http://'"$2"':'"$3"'/_api/version' `) && (n -lt timeout) ]] ; do
   echo -n "."
   sleep 1s
   n=$[$n+1]
