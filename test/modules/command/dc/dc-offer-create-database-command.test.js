@@ -79,13 +79,6 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             },
         };
 
-        const mockRemoteControl = {
-            lastData: null,
-            offerUpdate: (data) => {
-                this.lastData = data;
-            },
-        };
-
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
