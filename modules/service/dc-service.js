@@ -147,7 +147,7 @@ class DCService {
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
-        const offerStake = new BN(tokenAmountPerHolder, 10)
+        const offerStake = new BN(tokenAmountPerHolder.toString(), 10)
             .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
@@ -256,8 +256,8 @@ class DCService {
     async handleReplicationRequest(offerId, wallet, identity, dhIdentity, response) {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
-        if (!offerId || !wallet) {
-            const message = 'Asked replication without providing offer ID or wallet.';
+        if (!offerId || !wallet || !dhIdentity) {
+            const message = 'Asked replication without providing offer ID or wallet or identity.';
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
             return;
@@ -284,7 +284,39 @@ class DCService {
             await this.transport.sendResponse(response, { status: 'fail', message });
         }
 
-        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        const dhReputation = await this.getReputationForDh(dhIdentity);
+
+        if (dhReputation.lt(new BN(this.config.dh_min_reputation))) {
+            const message = `Replication request from holder identity ${dhIdentity} declined! Unacceptable reputation: ${dhReputation.toString()}.`;
+            this.logger.info(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+        } else {
+            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        }
+    }
+
+    /**
+     * Return reputation for received dh identity
+     * @param dhIdentity
+     * @returns {Promise<BN>}
+     */
+    async getReputationForDh(dhIdentity) {
+        const reputationModel = await models.reputation_data.findAll({
+            where: {
+                dh_identity: dhIdentity.toLowerCase(),
+            },
+        });
+        if (reputationModel) {
+            let reputation = new BN(0, 10);
+            reputationModel.forEach((element) => {
+                const reputationDelta = element.reputation_delta;
+                if (reputationDelta) {
+                    reputation = reputation.add(new BN(reputationDelta));
+                }
+            });
+            return reputation;
+        }
+        return new BN(0, 10);
     }
 
     /**

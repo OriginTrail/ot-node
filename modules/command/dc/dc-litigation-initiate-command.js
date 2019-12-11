@@ -74,8 +74,8 @@ class DCLitigationInitiateCommand extends Command {
 
         const merkleProof = this.challengeService.createChallengeProof(
             encryptedGraph['@graph'],
-            blockIndex,
             objectIndex,
+            blockIndex,
         );
 
         await this.blockchain.initiateLitigation(

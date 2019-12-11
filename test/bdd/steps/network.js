@@ -315,6 +315,7 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeInd
 });
 
 Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one manually calculated$/, async function (nodeType) {
+    this.logger.log(`${nodeType} last import/purchase hash should be the same as one manually calculated`);
     expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
     expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -474,18 +475,20 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 
     // All nodes including DC emit offer-finalized.
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
-        promises.push(new Promise((acc) => {
-            node.once('offer-finalized', (offerId) => {
-                if (this.state.lastReplication !== offerId) {
-                    if (this.state.lastReplication) {
-                        this.state.secondLastReplication = this.state.lastReplication;
+        if (!this.state.corruptedNode || (node.id !== this.state.corruptedNode.id)) {
+            promises.push(new Promise((acc) => {
+                node.once('offer-finalized', (offerId) => {
+                    if (this.state.lastReplication !== offerId) {
+                        if (this.state.lastReplication) {
+                            this.state.secondLastReplication = this.state.lastReplication;
+                        }
+                        this.state.lastReplication = offerId;
                     }
-                    this.state.lastReplication = offerId;
-                }
-                // TODO: Change API to connect internal offer ID and external offer ID.
-                acc();
-            });
-        }));
+                    // TODO: Change API to connect internal offer ID and external offer ID.
+                    acc();
+                });
+            }));
+        }
     });
 
     return Promise.all(promises);
@@ -884,6 +887,7 @@ Given(/^DC waits for replication window to close$/, { timeout: 180000 }, functio
 });
 
 Given(/^DC waits for last offer to get written to blockchain$/, { timeout: 180000 }, function (done) {
+    this.logger.log('DC waits for last offer to get written to blockchain');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);

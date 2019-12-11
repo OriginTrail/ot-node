@@ -110,7 +110,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
                 identifierKeys = ['urn:epc:id:sgtin:8635411.000333.00001'];
                 identifierTypes = ['sgtin'];
                 break;
-            // TODO fix these examples 'GraphExample_1-4.xml'
+                // TODO fix these examples 'GraphExample_1-4.xml'
             default:
                 throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
             }

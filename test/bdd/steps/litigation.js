@@ -38,6 +38,7 @@ Given(/^I remember stopped holder[s]*$/, async function () {
 });
 
 Given(/^I wait for litigation initiation$/, { timeout: 300000 }, function (done) {
+    this.logger.log('I wait for litigation initiation');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -117,10 +118,16 @@ Then(/^Litigator node should have completed litigation$/, { timeout: 300000 }, f
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
+    this.logger.log('Holder node should have been penalized');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const { dc } = this.state;
+
+    if (dc.state.penalizedDHIdentities.length > 0) {
+        done();
+        return;
+    }
 
     dc.once('dc-litigation-completed-dh-penalized', () => {
         done();
@@ -128,6 +135,7 @@ Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeou
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ started holder should not have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
+    this.logger.log('Holder node should not have been penalized');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -224,7 +232,7 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
         username,
         password,
     } = node.options.nodeConfiguration.database;
-
+    this.state.corruptedNode = node;
     const systemDb = new Database();
     systemDb.useBasicAuth(username, password);
     systemDb.useDatabase(databaseName);

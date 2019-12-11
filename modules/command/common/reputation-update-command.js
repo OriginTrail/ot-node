@@ -1,20 +1,26 @@
 const Command = require('../command');
-const Models = require('../../../models/index');
+const models = require('../../../models/index');
 const constants = require('../../constants');
 
 /**
  * Increases approval for Bidding contract on blockchain
  */
-class CleanerCommand extends Command {
+class ReputationUpdateCommand extends Command {
+    constructor(ctx) {
+        super(ctx);
+        this.config = ctx.config;
+    }
+
     /**
      * Executes command and produces one or more events
      * @param command
      */
     async execute(command) {
-        await Models.commands.destroy({
+        const earliestTimestampToKeep =
+            Date.now() - (this.config.reputationWindowInMinutes * 60 * 1000);
+        await models.reputation_data.destroy({
             where: {
-                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'FAILED', 'EXPIRED'] },
-                started_at: { [Models.Sequelize.Op.lte]: Date.now() },
+                timestamp: { [models.Sequelize.Op.lt]: earliestTimestampToKeep },
             },
         });
         return Command.repeat();
@@ -27,10 +33,10 @@ class CleanerCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'cleanerCommand',
+            name: 'reputationUpdateCommand',
             data: {
             },
-            period: constants.DEFAULT_COMMAND_CLEANUP_TIME_MILLS,
+            period: constants.DEFAULT_REPUTATION_UPDATE_PERIOD_MILLS,
             transactional: false,
         };
         Object.assign(command, map);
@@ -38,4 +44,4 @@ class CleanerCommand extends Command {
     }
 }
 
-module.exports = CleanerCommand;
+module.exports = ReputationUpdateCommand;

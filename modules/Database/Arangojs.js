@@ -822,13 +822,13 @@ class ArangoJS {
     }
 
     /**
-    * Get ArangoDB version
-    * @param {string} - host
-    * @param {string} - port
-    * @param {string} - username
-    * @param {string} - password
-    * @returns {Promise<any>}
-    */
+     * Get ArangoDB version
+     * @param {string} - host
+     * @param {string} - port
+     * @param {string} - username
+     * @param {string} - password
+     * @returns {Promise<any>}
+     */
     async version(host, port, username, password) {
         const result = await request
             .get(`http://${host}:${port}/_api/version`)
@@ -1006,10 +1006,10 @@ class ArangoJS {
      */
     async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges ' +
-                'FILTER v.datasets != null ' +
-                'AND POSITION(v.datasets, @importId, false) != false ' +
-                'SORT v._key ' +
-                'RETURN v';
+            'FILTER v.datasets != null ' +
+            'AND POSITION(v.datasets, @importId, false) != false ' +
+            'SORT v._key ' +
+            'RETURN v';
 
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);
