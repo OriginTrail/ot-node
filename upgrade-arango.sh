@@ -1,7 +1,6 @@
 #!/bin/bash
 service arangodb3 stop
-rm -rf /var/lib/arangodb3/LOCK
-rm -rf /var/lib/arangodb3/rocksdb/LOCK
+
 update-rc.d -f arangodb3 remove
 
 dpkg --purge arangodb3
