@@ -1,8 +1,8 @@
 #!/bin/bash
 
-curl -OL https://download.arangodb.com/arangodb33/xUbuntu_16.04/Release.key
+curl -OL https://download.arangodb.com/arangodb35/DEBIAN/Release.key
 apt-key add - < Release.key
-echo 'deb https://download.arangodb.com/arangodb33/xUbuntu_16.04/ /' | tee /etc/apt/sources.list.d/arangodb.list
+echo 'deb https://download.arangodb.com/arangodb35/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 apt-get install apt-transport-https -y
 apt-get update -y
 echo arangodb3 arangodb3/password password root | debconf-set-selections
