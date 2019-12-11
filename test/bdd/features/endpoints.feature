@@ -36,3 +36,14 @@ Feature: API endpoints features
     And I start the node
     And I use 1st node as DC
     Then API calls will not be authorized
+
+
+  @second
+  Scenario: Simple ZK quantity check
+    Given I setup 1 node
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "test/modules/test_xml/Transformation.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Then the custom traversal from "sgtin" "urn:epc:id:sgtin:8635411.000333.00001" with connection types "EPC,INPUT_EPC,OUTPUT_EPC" should contain 3 objects
+    And zk check should pass
