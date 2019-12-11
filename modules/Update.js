@@ -43,7 +43,7 @@ class Update {
             logger.log(`Starting downloading: ${name}`);
         });
         this.autoupdater.on('download.progress', (name, perc) => {
-            process.stdout.write(`Downloading ${perc}% \x1B[0G`);
+            // skip logging for now
         });
         this.autoupdater.on('download.end', (name) => {
             logger.log(`Downloaded ${name}`);
