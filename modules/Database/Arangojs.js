@@ -153,14 +153,13 @@ class ArangoJS {
                              
                             LET trailObjects = (
                                 FILTER startObjects[0] != null
-                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
-        if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
-            queryString += `
-                            FILTER p.edges[*].relationType ALL in @connectionTypes`;
-            queryParams.connectionTypes = connectionTypes;
-        }
-        queryString += `
-                            RETURN DISTINCT v
+                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                RETURN DISTINCT v
                             )
                             
                             FOR trailObject in trailObjects
@@ -179,6 +178,72 @@ class ArangoJS {
                                 "rootObject": trailObject,
                                 "relatedObjects": objectsRelated
                             }`;
+        if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
+            queryString = ` // Get identifier
+                            LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
+                            
+                            // Fetch the start entity for trail
+                            LET startObjects = UNIQUE(FLATTEN(
+                                FOR identifierObject IN identifierObjects
+                                    FILTER identifierObject != null
+                                    LET identifiedObject = (
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    RETURN v
+                                    )
+                                RETURN identifiedObject
+                            ))
+                             
+                            LET trailObjects = (
+                                FILTER startObjects[0] != null
+                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges
+                                OPTIONS {
+                                    bfs: true,
+                                    uniqueVertices: 'global',
+                                    uniqueEdges: 'path'
+                                }
+                                
+                            FILTER LENGTH(p.edges) < 2 ? true : (p.edges[-2].relationType != p.edges[-1].relationType)
+                            FILTER p.edges[*].relationType ALL in @connectionTypes
+                            RETURN DISTINCT { vertex: v, path: p.edges }
+                           )
+                           
+                           LET pairs = (
+                                FOR object in trailObjects
+                                FILTER LENGTH(object.path) > 2
+                                    let imaDuplikate = (
+                                        FOR relation in object.path
+                                            FILTER POSITION(object.path, relation, true) > 0
+                                            LET pozicija = ( RETURN POSITION(object.path, relation, true))
+                                            RETURN NTH(object.path, pozicija - 1).relationType == relation.relationType
+                                    )
+                                FILTER POSITION(imaDuplikate, true)
+                                RETURN object
+                            )
+                            
+                            let trailObjects2 = (for object in trailObjects
+                            filter object not in pairs
+                            return object.vertex
+                            )
+                            FOR trailObject in trailObjects2
+                                FILTER trailObject != null
+                                LET objectsRelated = (
+                                    FOR v, e in 1..1 OUTBOUND trailObject ot_edges
+                                    FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                        AND e.datasets != null
+                                        AND v.datasets != null
+                                        AND LENGTH(INTERSECTION(e.datasets, v.datasets, trailObject.datasets)) > 0
+                                    RETURN  {
+                                        "vertex": v,
+                                        "edge": e
+                                    })
+                            RETURN {
+                                "rootObject": trailObject,
+                                "relatedObjects": objectsRelated
+                            }`;
+            queryParams.connectionTypes = connectionTypes;
+        }
+
         const result = await this.runQuery(queryString, queryParams);
         return result;
     }
@@ -767,13 +832,13 @@ class ArangoJS {
     }
 
     /**
-    * Get ArangoDB version
-    * @param {string} - host
-    * @param {string} - port
-    * @param {string} - username
-    * @param {string} - password
-    * @returns {Promise<any>}
-    */
+     * Get ArangoDB version
+     * @param {string} - host
+     * @param {string} - port
+     * @param {string} - username
+     * @param {string} - password
+     * @returns {Promise<any>}
+     */
     async version(host, port, username, password) {
         const result = await request
             .get(`http://${host}:${port}/_api/version`)
@@ -951,10 +1016,10 @@ class ArangoJS {
      */
     async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges ' +
-                'FILTER v.datasets != null ' +
-                'AND POSITION(v.datasets, @importId, false) != false ' +
-                'SORT v._key ' +
-                'RETURN v';
+            'FILTER v.datasets != null ' +
+            'AND POSITION(v.datasets, @importId, false) != false ' +
+            'SORT v._key ' +
+            'RETURN v';
 
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);

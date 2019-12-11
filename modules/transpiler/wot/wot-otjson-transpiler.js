@@ -186,9 +186,9 @@ class WotOtJsonTranspiler {
             tags: thing.tags,
         };
 
-        const createRelation = (id, data) => ({
+        const createRelation = (id, relType, data) => ({
             '@type': 'otRelation',
-            relationType: 'PART_OF',
+            relationType: relType,
             direction: 'direct', // think about direction
             linkedObject: {
                 '@id': id,
@@ -198,7 +198,19 @@ class WotOtJsonTranspiler {
 
         if (thing.customFields) {
             for (const obj of thing.customFields) {
-                otObject.relations.push(createRelation(obj.id, {
+                let relType;
+                switch (obj.type) {
+                case 'readPoint':
+                    relType = 'OBSERVATION_READ_POINT';
+                    break;
+                case 'observedObject':
+                    relType = 'OBSERVES';
+                    break;
+                default:
+                    relType = 'PART_OF';
+                    break;
+                }
+                otObject.relations.push(createRelation(obj.id, relType, {
                     type: obj.type,
                 }));
             }

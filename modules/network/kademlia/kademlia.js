@@ -150,46 +150,6 @@ class Kademlia {
 
             this.node.quasar = this.node.plugin(kadence.quasar());
 
-            const quasarPublish = function (topic, contents, options = {}, callback = () => null) {
-                if (typeof options === 'function') {
-                    callback = options;
-                    options = {};
-                }
-
-                const publicationId = uuidv4();
-                const neighbors = [...this.node.router.getClosestContactsToKey(
-                    options.routingKey || this.node.identity.toString('hex'),
-                    this.node.router.size,
-                ).entries()];
-
-                const errors = [];
-                let sentSoFar = 0;
-                async.eachLimit(neighbors, kadence.constants.ALPHA, (contact, done) => {
-                    if (sentSoFar >= kadence.constants.ALPHA) {
-                        // Achieved desired publications.
-                        done();
-                        return;
-                    }
-                    this.node.send(kadence.quasar.QuasarPlugin.PUBLISH_METHOD, {
-                        uuid: publicationId,
-                        topic,
-                        contents,
-                        publishers: [this.node.identity.toString('hex')],
-                        ttl: kadence.constants.MAX_RELAY_HOPS,
-                    }, contact, (error) => {
-                        if (error) {
-                            errors.push(error);
-                        } else {
-                            sentSoFar += 1;
-                        }
-                        done();
-                    });
-                }, (error) => {
-                    callback(error, sentSoFar);
-                });
-            };
-
-            this.node.quasar.quasarPublish = quasarPublish.bind(this.node.quasar);
             this.log.info('Quasar initialised');
 
             const spartacusPlugin = kadence.spartacus(
@@ -495,7 +455,12 @@ class Kademlia {
                     this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                     return contact;
                 }
-                const peerContact = await this.node.rolodex.getExternalPeerInfo(contactId);
+                let peerContact;
+                try {
+                    peerContact = await this.node.rolodex.getExternalPeerInfo(contactId);
+                } catch (e) {
+                    this.log.debug("Can't find external peer info.");
+                }
                 if (peerContact) {
                     const peerContactArray = KadenceUtils.parseContactURL(peerContact);
 

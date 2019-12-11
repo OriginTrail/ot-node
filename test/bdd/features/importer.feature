@@ -53,13 +53,11 @@ Feature: Test basic importer features
     And DC waits for import to finish
     And DC imports "importers/xml_examples/Retail/06_Pink_to_Red_receipt.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Then the traversal from id "urn:epc:id:sgtin:Batch_1" with connection types "EPC,BIZ_LOCATION" should contain 13 objects
-    And the last traversal should contain 4 objects with type "otObject.properties.vocabularyType" and value "urn:ot:object:location"
-    And the last traversal should contain 3 objects with type "otObject.properties.urn:ot:object:product:batch:productId" and value "urn:ot:object:product:id:Product_1"
-    And the last traversal should contain 6 objects with type "otObject.properties.objectType" and value "ObjectEvent"
+    Then the traversal from id "urn:epc:id:sgtin:Batch_1" with connection types "EPC,BIZ_LOCATION" should contain 5 objects
+    And the last traversal should contain 2 objects with type "otObject.properties.vocabularyType" and value "urn:ot:object:location"
+    And the last traversal should contain 1 objects with type "otObject.properties.urn:ot:object:product:batch:productId" and value "urn:ot:object:product:id:Product_1"
+    And the last traversal should contain 2 objects with type "otObject.properties.objectType" and value "ObjectEvent"
     And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1"
-    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1_PINKSHIP2"
-    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:Batch_1_PINKSHIP1"
 
   @first
   Scenario: Check that exported WOT dataset is the same as the one imported
