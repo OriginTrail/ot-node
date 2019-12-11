@@ -8,8 +8,10 @@ const { expect } = require('chai');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
 const ImportUtilities = require('../../../modules/ImportUtilities');
+const Utilities = require('../../../modules/Utilities');
 const ZK = require('../../../modules/ZK');
 const logger = require('../../../modules/logger');
+const MerkleTree = require('../../../modules/Merkle');
 
 
 Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, async function () {
@@ -311,9 +313,14 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
                 return element.otObject['@id'] === object_id;
             });
 
-            const proof = await utilities.validateProof(otObject, dataset, proofData);
+            const { proof, object_index } = proofData;
+            const objectText = Utilities.sortedStringify(otObject);
+
+            const merkleTree = new MerkleTree(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1'], 'distribution', 'sha3');
+            const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);
+
             const myFingerprint = await httpApiHelper.apiFingerprint(host, dataset);
-            expect(proof).to.be.equal(myFingerprint.root_hash);
+            expect(`0x${rootHash}`).to.be.equal(myFingerprint.root_hash);
         }
     }
 });
