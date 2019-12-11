@@ -316,7 +316,7 @@ class OTNode {
 
                 log.info(`Arango server version ${version} is up and running`);
                 if (process.env.OT_NODE_DISTRIBUTION === 'docker'
-                    && !semver.gte(version, '3.5.0')
+                    && semver.lt(version, '3.5.0')
                     && config.autoUpdater.enabled) {
                     log.info('Your arangodb version is lower than required. Starting upgrade...');
                     execSync(`./upgrade-arango.sh ${config.database.password}`, { stdio: 'inherit' });
