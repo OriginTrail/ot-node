@@ -10,7 +10,7 @@ class TracPriceService {
     }
 
     async getTracPriceInEth() {
-        if (process.env.NODE_ENV !== 'mariner' && process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'mainnet' && process.env.NODE_ENV !== 'testnet') {
             return this.config.blockchain.trac_price_in_eth;
         }
 
