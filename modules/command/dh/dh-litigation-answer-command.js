@@ -57,16 +57,16 @@ class DHLitigationAnswerCommand extends Command {
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const { status, timestamp } = await this.blockchain.getLitigation(offerId, dhIdentity);
 
-        const { litigation_interval_in_minutes } = models.offers.findOne({
+        const { litigation_interval_in_minutes } = await models.bids.findOne({
             where: {
                 offer_id: offerId,
             },
         });
 
-        const diffTimeInMinutes = (Date.now() - timestamp) / 60000;
+        const litigationTimestamp = parseInt(timestamp, 10) * 1000; // seconds -> miliseconds
 
         if (status === '1') {
-            if (diffTimeInMinutes <= litigation_interval_in_minutes) {
+            if (litigationTimestamp + (litigation_interval_in_minutes * 60000) >= Date.now()) {
                 await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer);
 
                 return {

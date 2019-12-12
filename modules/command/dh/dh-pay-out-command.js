@@ -53,16 +53,18 @@ class DhPayOutCommand extends Command {
 
         const { status, timestamp } =
             await this.blockchain.getLitigation(offerId, blockchainIdentity);
-        const { litigation_interval_in_minutes } = Models.offers.findOne({
+        const { litigation_interval_in_minutes } = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
             },
         });
 
+        const litigationTimestamp = parseInt(timestamp, 10) * 1000;
+
         const blockTimestamp = Date.now();
-        if (status === '1' && !(timestamp + (litigation_interval_in_minutes * 2 * 60000) < blockTimestamp)) {
+        if (status === '1' && !(litigationTimestamp + (litigation_interval_in_minutes * 2 * 60000) < blockTimestamp)) {
             this.logger.info(`Unanswered litigation for offer ${offerId} in progress, cannot be payed out.`);
-        } else if (status === '2' && !(timestamp + (60000 * litigation_interval_in_minutes) < blockTimestamp)) {
+        } else if (status === '2' && !(litigationTimestamp + (60000 * litigation_interval_in_minutes) < blockTimestamp)) {
             this.logger.info(`Unanswered litigation for offer ${offerId} in progress, cannot be payed out.`);
         } else if (status !== '0') {
             this.logger.info(`I'm replaced or being replaced for offer ${offerId}, cannot be payed out.`);
