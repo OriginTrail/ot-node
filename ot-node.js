@@ -319,7 +319,7 @@ class OTNode {
                     && semver.lt(version, '3.5.0')
                     && config.autoUpdater.enabled) {
                     log.info('Your arangodb version is lower than required. Starting upgrade...');
-                    execSync(`./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`, { stdio: 'inherit' });
+                    execSync(`sudo ./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`, { stdio: 'inherit' });
 
                     const { version } = await Utilities.getArangoDbVersion(config);
                     log.info(`Arango server is updated to version ${version}.`);
