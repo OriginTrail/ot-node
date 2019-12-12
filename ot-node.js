@@ -517,6 +517,21 @@ class OTNode {
     }
 
     _runArangoMigration(config) {
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        execSync(
+            `arangodump --server.database ${config.database.database} ` +
+             ` --server.username ${config.database.username} ` +
+             ` --server.password ${config.database.password === '' ? '\'\'' : config.database.password} ` +
+             ` --output-directory '${migrationDir}/arangodb_backup' --overwrite true`,
+            (error, stdout, stderr) => {
+                console.log(`${stdout}`);
+                if (error !== null) {
+                    console.error(`${error}`);
+                    return 1;
+                }
+                console.log('Backup finished.');
+            },
+        );
         execSync(
             `sudo ./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`,
             { stdio: 'inherit' },
