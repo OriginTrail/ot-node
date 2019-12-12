@@ -27,6 +27,17 @@ class DCOfferCleanupCommand extends Command {
             throw new Error(`Failed to find offer ${offerId}`);
         }
 
+        const challengingHolders = await models.replicated_data.findAll({
+            where: {
+                offer_id: offer.offer_id,
+                status: 'CHALLENGING',
+            },
+        });
+        if (challengingHolders.length > 0) {
+            this.logger.trace(`There are still challenges in progress for offer: ${offer.offer_id}, repeating cleanup command in 1 min.`);
+            return Command.repeat();
+        }
+
         offer.status = 'COMPLETED';
         offer.global_status = 'COMPLETED';
         await offer.save({ fields: ['status', 'global_status'] });
@@ -36,6 +47,25 @@ class DCOfferCleanupCommand extends Command {
 
         this.replicationService.cleanup(offer.id);
         this.logger.info(`Offer ${offerId} replication data cleanup successful`);
+
+        const holders = await models.replicated_data.findAll({
+            where: {
+                offer_id: offer.offer_id,
+                status: 'HOLDING',
+            },
+        });
+
+        const promises = [];
+        for (const holder of holders) {
+            promises.push(models.reputation_data.create({
+                dh_identity: holder.dh_identity,
+                offer_id: offerId,
+                reputation_delta: '1',
+                timestamp: Date.now(),
+            }));
+        }
+
+        await Promise.all(promises);
 
         await models.replicated_data.update(
             {
@@ -78,6 +108,7 @@ class DCOfferCleanupCommand extends Command {
     default(map) {
         const command = {
             name: 'dcOfferCleanupCommand',
+            period: 60000,
             transactional: false,
         };
         Object.assign(command, map);

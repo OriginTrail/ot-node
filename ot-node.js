@@ -46,6 +46,9 @@ const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 
+const { execSync } = require('child_process');
+const semver = require('semver');
+
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
@@ -309,8 +312,18 @@ class OTNode {
         // check if ArangoDB service is running at all
         if (config.database.provider === 'arangodb') {
             try {
-                const responseFromArango = await Utilities.getArangoDbVersion(config);
-                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+                const { version } = await Utilities.getArangoDbVersion(config);
+
+                log.info(`Arango server version ${version} is up and running`);
+                if (process.env.OT_NODE_DISTRIBUTION === 'docker'
+                    && semver.lt(version, '3.5.0')
+                    && config.autoUpdater.enabled) {
+                    log.info('Your arangodb version is lower than required. Starting upgrade...');
+                    execSync(`sudo ./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`, { stdio: 'inherit' });
+
+                    const { version } = await Utilities.getArangoDbVersion(config);
+                    log.info(`Arango server is updated to version ${version}.`);
+                }
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
                 console.log(err);

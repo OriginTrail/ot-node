@@ -8,6 +8,9 @@ const { expect } = require('chai');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
 const ImportUtilities = require('../../../modules/ImportUtilities');
+const ZK = require('../../../modules/ZK');
+const logger = require('../../../modules/logger');
+const fs = require('fs');
 
 
 Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, async function () {
@@ -161,6 +164,96 @@ Then(
 );
 
 Then(
+    /^the custom traversal from "(\S+)" "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
+    { timeout: 120000 },
+    async function (idType, id, connectionTypes, expectedNumberOfObjects) {
+        expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+        const { dc } = this.state;
+
+        const host = dc.state.node_rpc_url;
+        const trailParams = {
+            identifier_types: [idType],
+            identifier_values: [id],
+            connection_types: connectionTypes.split(','),
+            depth: 10,
+        };
+
+        const trail = await httpApiHelper.apiTrail(host, trailParams);
+
+        expect(trail, 'should not be null').to.not.be.undefined;
+        expect(trail, 'should be an Array').to.be.an.instanceof(Array);
+        expect(
+            trail.length,
+            `Traversal result should contain ${expectedNumberOfObjects} object(s)`,
+        ).to.be.equal(expectedNumberOfObjects);
+
+        this.state.lastTrail = trail;
+    },
+);
+
+Then(/^zk check should pass/, { timeout: 120000 }, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+
+    const transformationEvent = this.state.lastTrail.find(x => x.otObject.properties.transformationID === 'BOM12345PO987');
+
+    const params = [{ enc: '16cafc73e9e5a1c15f2982c572e45b444feaf9b41447241', r: '2588f56ba7da' },
+        { enc: '1433f36cb15be0228fbac077b8cd020e373b0050fca601c', r: '7ad6c63383f' },
+        { enc: 'cb6fc2ced36d5c7c8edbb5b1fe4f9cc0439549d95f4074', r: '1eef0ee83632' },
+        { enc: '150f1ac43b69118201c6f9a429d308bfc4e7d8560ba444d', r: '22fe928695c9' }];
+
+    const e = '8b697fe0e';
+    const a = '14d7a652dd2d55af08817556ab785b959ca7782d82420ff';
+    const zp = '34f8573ca16512a6c1736ac5f3b4f9d5c68b9ff3683583';
+
+    const inputList = [];
+    const outputList = [];
+    let i;
+    for (i = 0; i < transformationEvent.otObject.properties.inputEPCList.epc.length; i += 1) {
+        inputList.push({
+            object: transformationEvent.otObject.properties.inputEPCList.epc[i],
+            public: {
+                enc: params[i].enc,
+            },
+            private: {
+                object: transformationEvent.otObject.properties.inputEPCList.epc[i],
+                r: params[i].r,
+                quantity: Number(transformationEvent.otObject.properties.inputQuantityList.quantityElement[i].quantity),
+            },
+        });
+    }
+
+    for (let j = 0; j < transformationEvent.otObject.properties.outputEPCList.epc.length; j += 1) {
+        outputList.push({
+            object: transformationEvent.otObject.properties.outputEPCList.epc[j],
+            public: {
+                enc: params[i + j].enc,
+            },
+            private: {
+                object: transformationEvent.otObject.properties.outputEPCList.epc[j],
+                r: params[i + j].r,
+                quantity: Number(transformationEvent.otObject.properties.outputQuantityList.quantityElement[j].quantity),
+            },
+        });
+    }
+
+    const zk = new ZK({ logger });
+
+    const inQuantities = inputList.map(o => o.public.enc).sort();
+    const outQuantities = outputList.map(o => o.public.enc).sort();
+
+    const z = zk.calculateZero(inQuantities, outQuantities);
+
+    const valid = zk.V(
+        e, a, z,
+        zp,
+    );
+
+    expect(valid, 'Zero Knowledge passed').to.be.equal(true);
+});
+
+Then(
     /^the last traversal should contain (\d+) objects with type "(\S+)" and value "(\S+)"/,
     async function (expectedNumberOfObjects, keySequenceString, value) {
         expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
@@ -184,6 +277,19 @@ Then(
             filteredTrail.length,
             `Traversal should contain ${expectedNumberOfObjects} of selected objects`,
         ).to.be.equal(expectedNumberOfObjects);
+    },
+);
+
+Then(
+    'Corrupted node should not have last replication dataset',
+    async function () {
+        expect(!!this.state.corruptedNode, 'Corrupted node not defined. Use other step to define it.').to.be.equal(true);
+
+        const erc725 = JSON.parse(fs.readFileSync(`${this.state.corruptedNode.options.configDir}/${this.state.corruptedNode.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+        expect(
+            erc725.identity.toUpperCase(),
+            'Declined identity should be the one that db was corrupted.',
+        ).to.be.equal(this.state.dc.state.declinedDhIdentity.toUpperCase());
     },
 );
 
