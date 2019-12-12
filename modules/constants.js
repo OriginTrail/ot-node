@@ -15,6 +15,11 @@ exports.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES = 31;
 exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 60000;
 
 /**
+ * @constant {number} DEFAULT_REPUTATION_UPDATE_PERIOD_MILLS - Period for updating reputation table
+ */
+exports.DEFAULT_REPUTATION_UPDATE_PERIOD_MILLS = 24 * 60 * 60 * 1000;
+
+/**
  * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  */
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
@@ -24,7 +29,7 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
  */
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
-    'dhReplacementStartedCommand', 'autoupdaterCommand'];
+    'dhReplacementStartedCommand', 'reputationUpdateCommand', 'autoupdaterCommand'];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands

@@ -51,10 +51,8 @@ class DCChallengeCommand extends Command {
             this.logger.info(`Peer with ID ${challenge.dh_id} could not be reached.`);
         }
 
-        let checkCommandDelay = this.config.challengeResponseTimeMills;
-        if (checkCommandDelay == null) {
-            checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
-        }
+        const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+
         return {
             commands: [
                 {

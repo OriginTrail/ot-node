@@ -39,7 +39,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -100,12 +100,14 @@
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "staging": {
     "identity": null,
@@ -147,7 +149,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -208,12 +210,14 @@
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 1440,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "stable": {
     "identity": null,
@@ -255,7 +259,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -316,12 +320,14 @@
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "production": {
     "identity": null,
@@ -363,7 +369,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -427,12 +433,14 @@
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "mariner": {
     "identity": null,
@@ -474,7 +482,7 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
     "latest_api_version" : "v2.0",
     "database": {
@@ -538,11 +546,13 @@
     "dc_holding_time_in_minutes": 10080,
     "dc_litigation_interval_in_minutes": 5,
     "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
     "dc_choose_time": 1200000,
     "requireApproval": true,
     "litigationEnabled": false,
-    "commandExecutorVerboseLoggingEnabled": false
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   }
 }

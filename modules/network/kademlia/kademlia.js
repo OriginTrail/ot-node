@@ -149,6 +149,7 @@ class Kademlia {
             this.log.info('Hashcash initialised');
 
             this.node.quasar = this.node.plugin(kadence.quasar());
+
             this.log.info('Quasar initialised');
 
             const spartacusPlugin = kadence.spartacus(
@@ -454,14 +455,12 @@ class Kademlia {
                     this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                     return contact;
                 }
-
                 let peerContact;
                 try {
                     peerContact = await this.node.rolodex.getExternalPeerInfo(contactId);
                 } catch (e) {
                     this.log.debug("Can't find external peer info.");
                 }
-
                 if (peerContact) {
                     const peerContactArray = KadenceUtils.parseContactURL(peerContact);
 

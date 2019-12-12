@@ -1,4 +1,5 @@
 const constants = require('../constants');
+const BN = require('bn.js');
 
 const minutesInDay = 60 * 24;
 
@@ -29,7 +30,7 @@ class PricingService {
         const price = (2 * basePayoutCostInTrac) + (priceFactor *
         Math.sqrt(2 * holdingTimeInDays * dataSizeInMB));
         this.logger.trace(`Calculated offer price for data size: ${dataSizeInMB}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${price}TRAC`);
-        return price;
+        return price * 1000000000000000000;
     }
 
     async _calculateBasePayoutInTrac() {

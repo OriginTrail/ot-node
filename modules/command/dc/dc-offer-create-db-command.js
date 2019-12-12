@@ -108,7 +108,7 @@ class DCOfferCreateDbCommand extends Command {
             greenLitigationHash: new BN(Utilities.denormalizeHex(data.greenLitigationHash), 16),
             blueLitigationHash: new BN(Utilities.denormalizeHex(data.blueLitigationHash), 16),
             holdingTimeInMinutes: new BN(data.holdingTimeInMinutes, 10),
-            tokenAmountPerHolder: new BN(data.tokenAmountPerHolder, 10),
+            tokenAmountPerHolder: new BN(data.tokenAmountPerHolder.toString(), 10),
             dataSizeInBytes: new BN(data.dataSizeInBytes, 10),
             litigationIntervalInMinutes: new BN(data.litigationIntervalInMinutes, 10),
         });

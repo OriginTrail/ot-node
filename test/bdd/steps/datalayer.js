@@ -12,6 +12,7 @@ const Utilities = require('../../../modules/Utilities');
 const ZK = require('../../../modules/ZK');
 const logger = require('../../../modules/logger');
 const MerkleTree = require('../../../modules/Merkle');
+const fs = require('fs');
 
 
 Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, async function () {
@@ -278,6 +279,19 @@ Then(
             filteredTrail.length,
             `Traversal should contain ${expectedNumberOfObjects} of selected objects`,
         ).to.be.equal(expectedNumberOfObjects);
+    },
+);
+
+Then(
+    'Corrupted node should not have last replication dataset',
+    async function () {
+        expect(!!this.state.corruptedNode, 'Corrupted node not defined. Use other step to define it.').to.be.equal(true);
+
+        const erc725 = JSON.parse(fs.readFileSync(`${this.state.corruptedNode.options.configDir}/${this.state.corruptedNode.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+        expect(
+            erc725.identity.toUpperCase(),
+            'Declined identity should be the one that db was corrupted.',
+        ).to.be.equal(this.state.dc.state.declinedDhIdentity.toUpperCase());
     },
 );
 
