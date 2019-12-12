@@ -55,20 +55,49 @@ class DHLitigationAnswerCommand extends Command {
         this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
 
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
-        await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer);
-        return {
-            commands: [
-                {
-                    name: 'dhLitigationAnsweredCommand',
-                    data: {
-                        offerId,
-                        dhIdentity,
-                    },
-                    period: 5000,
-                    transactional: false,
-                },
-            ],
-        };
+        const { status, timestamp } = await this.blockchain.getLitigation(offerId, dhIdentity);
+
+        const { litigation_interval_in_minutes } = models.offers.findOne({
+            where: {
+                offer_id: offerId,
+            },
+        });
+
+        const diffTimeInMinutes = (Date.now() - timestamp) / 60000;
+
+        if (status === '1') {
+            if (diffTimeInMinutes <= litigation_interval_in_minutes) {
+                await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer);
+
+                return {
+                    commands: [
+                        {
+                            name: 'dhLitigationAnsweredCommand',
+                            data: {
+                                offerId,
+                                dhIdentity,
+                            },
+                            period: 5000,
+                            transactional: false,
+                        },
+                    ],
+                };
+            }
+            this.logger.info(`It's too late to answer litigation for offer ${offerId}`);
+
+            return Command.empty();
+        } else if (status === '2') {
+            this.logger.info(`Litigation already answered for offer ${offerId}.`);
+
+            return Command.empty();
+        } else if (status === '3' || status === '4') {
+            this.logger.info(`I've already been replaced for offer ${offerId}`);
+
+            return Command.empty();
+        }
+        this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
+
+        return Command.empty();
     }
 
     /**

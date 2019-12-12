@@ -1368,6 +1368,20 @@ class Ethereum {
     }
 
     /**
+     * Gets litigation information for the holder
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigation(offerId, holderIdentity) {
+        this.log.trace(`getLitigation(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.litigationStorageContract
+            .methods.litigation(offerId, holderIdentity).call({
+                from: this.config.wallet_address,
+            });
+    }
+
+    /**
      * Gets last litigation timestamp for the holder
      * @param offerId - Offer ID
      * @param holderIdentity - Holder identity
