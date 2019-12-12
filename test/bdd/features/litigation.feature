@@ -122,7 +122,7 @@ Feature: Test various litigation scenarios
 #    Then I wait for 3 replacement replications to finish
 #    Then I wait for replacement to be completed
 
-  @first
+  @fourth
   Scenario: Test litigation case
     Given the replication difficulty is 0
     And I setup 4 nodes
