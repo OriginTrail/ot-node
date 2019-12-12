@@ -532,10 +532,9 @@ class OTNode {
                 console.log('Backup finished.');
             },
         );
-        execSync(
-            `sudo ./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`,
-            { stdio: 'inherit' },
-        );
+        
+        execSync('chmod +x upgrade-arango.sh')
+        execSync(`./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`, { stdio: 'inherit' });
     }
 
     /**
