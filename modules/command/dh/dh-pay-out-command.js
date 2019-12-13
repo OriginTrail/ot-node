@@ -36,11 +36,13 @@ class DhPayOutCommand extends Command {
             },
         });
 
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+
         if (!bid) {
             this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
+            await this._printBalances(blockchainIdentity);
             return Command.empty();
         }
-
         if (bid.status !== 'COMPLETED') {
             bid.status = 'COMPLETED';
             bid.message = `Offer ${offerId} has been completed`;
@@ -48,18 +50,35 @@ class DhPayOutCommand extends Command {
             this.logger.important(`Offer ${offerId} has been completed successfully.`);
         }
 
-        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-        await this._printBalances(blockchainIdentity);
-        try {
-            await this.blockchain.payOut(blockchainIdentity, offerId, urgent);
-            this.logger.important(`Payout for offer ${offerId} successfully completed.`);
-            await this._printBalances(blockchainIdentity);
-        } catch (error) {
-            if (error.message.includes('Gas price higher than maximum allowed price')) {
-                this.logger.info('Gas price too high, delaying call for 30 minutes');
-                return Command.repeat();
+        const { status, timestamp } =
+            await this.blockchain.getLitigation(offerId, blockchainIdentity);
+        const { litigation_interval_in_minutes } = await Models.bids.findOne({
+            where: {
+                offer_id: offerId,
+            },
+        });
+
+        const litigationTimestamp = parseInt(timestamp, 10) * 1000;
+
+        const blockTimestamp = Date.now();
+        if (status === '1' && !(litigationTimestamp + (litigation_interval_in_minutes * 2 * 60000) < blockTimestamp)) {
+            this.logger.info(`Unanswered litigation for offer ${offerId} in progress, cannot be payed out.`);
+        } else if (status === '2' && !(litigationTimestamp + (60000 * litigation_interval_in_minutes) < blockTimestamp)) {
+            this.logger.info(`Unanswered litigation for offer ${offerId} in progress, cannot be payed out.`);
+        } else if (status !== '0') {
+            this.logger.info(`I'm replaced or being replaced for offer ${offerId}, cannot be payed out.`);
+        } else {
+            try {
+                await this.blockchain.payOut(blockchainIdentity, offerId, urgent);
+                this.logger.important(`Payout for offer ${offerId} successfully completed.`);
+                await this._printBalances(blockchainIdentity);
+            } catch (error) {
+                if (error.message.includes('Gas price higher than maximum allowed price')) {
+                    this.logger.info('Gas price too high, delaying call for 30 minutes');
+                    return Command.repeat();
+                }
+                throw error;
             }
-            throw error;
         }
 
         return Command.empty();
