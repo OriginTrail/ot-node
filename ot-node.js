@@ -44,6 +44,7 @@ const RestApiController = require('./modules/service/rest-api-controller');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
+const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 
@@ -322,7 +323,7 @@ class OTNode {
                     if (process.env.OT_NODE_DISTRIBUTION === 'docker'
                         && config.autoUpdater.enabled) {
                         log.info('Your Arango version is lower than required. Starting upgrade...');
-                        this._runArangoMigration(config);
+                        await this._runArangoMigration(config);
 
                         const { version } = await Utilities.getArangoDbVersion(config);
                         log.info(`Arango server is updated to version ${version}.`);
@@ -516,25 +517,28 @@ class OTNode {
         }
     }
 
-    _runArangoMigration(config) {
-        const migrationDir = path.join(config.appDataPath, 'migrations');
-        execSync(
-            `arangodump --server.database ${config.database.database} ` +
-             ` --server.username ${config.database.username} ` +
-             ` --server.password ${config.database.password === '' ? '\'\'' : config.database.password} ` +
-             ` --output-directory '${migrationDir}/arangodb_backup' --overwrite true`,
-            (error, stdout, stderr) => {
-                console.log(`${stdout}`);
-                if (error !== null) {
-                    console.error(`${error}`);
-                    return 1;
-                }
-                console.log('Backup finished.');
-            },
-        );
+    async _runArangoMigration(config) {
+        const migrationsStartedMills = Date.now();
 
-        execSync('chmod +x upgrade-arango.sh');
-        execSync(`./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`, { stdio: 'inherit' });
+        const m1PayoutAllMigrationFilename = '4_m4ArangoMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M4ArangoMigration({ logger: log, config });
+
+            try {
+                log.info('Initializing Arango migration...');
+                await migration.run();
+                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
     }
 
     /**
