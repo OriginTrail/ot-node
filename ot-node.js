@@ -43,6 +43,8 @@ const APIUtilities = require('./modules/api-utilities');
 const RestApiController = require('./modules/service/rest-api-controller');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
+const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
+const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 
@@ -294,6 +296,8 @@ class OTNode {
             process.abort();
         }
 
+        await this._runNetworkIdentityMigration(config);
+
         // Seal config in order to prevent adding properties.
         // Allow identity to be added. Continuity.
         config.identity = '';
@@ -315,15 +319,18 @@ class OTNode {
                 const { version } = await Utilities.getArangoDbVersion(config);
 
                 log.info(`Arango server version ${version} is up and running`);
-                if (process.env.OT_NODE_DISTRIBUTION === 'docker'
-                    && semver.lt(version, '3.5.0')
-                    && config.autoUpdater.enabled) {
-                    log.info('Your arangodb version is lower than required. Starting upgrade...');
-                    execSync('chmod +x upgrade-arango.sh');
-                    execSync(`./upgrade-arango.sh ${config.database.password} ${config.database.host} ${config.database.port}`, { stdio: 'inherit' });
+                if (semver.lt(version, '3.5.0')) {
+                    if (process.env.OT_NODE_DISTRIBUTION === 'docker'
+                        && config.autoUpdater.enabled) {
+                        log.info('Your Arango version is lower than required. Starting upgrade...');
+                        await this._runArangoMigration(config);
 
-                    const { version } = await Utilities.getArangoDbVersion(config);
-                    log.info(`Arango server is updated to version ${version}.`);
+                        const { version } = await Utilities.getArangoDbVersion(config);
+                        log.info(`Arango server is updated to version ${version}.`);
+                    } else {
+                        log.error('Arango version too old! Please update to version 3.5.0 or newer');
+                        process.exit(1);
+                    }
                 }
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
@@ -439,7 +446,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runMigration(blockchain);
+            await this._runPayoutMigration(blockchain, config);
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -483,15 +490,68 @@ class OTNode {
     }
 
     /**
-     * Run one time migration
-     * Note: implement migration service
+     * Backs up network identity files if they are from the old network version
+     * @param config
+     * @returns {Promise<void>}
      * @private
      */
-    async _runMigration(blockchain) {
+    async _runNetworkIdentityMigration(config) {
         const migrationsStartedMills = Date.now();
-        log.info('Initializing code migrations...');
 
-        // Note: add migrations here
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const m3NetworkIdentityMigrationFilename = '3_m3NetworkIdentityMigrationFile';
+        const migrationFilePath = path.join(migrationDir, m3NetworkIdentityMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M3NetowrkIdentityMigration({ logger: log, config });
+            try {
+                await migration.run();
+                log.notify(`One-time network identity migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m3NetworkIdentityMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    async _runArangoMigration(config) {
+        const migrationsStartedMills = Date.now();
+
+        const m1PayoutAllMigrationFilename = '4_m4ArangoMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M4ArangoMigration({ logger: log, config });
+
+            try {
+                log.info('Initializing Arango migration...');
+                await migration.run();
+                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    /**
+     * Run one time payout migration
+     * @param blockchain
+     * @param config
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _runPayoutMigration(blockchain, config) {
+        const migrationsStartedMills = Date.now();
+        log.info('Initializing payOut migration...');
+
         const m1PayoutAllMigrationFilename = '1_m1PayoutAllMigrationFile';
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
@@ -510,8 +570,6 @@ class OTNode {
                 process.exit(1);
             }
         }
-
-        log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
 
     /**
