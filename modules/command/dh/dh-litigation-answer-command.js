@@ -40,20 +40,6 @@ class DHLitigationAnswerCommand extends Command {
             throw new Error(`Failed to find holding data for offer ${offerId}`);
         }
 
-        const color = this.replicationService.castNumberToColor(holdingData.color);
-
-        const otObject = await this.importService.getImportedOtObject(
-            dataSetId,
-            objectIndex,
-            offerId,
-            color,
-        );
-
-        const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
-        const rawAnswer = utilities.normalizeHex(Buffer.from(answer, 'utf-8').toString('hex').padStart(64, '0'));
-
-        this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
-
         const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const { status, timestamp } = await this.blockchain.getLitigation(offerId, dhIdentity);
 
@@ -67,6 +53,20 @@ class DHLitigationAnswerCommand extends Command {
 
         if (status === '1') {
             if (litigationTimestamp + (litigation_interval_in_minutes * 60000) >= Date.now()) {
+                const color = this.replicationService.castNumberToColor(holdingData.color);
+
+                const otObject = await this.importService.getImportedOtObject(
+                    dataSetId,
+                    objectIndex,
+                    offerId,
+                    color,
+                );
+
+                const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
+                const rawAnswer = utilities.normalizeHex(Buffer.from(answer, 'utf-8').toString('hex').padStart(64, '0'));
+
+                this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
+
                 await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer);
 
                 return {
@@ -84,18 +84,21 @@ class DHLitigationAnswerCommand extends Command {
                 };
             }
             this.logger.info(`It's too late to answer litigation for offer ${offerId}`);
-
-            return Command.empty();
         } else if (status === '2') {
             this.logger.info(`Litigation already answered for offer ${offerId}.`);
-
-            return Command.empty();
         } else if (status === '3' || status === '4') {
-            this.logger.info(`I've already been replaced for offer ${offerId}`);
-
-            return Command.empty();
+            await models.bids.update(
+                {
+                    status: 'PENALIZED',
+                },
+                {
+                    where: { offer_id: offerId },
+                },
+            );
+            this.logger.info(`I've already been penalized for offer ${offerId}`);
+        } else {
+            this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
         }
-        this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
 
         return Command.empty();
     }
