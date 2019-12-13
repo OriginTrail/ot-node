@@ -43,7 +43,7 @@ class PricingService {
     }
 
     async getGasPrice() {
-        if (process.env.NODE_ENV !== 'mainnet' && process.env.NODE_ENV !== 'testnet') {
+        if (process.env.NODE_ENV === 'development') {
             return this.config.blockchain.gas_price;
         }
 
