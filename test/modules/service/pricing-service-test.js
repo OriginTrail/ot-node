@@ -145,7 +145,6 @@ describe('Pricing service test', () => {
         process.env.NODE_ENV = 'development';
         const price = await pricingService
             .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
-        assert.equal(price, 180100415802209240000);
         const bigDataPrice = await pricingService
             .calculateOfferPriceinTrac(bigDataSizeInBytes, holdingTimeInMinutes);
         assert.isAbove(bigDataPrice, price);
