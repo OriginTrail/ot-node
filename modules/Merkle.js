@@ -97,7 +97,7 @@ class MerkleTree {
         return proof;
     }
 
-    verifyProof(proof, data, firstIndex, secondIndex = null) {
+    calculateProofResult(proof, data, firstIndex, secondIndex = null) {
         let h;
         let leafNumber;
         const { levels } = this;
@@ -131,6 +131,12 @@ class MerkleTree {
             leafNumber = Math.trunc(leafNumber / 2);
             j -= 1;
         }
+
+        return h;
+    }
+
+    verifyProof(proof, data, firstIndex, secondIndex = null) {
+        const h = this.calculateProofResult(proof, data, firstIndex, secondIndex);
         return h === this.rootHash;
     }
 
