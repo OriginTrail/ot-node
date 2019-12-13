@@ -556,7 +556,17 @@ class Blockchain {
     }
 
     /**
-     * Gets last litigation timestamp for the holder
+     * Gets litigation information for the holder
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigation(offerId, holderIdentity) {
+        return this.blockchain.getLitigation(offerId, holderIdentity);
+    }
+
+    /**
+     * Gets litigation timestamp for the holder
      * @param offerId - Offer ID
      * @param holderIdentity - Holder identity
      * @return {Promise<any>}
