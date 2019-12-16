@@ -49,7 +49,7 @@ contract('Deployment tests', async () => {
     // eslint-disable-next-line no-undef
     it('Should get Profile contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
-        const res = await hub.profileAddress.call();
+        const res = await hub.getContractAddress.call('Profile');
         assert.notEqual(
             res,
             '0x0000000000000000000000000000000000000000',
@@ -71,7 +71,7 @@ contract('Deployment tests', async () => {
     // eslint-disable-next-line no-undef
     it('Should get Holding contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
-        const res = await hub.holdingAddress.call();
+        const res = await hub.getContractAddress.call('Holding');
         assert.notEqual(
             res,
             '0x0000000000000000000000000000000000000000',
@@ -93,7 +93,7 @@ contract('Deployment tests', async () => {
     // eslint-disable-next-line no-undef
     it('Should get ProfileStorage contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
-        const res = await hub.profileStorageAddress.call();
+        const res = await hub.getContractAddress.call('ProfileStorage');
         assert.notEqual(
             res,
             '0x0000000000000000000000000000000000000000',
@@ -115,7 +115,7 @@ contract('Deployment tests', async () => {
     // eslint-disable-next-line no-undef
     it('Should get HoldingStorage contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
-        const res = await hub.holdingStorageAddress.call();
+        const res = await hub.getContractAddress.call('HoldingStorage');
         assert.notEqual(
             res,
             '0x0000000000000000000000000000000000000000',

@@ -113,6 +113,11 @@
 				<bizLocation>
 					<id>urn:epc:id:sgln:Building_Pink</id>
 				</bizLocation>
+				<bizTransactionList>
+					<bizTransaction>
+						connectionId:0x611d771aAfaa3D6Fb66c4a81D97768300a6882D5
+					</bizTransaction>
+				</bizTransactionList>
 				<extension>
 					<quantityList>
 						<quantityElement>			 

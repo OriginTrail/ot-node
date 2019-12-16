@@ -37,7 +37,6 @@ class DCOfferCreateBcCommand extends Command {
 
         let result;
 
-
         try {
             result = await this.blockchain.createOffer(
                 Utilities.normalizeHex(this.config.erc725Identity),
@@ -60,8 +59,6 @@ class DCOfferCreateBcCommand extends Command {
             }
             throw error;
         }
-
-
         this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
@@ -91,8 +88,9 @@ class DCOfferCreateBcCommand extends Command {
         const { internalOfferId } = command.data;
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });

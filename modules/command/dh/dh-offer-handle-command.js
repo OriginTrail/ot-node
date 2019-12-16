@@ -31,13 +31,22 @@ class DHOfferHandleCommand extends Command {
         }, dcNodeId);
 
         if (response.status === 'fail') {
-            if (response.message) {
-                throw new Error('Failed to receive replication ' +
-                    `from ${dcNodeId} for offer ${offerId}. ` +
-                    `Reason: ${response.message}`);
-            } else {
-                throw new Error(`Failed to receive replication from ${dcNodeId} for offer ${offerId}.`);
+            const bid = await Models.bids.findOne({
+                where: {
+                    offer_id: offerId,
+                },
+            });
+
+            bid.status = 'FAILED';
+            let message = `Failed to receive replication from ${dcNodeId} for offer ${offerId}.`;
+            if (response.message != null) {
+                message = `${message} Data creator reason: ${response.message}`;
             }
+
+            bid.message = message;
+            await bid.save({ fields: ['status', 'message'] });
+            this.logger.warn(message);
+            return Command.empty();
         }
 
         const bid = await Models.bids.findOne({
@@ -72,17 +81,14 @@ class DHOfferHandleCommand extends Command {
         return {
             offerId: response.offer_id,
             dataSetId: response.data_set_id,
-            edges: response.edges,
-            litigationVertices: response.litigation_vertices,
+            otJson: response.otJson,
             dcWallet: response.dc_wallet,
+            dcNodeId: response.dcNodeId,
             litigationPublicKey: response.litigation_public_key,
+            litigationRootHash: response.litigation_root_hash,
             distributionPublicKey: response.distribution_public_key,
             distributionPrivateKey: response.distribution_private_key,
-            distributionEpkChecksum: response.distribution_epk_checksum,
-            litigationRootHash: response.litigation_root_hash,
-            distributionRootHash: response.distribution_root_hash,
             distributionEpk: response.distribution_epk,
-            distributionSignature: response.distribution_signature,
             transactionHash: response.transaction_hash,
             encColor: response.color,
         };

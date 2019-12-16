@@ -20,6 +20,7 @@ const path = require('path');
 const rimraf = require('rimraf');
 
 const logger = require('./logger');
+const { sha3_256 } = require('js-sha3');
 
 class Utilities {
     /**
@@ -37,6 +38,38 @@ class Utilities {
      */
     static saveToConfig(config) {
 
+    }
+
+    /**
+     * Custom sorted stringify
+     * TODO think about optimization
+     * @param obj - Object to be serialized
+     * @param sortArrays - Sort array items
+     * @return {string}
+     */
+    static sortedStringify(obj, sortArrays = false) {
+        if (obj == null) {
+            return 'null';
+        }
+        if (typeof obj === 'object') {
+            const stringified = [];
+            for (const key of Object.keys(obj)) {
+                if (Array.isArray(obj)) {
+                    stringified.push(this.sortedStringify(obj[key], sortArrays));
+                } else {
+                    stringified.push(`"${key}":${this.sortedStringify(obj[key], sortArrays)}`);
+                }
+                if (sortArrays) {
+                    stringified.sort();
+                }
+            }
+            if (!Array.isArray(obj)) {
+                stringified.sort();
+                return `{${stringified.join(',')}}`;
+            }
+            return `[${stringified.join(',')}]`;
+        }
+        return `${JSON.stringify(obj)}`;
     }
 
     /**
@@ -284,7 +317,7 @@ class Utilities {
      * @return object
      */
     static sortObject(object) {
-        if (typeof object !== 'object') {
+        if (typeof object !== 'object' || object == null) {
             return object;
         }
         const sortedObj = {};
@@ -647,6 +680,22 @@ class Utilities {
     }
 
     /**
+     * Calculate SHA3 from input objects and return normalized hex string.
+     * @param rest An array of input data concatenated before calculating the hash.
+     * @return {string} Normalized hash string.
+     * @private
+     */
+    static keyFrom(...rest) {
+        return Utilities.normalizeHex(sha3_256([...rest].reduce(
+            (acc, argument) => {
+                acc += Utilities.stringify(argument, 0);
+                return acc;
+            },
+            '',
+        )));
+    }
+
+    /**
      * Denormalizes hex number
      * @param number     Hex number
      * @returns {string|null} Normalized hex number
@@ -859,6 +908,37 @@ class Utilities {
         const stripped = {};
         properties.forEach(prop => stripped[prop] = config[prop]);
         return stripped;
+    }
+
+    /**
+     * Groups array by some criteria
+     * @param list - Array of items
+     * @param keyGetter - Group criteria
+     * @return {Map<any, any>}
+     */
+    static groupBy(list, keyGetter) {
+        const map = new Map();
+        list.forEach((item) => {
+            const key = keyGetter(item);
+            const collection = map.get(key);
+            if (!collection) {
+                map.set(key, [item]);
+            } else {
+                collection.push(item);
+            }
+        });
+        return map;
+    }
+
+    /**
+     * Wrap into array if necessary
+     * @return {*}
+     */
+    static arrayze(obj) {
+        if (Array.isArray(obj)) {
+            return obj;
+        }
+        return [obj];
     }
 }
 

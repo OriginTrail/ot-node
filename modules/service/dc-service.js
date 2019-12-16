@@ -15,6 +15,8 @@ class DCService {
         this.blockchain = ctx.blockchain;
         this.commandExecutor = ctx.commandExecutor;
         this.replicationService = ctx.replicationService;
+        this.profileService = ctx.profileService;
+        this.pricingService = ctx.pricingService;
     }
 
     /**
@@ -29,31 +31,49 @@ class DCService {
      */
     async createOffer(
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-        dataSizeInBytes, litigationIntervalInMinutes, urgent,
+        dataSizeInBytes, litigationIntervalInMinutes, handler_id, urgent,
     ) {
         const offer = await models.offers.create({
             data_set_id: dataSetId,
             message: 'Offer is pending',
             status: 'PENDING',
+            global_status: 'PENDING',
         });
 
         if (!holdingTimeInMinutes) {
-            holdingTimeInMinutes = new BN(this.config.dc_holding_time_in_minutes, 10);
+            holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
         }
 
         if (!tokenAmountPerHolder) {
-            tokenAmountPerHolder = new BN(this.config.dc_token_amount_per_holder, 10);
+            tokenAmountPerHolder = await this.pricingService
+                .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
         }
 
         if (!litigationIntervalInMinutes) {
             litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);
         }
 
-        const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
-        if (!hasFunds) {
-            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
-            this.logger.warn(message);
-            throw new Error(message);
+        if (this.config.parentIdentity) {
+            const hasPermission = await this.profileService.hasParentPermission();
+            if (!hasPermission) {
+                const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';
+                this.logger.warn(message);
+                throw new Error(message);
+            }
+
+            const hasFunds = await this.parentHasProfileBalanceForOffer(tokenAmountPerHolder);
+            if (!hasFunds) {
+                const message = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
+                this.logger.warn(message);
+                throw new Error(message);
+            }
+        } else {
+            const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
+            if (!hasFunds) {
+                const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+                this.logger.warn(message);
+                throw new Error(message);
+            }
         }
 
         const commandData = {
@@ -64,6 +84,7 @@ class DCService {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            handler_id,
             urgent,
         };
         const commandSequence = [
@@ -126,6 +147,34 @@ class DCService {
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
+        const offerStake = new BN(tokenAmountPerHolder.toString(), 10)
+            .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
+
+        let remainder = null;
+        if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
+            remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
+        }
+
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        if (profileStake.sub(profileStakeReserved).sub(offerStake).lt(profileMinStake)) {
+            const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
+            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
+                remainder = stakeRemainder;
+            }
+        }
+        return !remainder;
+    }
+
+    /**
+     * Parent has enough balance on profile for creating an offer
+     * @param tokenAmountPerHolder - Tokens per DH
+     * @return {Promise<*>}
+     */
+    async parentHasProfileBalanceForOffer(tokenAmountPerHolder) {
+        const profile = await this.blockchain.getProfile(this.config.parentIdentity);
+        const profileStake = new BN(profile.stake, 10);
+        const profileStakeReserved = new BN(profile.stakeReserved, 10);
+
         const offerStake = new BN(tokenAmountPerHolder, 10)
             .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
 
@@ -151,8 +200,13 @@ class DCService {
      */
     async miningSucceed(data) {
         const { offerId } = data;
-        const mined = await models.miner_records.findOne({
-            where: { offer_id: offerId },
+        const mined = await models.miner_tasks.findOne({
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
@@ -167,19 +221,24 @@ class DCService {
 
     /**
      * Fails offer
-     * @param result - Miner result
+     * @param err - Miner error
      * @returns {Promise<void>}
      */
-    async miningFailed(result) {
-        const { offerId } = result;
-        const mined = await models.miner_records.findOne({
-            where: { offer_id: offerId },
+    async miningFailed(err) {
+        const { offerId, message } = err;
+        const mined = await models.miner_tasks.findOne({
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
         }
         mined.status = 'FAILED';
-        mined.message = result.message;
+        mined.message = message;
         await mined.save({
             fields: ['message', 'status'],
         });
@@ -187,18 +246,18 @@ class DCService {
 
     /**
      * Handles replication request from one DH
-     * @param offerId
-     * @param wallet
-     * @param identity
-     * @param dhIdentity
-     * @param response
+     * @param offerId - Offer ID
+     * @param wallet - DH wallet
+     * @param identity - Network identity
+     * @param dhIdentity - DH ERC725 identity
+     * @param response - Network response
      * @returns {Promise<void>}
      */
     async handleReplicationRequest(offerId, wallet, identity, dhIdentity, response) {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
-        if (!offerId || !wallet) {
-            const message = 'Asked replication without providing offer ID or wallet.';
+        if (!offerId || !wallet || !dhIdentity) {
+            const message = 'Asked replication without providing offer ID or wallet or identity.';
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
             return;
@@ -223,12 +282,118 @@ class DCService {
             const message = `Replication request for offer external ${offerId} that is not in STARTED state.`;
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
+        }
+
+        const dhReputation = await this.getReputationForDh(dhIdentity);
+
+        if (dhReputation.lt(new BN(this.config.dh_min_reputation))) {
+            const message = `Replication request from holder identity ${dhIdentity} declined! Unacceptable reputation: ${dhReputation.toString()}.`;
+            this.logger.info(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+        } else {
+            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        }
+    }
+
+    /**
+     * Return reputation for received dh identity
+     * @param dhIdentity
+     * @returns {Promise<BN>}
+     */
+    async getReputationForDh(dhIdentity) {
+        const reputationModel = await models.reputation_data.findAll({
+            where: {
+                dh_identity: dhIdentity.toLowerCase(),
+            },
+        });
+        if (reputationModel) {
+            let reputation = new BN(0, 10);
+            reputationModel.forEach((element) => {
+                const reputationDelta = element.reputation_delta;
+                if (reputationDelta) {
+                    reputation = reputation.add(new BN(reputationDelta));
+                }
+            });
+            return reputation;
+        }
+        return new BN(0, 10);
+    }
+
+    /**
+     * Handles replication request from one DH
+     * @param offerId - Offer ID
+     * @param wallet - DH wallet
+     * @param identity - Network identity
+     * @param dhIdentity - DH ERC725 identity
+     * @param response - Network response
+     * @returns {Promise<void>}
+     */
+    async handleReplacementRequest(offerId, wallet, identity, dhIdentity, response) {
+        this.logger.info(`Replacement request for replication of offer ${offerId} received. Sender ${identity}`);
+
+        if (!offerId || !wallet) {
+            const message = 'Asked replication without providing offer ID or wallet.';
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
             return;
         }
 
-        const colors = ['red', 'green', 'blue'];
-        const color = colors[Utilities.getRandomInt(2)];
-        const colorNumber = this.replicationService.castColorToNumber(color);
+        const offerModel = await models.offers.findOne({
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
+        });
+        if (!offerModel) {
+            const message = `Replacement replication request for offer ID ${offerId} that I don't know.`;
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+            return;
+        }
+        const offer = offerModel.get({ plain: true });
+        if (offer.global_status !== 'REPLACEMENT_STARTED') {
+            const message = `Replication request for offer ${offerId} that is not in REPLACEMENT_STARTED state.`;
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+        }
+
+        const usedDH = await models.replicated_data.findOne({
+            where: {
+                dh_id: identity,
+                dh_wallet: wallet,
+                dh_identity: dhIdentity,
+                offer_id: offerId,
+            },
+        });
+
+        if (usedDH != null) {
+            this.logger.notify(`Cannot send replication to DH with network ID ${identity}. DH status is ${usedDH.status}.`);
+
+            try {
+                await this.transport.sendResponse(response, {
+                    status: 'fail',
+                });
+            } catch (e) {
+                this.logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
+            }
+        }
+        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+    }
+
+    /**
+     * Handles replication request from one DH
+     * @param offer - Offer
+     * @param wallet - DH wallet
+     * @param identity - Network identity
+     * @param dhIdentity - DH ERC725 identity
+     * @param response - Network response
+     * @returns {Promise<void>}
+     */
+    async _sendReplication(offer, wallet, identity, dhIdentity, response) {
+        const colorNumber = Utilities.getRandomInt(2);
+        const color = this.replicationService.castNumberToColor(colorNumber);
 
         const replication = await this.replicationService.loadReplication(offer.id, color);
         await models.replicated_data.create({
@@ -236,6 +401,7 @@ class DCService {
             dh_wallet: wallet.toLowerCase(),
             dh_identity: dhIdentity.toLowerCase(),
             offer_id: offer.offer_id,
+            litigation_private_key: replication.litigationPrivateKey,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,
@@ -244,7 +410,7 @@ class DCService {
             distribution_root_hash: replication.distributionRootHash,
             distribution_epk: replication.distributionEpk,
             status: 'STARTED',
-            color: colorNumber.toNumber(),
+            color: colorNumber,
         });
 
         const toSign = [
@@ -257,11 +423,10 @@ class DCService {
         );
 
         const payload = {
-            offer_id: offerId,
+            offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
-            edges: replication.edges,
-            litigation_vertices: replication.litigationVertices,
+            otJson: replication.otJson,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,
@@ -272,7 +437,7 @@ class DCService {
             distribution_signature: distributionSignature.signature,
             transaction_hash: offer.transaction_hash,
             distributionSignature,
-            color: colorNumber.toNumber(),
+            color: colorNumber,
         };
 
         // send replication to DH
@@ -287,9 +452,10 @@ class DCService {
      * @param dhNodeId
      * @param dhWallet
      * @param dhIdentity
+     * @param isReplacement
      * @returns {Promise<void>}
      */
-    async verifyDHReplication(offerId, signature, dhNodeId, dhIdentity, dhWallet) {
+    async verifyDHReplication(offerId, signature, dhNodeId, dhIdentity, dhWallet, isReplacement) {
         await this.commandExecutor.add({
             name: 'dcReplicationCompletedCommand',
             delay: 0,
@@ -299,9 +465,32 @@ class DCService {
                 dhNodeId,
                 dhWallet,
                 dhIdentity,
+                isReplacement,
             },
             transactional: false,
         });
+    }
+
+    /**
+     * Handles challenge response
+     * @param answer - Challenge block ID
+     * @param challengeId - Challenge ID used for reply
+     * @return {Promise<void>}
+     */
+    async handleChallengeResponse(challengeId, answer) {
+        this.logger.info(`Challenge response arrived for challenge ${challengeId}. Answer ${answer}`);
+
+        const challenge = await models.challenges.findOne({
+            where: { id: challengeId },
+        });
+
+        if (challenge == null) {
+            this.logger.info(`Failed to find challenge ${challengeId}.`);
+            return;
+        }
+
+        challenge.answer = answer;
+        await challenge.save({ fields: ['answer'] });
     }
 }
 

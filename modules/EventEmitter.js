@@ -1,11 +1,11 @@
 const bytes = require('utf8-length');
 const events = require('events');
 
-const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
+const { sha3_256 } = require('js-sha3');
 
 class EventEmitter {
     /**
@@ -16,8 +16,13 @@ class EventEmitter {
         this.ctx = ctx;
         this.product = ctx.product;
         this.web3 = ctx.web3;
+        this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.appState = ctx.appState;
+        this.importService = ctx.importService;
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
+        this.commandExecutor = ctx.commandExecutor;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -85,7 +90,6 @@ class EventEmitter {
     _initializeAPIEmitter() {
         const {
             dhService,
-            importer,
             blockchain,
             product,
             logger,
@@ -98,28 +102,6 @@ class EventEmitter {
             notifyError,
             commandExecutor,
         } = this.ctx;
-
-        this._on('api-network-query-responses', async (data) => {
-            const { query_id } = data;
-            logger.info(`Query for network response triggered with query ID ${query_id}`);
-
-            let responses = await Models.network_query_responses.findAll({
-                where: {
-                    query_id,
-                },
-            });
-
-            responses = responses.map(response => ({
-                datasets: JSON.parse(response.imports),
-                data_size: response.data_size,
-                data_price: response.data_price,
-                stake_factor: response.stake_factor,
-                reply_id: response.reply_id,
-            }));
-
-            data.response.status(200);
-            data.response.send(responses);
-        });
 
         this._on('api-trail', (data) => {
             logger.info(`Get trail triggered with query ${JSON.stringify(data.query)}`);
@@ -140,31 +122,30 @@ class EventEmitter {
             });
         });
 
-        this._on('api-query-local-import', async (data) => {
-            const { data_set_id: dataSetId } = data;
-            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
-            try {
-                const result = await dhService.getImport(dataSetId);
+        this._on('api-trail-entity', (data) => {
+            logger.info(`Get enitity trail triggered with query ${JSON.stringify(data.query)}`);
 
-                if (result.vertices.length === 0) {
-                    data.response.status(204);
-                } else {
-                    data.response.status(200);
-                }
-
-                const normalizedImport = ImportUtilities
-                    .normalizeImport(dataSetId, result.vertices, result.edges);
-
-
-                data.response.send(normalizedImport);
-            } catch (error) {
-                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
-                notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error,
+            this.graphStorage
+                .findEntitiesTraversalPath(
+                    data.query.startVertex,
+                    data.query.depth,
+                    data.query.includeOnly,
+                    data.query.excludeOnly,
+                ).then((res) => {
+                    if (res.length === 0) {
+                        data.response.status(204);
+                    } else {
+                        data.response.status(200);
+                    }
+                    data.response.send(res);
+                }).catch((error) => {
+                    logger.error(`Failed to get trail for query ${JSON.stringify(data.query)}`);
+                    notifyError(error);
+                    data.response.status(500);
+                    data.response.send({
+                        message: error,
+                    });
                 });
-            }
         });
 
         this._on('api-consensus-events', async (data) => {
@@ -181,56 +162,45 @@ class EventEmitter {
             }
         });
 
-        this._on('api-import-info', async (data) => {
-            const { dataSetId } = data;
-            logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
+        this._on('api-query-local-import', async (data) => {
+            const { data_set_id: dataSetId, format, encryption } = data;
+            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const dataInfo =
-                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
+                const datasetOtJson = await this.importService.getImport(dataSetId, encryption);
 
-                if (!dataInfo) {
-                    logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
-                    data.response.status(404);
-                    data.response.send({
-                        message: `Import data for data set ID ${dataSetId} does not exist`,
-                    });
-                    return;
-                }
-
-                const result = await dhService.getImport(dataSetId);
-
-                // Check if packed to fix issue with double classes.
-                const filtered = result.vertices.filter(v => v._dc_key);
-                if (filtered.length > 0) {
-                    result.vertices = filtered;
-                    ImportUtilities.unpackKeys(result.vertices, result.edges);
-                }
-
-                if (result.vertices.length === 0) {
+                if (datasetOtJson == null) {
                     data.response.status(204);
-                    data.response.send(result);
                 } else {
-                    const transactionHash = await ImportUtilities
-                        .getTransactionHash(dataSetId, dataInfo.origin);
-
                     data.response.status(200);
-                    data.response.send({
-                        import: ImportUtilities.normalizeImport(
-                            dataSetId,
-                            result.vertices,
-                            result.edges,
-                        ),
-                        root_hash: dataInfo.root_hash,
-                        transaction: transactionHash,
-                        data_provider_wallet: dataInfo.data_provider_wallet,
-                    });
+                }
+
+                let formattedDataset = '';
+
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                    data.response.send({});
+                } else if (encryption == null) {
+                    switch (format) {
+                    case 'otjson':
+                        formattedDataset = datasetOtJson;
+                        break;
+                    case 'epcis':
+                        formattedDataset = this.epcisOtJsonTranspiler
+                            .convertFromOTJson(datasetOtJson);
+                        break;
+                    default:
+                        throw Error('Invalid response format.');
+                    }
+                    data.response.send(formattedDataset);
+                } else {
+                    data.response.send(formattedDataset);
                 }
             } catch (error) {
-                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
+                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
-                    message: error.toString(),
+                    message: error,
                 });
             }
         });
@@ -317,172 +287,6 @@ class EventEmitter {
             });
         });
 
-        this._on('api-network-query', (data) => {
-            logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-
-            dvController.queryNetwork(data.query)
-                .then((queryId) => {
-                    data.response.status(201);
-                    data.response.send({
-                        message: 'Query sent successfully.',
-                        query_id: queryId,
-                    });
-                }).catch((error) => {
-                    logger.error(`Failed query network. ${error}.`);
-                    notifyError(error);
-                });
-        });
-
-        this._on('api-choose-offer', async (data) => {
-            const failFunction = (error) => {
-                logger.warn(error);
-                data.response.status(400);
-                data.response.send({
-                    message: 'Failed to handle query',
-                    data: [],
-                });
-            };
-            const { query_id, reply_id, data_set_id } = data;
-            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
-
-            // TODO: Load offer reply from DB
-            const offer = await Models.network_query_responses.findOne({
-                where: {
-                    query_id,
-                    reply_id,
-                },
-            });
-
-            if (offer == null) {
-                data.response.status(400);
-                data.response.send({ message: 'Reply not found' });
-                return;
-            }
-            try {
-                dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
-                logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                data.response.status(200);
-                data.response.send({
-                    message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
-                });
-            } catch (e) {
-                const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
-                data.response.status(500);
-                data.response.send({ message });
-                failFunction(message);
-                notifyError(e);
-            }
-        });
-
-        this._on('api-network-query-status', async (data) => {
-            const { id, response } = data;
-            logger.info(`Query of network status triggered with ID ${id}`);
-            const networkQuery = await Models.network_queries.find({ where: { id } });
-            if (networkQuery.status === 'FINISHED') {
-                try {
-                    const vertices = await dhService.dataLocationQuery(id);
-
-                    response.status(200);
-                    response.send({
-                        status: `${networkQuery.status}`,
-                        query_id: networkQuery.id,
-                        vertices,
-                    });
-                } catch (error) {
-                    logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
-                    notifyError(error);
-                    response.status(500);
-                    response.send({
-                        error: 'Fail to process.',
-                        query_id: networkQuery.id,
-                    });
-                }
-            } else {
-                response.status(200);
-                response.send({
-                    status: `${networkQuery.status}`,
-                    query_id: networkQuery.id,
-                });
-            }
-        });
-
-        const processImport = async (response, error, data) => {
-            if (response === null) {
-                if (typeof (error.status) !== 'number') {
-                    // TODO investigate why we get non numeric error.status
-                    data.response.status(500);
-                } else {
-                    data.response.status(error.status);
-                }
-                data.response.send({
-                    message: error.message,
-                });
-                remoteControl.importFailed(error);
-
-                if (error.type !== 'ImporterError') {
-                    notifyError(error);
-                }
-                return;
-            }
-
-            const {
-                data_set_id,
-                root_hash,
-                total_documents,
-                wallet, // TODO: Sender's wallet is ignored for now.
-                vertices,
-            } = response;
-
-            try {
-                const dataSize = bytes(JSON.stringify(vertices));
-                await Models.data_info
-                    .create({
-                        data_set_id,
-                        root_hash,
-                        data_provider_wallet: config.node_wallet,
-                        import_timestamp: new Date(),
-                        total_documents,
-                        data_size: dataSize,
-                        origin: 'IMPORTED',
-                    }).catch((error) => {
-                        logger.error(error);
-                        notifyError(error);
-                        data.response.status(500);
-                        data.response.send({
-                            message: error,
-                        });
-                        remoteControl.importFailed(error);
-                    });
-
-                if (data.replicate) {
-                    this.emit('api-create-offer', {
-                        dataSetId: data_set_id,
-                        dataSizeInBytes: dataSize,
-                        dataRootHash: root_hash,
-                        response: data.response,
-                        urgent: data.urgent,
-                    });
-                } else {
-                    data.response.status(201);
-                    data.response.send({
-                        message: 'Import success',
-                        data_set_id,
-                        wallet: config.node_wallet,
-                    });
-                    remoteControl.importSucceeded();
-                }
-            } catch (error) {
-                logger.error(`Failed to register import. Error ${error}.`);
-                notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error,
-                });
-                remoteControl.importFailed(error);
-            }
-        };
-
         this._on('api-offer-status', async (data) => {
             const { replicationId } = data;
             logger.info(`Offer status for internal ID ${replicationId} triggered.`);
@@ -495,7 +299,7 @@ class EventEmitter {
                     offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for interanl ID ${replicationId}`);
+                logger.error(`There is no offer for internal ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
                     message: 'Replication not found',
@@ -509,14 +313,7 @@ class EventEmitter {
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await commandExecutor.add({
-                    name: 'dhPayOutCommand',
-                    delay: 0,
-                    data: {
-                        urgent,
-                        offerId,
-                    },
-                });
+                await profileService.payOut(offerId, urgent);
 
                 data.response.status(200);
                 data.response.send({
@@ -531,95 +328,140 @@ class EventEmitter {
             }
         });
 
-        this._on('api-create-offer', async (data) => {
-            const {
-                dataSetId,
-                holdingTimeInMinutes,
-                tokenAmountPerHolder,
-                litigationIntervalInMinutes,
-                urgent,
-            } = data;
-
-            let {
-                dataRootHash,
-                dataSizeInBytes,
-            } = data;
-
+        this._on('api-import-info', async (data) => {
+            const { dataSetId, responseFormat } = data;
+            logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
-                logger.info(`Preparing to create offer for data set ${dataSetId}`);
+                const dataInfo =
+                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
 
-                const dataset = await Models.data_info.findOne({
-                    where: { data_set_id: dataSetId },
-                });
-                if (dataset == null) {
+                if (!dataInfo) {
+                    logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
                     data.response.status(404);
                     data.response.send({
-                        message: 'This data set does not exist in the database',
+                        message: `Import data for data set ID ${dataSetId} does not exist`,
                     });
                     return;
                 }
 
-                if (dataSizeInBytes == null) {
-                    dataSizeInBytes = dataset.data_size;
+                const datasetOtJson = await this.importService.getImport(dataSetId);
+                let formattedDataset = null;
+
+                if (datasetOtJson == null) {
+                    data.response.status(204);
+                    data.response.send({});
+                } else {
+                    switch (responseFormat) {
+                    case 'otjson': formattedDataset = datasetOtJson; break;
+                    case 'epcis': formattedDataset = this.epcisOtJsonTranspiler.convertFromOTJson(datasetOtJson); break;
+                    default: throw Error('Invalid response format.');
+                    }
+
+                    const transactionHash = await ImportUtilities
+                        .getTransactionHash(dataSetId, dataInfo.origin);
+
+                    data.response.status(200);
+                    data.response.send({
+                        dataSetId,
+                        document: formattedDataset,
+                        root_hash: dataInfo.root_hash,
+                        transaction: transactionHash,
+                        data_provider_wallet: dataInfo.data_provider_wallet,
+                    });
                 }
-
-                if (dataRootHash == null) {
-                    dataRootHash = dataset.root_hash;
-                }
-
-                const replicationId = await dcService.createOffer(
-                    dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-                    dataSizeInBytes, litigationIntervalInMinutes, urgent,
-                );
-
-                data.response.status(201);
-                data.response.send({
-                    replication_id: replicationId,
-                    data_set_id: dataSetId,
-                });
             } catch (error) {
-                logger.error(`Failed to create offer. ${error}.`);
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
                 notifyError(error);
-                data.response.status(405);
+                data.response.status(500);
                 data.response.send({
-                    message: `Failed to start offer. ${error}.`,
+                    message: error.toString(),
                 });
-                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
             }
         });
 
+        const processExport = async (error, data) => {
+            const { handler_id, formatted_dataset } = data;
 
-        this._on('api-gs1-import-request', async (data) => {
-            try {
-                logger.debug('GS1 import triggered');
-                const responseObject = await importer.importXMLgs1(data.content);
-                const { error } = responseObject;
-                const { response } = responseObject;
+            if (!formatted_dataset) {
+                logger.info(`Export failed for export handler_id: ${handler_id}`);
+                await Models.handler_ids.update(
+                    {
+                        status: 'FAILED',
+                        data: JSON.stringify({
+                            error: error.message,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+                // TODO notify Houston
+                // remoteControl.exportFailed(error);
 
-                if (response === null) {
-                    await processImport(null, error, data);
-                } else {
-                    await processImport(response, null, data);
+                if (error.type !== 'ExporterError') {
+                    notifyError(error);
                 }
-            } catch (error) {
-                await processImport(null, error, data);
+            } else {
+                logger.info(`Export complete for export handler_id: ${handler_id}`);
+                await Models.handler_ids.update(
+                    {
+                        status: 'COMPLETED',
+                        data: JSON.stringify({
+                            formatted_dataset,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
             }
-        });
+        };
 
-        this._on('api-wot-import-request', async (data) => {
+        this._on('api-export-request', async (data) => {
             try {
-                logger.debug('WOT import triggered');
-                const responseObject = await importer.importWOT(data.content);
-                const { error } = responseObject;
-                const { response } = responseObject;
+                logger.debug('Export triggered');
 
-                if (response == null) {
-                    await processImport(null, error, data);
+                const result = await this.importService.getImport(data.dataset_id);
+
+                if (result.error != null) {
+                    await processExport(result.error, data);
                 } else {
-                    await processImport(response, null, data);
+                    switch (data.standard) {
+                    case 'gs1': {
+                        const formatted_dataset =
+                            this.epcisOtJsonTranspiler.convertFromOTJson(result);
+                        await processExport(
+                            null,
+                            { formatted_dataset, handler_id: data.handler_id },
+                        );
+                        break;
+                    }
+                    case 'wot': {
+                        const formatted_dataset =
+                            this.wotOtJsonTranspiler.convertFromOTJson(result);
+                        await processExport(
+                            null,
+                            { formatted_dataset, handler_id: data.handler_id },
+                        );
+                        break;
+                    }
+                    case 'ot-json': {
+                        await processExport(
+                            null,
+                            { formatted_dataset: result, handler_id: data.handler_id },
+                        );
+                        break;
+                    }
+                    default:
+                        throw new Error('Export for unsuported standard');
+                    }
                 }
             } catch (error) {
-                await processImport(null, error, data);
+                await processExport(error, data);
             }
         });
 
@@ -659,9 +501,6 @@ class EventEmitter {
             dhService,
             approvalService,
             logger,
-            config,
-            appState,
-            notifyError,
         } = this.ctx;
 
         this._on('eth-NodeApproved', (eventData) => {
@@ -711,38 +550,6 @@ class EventEmitter {
                 );
             } catch (e) {
                 logger.warn(e.message);
-            }
-        });
-
-        this._on('eth-LitigationInitiated', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                requested_data_index,
-            } = eventData;
-
-            try {
-                await dhService.litigationInitiated(
-                    import_id,
-                    DH_wallet,
-                    requested_data_index,
-                );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-                notifyError(error);
-            }
-        });
-
-        this._on('eth-LitigationCompleted', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                DH_was_penalized,
-            } = eventData;
-
-            if (config.node_wallet === DH_wallet) {
-                // the node is DH
-                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
     }
@@ -825,46 +632,25 @@ class EventEmitter {
             }
         });
 
-        // async
-        this._on('kad-replication-finished', async (request) => {
-            const dhNodeId = transport.extractSenderID(request);
-            const replicationFinishedMessage = transport.extractMessage(request);
-            const { wallet } = transport.extractSenderInfo(request);
-            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
-            await dcService.verifyDHReplication(
-                offerId, messageSignature,
-                dhNodeId, dhIdentity, wallet,
-            );
-        });
-
         // sync
-        // TODO this call should be refactored to be async
-        this._on('kad-challenge-request', async (request, response) => {
+        this._on('kad-replacement-replication-request', async (request, response) => {
             try {
                 const message = transport.extractMessage(request);
-                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
-                const challenge = message.payload;
+                const { offerId, wallet, dhIdentity } = message;
+                const { wallet: senderWallet } = transport.extractSenderInfo(request);
+                const identity = transport.extractSenderID(request);
 
-                let vertices = await this.graphStorage
-                    .findVerticesByImportId(challenge.import_id); // TODO add encColor
-                ImportUtilities.unpackKeys(vertices, []);
-                ImportUtilities.sort(vertices);
-                // filter CLASS vertices
-                vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
-                const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
-                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
-
-                try {
-                    await transport.sendResponse(response, {
-                        status: 'success',
-                        answer,
-                    });
-                } catch (e) {
-                    // TODO handle this case
-                    logger.error(`Failed to send challenge response for import ${challenge.import_id}. Error: ${e}.`);
+                if (senderWallet !== wallet) {
+                    logger.warn(`Wallet in the message differs from replacement replication request for offer ID ${offerId}.`);
                 }
+
+                await dcService.handleReplacementRequest(
+                    offerId, wallet, identity, dhIdentity,
+                    response,
+                );
             } catch (error) {
-                logger.error(`Failed to get data. ${error}.`);
+                const errorMessage = `Failed to handle replacement replication request. ${error}.`;
+                logger.warn(errorMessage);
                 notifyError(error);
 
                 try {
@@ -872,15 +658,93 @@ class EventEmitter {
                         status: 'fail',
                     });
                 } catch (e) {
-                    // TODO handle this case
-                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
                 }
             }
         });
 
         // async
+        this._on('kad-replication-finished', async (request) => {
+            try {
+                const dhNodeId = transport.extractSenderID(request);
+                const replicationFinishedMessage = transport.extractMessage(request);
+                const { wallet } = transport.extractSenderInfo(request);
+                const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+                await dcService.verifyDHReplication(
+                    offerId, messageSignature,
+                    dhNodeId, dhIdentity, wallet, false,
+                );
+            } catch (e) {
+                const errorMessage = `Failed to handle replication finished request. ${e}.`;
+                logger.warn(errorMessage);
+                notifyError(e);
+            }
+        });
+
+        // async
+        this._on('kad-replacement-replication-finished', async (request) => {
+            try {
+                const dhNodeId = transport.extractSenderID(request);
+                const replicationFinishedMessage = transport.extractMessage(request);
+                const { wallet } = transport.extractSenderInfo(request);
+                const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+                await dcService.verifyDHReplication(
+                    offerId, messageSignature,
+                    dhNodeId, dhIdentity, wallet, true,
+                );
+            } catch (e) {
+                const errorMessage = `Failed to handle replacement replication finished request. ${e}.`;
+                logger.warn(errorMessage);
+                notifyError(e);
+            }
+        });
+
+        // async
+        this._on('kad-challenge-request', async (request) => {
+            try {
+                const message = transport.extractMessage(request);
+                const error = ObjectValidator.validateChallengeRequest(message);
+                if (error) {
+                    logger.trace(`Challenge request message is invalid. ${error.message}`);
+                    return;
+                }
+                await dhService.handleChallenge(
+                    message.payload.data_set_id,
+                    message.payload.offer_id,
+                    message.payload.object_index,
+                    message.payload.block_index,
+                    message.payload.challenge_id,
+                    message.payload.litigator_id,
+                );
+            } catch (error) {
+                logger.error(`Failed to get data. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-challenge-response', async (request) => {
+            try {
+                const message = transport.extractMessage(request);
+                const error = ObjectValidator.validateChallengeResponse(message);
+                if (error) {
+                    logger.trace(`Challenge response message is invalid. ${error.message}`);
+                    return;
+                }
+
+                await dcService.handleChallengeResponse(
+                    message.payload.challenge_id,
+                    message.payload.answer,
+                );
+            } catch (error) {
+                logger.error(`Failed to get data. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
         this._on('kad-data-location-response', async (request) => {
-            logger.info('DH confirms possesion of required data');
+            logger.info('DH confirms possession of required data');
             try {
                 const dataLocationResponseObject = transport.extractMessage(request);
                 const { message, messageSignature } = dataLocationResponseObject;
@@ -911,7 +775,13 @@ class EventEmitter {
                 logger.warn(returnMessage);
                 return;
             }
-            await dhService.handleDataReadRequestFree(message);
+            await this.commandExecutor.add({
+                name: 'dhDataReadRequestFreeCommand',
+                transactional: false,
+                data: {
+                    message,
+                },
+            });
         });
 
         // async
@@ -995,7 +865,7 @@ class EventEmitter {
 
         this._on('int-miner-solution', async (err, data) => {
             if (err) {
-                await dcService.miningFailed(data.offerId);
+                await dcService.miningFailed(err);
             } else {
                 await dcService.miningSucceed(data);
             }

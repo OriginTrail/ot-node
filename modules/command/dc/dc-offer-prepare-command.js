@@ -47,8 +47,9 @@ class DCOfferPrepareCommand extends Command {
         const { internalOfferId } = command.data;
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });

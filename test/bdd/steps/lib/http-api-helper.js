@@ -21,7 +21,7 @@ const path = require('path');
 async function apiImportInfo(nodeRpcUrl, dataSetId) {
     return new Promise((accept, reject) => {
         request(
-            `${nodeRpcUrl}/api/import_info?data_set_id=${dataSetId}`,
+            `${nodeRpcUrl}/api/latest/import_info?data_set_id=${dataSetId}`,
             { json: true },
             (err, res, body) => {
                 if (err) {
@@ -52,7 +52,7 @@ async function apiFingerprint(nodeRpcUrl, datSetId) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/fingerprint?data_set_id=${datSetId}`,
+                uri: `${nodeRpcUrl}/api/latest/fingerprint?data_set_id=${datSetId}`,
                 json: true,
             },
             (err, res, body) => {
@@ -86,11 +86,11 @@ async function apiImport(nodeRpcUrl, importFilePath, importType) {
         request({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            url: `${nodeRpcUrl}/api/import`,
+            url: `${nodeRpcUrl}/api/latest/import`,
             json: true,
             formData: {
-                importfile: fs.createReadStream(path.join(__dirname, '../../../../', importFilePath)),
-                importtype: `${importType}`,
+                file: fs.createReadStream(path.join(__dirname, '../../../../', importFilePath)),
+                standard_id: `${importType}`,
             },
         }, (error, response, body) => {
             if (error) {
@@ -101,6 +101,152 @@ async function apiImport(nodeRpcUrl, importFilePath, importType) {
         });
     });
 }
+
+/**
+ * Fetch /api/latest/import/result
+ * @typedef {Object} ImportResult
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} handler_id
+ * @return {Promise.<ImportResult>}
+ */
+async function apiImportResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/import/result/${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
+ * Fetch /api/export
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} dataset_id ID of dataset to be exported
+ * @param {string} exportType - Export data format
+ * @return {Promise.<ExportHandler>}
+ */
+async function apiExport(nodeRpcUrl, dataset_id, exportType) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/export`,
+            json: true,
+            formData: {
+                dataset_id,
+                standard_id: exportType,
+            },
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
+ * Fetch /api/latest/export/result
+ * @typedef {Object} ExportResult
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} handler_id
+ * @return {Promise.<ExportResult>}
+ */
+async function apiExportResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/export/result/${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+
+async function apiGetDatasetInfo(nodeRpcUrl, dataset_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/get_dataset_info/${dataset_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
+ * Fetch /api/latest/import/result
+ * @typedef {Object} ImportResult
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} handler_id
+ * @return {Promise.<ImportResult>}
+ */
+async function apiReplicationResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/replicate/result/${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
+ * Fetch /api/latest/get_element_issuer_identity
+ * @param nodeRpcUrl nodeRpcUrl URL in following format http://host:port
+ * @param elementId
+ * @returns {Promise}
+ */
+async function apiGetElementIssuerIdentity(nodeRpcUrl, elementId) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/get_element_issuer_identity/${elementId}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
 
 /**
  * @typedef {Object} Import
@@ -159,7 +305,7 @@ async function apiImportsInfo(nodeRpcUrl) {
         request({
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            url: `${nodeRpcUrl}/api/imports_info`,
+            url: `${nodeRpcUrl}/api/latest/imports_info`,
             json: true,
         }, (error, response, body) => {
             if (error) {
@@ -184,7 +330,7 @@ async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local`,
+                uri: `${nodeRpcUrl}/api/latest/query/local`,
                 json: true,
                 body: jsonQuery,
             },
@@ -218,7 +364,7 @@ async function apiQueryLocalImportByDataSetId(nodeRpcUrl, dataSetId) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local/import/${dataSetId}`,
+                uri: `${nodeRpcUrl}/api/latest/query/local/import/${dataSetId}`,
                 json: true,
             },
             (err, res, body) => {
@@ -251,10 +397,10 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/replication`,
+                uri: `${nodeRpcUrl}/api/latest/replicate`,
                 json: true,
                 body: {
-                    data_set_id,
+                    dataset_id: data_set_id,
                 },
             },
             (err, res, body) => {
@@ -286,7 +432,7 @@ async function apiQueryNetwork(nodeRpcUrl, jsonQuery) {
         request(
             {
                 method: 'POST',
-                uri: `${nodeRpcUrl}/api/query/network`,
+                uri: `${nodeRpcUrl}/api/latest/network/query`,
                 json: true,
                 body: jsonQuery,
             },
@@ -313,7 +459,7 @@ async function apiQueryNetworkResponses(nodeRpcUrl, queryNetworkId) {
         request(
             {
                 method: 'GET',
-                uri: `${nodeRpcUrl}/api/query/${queryNetworkId}/responses`,
+                uri: `${nodeRpcUrl}/api/latest/network/query/responses/${queryNetworkId}`,
                 json: true,
             },
             (err, res, body) => {
@@ -347,7 +493,7 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
         request(
             {
                 method: 'POST',
-                uri: `${nodeRpcUrl}/api/read/network`,
+                uri: `${nodeRpcUrl}/api/latest/network/read`,
                 json: true,
                 body: {
                     query_id: queryId,
@@ -404,20 +550,56 @@ async function apiConsensus(nodeRpcUrl, senderId) {
  */
 
 /**
- * Fetch /api/trail/{{query}}
+ * Fetch /api/latest/trail/
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {object} query Query to be searched for starting vertex
  * @return {Promise.<TrailResponse>}
  */
-async function apiTrail(nodeRpcUrl, query) {
+async function apiTrail(nodeRpcUrl, params) {
     return new Promise((accept, reject) => {
         request(
             {
-                method: 'GET',
-                qs: query,
+                method: 'POST',
+                body: {
+                    identifier_types: params.identifier_types,
+                    identifier_values: params.identifier_values,
+                    depth: params.depth,
+                    connection_types: params.connection_types,
+                },
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/trail`,
+                uri: `${nodeRpcUrl}/api/latest/trail`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
+ * Fetch /api/latest/get_merkle_proofs/
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {object} params datasetId and object_ids
+ * @return {Promise.<TrailResponse>}
+ */
+async function apiMerkleProofs(nodeRpcUrl, params) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                body: {
+                    dataset_id: params.dataset_id,
+                    object_ids: params.object_ids,
+                },
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/latest/get_merkle_proofs`,
                 json: true,
             },
             (err, res, body) => {
@@ -487,7 +669,7 @@ async function apiBalance(nodeRpcUrl, humanReadable) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/balance?humanReadable=${humanReadable}`,
+                uri: `${nodeRpcUrl}/api/latest/balance?humanReadable=${humanReadable}`,
                 json: true,
             },
             (err, res, body) => {
@@ -504,17 +686,24 @@ async function apiBalance(nodeRpcUrl, humanReadable) {
 module.exports = {
     apiImport,
     apiImportContent,
+    apiImportResult,
     apiImportInfo,
     apiImportsInfo,
+    apiExport,
+    apiExportResult,
     apiFingerprint,
     apiQueryLocal,
     apiQueryLocalImportByDataSetId,
     apiReplication,
+    apiReplicationResult,
     apiQueryNetwork,
     apiQueryNetworkResponses,
     apiReadNetwork,
     apiConsensus,
     apiTrail,
+    apiMerkleProofs,
     apiNodeInfo,
     apiBalance,
+    apiGetElementIssuerIdentity,
+    apiGetDatasetInfo,
 };

@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         task: DataTypes.STRING,
         urgent: DataTypes.BOOLEAN,
         status: DataTypes.STRING,
+        global_status: DataTypes.STRING,
         message: DataTypes.STRING,
         transaction_hash: DataTypes.STRING(128),
     }, {});

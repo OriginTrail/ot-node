@@ -1,4 +1,4 @@
-const CT = require('@kadenceproject/kadence').Control;
+const CT = require('@deadcanaries/kadence').Control;
 
 class Control extends CT {
     constructor(node, config) {

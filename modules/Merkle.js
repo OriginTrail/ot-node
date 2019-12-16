@@ -1,19 +1,31 @@
 const abi = require('ethereumjs-abi');
+const constants = require('./constants');
 const BN = require('bn.js');
+const Utilities = require('./Utilities');
+const { sha3_256 } = require('js-sha3');
 
 class MerkleTree {
-    constructor(leaves) {
+    constructor(leaves, type = 'distribution', hashFunction = 'soliditySha3') {
         this.levels = [];
         this.levels.push(leaves);
-
+        this.hashFunction = hashFunction;
+        this.type = type;
         const leavesHashes = [];
         for (let i = 0; i < leaves.length; i += 1) {
-            const hash = abi.soliditySHA3(
-                ['bytes32', 'uint256'],
-                [new BN(Buffer.from(leaves[i], 'utf8').toString('hex'), 16), i],
-            ).toString('hex');
-
-            leavesHashes.push(hash);
+            switch (this.type) {
+            case 'distribution':
+                leavesHashes.push(this._generateDistributionLeafHash(leaves[i], i));
+                break;
+            case 'litigation':
+                leavesHashes.push(this._generateLitigationLeafHash(
+                    leaves[i].data,
+                    leaves[i].objectIndex,
+                    leaves[i].blockIndex,
+                ));
+                break;
+            default:
+                throw Error(`Unsupported Merkle tree type: ${type}`);
+            }
         }
 
         this.levels.push(leavesHashes);
@@ -25,16 +37,16 @@ class MerkleTree {
             let i = 0;
             while (i < currentLevel.length) {
                 if (i + 1 < currentLevel.length) {
-                    const hash = abi.soliditySHA3(
-                        ['bytes32', 'bytes32'],
-                        [new BN(currentLevel[i], 16), new BN(currentLevel[i + 1], 16)],
-                    ).toString('hex');
+                    const hash = this._generateInternalHash(
+                        currentLevel[i],
+                        currentLevel[i + 1],
+                    );
                     nextLevel.push(hash);
                 } else {
-                    const hash = abi.soliditySHA3(
-                        ['bytes32', 'bytes32'],
-                        [new BN(currentLevel[i], 16), new BN(currentLevel[i], 16)],
-                    ).toString('hex');
+                    const hash = this._generateInternalHash(
+                        currentLevel[i],
+                        currentLevel[i],
+                    );
                     nextLevel.push(hash);
                 }
                 i += 2;
@@ -50,14 +62,24 @@ class MerkleTree {
         return `0x${this.rootHash}`;
     }
 
-    createProof(leafNumber) {
+    createProof(firstIndex, secondIndex = null) {
+        let i;
         const { levels } = this;
+        switch (this.type) {
+        case 'distribution':
+            i = firstIndex;
+            break;
+        case 'litigation':
+            i = levels[0].findIndex(element =>
+                element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+            break;
+        default:
+            throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        }
 
         let currentLevel = 1;
 
         const proof = [];
-
-        let i = leafNumber;
 
         while (currentLevel < levels.length - 1) {
             if (i % 2 === 1) {
@@ -75,36 +97,95 @@ class MerkleTree {
         return proof;
     }
 
-    verifyProof(proof, block, i) {
-        let h = abi.soliditySHA3(
-            ['bytes32', 'uint256'],
-            [new BN(Buffer.from(block, 'utf8').toString('hex'), 16), i],
-        ).toString('hex');
+    calculateProofResult(proof, data, firstIndex, secondIndex = null) {
+        let h;
+        let leafNumber;
+        const { levels } = this;
+        switch (this.type) {
+        case 'distribution':
+            leafNumber = firstIndex;
+            h = this._generateDistributionLeafHash(data, firstIndex);
+            break;
+        case 'litigation':
+            h = this._generateLitigationLeafHash(data, firstIndex, secondIndex);
+            leafNumber = levels[0].findIndex(element =>
+                element.objectIndex === firstIndex && element.blockIndex === secondIndex);
+            break;
+        default:
+            throw Error(`Unsupported Merkle tree type: ${this.type}`);
+        }
 
         let j = this.levels.length - 1;
         let k = 0;
         let r = 0;
 
         while (j > 1) {
-            r = i % 2;
+            r = leafNumber % 2;
             if (r % 2 === 0) {
-                h = abi.soliditySHA3(
-                    ['bytes32', 'bytes32'],
-                    [new BN(h, 16), new BN(proof[k], 16)],
-                ).toString('hex');
+                h = this._generateInternalHash(h, proof[k]);
             } else {
-                h = abi.soliditySHA3(
-                    ['bytes32', 'bytes32'],
-                    [new BN(proof[k], 16), new BN(h, 16)],
-                ).toString('hex');
+                h = this._generateInternalHash(proof[k], h);
             }
 
             k += 1;
-            i = Math.trunc(i / 2);
+            leafNumber = Math.trunc(leafNumber / 2);
             j -= 1;
         }
 
+        return h;
+    }
+
+    verifyProof(proof, data, firstIndex, secondIndex = null) {
+        const h = this.calculateProofResult(proof, data, firstIndex, secondIndex);
         return h === this.rootHash;
+    }
+
+    _generateDistributionLeafHash(leaf, index) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            if (Buffer.from(`${leaf}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+                throw Error(`Block size is larger than ${constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES} bytes.`);
+            }
+            return abi.soliditySHA3(
+                ['bytes32', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${leaf}`, 'utf8').toString('hex')), index],
+            ).toString('hex');
+
+        case 'sha3': return sha3_256(`${leaf}${index}`);
+        default: throw Error('Invalid hash function!');
+        }
+    }
+
+    _generateLitigationLeafHash(data, objectIndex, blockIndex) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            if (Buffer.from(`${data}`, 'utf8').byteLength > constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+                throw Error(`Block size is larger than ${constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES} bytes.`);
+            }
+            return abi.soliditySHA3(
+                ['bytes32', 'uint256', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${data}`, 'utf8').toString('hex').padStart(64, '0')), objectIndex, blockIndex],
+            ).toString('hex');
+
+        case 'sha3': return sha3_256(`${data}${objectIndex}${blockIndex}`);
+        default: throw Error('Invalid hash function!');
+        }
+    }
+
+    _generateInternalHash(block1, block2) {
+        switch (this.hashFunction) {
+        case 'soliditySha3':
+            return abi.soliditySHA3(
+                ['bytes32', 'bytes32'],
+                [
+                    Utilities.normalizeHex(`${block1}`),
+                    Utilities.normalizeHex(`${block2}`),
+                ],
+            ).toString('hex');
+
+        case 'sha3': return sha3_256(`${Utilities.normalizeHex(block1)}${Utilities.normalizeHex(block2)}`);
+        default: throw Error('Invalid hash function!');
+        }
     }
 }
 

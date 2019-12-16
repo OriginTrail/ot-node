@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "07bdc6bb-9620-41a9-b6b0-904949a48586",
+		"_postman_id": "9157b7b4-d4f4-4620-8dbd-3168d51af754",
 		"name": "OriginTrail",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -410,60 +410,6 @@
 			"response": []
 		},
 		{
-			"name": "/api/deposit",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"trac_amount\": 30\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/deposit",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"deposit"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/withdraw",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{ \n\t\"trac_amount\": 20\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/withdraw",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"withdraw"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "api/imports_info",
 			"request": {
 				"method": "GET",
@@ -525,6 +471,34 @@
 						"api",
 						"consensus",
 						"{{sender_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/balance",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/balance?humanReadable=true",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"balance"
+					],
+					"query": [
+						{
+							"key": "humanReadable",
+							"value": "true"
+						}
 					]
 				}
 			},

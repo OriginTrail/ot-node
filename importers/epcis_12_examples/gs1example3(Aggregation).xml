@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+	xmlns:example="http://ns.example.com/epcis" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	creationDate="2005-07-11T11:30:47.0Z" schemaVersion="1.2">
+	<EPCISBody>
+		<EventList>
+			<AggregationEvent>
+				<eventTime>2013-06-08T14:58:56.591Z</eventTime>
+				<eventTimeZoneOffset>+02:00</eventTimeZoneOffset>
+				<parentID>urn:epc:id:sscc:0614141.1234567890</parentID>
+				<childEPCs>
+					<epc>urn:epc:id:sgtin:0614141.107346.2017</epc>
+					<epc>urn:epc:id:sgtin:0614141.107346.2018</epc>
+				</childEPCs>
+				<action>OBSERVE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+				<readPoint>
+					<id>urn:epc:id:sgln:0614141.00777.0</id>
+				</readPoint>
+				<bizLocation>
+					<id>urn:epc:id:sgln:0614141.00888.0</id>
+				</bizLocation>
+				<extension>
+					<childQuantityList>
+						<quantityElement>
+							<epcClass>urn:epc:idpat:sgtin:4012345.098765.*</epcClass>
+							<quantity>10</quantity>
+						</quantityElement>
+						<quantityElement>
+							<epcClass>urn:epc:class:lgtin:4012345.012345.998877</epcClass>
+							<quantity>200.5</quantity>
+							<uom>KGM</uom>
+						</quantityElement>
+					</childQuantityList>
+				</extension>
+				<example:myField>Example of a vendor/user extension</example:myField>
+			</AggregationEvent>
+		</EventList>
+	</EPCISBody>
+</epcis:EPCISDocument>

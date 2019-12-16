@@ -17,11 +17,11 @@ const fs = require('fs');
 const path = require('path');
 const models = require('./models');
 const Storage = require('./modules/Storage');
-const Importer = require('./modules/importer');
-const GS1Importer = require('./modules/GS1Importer');
-const GS1Utilities = require('./modules/GS1Utilities');
-const WOTImporter = require('./modules/WOTImporter');
-const Challenger = require('./modules/Challenger');
+const SchemaValidator = require('./modules/validator/schema-validator');
+const GS1Utilities = require('./modules/importer/gs1-utilities');
+const WOTImporter = require('./modules/importer/wot-importer');
+const EpcisOtJsonTranspiler = require('./modules/transpiler/epcis/epcis-otjson-transpiler');
+const WotOtJsonTranspiler = require('./modules/transpiler/wot/wot-otjson-transpiler');
 const RemoteControl = require('./modules/RemoteControl');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
@@ -29,8 +29,6 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
-const AxiosService = require('./modules/service/axios-service');
-
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
@@ -38,14 +36,20 @@ const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
 const ApprovalService = require('./modules/service/approval-service');
+const ChallengeService = require('./modules/service/challenge-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
-const ImportController = require('./modules/controller/import-controller');
-const APIUtilities = require('./modules/utility/api-utilities');
-const RestAPIService = require('./modules/service/rest-api-service');
+const APIUtilities = require('./modules/api-utilities');
+const RestApiController = require('./modules/service/rest-api-controller');
 const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migration');
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
-const GasPriceService = require('./modules/service/gas-price-service');
+const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
+const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
+const ImportWorkerController = require('./modules/worker/import-worker-controller');
+const ImportService = require('./modules/service/import-service');
+
+const { execSync } = require('child_process');
+const semver = require('semver');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -292,6 +296,8 @@ class OTNode {
             process.abort();
         }
 
+        await this._runNetworkIdentityMigration(config);
+
         // Seal config in order to prevent adding properties.
         // Allow identity to be added. Continuity.
         config.identity = '';
@@ -310,8 +316,22 @@ class OTNode {
         // check if ArangoDB service is running at all
         if (config.database.provider === 'arangodb') {
             try {
-                const responseFromArango = await Utilities.getArangoDbVersion(config);
-                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+                const { version } = await Utilities.getArangoDbVersion(config);
+
+                log.info(`Arango server version ${version} is up and running`);
+                if (semver.lt(version, '3.5.0')) {
+                    if (process.env.OT_NODE_DISTRIBUTION === 'docker'
+                        && config.autoUpdater.enabled) {
+                        log.info('Your Arango version is lower than required. Starting upgrade...');
+                        await this._runArangoMigration(config);
+
+                        const { version } = await Utilities.getArangoDbVersion(config);
+                        log.info(`Arango server is updated to version ${version}.`);
+                    } else {
+                        log.error('Arango version too old! Please update to version 3.5.0 or newer');
+                        process.exit(1);
+                    }
+                }
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
                 console.log(err);
@@ -357,27 +377,27 @@ class OTNode {
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
-            importer: awilix.asClass(Importer).singleton(),
+            schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
-            gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
+            epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
-            challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
-            importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
-            axiosService: awilix.asClass(AxiosService).singleton(),
-            gasPriceService: awilix.asClass(GasPriceService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
+            challengeService: awilix.asClass(ChallengeService).singleton(),
+            importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
+            importService: awilix.asClass(ImportService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -426,7 +446,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runMigration(blockchain);
+            await this._runPayoutMigration(blockchain, config);
             await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
@@ -440,21 +460,23 @@ class OTNode {
         const profile = await blockchain.getProfile(config.erc725Identity);
 
         if (!profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
-            throw Error('ERC725 profile not created for this node ID. ' +
-                `My identity ${config.identity}, profile's node id: ${profile.nodeId}.`);
+            await blockchain.setNodeId(
+                config.erc725Identity,
+                Utilities.normalizeHex(config.identity.toLowerCase()),
+            );
         }
 
         // Initialise API
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restApiController');
+
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
             notifyBugsnag(err);
             process.exit(1);
         }
-
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
             await remoteControl.connect();
@@ -468,16 +490,69 @@ class OTNode {
     }
 
     /**
-     * Run one time migration
-     * Note: implement migration service
-     * @deprecated
+     * Backs up network identity files if they are from the old network version
+     * @param config
+     * @returns {Promise<void>}
      * @private
      */
-    async _runMigration(blockchain) {
+    async _runNetworkIdentityMigration(config) {
         const migrationsStartedMills = Date.now();
-        log.info('Initializing code migrations...');
 
-        const m1PayoutAllMigrationFilename = '0_m1PayoutAllMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const m3NetworkIdentityMigrationFilename = '3_m3NetworkIdentityMigrationFile';
+        const migrationFilePath = path.join(migrationDir, m3NetworkIdentityMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M3NetowrkIdentityMigration({ logger: log, config });
+            try {
+                await migration.run();
+                log.notify(`One-time network identity migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m3NetworkIdentityMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    async _runArangoMigration(config) {
+        const migrationsStartedMills = Date.now();
+
+        const m1PayoutAllMigrationFilename = '4_m4ArangoMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M4ArangoMigration({ logger: log, config });
+
+            try {
+                log.info('Initializing Arango migration...');
+                await migration.run();
+                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    /**
+     * Run one time payout migration
+     * @param blockchain
+     * @param config
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _runPayoutMigration(blockchain, config) {
+        const migrationsStartedMills = Date.now();
+        log.info('Initializing payOut migration...');
+
+        const m1PayoutAllMigrationFilename = '1_m1PayoutAllMigrationFile';
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
@@ -495,8 +570,6 @@ class OTNode {
                 process.exit(1);
             }
         }
-
-        log.info(`Code migrations completed. Lasted ${Date.now() - migrationsStartedMills}`);
     }
 
     /**
@@ -508,7 +581,7 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js', 'modules/migration/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -531,9 +604,12 @@ class OTNode {
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
-            restAPIService: awilix.asClass(RestAPIService).singleton(),
-            axiosService: awilix.asClass(AxiosService).singleton(),
-            gasPriceService: awilix.asClass(GasPriceService).singleton(),
+            restApiController: awilix.asClass(RestApiController).singleton(),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
+            epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
+            wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
+            schemaValidator: awilix.asClass(SchemaValidator).singleton(),
+            importService: awilix.asClass(ImportService).singleton(),
         });
 
         const transport = container.resolve('transport');
@@ -554,9 +630,9 @@ class OTNode {
             approvalService.handleApprovalEvent(eventData);
         });
 
-        const restAPIService = container.resolve('restAPIService');
+        const restApiController = container.resolve('restApiController');
         try {
-            await restAPIService.startRPC();
+            await restApiController.startRPC();
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
@@ -581,6 +657,9 @@ class OTNode {
                 await blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 await blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 await blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                await blockchain.getAllPastEvents('LITIGATION_CONTRACT');
+                await blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
+                await blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
                 deadline = Date.now() + delay;
                 working = false;
             }

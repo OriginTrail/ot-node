@@ -1,15 +1,11 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Increases approval for Bidding contract on blockchain
  */
 class CleanerCommand extends Command {
-    constructor(ctx) {
-        super(ctx);
-        this.logger = ctx.logger;
-    }
-
     /**
      * Executes command and produces one or more events
      * @param command
@@ -34,7 +30,7 @@ class CleanerCommand extends Command {
             name: 'cleanerCommand',
             data: {
             },
-            period: 4 * 24 * 60 * 60 * 1000,
+            period: constants.DEFAULT_COMMAND_CLEANUP_TIME_MILLS,
             transactional: false,
         };
         Object.assign(command, map);

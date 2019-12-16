@@ -1,12 +1,12 @@
+const bytes = require('utf8-length');
+const uuidv4 = require('uuid/v4');
+const { sha3_256 } = require('js-sha3');
+
+const Utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
 const Encryption = require('./Encryption');
-const bytes = require('utf8-length');
-const utilities = require('./Utilities');
-const uuidv4 = require('uuid/v4');
-const { sha3_256 } = require('js-sha3');
 const { normalizeGraph } = require('./Database/graph-converter');
-
 const Models = require('../models');
 
 /**
@@ -87,6 +87,124 @@ class ImportUtilities {
     }
 
     /**
+     * Format empty identifiers, properties and relations format from a graph.
+     * @param graph
+     */
+    static formatGraph(graph) {
+        graph.filter(vertex => vertex['@type'] === 'otObject').forEach((vertex) => {
+            if (vertex.identifiers == null) {
+                vertex.identifiers = [];
+            }
+            if (vertex.properties != null && Object.keys(vertex.properties).length === 0) {
+                delete vertex.properties;
+            }
+            if (vertex.relations == null) {
+                vertex.relations = [];
+            } else {
+                vertex.relations.forEach((relation) => {
+                    if (relation.direction == null) {
+                        relation.direction = 'direct';
+                    }
+                });
+            }
+        });
+        return graph;
+    }
+
+    static prepareDataset(graph, config, web3) {
+        const id = this.calculateGraphHash(graph);
+        const header = this.createDatasetHeader(config);
+        const dataset = {
+            '@id': id,
+            '@type': 'Dataset',
+            datasetHeader: header,
+            '@graph': graph,
+        };
+
+        const rootHash = this.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
+        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+
+        const signed = this.signDataset(dataset, config, web3);
+        return signed;
+    }
+
+    /**
+     * Decrypt encrypted OT-JSON dataset
+     * @param dataset - OT-JSON dataset
+     * @param decryptionKey - Decryption key
+     * @param offerId - Replication identifier from which the dataset was received
+     * @param encryptionColor - Encryption color
+     * @returns Decrypted OTJson dataset
+     */
+    static decryptDataset(dataset, decryptionKey, offerId = null, encryptionColor = null) {
+        const decryptedDataset = Utilities.copyObject(dataset);
+        const encryptedMap = {};
+        encryptedMap.objects = {};
+        encryptedMap.relations = {};
+        const colorMap = {
+            0: 'red',
+            1: 'green',
+            2: 'blue',
+        };
+
+        for (const obj of decryptedDataset['@graph']) {
+            if (obj.properties != null) {
+                const encryptedProperties = obj.properties;
+                obj.properties = Encryption.decryptObject(obj.properties, decryptionKey);
+                if (encryptionColor != null) {
+                    const encColor = colorMap[encryptionColor];
+                    encryptedMap.objects[obj['@id']] = {};
+                    encryptedMap.objects[obj['@id']][offerId] = {};
+                    encryptedMap.objects[obj['@id']][offerId][encColor] = encryptedProperties;
+                }
+            }
+            if (obj.relations != null) {
+                encryptedMap.relations[obj['@id']] = {};
+                for (const rel of obj.relations) {
+                    if (rel.properties != null) {
+                        const encryptedProperties = rel.properties;
+                        rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
+                        if (encryptionColor != null) {
+                            const encColor = colorMap[encryptionColor];
+                            const relationKey = sha3_256(Utilities.stringify(rel, 0));
+                            encryptedMap.relations[obj['@id']][relationKey] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
+                                encryptedProperties;
+                        }
+                    }
+                }
+            }
+        }
+        return {
+            decryptedDataset,
+            encryptedMap,
+        };
+    }
+
+
+    static encryptDataset(dataset, encryptionKey) {
+        const encryptedDataset = Utilities.copyObject(dataset);
+
+        for (const obj of encryptedDataset['@graph']) {
+            if (obj.properties != null) {
+                const encryptedProperties = Encryption.encryptObject(obj.properties, encryptionKey);
+                obj.properties = encryptedProperties;
+            }
+            if (obj.relations != null) {
+                for (const rel of obj.relations) {
+                    if (rel.properties != null) {
+                        const encryptedProperties =
+                            Encryption.encryptObject(rel.properties, encryptionKey);
+                        rel.properties = encryptedProperties;
+                    }
+                }
+            }
+        }
+        return encryptedDataset;
+    }
+
+    /**
      * Normalizes import (use just necessary data)
      * @param dataSetId - Dataset ID
      * @param vertices - Import vertices
@@ -103,7 +221,7 @@ class ImportUtilities {
             edges,
         );
 
-        return utilities.sortObject({
+        return Utilities.sortObject({
             edges: normEdges,
             vertices: normVertices,
         });
@@ -118,7 +236,7 @@ class ImportUtilities {
      */
     static importHash(dataSetId, vertices, edges) {
         const normalized = ImportUtilities.normalizeImport(dataSetId, vertices, edges);
-        return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)));
+        return Utilities.normalizeHex(sha3_256(Utilities.stringify(normalized, 0)));
     }
 
     /**
@@ -136,7 +254,7 @@ class ImportUtilities {
 
         // process vertices
         for (const i in vertices) {
-            const hash = utilities.soliditySHA3(utilities.sortObject({
+            const hash = Utilities.soliditySHA3(Utilities.sortObject({
                 identifiers: vertices[i].identifiers,
                 data: vertices[i].data,
             }));
@@ -148,7 +266,7 @@ class ImportUtilities {
         }
 
         for (const edge of edges) {
-            const hash = utilities.soliditySHA3(utilities.sortObject({
+            const hash = Utilities.soliditySHA3(Utilities.sortObject({
                 identifiers: edge.identifiers,
                 _from: edge._from,
                 _to: edge._to,
@@ -187,12 +305,73 @@ class ImportUtilities {
         ImportUtilities.sort(documents2);
 
         for (const index in documents1) {
-            const distance = utilities.objectDistance(documents1[index], documents2[index]);
+            const distance = Utilities.objectDistance(documents1[index], documents2[index]);
             if (distance !== 100) {
                 return false;
             }
         }
         return true;
+    }
+
+    static calculateDatasetSummary(graph, datasetId, datasetCreator) {
+        return {
+            datasetId,
+            datasetCreator,
+            objects: graph.map(vertex => ({
+                '@id': vertex['@id'],
+                identifiers: vertex.identifiers != null ? vertex.identifiers : [],
+            })),
+            numRelations: graph.filter(vertex => vertex.relations != null)
+                .reduce((acc, value) => acc + value.relations.length, 0),
+        };
+    }
+
+    static createDistributionMerkleTree(graph, datasetId, datasetCreator) {
+        const datasetSummary =
+            this.calculateDatasetSummary(graph, datasetId, datasetCreator);
+
+        ImportUtilities.sortGraphRecursively(graph);
+
+        const stringifiedGraph = [];
+        for (const obj of graph) {
+            stringifiedGraph.push(Utilities.sortedStringify(obj));
+        }
+
+        return new MerkleTree(
+            [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
+            'distribution',
+            'sha3',
+        );
+    }
+
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const merkle = ImportUtilities.createDistributionMerkleTree(
+            graph,
+            datasetId,
+            datasetCreator,
+        );
+
+        return merkle.getRoot();
+    }
+
+    /**
+     * Sort @graph data inline
+     * @param graph
+     */
+    static sortGraphRecursively(graph) {
+        graph.forEach((el) => {
+            if (el.relations) {
+                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
+            }
+
+            if (el.identifiers) {
+                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
+                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
+            }
+        });
+        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+        return Utilities.sortedStringify(graph, true);
     }
 
     /**
@@ -226,7 +405,7 @@ class ImportUtilities {
      * @param privateKey Encryption key
      */
     static immutableEncryptVertices(vertices, privateKey) {
-        const copy = utilities.copyObject(vertices);
+        const copy = Utilities.copyObject(vertices);
         for (const id in copy) {
             const vertex = copy[id];
             if (vertex.data) {
@@ -243,22 +422,13 @@ class ImportUtilities {
      * @returns {*}
      */
     static immutableDecryptVertices(vertices, public_key) {
-        const copy = utilities.copyObject(vertices);
+        const copy = Utilities.copyObject(vertices);
         for (const id in copy) {
             if (copy[id].data) {
                 copy[id].data = Encryption.decryptObject(copy[id].data, public_key);
             }
         }
         return copy;
-    }
-
-    /**
-     * Filter CLASS vertices
-     * @param vertices
-     * @returns {*}
-     */
-    static immutableFilterClassVertices(vertices) {
-        return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
     }
 
     /**
@@ -299,6 +469,110 @@ class ImportUtilities {
             throw new Error(`Failed to find transaction hash for ${dataSetId} and origin ${origin}. Origin not valid.`);
         }
         return transactionHash;
+    }
+
+    /**
+     * Create SHA256 Hash of graph
+     * @param graph
+     * @returns {string}
+     */
+    static calculateGraphHash(graph) {
+        const sorted = this.sortGraphRecursively(graph);
+        return `0x${sha3_256(sorted, null, 0)}`;
+    }
+
+    static sortStringifyDataset(dataset) {
+        ImportUtilities.sortGraphRecursively(dataset['@graph']);
+        return Utilities.sortedStringify(dataset);
+    }
+
+    /**
+     * Sign OT-JSON
+     * @static
+     */
+    static signDataset(otjson, config, web3) {
+        const stringifiedOtjson = this.sortStringifyDataset(otjson);
+        const { signature } = web3.eth.accounts.sign(
+            stringifiedOtjson,
+            Utilities.normalizeHex(config.node_private_key),
+        );
+        otjson.signature = {
+            value: signature,
+            type: 'ethereum-signature',
+        };
+        return otjson;
+    }
+
+    /**
+     * Extract Signer from OT-JSON signature
+     * @static
+     */
+    static extractDatasetSigner(otjson, web3) {
+        const strippedOtjson = Object.assign({}, otjson);
+        delete strippedOtjson.signature;
+
+        const stringifiedOtjson = this.sortStringifyDataset(strippedOtjson);
+        return web3.eth.accounts.recover(stringifiedOtjson, otjson.signature.value);
+    }
+
+
+    /**
+     * Fill in dataset header
+     * @private
+     */
+    static createDatasetHeader(config, transpilationInfo = null, tags = []) {
+        const header = {
+            OTJSONVersion: '1.0',
+            datasetCreationTimestamp: new Date().toISOString(),
+            datasetTitle: '',
+            datasetTags: tags,
+            /*
+            relatedDatasets may contain objects like this:
+            {
+                datasetId: '0x620867dced3a96809fc69d579b2684a7',
+                relationType: 'UPDATED',
+                relationDescription: 'Some long description',
+                relationDirection: 'direct',
+            }
+             */
+            relatedDatasets: [],
+            validationSchemas: {
+                'erc725-main': {
+                    schemaType: 'ethereum-725',
+                    networkId: config.blockchain.network_id,
+                },
+                merkleRoot: {
+                    schemaType: 'merkle-root',
+                    networkId: config.blockchain.network_id,
+                    hubContractAddress: config.blockchain.hub_contract_address,
+                    // TODO: Add holding contract address and version. Hub address is useless.
+                },
+            },
+            dataIntegrity: {
+                proofs: [
+                    {
+                        proofValue: '',
+                        proofType: 'merkleRootHash',
+                        validationSchema: '/schemas/merkleRoot',
+                    },
+                ],
+            },
+            dataCreator: {
+                identifiers: [
+                    {
+                        identifierValue: config.erc725Identity,
+                        identifierType: 'ERC725',
+                        validationSchema: '/schemas/erc725-main',
+                    },
+                ],
+            },
+        };
+
+        if (transpilationInfo) {
+            header.transpilationInfo = transpilationInfo;
+        }
+
+        return header;
     }
 }
 

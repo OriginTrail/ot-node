@@ -401,21 +401,17 @@ class RemoteControl {
 
     /**
      * Finds holding based on a bid
-     * NOTE: if offer_id does not exist in the holding record, that's the older offer
-     * IMPORTANT: There is an edge case where the same data set is
-     *            imported more than once and the holder gets the same color. That's why we cannot
-     *            be 100% sure for getting the right info for old offers.
      * @param bid
      * @return {Promise<Model>}
      */
     async _findHoldingByBid(bid) {
         const encryptionType = await this.blockchain
             .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
-        const offer = await this.blockchain.getOffer(bid.offer_id);
+
         return Models.holding_data.findOne({
             where: {
+                data_set_id: bid.data_set_id,
                 color: encryptionType,
-                data_set_id: offer.dataSetId,
             },
         });
     }
@@ -619,6 +615,20 @@ class RemoteControl {
      */
     importSucceeded(data) {
         this.socket.emit('importSucceeded', data);
+    }
+
+    /**
+     * Get export data error
+     */
+    exportFailed(data) {
+        this.socket.emit('exportFailed', data);
+    }
+
+    /**
+     * Get export data - succeeded
+     */
+    exportSucceeded(data) {
+        this.socket.emit('exportSucceeded', data);
     }
 
 

@@ -6,8 +6,9 @@ module.exports = (sequelize, DataTypes) => {
         total_documents: DataTypes.INTEGER,
         root_hash: DataTypes.STRING(40),
         import_timestamp: DataTypes.DATE,
-        data_size: DataTypes.INTEGER,
         origin: DataTypes.STRING,
+        otjson_size_in_bytes: DataTypes.INTEGER,
+        data_hash: DataTypes.STRING,
     }, {
         tableName: 'data_info',
     });

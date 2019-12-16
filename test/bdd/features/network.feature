@@ -3,19 +3,20 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
+  @third
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
-  @first
+  @fourth
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
     And I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
@@ -28,7 +29,8 @@ Feature: Test basic network features
     And I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
@@ -39,51 +41,76 @@ Feature: Test basic network features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from a DH
+    And DV waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
-    Then DV's last purchase's hash should be the same as one manually calculated
 
-  @first
+  @second
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
-    And I setup 1 node
+    And I setup 3 node
     And I start the node
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And DC waits for replication window to close
     Given I additionally setup 1 node
     And I start additional nodes
-    And I use 2nd node as DV
+    And I use 4th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from the DC
+    And DV waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
 
-  @first
+  @third
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
-    And I setup 1 node
+    And I setup 3 node
     And I start the node
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And DC waits for replication window to close
     Given I additionally setup 1 node
     And I start additional nodes
-    And I use 2nd node as DV
+    And I use 4th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases last import from the last query from the DC
+    And DV waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
     Given I additionally setup 1 node
     And I start additional nodes
-    And I use 3rd node as DV2
+    And I use 5th node as DV2
     Given DV2 publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV2
     Given the DV2 purchases last import from the last query from a DV
+    And DV2 waits for import to finish
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    When DV2 exports the last imported dataset as OT-JSON
+    And DV2 waits for export to finish
     Then the last import should be the same on DC and DV2 nodes
 
   @first
@@ -97,32 +124,16 @@ Feature: Test basic network features
     And the 1st node's spend all the Ethers
     And I start the node
     And I use 1st node as DV
+    Given I additionally setup 3 node
+    And I start additional nodes
     When DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then everything should be ok
 
-  @first
-  Scenario: API calls should be forbidden
-    Given I setup 1 node
-    And I override configuration for all nodes
-      | network.remoteWhitelist | 100.100.100.100 | 200.200.200.200 |
-    And I start the node
-    And I use 1st node as DC
-    Then API calls will be forbidden
-
-  @first
-  Scenario: API calls should not be authorized
-    Given I setup 1 node
-    And I override configuration for all nodes
-      | auth_token_enabled | true |
-    And I start the node
-    And I use 1st node as DC
-    Then API calls will not be authorized
-
-  @first
+  @second
   Scenario: Bootstraps should have /api/info route enabled
     Then 1st bootstrap should reply on info route
 
-  @first
+  @third
   Scenario: DH payout scenario
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -130,13 +141,14 @@ Feature: Test basic network features
       | dc_holding_time_in_minutes | 1 |
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And DC waits for holding time
     Then selected DHes should be payed out
 
-  @first
+  @fourth
   Scenario: DH with disabled auto-payouts
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -145,7 +157,8 @@ Feature: Test basic network features
       | disableAutoPayouts         | true |
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And DC waits for holding time
@@ -158,13 +171,14 @@ Feature: Test basic network features
     And I start the node
     Then default initial token amount should be deposited on 1st node's profile
 
-  @third
+  @second
   Scenario: Test repeated offer creation with same dataset
     Given the replication difficulty is 0
     And I setup 3 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And I wait for DC to fail to finalize last offer

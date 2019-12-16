@@ -26,8 +26,9 @@ describe('Utilities module', () => {
                     'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
                     'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
-                    'dc_token_amount_per_holder', 'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes', 'dh_min_token_price',
-                    'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval', 'dh_max_data_set_size'],
+                    'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes',
+                    'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval', 'dh_maximum_dataset_filesize_in_mb', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled',
+                    'reputationWindowInMinutes'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -37,16 +38,22 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.blockchain, [
                     'blockchain_title', 'network_id', 'gas_limit', 'gas_price', 'max_allowed_gas_price',
-                    'hub_contract_address', 'plugins'],
+                    'hub_contract_address', 'plugins', 'price_factor', 'trac_price_in_eth'],
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
                 config.network, [
-                    'id', 'hostname', 'bootstraps',
+                    'id', 'hostname', 'bootstraps', 'churnPlugin',
                     'remoteWhitelist', 'identityDifficulty',
                     'solutionDifficulty',
                 ],
                 `Some config items are missing in config.network for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
+                config.network.churnPlugin, [
+                    'cooldownBaseTimeout', 'cooldownMultiplier', 'cooldownResetTime',
+                ],
+                `Some config items are missing in config.network.churnPlugin for environment '${environment}'`,
             );
             assert.hasAllKeys(
                 config.bugSnag, ['releaseStage'],
@@ -90,7 +97,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'max_allowed_gas_price', 'hub_contract_address']);
+                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'price_factor', 'trac_price_in_eth']);
             assert.equal(config.blockchain.blockchain_title, 'Ethereum');
         });
     });

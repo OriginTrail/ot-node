@@ -39,8 +39,9 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
+    "latest_api_version" : "v2.0",
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -56,7 +57,9 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
-      "hub_contract_address": "0x056f4DA796C00766061158A01cE068D912be9c89",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
+      "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
       "plugins": [
         {
           "enabled": false,
@@ -78,7 +81,12 @@
       "bootstraps": ["https://developbs.origintrial.me:5278/#05edf19bd36906240503e2e2e2f18d13f8211d2f"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
-      "identityDifficulty": 8
+      "identityDifficulty": 8,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "development"
@@ -90,15 +98,16 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
-    "dh_max_holding_time_in_minutes": 2635200,
-    "dh_min_token_price": "10000000000000000000",
+    "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
-    "dh_max_data_set_size": 1000000
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "staging": {
     "identity": null,
@@ -140,8 +149,9 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
+    "latest_api_version" : "v2.0",
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -157,7 +167,9 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
-      "hub_contract_address": "0x16d553B9765b6Aa9fE7C45Dfa1a1839fD88DD7bc",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
+      "hub_contract_address": "0xA272797Bfc59946388D89CdB6821dEeC927E0E36",
       "plugins": [
         {
           "enabled": false,
@@ -179,7 +191,12 @@
       "bootstraps": ["https://stagingbs.origintrial.me:5278/#1754b56ce26212eab45bc523c36e1d4bf57ea30e"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "staging"
@@ -191,15 +208,16 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "1",
     "dc_litigation_interval_in_minutes": 5,
-    "dh_max_holding_time_in_minutes": 2635200,
-    "dh_min_token_price": "1",
+    "dh_max_holding_time_in_minutes": 1440,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
-    "dh_max_data_set_size": 1000000
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "stable": {
     "identity": null,
@@ -241,8 +259,9 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
+    "latest_api_version" : "v2.0",
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -258,6 +277,8 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
       "hub_contract_address": "0x6C314872A7e97A6F1dC7De2dc43D28500dd36f22",
       "plugins": [
         {
@@ -280,7 +301,12 @@
       "bootstraps": ["https://82.196.10.12:5278/#e2f7ab11d0dd34595dfb2e71b4937ec8d790df84"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "stable"
@@ -292,15 +318,16 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
-    "dh_max_holding_time_in_minutes": 2635200,
-    "dh_min_token_price": "10000000000000000000",
+    "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
-    "dh_max_data_set_size": 1000000
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "production": {
     "identity": null,
@@ -342,8 +369,9 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
+    "latest_api_version" : "v2.0",
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -359,7 +387,9 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
-      "hub_contract_address": "0x0e5995FE34BfC9DB7a31fa318f7f1256Cf28FfCa",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
+      "hub_contract_address": "0x53F5b26EB263B96ffA83468F78DA738a3961644A",
       "plugins": [
         {
           "enabled": false,
@@ -384,7 +414,12 @@
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "testnet"
@@ -396,15 +431,16 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
-    "dh_max_holding_time_in_minutes": 2635200,
-    "dh_min_token_price": "10000000000000000000",
+    "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": false,
-    "dh_max_data_set_size": 1000000
+    "litigationEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   },
   "mariner": {
     "identity": null,
@@ -446,8 +482,9 @@
     "total_escrow_time_in_milliseconds": "86400000",
     "max_token_amount_per_dh": "500000000000",
     "dh_min_stake_amount": "100000000000",
-    "dh_min_reputation": 0,
+    "dh_min_reputation": -3,
     "probability_threshold": 10,
+    "latest_api_version" : "v2.0",
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -463,6 +500,8 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
+      "price_factor" : "2",
+      "trac_price_in_eth" : "0.00005",
       "hub_contract_address": "0xa287d7134fb40bef071c932286bd2cd01efccf30",
       "plugins": [
         {
@@ -488,7 +527,12 @@
       ],
       "remoteWhitelist": ["127.0.0.1"],
       "solutionDifficulty": 14,
-      "identityDifficulty": 12
+      "identityDifficulty": 12,
+      "churnPlugin": {
+        "cooldownBaseTimeout": "5m",
+        "cooldownMultiplier": 2,
+        "cooldownResetTime": "60m"
+      }
     },
     "bugSnag": {
       "releaseStage": "mariner"
@@ -500,14 +544,15 @@
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 10080,
-    "dc_token_amount_per_holder": "50000000000000000000",
     "dc_litigation_interval_in_minutes": 5,
-    "dh_max_holding_time_in_minutes": 2635200,
-    "dh_min_token_price": "20000000000000000000",
+    "dh_max_holding_time_in_minutes": 10080,
+    "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": false,
-    "dc_choose_time": 600000,
+    "dc_choose_time": 1200000,
     "requireApproval": true,
-    "dh_max_data_set_size": 1000000
+    "litigationEnabled": false,
+    "commandExecutorVerboseLoggingEnabled": false,
+    "reputationWindowInMinutes": 129600
   }
 }

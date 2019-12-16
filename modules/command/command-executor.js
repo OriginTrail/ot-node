@@ -37,12 +37,15 @@ class CommandExecutor {
         this.started = false;
 
         this.parallelism = QUEUE_PARALLELISM;
+        this.verboseLoggingEnabled = ctx.config.commandExecutorVerboseLoggingEnabled;
 
         const that = this;
         this.queue = async.queue(async (command, callback) => {
             try {
                 while (!that.started) {
-                    that.logger.trace('Command executor has not been started yet. Hibernating...');
+                    if (that.verboseLoggingEnabled) {
+                        that.logger.trace('Command executor has not been started yet. Hibernating...');
+                    }
 
                     // eslint-disable-next-line
                     await sleep.sleep(1000);
@@ -67,8 +70,9 @@ class CommandExecutor {
             constants.PERMANENT_COMMANDS,
             async command => this._startDefaultCommand(command),
         );
-
-        this.logger.trace('Command executor has been initialized...');
+        if (this.verboseLoggingEnabled) {
+            this.logger.trace('Command executor has been initialized...');
+        }
     }
 
     /**
@@ -77,7 +81,9 @@ class CommandExecutor {
      */
     async start() {
         this.started = true;
-        this.logger.trace('Command executor has been started...');
+        if (this.verboseLoggingEnabled) {
+            this.logger.trace('Command executor has been started...');
+        }
     }
 
     /**
@@ -90,7 +96,9 @@ class CommandExecutor {
             started_at: now,
         });
 
-        this.logger.trace(`Command ${command.name} and ID ${command.id} started.`);
+        if (this.verboseLoggingEnabled) {
+            this.logger.trace(`Command ${command.name} and ID ${command.id} started.`);
+        }
 
         const handler = this.commandResolver.resolve(command.name);
         if (command.deadline_at && now > command.deadline_at) {
@@ -112,7 +120,9 @@ class CommandExecutor {
 
         const waitMs = (command.ready_at + command.delay) - now;
         if (waitMs > 0) {
-            this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
+            if (this.verboseLoggingEnabled) {
+                this.logger.trace(`Command ${command.name} with ID ${command.id} should be delayed`);
+            }
             await this.add(command, Math.min(waitMs, constants.MAX_COMMAND_DELAY_IN_MILLS), false);
             return;
         }
@@ -153,7 +163,9 @@ class CommandExecutor {
             }, command.transactional);
 
             if (!result.repeat) {
-                this.logger.trace(`Command ${command.name} and ID ${command.id} processed.`);
+                if (this.verboseLoggingEnabled) {
+                    this.logger.trace(`Command ${command.name} and ID ${command.id} processed.`);
+                }
                 result.children.forEach(async e => this.add(e, e.delay, false));
             }
         } catch (e) {
@@ -195,7 +207,9 @@ class CommandExecutor {
         await CommandExecutor._delete(name);
         const handler = this.commandResolver.resolve(name);
         await this.add(handler.default(), 0, true);
-        this.logger.trace(`Permanent command ${name} created.`);
+        if (this.verboseLoggingEnabled) {
+            this.logger.trace(`Permanent command ${name} created.`);
+        }
     }
 
     /**

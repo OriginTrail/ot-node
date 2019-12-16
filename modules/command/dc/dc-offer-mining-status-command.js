@@ -17,9 +17,22 @@ class DcOfferMiningStatusCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const {
+            offerId,
+            isReplacement,
+            dhIdentity,
+            handler_id,
+        } = command.data;
 
-        const mined = await Models.miner_records.findOne({ where: { offer_id: offerId } });
+        const mined = await Models.miner_tasks.findOne({
+            limit: 1,
+            where: {
+                offer_id: offerId,
+            },
+            order: [
+                ['id', 'DESC'],
+            ],
+        });
         if (mined) {
             switch (mined.status) {
             case 'STARTED':
@@ -32,9 +45,12 @@ class DcOfferMiningStatusCommand extends Command {
                             delay: 0,
                             data: {
                                 offerId,
+                                isReplacement,
                                 solution: mined.result,
                                 success: true,
+                                dhIdentity,
                                 excludedDHs: command.data.excludedDHs,
+                                handler_id,
                             },
                             transactional: false,
                         },
@@ -48,6 +64,8 @@ class DcOfferMiningStatusCommand extends Command {
                             delay: 0,
                             data: {
                                 offerId,
+                                isReplacement,
+                                handler_id,
                                 success: false,
                             },
                             transactional: false,
@@ -70,8 +88,9 @@ class DcOfferMiningStatusCommand extends Command {
         const { offerId } = command.data;
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = err.message;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
@@ -88,10 +107,11 @@ class DcOfferMiningStatusCommand extends Command {
         const { dataSetId, offerId } = command.data;
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });

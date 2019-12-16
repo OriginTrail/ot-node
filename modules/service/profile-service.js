@@ -1,9 +1,10 @@
 const fs = require('fs');
 const BN = require('bn.js');
 const path = require('path');
+const EthereumAbi = require('ethereumjs-abi');
+const constants = require('../constants');
 
 const Utilities = require('../Utilities');
-const constants = require('../constants');
 
 class ProfileService {
     /**
@@ -29,6 +30,18 @@ class ProfileService {
         if (this.config.erc725Identity) {
             identityExists = true;
             this.logger.notify(`Identity has already been created for node ${this.config.identity}. Identity is ${this.config.erc725Identity}.`);
+        }
+
+        if (this.config.parentIdentity) {
+            let hasPermission = false;
+
+            if (identityExists) {
+                hasPermission = await this.hasParentPermission();
+            }
+
+            if (!hasPermission) {
+                this.logger.warn('Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config');
+            }
         }
 
         if (identityExists && await this.isProfileCreated()) {
@@ -85,7 +98,7 @@ class ProfileService {
                     createProfileCalled = true;
                 } else {
                     this.logger.important('Management wallet not set. Creating profile with operating wallet only.' +
-                            ' Please set management one.');
+                        ' Please set management one.');
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchain.createProfile(
                         this.config.node_wallet,
@@ -120,6 +133,7 @@ class ProfileService {
                 throw new Error('Identity could not be confirmed in timely manner. Please, try again later.');
             }
         }
+
         const event = await this.blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.erc725Identity));
         if (event) {
             this.logger.notify(`Profile created for node ${this.config.identity}.`);
@@ -186,15 +200,18 @@ class ProfileService {
     /**
      * Initiates payout opertaion
      * @param offerId
+     * @param urgent
      * @return {Promise<void>}
      */
-    async payOut(offerId) {
+    async payOut(offerId, urgent) {
         await this.commandExecutor.add({
             name: 'dhPayOutCommand',
             delay: 0,
             transactional: false,
             data: {
+                urgent,
                 offerId,
+                viaAPI: true,
             },
         });
         this.logger.notify(`Pay-out for offer ${offerId} initiated.`);
@@ -248,6 +265,22 @@ class ProfileService {
                 throw Error(`Failed to transfer profile. ${transferError}. ${transferError.stack}`);
             }
         }
+    }
+
+    /**
+     * Verify that the parent identity has this node's identity set as a sub-identity
+     * @return {Promise<*>}
+     */
+    async hasParentPermission() {
+        const hashedIdentity = EthereumAbi.soliditySHA3(['address'], [this.config.erc725Identity]).toString('hex');
+
+        const isChild = await this.blockchain.keyHasPurpose(
+            this.config.parentIdentity,
+            hashedIdentity,
+            new BN(237),
+        );
+
+        return isChild;
     }
 }
 

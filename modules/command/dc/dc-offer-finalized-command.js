@@ -2,6 +2,7 @@ const { forEach } = require('p-iteration');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
+const importUtilitites = require('../../ImportUtilities');
 const Models = require('../../../models/index');
 
 const { Op } = Models.Sequelize;
@@ -13,6 +14,9 @@ class DcOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.config = ctx.config;
+        this.graphStorage = ctx.graphStorage;
+        this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
     }
@@ -22,7 +26,7 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const { offerId, nodeIdentifiers, handler_id } = command.data;
 
         const events = await Models.events.findAll({
             where: {
@@ -43,17 +47,57 @@ class DcOfferFinalizedCommand extends Command {
 
                 this.logger.important(`Offer ${offerId} finalized`);
 
+                const handler = await Models.handler_ids.findOne({
+                    where: { handler_id },
+                });
+                const handler_data = JSON.parse(handler.data);
+                handler_data.status = 'FINALIZED';
+                handler_data.holders = nodeIdentifiers;
+                await Models.handler_ids.update(
+                    {
+                        data: JSON.stringify(handler_data),
+                        status: 'COMPLETED',
+                    },
+                    {
+                        where: { handler_id },
+                    },
+                );
+
+
                 const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
                 offer.status = 'FINALIZED';
-                offer.message = 'Offer has been finalized';
-                await offer.save({ fields: ['status', 'message'] });
+                offer.global_status = 'ACTIVE';
+                offer.message = 'Offer has been finalized. Offer is now active.';
+                await offer.save({ fields: ['status', 'message', 'global_status'] });
                 this.remoteControl.offerUpdate({
                     offer_id: offerId,
                 });
 
                 await this._setHolders(offer, event);
-                await this.replicationService.cleanup(offer.id);
-                return Command.empty();
+
+                // clear old replicated data
+                await Models.replicated_data.destroy({
+                    where: {
+                        offer_id: offerId,
+                        status: {
+                            [Op.in]: ['STARTED', 'VERIFIED'],
+                        },
+                    },
+                });
+
+                const delayOnComplete = 5 * 60 * 1000; // 5 minutes
+                const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + delayOnComplete;
+                return {
+                    commands: [
+                        {
+                            name: 'dcOfferCleanupCommand',
+                            data: {
+                                offerId,
+                            },
+                            delay: scheduledTime,
+                        },
+                    ],
+                };
             }
         }
         return Command.repeat();
@@ -73,6 +117,10 @@ class DcOfferFinalizedCommand extends Command {
             holder3,
         } = JSON.parse(event.data);
 
+        const startTime = Date.now();
+        const endTime = startTime + (offer.holding_time_in_minutes * 60 * 1000);
+
+        // const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
         const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
         await forEach(holders, async (holder) => {
             const replicatedData = await Models.replicated_data.findOne({
@@ -83,17 +131,31 @@ class DcOfferFinalizedCommand extends Command {
             });
             replicatedData.status = 'HOLDING';
             await replicatedData.save({ fields: ['status'] });
-        });
 
-        // clear old replicated data
-        await Models.replicated_data.destroy({
-            where: {
-                offer_id: offer.offer_id,
-                status: {
-                    [Op.in]: ['STARTED', 'VERIFIED'],
-                },
-            },
+            const encryptionColor = this.replicationService.castNumberToColor(replicatedData.color);
+
+            const encryptedGraph =
+                this.replicationService.replicationCache[offer.id][encryptionColor].otJson['@graph'];
+            const challenges = this.challengeService.generateChallenges(
+                encryptedGraph, startTime,
+                endTime, this.config.numberOfChallenges,
+            );
+
+            await forEach(challenges, async challenge =>
+                Models.challenges.create({
+                    dh_id: replicatedData.dh_id,
+                    dh_identity: replicatedData.dh_identity,
+                    data_set_id: offer.data_set_id,
+                    test_index: challenge.testIndex,
+                    object_index: challenge.objectIndex,
+                    block_index: challenge.blockIndex,
+                    expected_answer: challenge.answer,
+                    start_time: challenge.time,
+                    offer_id: offer.offer_id,
+                    status: 'PENDING',
+                }));
         });
+        await this.replicationService.cleanup(offer.id);
     }
 
     /**
@@ -106,8 +168,9 @@ class DcOfferFinalizedCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
+        offer.global_status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'global_status'] });
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });

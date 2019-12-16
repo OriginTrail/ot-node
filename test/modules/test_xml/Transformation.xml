@@ -135,10 +135,6 @@
 					 </outputQuantityList>					 
 					 <transformationID>BOM12345PO987</transformationID>
 					 <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
-					 <extension>
-						<OTEventClass>urn:ot:event:Transformation</OTEventClass>
-					 	<OTEventType>Packaging</OTEventType>
-					 </extension>
 				 </TransformationEvent>
 			</extension>
 		</EventList>

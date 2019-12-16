@@ -10,6 +10,12 @@ contract ProfileStorage {
         hub = Hub(hubAddress);
         activeNodes = 1;
     }
+
+    function setHubAddress(address newHubAddress)
+    public onlyContracts {
+        require(newHubAddress != address(0));
+        hub = Hub(newHubAddress);
+    }
     
     modifier onlyContracts(){
         require(hub.isContract(msg.sender),
@@ -111,9 +117,5 @@ contract ProfileStorage {
     public onlyContracts {
         ERC20 token = ERC20(hub.tokenAddress());
         token.transfer(wallet, amount);
-    }
-    function setHubAddress(address newHubAddress)
-    public onlyContracts {
-        hub = Hub(newHubAddress);
     }
 }

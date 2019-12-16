@@ -60,6 +60,15 @@ class Blockchain {
     }
 
     /**
+     * Set node ID
+     * @param identity
+     * @param nodeId
+     */
+    async setNodeId(identity, nodeId) {
+        return this.blockchain.setNodeId(identity, nodeId);
+    }
+
+    /**
      * Creates node profile on the Bidding contract
      * @param managementWallet - Management wallet
      * @param profileNodeId - Network node ID
@@ -117,25 +126,50 @@ class Blockchain {
     }
 
     /**
-     * DC initiates litigation on DH wrong challenge answer
-     * @param importId
-     * @param dhWallet
-     * @param blockId
-     * @param merkleProof
+     * Initiate litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param litigatorIdentity - Litigator identity
+     * @param requestedObjectIndex - Order number of the object from the OT-dataset
+     * @param requestedBlockIndex - Order number of the block inside the sorted object
+     * @param hashArray - Merkle proof
      * @return {Promise<any>}
      */
-    initiateLitigation(importId, dhWallet, blockId, merkleProof) {
-        return this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+    async initiateLitigation(
+        offerId, holderIdentity, litigatorIdentity,
+        requestedObjectIndex, requestedBlockIndex, hashArray,
+    ) {
+        return this.blockchain.initiateLitigation(
+            offerId,
+            holderIdentity, litigatorIdentity, requestedObjectIndex, requestedBlockIndex, hashArray,
+        );
+    }
+
+    /**
+     * Completes litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param challengerIdentity - DC identity
+     * @param proofData - answer
+     * @param leafIndex - the number of the block in the lowest level of the merkle tree
+     * @return {Promise<void>}
+     */
+    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData, leafIndex) {
+        return this.blockchain.completeLitigation(
+            offerId, holderIdentity,
+            challengerIdentity, proofData, leafIndex,
+        );
     }
 
     /**
      * Answers litigation from DH side
-     * @param importId
-     * @param requestedData
+     * @param offerId
+     * @param holderIdentity
+     * @param answer
      * @return {Promise<any>}
      */
-    answerLitigation(importId, requestedData) {
-        return this.blockchain.answerLitigation(importId, requestedData);
+    answerLitigation(offerId, holderIdentity, answer) {
+        return this.blockchain.answerLitigation(offerId, holderIdentity, answer);
     }
 
     /**
@@ -158,6 +192,20 @@ class Blockchain {
      */
     payOut(blockchainIdentity, offerId, urgent) {
         return this.blockchain.payOut(blockchainIdentity, offerId, urgent);
+    }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        return this.blockchain.payOutMultiple(
+            blockchainIdentity,
+            offerIds,
+        );
     }
 
     /**
@@ -207,11 +255,12 @@ class Blockchain {
         confirmation3,
         encryptionType,
         holders,
+        parentIdentity,
         urgent,
     ) {
         return this.blockchain.finalizeOffer(
             blockchainIdentity, offerId, shift, confirmation1,
-            confirmation2, confirmation3, encryptionType, holders, urgent,
+            confirmation2, confirmation3, encryptionType, holders, parentIdentity, urgent,
         );
     }
 
@@ -279,10 +328,6 @@ class Blockchain {
         return this.blockchain.getTotalStakedAmount();
     }
 
-    async getTotalIncome() {
-        return this.blockchain.getTotalIncome();
-    }
-
     async getTotalPayouts(identity) {
         return this.blockchain.getTotalPayouts(identity);
     }
@@ -295,15 +340,6 @@ class Blockchain {
      */
     addBid(importId, dhNodeId) {
         return this.blockchain.addBid(importId, dhNodeId);
-    }
-
-    /**
-     * Gets status of the offer
-     * @param importId
-     * @return {Promise<any>}
-     */
-    getOfferStatus(importId) {
-        return this.blockchain.getOfferStatus(importId);
     }
 
     /**
@@ -475,33 +511,88 @@ class Blockchain {
     }
 
     /**
-     * PayOut for multiple offers.
-     * @returns {Promise<any>}
-     */
-    payOutMultiple(
-        blockchainIdentity,
-        offerIds,
-    ) {
-        return this.blockchain.payOutMultiple(
-            blockchainIdentity,
-            offerIds,
-        );
-    }
-
-    /**
-     * Get litigation encryption type
-     */
-    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
-        return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
-    }
-
-    /**
      * Get offer by ID
      * @param offerId - offer ID
      * @return {Promise<*>}
      */
     async getOffer(offerId) {
         return this.blockchain.getOffer(offerId);
+    }
+
+    /**
+     * Get holders for offer ID
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getHolder(offerId, holderIdentity) {
+        return this.blockchain.getHolder(offerId, holderIdentity);
+    }
+
+    /**
+     * Replaces holder
+     * @returns {Promise<any>}
+     */
+    replaceHolder(
+        offerId,
+        holderIdentity,
+        litigatorIdentity,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        holders,
+    ) {
+        return this.blockchain.replaceHolder(
+            offerId,
+            holderIdentity,
+            litigatorIdentity,
+            shift,
+            confirmation1,
+            confirmation2,
+            confirmation3,
+            holders,
+        );
+    }
+
+    /**
+     * Gets litigation information for the holder
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigation(offerId, holderIdentity) {
+        return this.blockchain.getLitigation(offerId, holderIdentity);
+    }
+
+    /**
+     * Gets litigation timestamp for the holder
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationTimestamp(offerId, holderIdentity) {
+        return this.blockchain.getLitigationTimestamp(offerId, holderIdentity);
+    }
+
+    /**
+     * Gets last litigation difficulty
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationDifficulty(offerId, holderIdentity) {
+        return this.blockchain.getLitigationDifficulty(offerId, holderIdentity);
+    }
+
+    /**
+     * Gets last litigation replacement task
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigationReplacementTask(offerId, holderIdentity) {
+        return this.blockchain.getLitigationReplacementTask(offerId, holderIdentity);
     }
 
     /**
@@ -516,6 +607,24 @@ class Blockchain {
      */
     async getHolderPaidAmount(offerId, holderIdentity) {
         return this.blockchain.getHolderPaidAmount(offerId, holderIdentity);
+    }
+
+    /**
+     * Get litigation encryption type
+     */
+    async getHolderLitigationEncryptionType(offerId, holderIdentity) {
+        return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
+    }
+
+    /**
+     * Check that the identity key has a specific purpose
+     * @param identity - identity address
+     * @param key - identity key
+     * @param pupose - purpose to verify
+     * @return {Promise<any>}
+     */
+    async keyHasPurpose(identity, key, purpose) {
+        return this.blockchain.keyHasPurpose(identity, key, purpose);
     }
 }
 
