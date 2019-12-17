@@ -2,7 +2,7 @@ require('dotenv').config();
 
 if (!process.env.NODE_ENV) {
     // Environment not set. Use the production.
-    process.env.NODE_ENV = 'production';
+    process.env.NODE_ENV = 'testnet';
 }
 
 const HttpNetwork = require('./modules/network/http/http-network');
@@ -63,7 +63,7 @@ global.__basedir = __dirname;
 let context;
 const defaultConfig = configjson[
     process.env.NODE_ENV &&
-    ['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
+    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
         process.env.NODE_ENV : 'development'];
 
 let config;

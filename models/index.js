@@ -5,7 +5,7 @@ var path = require('path');
 var Sequelize = require('sequelize');
 
 var basename = path.basename(__filename);
-var env = process.env.NODE_ENV || 'production';
+var env = process.env.NODE_ENV || 'testnet';
 
 process.env.NODE_ENV = env; // Set for child processes.
 

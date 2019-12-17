@@ -8,7 +8,7 @@ const Utilities = require('../../modules/Utilities');
 const databaseData = require('./test_data/arangodb-data.js');
 
 describe('Utilities module', () => {
-    const environments = ['development', 'staging', 'stable', 'production'];
+    const environments = ['development', 'mainnet', 'testnet'];
     const configJson = JSON.parse(fs.readFileSync(`${__dirname}/../../config/config.json`).toString());
 
     it('node_config should contain certain entries', () => {
