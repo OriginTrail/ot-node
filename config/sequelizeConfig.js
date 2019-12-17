@@ -5,7 +5,7 @@ const pjson = require('../package.json');
 
 if (!process.env.NODE_ENV) {
     // Environment not set. Use the production.
-    process.env.NODE_ENV = 'production';
+    process.env.NODE_ENV = 'testnet';
 }
 
 const storagePath = process.env.SEQUELIZEDB ?
