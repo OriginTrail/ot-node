@@ -59,7 +59,7 @@
       "max_allowed_gas_price" : "50000000000",
       "price_factor" : "2",
       "trac_price_in_eth" : "0.00005",
-      "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
+      "hub_contract_address": "0x85720D4D09A52eD66656b28c68567E41AD45dD0e",
       "plugins": [
         {
           "enabled": false,
@@ -78,7 +78,11 @@
     "network": {
       "hostname": "127.0.0.1",
       "id": "Devnet",
-      "bootstraps": ["https://developbs.origintrial.me:5278/#05edf19bd36906240503e2e2e2f18d13f8211d2f"],
+      "bootstraps": [
+        "https://rinkeby-mariner-bootstrap-01.origin-trail.network:5278/#f4092d1795e2fd442308911db2c1df31faf4fe2f",
+        "https://rinkeby-mariner-bootstrap-02.origin-trail.network:5278/#d3951837f8100e6ea4a74417d560bcc8c6d4ffe5",
+        "https://rinkeby-mariner-bootstrap-03.origin-trail.network:5278/#ad3c3325e50c3bedcb5c6ee6a73592b2ca7e07aa"
+      ],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
       "identityDifficulty": 8,
