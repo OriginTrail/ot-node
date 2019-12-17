@@ -169,7 +169,7 @@
       "max_allowed_gas_price" : "50000000000",
       "price_factor" : "2",
       "trac_price_in_eth" : "0.00005",
-      "hub_contract_address": "0x1dc2e30b74bD56ECeB6817F2F43eA7fC57775A89",
+      "hub_contract_address": "0x85720D4D09A52eD66656b28c68567E41AD45dD0e",
       "plugins": [
         {
           "enabled": false,
@@ -187,7 +187,7 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "TestnetV4.0.0",
+      "id": "3-rinkeby-mariner-0g3x0pjawe",
       "bootstraps": [
         "https://rinkeby-mariner-bootstrap-01.origin-trail.network:5278/#f4092d1795e2fd442308911db2c1df31faf4fe2f",
         "https://rinkeby-mariner-bootstrap-02.origin-trail.network:5278/#d3951837f8100e6ea4a74417d560bcc8c6d4ffe5",
