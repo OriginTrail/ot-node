@@ -4,7 +4,7 @@ const {
 const PricingService = require('../../../modules/service/pricing-service');
 const TracPriceService = require('../../../modules/service/trac-price-service');
 const awilix = require('awilix');
-const defaultConfig = require('../../../config/config.json').mariner;
+const defaultConfig = require('../../../config/config.json').mainnet;
 const rc = require('rc');
 const pjson = require('../../../package.json');
 const logger = require('../../../modules/logger');
@@ -54,7 +54,7 @@ class Web3Mock {
 describe('Pricing service test', () => {
     beforeEach('Setup container', async () => {
         // Create the container and set the injectionMode to PROXY (which is also the default).
-        process.env.NODE_ENV = 'mariner';
+        process.env.NODE_ENV = 'mainnet';
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
@@ -75,12 +75,12 @@ describe('Pricing service test', () => {
     });
 
     it('Get gas price - env is develop - expect default is returned', async () => {
-        process.env.NODE_ENV = 'develop';
+        process.env.NODE_ENV = 'development';
         const gasPrice = await pricingService.getGasPrice();
         assert.equal(gasPrice, defaultConfigGasPrice, 'Gas price should be the same as in config');
     });
 
-    it('Get gas price - env is mariner, all services return valid value - expect axios value is used', async () => {
+    it('Get gas price - env is mainnet, all services return valid value - expect axios value is used', async () => {
         const gasPrice = await pricingService.getGasPrice();
         assert.equal(gasPrice, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Returned gas price price should be the same as default axios gas price');
         assert.equal(config.blockchain.gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Configuration gas price should be the same as default axios gas price');
@@ -88,7 +88,7 @@ describe('Pricing service test', () => {
         assert.closeTo(config.blockchain.gas_price_last_update_timestamp, now, 1000, 'Now should be set as new timestamp');
     });
 
-    it('Get gas price - env is mariner, all services return valid value, timestamp is not older than 30 min - expect config value is used', async () => {
+    it('Get gas price - env is mainnet, all services return valid value, timestamp is not older than 30 min - expect config value is used', async () => {
         const lastUpdateTimestamp = new Date().getTime() - (1000 * 25);
         config.blockchain.gas_price_last_update_timestamp = lastUpdateTimestamp;
         pricingService.config = config;
@@ -97,7 +97,7 @@ describe('Pricing service test', () => {
         assert.equal(config.blockchain.gas_price_last_update_timestamp, lastUpdateTimestamp, 'Timestamp should not be changed');
     });
 
-    it('Get gas price - env is mariner, axios returns undefined - expect web3 value is used', async () => {
+    it('Get gas price - env is mainnet, axios returns undefined - expect web3 value is used', async () => {
         gasStationService.gasPrice = undefined;
         pricingService.gasStationService = gasStationService;
         const gasPrice = await pricingService.getGasPrice();
@@ -107,7 +107,7 @@ describe('Pricing service test', () => {
         assert.closeTo(config.blockchain.gas_price_last_update_timestamp, now, 1000, 'Timestamp should not be changed');
     });
 
-    it('Get gas price - env is mariner, web3 returns undefined - expect axios value is used', async () => {
+    it('Get gas price - env is mainnet, web3 returns undefined - expect axios value is used', async () => {
         web3ServiceMock.eth.gasPrice = undefined;
         pricingService.web3 = web3ServiceMock;
         const gasPrice = await pricingService.getGasPrice();
@@ -145,7 +145,6 @@ describe('Pricing service test', () => {
         process.env.NODE_ENV = 'development';
         const price = await pricingService
             .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
-        // assert.equal(price, 180009128709291740000);
         const bigDataPrice = await pricingService
             .calculateOfferPriceinTrac(bigDataSizeInBytes, holdingTimeInMinutes);
         assert.isAbove(bigDataPrice, price);

@@ -559,7 +559,7 @@ class Ethereum {
         const gasLimit = offerIds.length * 200000;
         const gasPrice = await this.getGasPrice(true);
         const options = {
-            gasLimit,
+            gasLimit: this.web3.utils.toHex(gasLimit),
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.oldHoldingContractAddress,
         };

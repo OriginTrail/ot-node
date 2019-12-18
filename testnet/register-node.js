@@ -1,5 +1,11 @@
 require('dotenv').config({ path: '../.env' });
 
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'stable' || process.env.NODE_ENV === 'staging') {
+    process.env.NODE_ENV = 'testnet';
+} else if (process.env.NODE_ENV === 'mariner') {
+    process.env.NODE_ENV = 'mainnet';
+}
+
 const fs = require('fs');
 const rc = require('rc');
 const path = require('path');

@@ -3,8 +3,8 @@ require('dotenv').config();
 
 if (!process.env.NODE_ENV) {
     // Environment not set. Use the production.
-    process.env.NODE_ENV = 'production';
-} else if (['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) < 0) {
+    process.env.NODE_ENV = 'testnet';
+} else if (['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) < 0) {
     throw Error(`Unsupported environment '${process.env.NODE_ENV}'`);
 }
 
@@ -49,24 +49,18 @@ if (argv.configDir) {
     configDirs.push(path.join(
         homedir,
         `.${pjson.name}rc`,
-        'staging',
+        'testnet',
     ));
     configDirs.push(path.join(
         homedir,
         `.${pjson.name}rc`,
-        'stable',
-    ));
-    configDirs.push(path.join(
-        homedir,
-        `.${pjson.name}rc`,
-        'production',
+        'mainnet',
     ));
 
     // Add arango DBs.
     arangoDbs.push(configjson.development.database);
-    arangoDbs.push(configjson.staging.database);
-    arangoDbs.push(configjson.stable.database);
-    arangoDbs.push(configjson.production.database);
+    arangoDbs.push(configjson.testnet.database);
+    arangoDbs.push(configjson.mainnet.database);
 } else {
     configDirs.push(path.join(
         homedir,
