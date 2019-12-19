@@ -117,10 +117,14 @@ Feature: Test basic importer features
 
   @first
   Scenario: Get issuer identity
-    Given I setup 1 node
+    Given I setup 4 node
     And I start the node
     And I use 1st node as DC
     And DC imports "importers/use_cases/OBE/CARTONDATA.xml" as GS1-EPCIS
     And DC waits for import to finish
+    And DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And I use 4th node as DC
     And DC gets issuer id for element "1234567890000000015"
+    And I use 1st node as DC
     Then DC should be the issuer for the selected element
