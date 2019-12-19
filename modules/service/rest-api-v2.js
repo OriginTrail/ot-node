@@ -667,6 +667,7 @@ class RestAPIServiceV2 {
             });
         }
 
+
         if (req.body.dataset_id === undefined) {
             res.status(400);
             res.send({
@@ -676,7 +677,7 @@ class RestAPIServiceV2 {
 
         const requested_dataset = await Models.data_info.findOne({
             where: {
-                data_set_id: req.params.dataset_id,
+                data_set_id: req.body.dataset_id,
             },
         });
 
