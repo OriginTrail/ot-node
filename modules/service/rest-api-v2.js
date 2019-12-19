@@ -472,7 +472,7 @@ class RestAPIServiceV2 {
             return;
         }
 
-        this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
+        this.logger.info('Network-query handling triggered.');
 
         const queryId = await this.dvController.queryNetwork(query, res);
 

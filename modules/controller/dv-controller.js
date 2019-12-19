@@ -17,7 +17,7 @@ class DVController {
      * @returns {Promise<*>}
      */
     async queryNetwork(query, response) {
-        this.logger.info(`Network-query handling triggered with query ${JSON.stringify(query)}.`);
+        this.logger.info(`Query handling triggered with ${JSON.stringify(query)}.`);
 
         const queryId = uuidv4();
 
