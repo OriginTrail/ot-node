@@ -79,26 +79,6 @@ class RemoteControl {
         });
     }
 
-    async updateProfile() {
-        const { identity } = this.config;
-        const profileInfo = await this.blockchain.getProfile(this.config.node_wallet);
-        if (!profileInfo.active) {
-            this.log.info(`Profile hasn't been created for ${identity} yet`);
-            return;
-        }
-
-        this.log.notify(`Profile is being updated for ${identity}. This could take a while...`);
-        await this.blockchain.createProfile(
-            this.config.identity,
-            this.config.dh_price,
-            this.config.dh_stake_factor,
-            this.config.read_stake_factor,
-            this.config.dh_max_time_mins,
-        );
-
-        this.log.notify('Profile successfully updated');
-    }
-
     async connect() {
         this.app.listen(this.config.node_remote_control_port);
         await this.remote.on('connection', (socket) => {
