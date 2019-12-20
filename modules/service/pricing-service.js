@@ -12,7 +12,7 @@ class PricingService {
         this.tracPriceService = ctx.tracPriceService;
     }
 
-    async calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes) {
+    async calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes, priceFactor) {
         if (!dataSizeInBytes) {
             throw new Error('Calculate offer price method called. Data size in bytes not defined!');
         }
@@ -25,12 +25,12 @@ class PricingService {
         const holdingTimeInDays = holdingTimeInMinutes / minutesInDay;
         const dataSizeInMB = dataSizeInBytes / 1000000;
 
-        const priceFactor = this.config.blockchain.price_factor;
-
         const price = (2 * basePayoutCostInTrac) + (priceFactor *
         Math.sqrt(2 * holdingTimeInDays * dataSizeInMB));
-        this.logger.trace(`Calculated offer price for data size: ${dataSizeInMB}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${price}TRAC`);
-        return price * 1000000000000000000;
+
+        const finalPrice = price * 1000000000000000000;
+        this.logger.trace(`Calculated offer price for data size: ${dataSizeInMB}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${finalPrice}[mTRAC]`);
+        return finalPrice;
     }
 
     async _calculateBasePayoutInTrac() {

@@ -24,6 +24,7 @@ const dataSizeInBytes = 1000;
 const bigDataSizeInBytes = 100000;
 const holdingTimeInMinutes = 60;
 const longHoldingTimeInMinutes = 60000000;
+const defaultPriceFactor = 2;
 let config;
 
 class GasStationServiceMock {
@@ -120,7 +121,10 @@ describe('Pricing service test', () => {
     it('Calculate offer price in trac - data size in bytes not provided - expect error', async () => {
         var message = '';
         try {
-            await pricingService.calculateOfferPriceinTrac(null, holdingTimeInMinutes);
+            await pricingService.calculateOfferPriceinTrac(
+                null,
+                holdingTimeInMinutes, defaultPriceFactor,
+            );
             expect().to.throw();
         } catch (error) {
             // eslint-disable-next-line prefer-destructuring
@@ -132,7 +136,10 @@ describe('Pricing service test', () => {
     it('Calculate offer price in trac - holding time in minutes not provided - expect error', async () => {
         var message = '';
         try {
-            await pricingService.calculateOfferPriceinTrac(dataSizeInBytes, null);
+            await pricingService.calculateOfferPriceinTrac(
+                dataSizeInBytes,
+                null, defaultPriceFactor,
+            );
             expect().to.throw();
         } catch (error) {
             // eslint-disable-next-line prefer-destructuring
@@ -144,12 +151,18 @@ describe('Pricing service test', () => {
     it('Calculate offer price in trac - env is development, expect valid value is returned', async () => {
         process.env.NODE_ENV = 'development';
         const price = await pricingService
-            .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
+            .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes, defaultPriceFactor);
         const bigDataPrice = await pricingService
-            .calculateOfferPriceinTrac(bigDataSizeInBytes, holdingTimeInMinutes);
+            .calculateOfferPriceinTrac(
+                bigDataSizeInBytes,
+                holdingTimeInMinutes, defaultPriceFactor,
+            );
         assert.isAbove(bigDataPrice, price);
         const longDataPrice = await pricingService
-            .calculateOfferPriceinTrac(dataSizeInBytes, longHoldingTimeInMinutes);
+            .calculateOfferPriceinTrac(
+                dataSizeInBytes,
+                longHoldingTimeInMinutes, defaultPriceFactor,
+            );
         assert.isAbove(longDataPrice, price);
     });
 });
