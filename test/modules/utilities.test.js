@@ -38,7 +38,7 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.blockchain, [
                     'blockchain_title', 'network_id', 'gas_limit', 'gas_price', 'max_allowed_gas_price',
-                    'hub_contract_address', 'plugins', 'price_factor', 'trac_price_in_eth'],
+                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth'],
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -97,7 +97,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'price_factor', 'trac_price_in_eth']);
+                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth']);
             assert.equal(config.blockchain.blockchain_title, 'Ethereum');
         });
     });
