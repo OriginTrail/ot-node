@@ -132,7 +132,7 @@ class DHService {
             return;
         }
 
-        this.logger.info(`Accepting offer with price: ${myOfferPrice} TRAC.`);
+        this.logger.info(`Accepting offer with price: ${tokenAmountPerHolder} TRAC.`);
         const offer = await this.blockchain.getOffer(offerId);
         const bid = await Models.bids.create({
             offer_id: offerId,
