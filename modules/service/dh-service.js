@@ -118,24 +118,21 @@ class DHService {
             return;
         }
 
-        const format = d3.formatPrefix(',.6~s', 1e6);
         const myOfferPrice = await this.pricingService.calculateOfferPriceinTrac(
             dataSetSizeInBytes,
             holdingTimeInMinutes,
+            this.config.blockchain.dh_price_factor,
         );
         const dhTokenPrice = new BN(myOfferPrice.toString(), 10);
 
-
-        const formatMyPrice = format(dhTokenPrice);
-        const formatTokenAmountPerHolder = format(tokenAmountPerHolder);
         if (dhTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
             this.logger.info(`Offer ${offerId} too cheap for me.`);
-            this.logger.info(`Price offered ${formatTokenAmountPerHolder}[mTRAC]`);
-            this.logger.info(`My price for offer ${offerId}, ${formatMyPrice}[mTRAC]`);
+            this.logger.info(`Price offered ${tokenAmountPerHolder}[mTRAC]`);
+            this.logger.info(`My price for offer ${offerId}, ${myOfferPrice}[mTRAC]`);
             return;
         }
 
-        this.logger.info(`Accepting offer with price: ${myOfferPrice} TRAC.`);
+        this.logger.info(`Accepting offer with price: ${tokenAmountPerHolder} TRAC.`);
         const offer = await this.blockchain.getOffer(offerId);
         const bid = await Models.bids.create({
             offer_id: offerId,

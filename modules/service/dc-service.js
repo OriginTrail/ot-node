@@ -46,7 +46,11 @@ class DCService {
 
         if (!tokenAmountPerHolder) {
             tokenAmountPerHolder = await this.pricingService
-                .calculateOfferPriceinTrac(dataSizeInBytes, holdingTimeInMinutes);
+                .calculateOfferPriceinTrac(
+                    dataSizeInBytes,
+                    holdingTimeInMinutes,
+                    this.config.blockchain.dc_price_factor,
+                );
         }
 
         if (!litigationIntervalInMinutes) {
