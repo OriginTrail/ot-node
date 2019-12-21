@@ -1,4 +1,5 @@
 const Command = require('../command');
+const ImportUtilities = require('../../ImportUtilities');
 
 class DcConvertToOtJsonCommand extends Command {
     constructor(ctx) {
@@ -6,6 +7,8 @@ class DcConvertToOtJsonCommand extends Command {
         this.logger = ctx.logger;
         this.importWorkerController = ctx.importWorkerController;
         this.commandExecutor = ctx.command;
+        this.config = ctx.config;
+        this.web3 = ctx.web3;
     }
 
     /**
@@ -15,7 +18,9 @@ class DcConvertToOtJsonCommand extends Command {
     async execute(command) {
         const { standard_id } = command.data;
         if (standard_id === 'ot-json') {
-            return this.continueSequence({ data: command.data }, command.sequence);
+            command.data.document = JSON.parse(command.data.document);
+            if (!command.data.document.signature) { command.data.document = ImportUtilities.prepareDataset(command.data.document['@graph'], this.config, this.web3); }
+            return this.continueSequence(command.data, command.sequence);
         }
         try {
             await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
