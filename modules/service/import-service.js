@@ -458,23 +458,29 @@ class ImportService {
                     let hasConnection2 = false;
                     await Promise.all(relatedVertex.datasets
                         .map(datasetId => new Promise(async (accept, reject) => {
-                            if (hasConnection2 === false) {
-                                const metadata = await this.db
-                                    .findMetadataByImportId(datasetId);
+                            try {
+                                if (hasConnection2 === false) {
+                                    const metadata = await this.db
+                                        .findMetadataByImportId(datasetId);
 
-                                if (data.expectedConnectionCreators != null) {
-                                    data.expectedConnectionCreators.forEach((expectedCreator) => {
-                                        const expectedErc725 = _value(expectedCreator);
+                                    if (data.expectedConnectionCreators != null) {
+                                        data.expectedConnectionCreators
+                                            .forEach((expectedCreator) => {
+                                                const expectedErc725 = _value(expectedCreator);
 
-                                        if (expectedErc725 ===
-                                            metadata.datasetHeader.dataCreator.identifiers
-                                                .find(x => x.identifierType === 'ERC725').identifierValue) {
-                                            hasConnection2 = true;
-                                        }
-                                    });
+                                                if (metadata && expectedErc725 ===
+                                                metadata.datasetHeader.dataCreator.identifiers
+                                                    .find(x => x.identifierType === 'ERC725').identifierValue) {
+                                                    hasConnection2 = true;
+                                                }
+                                            });
+                                    }
                                 }
+                            } catch (e) {
+                                // console.log(e);
+                            } finally {
+                                accept();
                             }
-                            accept();
                         })));
 
                     if (!hasConnection1 || !hasConnection2) {

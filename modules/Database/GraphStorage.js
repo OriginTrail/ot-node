@@ -411,7 +411,11 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findMetadataByImportId(datasetId).then((result) => {
-                    resolve(result[0]);
+                    if (!result) {
+                        resolve(null);
+                    } else {
+                        resolve(result[0]);
+                    }
                 }).catch((err) => {
                     reject(err);
                 });
