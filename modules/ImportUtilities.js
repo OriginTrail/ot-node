@@ -370,7 +370,7 @@ class ImportUtilities {
                     .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
         });
-        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+        graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
         return Utilities.sortedStringify(graph, true);
     }
 
