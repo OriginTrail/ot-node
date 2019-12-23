@@ -54,7 +54,7 @@ function _sortGraphRecursively(graph) {
                 sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
         }
     });
-    graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
+    graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
     return _sortedStringify(graph);
 }
 
