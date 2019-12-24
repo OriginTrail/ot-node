@@ -121,7 +121,7 @@ class ImportWorkerController {
             delay: 0,
             transactional: false,
             data: {
-                error: { message: error.message },
+                error: { message: error },
                 handler_id,
             },
         });

@@ -815,6 +815,7 @@ class RestAPIServiceV2 {
             total_graph_entities: dataInfo.total_documents,
             transaction_hash: transactionHash,
             blockchain_network: this.config.network.id,
+            data_provider_wallet: dataInfo.data_provider_wallet,
             data_creator: {
                 identifier_type: identity[0].identifierType,
                 identifier_value: identity[0].identifierValue,

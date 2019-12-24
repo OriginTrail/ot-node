@@ -6,7 +6,7 @@ class DcConvertToOtJsonCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.importWorkerController = ctx.importWorkerController;
-        this.commandExecutor = ctx.command;
+        this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
         this.web3 = ctx.web3;
     }
@@ -17,12 +17,12 @@ class DcConvertToOtJsonCommand extends Command {
      */
     async execute(command) {
         const { standard_id } = command.data;
-        if (standard_id === 'ot-json') {
-            command.data.document = JSON.parse(command.data.document);
-            if (!command.data.document.signature) { command.data.document = ImportUtilities.prepareDataset(command.data.document['@graph'], this.config, this.web3); }
-            return this.continueSequence(command.data, command.sequence);
-        }
         try {
+            if (standard_id === 'ot-json') {
+                command.data.document = JSON.parse(command.data.document);
+                if (!command.data.document.signature) { command.data.document = ImportUtilities.prepareDataset(command.data.document['@graph'], this.config, this.web3); }
+                return this.continueSequence(command.data, command.sequence);
+            }
             await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
         } catch (error) {
             await this.commandExecutor.add({
