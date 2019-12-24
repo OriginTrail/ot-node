@@ -11,7 +11,7 @@ class EpcisOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
         this.web3 = ctx.web3;
-        this.connectionTypes = ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC'];
+        this.connectionTypes = ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC', 'READ_POINT', 'BIZ_LOCATION'];
     }
 
     /**
