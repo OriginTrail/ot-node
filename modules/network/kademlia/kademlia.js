@@ -119,6 +119,7 @@ class Kademlia {
                 // agent: kadence.version.protocol,
                 wallet: this.config.node_wallet,
                 network_id: this.config.network.id,
+                identity: this.config.identity,
             };
 
             const { key, cert } = this.kademliaUtilities.getCertificates();
@@ -462,7 +463,8 @@ class Kademlia {
                     this.log.debug("Can't find external peer info.");
                 }
                 if (peerContact) {
-                    const peerContactArray = KadenceUtils.parseContactURL(peerContact);
+                    const peerURL = `${peerContact.protocol}//${peerContact.hostname}:${peerContact.port}/#${peerContact.identity}`;
+                    const peerContactArray = KadenceUtils.parseContactURL(peerURL);
 
                     if (peerContactArray.length === 2 && peerContactArray[1].hostname) {
                         [, contact] = peerContactArray;
