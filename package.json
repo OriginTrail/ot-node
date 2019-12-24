@@ -22,7 +22,7 @@
     "test:bdd:dryrun": "cucumber-js --dry-run test/bdd/ -r test/bdd/steps/",
     "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:verbose": "cucumber-js --fail-fast --format event-protocol --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
-    "start": "node node_version_check.js && node ot-node.js",
+    "start": "node node_version_check.js && node --max-old-space-size=2048 ot-node.js",
     "debug:start": "node --nolazy --inspect-brk ot-node.js",
     "bootstrap": "npm run setup:hard",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js node_version_check.js add_db_backup.js check-updates.js",
