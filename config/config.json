@@ -215,7 +215,7 @@
     "node_rpc_port": 8900,
     "remote_control_enabled": true,
     "node_remote_control_port": 3000,
-    "is_bootstrap_node": false,
+    "is_bootstrap_node": true,
     "send_logs": false,
     "logs_level_debug": true,
     "reverse_tunnel_address": "diglet.origintrail.io",
@@ -260,7 +260,7 @@
       "dc_price_factor" : "3",
       "dh_price_factor" : "2",
       "trac_price_in_eth" : "0.00005",
-      "hub_contract_address": "0x85720D4D09A52eD66656b28c68567E41AD45dD0e",
+      "hub_contract_address": "0x89777F4D16F0a263F47EaD07cbCAb9497861aa79",
       "plugins": [
         {
           "enabled": false,
