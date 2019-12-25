@@ -8,7 +8,7 @@ class WotOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
         this.web3 = ctx.web3;
-        this.connectionTypes = ['PART OF'];
+        this.connectionTypes = ['PART OF', 'OBSERVES', 'OBSERVATION_READ_POINT'];
     }
 
     /**
