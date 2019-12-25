@@ -20,7 +20,7 @@ class APIUtilities {
             };
         }
         if (this.config.auth_token_enabled) {
-            const token = request.query.auth_token;
+            const token = request.headers.auth_token;
             if (!token) {
                 return {
                     status: 401,
