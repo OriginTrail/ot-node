@@ -693,6 +693,7 @@ class EpcisOtJsonTranspiler {
                             linkedObject: {
                                 '@id': eventId,
                             },
+                            properties: null,
                         },
                     ],
                 });
