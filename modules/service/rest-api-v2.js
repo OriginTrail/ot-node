@@ -53,7 +53,6 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
-            this.logger.info('Received import status');
             await this._checkForHandlerStatus(req, res);
         });
 
@@ -62,7 +61,6 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
-            this.logger.info('Received replicate status');
             await this._checkForHandlerStatus(req, res);
         });
 
@@ -71,7 +69,6 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
-            this.logger.info('Received export status');
             await this._checkForHandlerStatus(req, res);
         });
 
@@ -116,7 +113,6 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/network/read/result/:handler_id`, async (req, res) => {
-            this.logger.info('Received read network status');
             await this._checkForHandlerStatus(req, res);
         });
 
