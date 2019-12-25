@@ -464,6 +464,7 @@ class Kademlia {
                 }
                 if (peerContact) {
                     const peerURL = `${peerContact.protocol}//${peerContact.hostname}:${peerContact.port}/#${peerContact.identity}`;
+                    this.log.debug(`Searching for contact with URL ${peerContact}`);
                     const peerContactArray = KadenceUtils.parseContactURL(peerURL);
 
                     if (peerContactArray.length === 2 && peerContactArray[1].hostname) {
