@@ -78,7 +78,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -184,7 +184,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -292,7 +292,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
