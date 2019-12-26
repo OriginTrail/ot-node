@@ -78,7 +78,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -92,6 +92,8 @@
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
+    "dc_challenge_retry_delay_in_millis": 1000,
+    "dh_challenge_retry_delay_in_millis": 1000,
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
@@ -184,7 +186,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -198,6 +200,8 @@
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
+    "dc_challenge_retry_delay_in_millis": 600000,
+    "dh_challenge_retry_delay_in_millis": 600000,
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
@@ -257,10 +261,10 @@
       "gas_limit": "2000000",
       "gas_price": "20000000000",
       "max_allowed_gas_price" : "50000000000",
-      "dc_price_factor" : "3",
-      "dh_price_factor" : "2",
+      "dc_price_factor" : "6",
+      "dh_price_factor" : "5",
       "trac_price_in_eth" : "0.00005",
-      "hub_contract_address": "0x85720D4D09A52eD66656b28c68567E41AD45dD0e",
+      "hub_contract_address": "0x89777F4D16F0a263F47EaD07cbCAb9497861aa79",
       "plugins": [
         {
           "enabled": false,
@@ -280,9 +284,11 @@
       "hostname": "127.0.0.1",
       "id": "MainnetV4.0",
       "bootstraps": [
-        "https://rinkeby-mariner-bootstrap-01.origin-trail.network:5278/#f4092d1795e2fd442308911db2c1df31faf4fe2f",
-        "https://rinkeby-mariner-bootstrap-02.origin-trail.network:5278/#d3951837f8100e6ea4a74417d560bcc8c6d4ffe5",
-        "https://rinkeby-mariner-bootstrap-03.origin-trail.network:5278/#ad3c3325e50c3bedcb5c6ee6a73592b2ca7e07aa"
+        "https://mainnet-bootstrap-wm-monica-borer-21.origin-trail.network:5278/#61a8b70d373c8c64a1cecf2602b9176399ace9ca",
+        "https://mainnet-bootstrap-wm-wilbert-bode-41.origin-trail.network:5278/#a9a53281f99538c3e23cf0b2726cfd5901611ff5",
+        "https://mainnet-bootstrap-wm-dortha-metz-70.origin-trail.network:5278/#5d462772267b8ae0e4fdf52397a370439f338c9d",
+        "https://mainnet-bootstrap-wm-domenick-goldner-5.origin-trail.network:5278/#ae3896d7cf0a52f3dddeef80b5243695dce88cdf",
+        "https://mainnet-bootstrap-wm-kaleigh-schaefer-47.origin-trail.network:5278/#95f54eb6bc713706e2ec76881ea11db390cad51d"
       ],
       "remoteWhitelist": ["127.0.0.1"],
       "solutionDifficulty": 14,
@@ -290,7 +296,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -304,8 +310,10 @@
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 262800,
     "dc_litigation_interval_in_minutes": 5,
+    "dc_challenge_retry_delay_in_millis": 600000,
+    "dh_challenge_retry_delay_in_millis": 600000,
     "dh_max_holding_time_in_minutes": 5256000,
-    "dh_maximum_dataset_filesize_in_mb": 1000,
+    "dh_maximum_dataset_filesize_in_mb": 3,
     "dh_min_litigation_interval_in_minutes": 5,
     "dc_choose_time": 1200000,
     "requireApproval": false,

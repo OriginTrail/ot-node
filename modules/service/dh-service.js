@@ -370,6 +370,7 @@ class DHService {
         this.logger.info(`Challenge arrived: Object index ${objectIndex}, Block index ${blockIndex}, Data set ID ${datasetId}`);
         await this.commandExecutor.add({
             name: 'dhChallengeCommand',
+            retries: 4,
             data: {
                 objectIndex,
                 blockIndex,

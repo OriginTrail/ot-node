@@ -93,7 +93,11 @@ class RemoteControl {
             });
 
             this.socket.on('config-update', async (data) => {
-                this.log.important(`Updating config.\n${JSON.stringify(data, null, 4)}`);
+                const configClean = Object.assign({}, data);
+                configClean.node_private_key = '*** MASKED ***';
+                configClean.houston_password = '*** MASKED ***';
+                configClean.database.password = '*** MASKED ***';
+                this.log.important(`Updating config.\n${JSON.stringify(configClean, null, 4)}`);
                 deepExtend(this.config, data);
                 await this.socket.emit('updateComplete');
             });
