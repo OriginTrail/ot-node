@@ -60,7 +60,7 @@ class DHChallengeCommand extends Command {
                 },
             }, litigatorNodeId);
         } catch (e) {
-            command.delay = 60000;
+            command.delay = this.config.dh_challenge_retry_delay_in_millis;
             throw new Error(`Failed to send challenge response to litigator with ID ${litigatorNodeId} on attempt ${5 - command.retries}`);
         }
 
