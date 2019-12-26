@@ -498,22 +498,14 @@ class OTNode {
     async _runNetworkIdentityMigration(config) {
         const migrationsStartedMills = Date.now();
 
-        const migrationDir = path.join(config.appDataPath, 'migrations');
-        const m3NetworkIdentityMigrationFilename = '3_m3NetworkIdentityMigrationFile';
-        const migrationFilePath = path.join(migrationDir, m3NetworkIdentityMigrationFilename);
-        if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M3NetowrkIdentityMigration({ logger: log, config });
-            try {
-                await migration.run();
-                log.notify(`One-time network identity migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
-
-                await Utilities.writeContentsToFile(migrationDir, m3NetworkIdentityMigrationFilename, 'PROCESSED');
-            } catch (e) {
-                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
-                console.log(e);
-                notifyBugsnag(e);
-                process.exit(1);
-            }
+        const migration = new M3NetowrkIdentityMigration({ logger: log, config });
+        try {
+            await migration.run();
+        } catch (e) {
+            log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+            console.log(e);
+            notifyBugsnag(e);
+            process.exit(1);
         }
     }
 
