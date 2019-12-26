@@ -37,6 +37,7 @@ class DHChallengeCommand extends Command {
         });
 
         if (holdingData == null) {
+            command.retries = 0;
             throw new Error(`Failed to find holding data for offer ${offerId}`);
         }
 
@@ -51,12 +52,17 @@ class DHChallengeCommand extends Command {
         const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
 
         this.logger.info(`Calculated answer for dataset ${datasetId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
-        await this.transport.challengeResponse({
-            payload: {
-                answer,
-                challenge_id: challengeId,
-            },
-        }, litigatorNodeId);
+        try {
+            await this.transport.challengeResponse({
+                payload: {
+                    answer,
+                    challenge_id: challengeId,
+                },
+            }, litigatorNodeId);
+        } catch (e) {
+            command.delay = 60000;
+            throw new Error(`Failed to send challenge response to litigator with ID ${litigatorNodeId} on attempt ${5 - command.retries}`);
+        }
 
         this.logger.info(`Challenge answer ${answer} sent to ${litigatorNodeId}.`);
         return Command.empty();
