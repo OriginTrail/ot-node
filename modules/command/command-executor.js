@@ -252,7 +252,7 @@ class CommandExecutor {
             await CommandExecutor._update(command, {
                 retries: command.retries - 1,
             });
-            await this.add(command, 0, false);
+            await this.add(command, command.delay ? command.delay : 0, false);
         } else {
             try {
                 await CommandExecutor._update(command, {

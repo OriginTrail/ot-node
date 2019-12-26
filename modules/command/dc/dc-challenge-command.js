@@ -48,7 +48,8 @@ class DCChallengeCommand extends Command {
                 },
             }, challenge.dh_id);
         } catch (e) {
-            this.logger.info(`Peer with ID ${challenge.dh_id} could not be reached.`);
+            command.delay = 60000;
+            throw new Error(`Peer with ID ${challenge.dh_id} could not be reached on challenge attempt ${5 - command.retries}`);
         }
 
         const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
