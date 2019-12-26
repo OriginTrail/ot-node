@@ -30,17 +30,22 @@ class M3NetworkIdentityMigration {
 
             const backupPath = path.join(this.config.appDataPath, 'Node_2_0_59_Identity_Backup');
             const { xprivkey, index } = identityFileContent;
-            if ((xprivkey || index)
-                && this.config.autoUpdater.enabled
-                && !fs.existsSync(backupPath)) {
+            if ((xprivkey || index) && this.config.autoUpdater.enabled) {
                 this.logger.info('Old network identity detected, running code migrations...');
 
                 // Backup data
-                execSync(`mkdir ${backupPath}`);
+                if (!fs.existsSync(backupPath)) {
+                    execSync(`mkdir ${backupPath}`);
+
+                    try {
+                        execSync(`/bin/mv ${path.join(this.config.appDataPath, 'peercache')} ${backupPath}/`);
+                        execSync(`/bin/mv ${path.join(this.config.appDataPath, 'kadence.dht')} ${backupPath}/`);
+                    } catch (e) {
+                        this.logger.debug('peercache and kadence.dht not found');
+                    }
+                }
 
                 execSync(`/bin/mv ${identityFilePath} ${backupPath}/`);
-                execSync(`/bin/mv ${path.join(this.config.appDataPath, 'peercache')} ${backupPath}/`);
-                execSync(`/bin/mv ${path.join(this.config.appDataPath, 'kadence.dht')} ${backupPath}/`);
             }
         }
     }
