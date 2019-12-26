@@ -78,7 +78,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -92,6 +92,8 @@
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
+    "dc_challenge_retry_delay_in_millis": 1000,
+    "dh_challenge_retry_delay_in_millis": 1000,
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
@@ -184,7 +186,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -198,6 +200,8 @@
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
+    "dc_challenge_retry_delay_in_millis": 600000,
+    "dh_challenge_retry_delay_in_millis": 600000,
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
@@ -292,7 +296,7 @@
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
-        "cooldownResetTime": "60m"
+        "cooldownResetTime": "1s"
       }
     },
     "bugSnag": {
@@ -306,6 +310,8 @@
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 262800,
     "dc_litigation_interval_in_minutes": 5,
+    "dc_challenge_retry_delay_in_millis": 600000,
+    "dh_challenge_retry_delay_in_millis": 600000,
     "dh_max_holding_time_in_minutes": 5256000,
     "dh_maximum_dataset_filesize_in_mb": 3,
     "dh_min_litigation_interval_in_minutes": 5,
