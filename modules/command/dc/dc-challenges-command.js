@@ -58,6 +58,7 @@ class DCChallengesCommand extends Command {
                         litigationPrivateKey: challenged.litigation_private_key,
                     },
                     transactional: false,
+                    retries: 4,
                 });
             });
         } catch (e) {

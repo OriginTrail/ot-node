@@ -52,11 +52,13 @@ class PricingService {
             + constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS > now) {
             return this.config.blockchain.gas_price;
         }
-        const gasStationGasPrice = await this.gasStationService.getGasPrice()
+        let gasStationGasPrice = await this.gasStationService.getGasPrice()
             .catch((err) => { this.logger.warn(err); }) * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
+        gasStationGasPrice = Math.round(gasStationGasPrice);
 
-        const web3GasPrice = await this.web3.eth.getGasPrice()
+        let web3GasPrice = await this.web3.eth.getGasPrice()
             .catch((err) => { this.logger.warn(err); }) * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
+        web3GasPrice = Math.round(web3GasPrice);
 
         if (gasStationGasPrice && web3GasPrice) {
             const gasPrice = (
