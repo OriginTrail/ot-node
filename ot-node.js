@@ -426,7 +426,8 @@ class OTNode {
             process.exit(1);
         }
 
-        const houstonPasswordFilePath = path.join(config.appDataPath, config.houston_file_name);
+        const houstonPasswordFilePath = path
+            .join(config.appDataPath, config.houston_password_file_name);
         if (fs.existsSync(houstonPasswordFilePath)) {
             log.info('Using existing houston password.');
             config.houston_password = fs.readFileSync(houstonPasswordFilePath).toString();
