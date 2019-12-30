@@ -44,12 +44,14 @@ class PricingService {
 
     async getGasPrice() {
         if (process.env.NODE_ENV === 'development') {
+            this.logger.trace(`Using default gas price from configuration: ${this.config.blockchain.gas_price}`);
             return this.config.blockchain.gas_price;
         }
 
         const now = new Date().getTime();
         if (this.config.blockchain.gas_price_last_update_timestamp
             + constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS > now) {
+            this.logger.trace(`Using gas price from configuration: ${this.config.blockchain.gas_price}`);
             return this.config.blockchain.gas_price;
         }
         let gasStationGasPrice = await this.gasStationService.getGasPrice()
@@ -59,19 +61,23 @@ class PricingService {
         let web3GasPrice = await this.web3.eth.getGasPrice()
             .catch((err) => { this.logger.warn(err); }) * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
         web3GasPrice = Math.round(web3GasPrice);
-
         if (gasStationGasPrice && web3GasPrice) {
             const gasPrice = (
                 gasStationGasPrice > web3GasPrice ? gasStationGasPrice : web3GasPrice);
             this.saveNewGasPriceAndTime(gasPrice);
+            const service = gasStationGasPrice > web3GasPrice ? 'gas station' : 'web3';
+            this.logger.trace(`Using gas price from ${service} service: ${gasStationGasPrice}`);
             return gasPrice;
         } else if (gasStationGasPrice) {
             this.saveNewGasPriceAndTime(gasStationGasPrice);
+            this.logger.trace(`Using gas price from gas station service: ${gasStationGasPrice}`);
             return gasStationGasPrice;
         } else if (web3GasPrice) {
             this.saveNewGasPriceAndTime(web3GasPrice);
+            this.logger.trace(`Using gas price from web3 service: ${web3GasPrice}`);
             return web3GasPrice;
         }
+        this.logger.trace(`Using gas price from configuration: ${this.config.blockchain.gas_price}`);
         return this.config.blockchain.gas_price;
     }
 
