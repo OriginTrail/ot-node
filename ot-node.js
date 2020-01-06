@@ -426,15 +426,18 @@ class OTNode {
             process.exit(1);
         }
 
-        // Fetch Houston access password
-        if (!config.houston_password) {
+        const houstonPasswordFilePath = path
+            .join(config.appDataPath, config.houston_password_file_name);
+        if (fs.existsSync(houstonPasswordFilePath)) {
+            log.info('Using existing houston password.');
+            config.houston_password = fs.readFileSync(houstonPasswordFilePath).toString();
+        } else {
             config.houston_password = uuidv4();
+            fs.writeFileSync(houstonPasswordFilePath, config.houston_password);
+            log.notify('================================================================');
+            log.notify('        Houston password generated and stored in file           ');
+            log.notify('================================================================');
         }
-
-        fs.writeFileSync(path.join(config.appDataPath, 'houston.txt'), config.houston_password);
-        log.notify('================================================================');
-        log.notify('Houston password stored in file                                 ');
-        log.notify('================================================================');
 
         // Starting the kademlia
         const transport = container.resolve('transport');
