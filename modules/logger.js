@@ -189,12 +189,6 @@ class Logger {
      * @return {*}
      */
     static transformLog(level, msg) {
-        if (process.env.LOGS_LEVEL_DEBUG) {
-            return {
-                level,
-                msg,
-            };
-        }
         if (msg.startsWith('connection timed out')) {
             return null;
         }
@@ -211,6 +205,9 @@ class Logger {
             return null;
         }
         if (msg.startsWith('updating peer profile')) {
+            return null;
+        }
+        if (msg.startsWith('updating cached peer profile')) {
             return null;
         }
         if (msg.includes('client cannot service request at this time')) {
