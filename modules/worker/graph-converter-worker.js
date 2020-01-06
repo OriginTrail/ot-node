@@ -73,8 +73,10 @@ Object.freeze(constants);
 
 process.on('message', async (dataFromParent) => {
     const {
-        document, encryptedMap, wallet, handler_id,
+        documentPath, encryptedMap, wallet, handler_id,
     } = JSON.parse(dataFromParent);
+
+    const document = JSON.parse(fs.readFileSync(documentPath));
 
     try {
         const datasetId = _id(document);
@@ -384,7 +386,9 @@ process.on('message', async (dataFromParent) => {
             deduplicateVertices,
             handler_id,
         };
-        process.send(JSON.stringify(response), () => {
+
+        fs.writeFileSync(documentPath, JSON.stringify(response, null, 4));
+        process.send(documentPath, () => {
             process.exit(0);
         });
     } catch (e) {

@@ -16,11 +16,17 @@ class DcConvertToOtJsonCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { standard_id } = command.data;
+        const { standard_id, documentPath, handler_id } = command.data;
         try {
             if (standard_id === 'ot-json') {
-                command.data.document = JSON.parse(command.data.document);
-                if (!command.data.document.signature) { command.data.document = ImportUtilities.prepareDataset(command.data.document['@graph'], this.config, this.web3); }
+                let document = JSON.parse(fs.readFileSync(documentPath));
+
+                if (!document.signature) { 
+                    document = ImportUtilities.prepareDataset(document['@graph'], this.config, this.web3);
+                }
+
+                fs.writeFileSync(documentPath, JSON.stringify(document, null, 4));
+
                 return this.continueSequence(command.data, command.sequence);
             }
             await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
@@ -31,7 +37,8 @@ class DcConvertToOtJsonCommand extends Command {
                 transactional: false,
                 data: {
                     error: { message: error.message },
-                    handler_id: command.data.handler_id,
+                    handler_id,
+                    documentPath,
                 },
             });
         }

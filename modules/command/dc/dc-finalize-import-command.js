@@ -20,9 +20,9 @@ class DcFinalizeImport extends Command {
      * @param command
      */
     async execute(command) {
-        const { afterImportData, error } = command.data;
+        const { afterImportData, error, handler_id, documentPath } = command.data;
         if (error) {
-            await this._processError(error, command.data.handler_id);
+            await this._processError(error, handler_id, documentPath);
             return Command.empty();
         }
         const response = await this._unpackKeysAndSortVertices(afterImportData);
@@ -90,6 +90,9 @@ class DcFinalizeImport extends Command {
                     },
                 },
             );
+
+            this._removeDocumentCache(documentPath);
+
             this.logger.info('Import complete');
             this.logger.info(`Root hash: ${root_hash}`);
             this.logger.info(`Data set ID: ${data_set_id}`);
@@ -130,7 +133,7 @@ class DcFinalizeImport extends Command {
         return command;
     }
 
-    async _processError(error, handlerId) {
+    async _processError(error, handlerId, documentPath) {
         this.logger.error(error.message);
         await Models.handler_ids.update(
             {
@@ -146,6 +149,8 @@ class DcFinalizeImport extends Command {
             },
         );
         this.remoteControl.importFailed(error);
+
+        this._removeDocumentCache(documentPath);
 
         if (error.type !== 'ImporterError') {
             this.notifyError(error);
@@ -181,6 +186,17 @@ class DcFinalizeImport extends Command {
             edges,
             wallet,
         };
+    }
+
+    /**
+     * Removes the temporary document used as import cache file
+     * @param documentPath path to cache file
+     * @return undefined
+     */
+    _removeDocumentCache(documentPath) {
+        if (fs.existsSync(documentPath)) {
+            fs.unlink(documentPath);
+        }
     }
 }
 

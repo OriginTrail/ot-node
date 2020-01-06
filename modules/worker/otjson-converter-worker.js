@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const EpcisOtJsonTranspiler = require('.././transpiler/epcis/epcis-otjson-transpiler');
 const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler');
 
@@ -18,7 +20,10 @@ process.on('message', (data) => {
             process.send({ error: `Unsupported standardId: ${data.standardId}` });
             return;
         }
-        const stringifiedJson = transpiler.convertToOTJson(data.dataset);
+
+        const dataset = fs.readFileSync(data.documentPath);
+        const stringifiedJson = transpiler.convertToOTJson(dataset);
+        // TODO Save to file, don't send via process
         process.send(stringifiedJson);
     } catch (e) {
         process.send({ error: e.message });

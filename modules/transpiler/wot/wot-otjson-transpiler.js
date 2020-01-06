@@ -20,6 +20,7 @@ class WotOtJsonTranspiler {
         if (wotJson == null) {
             throw new Error('[Transpilation Error] JSON document cannot be empty');
         }
+        wotJson = JSON.parse(wotJson);
 
         const jsonFileBuffer = fs.readFileSync('./modules/transpiler/wot/json_schemas/wot_schema.json');
         const validator = new Ajv();

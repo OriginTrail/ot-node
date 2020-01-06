@@ -589,9 +589,22 @@ class RestAPIServiceV2 {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
+
+                const documentPath = path.join(this.config.appDataPath, 'import_cache', inserted_object.dataValues.handler_id);
+
+                if (!fs.existsSync(documentPath)) {
+                    fs.writeFileSync(documentPath, fileContent);
+                } else {
+                    res.status(500);
+                    res.send({
+                        message: `Cache file for generated import handler ${inserted_object.dataValues.handler_id} already exists`,
+                    });
+                    return;
+                }
+
                 const commandData = {
                     standard_id,
-                    document: fileContent,
+                    documentPath,
                     handler_id: inserted_object.dataValues.handler_id,
                 };
                 const commandSequence = [
