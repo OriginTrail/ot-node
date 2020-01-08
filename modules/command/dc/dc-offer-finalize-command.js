@@ -112,6 +112,7 @@ class DCOfferFinalizeCommand extends Command {
         const {
             offerId,
             solution,
+            handler_id,
         } = command.data;
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
@@ -165,6 +166,9 @@ class DCOfferFinalizeCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
 
         return Command.empty();
     }

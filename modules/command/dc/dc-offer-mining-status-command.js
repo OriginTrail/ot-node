@@ -85,7 +85,7 @@ class DcOfferMiningStatusCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { offerId } = command.data;
+        const { offerId, handler_id } = command.data;
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
@@ -94,6 +94,9 @@ class DcOfferMiningStatusCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
@@ -104,7 +107,7 @@ class DcOfferMiningStatusCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { dataSetId, offerId } = command.data;
+        const { dataSetId, offerId, handler_id } = command.data;
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
@@ -115,6 +118,9 @@ class DcOfferMiningStatusCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
