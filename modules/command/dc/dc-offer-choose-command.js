@@ -122,7 +122,7 @@ class DCOfferChooseCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { internalOfferId } = command.data;
+        const { internalOfferId, handler_id } = command.data;
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
@@ -131,6 +131,9 @@ class DCOfferChooseCommand extends Command {
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });
+        models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
