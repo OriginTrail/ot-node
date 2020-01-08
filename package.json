@@ -156,6 +156,7 @@
     "semaphore-async-await": "^1.5.1",
     "semver": "^5.6.0",
     "sequelize": "^4.38.0",
+    "sequelize-cli": "^5.5.1",
     "sleep-async": "^1.0.5",
     "socket.io": "^2.1.0",
     "socket.io-client": "^2.1.1",
