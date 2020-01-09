@@ -21,7 +21,7 @@ class PricingService {
         }
 
         const {
-            basePayoutCostInTrac,
+            basePayoutInTrac,
             tracInEth,
             gasPriceInGwei,
         } = await this._calculateBasePayoutInTrac();
@@ -29,12 +29,12 @@ class PricingService {
         const holdingTimeInDays = holdingTimeInMinutes / minutesInDay;
         const dataSizeInMB = dataSizeInBytes / 1000000;
 
-        const price = (2 * basePayoutCostInTrac) + (priceFactor *
+        const price = (2 * basePayoutInTrac) + (priceFactor *
         Math.sqrt(2 * holdingTimeInDays * dataSizeInMB));
 
         const finalPrice = price * 1000000000000000000;
         this.logger.trace(`Calculated offer price for data size: ${dataSizeInMB}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${finalPrice}[mTRAC]`);
-        return {finalPrice, tracInEth, gasPriceInGwei};
+        return { finalPrice, tracInEth, gasPriceInGwei };
     }
 
     async _calculateBasePayoutInTrac() {
