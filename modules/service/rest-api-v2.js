@@ -547,7 +547,6 @@ class RestAPIServiceV2 {
             holding_time_in_minutes: handlerData.holding_time_in_minutes,
             token_amount_per_holder: handlerData.token_amount_per_holder,
             status: handlerData.status,
-            offer_id: handlerData.offerId,
             holders: handlerData.holders,
         };
         const offer = await Models.offers.findOne({
@@ -563,6 +562,7 @@ class RestAPIServiceV2 {
             offerData.price_factor_used_for_create_offer = offer.price_factor_used_for_create_offer;
             offerData.offer_create_transaction_hash = offer.transaction_hash;
             offerData.offer_finalize_transaction_hash = offer.offer_finalize_transaction_hash;
+            offerData.offer_id = offer.offer_id;
         }
         Object.keys(offerData).forEach(key => (offerData[key] == null) && delete offerData[key]);
         res.status(200);

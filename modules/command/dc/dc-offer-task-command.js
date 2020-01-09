@@ -60,6 +60,7 @@ class DcOfferTaskCommand extends Command {
                 where: { handler_id },
             });
             const handler_data = JSON.parse(handler.data);
+            handler_data.offer_id = offer.offer_id;
             handler_data.status = 'WAITING_FOR_HOLDERS';
             await Models.handler_ids.update(
                 {
