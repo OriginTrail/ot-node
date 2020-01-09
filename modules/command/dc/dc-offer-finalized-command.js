@@ -62,13 +62,23 @@ class DcOfferFinalizedCommand extends Command {
                         where: { handler_id },
                     },
                 );
-
+                const replications = await Models.replicated_data.findAll({
+                    where: {
+                        offer_id: offerId,
+                        status: {
+                            [Op.in]: ['STARTED', 'VERIFIED'],
+                        },
+                    },
+                });
+                const verifiedReplications = replications.filter(r => r.status === 'VERIFIED');
 
                 const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
                 offer.status = 'FINALIZED';
                 offer.global_status = 'ACTIVE';
+                offer.number_of_replications = replications.length;
+                offer.number_of_verified_replications = verifiedReplications.length;
                 offer.message = 'Offer has been finalized. Offer is now active.';
-                await offer.save({ fields: ['status', 'message', 'global_status'] });
+                await offer.save({ fields: ['status', 'message', 'global_status', 'number_of_replications', 'number_of_verified_replications'] });
                 this.remoteControl.offerUpdate({
                     offer_id: offerId,
                 });

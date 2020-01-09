@@ -33,25 +33,29 @@ class DCService {
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
         dataSizeInBytes, litigationIntervalInMinutes, handler_id, urgent,
     ) {
-        const offer = await models.offers.create({
-            data_set_id: dataSetId,
-            message: 'Offer is pending',
-            status: 'PENDING',
-            global_status: 'PENDING',
-        });
-
         if (!holdingTimeInMinutes) {
             holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
         }
-
+        let offerPrice = {};
         if (!tokenAmountPerHolder) {
-            tokenAmountPerHolder = await this.pricingService
+            offerPrice = await this.pricingService
                 .calculateOfferPriceinTrac(
                     dataSizeInBytes,
                     holdingTimeInMinutes,
                     this.config.blockchain.dc_price_factor,
                 );
+            tokenAmountPerHolder = offerPrice.finalPrice;
         }
+
+        const offer = await models.offers.create({
+            data_set_id: dataSetId,
+            message: 'Offer is pending',
+            status: 'PENDING',
+            global_status: 'PENDING',
+            trac_in_eth_used_for_create_offer: offerPrice.tracInEth,
+            gas_price_used_for_create_offer: offerPrice.gasPriceInGwei,
+            price_factor_used_for_create_offer: this.config.blockchain.dc_price_factor,
+        });
 
         if (!litigationIntervalInMinutes) {
             litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);

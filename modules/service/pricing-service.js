@@ -20,7 +20,11 @@ class PricingService {
             throw new Error('Calculate offer price method called. Holding time in minutes not defined!');
         }
 
-        const basePayoutCostInTrac = await this._calculateBasePayoutInTrac();
+        const {
+            basePayoutCostInTrac,
+            tracInEth,
+            gasPriceInGwei,
+        } = await this._calculateBasePayoutInTrac();
 
         const holdingTimeInDays = holdingTimeInMinutes / minutesInDay;
         const dataSizeInMB = dataSizeInBytes / 1000000;
@@ -30,7 +34,7 @@ class PricingService {
 
         const finalPrice = price * 1000000000000000000;
         this.logger.trace(`Calculated offer price for data size: ${dataSizeInMB}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${finalPrice}[mTRAC]`);
-        return finalPrice;
+        return {finalPrice, tracInEth, gasPriceInGwei};
     }
 
     async _calculateBasePayoutInTrac() {
@@ -38,8 +42,8 @@ class PricingService {
 
         const gasPriceInGwei = await this.getGasPrice() / 1000000000;
         const basePayoutInEth = (constants.BASE_PAYOUT_GAS * gasPriceInGwei) / 1000000000;
-
-        return basePayoutInEth / tracInEth;
+        const basePayoutInTrac = basePayoutInEth / tracInEth;
+        return { basePayoutInTrac, tracInEth, gasPriceInGwei };
     }
 
     async getGasPrice() {

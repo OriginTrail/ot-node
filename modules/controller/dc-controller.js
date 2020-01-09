@@ -25,6 +25,7 @@ class DCController {
             utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&
             utilities.validateNumberParameter(req.body.litigation_interval_in_minutes)) {
+            var handlerId = null;
             try {
                 const dataset = await Models.data_info.findOne({
                     where: { data_set_id: req.body.dataset_id },
@@ -41,31 +42,41 @@ class DCController {
                 if (!litigationIntervalInMinutes) {
                     litigationIntervalInMinutes = this.config.dc_litigation_interval_in_minutes;
                 }
+                const inserted_object = await Models.handler_ids.create({
+                    status: 'PENDING',
 
+                });
+                handlerId = inserted_object.dataValues.handler_id;
+                const offerId = await this.dcService.createOffer(
+                    req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
+                    req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
+                    litigationIntervalInMinutes, handlerId,
+                    req.body.urgent,
+                );
                 const handler_data = {
                     holding_time_in_minutes: req.body.holding_time_in_minutes,
                     token_amount_per_holder: req.body.token_amount_per_holder,
                     status: 'PUBLISHING_TO_BLOCKCHAIN',
-                    hold: [],
+                    offer_id: offerId,
                 };
-                const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
+                await Models.handler_ids.update({
                     data: JSON.stringify(handler_data),
+                }, {
+                    where: {
+                        handler_id: handlerId,
+                    },
                 });
-
-                await this.dcService.createOffer(
-                    req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
-                    req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
-                    litigationIntervalInMinutes, inserted_object.dataValues.handler_id,
-                    req.body.urgent,
-                );
-
                 res.status(200);
                 res.send({
-                    handler_id: inserted_object.dataValues.handler_id,
+                    handler_id: handlerId,
                 });
             } catch (error) {
                 this.logger.error(`Failed to create offer. ${error}.`);
+                if (handlerId) {
+                    Models.handler_ids.update({
+                        status: 'FAILED',
+                    }, { where: { handler_id: handlerId } });
+                }
                 res.status(400);
                 res.send({
                     message: `Failed to start offer. ${error}.`,

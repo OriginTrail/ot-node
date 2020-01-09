@@ -61,7 +61,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
+            await this._checkForReplicationHandlerStatus(req, res);
         });
 
         server.post(`/api/${this.version_id}/export`, async (req, res) => {
@@ -524,6 +524,52 @@ class RestAPIServiceV2 {
         const { reply_id, data_set_id } = req.body;
 
         await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
+    }
+
+    async _checkForReplicationHandlerStatus(req, res) {
+        const handler_object = await Models.handler_ids.findOne({
+            where: {
+                handler_id: req.params.handler_id,
+            },
+        });
+
+        if (handler_object == null) {
+            this.logger.info('Invalid request');
+            res.status(404);
+            res.send({
+                message: 'Unable to find data with given parameters!',
+            });
+            return;
+        }
+        const handlerData = JSON.parse(handler_object.data);
+
+        const offerData = {
+            holding_time_in_minutes: handlerData.holding_time_in_minutes,
+            token_amount_per_holder: handlerData.token_amount_per_holder,
+            status: handlerData.status,
+            offer_id: handlerData.offerId,
+            holders: handlerData.holders,
+        };
+        const offer = await Models.offers.findOne({
+            where: {
+                id: handlerData.offer_id,
+            },
+        });
+        if (offer) {
+            offerData.number_of_replications = offer.number_of_replications;
+            offerData.number_of_verified_replications = offer.number_of_verified_replications;
+            offerData.trac_in_eth_used_for_create_offer = offer.trac_in_eth_used_for_create_offer;
+            offerData.gas_price_used_for_create_offer = offer.gas_price_used_for_create_offer;
+            offerData.price_factor_used_for_create_offer = offer.price_factor_used_for_create_offer;
+            offerData.offer_create_transaction_hash = offer.transaction_hash;
+            offerData.offer_finalize_transaction_hash = offer.offer_finalize_transaction_hash;
+        }
+        Object.keys(offerData).forEach(key => (offerData[key] == null) && delete offerData[key]);
+        res.status(200);
+        res.send({
+            data: offerData,
+            status: handler_object.status,
+        });
     }
 
     async _checkForHandlerStatus(req, res) {
