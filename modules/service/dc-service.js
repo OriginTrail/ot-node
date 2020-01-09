@@ -52,9 +52,9 @@ class DCService {
             message: 'Offer is pending',
             status: 'PENDING',
             global_status: 'PENDING',
-            trac_in_eth_used_for_create_offer: offerPrice.tracInEth,
-            gas_price_used_for_create_offer: offerPrice.gasPriceInGwei,
-            price_factor_used_for_create_offer: this.config.blockchain.dc_price_factor,
+            trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
+            gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
+            price_factor_used_for_price_calculation: this.config.blockchain.dc_price_factor,
         });
 
         if (!litigationIntervalInMinutes) {

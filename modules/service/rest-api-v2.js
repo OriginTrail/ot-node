@@ -544,25 +544,28 @@ class RestAPIServiceV2 {
         const handlerData = JSON.parse(handler_object.data);
 
         const offerData = {
-            holding_time_in_minutes: handlerData.holding_time_in_minutes,
-            token_amount_per_holder: handlerData.token_amount_per_holder,
             status: handlerData.status,
             holders: handlerData.holders,
         };
         const offer = await Models.offers.findOne({
             where: {
-                id: handlerData.offer_id,
+                offer_id: handlerData.offer_id,
             },
         });
         if (offer) {
             offerData.number_of_replications = offer.number_of_replications;
             offerData.number_of_verified_replications = offer.number_of_verified_replications;
-            offerData.trac_in_eth_used_for_create_offer = offer.trac_in_eth_used_for_create_offer;
-            offerData.gas_price_used_for_create_offer = offer.gas_price_used_for_create_offer;
-            offerData.price_factor_used_for_create_offer = offer.price_factor_used_for_create_offer;
+            offerData.trac_in_eth_used_for_price_calculation =
+                offer.trac_in_eth_used_for_price_calculation;
+            offerData.gas_price_used_for_prica_calculation =
+                offer.gas_price_used_for_prica_calculation;
+            offerData.price_factor_used_for_price_calculation =
+                offer.price_factor_used_for_price_calculation;
             offerData.offer_create_transaction_hash = offer.transaction_hash;
             offerData.offer_finalize_transaction_hash = offer.offer_finalize_transaction_hash;
             offerData.offer_id = offer.offer_id;
+            offerData.holding_time_in_minutes = offer.holding_time_in_minutes;
+            offerData.token_amount_per_holder = offer.token_amount_per_holder;
         }
         Object.keys(offerData).forEach(key => (offerData[key] == null) && delete offerData[key]);
         res.status(200);

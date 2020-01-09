@@ -21,7 +21,7 @@ class PricingService {
         }
 
         const {
-            basePayoutInTrac,
+            basePayoutCostInTrac,
             tracInEth,
             gasPriceInGwei,
         } = await this._calculateBasePayoutInTrac();
@@ -29,7 +29,7 @@ class PricingService {
         const holdingTimeInDays = holdingTimeInMinutes / minutesInDay;
         const dataSizeInMB = dataSizeInBytes / 1000000;
 
-        const price = (2 * basePayoutInTrac) + (priceFactor *
+        const price = (2 * basePayoutCostInTrac) + (priceFactor *
         Math.sqrt(2 * holdingTimeInDays * dataSizeInMB));
 
         const finalPrice = price * 1000000000000000000;
@@ -42,8 +42,8 @@ class PricingService {
 
         const gasPriceInGwei = await this.getGasPrice() / 1000000000;
         const basePayoutInEth = (constants.BASE_PAYOUT_GAS * gasPriceInGwei) / 1000000000;
-        const basePayoutInTrac = basePayoutInEth / tracInEth;
-        return { basePayoutInTrac, tracInEth, gasPriceInGwei };
+        const basePayoutCostInTrac = basePayoutInEth / tracInEth;
+        return { basePayoutCostInTrac, tracInEth, gasPriceInGwei };
     }
 
     async getGasPrice() {

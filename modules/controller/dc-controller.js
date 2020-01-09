@@ -38,10 +38,7 @@ class DCController {
                     });
                     return;
                 }
-                let litigationIntervalInMinutes = req.body.litigation_interval_in_minutes;
-                if (!litigationIntervalInMinutes) {
-                    litigationIntervalInMinutes = this.config.dc_litigation_interval_in_minutes;
-                }
+
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
 
@@ -50,12 +47,10 @@ class DCController {
                 const offerId = await this.dcService.createOffer(
                     req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
                     req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
-                    litigationIntervalInMinutes, handlerId,
+                    req.body.litigation_interval_in_minutes, handlerId,
                     req.body.urgent,
                 );
                 const handler_data = {
-                    holding_time_in_minutes: req.body.holding_time_in_minutes,
-                    token_amount_per_holder: req.body.token_amount_per_holder,
                     status: 'PUBLISHING_TO_BLOCKCHAIN',
                     offer_id: offerId,
                 };
