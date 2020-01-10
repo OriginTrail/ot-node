@@ -127,6 +127,17 @@ class Command {
             repeat: true,
         };
     }
+
+
+    /**
+     * Returns retry info
+     * @returns {{retry: boolean, commands: Array}}
+     */
+    static retry() {
+        return {
+            retry: true,
+        };
+    }
 }
 
 module.exports = Command;

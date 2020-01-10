@@ -60,6 +60,7 @@ class DCLitigationCompleteCommand extends Command {
             dcIdentity,
             answer,
             challenge.test_index,
+            true,
         );
         return {
             commands: [
