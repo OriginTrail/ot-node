@@ -67,7 +67,7 @@ class DHLitigationAnswerCommand extends Command {
 
                 this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
 
-                await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer);
+                await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer, true);
 
                 return {
                     commands: [
