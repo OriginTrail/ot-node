@@ -97,7 +97,13 @@ class DHLitigationAnswerCommand extends Command {
             );
             this.logger.info(`I've already been penalized for offer ${offerId}`);
         } else {
-            this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
+            if (command.retries) {
+                this.logger.trace(`Litigation status for offer ${offerId} unclear, checking status again after delay.`);
+            } else {
+                this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
+            }
+            command.delay = 20000;
+            return Command.retry();
         }
 
         return Command.empty();

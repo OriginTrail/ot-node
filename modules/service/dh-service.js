@@ -408,6 +408,7 @@ class DHService {
                 blockIndex,
                 dataSetId: bid.data_set_id,
             },
+            retries: 2,
         });
     }
 
