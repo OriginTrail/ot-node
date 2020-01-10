@@ -38,29 +38,29 @@ class DCController {
                     });
                     return;
                 }
-                let litigationIntervalInMinutes = req.body.litigation_interval_in_minutes;
-                if (!litigationIntervalInMinutes) {
-                    litigationIntervalInMinutes = this.config.dc_litigation_interval_in_minutes;
-                }
 
-                const handler_data = {
-                    holding_time_in_minutes: req.body.holding_time_in_minutes,
-                    token_amount_per_holder: req.body.token_amount_per_holder,
-                    status: 'PUBLISHING_TO_BLOCKCHAIN',
-                    hold: [],
-                };
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
-                    data: JSON.stringify(handler_data),
+
                 });
                 handlerId = inserted_object.dataValues.handler_id;
-                await this.dcService.createOffer(
+                const offerId = await this.dcService.createOffer(
                     req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
                     req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
-                    litigationIntervalInMinutes, handlerId,
+                    req.body.litigation_interval_in_minutes, handlerId,
                     req.body.urgent,
                 );
-
+                const handler_data = {
+                    status: 'PUBLISHING_TO_BLOCKCHAIN',
+                    offer_id: offerId,
+                };
+                await Models.handler_ids.update({
+                    data: JSON.stringify(handler_data),
+                }, {
+                    where: {
+                        handler_id: handlerId,
+                    },
+                });
                 res.status(200);
                 res.send({
                     handler_id: handlerId,

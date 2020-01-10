@@ -203,12 +203,12 @@ class Kademlia {
                 next();
             });
 
-            this.node.blacklist = this.node.plugin(kadence.churnfilter({
-                cooldownBaseTimeout: this.config.network.churnPlugin.cooldownBaseTimeout,
-                cooldownMultiplier:
-                    parseInt(this.config.network.churnPlugin.cooldownMultiplier, 10),
-                cooldownResetTime: this.config.network.churnPlugin.cooldownResetTime,
-            }));
+            // this.node.blacklist = this.node.plugin(kadence.churnfilter({
+            //     cooldownBaseTimeout: this.config.network.churnPlugin.cooldownBaseTimeout,
+            //     cooldownMultiplier:
+            //         parseInt(this.config.network.churnPlugin.cooldownMultiplier, 10),
+            //     cooldownResetTime: this.config.network.churnPlugin.cooldownResetTime,
+            // }));
             if (this.config.traverse_nat_enabled) {
                 this.enableNatTraversal();
             }
