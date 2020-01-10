@@ -557,8 +557,8 @@ class RestAPIServiceV2 {
             offerData.number_of_verified_replications = offer.number_of_verified_replications;
             offerData.trac_in_eth_used_for_price_calculation =
                 offer.trac_in_eth_used_for_price_calculation;
-            offerData.gas_price_used_for_prica_calculation =
-                offer.gas_price_used_for_prica_calculation;
+            offerData.gas_price_used_for_price_calculation =
+                offer.gas_price_used_for_price_calculation;
             offerData.price_factor_used_for_price_calculation =
                 offer.price_factor_used_for_price_calculation;
             offerData.offer_create_transaction_hash = offer.transaction_hash;
