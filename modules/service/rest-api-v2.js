@@ -566,7 +566,7 @@ class RestAPIServiceV2 {
             offerData.offer_id = offer.offer_id;
             offerData.holding_time_in_minutes = offer.holding_time_in_minutes;
             offerData.token_amount_per_holder = offer.token_amount_per_holder;
-            offerData.errorMessage = offer.message;
+            offerData.message = offer.message;
         }
         Object.keys(offerData).forEach(key => (offerData[key] == null) && delete offerData[key]);
         res.status(200);

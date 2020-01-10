@@ -126,7 +126,7 @@ class DCOfferChooseCommand extends Command {
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
-        offer.message = err.message;
+        offer.message = `Failed to choose holders. Error message: ${err.message}`;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
         this.remoteControl.offerUpdate({
             id: internalOfferId,
