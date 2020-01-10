@@ -180,7 +180,20 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { offerId } = command.data;
+        return this.invalidateOffer(command);
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command) {
+        return this.invalidateOffer(command);
+    }
+
+    async invalidateOffer(command) {
+        const { offerId, handler_id } = command.data;
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
@@ -191,7 +204,9 @@ class DcOfferFinalizedCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
-
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

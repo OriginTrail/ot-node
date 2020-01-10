@@ -557,8 +557,8 @@ class RestAPIServiceV2 {
             offerData.number_of_verified_replications = offer.number_of_verified_replications;
             offerData.trac_in_eth_used_for_price_calculation =
                 offer.trac_in_eth_used_for_price_calculation;
-            offerData.gas_price_used_for_prica_calculation =
-                offer.gas_price_used_for_prica_calculation;
+            offerData.gas_price_used_for_price_calculation =
+                offer.gas_price_used_for_price_calculation;
             offerData.price_factor_used_for_price_calculation =
                 offer.price_factor_used_for_price_calculation;
             offerData.offer_create_transaction_hash = offer.transaction_hash;
@@ -566,6 +566,7 @@ class RestAPIServiceV2 {
             offerData.offer_id = offer.offer_id;
             offerData.holding_time_in_minutes = offer.holding_time_in_minutes;
             offerData.token_amount_per_holder = offer.token_amount_per_holder;
+            offerData.message = offer.message;
         }
         Object.keys(offerData).forEach(key => (offerData[key] == null) && delete offerData[key]);
         res.status(200);
