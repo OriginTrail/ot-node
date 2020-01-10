@@ -2,6 +2,7 @@ const Command = require('../command');
 const importUtilities = require('../../ImportUtilities');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether litigation is successfully initiated
@@ -102,7 +103,7 @@ class DHLitigationAnswerCommand extends Command {
             } else {
                 this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
             }
-            command.delay = 20000;
+            command.delay = constants.BLOCKCHAIN_RETRY_DELAY_IN_MILLS;
             return Command.retry();
         }
 

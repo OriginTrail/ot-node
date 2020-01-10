@@ -12,6 +12,7 @@ const Graph = require('../Graph');
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const ObjectValidator = require('../validator/object-validator');
+const constants = require('../constants');
 
 class DHService {
     constructor(ctx) {
@@ -408,7 +409,7 @@ class DHService {
                 blockIndex,
                 dataSetId: bid.data_set_id,
             },
-            retries: 2,
+            retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
         });
     }
 
