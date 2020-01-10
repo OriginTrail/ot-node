@@ -118,11 +118,12 @@ class DHService {
             return;
         }
 
-        const myOfferPrice = await this.pricingService.calculateOfferPriceinTrac(
+        const offerPrice = await this.pricingService.calculateOfferPriceinTrac(
             dataSetSizeInBytes,
             holdingTimeInMinutes,
             this.config.blockchain.dh_price_factor,
         );
+        const myOfferPrice = offerPrice.finalPrice;
         const dhTokenPrice = new BN(myOfferPrice.toString(), 10);
 
         if (dhTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {

@@ -157,12 +157,12 @@ describe('Pricing service test', () => {
                 bigDataSizeInBytes,
                 holdingTimeInMinutes, defaultPriceFactor,
             );
-        assert.isAbove(bigDataPrice, price);
+        assert.isAbove(bigDataPrice.finalPrice, price.finalPrice);
         const longDataPrice = await pricingService
             .calculateOfferPriceinTrac(
                 dataSizeInBytes,
                 longHoldingTimeInMinutes, defaultPriceFactor,
             );
-        assert.isAbove(longDataPrice, price);
+        assert.isAbove(longDataPrice.finalPrice, price.finalPrice);
     });
 });

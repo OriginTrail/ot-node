@@ -69,9 +69,9 @@ class DCOfferFinalizeCommand extends Command {
                 where: { handler_id },
             },
         );
-
+        let result;
         try {
-            await this.blockchain.finalizeOffer(
+            result = await this.blockchain.finalizeOffer(
                 Utilities.normalizeHex(this.config.erc725Identity),
                 offerId,
                 new BN(solution.shift, 10),
@@ -90,7 +90,9 @@ class DCOfferFinalizeCommand extends Command {
             }
             throw error;
         }
-
+        const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
+        offer.offer_finalize_transaction_hash = result.transactionHash;
+        await offer.save({ fields: ['offer_finalize_transaction_hash'] });
         return {
             commands: [
                 {
