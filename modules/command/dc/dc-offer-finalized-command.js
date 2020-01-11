@@ -62,13 +62,30 @@ class DcOfferFinalizedCommand extends Command {
                         where: { handler_id },
                     },
                 );
-
+                const replications = await Models.replicated_data.count({
+                    where: {
+                        offer_id: offerId,
+                        status: {
+                            [Op.in]: ['STARTED', 'VERIFIED'],
+                        },
+                    },
+                });
+                const verifiedReplications = await Models.replicated_data.count({
+                    where: {
+                        offer_id: offerId,
+                        status: {
+                            [Op.in]: ['VERIFIED'],
+                        },
+                    },
+                });
 
                 const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
                 offer.status = 'FINALIZED';
                 offer.global_status = 'ACTIVE';
+                offer.number_of_replications = replications;
+                offer.number_of_verified_replications = verifiedReplications;
                 offer.message = 'Offer has been finalized. Offer is now active.';
-                await offer.save({ fields: ['status', 'message', 'global_status'] });
+                await offer.save({ fields: ['status', 'message', 'global_status', 'number_of_replications', 'number_of_verified_replications'] });
                 this.remoteControl.offerUpdate({
                     offer_id: offerId,
                 });
@@ -163,7 +180,20 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { offerId } = command.data;
+        return this.invalidateOffer(command);
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command) {
+        return this.invalidateOffer(command);
+    }
+
+    async invalidateOffer(command) {
+        const { offerId, handler_id } = command.data;
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
@@ -174,7 +204,9 @@ class DcOfferFinalizedCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
-
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

@@ -82,7 +82,20 @@ class DcOfferTaskCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { dataSetId, internalOfferId } = command.data;
+        return this.invalidateOffer(command);
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command) {
+        return this.invalidateOffer(command);
+    }
+
+    async invalidateOffer(command) {
+        const { dataSetId, internalOfferId, handler_id } = command.data;
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
@@ -93,7 +106,9 @@ class DcOfferTaskCommand extends Command {
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });
-
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

@@ -63,3 +63,15 @@ exports.AVERAGE_GAS_PRICE_MULTIPLIER = 1.2;
  * @constant {number} BASE_PAYOUT_GAS - Gas used for payout
  */
 exports.BASE_PAYOUT_GAS = 150000;
+
+/**
+ *
+ * @constant {number} BLOCKCHAIN_RETRY_DELAY_IN_MILLS - Delay length for blockchain reading
+ */
+exports.BLOCKCHAIN_RETRY_DELAY_IN_MILLS = 20000;
+
+/**
+ *
+ * @constant {number} ANSWER_LITIGATION_COMMAND_RETRIES - dhLitigationAnswerCommand retries
+ */
+exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;

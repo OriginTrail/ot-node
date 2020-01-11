@@ -152,12 +152,20 @@ class Blockchain {
      * @param challengerIdentity - DC identity
      * @param proofData - answer
      * @param leafIndex - the number of the block in the lowest level of the merkle tree
+     * @param urgent - Whether max gas price should or not
      * @return {Promise<void>}
      */
-    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData, leafIndex) {
+    async completeLitigation(
+        offerId,
+        holderIdentity,
+        challengerIdentity,
+        proofData,
+        leafIndex,
+        urgent,
+    ) {
         return this.blockchain.completeLitigation(
             offerId, holderIdentity,
-            challengerIdentity, proofData, leafIndex,
+            challengerIdentity, proofData, leafIndex, urgent,
         );
     }
 
@@ -166,10 +174,11 @@ class Blockchain {
      * @param offerId
      * @param holderIdentity
      * @param answer
+     * @param urgent - Whether maximum gas price should be used
      * @return {Promise<any>}
      */
-    answerLitigation(offerId, holderIdentity, answer) {
-        return this.blockchain.answerLitigation(offerId, holderIdentity, answer);
+    answerLitigation(offerId, holderIdentity, answer, urgent) {
+        return this.blockchain.answerLitigation(offerId, holderIdentity, answer, urgent);
     }
 
     /**

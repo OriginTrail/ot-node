@@ -475,10 +475,11 @@ class Ethereum {
      * @param offerId - Offer ID
      * @param holderIdentity - DH identity
      * @param answer - Litigation answer
+     * @param urgent - Whether maximum gas price should be used
      * @return {Promise<any>}
      */
-    async answerLitigation(offerId, holderIdentity, answer) {
-        const gasPrice = await this.getGasPrice();
+    async answerLitigation(offerId, holderIdentity, answer, urgent) {
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
@@ -1350,10 +1351,18 @@ class Ethereum {
      * @param challengerIdentity - DC identity
      * @param proofData - answer
      * @param leafIndex - the number of the block in the lowest level of the merkle tree
+     * @param urgent - Whether max gas price should be used or not
      * @return {Promise<void>}
      */
-    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData, leafIndex) {
-        const gasPrice = await this.getGasPrice();
+    async completeLitigation(
+        offerId,
+        holderIdentity,
+        challengerIdentity,
+        proofData,
+        leafIndex,
+        urgent,
+    ) {
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
