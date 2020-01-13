@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
 
@@ -19,13 +21,13 @@ class DcConvertToOtJsonCommand extends Command {
         const { standard_id, documentPath, handler_id } = command.data;
         try {
             if (standard_id === 'ot-json') {
-                let document = JSON.parse(fs.readFileSync(documentPath));
+                let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
-                if (!document.signature) { 
+                if (!document.signature) {
                     document = ImportUtilities.prepareDataset(document['@graph'], this.config, this.web3);
                 }
 
-                fs.writeFileSync(documentPath, JSON.stringify(document, null, 4));
+                fs.writeFileSync(documentPath, JSON.stringify(document));
 
                 return this.continueSequence(command.data, command.sequence);
             }

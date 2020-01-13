@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
@@ -75,6 +77,12 @@ class ImportService {
         this.schemaValidator = ctx.schemaValidator;
         this.web3 = ctx.web3;
         this.log = ctx.logger;
+        this.config = ctx.config;
+
+        const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+        if (!fs.existsSync(cacheDirectory)) {
+            fs.mkdirSync(cacheDirectory);
+        }
     }
 
     async getImport(datasetId, encColor = null) {

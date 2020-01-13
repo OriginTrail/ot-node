@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
 const bytes = require('utf8-length');
@@ -28,8 +29,9 @@ class ImportWorkerController {
             purchased,
         } = command.data;
 
-        const document = JSON.parse(fs.readFileSync(documentPath));
-
+        let document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
+        const otjson_size_in_bytes = bytes(document);
+        document = JSON.parse(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
@@ -38,12 +40,10 @@ class ImportWorkerController {
 
         await this.importService.validateDocument(document);
 
-        const otjson_size_in_bytes = bytes(JSON.stringify(document));
-
         const forked = fork('modules/worker/graph-converter-worker.js');
 
         forked.send(JSON.stringify({
-            documentPath, encryptedMap, wallet, handler_id,
+            document, encryptedMap, wallet, handler_id,
         }));
 
         forked.on('message', async (response) => {
@@ -89,7 +89,7 @@ class ImportWorkerController {
     async startOtjsonConverterWorker(command, standardId) {
         this.logger.info('Starting ot-json converter worker');
         const { documentPath, handler_id } = command.data;
-
+        const document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
         forked.send(JSON.stringify({ config: this.config, dataset: document, standardId }));
@@ -97,23 +97,22 @@ class ImportWorkerController {
         forked.on('message', async (response) => {
             if (response.error) {
                 await this._sendErrorToFinalizeCommand(response.error, handler_id, documentPath);
-                forked.kill();
-                return;
+            } else {
+                const otjson = JSON.parse(response);
+                const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
+                fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));
+                const commandData = {
+                    documentPath,
+                    handler_id,
+                };
+                await this.commandExecutor.add({
+                    name: command.sequence[0],
+                    sequence: command.sequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
+                });
             }
-            const otjson = JSON.parse(response);
-            const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
-            fs.writeFileSync(documentPath, signedOtjson);
-            const commandData = {
-                documentPath,
-                handler_id,
-            };
-            await this.commandExecutor.add({
-                name: command.sequence[0],
-                sequence: command.sequence.slice(1),
-                delay: 0,
-                data: commandData,
-                transactional: false,
-            });
             forked.kill();
         });
     }

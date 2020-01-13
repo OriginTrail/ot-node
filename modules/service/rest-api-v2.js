@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 const ImportUtilities = require('../ImportUtilities');
