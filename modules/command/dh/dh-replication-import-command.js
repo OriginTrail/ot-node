@@ -1,8 +1,7 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
 const bytes = require('utf8-length');
+const fs = require('fs');
 const { sha3_256 } = require('js-sha3');
 const Command = require('../command');
-const MerkleTree = require('../../Merkle');
 const Encryption = require('../../Encryption');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
@@ -33,7 +32,7 @@ class DhReplicationImportCommand extends Command {
         const {
             offerId,
             dataSetId,
-            otJson,
+            documentPath,
             dcWallet,
             dcNodeId,
             litigationPublicKey,
@@ -44,6 +43,8 @@ class DhReplicationImportCommand extends Command {
             transactionHash,
             encColor,
         } = command.data;
+        const otJson = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+
         const { decryptedDataset, encryptedMap } =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
         const calculatedDataSetId =
@@ -112,6 +113,8 @@ class DhReplicationImportCommand extends Command {
             document: decryptedDataset,
             encryptedMap,
         });
+
+        fs.unlinkSync(documentPath);
 
         if (importResult.error) {
             throw Error(importResult.error);
