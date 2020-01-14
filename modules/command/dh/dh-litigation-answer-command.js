@@ -2,6 +2,7 @@ const Command = require('../command');
 const importUtilities = require('../../ImportUtilities');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether litigation is successfully initiated
@@ -67,7 +68,7 @@ class DHLitigationAnswerCommand extends Command {
 
                 this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
 
-                await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer);
+                await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer, true);
 
                 return {
                     commands: [
@@ -97,7 +98,13 @@ class DHLitigationAnswerCommand extends Command {
             );
             this.logger.info(`I've already been penalized for offer ${offerId}`);
         } else {
-            this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
+            if (command.retries) {
+                this.logger.trace(`Litigation status for offer ${offerId} unclear, checking status again after delay.`);
+            } else {
+                this.logger.trace(`Litigation for offer ${offerId} is not in progress.`);
+            }
+            command.delay = constants.BLOCKCHAIN_RETRY_DELAY_IN_MILLS;
+            return Command.retry();
         }
 
         return Command.empty();

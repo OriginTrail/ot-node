@@ -122,6 +122,9 @@ class DcOfferMiningCompletedCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
+        models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
@@ -133,7 +136,7 @@ class DcOfferMiningCompletedCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { offerId } = command.data;
+        const { offerId, handler_id } = command.data;
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
@@ -142,6 +145,9 @@ class DcOfferMiningCompletedCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
+        models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
