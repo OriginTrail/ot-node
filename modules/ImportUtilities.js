@@ -584,6 +584,30 @@ class ImportUtilities {
     static getDataCreator(datasetHeader) {
         return datasetHeader.dataCreator.identifiers[0].identifierValue;
     }
+
+    /**
+     * Process successfull import
+     * @static
+     * @param unpack  Unpack keys
+     * @param objects  Graph vertices and edges
+     * @return {Promise<>}
+     */
+    static _unpackKeysAndSortVertices(objects, unpack = false) {
+        let {
+            vertices, edges,
+        } = objects;
+        if (unpack) {
+            ImportUtilities.unpackKeys(vertices, edges);
+        }
+
+        edges = Graph.sortVertices(edges);
+        vertices = Graph.sortVertices(vertices);
+
+        return {
+            vertices,
+            edges,
+        };
+    }
 }
 
 module.exports = ImportUtilities;

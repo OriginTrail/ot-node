@@ -158,37 +158,6 @@ class DcFinalizeImport extends Command {
     }
 
     /**
-     * Process successfull import
-     * @param unpack  Unpack keys
-     * @param result  Import result
-     * @return {Promise<>}
-     */
-    _unpackKeysAndSortVertices(result, unpack = false) {
-        this.remoteControl.importRequestData();
-        const {
-            data_set_id, wallet, root_hash,
-        } = result;
-        let {
-            vertices, edges,
-        } = result;
-        if (unpack) {
-            ImportUtilities.unpackKeys(vertices, edges);
-        }
-
-        edges = Graph.sortVertices(edges);
-        vertices = Graph.sortVertices(vertices);
-
-        return {
-            data_set_id,
-            root_hash,
-            total_documents: edges.length + vertices.length,
-            vertices,
-            edges,
-            wallet,
-        };
-    }
-
-    /**
      * Removes the temporary document used as import cache file
      * @param documentPath path to cache file
      * @return undefined
