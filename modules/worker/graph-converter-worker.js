@@ -74,7 +74,7 @@ Object.freeze(constants);
 
 process.on('message', async (dataFromParent) => {
     const {
-        document, encryptedMap, wallet, handler_id,
+        document, encryptedMap,
     } = JSON.parse(dataFromParent);
 
     try {
