@@ -378,23 +378,16 @@ process.on('message', async (dataFromParent) => {
         const data_hash = Utilities.normalizeHex(sha3_256(`${graphObject}`));
 
         const response = {
-            vertices,
-            edges,
+            vertices: deduplicateVertices,
+            edges: deduplicateEdges,
             metadata,
             datasetId,
-            header,
-            dataCreator,
-            wallet,
             total_documents,
             root_hash,
-            deduplicateEdges,
-            deduplicateVertices,
-            handler_id,
             data_hash,
         };
 
-        fs.writeFileSync(documentPath, JSON.stringify(response, null, 4));
-        process.send(documentPath, () => {
+        process.send(JSON.stringify(response), () => {
             process.exit(0);
         });
     } catch (e) {
