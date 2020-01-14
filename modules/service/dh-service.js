@@ -12,6 +12,7 @@ const Graph = require('../Graph');
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const ObjectValidator = require('../validator/object-validator');
+const constants = require('../constants');
 
 class DHService {
     constructor(ctx) {
@@ -118,11 +119,12 @@ class DHService {
             return;
         }
 
-        const myOfferPrice = await this.pricingService.calculateOfferPriceinTrac(
+        const offerPrice = await this.pricingService.calculateOfferPriceinTrac(
             dataSetSizeInBytes,
             holdingTimeInMinutes,
             this.config.blockchain.dh_price_factor,
         );
+        const myOfferPrice = offerPrice.finalPrice;
         const dhTokenPrice = new BN(myOfferPrice.toString(), 10);
 
         if (dhTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
@@ -408,6 +410,7 @@ class DHService {
                 blockIndex,
                 dataSetId: bid.data_set_id,
             },
+            retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
         });
     }
 
