@@ -1,4 +1,6 @@
 const bytes = require('utf8-length');
+const fs = require('fs');
+const path = require('path');
 
 const Models = require('../../../models/index');
 const Command = require('../command');
@@ -98,8 +100,16 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         try {
+            const documentPath = path.join(this.config.appDataPath, 'import_cache', handler_id);
+
+            if (!fs.existsSync(documentPath)) {
+                fs.writeFileSync(documentPath, JSON.stringify(document));
+            } else {
+                throw new Error(`Import cache file for generated handler ${handler_id} already exists`);
+            }
+
             const commandData = {
-                document,
+                documentPath,
                 handler_id,
                 purchased: true,
             };
