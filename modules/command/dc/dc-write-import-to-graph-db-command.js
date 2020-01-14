@@ -68,11 +68,12 @@ class DcWriteImportToGraphDbCommand extends Command {
                                         if (data.expectedConnectionCreators != null) {
                                             data.expectedConnectionCreators
                                                 .forEach((expectedCreator) => {
-                                                    const expectedErc725 = this._value(expectedCreator);
+                                                    const expectedErc725 =
+                                                        this._value(expectedCreator);
 
                                                     if (metadata && expectedErc725 ===
-                                                        metadata.datasetHeader.dataCreator.identifiers
-                                                            .find(x => x.identifierType === 'ERC725').identifierValue) {
+                                                        metadata.datasetHeader.dataCreator
+                                                            .identifiers.find(x => x.identifierType === 'ERC725').identifierValue) {
                                                         hasConnection2 = true;
                                                     }
                                                 });
