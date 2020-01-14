@@ -371,6 +371,13 @@ process.on('message', async (dataFromParent) => {
         const total_documents = document['@graph'].length;
         const root_hash = document.datasetHeader.dataIntegrity.proofs[0].proofValue;
 
+        const graphObject = {};
+        Object.assign(graphObject, ImportUtilities.unpackKeysAndSortVertices({
+            vertices: deduplicateVertices,
+            edges: deduplicateEdges,
+        }));
+        const data_hash = Utilities.normalizeHex(sha3_256(`${graphObject}`));
+
         const response = {
             vertices,
             edges,
@@ -384,6 +391,7 @@ process.on('message', async (dataFromParent) => {
             deduplicateEdges,
             deduplicateVertices,
             handler_id,
+            data_hash,
         };
 
         fs.writeFileSync(documentPath, JSON.stringify(response, null, 4));

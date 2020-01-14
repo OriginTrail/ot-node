@@ -592,7 +592,7 @@ class ImportUtilities {
      * @param objects  Graph vertices and edges
      * @return {Promise<>}
      */
-    static _unpackKeysAndSortVertices(objects, unpack = false) {
+    static unpackKeysAndSortVertices(objects, unpack = false) {
         let {
             vertices, edges,
         } = objects;
