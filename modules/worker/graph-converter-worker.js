@@ -353,13 +353,13 @@ process.on('message', async (dataFromParent) => {
             // datasetContext: _context(data),
             datasetHeader: document.datasetHeader,
             signature: document.signature,
-            vertices: vertices.reduce((acc, current) => {
+            vertices: deduplicateVertices.reduce((acc, current) => {
                 if (!acc.includes(current._key)) {
                     acc.push(current._key);
                 }
                 return acc;
             }, []),
-            edges: edges.reduce((acc, current) => {
+            edges: deduplicateEdges.reduce((acc, current) => {
                 if (!acc.includes(current._key)) {
                     acc.push(current._key);
                 }

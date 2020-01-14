@@ -30,12 +30,9 @@ class DcWriteImportToGraphDbCommand extends Command {
             await forEachSeries(vertices, vertex => this.graphStorage.addVertex(vertex));
             await forEachSeries(edges, edge => this.graphStorage.addEdge(edge));
 
-            this.vertices = vertices;
-            this.edges = edges;
-
             await forEachSeries(vertices.filter(vertex => vertex.vertexType === 'Connector'), async (vertex) => {
-                const { identifierValue } = this.vertices.find(v => this.edges.filter(edge => edge._from === vertex._key && ['IDENTIFIED_BY'].includes(edge.relationType)).map(edge => edge._to).includes(v._key));
-                const { data } = this.vertices.find(v => this.edges.filter(edge => edge._from === vertex._key && ['HAS_DATA'].includes(edge.relationType)).map(edge => edge._to).includes(v._key));
+                const { identifierValue } = vertices.find(v => edges.filter(edge => edge._from === vertex._key && ['IDENTIFIED_BY'].includes(edge.relationType)).map(edge => edge._to).includes(v._key));
+                const { data } = vertices.find(v => edges.filter(edge => edge._from === vertex._key && ['HAS_DATA'].includes(edge.relationType)).map(edge => edge._to).includes(v._key));
                 // Connect to other connectors if available.
 
                 const connectorIdentifierVertexKey = Utilities.keyFrom('id', identifierValue);
