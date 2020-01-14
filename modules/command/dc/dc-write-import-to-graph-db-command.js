@@ -25,7 +25,7 @@ class DcWriteImportToGraphDbCommand extends Command {
         } = command.data;
         try {
             const { vertices, edges, metadata } = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
-            const dataCreator = ImportUtilities.getDataCreator(metadata);
+            const dataCreator = ImportUtilities.getDataCreator(metadata.datasetHeader);
 
             await forEachSeries(vertices, vertex => this.graphStorage.addVertex(vertex));
             await forEachSeries(edges, edge => this.graphStorage.addEdge(edge));
