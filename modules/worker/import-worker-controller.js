@@ -61,19 +61,14 @@ class ImportWorkerController {
             }));
 
             const commandData = {
-                afterImportData: {
-                    wallet: parsedData.wallet,
-                    total_documents: parsedData.total_documents,
-                    root_hash: parsedData.root_hash,
-                    vertices: parsedData.deduplicateEdges,
-                    edges: parsedData.deduplicateVertices,
-                    data_set_id: parsedData.datasetId,
-                    handler_id: parsedData.handler_id,
-                    otjson_size_in_bytes,
-                    purchased,
-                },
                 handler_id,
                 documentPath,
+                data_set_id: parsedData.datasetId,
+                root_hash: parsedData.root_hash,
+                data_hash: parsedData.data_hash,
+                total_documents: parsedData.total_documents,
+                otjson_size_in_bytes,
+                purchased,
             };
 
             await this.commandExecutor.add({
