@@ -36,6 +36,7 @@ Feature: Test basic network features
     Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And I wait for DC to fail to finalize last offer
+    Given I wait for 5 seconds
     Then Last replication should fail
 
   @first
