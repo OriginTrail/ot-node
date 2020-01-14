@@ -111,6 +111,7 @@ class DVDataReadResponseFreeCommand extends Command {
             const commandData = {
                 documentPath,
                 handler_id,
+                data_provider_wallet: dcWallet,
                 purchased: true,
             };
 

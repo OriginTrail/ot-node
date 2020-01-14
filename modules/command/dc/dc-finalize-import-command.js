@@ -20,6 +20,7 @@ class DcFinalizeImport extends Command {
             error,
             handler_id,
             data_set_id,
+            data_provider_wallet,
             purchased,
             documentPath,
             root_hash,
@@ -41,7 +42,7 @@ class DcFinalizeImport extends Command {
             await Models.data_info.create({
                 data_set_id,
                 root_hash,
-                data_provider_wallet: this.config.node_wallet,
+                data_provider_wallet: data_provider_wallet || this.config.node_wallet,
                 import_timestamp,
                 total_documents,
                 origin: purchased ? 'PURCHASED' : 'IMPORTED',

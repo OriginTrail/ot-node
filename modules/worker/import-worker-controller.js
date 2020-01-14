@@ -26,6 +26,7 @@ class ImportWorkerController {
             documentPath,
             handler_id,
             encryptedMap,
+            data_provider_wallet,
             purchased,
         } = command.data;
 
@@ -68,6 +69,7 @@ class ImportWorkerController {
                 data_hash: parsedData.data_hash,
                 total_documents: parsedData.total_documents,
                 otjson_size_in_bytes,
+                data_provider_wallet,
                 purchased,
             };
 
