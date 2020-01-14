@@ -1,6 +1,8 @@
+const fs = require('fs');
 const Command = require('../command');
 const { forEachSeries } = require('p-iteration');
 const Utilities = require('../../Utilities');
+const ImportUtilities = require('../../ImportUtilities');
 const { sha3_256 } = require('js-sha3');
 
 class DcWriteImportToGraphDbCommand extends Command {
@@ -20,8 +22,11 @@ class DcWriteImportToGraphDbCommand extends Command {
         try {
             this.logger.info('Importing data to database');
             const {
-                vertices, edges, metadata, dataCreator,
-            } = command.data.dbData;
+                handler_id, documentPath,
+            } = command.data;
+
+            const { vertices, edges, metadata } = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+            const dataCreator = ImportUtilities.getDataCreator(metadata);
 
             await forEachSeries(vertices, vertex => this.graphStorage.addVertex(vertex));
             await forEachSeries(edges, edge => this.graphStorage.addEdge(edge));
