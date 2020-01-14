@@ -74,10 +74,8 @@ Object.freeze(constants);
 
 process.on('message', async (dataFromParent) => {
     const {
-        documentPath, encryptedMap, wallet, handler_id,
+        document, encryptedMap, wallet, handler_id,
     } = JSON.parse(dataFromParent);
-
-    const document = JSON.parse(fs.readFileSync(documentPath));
 
     try {
         const datasetId = _id(document);
