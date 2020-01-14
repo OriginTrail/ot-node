@@ -574,6 +574,14 @@ class ImportUtilities {
 
         return header;
     }
+
+    /**
+     * Extract Dataset creator from OT-JSON or graph header
+     * @static
+     */
+    static getDataCreator(datasetHeader) {
+        return datasetHeader.dataCreator.identifiers[0].identifierValue;
+    }
 }
 
 module.exports = ImportUtilities;
