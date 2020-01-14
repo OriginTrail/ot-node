@@ -576,8 +576,10 @@ class ImportUtilities {
     }
 
     /**
-     * Extract Dataset creator from OT-JSON or graph header
+     * Extract Dataset creator identifier value from OT-JSON or graph header
      * @static
+     * @param datasetHeader Header of the dataset in which the dataCreator field exists
+     * @returns String - Dataset creator identifier value (Currently ERC725 Identity)
      */
     static getDataCreator(datasetHeader) {
         return datasetHeader.dataCreator.identifiers[0].identifierValue;
