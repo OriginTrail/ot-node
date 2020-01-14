@@ -53,15 +53,14 @@ class ImportWorkerController {
                 return;
             }
             const parsedData = JSON.parse(response);
+
+            fs.writeFileSync(documentPath, JSON.stringify({
+                vertices: parsedData.vertices,
+                edges: parsedData.edges,
+                metadata: parsedData.metadata,
+            }));
+
             const commandData = {
-                dbData: {
-                    vertices: parsedData.vertices,
-                    edges: parsedData.edges,
-                    metadata: parsedData.metadata,
-                    datasetId: parsedData.datasetId,
-                    header: parsedData.header,
-                    dataCreator: parsedData.dataCreator,
-                },
                 afterImportData: {
                     wallet: parsedData.wallet,
                     total_documents: parsedData.total_documents,
@@ -73,6 +72,8 @@ class ImportWorkerController {
                     otjson_size_in_bytes,
                     purchased,
                 },
+                handler_id,
+                documentPath,
             };
 
             await this.commandExecutor.add({

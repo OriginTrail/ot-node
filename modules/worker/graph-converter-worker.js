@@ -1,5 +1,6 @@
 const { sha3_256 } = require('js-sha3');
 const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 
 /**
  * Returns value of '@id' property.
