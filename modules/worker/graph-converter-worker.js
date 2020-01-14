@@ -79,8 +79,7 @@ process.on('message', async (dataFromParent) => {
 
     try {
         const datasetId = _id(document);
-        const header = document.datasetHeader;
-        const dataCreator = ImportUtilities.getDataCreator(header);
+        const dataCreator = ImportUtilities.getDataCreator(document.datasetHeader);
 
         // Result
         const vertices = [];
