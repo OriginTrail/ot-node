@@ -21,6 +21,6 @@ process.on('message', (data) => {
         const stringifiedJson = transpiler.convertToOTJson(data.dataset);
         process.send(stringifiedJson);
     } catch (e) {
-        process.send({ error: e.message });
+        process.send({ error: `${e.message}\n${e.stack}` });
     }
 });
