@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const Command = require('../command');
 const Models = require('../../../models/index');
+const Utilities = require('../../Utilities');
 
 /**
  * Handles new offer from the DH side
@@ -59,19 +60,18 @@ class DHOfferHandleCommand extends Command {
 
         this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Response received.`);
 
-        const documentPath = path.join(this.config.appDataPath, 'import_cache', offerId);
+        const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
-        if (!fs.existsSync(documentPath)) {
-            fs.writeFileSync(documentPath, JSON.stringify(response.otJson));
-        } else {
-            throw new Error(`Import cache file for offer_id ${offerId} already exists`);
-        }
-
+        await Utilities.writeContentsToFile(
+            cacheDirectory,
+            offerId,
+            JSON.stringify(response.otJson),
+        );
 
         const packedResponse = DHOfferHandleCommand._stripResponse(response);
         Object.assign(packedResponse, {
             dcNodeId,
-            documentPath,
+            documentPath: path.join(cacheDirectory, offerId),
         });
         return {
             commands: [

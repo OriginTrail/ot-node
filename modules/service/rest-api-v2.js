@@ -642,21 +642,25 @@ class RestAPIServiceV2 {
                     status: 'PENDING',
                 });
 
-                const documentPath = path.join(this.config.appDataPath, 'import_cache', inserted_object.dataValues.handler_id);
+                const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
-                if (!fs.existsSync(documentPath)) {
-                    fs.writeFileSync(documentPath, fileContent);
-                } else {
+                try {
+                    await Utilities.writeContentsToFile(
+                        cacheDirectory,
+                        inserted_object.dataValues.handler_id,
+                        fileContent,
+                    );
+                } catch (e) {
                     res.status(500);
                     res.send({
-                        message: `Cache file for generated import handler ${inserted_object.dataValues.handler_id} already exists`,
+                        message: `Error when creating import cache file for handler_id ${inserted_object.dataValues.handler_id}. ${e.message}`,
                     });
                     return;
                 }
 
                 const commandData = {
                     standard_id,
-                    documentPath,
+                    documentPath: path.join(cacheDirectory, inserted_object.dataValues.handler_id),
                     handler_id: inserted_object.dataValues.handler_id,
                 };
                 const commandSequence = [

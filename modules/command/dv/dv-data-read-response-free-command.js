@@ -100,16 +100,16 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         try {
-            const documentPath = path.join(this.config.appDataPath, 'import_cache', handler_id);
+            const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
-            if (!fs.existsSync(documentPath)) {
-                fs.writeFileSync(documentPath, JSON.stringify(document));
-            } else {
-                throw new Error(`Import cache file for generated handler ${handler_id} already exists`);
-            }
+            await Utilities.writeContentsToFile(
+                cacheDirectory,
+                handler_id,
+                JSON.stringify(document),
+            );
 
             const commandData = {
-                documentPath,
+                documentPath: path.join(cacheDirectory, handler_id),
                 handler_id,
                 data_provider_wallet: dcWallet,
                 purchased: true,
