@@ -62,7 +62,7 @@ class DHOfferHandleCommand extends Command {
         const documentPath = path.join(this.config.appDataPath, 'import_cache', offerId);
 
         if (!fs.existsSync(documentPath)) {
-            fs.writeFileSync(documentPath, JSON.stringify(response.otjson));
+            fs.writeFileSync(documentPath, JSON.stringify(response.otJson));
         } else {
             throw new Error(`Import cache file for offer_id ${offerId} already exists`);
         }
