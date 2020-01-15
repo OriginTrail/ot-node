@@ -116,6 +116,11 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
 
+        server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
+            await this._getChallenges(req, res);
+        });
+
+
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
             const nodeId = req.params.node_id;
@@ -599,6 +604,42 @@ class RestAPIServiceV2 {
             data: JSON.parse(data),
             status,
         });
+    }
+
+    async _getChallenges(req, res) {
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        // Check if import type is valid
+        if (req.body.startDate === undefined ||
+            req.body.endDate === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request startDate and endDate required!',
+            });
+            return;
+        }
+
+        const challenges = await Models.challenges.findAll({
+            where: {
+                start_time: {
+                    [Models.Sequelize.Op.between]:
+                        [(new Date(req.body.startDate)).getTime(),
+                            (new Date(req.body.endDate)).getTime()],
+                },
+            },
+            order: [
+                ['start_time', 'ASC'],
+            ],
+        });
+
+        res.status(200);
+        res.send(challenges);
     }
 
     // This is hardcoded import in case it is needed to make new importer with this method
