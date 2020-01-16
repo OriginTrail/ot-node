@@ -651,6 +651,12 @@ class RestAPIServiceV2 {
                         fileContent,
                     );
                 } catch (e) {
+                    const filePath =
+                        path.join(cacheDirectory, inserted_object.dataValues.handler_id);
+
+                    if (fs.existsSync(filePath)) {
+                        await Utilities.deleteDirectory(filePath);
+                    }
                     res.status(500);
                     res.send({
                         message: `Error when creating import cache file for handler_id ${inserted_object.dataValues.handler_id}. ${e.message}`,
