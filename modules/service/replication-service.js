@@ -24,7 +24,6 @@ class ReplicationService {
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
-        this.replicationCache = {};
         this.importService = ctx.importService;
 
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
@@ -144,8 +143,6 @@ class ReplicationService {
      * @return {Promise<void>}
      */
     async cleanup(internalOfferId) {
-        delete this.replicationCache[internalOfferId];
-
         this.logger.info(`Deleting replications directory and cache for offer with internal ID ${internalOfferId}`);
         const offerDirPath = this._getOfferDirPath(internalOfferId);
         await Utilities.deleteDirectory(offerDirPath);
@@ -169,20 +166,11 @@ class ReplicationService {
      * @return {Promise<*>}
      */
     async loadReplication(internalOfferId, color) {
-        let data;
-        if (this.replicationCache[internalOfferId]) {
-            data = this.replicationCache[internalOfferId][color];
-        }
+        const offerDirPath = this._getOfferDirPath(internalOfferId);
+        const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
-        if (data) {
-            this.logger.trace(`Loaded replication from cache for offer internal ID ${internalOfferId} and color ${color}`);
-        } else {
-            const offerDirPath = this._getOfferDirPath(internalOfferId);
-            const colorFilePath = path.join(offerDirPath, `${color}.json`);
-
-            data = JSON.parse(await Utilities.fileContents(colorFilePath));
-            this.logger.trace(`Loaded replication from file for offer internal ID ${internalOfferId} and color ${color}`);
-        }
+        const data = JSON.parse(await Utilities.fileContents(colorFilePath));
+        this.logger.trace(`Loaded replication from file for offer internal ID ${internalOfferId} and color ${color}`);
 
         return data;
     }
