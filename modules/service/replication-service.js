@@ -45,25 +45,15 @@ class ReplicationService {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
 
-        let otJson = await this.importService.getImport(offer.data_set_id);
+        const otJson = await this.importService.getImport(offer.data_set_id);
 
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
-
-        const originalDocumentPath = path.join(replicationPath, `${internalOfferId}-original.json`);
-        if (!fs.existsSync(originalDocumentPath)) {
-            fs.writeFileSync(originalDocumentPath, JSON.stringify(otJson));
-        } else {
-            throw new Error(`Replication cache file for internal offer ID ${internalOfferId} already exists`);
-        }
 
         const hashes = {};
 
         const writeFilePromises = [];
 
         for (let i = 0; i < 3; i += 1) {
-            if (i !== 0) {
-                otJson = JSON.parse(fs.readFileSync(originalDocumentPath, { encoding: 'utf-8' }));
-            }
             const color = this.castNumberToColor(i);
 
             const litigationKeyPair = Encryption.generateKeyPair(512);
