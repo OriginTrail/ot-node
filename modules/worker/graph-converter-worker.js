@@ -86,6 +86,27 @@ process.on('message', async (dataFromParent) => {
         const edges = [];
 
         document['@graph'].forEach((otObject) => {
+            if (!_id(otObject) && _id(otObject) !== '') {
+                throw Error('OT-JSON object missing @id parameter');
+            }
+
+            if (!_type(otObject) && _type(otObject) !== '') {
+                throw Error(`OT-JSON object ${_id(otObject)} missing @type parameter`);
+            }
+
+            if (!otObject.identifiers) {
+                throw Error(`OT-JSON object ${_id(otObject)} missing identifiers parameter`);
+            }
+
+            if (!otObject.properties) {
+                throw Error(`OT-JSON object ${_id(otObject)} missing properties parameter`);
+            }
+
+            if (!otObject.relations) {
+                throw Error(`OT-JSON object ${_id(otObject)} missing relations parameter`);
+            }
+
+
             switch (_type(otObject)) {
             case constants.objectType.otObject: {
                 // Create entity vertex.
