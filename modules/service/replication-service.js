@@ -4,7 +4,6 @@ const fs = require('fs');
 
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
-const MerkleTree = require('../Merkle');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
 
@@ -45,8 +44,6 @@ class ReplicationService {
         }
 
         const otJson = await this.importService.getImport(offer.data_set_id);
-
-        const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
 
         const hashes = {};
 
