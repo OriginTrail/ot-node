@@ -388,7 +388,7 @@ process.on('message', async (dataFromParent) => {
             process.exit(0);
         });
     } catch (e) {
-        process.send({ error: e.message });
+        process.send({ error: `${e.message}\n${e.stack}` });
     }
 });
 
