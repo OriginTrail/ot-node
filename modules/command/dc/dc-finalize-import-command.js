@@ -1,6 +1,7 @@
 const fs = require('fs');
 const Command = require('../command');
 const Models = require('../../../models');
+const Utilities = require('../../Utilities');
 
 class DcFinalizeImport extends Command {
     constructor(ctx) {
@@ -29,7 +30,7 @@ class DcFinalizeImport extends Command {
             total_documents,
         } = command.data;
 
-        this._removeDocumentCache(documentPath);
+        await Utilities.deleteDirectory(documentPath);
 
         if (error) {
             await this._processError(error, handler_id, documentPath);
@@ -144,17 +145,6 @@ class DcFinalizeImport extends Command {
 
         if (error.type !== 'ImporterError') {
             this.notifyError(error);
-        }
-    }
-
-    /**
-     * Removes the temporary document used as import cache file
-     * @param documentPath path to cache file
-     * @return undefined
-     */
-    _removeDocumentCache(documentPath) {
-        if (fs.existsSync(documentPath)) {
-            fs.unlinkSync(documentPath);
         }
     }
 }
