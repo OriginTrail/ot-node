@@ -59,15 +59,16 @@ class ReplicationService {
             const litigationKeyPair = Encryption.generateKeyPair(512);
             const distributionKeyPair = Encryption.generateKeyPair(512);
 
-            const encryptedDataset =
-                ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
-
-            const distEncDataset =
+            // TODO Optimize encryption to reduce memory usage
+            let encryptedDataset =
                 ImportUtilities.encryptDataset(otJson, distributionKeyPair.privateKey);
 
-            const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
+            const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
-            const distRootHash = ImportUtilities.calculateDatasetRootHash(distEncDataset['@graph'], distEncDataset['@id'], distEncDataset.datasetHeader.dataCreator);
+            encryptedDataset =
+                ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
+
+            const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
 
             const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
             // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
