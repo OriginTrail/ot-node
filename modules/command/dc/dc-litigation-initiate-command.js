@@ -50,17 +50,23 @@ class DCLitigationInitiateCommand extends Command {
             return Command.empty();
         }
 
-        if (offer.global_status !== 'ACTIVE') {
+        const replicatedData = await models.replicated_data.findOne({
+            where: { offer_id: offerId, dh_identity: dhIdentity },
+        });
+
+        if (replicatedData.status === 'PENALIZED') {
+            this.logger.trace(`Holder with id: ${dhIdentity} for offer ${offerId} was already penalized`);
+            return Command.empty();
+        }
+
+        if (replicatedData.status !== 'HOLDING') {
             // litigation or replacement is in progress
             this.logger.trace(`Litigation already in progress... It needs to be completed in order to litigate ${dhIdentity} for offer ${offerId}`);
             return Command.repeat(); // wait for offer to be active
         }
 
-        offer.global_status = 'LITIGATION_INITIATED';
-        await offer.save(({ fields: ['global_status'] }));
-        this.remoteControl.offerUpdate({
-            offer_id: offerId,
-        });
+        replicatedData.status = 'LITIGATION_STARTED';
+        await replicatedData.save({ fields: ['status'] });
 
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const otJson = await this.importService.getImport(offer.data_set_id);
