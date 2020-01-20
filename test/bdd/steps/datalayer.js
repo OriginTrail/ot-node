@@ -328,6 +328,7 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
             });
 
             const { proof, object_index } = proofData;
+            ImportUtilities.sortGraphRecursively([otObject]);
             const objectText = Utilities.sortedStringify(otObject);
 
             const merkleTree = new MerkleTree(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1'], 'distribution', 'sha3');
