@@ -637,9 +637,19 @@ class RestAPIServiceV2 {
                 ['start_time', 'ASC'],
             ],
         });
+        const returnChallenges = [];
+        challenges.forEach((challenge) => {
+            const answered = !!challenge.answer;
+            returnChallenges.push({
+                offer_id: challenge.offer_id,
+                start_time: challenge.start_time,
+                status: challenge.status,
+                answered,
+            });
+        });
 
         res.status(200);
-        res.send(challenges);
+        res.send(returnChallenges);
     }
 
     // This is hardcoded import in case it is needed to make new importer with this method
