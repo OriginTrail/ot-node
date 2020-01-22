@@ -43,10 +43,6 @@ class DCChallengesCommand extends Command {
                     return;
                 }
 
-                challenge.status = 'IN_PROGRESS';
-                await challenge.save({ fields: ['status'] });
-
-
                 challenged.status = 'CHALLENGING';
                 await challenged.save({ fields: ['status'] });
 

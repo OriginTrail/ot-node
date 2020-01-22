@@ -59,7 +59,7 @@ class DCLitigationInitiateCommand extends Command {
             return Command.empty();
         }
 
-        if (replicatedData.status !== 'HOLDING') {
+        if (replicatedData.status !== 'CHALLENGING') {
             // litigation or replacement is in progress
             this.logger.trace(`Litigation already in progress... It needs to be completed in order to litigate ${dhIdentity} for offer ${offerId}`);
             return Command.repeat(); // wait for offer to be active

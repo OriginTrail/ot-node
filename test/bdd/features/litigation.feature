@@ -3,42 +3,6 @@ Feature: Test various litigation scenarios
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @first
-  Scenario: Test litigation for one holder which is not responding
-    Given the replication difficulty is 0
-    And I setup 4 nodes
-    And I override configuration for all nodes
-      | dc_holding_time_in_minutes | 5 |
-      | numberOfChallenges | 100 |
-      | challengeResponseTimeMills | 5000 |
-    And I start the nodes
-    And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
-    And DC waits for import to finish
-    Then DC's last import's hash should be the same as one manually calculated
-    Given DC initiates the replication for last imported dataset
-    And DC waits for last offer to get written to blockchain
-    And I wait for replications to finish
-    Then the last root hash should be the same as one manually calculated
-    Then the last import should be the same on all nodes that replicated data
-    And I wait for challenges to start
-    And I corrupt 1st holder's database ot_vertices collection
-    And I wait for litigation initiation
-    And I corrupt 2nd holder's database ot_vertices collection
-    Then Litigator should delay other litigations while one is running
-    Then 1st holder to litigate should answer litigation
-    Then Litigator node should have completed litigation
-    Then 1st started holder should have been penalized
-#    Then Litigator should have started replacement for penalized holder
-#    Then I wait for 4 replacement replications to finish
-#    Then I wait for replacement to be completed
-#    Then 2nd holder to litigate should answer litigation
-#    Then Litigator node should have completed litigation
-#    Then 2nd started holder should have been penalized
-#    Then Litigator should have started replacement for penalized holder
-#    Then I wait for 3 replacement replications to finish
-#    Then I wait for replacement to be completed
-
   @second
   Scenario: Test litigation for one holder which has failed to answer challenge but succeeded to answer litigation (wrongly)
     Given the replication difficulty is 0
@@ -94,7 +58,7 @@ Feature: Test various litigation scenarios
     Then Litigator node should have completed litigation
     Then 1st started holder should not have been penalized
 
-  @fourth
+  @skip #to be done when we finish replacement
   Scenario: Test litigation case where same new nodes will apply for same offer
     Given the replication difficulty is 0
     And I setup 4 nodes
