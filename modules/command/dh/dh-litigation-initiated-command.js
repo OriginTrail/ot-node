@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether litigation is successfully initiated
@@ -42,11 +43,17 @@ class DHLitigationInitiatedCommand extends Command {
                         requestedBlockIndex,
                     } = JSON.parse(event.data);
 
-                    await this.dhService.handleLitigation(
-                        offerId,
-                        requestedObjectIndex,
-                        requestedBlockIndex,
-                    );
+                    this.logger.warn(`Litigation initiated for offer ${offerId}, object index ${requestedObjectIndex} and block index ${requestedBlockIndex}.`);
+
+                    await this.commandExecutor.add({
+                        name: 'dhLitigationAnswerCommand',
+                        data: {
+                            offerId,
+                            requestedObjectIndex,
+                            requestedBlockIndex,
+                        },
+                        retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
+                    });
                 }
             }
         } catch (e) {
