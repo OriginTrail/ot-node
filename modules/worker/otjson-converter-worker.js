@@ -3,22 +3,23 @@ const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler')
 
 process.on('message', (data) => {
     try {
-        data = JSON.parse(data);
+        const { standardId, config, dataset } = JSON.parse(data);
         let transpiler;
-        switch (data.standardId) {
+        switch (standardId) {
         case 'gs1': {
-            transpiler = new EpcisOtJsonTranspiler({ config: data.config });
+            transpiler = new EpcisOtJsonTranspiler({ config });
             break;
         }
         case 'wot': {
-            transpiler = new WotOtJsonTranspiler({ config: data.config });
+            transpiler = new WotOtJsonTranspiler({ config });
             break;
         }
         default:
-            process.send({ error: `Unsupported standardId: ${data.standardId}` });
+            process.send({ error: `Unsupported standardId: ${standardId}` });
             return;
         }
-        const stringifiedJson = transpiler.convertToOTJson(data.dataset);
+
+        const stringifiedJson = transpiler.convertToOTJson(dataset);
         process.send(stringifiedJson);
     } catch (e) {
         process.send({ error: `${e.message}\n${e.stack}` });

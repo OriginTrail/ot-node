@@ -1,5 +1,6 @@
 const { sha3_256 } = require('js-sha3');
 const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 
 /**
  * Returns value of '@id' property.
@@ -73,13 +74,12 @@ Object.freeze(constants);
 
 process.on('message', async (dataFromParent) => {
     const {
-        document, encryptedMap, wallet, handler_id,
+        document, encryptedMap,
     } = JSON.parse(dataFromParent);
 
     try {
         const datasetId = _id(document);
-        const header = document.datasetHeader;
-        const dataCreator = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        const dataCreator = ImportUtilities.getDataCreator(document.datasetHeader);
 
         // Result
         const vertices = [];
@@ -374,13 +374,13 @@ process.on('message', async (dataFromParent) => {
             // datasetContext: _context(data),
             datasetHeader: document.datasetHeader,
             signature: document.signature,
-            vertices: vertices.reduce((acc, current) => {
+            vertices: deduplicateVertices.reduce((acc, current) => {
                 if (!acc.includes(current._key)) {
                     acc.push(current._key);
                 }
                 return acc;
             }, []),
-            edges: edges.reduce((acc, current) => {
+            edges: deduplicateEdges.reduce((acc, current) => {
                 if (!acc.includes(current._key)) {
                     acc.push(current._key);
                 }
@@ -391,20 +391,23 @@ process.on('message', async (dataFromParent) => {
         const total_documents = document['@graph'].length;
         const root_hash = document.datasetHeader.dataIntegrity.proofs[0].proofValue;
 
+        const graphObject = {};
+        Object.assign(graphObject, ImportUtilities.unpackKeysAndSortVertices({
+            vertices: deduplicateVertices,
+            edges: deduplicateEdges,
+        }));
+        const data_hash = Utilities.normalizeHex(sha3_256(`${graphObject}`));
+
         const response = {
-            vertices,
-            edges,
+            vertices: deduplicateVertices,
+            edges: deduplicateEdges,
             metadata,
             datasetId,
-            header,
-            dataCreator,
-            wallet,
             total_documents,
             root_hash,
-            deduplicateEdges,
-            deduplicateVertices,
-            handler_id,
+            data_hash,
         };
+
         process.send(JSON.stringify(response), () => {
             process.exit(0);
         });

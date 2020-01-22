@@ -574,6 +574,40 @@ class ImportUtilities {
 
         return header;
     }
+
+    /**
+     * Extract Dataset creator identifier value from OT-JSON or graph header
+     * @static
+     * @param datasetHeader Header of the dataset in which the dataCreator field exists
+     * @returns String - Dataset creator identifier value (Currently ERC725 Identity)
+     */
+    static getDataCreator(datasetHeader) {
+        return datasetHeader.dataCreator.identifiers[0].identifierValue;
+    }
+
+    /**
+     * Process successfull import
+     * @static
+     * @param unpack  Unpack keys
+     * @param objects  Graph vertices and edges
+     * @return {Promise<>}
+     */
+    static unpackKeysAndSortVertices(objects, unpack = false) {
+        let {
+            vertices, edges,
+        } = objects;
+        if (unpack) {
+            ImportUtilities.unpackKeys(vertices, edges);
+        }
+
+        edges = Graph.sortVertices(edges);
+        vertices = Graph.sortVertices(vertices);
+
+        return {
+            vertices,
+            edges,
+        };
+    }
 }
 
 module.exports = ImportUtilities;
