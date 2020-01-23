@@ -38,7 +38,6 @@ class DCChallengesCommand extends Command {
                         offer_id: challenge.offer_id,
                     },
                 });
-
                 if (challenged.status !== 'HOLDING') {
                     return;
                 }
