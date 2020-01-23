@@ -39,6 +39,10 @@ class DCChallengesCommand extends Command {
                     },
                 });
 
+                challenge.status = 'IN_PROGRESS';
+                await challenge.save({ fields: ['status'] });
+
+
                 if (challenged.status !== 'HOLDING') {
                     return;
                 }
