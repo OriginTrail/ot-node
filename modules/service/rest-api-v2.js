@@ -632,6 +632,9 @@ class RestAPIServiceV2 {
                         [(new Date(req.body.startDate)).getTime(),
                             (new Date(req.body.endDate)).getTime()],
                 },
+                status: {
+                    [Models.Sequelize.Op.not]: 'PENDING',
+                },
             },
             order: [
                 ['start_time', 'ASC'],
