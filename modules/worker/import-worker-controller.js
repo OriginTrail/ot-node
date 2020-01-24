@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
 const bytes = require('utf8-length');
@@ -22,12 +23,16 @@ class ImportWorkerController {
     async startGraphConverterWorker(command) {
         this.logger.info('Starting graph converter worker');
         const {
-            document,
+            documentPath,
             handler_id,
             encryptedMap,
+            data_provider_wallet,
             purchased,
         } = command.data;
 
+        let document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
+        const otjson_size_in_bytes = bytes(document);
+        document = JSON.parse(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
@@ -35,8 +40,6 @@ class ImportWorkerController {
         );
 
         await this.importService.validateDocument(document);
-
-        const otjson_size_in_bytes = bytes(JSON.stringify(document));
 
         const forked = fork('modules/worker/graph-converter-worker.js');
 
@@ -46,31 +49,28 @@ class ImportWorkerController {
 
         forked.on('message', async (response) => {
             if (response.error) {
-                await this._sendErrorToFinalizeCommand(response.error, handler_id);
+                await this._sendErrorToFinalizeCommand(response.error, handler_id, documentPath);
                 forked.kill();
                 return;
             }
             const parsedData = JSON.parse(response);
+
+            fs.writeFileSync(documentPath, JSON.stringify({
+                vertices: parsedData.vertices,
+                edges: parsedData.edges,
+                metadata: parsedData.metadata,
+            }));
+
             const commandData = {
-                dbData: {
-                    vertices: parsedData.vertices,
-                    edges: parsedData.edges,
-                    metadata: parsedData.metadata,
-                    datasetId: parsedData.datasetId,
-                    header: parsedData.header,
-                    dataCreator: parsedData.dataCreator,
-                },
-                afterImportData: {
-                    wallet: parsedData.wallet,
-                    total_documents: parsedData.total_documents,
-                    root_hash: parsedData.root_hash,
-                    vertices: parsedData.deduplicateEdges,
-                    edges: parsedData.deduplicateVertices,
-                    data_set_id: parsedData.datasetId,
-                    handler_id: parsedData.handler_id,
-                    otjson_size_in_bytes,
-                    purchased,
-                },
+                handler_id,
+                documentPath,
+                data_set_id: parsedData.datasetId,
+                root_hash: parsedData.root_hash,
+                data_hash: parsedData.data_hash,
+                total_documents: parsedData.total_documents,
+                otjson_size_in_bytes,
+                data_provider_wallet,
+                purchased,
             };
 
             await this.commandExecutor.add({
@@ -86,36 +86,36 @@ class ImportWorkerController {
 
     async startOtjsonConverterWorker(command, standardId) {
         this.logger.info('Starting ot-json converter worker');
-        const { document, handler_id } = command.data;
-
+        const { documentPath, handler_id } = command.data;
+        const document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
         forked.send(JSON.stringify({ config: this.config, dataset: document, standardId }));
 
         forked.on('message', async (response) => {
             if (response.error) {
-                await this._sendErrorToFinalizeCommand(response.error, handler_id);
-                forked.kill();
-                return;
+                await this._sendErrorToFinalizeCommand(response.error, handler_id, documentPath);
+            } else {
+                const otjson = JSON.parse(response);
+                const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
+                fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));
+                const commandData = {
+                    documentPath,
+                    handler_id,
+                };
+                await this.commandExecutor.add({
+                    name: command.sequence[0],
+                    sequence: command.sequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
+                });
             }
-            const otjson = JSON.parse(response);
-            const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
-            const commandData = {
-                document: signedOtjson,
-                handler_id,
-            };
-            await this.commandExecutor.add({
-                name: command.sequence[0],
-                sequence: command.sequence.slice(1),
-                delay: 0,
-                data: commandData,
-                transactional: false,
-            });
             forked.kill();
         });
     }
 
-    async _sendErrorToFinalizeCommand(error, handler_id) {
+    async _sendErrorToFinalizeCommand(error, handler_id, documentPath) {
         await this.commandExecutor.add({
             name: 'dcFinalizeImportCommand',
             delay: 0,
@@ -123,6 +123,7 @@ class ImportWorkerController {
             data: {
                 error: { message: error },
                 handler_id,
+                documentPath,
             },
         });
     }

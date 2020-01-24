@@ -1,7 +1,9 @@
+const path = require('path');
+const fs = require('fs');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 const ImportUtilities = require('../ImportUtilities');
-const utilities = require('../Utilities');
+const Utilities = require('../Utilities');
 const Models = require('../../models');
 
 class RestAPIServiceV2 {
@@ -115,6 +117,11 @@ class RestAPIServiceV2 {
         server.get(`/api/${this.version_id}/network/read/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
         });
+
+        server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
+            await this._getChallenges(req, res);
+        });
+
 
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
@@ -268,7 +275,7 @@ class RestAPIServiceV2 {
                 const humanReadable = req.query.humanReadable === 'true';
 
                 const walletEthBalance = await web3.eth.getBalance(config.node_wallet);
-                const walletTokenBalance = await utilities.getTracTokenBalance(
+                const walletTokenBalance = await Utilities.getTracTokenBalance(
                     web3,
                     config.node_wallet,
                     blockchain.getTokenContractAddress(),
@@ -377,8 +384,8 @@ class RestAPIServiceV2 {
 
         const { identifier_types, identifier_values } = req.body;
 
-        if (utilities.arrayze(identifier_types).length !==
-            utilities.arrayze(identifier_values).length) {
+        if (Utilities.arrayze(identifier_types).length !==
+            Utilities.arrayze(identifier_values).length) {
             res.status(400);
             res.send({
                 message: 'Identifier array length mismatch',
@@ -394,13 +401,13 @@ class RestAPIServiceV2 {
 
         const keys = [];
 
-        const typesArray = utilities.arrayze(identifier_types);
-        const valuesArray = utilities.arrayze(identifier_values);
+        const typesArray = Utilities.arrayze(identifier_types);
+        const valuesArray = Utilities.arrayze(identifier_values);
 
         const { length } = typesArray;
 
         for (let i = 0; i < length; i += 1) {
-            keys.push(utilities.keyFrom(typesArray[i], valuesArray[i]));
+            keys.push(Utilities.keyFrom(typesArray[i], valuesArray[i]));
         }
 
         try {
@@ -444,7 +451,7 @@ class RestAPIServiceV2 {
         const { object_ids, dataset_id } = req.body;
 
         const response =
-            await this.importService.getMerkleProofs(utilities.arrayze(object_ids), dataset_id);
+            await this.importService.getMerkleProofs(Utilities.arrayze(object_ids), dataset_id);
 
         res.status(200);
         res.send(response);
@@ -601,6 +608,55 @@ class RestAPIServiceV2 {
         });
     }
 
+    async _getChallenges(req, res) {
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        // Check if import type is valid
+        if (req.body.startDate === undefined ||
+            req.body.endDate === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request startDate and endDate required!',
+            });
+            return;
+        }
+
+        const challenges = await Models.challenges.findAll({
+            where: {
+                start_time: {
+                    [Models.Sequelize.Op.between]:
+                        [(new Date(req.body.startDate)).getTime(),
+                            (new Date(req.body.endDate)).getTime()],
+                },
+                status: {
+                    [Models.Sequelize.Op.not]: 'PENDING',
+                },
+            },
+            order: [
+                ['start_time', 'ASC'],
+            ],
+        });
+        const returnChallenges = [];
+        challenges.forEach((challenge) => {
+            const answered = !!challenge.answer;
+            returnChallenges.push({
+                offer_id: challenge.offer_id,
+                start_time: challenge.start_time,
+                status: challenge.status,
+                answered,
+            });
+        });
+
+        res.status(200);
+        res.send(returnChallenges);
+    }
+
     // This is hardcoded import in case it is needed to make new importer with this method
     async _importDataset(req, res) {
         this.logger.api('POST: Import of data request received.');
@@ -629,7 +685,7 @@ class RestAPIServiceV2 {
         let fileContent;
         if (req.files !== undefined && req.files.file !== undefined) {
             const inputFile = req.files.file.path;
-            fileContent = await utilities.fileContents(inputFile);
+            fileContent = await Utilities.fileContents(inputFile);
         } else if (req.body.file !== undefined) {
             fileContent = req.body.file;
         }
@@ -639,9 +695,32 @@ class RestAPIServiceV2 {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
+
+                const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+
+                try {
+                    await Utilities.writeContentsToFile(
+                        cacheDirectory,
+                        inserted_object.dataValues.handler_id,
+                        fileContent,
+                    );
+                } catch (e) {
+                    const filePath =
+                        path.join(cacheDirectory, inserted_object.dataValues.handler_id);
+
+                    if (fs.existsSync(filePath)) {
+                        await Utilities.deleteDirectory(filePath);
+                    }
+                    res.status(500);
+                    res.send({
+                        message: `Error when creating import cache file for handler_id ${inserted_object.dataValues.handler_id}. ${e.message}`,
+                    });
+                    return;
+                }
+
                 const commandData = {
                     standard_id,
-                    document: fileContent,
+                    documentPath: path.join(cacheDirectory, inserted_object.dataValues.handler_id),
                     handler_id: inserted_object.dataValues.handler_id,
                 };
                 const commandSequence = [

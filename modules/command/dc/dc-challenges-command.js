@@ -38,14 +38,12 @@ class DCChallengesCommand extends Command {
                         offer_id: challenge.offer_id,
                     },
                 });
-
                 if (challenged.status !== 'HOLDING') {
                     return;
                 }
 
                 challenge.status = 'IN_PROGRESS';
                 await challenge.save({ fields: ['status'] });
-
 
                 challenged.status = 'CHALLENGING';
                 await challenged.save({ fields: ['status'] });
