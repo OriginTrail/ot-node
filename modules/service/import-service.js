@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
@@ -75,6 +77,7 @@ class ImportService {
         this.schemaValidator = ctx.schemaValidator;
         this.web3 = ctx.web3;
         this.log = ctx.logger;
+        this.config = ctx.config;
     }
 
     async getImport(datasetId, encColor = null) {
@@ -123,13 +126,33 @@ class ImportService {
 
         const datasetId = _id(document);
         const header = document.datasetHeader;
-        const dataCreator = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        const dataCreator = ImportUtilities.getDataCreator(header);
 
         // Result
         const vertices = [];
         const edges = [];
         const objectIds = [];
         document['@graph'].forEach((otObject) => {
+            if (!_id(otObject) && _id(otObject) !== '') {
+                throw Error('OT-JSON object missing @id parameter');
+            }
+
+            if (!_type(otObject) && _type(otObject) !== '') {
+                throw Error(`OT-JSON object ${_id(otObject)} missing @type parameter`);
+            }
+
+            if (!otObject.identifiers) {
+                throw Error(`OT-JSON object ${_id(otObject)} missing identifiers parameter`);
+            }
+
+            if (!otObject.properties) {
+                throw Error(`OT-JSON object ${_id(otObject)} missing properties parameter`);
+            }
+
+            if (!otObject.relations) {
+                throw Error(`OT-JSON object ${_id(otObject)} missing relations parameter`);
+            }
+
             objectIds.push(Utilities.keyFrom(dataCreator, _id(otObject)));
 
             switch (_type(otObject)) {
@@ -573,6 +596,7 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
+            ImportUtilities.sortGraphRecursively([reconstructedObjects[i]]);
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],

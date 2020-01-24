@@ -244,9 +244,13 @@ class EpcisOtJsonTranspiler {
                 }
 
                 const otVocabulary = {
+                    '@id': vocabularyElement._attributes.id,
+                    '@type': 'otObject',
                     identifiers: [],
                     relations: [],
+                    properties,
                 };
+                // TODO Find out what happens when there is no _attribute.id
                 if (vocabularyElement._attributes.id) {
                     otVocabulary.identifiers =
                         Object.entries(this._parseGS1Identifier(vocabularyElement._attributes.id))
@@ -254,10 +258,6 @@ class EpcisOtJsonTranspiler {
                 }
 
                 otVocabulary.identifiers.push(...this._findIdentifiers(vocabularyElement));
-
-                otVocabulary['@id'] = vocabularyElement._attributes.id;
-                otVocabulary.properties = properties;
-                otVocabulary['@type'] = 'otObject';
 
                 if (vocabularyElement.children) {
                     const compressedChildren = this._compressText(vocabularyElement.children);
@@ -418,16 +418,16 @@ class EpcisOtJsonTranspiler {
         const otObject = {
             '@type': 'otObject',
             '@id': id,
-            identifiers: [{
-                '@type': 'uuid',
-                '@value': id,
-            },
+            identifiers: [
+                {
+                    '@type': 'uuid',
+                    '@value': id,
+                },
             ],
-        };
-
-        otObject.relations = [];
-        otObject.properties = {
-            objectType: eventType,
+            relations: [],
+            properties: {
+                objectType: eventType,
+            },
         };
 
         const foundIdentifiers = this._findIdentifiers(event);

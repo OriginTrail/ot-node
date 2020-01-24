@@ -23,15 +23,7 @@ class DCOfferPrepareCommand extends Command {
             internalOfferId,
         } = command.data;
 
-        const colorsInfo = await this.replicationService.createReplications(internalOfferId);
-        const distLitRootHashes = (await Promise.all(colorsInfo.map(async (cInfo) => {
-            await this.replicationService.saveReplication(internalOfferId, cInfo.color, cInfo);
-
-            const hashes = {};
-            hashes[`${cInfo.color}LitigationHash`] = cInfo.litigationRootHash;
-            hashes[`${cInfo.color}DistributionHash`] = cInfo.distributionRootHash;
-            return hashes;
-        }))).reduce((acc, value) => Object.assign(acc, value));
+        const distLitRootHashes = await this.replicationService.createReplications(internalOfferId);
 
         const { data } = command;
         Object.assign(data, distLitRootHashes);

@@ -93,20 +93,23 @@ class WotOtJsonTranspiler {
             const otObject = {
                 '@type': 'otObject',
                 '@id': id,
-                identifiers: [{
-                    '@type': 'id',
-                    '@value': id,
-                }, {
-                    '@type': 'internal_id',
-                    '@value': property.id,
-                }, {
-                    '@type': 'name',
-                    '@value': property.name,
-                },
+                identifiers: [
+                    {
+                        '@type': 'id',
+                        '@value': id,
+                    },
+                    {
+                        '@type': 'internal_id',
+                        '@value': property.id,
+                    },
+                    {
+                        '@type': 'name',
+                        '@value': property.name,
+                    },
                 ],
+                properties: property.values,
+                relations: [],
             };
-            otObject.properties = property.values;
-            otObject.relations = [];
 
             result.push(otObject);
         }
@@ -171,19 +174,19 @@ class WotOtJsonTranspiler {
         const otObject = {
             '@type': 'otObject',
             '@id': id,
-            identifiers: [{
-                '@type': 'id',
-                '@value': id,
-            },
+            identifiers: [
+                {
+                    '@type': 'id',
+                    '@value': id,
+                },
             ],
-        };
-
-        otObject.relations = [];
-        otObject.properties = {
-            id: thing.id,
-            name: thing.name,
-            description: thing.description,
-            tags: thing.tags,
+            relations: [],
+            properties: {
+                id: thing.id,
+                name: thing.name,
+                description: thing.description,
+                tags: thing.tags,
+            },
         };
 
         const createRelation = (id, relType, data) => ({
@@ -243,17 +246,17 @@ class WotOtJsonTranspiler {
                     const otObject = {
                         '@type': 'otObject',
                         '@id': obj.id,
-                        identifiers: [{
-                            '@type': 'id',
-                            '@value': obj.id,
-                        },
+                        identifiers: [
+                            {
+                                '@type': 'id',
+                                '@value': obj.id,
+                            },
                         ],
+                        relations: [],
+                        properties: {
+                            '@type': obj.type,
+                        },
                     };
-                    otObject.properties = {
-                        '@type': obj.type,
-                    };
-
-                    otObject.relations = [];
 
                     results.push(otObject);
                 }

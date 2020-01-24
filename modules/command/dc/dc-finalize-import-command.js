@@ -1,10 +1,7 @@
+const fs = require('fs');
 const Command = require('../command');
 const Models = require('../../../models');
-const bytes = require('utf8-length');
 const Utilities = require('../../Utilities');
-const { sha3_256 } = require('js-sha3');
-const ImportUtilities = require('../../ImportUtilities');
-const Graph = require('../../Graph');
 
 class DcFinalizeImport extends Command {
     constructor(ctx) {
@@ -20,38 +17,38 @@ class DcFinalizeImport extends Command {
      * @param command
      */
     async execute(command) {
-        const { afterImportData, error } = command.data;
+        const {
+            error,
+            handler_id,
+            data_set_id,
+            data_provider_wallet,
+            purchased,
+            documentPath,
+            root_hash,
+            data_hash,
+            otjson_size_in_bytes,
+            total_documents,
+        } = command.data;
+
+        await Utilities.deleteDirectory(documentPath);
+
         if (error) {
-            await this._processError(error, command.data.handler_id);
+            await this._processError(error, handler_id, documentPath);
             return Command.empty();
         }
-        const response = await this._unpackKeysAndSortVertices(afterImportData);
-
-        const {
-            handler_id, otjson_size_in_bytes, total_documents, purchased,
-        } = afterImportData;
-        const {
-            data_set_id,
-            root_hash,
-            wallet, // TODO: Sender's wallet is ignored for now.
-            vertices,
-            edges,
-        } = response;
 
         try {
-            const importTimestamp = new Date();
-            const graphObject = {};
-            Object.assign(graphObject, { vertices, edges });
-            const dataHash = Utilities.normalizeHex(sha3_256(`${graphObject}`));
+            const import_timestamp = new Date();
+            this.remoteControl.importRequestData();
             await Models.data_info.create({
                 data_set_id,
                 root_hash,
-                data_provider_wallet: this.config.node_wallet,
-                import_timestamp: importTimestamp,
+                data_provider_wallet: data_provider_wallet || this.config.node_wallet,
+                import_timestamp,
                 total_documents,
                 origin: purchased ? 'PURCHASED' : 'IMPORTED',
                 otjson_size_in_bytes,
-                data_hash: dataHash,
+                data_hash,
             }).catch(async (error) => {
                 this.logger.error(error);
                 this.notifyError(error);
@@ -76,12 +73,10 @@ class DcFinalizeImport extends Command {
                     status: 'COMPLETED',
                     data: JSON.stringify({
                         dataset_id: data_set_id,
-                        import_time: importTimestamp.valueOf(),
+                        import_time: import_timestamp.valueOf(),
                         otjson_size_in_bytes,
                         root_hash,
-                        data_hash: dataHash,
-                        total_graph_entities: vertices.length
-                            + edges.length,
+                        data_hash,
                     }),
                 },
                 {
@@ -90,6 +85,7 @@ class DcFinalizeImport extends Command {
                     },
                 },
             );
+
             this.logger.info('Import complete');
             this.logger.info(`Root hash: ${root_hash}`);
             this.logger.info(`Data set ID: ${data_set_id}`);
@@ -130,7 +126,7 @@ class DcFinalizeImport extends Command {
         return command;
     }
 
-    async _processError(error, handlerId) {
+    async _processError(error, handlerId, documentPath) {
         this.logger.error(error.message);
         await Models.handler_ids.update(
             {
@@ -150,37 +146,6 @@ class DcFinalizeImport extends Command {
         if (error.type !== 'ImporterError') {
             this.notifyError(error);
         }
-    }
-
-    /**
-     * Process successfull import
-     * @param unpack  Unpack keys
-     * @param result  Import result
-     * @return {Promise<>}
-     */
-    _unpackKeysAndSortVertices(result, unpack = false) {
-        this.remoteControl.importRequestData();
-        const {
-            data_set_id, wallet, root_hash,
-        } = result;
-        let {
-            vertices, edges,
-        } = result;
-        if (unpack) {
-            ImportUtilities.unpackKeys(vertices, edges);
-        }
-
-        edges = Graph.sortVertices(edges);
-        vertices = Graph.sortVertices(vertices);
-
-        return {
-            data_set_id,
-            root_hash,
-            total_documents: edges.length + vertices.length,
-            vertices,
-            edges,
-            wallet,
-        };
     }
 }
 
