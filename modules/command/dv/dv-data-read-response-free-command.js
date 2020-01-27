@@ -1,4 +1,6 @@
 const bytes = require('utf8-length');
+const fs = require('fs');
+const path = require('path');
 
 const Models = require('../../../models/index');
 const Command = require('../command');
@@ -98,9 +100,18 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         try {
-            const commandData = {
-                document,
+            const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+
+            await Utilities.writeContentsToFile(
+                cacheDirectory,
                 handler_id,
+                JSON.stringify(document),
+            );
+
+            const commandData = {
+                documentPath: path.join(cacheDirectory, handler_id),
+                handler_id,
+                data_provider_wallet: dcWallet,
                 purchased: true,
             };
 

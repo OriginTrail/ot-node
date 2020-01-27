@@ -1,7 +1,7 @@
 /**
  * @constant {number} DEFAULT_CHALLENGE_NUMBER_OF_TESTS - Number of challenges per DH
  */
-exports.DEFAULT_CHALLENGE_NUMBER_OF_TESTS = 10;
+exports.DEFAULT_CHALLENGE_NUMBER_OF_TESTS = 2;
 
 /**
  * @constant {number} DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES - Block size in bytes used for Merkle tree
@@ -29,7 +29,7 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
  */
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
-    'dhReplacementStartedCommand', 'reputationUpdateCommand', 'autoupdaterCommand'];
+    'reputationUpdateCommand', 'autoupdaterCommand'];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
