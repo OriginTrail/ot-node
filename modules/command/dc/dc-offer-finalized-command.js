@@ -152,7 +152,7 @@ class DcOfferFinalizedCommand extends Command {
             const encryptionColor = this.replicationService.castNumberToColor(replicatedData.color);
 
             const encryptedGraph =
-                this.replicationService.replicationCache[offer.id][encryptionColor].otJson['@graph'];
+                (await this.replicationService.loadReplication(offer.id, encryptionColor)).otJson['@graph'];
             const challenges = this.challengeService.generateChallenges(
                 encryptedGraph, startTime,
                 endTime, this.config.numberOfChallenges,

@@ -100,7 +100,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         const dataCreator = {
             identifiers: [
                 {
-                    identifierValue: dataset.datasetHeader.dataCreator.identifiers[0].identifierValue,
+                    identifierValue: ImportUtilities.getDataCreator(dataset.datasetHeader),
                     identifierType: 'ERC725',
                     validationSchema: '/schemas/erc725-main',
                 },

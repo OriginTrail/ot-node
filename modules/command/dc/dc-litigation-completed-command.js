@@ -66,40 +66,12 @@ class DCLitigationCompletedCommand extends Command {
                     });
                     this.logger.info(`Challenges removed for DH with identity ${dhIdentity} and offer ${offerId}.`);
 
-                    const offer = await models.offers.findOne({
-                        where: {
-                            offer_id: offerId,
-                        },
-                    });
-
-                    offer.global_status = 'REPLACEMENT_STARTED';
-                    await offer.save({ fields: ['global_status'] });
-                    this.remoteControl.offerUpdate({
-                        offer_id: offerId,
-                    });
-
                     await models.reputation_data.create({
                         dh_identity: dhIdentity,
                         offer_id: offerId,
                         reputation_delta: '-1',
                         timestamp: Date.now(),
                     });
-
-                    return {
-                        commands: [
-                            {
-                                data: {
-                                    offerId,
-                                    dhIdentity,
-                                },
-                                name: 'dcLitigationReplacementStartedCommand',
-                                delay: 0,
-                                period: 5000,
-                                deadline_at: Date.now() + (5 * 60 * 1000),
-                                transactional: false,
-                            },
-                        ],
-                    };
                 }
 
                 const offer = await models.offers.findOne({
@@ -108,12 +80,17 @@ class DCLitigationCompletedCommand extends Command {
                     },
                 });
 
-                offer.global_status = 'ACTIVE';
-                await offer.save({ fields: ['global_status'] });
-                this.remoteControl.offerUpdate({
-                    offer_id: offerId,
+                const holdingCount = await models.replicated_data.count({
+                    where: { offer_id: offerId, status: 'HOLDING' },
                 });
-                this.logger.important(`DH ${dhIdentity} has successfully answered litigation.`);
+
+                if (holdingCount === 0) {
+                    offer.global_status = 'FAILED';
+                    await offer.save({ fields: ['global_status'] });
+                    this.remoteControl.offerUpdate({
+                        offer_id: offerId,
+                    });
+                }
                 return Command.empty();
             }
         }

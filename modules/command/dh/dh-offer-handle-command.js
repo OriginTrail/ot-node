@@ -1,5 +1,8 @@
+const path = require('path');
+const fs = require('fs');
 const Command = require('../command');
 const Models = require('../../../models/index');
+const Utilities = require('../../Utilities');
 
 /**
  * Handles new offer from the DH side
@@ -57,9 +60,18 @@ class DHOfferHandleCommand extends Command {
 
         this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Response received.`);
 
+        const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+
+        await Utilities.writeContentsToFile(
+            cacheDirectory,
+            offerId,
+            JSON.stringify(response.otJson),
+        );
+
         const packedResponse = DHOfferHandleCommand._stripResponse(response);
         Object.assign(packedResponse, {
             dcNodeId,
+            documentPath: path.join(cacheDirectory, offerId),
         });
         return {
             commands: [
@@ -81,7 +93,6 @@ class DHOfferHandleCommand extends Command {
         return {
             offerId: response.offer_id,
             dataSetId: response.data_set_id,
-            otJson: response.otJson,
             dcWallet: response.dc_wallet,
             dcNodeId: response.dcNodeId,
             litigationPublicKey: response.litigation_public_key,
