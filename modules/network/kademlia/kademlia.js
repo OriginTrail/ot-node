@@ -93,6 +93,28 @@ class Kademlia {
         this.config.identity = this.identity.fingerprint.toString('hex');
 
         this.log.notify(`My network identity: ${this.config.identity}`);
+
+        const fingerprintFIle = path.join(
+            this.config.appDataPath,
+            'fingerprint.json',
+        );
+
+        if (fs.existsSync(fingerprintFIle)) {
+            fs.unlinkSync(fingerprintFIle);
+        }
+
+        fs.writeFileSync(fingerprintFIle, `{"identity":"${this.config.identity}"}`);
+
+        const homeDir = require('os').homedir();
+        const forwardDir = `${homeDir}/forwards/`;
+        const forwardTo = path.join(
+            forwardDir,
+            `${this.config.identity}.json`,
+        );
+        if (fs.existsSync(forwardTo)) {
+            fs.unlinkSync(forwardTo);
+        }
+        fs.writeFileSync(forwardTo, '[]');
     }
 
     /**
@@ -150,6 +172,7 @@ class Kademlia {
             this.log.info('Hashcash initialised');
 
             this.node.quasar = this.node.plugin(kadence.quasar());
+            this.node.quasar.appDataPath = this.config.appDataPath;
 
             this.log.info('Quasar initialised');
 
@@ -338,6 +361,34 @@ class Kademlia {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
         });
+
+        this.node.quasar.quasarSubscribe('kad-broadcast-request', async (message, err) => {
+            this.log.info('New broadcast request received');
+            const contact = await this.node.getContact(message.nodeId);
+            const myIdentity = this.node.identity.toString('hex');
+            return new Promise((resolve, reject) => {
+                this.node.send('kad-broadcast-response', { myIdentity }, [message.nodeId, contact], (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(res);
+                    }
+                });
+            });
+        });
+
+        this.node.use('kad-broadcast-response', (request, response, next) => {
+            this.log.info(`Broadcast response received for ${request.contact[0]}`);
+            const broadcastResultFilePath = path.join(
+                this.config.appDataPath,
+                'broadcast.json',
+            );
+            const broadcastArray = JSON.parse(fs.readFileSync(broadcastResultFilePath));
+            broadcastArray.push(request.contact[0]);
+            fs.writeFileSync(broadcastResultFilePath, JSON.stringify(broadcastArray));
+            response.send([]);
+        });
+
 
         // sync
         this.node.use('kad-replication-request', (request, response, next) => {

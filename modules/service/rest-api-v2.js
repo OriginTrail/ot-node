@@ -152,6 +152,22 @@ class RestAPIServiceV2 {
             res.send(body);
         });
 
+        server.get(`/api/${this.version_id}/network/broadcast`, async (req, res) => {
+            this.logger.api('Broadcasting');
+
+            const broadcastResultFilePath = path.join(
+                this.config.appDataPath,
+                'broadcast.json',
+            );
+            fs.writeFileSync(broadcastResultFilePath, '[]');
+
+            await transport.publish('kad-broadcast-request', { nodeId: this.config.identity });
+            const body = {};
+
+            res.status(200);
+            res.send(body);
+        });
+
         /**
          * Temporary route used for HTTP network prototype
          */
