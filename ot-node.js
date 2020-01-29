@@ -682,7 +682,7 @@ function main() {
     otNode.bootstrap().then(async () => {
         log.info('OT Node started');
         const options = {
-            uri: `http://93.186.70.40:8900/api/latest/network/count_on_me/${config.identity}`,
+            uri: `http://192.168.88.75:8900/api/latest/network/count_on_me/${config.identity}`,
             method: 'GET',
         };
 
