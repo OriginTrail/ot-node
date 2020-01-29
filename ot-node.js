@@ -47,6 +47,7 @@ const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-ident
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
+const request = require('request-promise-native');
 
 const { execSync } = require('child_process');
 const semver = require('semver');
@@ -678,8 +679,14 @@ log.info('');
 
 function main() {
     const otNode = new OTNode();
-    otNode.bootstrap().then(() => {
+    otNode.bootstrap().then(async () => {
         log.info('OT Node started');
+        const options = {
+            uri: `http://127.0.0.1:8900/api/latest/network/count_on_me/${config.identity}`,
+            method: 'GET',
+        };
+
+        const result = await request(options);
     });
 }
 

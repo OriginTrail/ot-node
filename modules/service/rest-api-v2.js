@@ -5,6 +5,9 @@ const RestAPIValidator = require('../validator/rest-api-validator');
 const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const Models = require('../../models');
+const homeDir = require('os').homedir();
+const { lstatSync, readdirSync } = require('fs');
+const { join, basename, parse } = require('path');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -155,17 +158,49 @@ class RestAPIServiceV2 {
         server.get(`/api/${this.version_id}/network/broadcast`, async (req, res) => {
             this.logger.api('Broadcasting');
 
-            const broadcastResultFilePath = path.join(
-                this.config.appDataPath,
-                'broadcast.json',
-            );
-            fs.writeFileSync(broadcastResultFilePath, '[]');
 
-            await transport.publish('kad-broadcast-request', { nodeId: this.config.identity });
+            const isDirectory = source => lstatSync(source).isDirectory();
+            const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
+            const broadcastDir = (getDirectories(`${homeDir}/kademlia/logs/`).sort()).slice(-1)[0];
+
+            fs.writeFileSync(`${broadcastDir}/broadcast.json`, '[]');
+            await transport.publish('kad-broadcast-request', { nodeId: this.config.identity, broadcastDir });
             const body = {};
 
             res.status(200);
             res.send(body);
+        });
+
+        server.get(`/api/${this.version_id}/network/count_on_me/:node_id`, async (req, res) => {
+            const nodeId = req.params.node_id;
+
+            const isDirectory = source => lstatSync(source).isDirectory();
+            const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
+            const broadcastDir = (getDirectories(`${homeDir}/kademlia/logs/`).sort()).slice(-1)[0];
+
+            if (!fs.existsSync(`${broadcastDir}/identities.json`)) {
+                fs.writeFileSync(`${broadcastDir}/identities.json`, '[]');
+            }
+            const identitiesArray = JSON.parse(fs.readFileSync(`${broadcastDir}/identities.json`));
+            identitiesArray.push(nodeId);
+            fs.writeFileSync(`${broadcastDir}/identities.json`, JSON.stringify(identitiesArray));
+            const body = {};
+
+            res.status(200);
+            res.send(body);
+        });
+
+        server.get(`/api/${this.version_id}/network/get_broadcast_details`, async (req, res) => {
+            const isDirectory = source => lstatSync(source).isDirectory();
+            const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
+            const broadcastDir = (getDirectories(`${homeDir}/kademlia/logs/`).sort()).slice(-1)[0];
+
+            let forwards = [];
+            if (fs.existsSync(`${broadcastDir}/${this.config.identity}.json`)) {
+                forwards = JSON.parse(fs.readFileSync(`${broadcastDir}/${this.config.identity}.json`));
+            }
+            res.status(200);
+            res.send(forwards);
         });
 
         /**

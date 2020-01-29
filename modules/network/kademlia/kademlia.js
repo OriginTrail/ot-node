@@ -13,6 +13,7 @@ const leveldown = require('leveldown');
 const ip = require('ip');
 const uuidv4 = require('uuid/v4');
 const secp256k1 = require('secp256k1');
+const homeDir = require('os').homedir();
 
 const KadenceUtils = require('@deadcanaries/kadence/lib/utils.js');
 const { IncomingMessage, OutgoingMessage } = require('./logger');
@@ -105,16 +106,8 @@ class Kademlia {
 
         fs.writeFileSync(fingerprintFIle, `{"identity":"${this.config.identity}"}`);
 
-        const homeDir = require('os').homedir();
-        const forwardDir = `${homeDir}/forwards/`;
-        const forwardTo = path.join(
-            forwardDir,
-            `${this.config.identity}.json`,
-        );
-        if (fs.existsSync(forwardTo)) {
-            fs.unlinkSync(forwardTo);
-        }
-        fs.writeFileSync(forwardTo, '[]');
+        if (!fs.existsSync(`${homeDir}/kademlia`)) { fs.mkdirSync(`${homeDir}/kademlia`); }
+        if (!fs.existsSync(`${homeDir}/kademlia/logs`)) { fs.mkdirSync(`${homeDir}/kademlia/logs`); }
     }
 
     /**
@@ -363,11 +356,11 @@ class Kademlia {
         });
 
         this.node.quasar.quasarSubscribe('kad-broadcast-request', async (message, err) => {
-            this.log.info('New broadcast request received');
+            this.log.info('Broadcast request received');
             const contact = await this.node.getContact(message.nodeId);
             const myIdentity = this.node.identity.toString('hex');
             return new Promise((resolve, reject) => {
-                this.node.send('kad-broadcast-response', { myIdentity }, [message.nodeId, contact], (err, res) => {
+                this.node.send('kad-broadcast-response', { myIdentity, broadcastDir: JSON.stringify(message.broadcastDir) }, [message.nodeId, contact], (err, res) => {
                     if (err) {
                         reject(err);
                     } else {
@@ -379,13 +372,10 @@ class Kademlia {
 
         this.node.use('kad-broadcast-response', (request, response, next) => {
             this.log.info(`Broadcast response received for ${request.contact[0]}`);
-            const broadcastResultFilePath = path.join(
-                this.config.appDataPath,
-                'broadcast.json',
-            );
-            const broadcastArray = JSON.parse(fs.readFileSync(broadcastResultFilePath));
+            const broadcastDir = JSON.parse(request.params.broadcastDir);
+            const broadcastArray = JSON.parse(fs.readFileSync(`${broadcastDir}/broadcast.json`));
             broadcastArray.push(request.contact[0]);
-            fs.writeFileSync(broadcastResultFilePath, JSON.stringify(broadcastArray));
+            fs.writeFileSync(`${broadcastDir}/broadcast.json`, JSON.stringify(broadcastArray));
             response.send([]);
         });
 
