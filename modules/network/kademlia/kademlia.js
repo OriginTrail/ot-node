@@ -359,6 +359,7 @@ class Kademlia {
         this.node.quasar.quasarSubscribe('kad-broadcast-request', async (message, err) => {
             this.log.info('Broadcast request received');
             this.log.info(`ALPHA is ${kadence.constants.ALPHA}.`);
+            this.log.info(`MAX_RELAY_HOPS is ${kadence.constants.MAX_RELAY_HOPS}.`);
             const contact = await this.node.getContact(message.nodeId);
             const myIdentity = this.node.identity.toString('hex');
             return new Promise((resolve, reject) => {
