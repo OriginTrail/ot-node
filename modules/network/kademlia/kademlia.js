@@ -38,6 +38,7 @@ class Kademlia {
         this.approvalService = ctx.approvalService;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
+        kadence.constants.ALPHA = 6;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
         kadence.constants.IDENTITY_DIFFICULTY = this.config.network.identityDifficulty;
         this.log.info(`Network solution difficulty ${kadence.constants.SOLUTION_DIFFICULTY}.`);
