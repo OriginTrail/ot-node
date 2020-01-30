@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creationDate="2005-07-11T11:30:47.0Z"
+    schemaVersion="1.2">
+    <EPCISBody>
+        <EventList>
+            <ObjectEvent id="receiving_product">
+                <eventTime>2019-10-12T15:00:00.000-06:00</eventTime>
+                <eventTimeZoneOffset>-06:00</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:111111111</epc>
+                </epcList>
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:0000000.33333.0</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:0000000.33333.0</id>
+                </bizLocation>
+                <bizTransactionList>
+                    <bizTransaction>klotFarmAtt326122019:0x611d771aafaa3d6fb66c4a81d97768300a6882d5</bizTransaction>
+                </bizTransactionList>
+
+            </ObjectEvent> 
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>
