@@ -217,6 +217,24 @@ class RestAPIServiceV2 {
             res.send(body);
         });
 
+        server.post(`/api/${this.version_id}/network/set_max_relay_hops`, async (req, res) => {
+            if (req.body === undefined) {
+                res.status(400);
+                res.send({
+                    message: 'Bad request',
+                });
+                return;
+            }
+
+            kadence.constants.MAX_RELAY_HOPS = req.body.max_relay_hops;
+            this.logger.api(`MAX_RELAY_HOPS changed to ${kadence.constants.MAX_RELAY_HOPS}.`);
+
+            const body = {};
+
+            res.status(200);
+            res.send(body);
+        });
+
         server.get(`/api/${this.version_id}/network/get_broadcast_details`, async (req, res) => {
             const isDirectory = source => lstatSync(source).isDirectory();
             const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
