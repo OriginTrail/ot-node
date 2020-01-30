@@ -684,7 +684,7 @@ function main() {
         log.info('OT Node started');
 
         const options = {
-            uri: 'http://192.168.88.75:8900/api/latest/network/count_on_me',
+            uri: 'http://192.168.0.153:8900/api/latest/network/count_on_me',
             method: 'POST',
             formData: {
                 identity: `${config.identity}`,
