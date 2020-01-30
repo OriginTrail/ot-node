@@ -171,19 +171,27 @@ class RestAPIServiceV2 {
             res.send(body);
         });
 
-        server.get(`/api/${this.version_id}/network/count_on_me/:node_id`, async (req, res) => {
-            const nodeId = req.params.node_id;
+        server.post(`/api/${this.version_id}/network/count_on_me`, async (req, res) => {
+            this.logger.api('POST: Count on me.');
+
+            if (req.body === undefined) {
+                res.status(400);
+                res.send({
+                    message: 'Bad request',
+                });
+                return;
+            }
 
             const isDirectory = source => lstatSync(source).isDirectory();
             const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
             const broadcastDir = (getDirectories(`${homeDir}/kademlia/logs/`).sort()).slice(-1)[0];
 
             if (!fs.existsSync(`${broadcastDir}/identities.json`)) {
-                fs.writeFileSync(`${broadcastDir}/identities.json`, '[]');
+                fs.writeFileSync(`${broadcastDir}/identities.json`, '{}');
             }
-            const identitiesArray = JSON.parse(fs.readFileSync(`${broadcastDir}/identities.json`));
-            identitiesArray.push(nodeId);
-            fs.writeFileSync(`${broadcastDir}/identities.json`, JSON.stringify(identitiesArray));
+            const identitiesObject = JSON.parse(fs.readFileSync(`${broadcastDir}/identities.json`));
+            identitiesObject[req.body.identity] = { index: req.body.index, ip: req.body.ip };
+            fs.writeFileSync(`${broadcastDir}/identities.json`, JSON.stringify(identitiesObject));
             const body = {};
 
             res.status(200);

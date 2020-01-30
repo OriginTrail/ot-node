@@ -48,6 +48,7 @@ const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const request = require('request-promise-native');
+var ip = require('ip');
 
 const { execSync } = require('child_process');
 const semver = require('semver');
@@ -681,9 +682,15 @@ function main() {
     const otNode = new OTNode();
     otNode.bootstrap().then(async () => {
         log.info('OT Node started');
+
         const options = {
-            uri: `http://192.168.88.75:8900/api/latest/network/count_on_me/${config.identity}`,
-            method: 'GET',
+            uri: 'http://192.168.88.75:8900/api/latest/network/count_on_me',
+            method: 'POST',
+            formData: {
+                identity: `${config.identity}`,
+                index: `${config.node_rpc_port}`,
+                ip: `${ip.address()}`,
+            },
         };
 
         const result = await request(options);
