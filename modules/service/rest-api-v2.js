@@ -8,6 +8,7 @@ const Models = require('../../models');
 const homeDir = require('os').homedir();
 const { lstatSync, readdirSync } = require('fs');
 const { join, basename, parse } = require('path');
+const kadence = require('@deadcanaries/kadence');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -192,6 +193,24 @@ class RestAPIServiceV2 {
             const identitiesObject = JSON.parse(fs.readFileSync(`${broadcastDir}/identities.json`));
             identitiesObject[req.body.identity] = { index: req.body.index, ip: req.body.ip };
             fs.writeFileSync(`${broadcastDir}/identities.json`, JSON.stringify(identitiesObject));
+            const body = {};
+
+            res.status(200);
+            res.send(body);
+        });
+
+        server.post(`/api/${this.version_id}/network/set_alpha`, async (req, res) => {
+            if (req.body === undefined) {
+                res.status(400);
+                res.send({
+                    message: 'Bad request',
+                });
+                return;
+            }
+
+            kadence.constants.ALPHA = req.body.alpha;
+            this.logger.api(`ALPHA changed to ${kadence.constants.ALPHA}.`);
+
             const body = {};
 
             res.status(200);
