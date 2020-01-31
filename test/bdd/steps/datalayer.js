@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions, max-len, no-await-in-loop */
 
 const {
-    Then, Given
+    Then, Given,
 } = require('cucumber');
 const { expect } = require('chai');
 
