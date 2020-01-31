@@ -22,9 +22,9 @@
                     <id>urn:epc:id:sgln:0000000.55555.0</id>
                 </bizLocation>
                 <bizTransactionList>
-                    <bizTransaction>klotFarmAtt326122020:0x56d85ffb2ac0ce720047490c8092305917da321b</bizTransaction>
+                    <bizTransaction>sampleFarmAtDate14102019:0x75bd15b2f5a5f2ead02717973e1fdf1d4c8f914a</bizTransaction>
                 </bizTransactionList>
-            </ObjectEvent> 
+            </ObjectEvent>
         </EventList>
     </EPCISBody>
 </epcis:EPCISDocument>

@@ -21,10 +21,10 @@
                     <id>urn:epc:id:sgln:0000000.22222.0</id>
                 </bizLocation>
                 <bizTransactionList>
-                    <bizTransaction>klotFarmAtt326122019:0x425c751e2000773041e0f2424d6f9cf3c2777417</bizTransaction>
+                    <bizTransaction>sampleFarmAtDate12102019:0x475092045ff115c5eea7679d7edae8c97a64967c</bizTransaction>
                 </bizTransactionList>
 
-            </ObjectEvent> 
+            </ObjectEvent>
         </EventList>
     </EPCISBody>
 </epcis:EPCISDocument>

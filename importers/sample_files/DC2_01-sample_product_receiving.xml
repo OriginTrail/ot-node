@@ -21,7 +21,7 @@
                     <id>urn:epc:id:sgln:0000000.33333.0</id>
                 </bizLocation>
                 <bizTransactionList>
-                    <bizTransaction>klotFarmAtt326122019:0xd5ddaf0d5686ace0735256333eeddf7eb637fe67</bizTransaction>
+                    <bizTransaction>sampleFarmAtDate12102019:0xfc41a6e359ee40996fe08f2d2e8728d2bc204442</bizTransaction>
                 </bizTransactionList>
 
             </ObjectEvent>
