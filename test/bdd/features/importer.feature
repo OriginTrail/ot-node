@@ -34,7 +34,7 @@ Feature: Test basic importer features
     And DC waits for import to finish
     And DC imports "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Then the traversal from id "urn:epc:id:sgtin:Batch_1" with connection types "EPC" should contain 3 objects
+    Then the traversal from "id" "urn:epc:id:sgtin:Batch_1" with connection types "EPC" should contain 3 objects
 
   @fourth
   Scenario: Check that trail returns the expected objects
@@ -53,7 +53,7 @@ Feature: Test basic importer features
     And DC waits for import to finish
     And DC imports "importers/xml_examples/Retail/06_Pink_to_Red_receipt.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Then the traversal from id "urn:epc:id:sgtin:Batch_1" with connection types "EPC,BIZ_LOCATION" should contain 5 objects
+    Then the traversal from "id" "urn:epc:id:sgtin:Batch_1" with connection types "EPC,BIZ_LOCATION" should contain 5 objects
     And the last traversal should contain 2 objects with type "otObject.properties.vocabularyType" and value "urn:ot:object:location"
     And the last traversal should contain 1 objects with type "otObject.properties.urn:ot:object:product:batch:productId" and value "urn:ot:object:product:id:Product_1"
     And the last traversal should contain 2 objects with type "otObject.properties.objectType" and value "ObjectEvent"
@@ -92,7 +92,7 @@ Feature: Test basic importer features
     And DC waits for import to finish
     And DC imports "importers/use_cases/connectors/02_Green_to_Pink_receipt.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Then the traversal from id "connectionId" with connection types "CONNECTION_DOWNSTREAM" should contain 2 objects
+    Then the traversal from "id" "connectionId" with connection types "CONNECTION_DOWNSTREAM" should contain 2 objects
 
   @third
   Scenario: Return all data related to a specific identifier
@@ -103,7 +103,7 @@ Feature: Test basic importer features
     And DC waits for import to finish
     And DC initiates the replication for last imported dataset
     And I wait for replications to finish
-    Then the traversal from id "100678" with connection types "EPC" should contain 5 objects
+    Then the traversal from "id" "100678" with connection types "EPC" should contain 5 objects
     And I calculate and validate the proof of the last traversal
 
   @fourth

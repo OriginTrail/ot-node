@@ -138,18 +138,18 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
 });
 
 Then(
-    /^the traversal from id "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
+    /^the traversal from "(\S+)" "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
     { timeout: 120000 },
-    async function (id, connectionTypes, expectedNumberOfObjects) {
+    async function (id_type, id_value, connectionTypes, expectedNumberOfObjects) {
         expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
         const { dc } = this.state;
 
         const host = dc.state.node_rpc_url;
         const trailParams = {
-            identifier_types: ['id'],
-            identifier_values: [id],
+            identifier_types: [id_type],
+            identifier_values: [id_value],
             connection_types: connectionTypes.split(','),
-            depth: 10,
+            depth: 50,
         };
 
         const trail = await httpApiHelper.apiTrail(host, trailParams);
