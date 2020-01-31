@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions, max-len, no-await-in-loop */
 
 const {
-    Then,
+    Then, Given
 } = require('cucumber');
 const { expect } = require('chai');
 
@@ -137,10 +137,10 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
     });
 });
 
-Then(
-    /^the traversal from "(\S+)" "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
+Given(
+    /^I call traversal from "(\S+)" "(\S+)" with connection types "(\S+)"/,
     { timeout: 120000 },
-    async function (id_type, id_value, connectionTypes, expectedNumberOfObjects) {
+    async function (id_type, id_value, connectionTypes) {
         expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
         const { dc } = this.state;
 
@@ -153,13 +153,6 @@ Then(
         };
 
         const trail = await httpApiHelper.apiTrail(host, trailParams);
-
-        expect(trail, 'should not be null').to.not.be.undefined;
-        expect(trail, 'should be an Array').to.be.an.instanceof(Array);
-        expect(
-            trail.length,
-            `Traversal result should contain ${expectedNumberOfObjects} object(s)`,
-        ).to.be.equal(expectedNumberOfObjects);
 
         this.state.lastTrail = trail;
     },
@@ -278,6 +271,19 @@ Then(
         expect(
             filteredTrail.length,
             `Traversal should contain ${expectedNumberOfObjects} of selected objects`,
+        ).to.be.equal(expectedNumberOfObjects);
+    },
+);
+
+Then(
+    /^the last traversal should contain (\d+) objects in total/,
+    async function (expectedNumberOfObjects) {
+        expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
+        const { lastTrail } = this.state;
+
+        expect(
+            lastTrail.length,
+            `Traversal should contain ${expectedNumberOfObjects} objects`,
         ).to.be.equal(expectedNumberOfObjects);
     },
 );
