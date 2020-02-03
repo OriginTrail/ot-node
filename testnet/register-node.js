@@ -111,7 +111,7 @@ function checkForUpdate() {
             const filePath = `/ot-node/${fileName}`;
             if (fs.lstatSync(filePath).isDirectory()
                 && filePath !== updateInfo.path
-                 && /^[0-9]\.[0-9]\.[0-9]/.test(fileName)) {
+                 && /^\d+\.\d+\.\d+$/.test(fileName)) {
                 fs.rmdirSync(filePath);
                 logger.trace(`Successfully removed old version directory: ${filePath}`);
             }
