@@ -106,7 +106,16 @@ function checkForUpdate() {
         // Just replace current link.
         execSync(`ln -fns ${updateInfo.path} /ot-node/current`);
 
-        // TODO: Remove old version dir.
+        const fileList = fs.readdirSync('/ot-node');
+        fileList.forEach((fileName) => {
+            const filePath = `/ot-node/${fileName}`;
+            if (fs.lstatSync(filePath).isDirectory()
+                && filePath !== updateInfo.path
+                 && /^[0-9]\.[0-9]\.[0-9]/.test(fileName)) {
+                fs.rmdirSync(filePath);
+                logger.trace(`Successfully removed old version directory: ${filePath}`);
+            }
+        });
 
         logger.important(`OT Node updated to ${updateInfo.version}. Resetting...`);
         process.exit(2);
