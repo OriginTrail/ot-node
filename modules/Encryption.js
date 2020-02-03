@@ -12,7 +12,7 @@ class Encryption {
      * @param Key bit size (optional)
      * @returns {privateKey: string, publicKey: string}
      */
-    static generateKeyPair(bitSize = 512) {
+    static generateKeyPair(bitSize = 2048) {
         const rsa = new RSA({ b: bitSize });
         const privateKey = rsa.exportKey('pkcs8-private');
         const publicKey = rsa.exportKey('pkcs8-public');
