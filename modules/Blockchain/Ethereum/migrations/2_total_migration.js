@@ -108,7 +108,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        for (let i = 0; i < 100; i += 1) {
+        for (let i = 0; i < 1000; i += 1) {
             amounts.push(amountToMint);
             recepients.push(accounts[i]);
         }
@@ -176,7 +176,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        for (let i = 0; i < 100; i += 1) {
+        for (let i = 0; i < 1000; i += 1) {
             amounts.push(amountToMint);
             recepients.push(accounts[i]);
         }
@@ -237,7 +237,7 @@ module.exports = async (deployer, network, accounts) => {
             .then(result => token = result);
         holding = await deployer.deploy(MockHolding);
 
-        for (var i = 0; i < 100; i += 1) {
+        for (var i = 0; i < 1000; i += 1) {
             amounts.push(amountToMint);
             recepients.push(accounts[i]);
         }
