@@ -10,6 +10,8 @@ const { lstatSync, readdirSync } = require('fs');
 const { join, basename, parse } = require('path');
 const kadence = require('@deadcanaries/kadence');
 
+let count_on_me = 0;
+
 class RestAPIServiceV2 {
     constructor(ctx) {
         this.ctx = ctx;
@@ -173,7 +175,8 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/network/count_on_me`, async (req, res) => {
-            this.logger.api('POST: Count on me.');
+            this.logger.api(`POST: Count on me. ${count_on_me}`);
+            count_on_me += 1;
 
             if (req.body === undefined) {
                 res.status(400);
@@ -209,6 +212,8 @@ class RestAPIServiceV2 {
             }
 
             kadence.constants.ALPHA = req.body.alpha;
+            exports.ALPHA = req.body.alpha;
+
             this.logger.api(`ALPHA changed to ${kadence.constants.ALPHA}.`);
 
             const body = {};
@@ -227,6 +232,7 @@ class RestAPIServiceV2 {
             }
 
             kadence.constants.MAX_RELAY_HOPS = req.body.max_relay_hops;
+            exports.MAX_RELAY_HOPS = req.body.max_relay_hops;
             this.logger.api(`MAX_RELAY_HOPS changed to ${kadence.constants.MAX_RELAY_HOPS}.`);
 
             const body = {};
