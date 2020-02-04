@@ -176,6 +176,7 @@ Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
 });
 
 Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
+    this.logger.log('I start the nodes');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -436,6 +437,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
 });
 
 Then(/^the last root hash should be the same as one manually calculated$/, async function () {
+    this.logger.log('The last root hash should be the same as one manually calculated$');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -575,6 +577,7 @@ Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 
 });
 
 Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
+    this.logger.log('The last import should be the same on all nodes that replicated data$');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);

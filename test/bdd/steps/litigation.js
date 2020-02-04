@@ -67,6 +67,7 @@ Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 300000 }, func
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ holder to litigate should answer litigation$/, { timeout: 300000 }, async function (nodeIndex) {
+    this.logger.log(`${nodeIndex} holder to litigate should answer litigation`);
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -192,6 +193,7 @@ Then(/^I wait for replacement to be completed$/, { timeout: 300000 }, function (
 });
 
 Given(/^I wait for challenges to start$/, { timeout: 300000 }, async function () {
+    this.logger.log('I wait for challenges to start');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 

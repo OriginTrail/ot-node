@@ -18,6 +18,7 @@ Given(/^the blockchain is set up$/, { timeout: 60000 }, function (done) {
 });
 
 Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
+    this.logger.log(`The replication difficulty is ${difficulty}`);
     expect(
         this.state.localBlockchain && this.state.localBlockchain.isInitialized,
         'localBlockchain not initialized',
