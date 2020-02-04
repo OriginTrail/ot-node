@@ -37,7 +37,7 @@ Feature: Test basic importer features
     And I call traversal from "id" "urn:epc:id:sgtin:Batch_1" with connection types "EPC"
     Then the last traversal should contain 3 objects in total
 
-  @fourth
+  @second
   Scenario: Check that trail returns the expected objects
     Given I setup 1 node
     And I start the nodes
