@@ -5,7 +5,7 @@ Feature: Trail features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-@fourth
+@second
 Scenario: Check that trail returns the expected objects
   Given I setup 4 nodes
   And I start the 1st node
