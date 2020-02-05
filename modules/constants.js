@@ -75,3 +75,13 @@ exports.BLOCKCHAIN_RETRY_DELAY_IN_MILLS = 20000;
  * @constant {number} ANSWER_LITIGATION_COMMAND_RETRIES - dhLitigationAnswerCommand retries
  */
 exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
+/**
+ *
+ * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
+ */
+exports.PRIVATE_DATA_OBJECT_NAMES = ['private_data', 'claims'];
+/**
+ *
+ * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
+ */
+exports.PRIVATE_DATA_FIRST_LEVEL_BLOCKS = 256;

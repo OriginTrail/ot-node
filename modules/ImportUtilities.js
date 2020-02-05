@@ -8,6 +8,7 @@ const Graph = require('./Graph');
 const Encryption = require('./Encryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
+const constants = require('./constants');
 
 /**
  * Import related utilities
@@ -479,6 +480,117 @@ class ImportUtilities {
     static calculateGraphHash(graph) {
         const sorted = this.sortGraphRecursively(graph);
         return `0x${sha3_256(sorted, null, 0)}`;
+    }
+
+    /**
+     * Create SHA256 Hash of public part of one graph
+     * @param graph
+     * @returns {string}
+     */
+    static calculateGraphPublicHash(graph) {
+        const public_data = ImportUtilities.removeGraphPrivateData(graph);
+        const sorted = ImportUtilities.sortGraphRecursively(public_data);
+        return `0x${sha3_256(sorted, null, 0)}`;
+    }
+
+    /**
+     * Create SHA256 Hash of graph public data part
+     * @param graph
+     * @returns {Array}
+     */
+    static removeGraphPrivateData(graph) {
+        graph.forEach((object) => {
+            ImportUtilities.removeObjectPrivateData(object);
+        });
+        return graph;
+    }
+
+    /**
+     * Removes the private data structures from one ot-json object
+     * @param ot_object
+     * @returns {object}
+     */
+    static removeObjectPrivateData(ot_object) {
+        if (!ot_object || !ot_object.properties) {
+            return;
+        }
+        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (ot_object.properties[private_data_array] &&
+                Array.isArray(ot_object.properties[private_data_array])) {
+                ot_object.properties[private_data_array].forEach((private_object) => {
+                    delete private_object.isPrivate;
+                    delete private_object.data;
+                });
+            }
+        });
+        return ot_object;
+    }
+
+    /**
+     * Add the private data hash to each graph object
+     * @param graph
+     * @returns {array}
+     */
+    static calculateGraphPrivateDataHashes(graph) {
+        graph.forEach((object) => {
+            ImportUtilities.calculateObjectPrivateDataHashes(object);
+        });
+        return graph;
+    }
+
+    /**
+     * Add private data hash to each object in PRIVATE_DATA_OBJECT_NAMES ot_object properties
+     * @param ot_object
+     * @returns {object}
+     */
+    static calculateObjectPrivateDataHashes(ot_object) {
+        if (!ot_object || !ot_object.properties) {
+            throw Error(`Cannot calculate private data hash for invalid ot-json object ${ot_object}`);
+        }
+        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (ot_object.properties[private_data_array] &&
+                Array.isArray(ot_object.properties[private_data_array])) {
+                ot_object.properties[private_data_array].forEach((private_object) => {
+                    ImportUtilities.calculatePrivateDataHash(private_object);
+                });
+            }
+        });
+        return ot_object;
+    }
+
+    /**
+     * Calculates the merkle tree root hash of an object
+     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
+     * The tree contains at least PRIVATE_DATA_FIRST_LEVEL_BLOCKS
+     * @param private_object
+     * @returns {object}
+     */
+    static calculatePrivateDataHash(private_object) {
+        if (!private_object || !private_object.data) {
+            throw Error('Cannot calculate root hash of an empty object');
+        }
+        const sorted_data = Utilities.sortedStringify(private_object.data, true);
+        const data = Buffer.from(sorted_data);
+
+        const first_level_blocks = constants.PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+
+        let block_size = Math.min(
+            Math.round(data.length / first_level_blocks),
+            default_block_size
+        );
+        if (block_size < default_block_size) {
+            block_size = Math.max(1, block_size);
+        }
+
+        const blocks = [];
+        for (let i = 0;i < data.length || blocks.length < first_level_blocks; i += block_size) {
+            const block = data.slice(i, i + block_size).toString('hex');
+            blocks.push(block.padEnd(default_block_size, '0'));
+        }
+
+        private_object.data_root_hash = (new MerkleTree(blocks, 'distribution', 'sha3')).getRoot();
+        return private_object;
     }
 
     static sortStringifyDataset(dataset) {

@@ -1,7 +1,8 @@
 const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const ImportUtilities = require('../../modules/ImportUtilities');
-const { graph: testGraph, shuffledGraph, graph2: testGraph2 } = require('./test_data/otjson-graph');
+const { graph: testGraph, shuffledGraph } = require('./test_data/otjson-graph');
+const sample_data = require('./test_data/otjson-graph');
 const Encryption = require('./../../modules/Encryption');
 const Utilities = require('./../../modules/Utilities');
 const Web3 = require('web3');
@@ -29,13 +30,18 @@ describe('Encryption modules ', () => {
         const object1 = {
             a: 1,
             b: 'abc',
-            c: { d: [1, 2, 3, { e: null, x: undefined }] },
+            c: {
+                d: [1, 2, 3, { e: null, x: undefined },  { y: 1, f: 2 }] },
         };
 
-        const object2 = { c: { d: [1, 2, 3, { x: undefined, e: null }] }, b: 'abc', a: 1 };
+        const object2 = {
+            c: { d: [1, { f: 2, y: 1 }, 2, { x: undefined, e: null },  3] },
+            b: 'abc',
+            a: 1,
+        };
 
-        const stringifiedObject1 = Utilities.sortedStringify(object1);
-        const stringifiedObject2 = Utilities.sortedStringify(object2);
+        const stringifiedObject1 = Utilities.sortedStringify(object1, true);
+        const stringifiedObject2 = Utilities.sortedStringify(object2, true);
         assert.equal(stringifiedObject1, stringifiedObject2);
     });
 
@@ -168,6 +174,93 @@ describe('Encryption modules ', () => {
                 .sortStringifyDataset(signedOriginal),
             ImportUtilities
                 .sortStringifyDataset(signedShuffled),
+        );
+    });
+
+    it('Calculate the root hash on one private data object', () => {
+        const originalObject = sample_data.private_data_object;
+        const shuffledObject = sample_data.private_data_object_shuffled;
+        const differenObject = sample_data.private_data_object_2;
+
+        const originalResult = ImportUtilities.calculatePrivateDataHash(originalObject);
+        const originalRootHash = originalResult.data_root_hash;
+        const shuffledResult = ImportUtilities.calculatePrivateDataHash(shuffledObject);
+        const shuffledRootHash = shuffledResult.data_root_hash;
+        const differentResult = ImportUtilities.calculatePrivateDataHash(differenObject);
+        const differentRootHash = differentResult.data_root_hash;
+
+        assert(originalRootHash != null);
+        assert(shuffledRootHash != null);
+        assert(differentRootHash != null);
+
+        // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
+        assert(originalRootHash.length === 66);
+        assert(shuffledRootHash.length === 66);
+        assert(differentRootHash.length === 66);
+
+        assert.equal(
+            originalRootHash,
+            shuffledRootHash,
+            'Private data root hash for same object with attributes in different order!',
+        );
+
+        assert.notEqual(
+            originalRootHash,
+            differentRootHash,
+            'Private data root hash for different objects is the same!',
+        );
+    });
+
+    it('Calculating the root hash of an empty private data object should throw an error', () => {
+        const testObject = {};
+
+        let errorHappened = false;
+        try {
+            ImportUtilities.calculatePrivateDataHash(testObject);
+        } catch (e) {
+            errorHappened = true;
+            assert.equal(
+                e.message,
+                'Cannot calculate root hash of an empty object',
+                'Unexpected error received'
+            );
+        }
+
+        assert(errorHappened, 'calculatePrivateDataHash did not throw an error!');
+    });
+
+    it('Calculate the public root hash of one graph', () => {
+        const originalGraph = ImportUtilities.calculateGraphPrivateDataHashes(sample_data.private_data_graph['@graph']);
+        const shuffledGraph = ImportUtilities.calculateGraphPrivateDataHashes(sample_data.private_data_graph_shuffled['@graph']);
+        const differentGraph = ImportUtilities.calculateGraphPrivateDataHashes(sample_data.private_data_graph_2['@graph']);
+
+        const originalGraphRootHash = ImportUtilities.calculateGraphPublicHash(originalGraph);
+        const shuffledGraphRootHash = ImportUtilities.calculateGraphPublicHash(shuffledGraph);
+        const differentGraphRootHash = ImportUtilities.calculateGraphPublicHash(differentGraph);
+
+        assert(originalGraphRootHash != null);
+        assert(shuffledGraphRootHash != null);
+        assert(differentGraphRootHash != null);
+
+        // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
+        assert(typeof originalGraphRootHash === 'string');
+        assert(typeof shuffledGraphRootHash === 'string');
+        assert(typeof differentGraphRootHash === 'string');
+
+        assert(originalGraphRootHash.length === 66);
+        assert(shuffledGraphRootHash.length === 66);
+        assert(differentGraphRootHash.length === 66);
+
+        assert.equal(
+            originalGraphRootHash,
+            shuffledGraphRootHash,
+            'Graph root hash for same object with attributes in different order!',
+        );
+
+        assert.notEqual(
+            originalGraphRootHash,
+            differentGraphRootHash,
+            'Graph root hash for different objects is the same!',
         );
     });
 
