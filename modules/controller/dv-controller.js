@@ -1,5 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const Models = require('../../models');
+const Utilities = require('../Utilities');
 
 /**
  * Encapsulates DV related methods
@@ -9,6 +10,8 @@ class DVController {
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
+        this.transport = ctx.transport;
+        this.config = ctx.config;
     }
 
     /**
@@ -144,6 +147,81 @@ class DVController {
             res.status(400);
             res.send({ message });
         }
+    }
+
+    async sendNetworkPurchase(elementId, dataSetId, nodeId, handlerId) {
+        const message = {
+            element_id: elementId,
+            data_set_id: dataSetId,
+            handler_id: handlerId,
+        };
+        const dataPurchaseRequestObject = {
+            message,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(message),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendDataPurchaseRequest(
+            dataPurchaseRequestObject,
+            nodeId,
+        );
+    }
+
+    async handleNetworkPurchaseRequest(message) {
+        const {
+            element_id, data_set_id, handler_id, dv_node_id,
+        } = message;
+
+        const privateData = await Models.private_data.findOne({
+            where: {
+                data_set_id,
+                element_id,
+            },
+        });
+
+        const response = {
+            handler_id,
+        };
+        if (privateData) {
+            await Models.data_permission.create({
+                id_private_data: privateData.id,
+                dv_node_id,
+            });
+            response.status = 'SUCCESS';
+            response.message = 'Data purchase successfully finalized!';
+        } else {
+            response.status = 'ERROR';
+            response.message = 'Could not find requested data';
+        }
+
+        const dataPurchaseResponseObject = {
+            response,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(message),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendDataPurchaseResponse(
+            dataPurchaseResponseObject,
+            dv_node_id,
+        );
+    }
+
+    async handleNetworkPurchaseResponse(message) {
+        const { handler_id, status, responseMessage } = message;
+
+        await Models.handler_ids.update({
+            data: JSON.stringify({ status, responseMessage }),
+        }, {
+            where: {
+                handler_id,
+            },
+        });
     }
 
     async handleDataLocationResponse(message) {

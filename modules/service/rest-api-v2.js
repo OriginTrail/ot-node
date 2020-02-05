@@ -118,6 +118,14 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
 
+        server.post(`/api/${this.version_id}/network/purchase`, async (req, res) => {
+            await this._networkPurchase(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/purchase/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
+
         server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
             await this._getChallenges(req, res);
         });
@@ -954,6 +962,30 @@ class RestAPIServiceV2 {
         };
         response.status(200);
         response.send(result);
+    }
+
+    async _networkPurchase(req, res) {
+        this.logger.api('POST: Network purchase request received.');
+
+        if (req.body == null || req.body.element_id == null
+            || req.body.data_set_id == null
+            || req.body.node_id == null) {
+            res.status(400);
+            res.send({ message: 'Params element_id, data_set_id and node_id are required.' });
+            return;
+        }
+        const { element_id, data_set_id, node_id } = req.body;
+        const inserted_object = await Models.handler_ids.create({
+            data: { element_id, data_set_id, node_id },
+            status: 'PENDING',
+        });
+        const handlerId = inserted_object.dataValues.handler_id;
+        res.status(200);
+        res.send({
+            handler_id: handlerId,
+        });
+
+        await this.dvController.sendNetworkPurchase(element_id, data_set_id, node_id, handlerId);
     }
 }
 

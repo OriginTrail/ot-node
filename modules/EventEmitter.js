@@ -812,6 +812,61 @@ class EventEmitter {
         });
 
         // async
+        this._on('kad-data-purchase-request', async (request) => {
+            logger.info('Encrypted data received');
+            const dvNodeId = transport.extractSenderID(request);
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-purchase-request. ${reqMessage}`);
+                return;
+            }
+            const dataPurchaseRequestObject = reqMessage;
+            const { message, messageSignature } = dataPurchaseRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                console.log('kad-data-purchase-request', JSON.stringify(message), JSON.stringify(messageSignature));
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                message.dv_node_id = dvNodeId;
+                await dvController.handleNetworkPurchaseRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process data purchase request. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-data-purchase-response', async (request) => {
+            logger.info('Encrypted data received');
+
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-purchase-response. ${reqMessage}`);
+                return;
+            }
+            const dataPurchaseResponseObject = reqMessage;
+            const { message, messageSignature } = dataPurchaseResponseObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                console.log('kad-data-purchase-response', JSON.stringify(message), JSON.stringify(messageSignature));
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                await dvController.handleNetworkPurchaseResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process data purchase response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
         this._on('kad-send-encrypted-key', async (request, response) => {
             await transport.sendResponse(response, []);
             logger.info('Initial info received to unlock data');
