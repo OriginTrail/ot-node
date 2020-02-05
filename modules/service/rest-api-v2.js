@@ -211,8 +211,8 @@ class RestAPIServiceV2 {
                 return;
             }
 
-            kadence.constants.ALPHA = req.body.alpha;
-            exports.ALPHA = req.body.alpha;
+            kadence.constants.ALPHA = parseInt(req.body.alpha, 10);
+            exports.ALPHA = parseInt(req.body.alpha, 10);
 
             this.logger.api(`ALPHA changed to ${kadence.constants.ALPHA}.`);
 
@@ -231,9 +231,29 @@ class RestAPIServiceV2 {
                 return;
             }
 
-            kadence.constants.MAX_RELAY_HOPS = req.body.max_relay_hops;
-            exports.MAX_RELAY_HOPS = req.body.max_relay_hops;
+            kadence.constants.MAX_RELAY_HOPS = parseInt(req.body.max_relay_hops, 10);
+            exports.MAX_RELAY_HOPS = parseInt(req.body.max_relay_hops, 10);
             this.logger.api(`MAX_RELAY_HOPS changed to ${kadence.constants.MAX_RELAY_HOPS}.`);
+
+            const body = {};
+
+            res.status(200);
+            res.send(body);
+        });
+
+        server.post(`/api/${this.version_id}/network/set_k`, async (req, res) => {
+            if (req.body === undefined) {
+                res.status(400);
+                res.send({
+                    message: 'Bad request',
+                });
+                return;
+            }
+
+            kadence.constants.K = parseInt(req.body.k, 10);
+            exports.K = parseInt(req.body.k, 10);
+
+            this.logger.api(`K changed to ${kadence.constants.K}.`);
 
             const body = {};
 
