@@ -495,7 +495,7 @@ class Kademlia {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId) => {
-                if (contactId === this.node.identity){
+                if (contactId === this.node.identity.toString('hex')){
                     return this.node.contact;
                 }
 
