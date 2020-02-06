@@ -494,63 +494,64 @@ class Kademlia {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId) => {
-                let contact = node.router.getContactByNodeId(contactId);
+                const contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                     return contact;
                 }
-                let peerContact;
-                try {
-                    peerContact = await this.node.rolodex.getExternalPeerInfo(contactId);
-                } catch (e) {
-                    this.log.debug("Can't find external peer info.");
-                }
-                if (peerContact) {
-                    const peerURL = `${peerContact.protocol}//${peerContact.hostname}:${peerContact.port}/#${peerContact.identity}`;
-                    this.log.debug(`Searching for contact with URL ${peerContact}`);
-                    const peerContactArray = KadenceUtils.parseContactURL(peerURL);
 
-                    if (peerContactArray.length === 2 && peerContactArray[1].hostname) {
-                        [, contact] = peerContactArray;
-
-                        this.log.debug(`Found contact in peer cache. ${contactId} - ${contact.hostname}:${contact.port}.`);
-                        return new Promise((accept, reject) => {
-                            this.node.ping(peerContactArray, (error) => {
-                                if (error) {
-                                    this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
-                                    accept(null);
-                                    return;
-                                }
-                                this.log.debug(`Contact ${contactId} reachable at ${contact.hostname}:${contact.port}.`);
-                                accept(contact);
-                            });
-                        }).then((contact) => {
-                            if (contact) {
-                                return contact;
-                            }
-                            return new Promise((accept, reject) => {
-                                this.log.debug(`Searching for contact: ${contactId}.`);
-                                this.node.iterativeFindNode(contactId, (err, result) => {
-                                    if (err) {
-                                        reject(Error(`Failed to find contact ${contactId}. ${err}`));
-                                        return;
-                                    }
-                                    if (result && Array.isArray(result)) {
-                                        const contact = result.find(c => c[0] === contactId);
-                                        if (contact) {
-                                            accept(contact[1]);
-                                        } else {
-                                            reject(Error(`Failed to find contact ${contactId}`));
-                                        }
-                                    } else {
-                                        reject(Error(`Failed to find contact ${contactId}`));
-                                    }
-                                });
-                            });
-                        });
-                    }
-                }
-
+                // let peerContact;
+                // try {
+                //     peerContact = await this.node.rolodex.getExternalPeerInfo(contactId);
+                // } catch (e) {
+                //     this.log.debug("Can't find external peer info.");
+                // }
+                // if (peerContact) {
+                //     const peerURL = `${peerContact.protocol}//${peerContact.hostname}:${peerContact.port}/#${peerContact.identity}`;
+                //     this.log.debug(`Searching for contact with URL ${peerContact}`);
+                //     const peerContactArray = KadenceUtils.parseContactURL(peerURL);
+                //
+                //     if (peerContactArray.length === 2 && peerContactArray[1].hostname) {
+                //         [, contact] = peerContactArray;
+                //
+                //         this.log.debug(`Found contact in peer cache. ${contactId} - ${contact.hostname}:${contact.port}.`);
+                //         return new Promise((accept, reject) => {
+                //             this.node.ping(peerContactArray, (error) => {
+                //                 if (error) {
+                //                     this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
+                //                     accept(null);
+                //                     return;
+                //                 }
+                //                 this.log.debug(`Contact ${contactId} reachable at ${contact.hostname}:${contact.port}.`);
+                //                 accept(contact);
+                //             });
+                //         }).then((contact) => {
+                //             if (contact) {
+                //                 return contact;
+                //             }
+                //             return new Promise((accept, reject) => {
+                //                 this.log.debug(`Searching for contact: ${contactId}.`);
+                //                 this.node.iterativeFindNode(contactId, (err, result) => {
+                //                     if (err) {
+                //                         reject(Error(`Failed to find contact ${contactId}. ${err}`));
+                //                         return;
+                //                     }
+                //                     if (result && Array.isArray(result)) {
+                //                         const contact = result.find(c => c[0] === contactId);
+                //                         if (contact) {
+                //                             accept(contact[1]);
+                //                         } else {
+                //                             reject(Error(`Failed to find contact ${contactId}`));
+                //                         }
+                //                     } else {
+                //                         reject(Error(`Failed to find contact ${contactId}`));
+                //                     }
+                //                 });
+                //             });
+                //         });
+                //     }
+                // }
+                console.log('contactId: '+contactId);
                 this.log.debug(`No knowledge about contact ${contactId}, searching for it.`);
                 return new Promise(async (accept, reject) => {
                     await this.node.iterativeFindNode(contactId, (err, result) => {
@@ -561,6 +562,7 @@ class Kademlia {
                         if (result && Array.isArray(result)) {
                             const contact = result.find(c => c[0] === contactId);
                             if (contact) {
+                                console.log('accept: '+ JSON.stringify(contact[1]));
                                 accept(contact[1]);
                             } else {
                                 reject(Error(`Failed to find contact ${contactId}`));
@@ -569,6 +571,11 @@ class Kademlia {
                             reject(Error(`Failed to find contact ${contactId}`));
                         }
                     });
+                }).then((contact) => {
+                    console.log('then: '+JSON.stringify(contact));
+                    if (contact) {
+                        return contact;
+                    }
                 });
             };
 
