@@ -30,12 +30,11 @@ describe('Encryption modules ', () => {
         const object1 = {
             a: 1,
             b: 'abc',
-            c: {
-                d: [1, 2, 3, { e: null, x: undefined },  { y: 1, f: 2 }] },
+            c: { d: [1, 2, 3, { e: null, x: undefined }, { y: 1, f: 2 }] },
         };
 
         const object2 = {
-            c: { d: [1, { f: 2, y: 1 }, 2, { x: undefined, e: null },  3] },
+            c: { d: [1, { f: 2, y: 1 }, 2, { x: undefined, e: null }, 3] },
             b: 'abc',
             a: 1,
         };
@@ -222,7 +221,7 @@ describe('Encryption modules ', () => {
             assert.equal(
                 e.message,
                 'Cannot calculate root hash of an empty object',
-                'Unexpected error received'
+                'Unexpected error received',
             );
         }
 

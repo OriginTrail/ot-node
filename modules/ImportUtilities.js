@@ -577,14 +577,14 @@ class ImportUtilities {
 
         let block_size = Math.min(
             Math.round(data.length / first_level_blocks),
-            default_block_size
+            default_block_size,
         );
         if (block_size < default_block_size) {
             block_size = Math.max(1, block_size);
         }
 
         const blocks = [];
-        for (let i = 0;i < data.length || blocks.length < first_level_blocks; i += block_size) {
+        for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
             const block = data.slice(i, i + block_size).toString('hex');
             blocks.push(block.padEnd(default_block_size, '0'));
         }
