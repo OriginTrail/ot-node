@@ -102,11 +102,21 @@ function checkForUpdate() {
         execSync(`cp -af ${appMigrationDirPath}/. ${configDir}`);
 
         // Potential risk of race condition here. Coping and linking has to be atomic operation.
-
+        const previousVersionPath = fs.realpathSync('/ot-node/current');
         // Just replace current link.
         execSync(`ln -fns ${updateInfo.path} /ot-node/current`);
 
-        // TODO: Remove old version dir.
+        const fileList = fs.readdirSync('/ot-node');
+        fileList.forEach((fileName) => {
+            const filePath = `/ot-node/${fileName}`;
+            if (fs.lstatSync(filePath).isDirectory()
+                && filePath !== updateInfo.path
+                && filePath !== previousVersionPath
+                && /^\d+\.\d+\.\d+$/.test(fileName)) {
+                fs.rmdirSync(filePath);
+                logger.trace(`Successfully removed old version directory: ${filePath}`);
+            }
+        });
 
         logger.important(`OT Node updated to ${updateInfo.version}. Resetting...`);
         process.exit(2);

@@ -118,6 +118,11 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
 
+        server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
+            await this._getChallenges(req, res);
+        });
+
+
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
             const nodeId = req.params.node_id;
@@ -603,6 +608,55 @@ class RestAPIServiceV2 {
         });
     }
 
+    async _getChallenges(req, res) {
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        // Check if import type is valid
+        if (req.body.startDate === undefined ||
+            req.body.endDate === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request startDate and endDate required!',
+            });
+            return;
+        }
+
+        const challenges = await Models.challenges.findAll({
+            where: {
+                start_time: {
+                    [Models.Sequelize.Op.between]:
+                        [(new Date(req.body.startDate)).getTime(),
+                            (new Date(req.body.endDate)).getTime()],
+                },
+                status: {
+                    [Models.Sequelize.Op.not]: 'PENDING',
+                },
+            },
+            order: [
+                ['start_time', 'ASC'],
+            ],
+        });
+        const returnChallenges = [];
+        challenges.forEach((challenge) => {
+            const answered = !!challenge.answer;
+            returnChallenges.push({
+                offer_id: challenge.offer_id,
+                start_time: challenge.start_time,
+                status: challenge.status,
+                answered,
+            });
+        });
+
+        res.status(200);
+        res.send(returnChallenges);
+    }
+
     // This is hardcoded import in case it is needed to make new importer with this method
     async _importDataset(req, res) {
         this.logger.api('POST: Import of data request received.');
@@ -768,7 +822,7 @@ class RestAPIServiceV2 {
 
         const object_to_export =
             {
-                dataset_id: requested_dataset,
+                dataset_id,
             };
 
         const inserted_object = await Models.handler_ids.create({
