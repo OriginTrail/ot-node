@@ -151,6 +151,7 @@ class Kademlia {
                 storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
+
             this.log.info('Starting OT Node...');
             this.node.hashcash = this.node.plugin(kadence.hashcash({
                 methods: [
@@ -494,6 +495,10 @@ class Kademlia {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId) => {
+                if (contactId === this.node.identity){
+                    return this.node.contact;
+                }
+
                 const contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
