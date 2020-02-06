@@ -495,6 +495,7 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 });
 
 Then(/^DC should send a challenge request$/, { timeout: 1200000 }, function () {
+    this.logger.log('DC should send a challenge request$');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
