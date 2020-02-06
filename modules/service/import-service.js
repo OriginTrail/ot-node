@@ -867,10 +867,6 @@ class ImportService {
             throw Error('[Validation Error] Invalid dataset ID');
         }
 
-        if (datasetId !== ImportUtilities.calculateGraphHash(document['@graph'])) {
-            throw Error('[Validation Error] Invalid dataset ID');
-        }
-
         if (datasetType !== 'Dataset') {
             throw Error('[Validation Error] Unsupported dataset type.');
         }
