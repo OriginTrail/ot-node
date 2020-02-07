@@ -84,4 +84,4 @@ exports.PRIVATE_DATA_OBJECT_NAMES = ['private_data', 'claims'];
  *
  * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
  */
-exports.PRIVATE_DATA_FIRST_LEVEL_BLOCKS = 256;
+exports.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS = 256;

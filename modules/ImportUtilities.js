@@ -346,8 +346,13 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const publicGraph = Utilities.copyObject(graph);
+        ImportUtilities.removeGraphPrivateData(publicGraph);
+
+        ImportUtilities.sortGraphRecursively(publicGraph);
+
         const merkle = ImportUtilities.createDistributionMerkleTree(
-            graph,
+            publicGraph,
             datasetId,
             datasetCreator,
         );
@@ -488,27 +493,27 @@ class ImportUtilities {
      * @returns {string}
      */
     static calculateGraphPublicHash(graph) {
-        const public_data = ImportUtilities.removeGraphPrivateData(graph);
+        const public_data = Utilities.copyObject(graph);
+        ImportUtilities.removeGraphPrivateData(public_data);
         const sorted = ImportUtilities.sortGraphRecursively(public_data);
         return `0x${sha3_256(sorted, null, 0)}`;
     }
 
     /**
-     * Create SHA256 Hash of graph public data part
+     * Removes the isPrivate and data attributes from all data that can be private
      * @param graph
-     * @returns {Array}
+     * @returns {null}
      */
     static removeGraphPrivateData(graph) {
         graph.forEach((object) => {
             ImportUtilities.removeObjectPrivateData(object);
         });
-        return graph;
     }
 
     /**
-     * Removes the private data structures from one ot-json object
+     * Removes the isPrivate and data attributes from one ot-json object
      * @param ot_object
-     * @returns {object}
+     * @returns {null}
      */
     static removeObjectPrivateData(ot_object) {
         if (!ot_object || !ot_object.properties) {
@@ -523,25 +528,23 @@ class ImportUtilities {
                 });
             }
         });
-        return ot_object;
     }
 
     /**
      * Add the private data hash to each graph object
      * @param graph
-     * @returns {array}
+     * @returns {null}
      */
     static calculateGraphPrivateDataHashes(graph) {
         graph.forEach((object) => {
             ImportUtilities.calculateObjectPrivateDataHashes(object);
         });
-        return graph;
     }
 
     /**
      * Add private data hash to each object in PRIVATE_DATA_OBJECT_NAMES ot_object properties
      * @param ot_object
-     * @returns {object}
+     * @returns {null}
      */
     static calculateObjectPrivateDataHashes(ot_object) {
         if (!ot_object || !ot_object.properties) {
@@ -555,15 +558,14 @@ class ImportUtilities {
                 });
             }
         });
-        return ot_object;
     }
 
     /**
      * Calculates the merkle tree root hash of an object
      * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
-     * The tree contains at least PRIVATE_DATA_FIRST_LEVEL_BLOCKS
+     * The tree contains at least NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS
      * @param private_object
-     * @returns {object}
+     * @returns {null}
      */
     static calculatePrivateDataHash(private_object) {
         if (!private_object || !private_object.data) {
@@ -572,16 +574,11 @@ class ImportUtilities {
         const sorted_data = Utilities.sortedStringify(private_object.data, true);
         const data = Buffer.from(sorted_data);
 
-        const first_level_blocks = constants.PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
+        const first_level_blocks = constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
         const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
-        let block_size = Math.min(
-            Math.round(data.length / first_level_blocks),
-            default_block_size,
-        );
-        if (block_size < default_block_size) {
-            block_size = Math.max(1, block_size);
-        }
+        let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
+        block_size = block_size < 1 ? 1 : block_size;
 
         const blocks = [];
         for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
@@ -590,7 +587,6 @@ class ImportUtilities {
         }
 
         private_object.data_root_hash = (new MerkleTree(blocks, 'distribution', 'sha3')).getRoot();
-        return private_object;
     }
 
     static sortStringifyDataset(dataset) {
