@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE project>
+<epcis:EPCISDocument schemaVersion="1.2"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creationDate="2013-06-04T14:59:02.099+02:00"
+    xmlns:epcis="urn:epcglobal:epcis:xsd:1">
+    <EPCISBody>
+        <EventList>
+            <extension>
+                <TransformationEvent id="transforming">
+                    <eventTime>2019-09-18T10:30:00.000-06:00</eventTime>
+                    <eventTimeZoneOffset>-06:00</eventTimeZoneOffset>
+                    <inputEPCList>
+                        <epc>urn:epc:id:sgtin:111111111</epc>
+                        <epc>urn:epc:id:sgtin:222222222</epc>
+                    </inputEPCList>
+                    <outputEPCList>
+                        <epc>urn:epc:id:sgtin:999999999</epc>
+                        <epc>urn:epc:id:sgtin:888888888</epc>
+                    </outputEPCList>
+                    <bizStep>urn:epcglobal:cbv:bizstep:transforming</bizStep>
+                    <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                    <readPoint>
+                        <id>urn:epc:id:sgln:0000000.44444.0</id>
+                    </readPoint>
+                    <bizLocation>
+                        <id>urn:epc:id:sgln:0000000.44444.0</id>
+                    </bizLocation>
+                </TransformationEvent>
+            </extension>
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>

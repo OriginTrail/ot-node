@@ -28,7 +28,6 @@ class DHLitigationAnswerCommand extends Command {
             offerId,
             objectIndex,
             blockIndex,
-            dataSetId,
         } = command.data;
 
         const holdingData = await models.holding_data.findOne({
@@ -53,11 +52,11 @@ class DHLitigationAnswerCommand extends Command {
         const litigationTimestamp = parseInt(timestamp, 10) * 1000; // seconds -> miliseconds
 
         if (status === '1') {
-            if (litigationTimestamp + (litigation_interval_in_minutes * 60000) >= Date.now()) {
+            if (litigationTimestamp + (litigation_interval_in_minutes * 60 * 1000) >= Date.now()) {
                 const color = this.replicationService.castNumberToColor(holdingData.color);
 
                 const otObject = await this.importService.getImportedOtObject(
-                    dataSetId,
+                    holdingData.data_set_id,
                     objectIndex,
                     offerId,
                     color,
