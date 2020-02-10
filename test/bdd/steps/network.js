@@ -476,7 +476,7 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     // All nodes including DC emit offer-finalized.
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
         if (!this.state.corruptedNode || (node.id !== this.state.corruptedNode.id)) {
-            promises.push(new Promise((acc) => {
+            promises.push(new Promise((accept, reject) => {
                 node.once('offer-finalized', (offerId) => {
                     if (this.state.lastReplication !== offerId) {
                         if (this.state.lastReplication) {
@@ -485,7 +485,17 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
                         this.state.lastReplication = offerId;
                     }
                     // TODO: Change API to connect internal offer ID and external offer ID.
-                    acc();
+                    accept();
+                });
+                node.once('not-enough-dhs', (offerId) => {
+                    if (this.state.lastReplication !== offerId) {
+                        if (this.state.lastReplication) {
+                            this.state.secondLastReplication = this.state.lastReplication;
+                        }
+                        this.state.lastReplication = offerId;
+                    }
+                    // TODO: Change API to connect internal offer ID and external offer ID.
+                    reject(Error('Offer failed: Not enough DH\'s submitted'));
                 });
             }));
         }
