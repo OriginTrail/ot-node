@@ -22,17 +22,11 @@ class DVDataReadRequestCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            dataSetId, replyId, handlerId,
+            dataSetId, replyId, handlerId, readOnlyPrivateData, nodeId,
         } = command.data;
 
-        const offer = await Models.network_query_responses.findOne({
-            where: {
-                reply_id: replyId,
-            },
-        });
-
         const message = {
-            id: offer.reply_id,
+            id: replyId,
             data_set_id: dataSetId,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
@@ -47,10 +41,18 @@ class DVDataReadRequestCommand extends Command {
             ),
         };
 
-        await this.transport.dataReadRequest(
-            dataReadRequestObject,
-            offer.node_id,
-        );
+        if (readOnlyPrivateData) {
+            await this.transport.sendPrivateDataReadRequest(
+                dataReadRequestObject,
+                nodeId,
+            );
+        } else {
+            await this.transport.dataReadRequest(
+                dataReadRequestObject,
+                nodeId,
+            );
+        }
+
         this.logger.info(`Data request sent for reply ID ${message.id}.`);
         return Command.empty();
     }

@@ -1,7 +1,8 @@
 const uuidv4 = require('uuid/v4');
 const Models = require('../../models');
 const Utilities = require('../Utilities');
-
+const ImportUtilities = require('../ImportUtilities');
+const constants = require('../constants');
 /**
  * Encapsulates DV related methods
  */
@@ -108,7 +109,7 @@ class DVController {
             const dataInfo = await Models.data_info.findOne({
                 where: { data_set_id },
             });
-            if (dataInfo) {
+            if (dataInfo && !offer.private_data) {
                 const message = `I've already stored data for data set ID ${data_set_id}.`;
                 this.logger.trace(message);
                 res.status(200);
@@ -123,22 +124,24 @@ class DVController {
                 status: 'PENDING',
                 data: JSON.stringify(handler_data),
             });
-
-            this.logger.info(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
-            this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
+            const handlerId = inserted_object.dataValues.handler_id;
+            this.logger.info(`Read offer for query ${offer.query_id} with handler id ${handlerId} initiated.`);
+            this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${handlerId} initiated.`);
 
             res.status(200);
             res.send({
-                handler_id: inserted_object.dataValues.handler_id,
+                handler_id: handlerId,
             });
 
             this.commandExecutor.add({
                 name: 'dvDataReadRequestCommand',
                 delay: 0,
                 data: {
+                    readOnlyPrivateData: (dataInfo && offer.private_data),
                     dataSetId: data_set_id,
                     replyId: reply_id,
-                    handlerId: inserted_object.dataValues.handler_id,
+                    handlerId,
+                    nodeId: offer.node_id,
                 },
                 transactional: false,
             });
@@ -146,6 +149,40 @@ class DVController {
             const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
             res.status(400);
             res.send({ message });
+        }
+    }
+
+    async handlePrivateDataReadResponse(message) {
+        const {
+            handler_id, ot_object, data_creator,
+        } = message;
+
+        // calculate key using ot_object.properties and data_creator
+        const objectKey = Utilities.keyFrom(
+            data_creator,
+            Utilities.keyFrom(ot_object.properties),
+        );
+        // update whole ot_object
+        const queryObject = { _key: objectKey };
+        const document = await this.graphStorage.findDocuments('ot_vertices', queryObject);
+
+        if (document) {
+            // go through private data elements
+            constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+                if (ot_object.properties[private_data_array] &&
+                    Array.isArray(ot_object.properties[private_data_array])) {
+                    ot_object.properties[private_data_array].forEach((private_object, index) => {
+                        if (document[private_data_array]
+                            && document[private_data_array].length() === index - 1
+                            && private_object.data_hash === document[private_data_array][index]) {
+                            document[private_data_array][index].data = private_object.data;
+                            // todo add hash calculation and check
+                        }
+                    });
+                }
+            });
+
+            await this.graphStorage.updateDocument('ot_vertices', document);
         }
     }
 
@@ -170,53 +207,12 @@ class DVController {
         );
     }
 
-    async handleNetworkPurchaseRequest(message) {
-        const {
-            element_id, data_set_id, handler_id, dv_node_id,
-        } = message;
-
-        const privateData = await Models.private_data.findOne({
-            where: {
-                data_set_id,
-                element_id,
-            },
-        });
-
-        const response = {
-            handler_id,
-        };
-        if (privateData) {
-            await Models.data_permission.create({
-                id_private_data: privateData.id,
-                dv_node_id,
-            });
-            response.status = 'SUCCESS';
-            response.message = 'Data purchase successfully finalized!';
-        } else {
-            response.status = 'ERROR';
-            response.message = 'Could not find requested data';
-        }
-
-        const dataPurchaseResponseObject = {
-            response,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(message),
-                this.web3,
-                this.config.node_private_key,
-            ),
-        };
-
-        await this.transport.sendDataPurchaseResponse(
-            dataPurchaseResponseObject,
-            dv_node_id,
-        );
-    }
-
     async handleNetworkPurchaseResponse(message) {
         const { handler_id, status, responseMessage } = message;
 
         await Models.handler_ids.update({
-            data: JSON.stringify({ status, responseMessage }),
+            data: JSON.stringify({ responseMessage }),
+            status,
         }, {
             where: {
                 handler_id,

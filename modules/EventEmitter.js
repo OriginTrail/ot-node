@@ -566,6 +566,7 @@ class EventEmitter {
             dhService,
             dcService,
             dvController,
+            dcController,
             notifyError,
         } = this.ctx;
 
@@ -811,6 +812,45 @@ class EventEmitter {
             }
         });
 
+        this._on('kad-private-data-read-request', async (request) => {
+            logger.info('Request for private data read received');
+            const dataReadRequestObject = transport.extractMessage(request);
+            const { message, messageSignature } = dataReadRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
+                logger.warn(returnMessage);
+                return;
+            }
+            try {
+                await dvController.handlePrivateDataReadRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process private data read request. ${error}.`);
+                // todo send error to dv
+            }
+        });
+
+        this._on('kad-private-data-read-response', async (request) => {
+            logger.info('Response for private data read received');
+
+            const dataReadRequestObject = transport.extractMessage(request);
+            const { message, messageSignature } = dataReadRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
+                logger.warn(returnMessage);
+                return;
+            }
+            try {
+                await dvController.handlePrivateDataReadResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process private data read response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
         // async
         this._on('kad-data-purchase-request', async (request) => {
             logger.info('Encrypted data received');
@@ -832,7 +872,7 @@ class EventEmitter {
 
             try {
                 message.dv_node_id = dvNodeId;
-                await dvController.handleNetworkPurchaseRequest(message);
+                await dcController.handleNetworkPurchaseRequest(message);
             } catch (error) {
                 logger.warn(`Failed to process data purchase request. ${error}.`);
                 notifyError(error);

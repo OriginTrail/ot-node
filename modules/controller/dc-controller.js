@@ -1,5 +1,7 @@
 const utilities = require('../Utilities');
 const Models = require('../../models');
+const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 
 /**
  * DC related API controller
@@ -12,6 +14,9 @@ class DCController {
         this.config = ctx.config;
         this.dcService = ctx.dcService;
         this.remoteControl = ctx.remoteControl;
+        this.graphStorage = ctx.graphStorage;
+        this.transport = ctx.transport;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -85,6 +90,119 @@ class DCController {
                 message: 'Invalid parameters!',
             });
         }
+    }
+
+    async handlePrivateDataReadRequest(message) {
+        const {
+            handler_id, nodeId, data_set_id, wallet,
+        } = message;
+        const replyId = message.id;
+
+        const networkReply = await Models.network_replies.find({ where: { id: replyId } });
+        if (!networkReply) {
+            throw Error(`Couldn't find reply with ID ${replyId}.`);
+        }
+
+        if (networkReply.receiver_wallet !== wallet &&
+            networkReply.receiver_identity) {
+            throw Error('Sorry not your read request');
+        }
+        const networkReplyData = JSON.parse(networkReply.data);
+
+        const networkQuery = await Models.network_queries.find({
+            where: {
+                id: networkReplyData.id,
+            },
+        });
+
+        if (!networkQuery) {
+            throw Error(`Can't find network query with ID ${networkReplyData.id}`);
+        }
+        const networkQuerySearch = JSON.parse(networkQuery.queries);
+        const elementId = networkQuerySearch.value;
+        const privateData = await Models.private_data({
+            where: {
+                data_set_id,
+                element_id: elementId,
+            },
+        });
+
+        if (!privateData) {
+            throw Error(`Can't find private data with datasetId: ${data_set_id} and elementId: ${elementId}`);
+        }
+        const permission = await Models.data_permission.find({
+            where: {
+                node_id: nodeId,
+                id_private_data: privateData.id,
+            },
+        });
+
+        if (!permission) {
+            throw Error(`You don't have permission to view elementId: ${elementId} from dataset: ${data_set_id}`);
+        }
+        const returnValue = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(data_set_id, `ot_vertices/${elementId}`);
+        const otObject = this.importService._constructOtObject(returnValue.relatedObjects);
+        const metadata = await this.graphStorage.findMetadataByImportId(data_set_id);
+        const dataCreator = ImportUtilities.getDataCreator(metadata.datasetHeader);
+        const replayMessage = {
+            data_creator: dataCreator,
+            ot_object: otObject,
+            handler_id,
+        };
+        const privateDataReadResponseObject = {
+            message: replayMessage,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(replayMessage),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+        await this.transport.sendPrivateDataReadResponse(
+            privateDataReadResponseObject,
+            nodeId,
+        );
+    }
+
+    async handleNetworkPurchaseRequest(message) {
+        const {
+            element_id, data_set_id, handler_id, dv_node_id,
+        } = message;
+
+        const privateData = await Models.private_data.findOne({
+            where: {
+                data_set_id,
+                element_id,
+            },
+        });
+
+        const response = {
+            handler_id,
+        };
+        if (privateData) {
+            await Models.data_permission.create({
+                id_private_data: privateData.id,
+                dv_node_id,
+            });
+            response.status = 'SUCCESS';
+            response.message = 'Data purchase successfully finalized!';
+        } else {
+            response.status = 'ERROR';
+            response.message = 'Could not find requested data';
+        }
+
+        const dataPurchaseResponseObject = {
+            response,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(message),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendDataPurchaseResponse(
+            dataPurchaseResponseObject,
+            dv_node_id,
+        );
     }
 }
 
