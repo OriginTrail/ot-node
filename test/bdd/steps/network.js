@@ -586,6 +586,7 @@ Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 
 });
 
 Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
+    this.logger.log('The last import should be the same on all nodes that replicated data');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);

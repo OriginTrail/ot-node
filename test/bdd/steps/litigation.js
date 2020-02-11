@@ -192,6 +192,7 @@ Then(/^I wait for replacement to be completed$/, { timeout: 300000 }, function (
 });
 
 Given(/^I wait for challenges to start$/, { timeout: 300000 }, async function () {
+    this.logger.log('I wait for challenges to start');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
