@@ -1,0 +1,406 @@
+{ 
+   "@graph":[ 
+      { 
+         "@id":"urn:ot:object:actor:id:company-red",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"id",
+               "@value":"urn:ot:object:actor:id:company-red"
+            }
+         ],
+         "properties":{ 
+            "___metadata":{ 
+               "_attributes":{ 
+                  "id":"urn:ot:object:actor:id:company-red"
+               },
+               "attribute":[ 
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:actor:name"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:actor:category"
+                     }
+                  }
+               ]
+            },
+            "objectType":"vocabularyElement",
+            "urn:ot:object:actor:category":"Company",
+            "urn:ot:object:actor:name":"company-red",
+            "vocabularyType":"urn:ot:object:actor",
+            "claims": [{
+                    "isPrivate": false,
+                    "data": {
+                        "id": "halal_certificate_56789",
+                        "transaction_id": "bsi-nos-demotest-10",
+                        "standard_title": "Halal standard",
+                        "description": "This company can produce halal food",
+                        "customer_name": "eyJpdiI6IlJKY2hLWVF0bVZPU0twYjRvTUUxZVE9PSIsInZhbHVlIjoiRHc3SmYwSkM0cFFwXC9JQ1FxN1FaMTNweGh2SXlySk9aZGNxQ2ZOVEg2c2htamFzZzRhbXRNaStoRG9rRDRBQzEiLCJtYWMiOiJiMGFiN2U5NDRhYTQ0ZTI4MDA4MzEzYjQyMTcwYjAyYmVhZWVmN2ZhOTlkMDEyOTkyOWIzNjM4MzcyYWU1ZjgzIn0=",
+                        "create_date": "2009-09-13",
+                        "material_id": "110000000131122120"
+                    }
+            }]
+         },
+         "relations":[ 
+
+         ]
+      },
+      { 
+         "@id":"urn:ot:object:actor:id:OneAgrix",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"id",
+               "@value":"urn:ot:object:actor:id:OneAgrix"
+            }
+         ],
+         "properties":{ 
+            "___metadata":{ 
+               "_attributes":{ 
+                  "id":"urn:ot:object:actor:id:OneAgrix"
+               },
+               "attribute":[ 
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:actor:name"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:actor:category"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:actor:wallet"
+                     }
+                  }
+               ]
+            },
+            "objectType":"vocabularyElement",
+            "urn:ot:object:actor:category":"Company",
+            "urn:ot:object:actor:name":"OneAgrix",
+            "urn:ot:object:actor:wallet":"0x9B4D74EcC3F29467b1d4714a05d833579847096A",
+            "vocabularyType":"urn:ot:object:actor",
+            "private_data": [{
+                    "isPrivate": true,
+                    "data": {
+                        "id": "halal_certificate_56789",
+                        "transaction_id": "bsi-nos-demotest-10",
+                        "standard_title": "Halal standard",
+                        "description": "This company can produce halal food",
+                        "customer_name": "eyJpdiI6IlJKY2hLWVF0bVZPU0twYjRvTUUxZVE9PSIsInZhbHVlIjoiRHc3SmYwSkM0cFFwXC9JQ1FxN1FaMTNweGh2SXlySk9aZGNxQ2ZOVEg2c2htamFzZzRhbXRNaStoRG9rRDRBQzEiLCJtYWMiOiJiMGFiN2U5NDRhYTQ0ZTI4MDA4MzEzYjQyMTcwYjAyYmVhZWVmN2ZhOTlkMDEyOTkyOWIzNjM4MzcyYWU1ZjgzIn0=",
+                        "create_date": "2009-09-13",
+                        "material_id": "110000000131122120"
+                    }
+            }]
+         },
+         "relations":[ 
+
+         ]
+      },
+      { 
+         "@id":"urn:ot:object:location:id:company-redHQ",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"id",
+               "@value":"urn:ot:object:location:id:company-redHQ"
+            }
+         ],
+         "properties":{ 
+            "___metadata":{ 
+               "_attributes":{ 
+                  "id":"urn:ot:object:location:id:company-redHQ"
+               },
+               "attribute":[ 
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:location:category"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:location:actorId"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:location:description"
+                     }
+                  }
+               ]
+            },
+            "children":[ 
+               "urn:ot:object:location:id:company-redHQ_ReadPoint"
+            ],
+            "objectType":"vocabularyElement",
+            "urn:ot:object:location:actorId":"urn:ot:object:actor:id:company-red",
+            "urn:ot:object:location:category":"Building",
+            "urn:ot:object:location:description":"company-redHeadQuarters",
+            "vocabularyType":"urn:ot:object:location"
+         },
+         "relations":[ 
+            { 
+               "@type":"otRelation",
+               "direction":"direct",
+               "linkedObject":{ 
+                  "@id":"urn:ot:object:location:id:company-redHQ_ReadPoint"
+               },
+               "properties":{ 
+
+               },
+               "relationType":"HAS_CHILD"
+            }
+         ]
+      },
+      { 
+         "@id":"urn:ot:object:location:id:company-redHQ_ReadPoint",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"id",
+               "@value":"urn:ot:object:location:id:company-redHQ_ReadPoint"
+            }
+         ],
+         "properties":{ 
+            "___autogenerated":true,
+            "objectType":"vocabularyElement"
+         },
+         "relations":[ 
+
+         ]
+      },
+      { 
+         "@id":"urn:ot:object:product:batch:Id:pVey_company-red_company-red",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"id",
+               "@value":"urn:ot:object:product:batch:Id:pVey_company-red_company-red"
+            }
+         ],
+         "properties":{ 
+            "___metadata":{ 
+               "_attributes":{ 
+                  "id":"urn:ot:object:product:batch:Id:pVey_company-red_company-red"
+               },
+               "attribute":[ 
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:product:batch:productId"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:product:batch:dateOfCertification"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:product:batch:validityDate"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:product:batch:image"
+                     }
+                  }
+               ]
+            },
+            "objectType":"vocabularyElement",
+            "urn:ot:object:product:batch:dateOfCertification":"2019-11-26",
+            "urn:ot:object:product:batch:productId":"urn:ot:object:product:id:halal",
+            "urn:ot:object:product:batch:validityDate":{ 
+
+            },
+            "vocabularyType":"urn:ot:object:batch"
+         },
+         "relations":[ 
+
+         ]
+      },
+      { 
+         "@id":"urn:ot:object:product:batch:Id:XVfU_company-red_company-red",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"id",
+               "@value":"urn:ot:object:product:batch:Id:XVfU_company-red_company-red"
+            }
+         ],
+         "properties":{ 
+            "___autogenerated":true,
+            "objectType":"vocabularyElement"
+         },
+         "relations":[ 
+
+         ]
+      },
+      { 
+         "@id":"urn:ot:object:product:id:halal",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"id",
+               "@value":"urn:ot:object:product:id:halal"
+            }
+         ],
+         "properties":{ 
+            "___metadata":{ 
+               "_attributes":{ 
+                  "id":"urn:ot:object:product:id:halal"
+               },
+               "attribute":[ 
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:location:category"
+                     }
+                  },
+                  { 
+                     "_attributes":{ 
+                        "id":"urn:ot:object:location:description"
+                     }
+                  }
+               ]
+            },
+            "objectType":"vocabularyElement",
+            "urn:ot:object:location:category":"Certificate",
+            "urn:ot:object:location:description":"HALAL certificate",
+            "vocabularyType":"urn:ot:object:product",
+            "claims": [{
+                    "isPrivate": true,
+                    "data": {
+                        "id": "halal_certificate_12345677",
+                        "transaction_id": "bsi-nos-demotest-10",
+                        "standard_title": "Halal standard",
+                        "description": "Halal description",
+                        "customer_name": "eyJpdiI6IlJKY2hLWVF0bVZPU0twYjRvTUUxZVE9PSIsInZhbHVlIjoiRHc3SmYwSkM0cFFwXC9JQ1FxN1FaMTNweGh2SXlySk9aZGNxQ2ZOVEg2c2htamFzZzRhbXRNaStoRG9rRDRBQzEiLCJtYWMiOiJiMGFiN2U5NDRhYTQ0ZTI4MDA4MzEzYjQyMTcwYjAyYmVhZWVmN2ZhOTlkMDEyOTkyOWIzNjM4MzcyYWU1ZjgzIn0=",
+                        "create_date": "2009-09-13",
+                        "material_id": "110000000131122120"
+                    }
+            }]
+         },
+         "relations":[ 
+
+         ]
+      },
+      { 
+         "@id":"urn:uuid:07d7bb3f-db59-48d8-98e8-fe3504132d86",
+         "@type":"otObject",
+         "identifiers":[ 
+            { 
+               "@type":"uuid",
+               "@value":"urn:uuid:07d7bb3f-db59-48d8-98e8-fe3504132d86"
+            }
+         ],
+         "properties":{ 
+            "___metadata":{ 
+               "extension":{ 
+                  "extension":{ 
+                     "sourceList":{ 
+                        "source":[ 
+                           { 
+                              "_attributes":{ 
+                                 "type":"urn:epcglobal:cbv:sdt:owning_party"
+                              }
+                           }
+                        ]
+                     }
+                  }
+               }
+            },
+            "action":"OBSERVE",
+            "baseExtension":{ 
+               "eventID":"Certification_Issuance_jjbI"
+            },
+            "bizLocation":{ 
+               "id":"urn:ot:object:location:id:company-redHQ"
+            },
+            "bizStep":"urn:epcglobal:cbv:bizstep:shipping",
+            "disposition":"urn:epcglobal:cbv:disp:active",
+            "epcList":{ 
+               "epc":[ 
+                  "urn:ot:object:product:batch:Id:pVey_company-red_company-red"
+               ]
+            },
+            "eventTime":"2019-11-26T10:42:44Z",
+            "eventTimeZoneOffset":"-00:00",
+            "extension":{ 
+               "extension":{ 
+                  "OTEventClass":"urn:ot:event:ObjectEvent",
+                  "OTEventType":"Transport",
+                  "sourceList":{ 
+                     "source":[ 
+                        "urn:ot:object:actor:id:company-red"
+                     ]
+                  }
+               },
+               "quantityList":{ 
+                  "quantityElement":[ 
+                     { 
+                        "epcClass":"urn:ot:object:product:batch:Id:XVfU_company-red_company-red",
+                        "quantity":"1",
+                        "uom":"PCS"
+                     }
+                  ]
+               }
+            },
+            "objectType":"ObjectEvent",
+            "readPoint":{ 
+               "id":"urn:ot:object:location:id:company-redHQ_ReadPoint"
+            }
+         },
+         "relations":[ 
+            { 
+               "@type":"otRelation",
+               "direction":"direct",
+               "linkedObject":{ 
+                  "@id":"urn:ot:object:location:id:company-redHQ_ReadPoint"
+               },
+               "properties":{ 
+
+               },
+               "relationType":"READ_POINT"
+            },
+            { 
+               "@type":"otRelation",
+               "direction":"direct",
+               "linkedObject":{ 
+                  "@id":"urn:ot:object:product:batch:Id:pVey_company-red_company-red"
+               },
+               "properties":{ 
+
+               },
+               "relationType":"EPC"
+            },
+            { 
+               "@type":"otRelation",
+               "direction":"direct",
+               "linkedObject":{ 
+                  "@id":"urn:ot:object:location:id:company-redHQ"
+               },
+               "properties":{ 
+
+               },
+               "relationType":"BIZ_LOCATION"
+            },
+            { 
+               "@type":"otRelation",
+               "direction":"direct",
+               "linkedObject":{ 
+                  "@id":"urn:ot:object:product:batch:Id:XVfU_company-red_company-red"
+               },
+               "properties":{ 
+                  "quantity":"1",
+                  "uom":"PCS"
+               },
+               "relationType":"EPC_QUANTITY"
+            }
+         ]
+      }
+   ]
+}
