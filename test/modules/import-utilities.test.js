@@ -1,7 +1,7 @@
 const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const ImportUtilities = require('../../modules/ImportUtilities');
-const { graph: testGraph, shuffledGraph, graph2: testGraph2 } = require('./test_data/otjson-graph');
+const sample_data = require('./test_data/otjson-graph');
 const Encryption = require('./../../modules/Encryption');
 const Utilities = require('./../../modules/Utilities');
 const Web3 = require('web3');
@@ -17,7 +17,7 @@ const config = {
     node_private_key: signingWallet.privateKey,
 };
 
-describe('Encryption modules ', () => {
+describe('Import utilities module ', () => {
     const web3 = new Web3();
     web3.setProvider(new web3.providers.HttpProvider());
 
@@ -29,28 +29,33 @@ describe('Encryption modules ', () => {
         const object1 = {
             a: 1,
             b: 'abc',
-            c: { d: [1, 2, 3, { e: null, x: undefined }] },
+            c: { d: [1, 2, 3, { e: null, x: undefined }, { y: 1, f: 2 }] },
         };
 
-        const object2 = { c: { d: [1, 2, 3, { x: undefined, e: null }] }, b: 'abc', a: 1 };
+        const object2 = {
+            c: { d: [1, { f: 2, y: 1 }, 2, { x: undefined, e: null }, 3] },
+            b: 'abc',
+            a: 1,
+        };
 
-        const stringifiedObject1 = Utilities.sortedStringify(object1);
-        const stringifiedObject2 = Utilities.sortedStringify(object2);
+        const stringifiedObject1 = Utilities.sortedStringify(object1, true);
+        const stringifiedObject2 = Utilities.sortedStringify(object2, true);
         assert.equal(stringifiedObject1, stringifiedObject2);
     });
 
     it('Sorted dataset', () => {
-        const sortedOriginal = ImportUtilities.sortStringifyDataset(testGraph);
-        const sortedShuffled = ImportUtilities.sortStringifyDataset(shuffledGraph);
+        const sortedOriginal = ImportUtilities.sortStringifyDataset(sample_data.graph);
+        const sortedShuffled = ImportUtilities.sortStringifyDataset(sample_data.shuffledGraph);
 
         assert.equal(sortedOriginal, sortedShuffled);
     });
 
     it('Encrypt dataset', () => {
-        const encryptedGraph = ImportUtilities.encryptDataset(testGraph, keyPair.privateKey);
+        const encryptedGraph =
+            ImportUtilities.encryptDataset(sample_data.graph, keyPair.privateKey);
 
         for (let i = 0; i < encryptedGraph['@graph'].length; i += 1) {
-            const originalItem = testGraph['@graph'][i];
+            const originalItem = sample_data.graph['@graph'][i];
             const encryptedItem = encryptedGraph['@graph'][i];
 
             assert.equal(typeof encryptedItem.properties, 'string');
@@ -76,13 +81,14 @@ describe('Encryption modules ', () => {
     });
 
     it('Decrypt dataset', () => {
-        const encryptedGraph = ImportUtilities.encryptDataset(testGraph, keyPair.privateKey);
+        const encryptedGraph =
+            ImportUtilities.encryptDataset(sample_data.graph, keyPair.privateKey);
         const decryptedGraph = ImportUtilities.decryptDataset(
             encryptedGraph,
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const stringifiedOriginal = Utilities.sortedStringify(testGraph);
+        const stringifiedOriginal = Utilities.sortedStringify(sample_data.graph);
         const stringifiedDecrypted = Utilities.sortedStringify(decryptedGraph);
 
         assert.equal(stringifiedOriginal, stringifiedDecrypted);
@@ -96,7 +102,8 @@ describe('Encryption modules ', () => {
         };
 
         const encryptionColor = 'red';
-        const encryptedGraph = ImportUtilities.encryptDataset(testGraph, keyPair.privateKey);
+        const encryptedGraph =
+            ImportUtilities.encryptDataset(sample_data.graph, keyPair.privateKey);
         const { encryptedMap } = ImportUtilities.decryptDataset(
             encryptedGraph,
             keyPair.publicKey,
@@ -115,7 +122,7 @@ describe('Encryption modules ', () => {
                 for (const objectId of Object.keys(encryptedMap[type])) {
                     for (const relationId of Object.keys(encryptedMap[type][objectId])) {
                         const mapData = encryptedMap[type][objectId][relationId][encryptionColor];
-                        const decryptedData = testGraph['@graph'].find(el => el['@id'] === objectId)
+                        const decryptedData = sample_data.graph['@graph'].find(el => el['@id'] === objectId)
                             .relations.find(el =>
                                 sha3_256(Utilities.stringify(el, 0)) === relationId).properties;
                         const encryptedData =
@@ -128,34 +135,36 @@ describe('Encryption modules ', () => {
     });
 
     it('Calculate graph hash', () => {
-        const encryptedGraph = ImportUtilities.encryptDataset(testGraph, keyPair.privateKey);
+        const encryptedGraph =
+            ImportUtilities.encryptDataset(sample_data.graph, keyPair.privateKey);
         const decryptedGraph = ImportUtilities.decryptDataset(
             encryptedGraph,
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalGraphHash = ImportUtilities.calculateGraphHash(testGraph['@graph']);
+        const originalGraphHash = ImportUtilities.calculateGraphHash(sample_data.graph['@graph']);
         const decryptedGraphHash = ImportUtilities.calculateGraphHash(decryptedGraph['@graph']);
 
         assert.equal(originalGraphHash, decryptedGraphHash);
     });
 
     it('Calculate dataset root hash', () => {
-        const encryptedGraph = ImportUtilities.encryptDataset(testGraph, keyPair.privateKey);
+        const encryptedGraph =
+            ImportUtilities.encryptDataset(sample_data.graph, keyPair.privateKey);
         const decryptedGraph = ImportUtilities.decryptDataset(
             encryptedGraph,
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalRootHash = ImportUtilities.calculateDatasetRootHash(testGraph['@graph'], testGraph['@id'], testGraph.datasetHeader.dataCreator);
+        const originalRootHash = ImportUtilities.calculateDatasetRootHash(sample_data.graph['@graph'], sample_data.graph['@id'], sample_data.graph.datasetHeader.dataCreator);
         const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph['@graph'], decryptedGraph['@id'], decryptedGraph.datasetHeader.dataCreator);
 
         assert.equal(originalRootHash, decryptedRootHash);
     });
 
     it('Sign dataset', () => {
-        const testGraphCopy = Object.assign({}, testGraph);
-        const shuffledGraphCopy = Object.assign({}, shuffledGraph);
+        const testGraphCopy = Object.assign({}, sample_data.graph);
+        const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
         const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
 
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
@@ -171,9 +180,105 @@ describe('Encryption modules ', () => {
         );
     });
 
+    it('Calculate the root hash on one private data object', () => {
+        const originalObject = Utilities.copyObject(sample_data.private_data_object);
+        const shuffledObject = Utilities.copyObject(sample_data.private_data_object_shuffled);
+        const differentObject = Utilities.copyObject(sample_data.private_data_object_2);
+
+        ImportUtilities.calculatePrivateDataHash(originalObject);
+        const originalRootHash = originalObject.data_root_hash;
+        ImportUtilities.calculatePrivateDataHash(shuffledObject);
+        const shuffledRootHash = shuffledObject.data_root_hash;
+        ImportUtilities.calculatePrivateDataHash(differentObject);
+        const differentRootHash = differentObject.data_root_hash;
+
+        assert(originalRootHash != null);
+        assert(shuffledRootHash != null);
+        assert(differentRootHash != null);
+
+        // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
+        assert(typeof originalRootHash === 'string');
+        assert(typeof shuffledRootHash === 'string');
+        assert(typeof differentRootHash === 'string');
+
+        assert(originalRootHash.length === 66);
+        assert(shuffledRootHash.length === 66);
+        assert(differentRootHash.length === 66);
+
+        assert.equal(
+            originalRootHash,
+            shuffledRootHash,
+            'Private data root hash for same object with attributes in different order!',
+        );
+
+        assert.notEqual(
+            originalRootHash,
+            differentRootHash,
+            'Private data root hash for different objects is the same!',
+        );
+    });
+
+    it('Calculating the root hash of an empty private data object should throw an error', () => {
+        const testObject = {};
+
+        let errorHappened = false;
+        try {
+            ImportUtilities.calculatePrivateDataHash(testObject);
+        } catch (e) {
+            errorHappened = true;
+            assert.equal(
+                e.message,
+                'Cannot calculate root hash of an empty object',
+                'Unexpected error received',
+            );
+        }
+
+        assert(errorHappened, 'calculatePrivateDataHash did not throw an error!');
+    });
+
+    it('Calculate the public root hash of one graph', () => {
+        const originalGraph = Utilities.copyObject(sample_data.private_data_graph['@graph']);
+        ImportUtilities.calculateGraphPrivateDataHashes(originalGraph);
+
+        const shuffledGraph = Utilities.copyObject(sample_data.private_data_graph_shuffled['@graph']);
+        ImportUtilities.calculateGraphPrivateDataHashes(shuffledGraph);
+
+        const differentGraph = Utilities.copyObject(sample_data.private_data_graph_2['@graph']);
+        ImportUtilities.calculateGraphPrivateDataHashes(differentGraph);
+
+        const originalGraphRootHash = ImportUtilities.calculateGraphPublicHash(originalGraph);
+        const shuffledGraphRootHash = ImportUtilities.calculateGraphPublicHash(shuffledGraph);
+        const differentGraphRootHash = ImportUtilities.calculateGraphPublicHash(differentGraph);
+
+        assert(originalGraphRootHash != null);
+        assert(shuffledGraphRootHash != null);
+        assert(differentGraphRootHash != null);
+
+        // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
+        assert(typeof originalGraphRootHash === 'string');
+        assert(typeof shuffledGraphRootHash === 'string');
+        assert(typeof differentGraphRootHash === 'string');
+
+        assert(originalGraphRootHash.length === 66);
+        assert(shuffledGraphRootHash.length === 66);
+        assert(differentGraphRootHash.length === 66);
+
+        assert.equal(
+            originalGraphRootHash,
+            shuffledGraphRootHash,
+            'Graph root hash for same object with attributes in different order!',
+        );
+
+        assert.notEqual(
+            originalGraphRootHash,
+            differentGraphRootHash,
+            'Graph root hash for different objects is the same!',
+        );
+    });
+
     it('Verify dataset signature', async () => {
-        const testGraphCopy = Object.assign({}, testGraph);
-        const shuffledGraphCopy = Object.assign({}, shuffledGraph);
+        const testGraphCopy = Object.assign({}, sample_data.graph);
+        const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
         const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
