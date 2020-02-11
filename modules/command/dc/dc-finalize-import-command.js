@@ -2,6 +2,7 @@ const fs = require('fs');
 const Command = require('../command');
 const Models = require('../../../models');
 const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 class DcFinalizeImport extends Command {
     constructor(ctx) {
@@ -29,6 +30,35 @@ class DcFinalizeImport extends Command {
             otjson_size_in_bytes,
             total_documents,
         } = command.data;
+
+
+        const promises = [];
+
+        const document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+        document.vertices.forEach((vertex) => {
+            if (vertex.vertexType === 'Data') {
+                for (const private_data_array of constants.PRIVATE_DATA_OBJECT_NAMES) {
+                    if (Array.isArray(vertex.data[private_data_array])) {
+                        let has_private_data = false;
+                        for (const private_data_element of vertex.data[private_data_array]) {
+                            if (private_data_element.isPrivate) {
+                                has_private_data = true;
+                                promises.push(Models.private_data.create({
+                                    data_set_id,
+                                    element_id: vertex._key,
+                                }));
+                                break;
+                            }
+                        }
+                        if (has_private_data) {
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+
+        await Promise.all(promises);
 
         await Utilities.deleteDirectory(documentPath);
 

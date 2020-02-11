@@ -585,7 +585,7 @@ class ImportUtilities {
             blocks.push(block.padEnd(default_block_size, '0'));
         }
 
-        private_object.data_root_hash = (new MerkleTree(blocks, 'distribution', 'sha3')).getRoot();
+        private_object.private_data_hash = (new MerkleTree(blocks, 'distribution', 'sha3')).getRoot();
     }
 
     static sortStringifyDataset(dataset) {
