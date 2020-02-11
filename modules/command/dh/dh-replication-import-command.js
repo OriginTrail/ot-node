@@ -48,7 +48,7 @@ class DhReplicationImportCommand extends Command {
         const { decryptedDataset, encryptedMap } =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
         const calculatedDataSetId =
-            await ImportUtilities.calculateGraphHash(decryptedDataset['@graph']);
+            await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
 
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);

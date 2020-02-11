@@ -113,7 +113,8 @@ class ImportUtilities {
     }
 
     static prepareDataset(graph, config, web3) {
-        const id = this.calculateGraphHash(graph);
+        ImportUtilities.calculateGraphPrivateDataHashes(graph);
+        const id = this.calculateGraphPublicHash(graph);
         const header = this.createDatasetHeader(config);
         const dataset = {
             '@id': id,
@@ -330,8 +331,6 @@ class ImportUtilities {
     static createDistributionMerkleTree(graph, datasetId, datasetCreator) {
         const datasetSummary =
             this.calculateDatasetSummary(graph, datasetId, datasetCreator);
-
-        ImportUtilities.sortGraphRecursively(graph);
 
         const stringifiedGraph = [];
         for (const obj of graph) {
@@ -599,6 +598,8 @@ class ImportUtilities {
      * @static
      */
     static signDataset(otjson, config, web3) {
+        const privateGraph = Utilities.copyObject(otjson['@graph']);
+        ImportUtilities.removeGraphPrivateData(otjson['@graph']);
         const stringifiedOtjson = this.sortStringifyDataset(otjson);
         const { signature } = web3.eth.accounts.sign(
             stringifiedOtjson,
@@ -608,6 +609,8 @@ class ImportUtilities {
             value: signature,
             type: 'ethereum-signature',
         };
+
+        otjson['@graph'] = privateGraph;
         return otjson;
     }
 
