@@ -183,7 +183,13 @@ class DVController {
             });
 
             await this.graphStorage.updateDocument('ot_vertices', document);
+            await Models.handler_ids.update({
+                status: 'SUCCESSFULL',
+            }, { where: { handler_id } });
         }
+        await Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
     }
 
     async sendNetworkPurchase(elementId, dataSetId, nodeId, handlerId) {
