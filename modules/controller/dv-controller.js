@@ -173,10 +173,11 @@ class DVController {
                     Array.isArray(ot_object.properties[private_data_array])) {
                     ot_object.properties[private_data_array].forEach((private_object, index) => {
                         if (document[private_data_array]
-                            && document[private_data_array].length() === index - 1
-                            && private_object.data_hash === document[private_data_array][index]) {
-                            document[private_data_array][index].data = private_object.data;
-                            // todo add hash calculation and check
+                            && document[private_data_array].length() === index - 1) {
+                            if (private_object.private_data_hash === document[private_data_array][index].private_data_hash) {
+                                document[private_data_array][index].data = private_object.data;
+                                // todo add hash calculation and check
+                            }
                         }
                     });
                 }

@@ -120,24 +120,15 @@ class DCController {
         }
         const networkQuerySearch = JSON.parse(networkQuery.queries);
         const elementId = networkQuerySearch.value;
-        const privateData = await Models.private_data({
+        const privateDataPermission = await Models.private_data_permission.findOne({
             where: {
                 data_set_id,
-                element_id: elementId,
-            },
-        });
-
-        if (!privateData) {
-            throw Error(`Can't find private data with datasetId: ${data_set_id} and elementId: ${elementId}`);
-        }
-        const permission = await Models.data_permission.find({
-            where: {
+                data_element_key: elementId,
                 node_id: nodeId,
-                id_private_data: privateData.id,
             },
         });
 
-        if (!permission) {
+        if (!privateDataPermission) {
             throw Error(`You don't have permission to view elementId: ${elementId} from dataset: ${data_set_id}`);
         }
         const returnValue = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(data_set_id, `ot_vertices/${elementId}`);
@@ -168,27 +159,16 @@ class DCController {
             element_id, data_set_id, handler_id, dv_node_id,
         } = message;
 
-        const privateData = await Models.private_data.findOne({
-            where: {
-                data_set_id,
-                element_id,
-            },
+        await Models.private_data_permission.create({
+            node_id: dv_node_id,
+            data_set_id,
+            data_element_key: element_id,
         });
-
         const response = {
             handler_id,
+            status: 'SUCCESS',
+            message: 'Data purchase successfully finalized!',
         };
-        if (privateData) {
-            await Models.data_permission.create({
-                id_private_data: privateData.id,
-                dv_node_id,
-            });
-            response.status = 'SUCCESS';
-            response.message = 'Data purchase successfully finalized!';
-        } else {
-            response.status = 'ERROR';
-            response.message = 'Could not find requested data';
-        }
 
         const dataPurchaseResponseObject = {
             response,
