@@ -17,6 +17,7 @@ class DCService {
         this.replicationService = ctx.replicationService;
         this.profileService = ctx.profileService;
         this.pricingService = ctx.pricingService;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -430,11 +431,40 @@ class DCService {
             Utilities.normalizeHex(this.config.node_private_key),
         );
 
+        const allowedPrivateDataElements = await models.private_data.findAll({
+            where: {
+                data_set_id: offer.data_set_id,
+                node_id: identity,
+            },
+        });
+
+        const privateData = {};
+
+        const promises = [];
+        allowedPrivateDataElements.forEach((element) => {
+            const ot_object_id = element.ot_json_object_id;
+            promises.push(this.importService.getOtObjectById(offer.data_set_id, ot_object_id));
+        });
+
+        const ot_objects = await Promise.all(promises);
+
+        ot_objects.forEach((ot_object, index) => {
+            const privateDataObject = {};
+            constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
+                if (Array.isArray(ot_object.properties[privateDataArray])) {
+                    privateDataObject[privateDataArray] = ot_object.properties[privateDataArray];
+                }
+            });
+            const { ot_json_object_id } = allowedPrivateDataElements[index];
+            privateData[ot_json_object_id] = privateDataObject;
+        });
+
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
             otJson: replication.otJson,
+            privateData,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,
