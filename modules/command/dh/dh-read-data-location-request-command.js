@@ -107,18 +107,26 @@ class DHReadDataLocationRequestCommand extends Command {
             const privateData = [];
 
             importDetails.forEach((item) => {
-                privateData.push({
-                    is_private: item.isPrivate,
-                    data_element_key: item.data_element_key,
-                    ot_object_id: item.id,
-                });
+                if (item.hasData) {
+                    privateData.push({
+                        is_private: item.isPrivate,
+                        data_element_key: item.data_element_key,
+                        ot_object_id: item.id,
+                    });
+                }
             });
-
+            if (privateData.length > 0) {
+                return {
+                    data_set_id: dataSetId,
+                    size,
+                    calculated_price: new BN(size, 10).mul(new BN(dataPrice, 10)).toString(),
+                    private_data: privateData,
+                };
+            }
             return {
                 data_set_id: dataSetId,
                 size,
                 calculated_price: new BN(size, 10).mul(new BN(dataPrice, 10)).toString(),
-                private_data: privateData,
             };
         });
 

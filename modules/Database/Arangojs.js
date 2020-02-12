@@ -2,7 +2,7 @@ const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
 const { normalizeGraph } = require('./graph-converter');
-const constants = require('./constants');
+const constants = require('../constants');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -308,15 +308,24 @@ class ArangoJS {
                             and e2.relationType == "HAS_DATA"
                             for dataVertex in ot_vertices
                             filter dataVertex._id == e2._to
+                            
                             LET privateArray = (
                             let properties = dataVertex['data']
-                            for p in ${constants.PRIVATE_DATA_OBJECT_NAMES}
+                            for p in ${JSON.stringify(constants.PRIVATE_DATA_OBJECT_NAMES)}
                             filter IS_ARRAY(properties[p]) == true
                             for d in properties[p]
                             RETURN d.isPrivate == null? false : d.isPrivate)
                             let isPrivate = POSITION (privateArray, true)
                             
-                            return {"id": v${count}.identifierValue, "datasets": dataVertex.datasets, "data_element_key": dataVertex._key, "isPrivate": isPrivate}
+                            LET dataArray = (
+                            let properties = dataVertex['data']
+                            for p in ${JSON.stringify(constants.PRIVATE_DATA_OBJECT_NAMES)}
+                            filter IS_ARRAY(properties[p]) == true
+                            for d in properties[p]
+                            RETURN d.data == null? false : true)
+                            let hasData = POSITION (dataArray, true)
+                            
+                            return {"id": v${count}.identifierValue, "datasets": dataVertex.datasets, "data_element_key": dataVertex._key, "isPrivate": isPrivate, "hasData": hasData}
                             )`;
 
             count += 1;
