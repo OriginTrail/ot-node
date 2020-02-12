@@ -108,11 +108,15 @@ class ArangoJS {
      * @return {Promise}
      */
     async findImportIds(dataLocationQuery, encColor = null) {
-        const results = await this.dataLocationQuery(dataLocationQuery, encColor);
-        if (results.length > 0) {
-            return results[0].datasets;
-        }
-        return [];
+        const queryResult = await this.dataLocationQuery(dataLocationQuery, encColor);
+
+        let result = [];
+        queryResult.forEach((item) => {
+            const { datasets } = item;
+            result = result.concat(datasets.filter(x => result.indexOf(x) < 0));
+        });
+
+        return result;
     }
 
     async findTrail(queryObject) {
@@ -262,16 +266,7 @@ class ArangoJS {
             }
 
             const id_value = value;
-            let filter = `LET v_res${count} = (
-                                            FOR v${count} IN ot_vertices
-                                        LET objects = (
-                                            FOR e IN ot_edges
-                                        FILTER e._from == v${count}._id
-                                        AND e.edgeType=='IdentifierValue'
-                                        AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        RETURN e._to)
-                             `;
-
+            let filter = '';
             switch (opcode) {
             case 'EQ':
                 filter += `FILTER v${count}.vertexType == "Identifier"
@@ -296,10 +291,32 @@ class ArangoJS {
                 throw new Error(`OPCODE ${opcode} is not defined`);
             }
 
-            filter += `RETURN {"datasets": v${count}.datasets, "objects": objects})
-                `;
-
-            queryString += filter;
+            queryString += `LET v_res${count} = (
+                            FOR v${count} IN ot_vertices
+                            ${filter}
+                            
+                            let es =(FOR es IN ot_edges
+                            FILTER es._from == v${count}._id
+                            return es)
+                            for e1 IN es
+                            
+                            for entity in ot_vertices
+                            filter entity._id == e1._to
+                            for e2 in ot_edges
+                            filter e2._from == entity._id
+                            and e2.relationType == "HAS_DATA"
+                            for dataVertex in ot_vertices
+                            filter dataVertex._id == e2._to
+                            LET privateArray = (
+                            let properties = dataVertex['data']
+                            for p in ['private_data', 'claims']
+                            filter IS_ARRAY(properties[p]) == true
+                            for d in properties[p]
+                            RETURN d.isPrivate == null? false : d.isPrivate)
+                            let isPrivate = POSITION (privateArray, true)
+                            
+                            return {"id": v${count}.identifierValue, "datasets": dataVertex.datasets, "data_element_key": dataVertex._key, "isPrivate": isPrivate}
+                            )`;
 
             count += 1;
         }
@@ -310,19 +327,13 @@ class ArangoJS {
                     `;
         }
 
-
-        queryString += ' RETURN {datasets: INTERSECTION(v_res1[0].datasets';
-
-        for (let i = 1; i < count; i += 1) {
-            queryString += `, v_res${i}[0].datasets`;
-        }
-
-        queryString += '), objects: INTERSECTION(v_res1[0].objects';
+        queryString += ' RETURN INTERSECTION(v_res1';
 
         for (let i = 1; i < count; i += 1) {
-            queryString += `, v_res${i}[0].objects`;
+            queryString += `, v_res${i}`;
         }
-        queryString += ')}';
+
+        queryString += ')[0]';
 
         return this.runQuery(queryString, params);
     }
