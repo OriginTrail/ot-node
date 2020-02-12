@@ -476,7 +476,7 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     // All nodes including DC emit offer-finalized.
     this.state.nodes.filter(node => node.isRunning).forEach((node) => {
         if (!this.state.corruptedNode || (node.id !== this.state.corruptedNode.id)) {
-            promises.push(new Promise((acc) => {
+            promises.push(new Promise((accept, reject) => {
                 node.once('offer-finalized', (offerId) => {
                     if (this.state.lastReplication !== offerId) {
                         if (this.state.lastReplication) {
@@ -485,7 +485,17 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
                         this.state.lastReplication = offerId;
                     }
                     // TODO: Change API to connect internal offer ID and external offer ID.
-                    acc();
+                    accept();
+                });
+                node.once('not-enough-dhs', (offerId) => {
+                    if (this.state.lastReplication !== offerId) {
+                        if (this.state.lastReplication) {
+                            this.state.secondLastReplication = this.state.lastReplication;
+                        }
+                        this.state.lastReplication = offerId;
+                    }
+                    // TODO: Change API to connect internal offer ID and external offer ID.
+                    reject(Error('Offer failed: Not enough DH\'s submitted'));
                 });
             }));
         }
@@ -495,6 +505,7 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
 });
 
 Then(/^DC should send a challenge request$/, { timeout: 1200000 }, function () {
+    this.logger.log('DC should send a challenge request$');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -575,6 +586,7 @@ Given(/^I wait for (\d+)[st|nd|rd|th]+ node to verify replication$/, { timeout: 
 });
 
 Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
+    this.logger.log('The last import should be the same on all nodes that replicated data');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
