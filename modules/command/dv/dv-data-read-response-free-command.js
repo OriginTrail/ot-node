@@ -77,7 +77,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
-        const { document } = message;
+        const { document, privateData } = message;
         // Calculate root hash and check is it the same on the SC.
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
@@ -97,6 +97,21 @@ class DVDataReadResponseFreeCommand extends Command {
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
+        }
+
+        if (privateData && Object.keys(privateData).length > 0) {
+            for (const otObject of document['@graph']) {
+                if (otObject['@id'] in privateData) {
+                    const otObjectId = otObject['@id'];
+                    for (const privateDataElement in privateData[otObjectId]) {
+                        if (!otObject.properties) {
+                            otObject.properties = {};
+                        }
+                        otObject.properties[privateDataElement] =
+                            privateData[otObjectId][privateDataElement];
+                    }
+                }
+            }
         }
 
         try {

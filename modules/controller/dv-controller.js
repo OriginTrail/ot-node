@@ -87,9 +87,10 @@ class DVController {
 
     /**
      * Handles data read request
-     * @param queryId
-     * @param dataSetId
-     * @param replyId
+     * @param data_set_id - Dataset to be read
+     * @param reply_id - Id of DH reply previously sent to user
+     * @param res - API result object
+     * @returns null
      */
     async handleDataReadRequest(data_set_id, reply_id, res) {
         this.logger.info(`Choose offer triggered with reply ID ${reply_id} and import ID ${data_set_id}`);
