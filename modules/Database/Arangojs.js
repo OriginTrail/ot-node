@@ -2,6 +2,7 @@ const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
 const { normalizeGraph } = require('./graph-converter');
+const constants = require('./constants');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -309,7 +310,7 @@ class ArangoJS {
                             filter dataVertex._id == e2._to
                             LET privateArray = (
                             let properties = dataVertex['data']
-                            for p in ['private_data', 'claims']
+                            for p in ${constants.PRIVATE_DATA_OBJECT_NAMES}
                             filter IS_ARRAY(properties[p]) == true
                             for d in properties[p]
                             RETURN d.isPrivate == null? false : d.isPrivate)
