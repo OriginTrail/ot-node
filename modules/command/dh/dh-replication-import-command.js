@@ -43,7 +43,8 @@ class DhReplicationImportCommand extends Command {
             transactionHash,
             encColor,
         } = command.data;
-        const otJson = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+        const { otJson, privateData }
+            = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
         const { decryptedDataset, encryptedMap } =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
@@ -76,6 +77,21 @@ class DhReplicationImportCommand extends Command {
         // TODO: Verify EPK checksum
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id
+
+        if (privateData && Object.keys(privateData).length > 0) {
+            for (const otObject of decryptedDataset['@graph']) {
+                if (otObject['@id'] in privateData) {
+                    const otObjectId = otObject['@id'];
+                    for (const privateDataElement in privateData[otObjectId]) {
+                        if (!otObject.properties) {
+                            otObject.properties = {};
+                        }
+                        otObject.properties[privateDataElement] =
+                            privateData[otObjectId][privateDataElement];
+                    }
+                }
+            }
+        }
 
         const holdingData = await Models.holding_data.findOne({
             where: {

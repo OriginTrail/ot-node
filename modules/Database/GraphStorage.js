@@ -363,7 +363,26 @@ class GraphStorage {
     /**
      * Returns vertices and edges with specific parameters
      * @param importId
-     * @param fromKey
+     * @param objectKey
+     * @returns {Promise<any>}
+     */
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findDocumentsByImportIdAndOtObjectKey(importId, objectKey)
+                    .then((result) => { resolve(result); }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param objectId
      * @returns {Promise<any>}
      */
     async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
