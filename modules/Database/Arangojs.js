@@ -923,7 +923,7 @@ class ArangoJS {
      * @param objectKey
      * @returns {Promise<any>}
      */
-    async findDocumentsByImportIdAndOtObjectId(importId, objectKey) {
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
         const queryString = `LET rootObject = (
                                 RETURN document('ot_vertices', @objectKey)
                             )
@@ -949,6 +949,48 @@ class ArangoJS {
         const result = await this.runQuery(queryString, {
             importId,
             objectKey,
+        });
+
+        return result[0];
+    }
+
+    /**
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param objectId
+     * @returns {Promise<any>}
+     */
+    async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
+        const queryString = `LET rootObject = (
+                                FOR v IN ot_vertices
+                                
+                                FILTER v.uid == @objectId
+                                    AND v.datasets != null
+                                    AND POSITION(v.datasets, @importId, false) != false
+                                RETURN v
+                            )    
+                            
+                            LET relatedObjects = (
+                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                    AND POSITION(e.datasets, @importId, false) != false
+                                    AND POSITION(v.datasets, @importId, false) != false
+                                RETURN {
+                                    "vertex": v,
+                                    "edge": e
+                                }
+                            )
+                            
+                            RETURN {
+                                "rootObject": rootObject[0],
+                                "relatedObjects": relatedObjects
+                            }`;
+
+        const result = await this.runQuery(queryString, {
+            importId,
+            objectId,
         });
 
         return result[0];
