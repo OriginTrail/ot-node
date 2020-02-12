@@ -1,4 +1,9 @@
 /**
+ * @constant {number} DEFAULT_NUMBER_OF_HOLDERS - Number of data holders for a dataset
+ */
+exports.DEFAULT_NUMBER_OF_HOLDERS = 3;
+
+/**
  * @constant {number} DEFAULT_CHALLENGE_NUMBER_OF_TESTS - Number of challenges per DH
  */
 exports.DEFAULT_CHALLENGE_NUMBER_OF_TESTS = 2;

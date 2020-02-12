@@ -4,7 +4,7 @@ const Encryption = require('../Encryption');
 
 const models = require('../../models');
 
-const DEFAULT_NUMBER_OF_HOLDERS = 3;
+const constants = require('../constants');
 
 class DCService {
     constructor(ctx) {
@@ -156,7 +156,7 @@ class DCService {
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
         const offerStake = new BN(tokenAmountPerHolder.toString(), 10)
-            .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
+            .mul(new BN(constants.DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
         if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
@@ -184,7 +184,7 @@ class DCService {
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
         const offerStake = new BN(tokenAmountPerHolder, 10)
-            .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
+            .mul(new BN(constants.DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
         if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
