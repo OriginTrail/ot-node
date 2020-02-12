@@ -156,13 +156,13 @@ class DCController {
 
     async handleNetworkPurchaseRequest(message) {
         const {
-            element_id, data_set_id, handler_id, dv_node_id,
+            data_element_key, data_set_id, handler_id, dv_node_id,
         } = message;
 
         await Models.private_data_permission.create({
             node_id: dv_node_id,
             data_set_id,
-            data_element_key: element_id,
+            data_element_key,
         });
         const response = {
             handler_id,

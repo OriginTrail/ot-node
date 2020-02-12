@@ -193,9 +193,9 @@ class DVController {
         }, { where: { handler_id } });
     }
 
-    async sendNetworkPurchase(elementId, dataSetId, nodeId, handlerId) {
+    async sendNetworkPurchase(dataElementKey, dataSetId, nodeId, handlerId) {
         const message = {
-            element_id: elementId,
+            data_element_key: dataElementKey,
             data_set_id: dataSetId,
             handler_id: handlerId,
         };
