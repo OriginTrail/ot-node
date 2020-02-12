@@ -445,7 +445,7 @@ class EpcisOtJsonTranspiler {
             linkedObject: {
                 '@id': id,
             },
-            properties: data,
+            properties: data || {},
         });
         if (compressed.epcList && compressed.epcList.epc) {
             for (const epc of compressed.epcList.epc) {
