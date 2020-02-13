@@ -308,6 +308,7 @@ class ArangoJS {
                             and e2.relationType == "HAS_DATA"
                             for dataVertex in ot_vertices
                             filter dataVertex._id == e2._to
+                            
                             LET privateArray = (
                             let properties = dataVertex['data']
                             for p in ${JSON.stringify(constants.PRIVATE_DATA_OBJECT_NAMES)}
@@ -316,7 +317,15 @@ class ArangoJS {
                             RETURN d.isPrivate == null? false : d.isPrivate)
                             let isPrivate = POSITION (privateArray, true)
                             
-                            return {"id": v${count}.identifierValue, "datasets": dataVertex.datasets, "data_element_key": dataVertex._key, "isPrivate": isPrivate}
+                            LET dataArray = (
+                            let properties = dataVertex['data']
+                            for p in ${JSON.stringify(constants.PRIVATE_DATA_OBJECT_NAMES)}
+                            filter IS_ARRAY(properties[p]) == true
+                            for d in properties[p]
+                            RETURN d.data == null? false : true)
+                            let hasData = POSITION (dataArray, true)
+                            
+                            return {"id": v${count}.identifierValue, "datasets": dataVertex.datasets, "data_element_key": dataVertex._key, "isPrivate": isPrivate, "hasData": hasData}
                             )`;
 
             count += 1;
