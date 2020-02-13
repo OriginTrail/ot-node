@@ -107,7 +107,7 @@ class DHReadDataLocationRequestCommand extends Command {
             const privateData = [];
 
             importDetails.forEach((item) => {
-                if (item.hasData) {
+                if (item.hasData && item.isPrivate) {
                     privateData.push({
                         is_private: item.isPrivate,
                         data_element_key: item.data_element_key,
