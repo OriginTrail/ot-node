@@ -162,21 +162,35 @@ class DCController {
         );
     }
 
-    async handleNetworkPurchaseRequest(message) {
+    async handleNetworkPurchaseRequest(request) {
         const {
             data_set_id, handler_id, dv_node_id, ot_json_object_id,
-        } = message;
+        } = request;
 
-        await Models.private_data_permissions.create({
-            node_id: dv_node_id,
-            data_set_id,
-            ot_json_object_id,
+        const permission = Models.private_data_permissions.findOne({
+            where: {
+                node_id: dv_node_id,
+                data_set_id,
+                ot_json_object_id,
+            },
         });
+        let message = '';
+        if (permission) {
+            message = 'Data already purchased!';
+        } else {
+            await Models.private_data_permissions.create({
+                node_id: dv_node_id,
+                data_set_id,
+                ot_json_object_id,
+            });
+            message = 'Data purchase successfully finalized!';
+        }
+
         const response = {
             handler_id,
             status: 'SUCCESS',
             wallet: this.config.node_wallet,
-            message: 'Data purchase successfully finalized!',
+            message,
         };
 
         const dataPurchaseResponseObject = {
