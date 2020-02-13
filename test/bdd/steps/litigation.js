@@ -38,6 +38,7 @@ Given(/^I remember stopped holder[s]*$/, async function () {
 });
 
 Given(/^I wait for litigation initiation$/, { timeout: 300000 }, function (done) {
+    this.logger.log('I wait for litigation initiation');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -66,6 +67,7 @@ Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 300000 }, func
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ holder to litigate should answer litigation$/, { timeout: 300000 }, async function (nodeIndex) {
+    this.logger.log(`${nodeIndex} holder to litigate should answer litigation`);
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -117,10 +119,16 @@ Then(/^Litigator node should have completed litigation$/, { timeout: 300000 }, f
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
+    this.logger.log('Holder node should have been penalized');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
     const { dc } = this.state;
+
+    if (dc.state.penalizedDHIdentities.length > 0) {
+        done();
+        return;
+    }
 
     dc.once('dc-litigation-completed-dh-penalized', () => {
         done();
@@ -128,6 +136,7 @@ Then(/^(\d+)[st|nd|rd|th]+ started holder should have been penalized$/, { timeou
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ started holder should not have been penalized$/, { timeout: 300000 }, function (nodeIndex, done) {
+    this.logger.log('Holder node should not have been penalized');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -184,6 +193,7 @@ Then(/^I wait for replacement to be completed$/, { timeout: 300000 }, function (
 });
 
 Given(/^I wait for challenges to start$/, { timeout: 300000 }, async function () {
+    this.logger.log('I wait for challenges to start');
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -224,18 +234,23 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
         username,
         password,
     } = node.options.nodeConfiguration.database;
-
+    this.state.corruptedNode = node;
     const systemDb = new Database();
     systemDb.useBasicAuth(username, password);
     systemDb.useDatabase(databaseName);
 
     await systemDb.query(`FOR v IN ot_vertices
-            UPDATE { _key: v._key, 
-                '${this.state.lastImport.dataset_id}': {
-                    data:
-                        REVERSE(v['${this.state.lastImport.dataset_id}'].data)
-                       } 
+            UPDATE { _key: v._key,
+                uid: "corrupted",
+                identifierType: "corrupted",
+                identifierValue: "corrupted",
+                vertexType: "corrupted",
+                data: "corrupted",
+                datasets: "corrupted",
+                objectType: "corrupted"
             } IN ot_vertices`);
+
+    // await systemDb.query('FOR u IN ot_vertices REMOVE { _key: u._key } IN ot_vertices');
 
     this.state.holdersToLitigate.push(node);
 });
@@ -271,7 +286,7 @@ Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeo
                 "requestedDataIndex":"203"
             }
          */
-        expect(event).to.have.keys(['0', '1', '2', 'offerId', 'holderIdentity', 'requestedDataIndex']);
+        expect(event).to.have.keys(['0', '1', '2', '3', 'offerId', 'holderIdentity', 'requestedBlockIndex', 'requestedObjectIndex']);
 
         // Find node
         Models.sequelize.options.storage = dc.systemDbPath;
@@ -279,7 +294,8 @@ Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeo
         const challenge = await Models.sequelize.models.challenges.findOne({
             where: {
                 dh_id: node.state.identity,
-                block_id: Number(event.requestedDataIndex),
+                block_index: Number(event.requestedBlockIndex),
+                object_index: Number(event.requestedObjectIndex),
                 offer_id: event.offerId,
             },
         });
@@ -341,7 +357,7 @@ Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeo
 });
 
 Then(
-    /^the last offer's status for (\d+)[st|nd|rd|th]+ node should be active$/,
+    /^the last replication status for (\d+)[st|nd|rd|th]+ node should be holding$/,
     { timeout: 300000 },
     async function (nodeIndex) {
         expect(nodeIndex, 'Invalid node index').to.be.greaterThan(0);
@@ -359,7 +375,7 @@ Then(
         const node = this.state.nodes[nodeIndex - 1];
 
         const lastOfferId =
-            dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
+            dc.state.offers.internalIDs[Object.keys(dc.state.offers.internalIDs)[0]].offerId;
 
         Models.sequelize.options.storage = dc.systemDbPath;
         await Models.sequelize.sync();
@@ -373,14 +389,5 @@ Then(
         });
 
         expect(replicated_data.status).to.equal('HOLDING');
-
-        const offer = await Models.sequelize.models.offers.findOne({
-            where: {
-                offer_id: lastOfferId,
-                data_set_id: this.state.lastImport.dataset_id,
-            },
-        });
-
-        expect(offer.global_status).to.equal('ACTIVE');
     },
 );

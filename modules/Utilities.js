@@ -20,6 +20,7 @@ const path = require('path');
 const rimraf = require('rimraf');
 
 const logger = require('./logger');
+const { sha3_256 } = require('js-sha3');
 
 class Utilities {
     /**
@@ -85,7 +86,7 @@ class Utilities {
                 // eslint-disable-next-line no-template-curly-in-string
                 packageDir: '${__dirname}/../',
                 install: false,
-                scopeList: process.env.NODE_ENV !== 'production' ?
+                scopeList: process.env.NODE_ENV !== 'testnet' ?
                     ['dependencies', 'devDependencies'] : ['dependencies'],
                 verbose: false,
             }).then((output) => {
@@ -679,6 +680,22 @@ class Utilities {
     }
 
     /**
+     * Calculate SHA3 from input objects and return normalized hex string.
+     * @param rest An array of input data concatenated before calculating the hash.
+     * @return {string} Normalized hash string.
+     * @private
+     */
+    static keyFrom(...rest) {
+        return Utilities.normalizeHex(sha3_256([...rest].reduce(
+            (acc, argument) => {
+                acc += Utilities.stringify(argument, 0);
+                return acc;
+            },
+            '',
+        )));
+    }
+
+    /**
      * Denormalizes hex number
      * @param number     Hex number
      * @returns {string|null} Normalized hex number
@@ -876,10 +893,6 @@ class Utilities {
             'cpus',
             'network',
             'node_rpc_port',
-            'dh_price',
-            'dh_stake_factor',
-            'dh_max_time_mins',
-            'max_token_amount_per_dh',
             'dh_min_stake_amount',
             'read_stake_factor',
             'control_port_enabled',

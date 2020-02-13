@@ -1,15 +1,10 @@
+const path = require('path');
 const fs = require('fs');
-const ip = require('ip');
-const restify = require('restify');
-const corsMiddleware = require('restify-cors-middleware');
-
-const Utilities = require('../Utilities');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
-
-const utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
+const Utilities = require('../Utilities');
 const Models = require('../../models');
-const uuidv4 = require('uuid/v4');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -18,14 +13,25 @@ class RestAPIServiceV2 {
         this.logger = ctx.logger;
         this.apiUtilities = ctx.apiUtilities;
         this.emitter = ctx.emitter;
+        this.commandExecutor = ctx.commandExecutor;
+        this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
+        this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
+        this.dcController = ctx.dcController;
+
+        this.dvController = ctx.dvController;
+        this.remoteControl = ctx.remoteControl;
+
+        this.graphStorage = ctx.graphStorage;
+        this.importService = ctx.importService;
 
         this.version_id = 'v2.0';
-        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH'];
-
+        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
+        this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
-        this.mapping_standards_for_event.set('ot-json', 'graph');
+        this.mapping_standards_for_event.set('ot-json', 'ot-json');
         this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
-        this.mapping_standards_for_event.set('graph', 'graph');
+        this.mapping_standards_for_event.set('graph', 'ot-json');
+        this.mapping_standards_for_event.set('wot', 'wot');
     }
 
     /**
@@ -33,8 +39,7 @@ class RestAPIServiceV2 {
      */
     _exposeAPIRoutes(server) {
         const {
-            importController, dcController, transport, emitter,
-            blockchain, web3, config,
+            transport, emitter, blockchain, web3, config,
         } = this.ctx;
 
         this._registerNodeInfoRoute(server, false);
@@ -50,7 +55,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
+            await this._checkForHandlerStatus(req, res);
         });
 
         server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
@@ -58,7 +63,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
+            await this._checkForReplicationHandlerStatus(req, res);
         });
 
         server.post(`/api/${this.version_id}/export`, async (req, res) => {
@@ -66,25 +71,57 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
-            await this._check_for_handler_status(req, res);
+            await this._checkForHandlerStatus(req, res);
         });
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
-            const msg = [];
-            this.stanards.forEach(standard =>
-                msg.push(standard));
-            res.send({
-                message: msg,
-            });
+            this._getStandards(req, res);
         });
 
-        /** Local query routes */
-        // TODO Add remaining query routes
-        /**
-         * Get trail from database
-         * @param QueryObject - ex. {uid: abc:123}
-         */
-        server.get(`/api/${this.version_id}/trail`, (req, res, next) => { });
+        server.get(`/api/${this.version_id}/get_element_issuer_identity/:element_id`, async (req, res) => {
+            await this._getElementIssuerIdentity(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/get_connection_types/:standard_id`, async (req, res) => {
+            await this._getConnectionTypes(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/get_dataset_info/:dataset_id`, async (req, res) => {
+            await this._getDatasetInfo(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/trail`, async (req, res) => {
+            await this._getTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res) => {
+            await this._getMerkleProofs(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/network/query`, async (req, res) => {
+            await this._networkQuery(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/query/result/:query_id`, async (req, res) => {
+            await this._networkQueryStatus(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/query/responses/:query_id`, async (req, res) => {
+            await this._networkQueryResponses(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/network/read`, async (req, res) => {
+            await this._readNetwork(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/read/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
+            await this._getChallenges(req, res);
+        });
+
 
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
@@ -125,78 +162,47 @@ class RestAPIServiceV2 {
             emitter.emit(type, req, res);
         });
 
-        /** Network queries & read requests, to be refactored */
-
-        server.post(`/api/${this.version_id}/query/network`, (req, res, next) => {
-            this.logger.api('POST: Network query request received.');
+        server.post(`/api/${this.version_id}/query/local`, (req, res, next) => {
+            this.logger.api('POST: Local query request received.');
 
             let error = RestAPIValidator.validateBodyRequired(req.body);
             if (error) {
                 return next(error);
             }
 
-            const { query } = req.body;
-            error = RestAPIValidator.validateSearchQuery(query);
+            const queryObject = req.body.query;
+            error = RestAPIValidator.validateSearchQuery(queryObject);
             if (error) {
                 return next(error);
             }
 
-            emitter.emit('api-network-query', {
-                query,
+            // TODO: Decrypt returned vertices
+            emitter.emit('api-query', {
+                query: queryObject,
                 response: res,
             });
         });
 
-        server.get(`/api/${this.version_id}/query/network/:query_id`, (req, res) => {
-            this.logger.api('GET: Query for status request received.');
+        server.get(`/api/${this.version_id}/query/local/import/:data_set_id`, (req, res) => {
+            this.logger.api('GET: Local import request received.');
 
-            if (!req.params.query_id) {
+            if (!req.params.data_set_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
                 });
                 return;
             }
-            emitter.emit('api-network-query-status', {
-                id: req.params.query_id,
+
+            emitter.emit('api-query-local-import', {
+                data_set_id: req.params.data_set_id,
+                format: ((req.query && req.query.format) || 'otjson'),
+                encryption: req.query.encryption,
+                request: req,
                 response: res,
             });
         });
 
-        server.get(`/api/${this.version_id}/query/:query_id/responses`, (req, res) => {
-            this.logger.api('GET: Local query responses request received.');
-
-            if (!req.params.query_id) {
-                res.status(400);
-                res.send({
-                    message: 'Param query_id is required.',
-                });
-                return;
-            }
-            emitter.emit('api-network-query-responses', {
-                query_id: req.params.query_id,
-                response: res,
-            });
-        });
-
-        server.post(`/api/${this.version_id}/read/network`, (req, res) => {
-            this.logger.api('POST: Network read request received.');
-
-            if (req.body == null || req.body.query_id == null || req.body.reply_id == null
-                || req.body.data_set_id == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-                return;
-            }
-            const { query_id, reply_id, data_set_id } = req.body;
-
-            emitter.emit('api-choose-offer', {
-                query_id,
-                reply_id,
-                data_set_id,
-                response: res,
-            });
-        });
 
         server.get(`/api/${this.version_id}/consensus/:sender_id`, (req, res) => {
             this.logger.api('GET: Consensus check events request received.');
@@ -230,6 +236,91 @@ class RestAPIServiceV2 {
             emitter.emit('api-payout', {
                 offerId: req.query.offer_id,
                 response: res,
+            });
+        });
+
+        /** Get root hash for provided data query
+         * @param Query params: data_set_id
+         */
+        server.get(`/api/${this.version_id}/fingerprint`, (req, res) => {
+            this.logger.api('GET: Fingerprint request received.');
+
+            const queryObject = req.query;
+            emitter.emit('api-get_root_hash', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
+            this.logger.api('GET: import_info.');
+
+            const queryObject = req.query;
+            if (queryObject.data_set_id == null) {
+                res.send({ status: 400, message: 'Missing parameter!', data: [] });
+                return;
+            }
+
+            this.emitter.emit('api-import-info', {
+                dataSetId: queryObject.data_set_id,
+                responseFormat: queryObject.format || 'otjson',
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/balance`, async (req, res) => {
+            this.logger.api('Get balance.');
+
+            try {
+                const humanReadable = req.query.humanReadable === 'true';
+
+                const walletEthBalance = await web3.eth.getBalance(config.node_wallet);
+                const walletTokenBalance = await Utilities.getTracTokenBalance(
+                    web3,
+                    config.node_wallet,
+                    blockchain.getTokenContractAddress(),
+                    false,
+                );
+                const profile = await blockchain.getProfile(config.erc725Identity);
+                const profileMinimalStake = await blockchain.getProfileMinimumStake();
+
+                const body = {
+                    wallet: {
+                        address: config.node_wallet,
+                        ethBalance: humanReadable ? web3.utils.fromWei(walletEthBalance, 'ether') : walletEthBalance,
+                        tokenBalance: humanReadable ? web3.utils.fromWei(walletTokenBalance, 'ether') : walletTokenBalance,
+                    },
+                    profile: {
+                        staked: humanReadable ? web3.utils.fromWei(profile.stake, 'ether') : profile.stake,
+                        reserved: humanReadable ? web3.utils.fromWei(profile.stakeReserved, 'ether') : profile.stakeReserved,
+                        minimalStake: humanReadable ? web3.utils.fromWei(profileMinimalStake, 'ether') : profileMinimalStake,
+                    },
+                };
+
+                res.status(200);
+                res.send(body);
+            } catch (error) {
+                this.logger.error(`Failed to get balance. ${error.message}.`);
+                res.status(503);
+                res.send({});
+            }
+        });
+
+        server.get(`/api/${this.version_id}/imports_info`, (req, res) => {
+            this.logger.api('GET: List imports request received.');
+
+            emitter.emit('api-imports-info', {
+                response: res,
+            });
+        });
+
+        server.get(`/api/${this.version_id}/dump/rt`, (req, res) => {
+            this.logger.api('Dumping routing table');
+            const message = transport.dumpContacts();
+
+            res.status(200);
+            res.send({
+                message,
             });
         });
     }
@@ -277,7 +368,172 @@ class RestAPIServiceV2 {
         });
     }
 
-    async _check_for_handler_status(req, res) {
+    async _getTrail(req, res) {
+        this.logger.api('POST: Trail request received.');
+
+        if (req.body === undefined ||
+            req.body.identifier_types === undefined ||
+            req.body.identifier_values === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { identifier_types, identifier_values } = req.body;
+
+        if (Utilities.arrayze(identifier_types).length !==
+            Utilities.arrayze(identifier_values).length) {
+            res.status(400);
+            res.send({
+                message: 'Identifier array length mismatch',
+            });
+            return;
+        }
+
+        const depth = req.body.depth === undefined ?
+            this.graphStorage.getDatabaseInfo().max_path_length :
+            parseInt(req.body.depth, 10);
+
+        const { connection_types } = req.body;
+
+        const keys = [];
+
+        const typesArray = Utilities.arrayze(identifier_types);
+        const valuesArray = Utilities.arrayze(identifier_values);
+
+        const { length } = typesArray;
+
+        for (let i = 0; i < length; i += 1) {
+            keys.push(Utilities.keyFrom(typesArray[i], valuesArray[i]));
+        }
+
+        try {
+            const trail =
+                await this.graphStorage.findTrail({
+                    identifierKeys: keys,
+                    depth,
+                    connectionTypes: connection_types,
+                });
+
+            const response = await this.importService.packTrailData(trail);
+
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            res.status(400);
+            res.send(e);
+        }
+    }
+
+    async _getMerkleProofs(req, res) {
+        this.logger.api('POST: Get Merkle proofs request received.');
+
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        if (req.body.object_ids === undefined ||
+            req.body.dataset_id === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { object_ids, dataset_id } = req.body;
+
+        const response =
+            await this.importService.getMerkleProofs(Utilities.arrayze(object_ids), dataset_id);
+
+        res.status(200);
+        res.send(response);
+    }
+
+    async _networkQuery(req, res) {
+        this.logger.api('POST: Network query request received.');
+
+        let error = RestAPIValidator.validateBodyRequired(req.body);
+        if (error) {
+            res.status(400);
+            res.send({
+                message: error.message,
+            });
+            return;
+        }
+
+        const { query } = req.body;
+        error = RestAPIValidator.validateSearchQuery(query);
+        if (error) {
+            res.status(400);
+            res.send({
+                message: error.message,
+            });
+            return;
+        }
+
+        this.logger.info('Network-query handling triggered.');
+
+        const queryId = await this.dvController.queryNetwork(query, res);
+
+        if (queryId) {
+            res.status(200);
+            res.send({
+                query_id: queryId,
+            });
+        }
+    }
+
+    async _networkQueryStatus(req, res) {
+        this.logger.api('GET: Query for status request received.');
+
+        if (!req.params.query_id) {
+            res.status(400);
+            res.send({
+                message: 'Missing Query ID parameter.',
+            });
+            return;
+        }
+
+        await this.dvController.handleNetworkQueryStatus(req.params.query_id, res);
+    }
+
+    async _networkQueryResponses(req, res) {
+        this.logger.api('GET: Local query responses request received.');
+
+        if (!req.params.query_id) {
+            res.status(400);
+            res.send({
+                message: 'Param query_id is required.',
+            });
+            return;
+        }
+
+        await this.dvController.getNetworkQueryResponses(req.params.query_id, res);
+    }
+
+    async _readNetwork(req, res) {
+        this.logger.api('POST: Network read request received.');
+
+        if (req.body == null || req.body.reply_id == null
+            || req.body.data_set_id == null) {
+            res.status(400);
+            res.send({ message: 'Params reply_id and data_set_id are required.' });
+            return;
+        }
+        const { reply_id, data_set_id } = req.body;
+
+        await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
+    }
+
+    async _checkForReplicationHandlerStatus(req, res) {
         const handler_object = await Models.handler_ids.findOne({
             where: {
                 handler_id: req.params.handler_id,
@@ -288,7 +544,57 @@ class RestAPIServiceV2 {
             this.logger.info('Invalid request');
             res.status(404);
             res.send({
-                message: 'This data set does not exist in the database',
+                message: 'Unable to find data with given parameters!',
+            });
+            return;
+        }
+        const handlerData = JSON.parse(handler_object.data);
+
+        const offerData = {
+            status: handlerData.status,
+            holders: handlerData.holders,
+        };
+        const offer = await Models.offers.findOne({
+            where: {
+                offer_id: handlerData.offer_id,
+            },
+        });
+        if (offer) {
+            offerData.number_of_replications = offer.number_of_replications;
+            offerData.number_of_verified_replications = offer.number_of_verified_replications;
+            offerData.trac_in_eth_used_for_price_calculation =
+                offer.trac_in_eth_used_for_price_calculation;
+            offerData.gas_price_used_for_price_calculation =
+                offer.gas_price_used_for_price_calculation;
+            offerData.price_factor_used_for_price_calculation =
+                offer.price_factor_used_for_price_calculation;
+            offerData.offer_create_transaction_hash = offer.transaction_hash;
+            offerData.offer_finalize_transaction_hash = offer.offer_finalize_transaction_hash;
+            offerData.offer_id = offer.offer_id;
+            offerData.holding_time_in_minutes = offer.holding_time_in_minutes;
+            offerData.token_amount_per_holder = offer.token_amount_per_holder;
+            offerData.message = offer.message;
+        }
+        Object.keys(offerData).forEach(key => (offerData[key] == null) && delete offerData[key]);
+        res.status(200);
+        res.send({
+            data: offerData,
+            status: handler_object.status,
+        });
+    }
+
+    async _checkForHandlerStatus(req, res) {
+        const handler_object = await Models.handler_ids.findOne({
+            where: {
+                handler_id: req.params.handler_id,
+            },
+        });
+
+        if (handler_object == null) {
+            this.logger.info('Invalid request');
+            res.status(404);
+            res.send({
+                message: 'Unable to find data with given parameters!',
             });
             return;
         }
@@ -300,6 +606,55 @@ class RestAPIServiceV2 {
             data: JSON.parse(data),
             status,
         });
+    }
+
+    async _getChallenges(req, res) {
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        // Check if import type is valid
+        if (req.body.startDate === undefined ||
+            req.body.endDate === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request startDate and endDate required!',
+            });
+            return;
+        }
+
+        const challenges = await Models.challenges.findAll({
+            where: {
+                start_time: {
+                    [Models.Sequelize.Op.between]:
+                        [(new Date(req.body.startDate)).getTime(),
+                            (new Date(req.body.endDate)).getTime()],
+                },
+                status: {
+                    [Models.Sequelize.Op.not]: 'PENDING',
+                },
+            },
+            order: [
+                ['start_time', 'ASC'],
+            ],
+        });
+        const returnChallenges = [];
+        challenges.forEach((challenge) => {
+            const answered = !!challenge.answer;
+            returnChallenges.push({
+                offer_id: challenge.offer_id,
+                start_time: challenge.start_time,
+                status: challenge.status,
+                answered,
+            });
+        });
+
+        res.status(200);
+        res.send(returnChallenges);
     }
 
     // This is hardcoded import in case it is needed to make new importer with this method
@@ -324,23 +679,64 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const standard_id = req.body.standard_id.toLowerCase();
+        const standard_id =
+            this.mapping_standards_for_event.get(req.body.standard_id.toLowerCase());
 
-        // Check if file is provided
+        let fileContent;
         if (req.files !== undefined && req.files.file !== undefined) {
             const inputFile = req.files.file.path;
+            fileContent = await Utilities.fileContents(inputFile);
+        } else if (req.body.file !== undefined) {
+            fileContent = req.body.file;
+        }
+
+        if (fileContent) {
             try {
-                const content = await utilities.fileContents(inputFile);
-                const queryObject = {
-                    content,
-                    contact: req.contact,
-                    response: res,
-                };
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                queryObject.handler_id = inserted_object.dataValues.handler_id;
-                this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
+
+                const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+
+                try {
+                    await Utilities.writeContentsToFile(
+                        cacheDirectory,
+                        inserted_object.dataValues.handler_id,
+                        fileContent,
+                    );
+                } catch (e) {
+                    const filePath =
+                        path.join(cacheDirectory, inserted_object.dataValues.handler_id);
+
+                    if (fs.existsSync(filePath)) {
+                        await Utilities.deleteDirectory(filePath);
+                    }
+                    res.status(500);
+                    res.send({
+                        message: `Error when creating import cache file for handler_id ${inserted_object.dataValues.handler_id}. ${e.message}`,
+                    });
+                    return;
+                }
+
+                const commandData = {
+                    standard_id,
+                    documentPath: path.join(cacheDirectory, inserted_object.dataValues.handler_id),
+                    handler_id: inserted_object.dataValues.handler_id,
+                };
+                const commandSequence = [
+                    'dcConvertToOtJsonCommand',
+                    'dcConvertToGraphCommand',
+                    'dcWriteImportToGraphDbCommand',
+                    'dcFinalizeImportCommand',
+                ];
+
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
+                });
                 res.status(200);
                 res.send({
                     handler_id: inserted_object.dataValues.handler_id,
@@ -351,24 +747,7 @@ class RestAPIServiceV2 {
                     message: 'No import data provided',
                 });
             }
-        } else if (req.body.file !== undefined) {
-            // Check if import data is provided in request body
-            const queryObject = {
-                content: req.body.file,
-                contact: req.contact,
-                response: res,
-            };
-            const inserted_object = await Models.handler_ids.create({
-                status: 'PENDING',
-            });
-            queryObject.handler_id = inserted_object.dataValues.handler_id;
-            this.emitter.emit(`api-${this.mapping_standards_for_event.get(standard_id)}-import-request`, queryObject);
-            res.status(200);
-            res.send({
-                handler_id: inserted_object.dataValues.handler_id,
-            });
         } else {
-            // No import data provided
             res.status(400);
             res.send({
                 message: 'No import data provided',
@@ -379,54 +758,7 @@ class RestAPIServiceV2 {
     async _replicateDataset(req, res) {
         this.logger.api('POST: Replication of imported data request received.');
 
-        if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
-            utilities.validateNumberParameter(req.body.data_lifespan) &&
-            utilities.validateStringParameter(req.body.total_token_amount)) {
-            const dataset = await Models.data_info.findOne({
-                /**
-                 * u tabeli data_info ovo polje se i
-                 * dalje zove data_set_id a treba dataset_id po novom apiju
-                 */
-                where: { data_set_id: req.body.dataset_id },
-            });
-            if (dataset == null) {
-                this.logger.info('Invalid request');
-                res.status(404);
-                res.send({
-                    message: 'This data set does not exist in the database',
-                });
-                return;
-            }
-            const queryObject = {
-                dataSetId: req.body.dataset_id,
-                data_lifespan: req.body.data_lifespan,
-                total_token_amount: req.body.total_token_amount,
-                response: res,
-            };
-            const handler_data = {
-                data_lifespan: queryObject.data_lifespan,
-                total_token_amount: queryObject.total_token_amount,
-                status: 'PUBLISHING_TO_BLOCKCHAIN',
-                hold: [],
-            };
-            const inserted_object = await Models.handler_ids.create({
-                status: 'PENDING',
-                data: JSON.stringify(handler_data),
-            });
-            queryObject.handler_id = inserted_object.dataValues.handler_id;
-            console.log(queryObject.handler_id);
-            this.emitter.emit('api-create-offer', queryObject);
-            res.status(200);
-            res.send({
-                handler_id: inserted_object.dataValues.handler_id,
-            });
-        } else {
-            this.logger.error('Invalid request');
-            res.status(400);
-            res.send({
-                message: 'Invalid parameters!',
-            });
-        }
+        this.dcController.handleReplicateRequest(req, res);
     }
 
     /**
@@ -464,6 +796,7 @@ class RestAPIServiceV2 {
             });
         }
 
+
         if (req.body.dataset_id === undefined) {
             res.status(400);
             res.send({
@@ -473,22 +806,23 @@ class RestAPIServiceV2 {
 
         const requested_dataset = await Models.data_info.findOne({
             where: {
-                data_set_id: req.params.dataset_id,
+                data_set_id: req.body.dataset_id,
             },
         });
 
-        if (requested_dataset === undefined) {
+        if (requested_dataset === null) {
             res.status(400);
             res.send({
                 message: 'Data set does not exist',
             });
+            return;
         }
 
         const dataset_id = requested_dataset.dataValues.data_set_id;
 
         const object_to_export =
             {
-                dataset_id: requested_dataset,
+                dataset_id,
             };
 
         const inserted_object = await Models.handler_ids.create({
@@ -503,6 +837,123 @@ class RestAPIServiceV2 {
         });
 
         this.emitter.emit('api-export-request', { dataset_id, handler_id, standard: this.mapping_standards_for_event.get(standard_id) });
+    }
+
+    /**
+     * Get all supported standards
+     * @param req
+     * @param res
+     * @private
+     */
+    _getStandards(req, res) {
+        const msg = [];
+        this.stanards.forEach(standard =>
+            msg.push(standard));
+        res.send({
+            message: msg,
+        });
+    }
+
+    _getConnectionTypes(req, res) {
+        const standard_id = req.params.standard_id.toLocaleLowerCase();
+        if (standard_id === 'gs1') {
+            res.status(200);
+            res.send({ connection_types: this.epcisOtJsonTranspiler.getConnectionTypes() });
+        } else if (standard_id === 'wot') {
+            res.status(200);
+            res.send({ connection_types: this.wotOtJsonTranspiler.getConnectionTypes() });
+        } else {
+            res.status(400);
+            res.send({
+                message: 'Invalid type request',
+            });
+        }
+    }
+
+    /**
+     * Returns element issuer identity
+     * @param req
+     * @param res
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _getElementIssuerIdentity(req, res) {
+        this.logger.api('GET: Element issuer identity request received.');
+        const elementId = req.params.element_id;
+        if (!elementId) {
+            res.status(400);
+            res.send({
+                message: 'Param element_id is required.',
+            });
+            return;
+        }
+        const result = await this.graphStorage.findIssuerIdentityForElementId(elementId);
+        if (result && result.length > 0) {
+            res.status(200);
+            res.send(result);
+        } else {
+            res.status(400);
+            res.send({
+                message: 'Unable to find requested data',
+            });
+        }
+    }
+
+    async _getDatasetInfo(request, response) {
+        const datasetId = request.params.dataset_id;
+        if (!datasetId) {
+            response.status(400);
+            response.send({
+                message: 'Param dataset_id is required.',
+            });
+            return;
+        }
+        const dataInfo =
+            await Models.data_info.findOne({ where: { data_set_id: datasetId } });
+
+        if (!dataInfo) {
+            this.logger.info(`Import data for data set ID ${datasetId} does not exist.`);
+            response.status(404);
+            response.send({
+                message: `Import data for data set ID ${datasetId} does not exist`,
+            });
+            return;
+        }
+
+        const identity = await this.graphStorage.findIssuerIdentityForDatasetId(datasetId);
+
+        if (!identity && identity.length > 0) {
+            this.logger.info(`Issuer identity for data set ID ${datasetId} does not exist.`);
+            response.status(404);
+            response.send({
+                message: `Import data for data set ID ${datasetId} does not exist`,
+            });
+            return;
+        }
+
+        const transactionHash = await ImportUtilities
+            .getTransactionHash(datasetId, dataInfo.origin);
+
+        const result = {
+            dataset_id: datasetId,
+            import_time: dataInfo.import_timestamp,
+            dataset_size_in_bytes: dataInfo.data_size,
+            otjson_size_in_bytes: dataInfo.otjson_size_in_bytes,
+            root_hash: dataInfo.root_hash,
+            data_hash: dataInfo.data_hash,
+            total_graph_entities: dataInfo.total_documents,
+            transaction_hash: transactionHash,
+            blockchain_network: this.config.network.id,
+            data_provider_wallet: dataInfo.data_provider_wallet,
+            data_creator: {
+                identifier_type: identity[0].identifierType,
+                identifier_value: identity[0].identifierValue,
+                validation_schema: identity[0].validationSchema,
+            },
+
+        };
+        response.status(200);
+        response.send(result);
     }
 }
 

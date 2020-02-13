@@ -1,7 +1,5 @@
 const Command = require('../command');
-const importUtilities = require('../../ImportUtilities');
 const models = require('../../../models/index');
-const importUtilitites = require('../../ImportUtilities');
 
 /**
  * Handles one data challenge
@@ -14,7 +12,8 @@ class DHChallengeCommand extends Command {
         this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
-        this.otJsonImporter = ctx.otJsonImporter;
+        this.replicationService = ctx.replicationService;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -32,40 +31,38 @@ class DHChallengeCommand extends Command {
         } = command.data;
 
         const holdingData = await models.holding_data.findOne({
-            limit: 1,
             where: {
                 offer_id: offerId,
-
             },
-            order: [
-                ['id', 'DESC'],
-            ],
         });
 
         if (holdingData == null) {
-            throw new Error(`Failed to find holding data for data set ${datasetId}`);
+            command.retries = 0;
+            throw new Error(`Failed to find holding data for offer ${offerId}`);
         }
 
-        const colors = ['red', 'green', 'blue'];
-        const colorIndex = holdingData.color;
-        const color = colors[colorIndex];
+        const color = this.replicationService.castNumberToColor(holdingData.color);
 
-        const otObject = await this.otJsonImporter.getImportedOtObject(
+        const otObject = await this.importService.getImportedOtObject(
             datasetId,
             objectIndex,
             offerId,
             color,
         );
-
         const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
 
         this.logger.info(`Calculated answer for dataset ${datasetId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
-        await this.transport.challengeResponse({
-            payload: {
-                answer,
-                challenge_id: challengeId,
-            },
-        }, litigatorNodeId);
+        try {
+            await this.transport.challengeResponse({
+                payload: {
+                    answer,
+                    challenge_id: challengeId,
+                },
+            }, litigatorNodeId);
+        } catch (e) {
+            command.delay = this.config.dh_challenge_retry_delay_in_millis;
+            throw new Error(`Failed to send challenge response to litigator with ID ${litigatorNodeId} on attempt ${5 - command.retries}`);
+        }
 
         this.logger.info(`Challenge answer ${answer} sent to ${litigatorNodeId}.`);
         return Command.empty();

@@ -18,13 +18,13 @@ class DHService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
-        this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+        this.pricingService = ctx.pricingService;
 
         const that = this;
         this.queue = new Queue((async (args, cb) => {
@@ -98,33 +98,42 @@ class DHService {
         }
 
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
-
-        const format = d3.formatPrefix(',.6~s', 1e6);
-        const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
-        const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
-        const dhMinLitigationIntervalInMinutes =
-            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
-
-        const formatMaxPrice = format(tokenAmountPerHolder);
-        const formatMyPrice = format(this.config.dh_min_token_price);
-
-        if (dhMinTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
-            this.logger.info(`Offer ${offerId} too cheap for me.`);
-            this.logger.info(`Maximum price offered ${formatMaxPrice}[mTRAC] per byte/min`);
-            this.logger.info(`My price ${formatMyPrice}[mTRAC] per byte/min`);
-            return;
+        if (dataSetSizeInBytes) {
+            const dataSizeInMB = dataSetSizeInBytes / 1000000;
+            if (dataSizeInMB > this.config.dh_maximum_dataset_filesize_in_mb) {
+                this.logger.info(`Data size in offer ${offerId} too big. Max allowed size is ${this.config.dh_maximum_dataset_filesize_in_mb}.`);
+                return;
+            }
         }
-
+        const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
         if (dhMaxHoldingTimeInMinutes.lt(new BN(holdingTimeInMinutes, 10))) {
             this.logger.info(`Holding time for the offer ${offerId} is greater than my holding time defined.`);
             return;
         }
 
+        const dhMinLitigationIntervalInMinutes =
+            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
         if (dhMinLitigationIntervalInMinutes.gt(new BN(litigationIntervalInMinutes, 10))) {
             this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
             return;
         }
 
+        const offerPrice = await this.pricingService.calculateOfferPriceinTrac(
+            dataSetSizeInBytes,
+            holdingTimeInMinutes,
+            this.config.blockchain.dh_price_factor,
+        );
+        const myOfferPrice = offerPrice.finalPrice;
+        const dhTokenPrice = new BN(myOfferPrice.toString(), 10);
+
+        if (dhTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
+            this.logger.info(`Offer ${offerId} too cheap for me.`);
+            this.logger.info(`Price offered ${tokenAmountPerHolder}[mTRAC]`);
+            this.logger.info(`My price for offer ${offerId}, ${myOfferPrice}[mTRAC]`);
+            return;
+        }
+
+        this.logger.info(`Accepting offer with price: ${tokenAmountPerHolder} TRAC.`);
         const offer = await this.blockchain.getOffer(offerId);
         const bid = await Models.bids.create({
             offer_id: offerId,
@@ -360,6 +369,7 @@ class DHService {
         this.logger.info(`Challenge arrived: Object index ${objectIndex}, Block index ${blockIndex}, Data set ID ${datasetId}`);
         await this.commandExecutor.add({
             name: 'dhChallengeCommand',
+            retries: 4,
             data: {
                 objectIndex,
                 blockIndex,
@@ -367,33 +377,6 @@ class DHService {
                 offerId,
                 challengeId,
                 litigatorNodeId,
-            },
-        });
-    }
-
-    /**
-     * Handle started litigated
-     * @param offerId - Offer ID
-     * @param blockId - Block ID
-     * @return {Promise<void>}
-     */
-    async handleLitigation(offerId, blockId) {
-        this.logger.warn(`Litigation initiated for offer ${offerId} and block ID ${blockId}.`);
-
-        const bid = await Models.bids.findOne({
-            where: { offer_id: offerId },
-        });
-        if (bid == null) {
-            this.logger.info(`I am not a holder for offer ${offerId}. Ignoring litigation.`);
-            return;
-        }
-
-        await this.commandExecutor.add({
-            name: 'dhLitigationAnswerCommand',
-            data: {
-                offerId,
-                blockId,
-                dataSetId: bid.data_set_id,
             },
         });
     }
@@ -415,21 +398,6 @@ class DHService {
                 msgNodeId,
                 msgWallet,
                 msgQuery,
-            },
-        });
-    }
-
-    /**
-     * Sends dhDataReadRequestFreeCommand to the queue.
-     * @param message Message received from network
-     * @returns {Promise<void>}
-     */
-    async handleDataReadRequestFree(message) {
-        await this.commandExecutor.add({
-            name: 'dhDataReadRequestFreeCommand',
-            transactional: false,
-            data: {
-                message,
             },
         });
     }

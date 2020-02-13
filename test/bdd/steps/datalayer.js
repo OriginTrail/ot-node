@@ -1,13 +1,18 @@
 /* eslint-disable no-unused-expressions, max-len, no-await-in-loop */
 
 const {
-    Then,
+    Then, Given,
 } = require('cucumber');
 const { expect } = require('chai');
 
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
 const ImportUtilities = require('../../../modules/ImportUtilities');
+const Utilities = require('../../../modules/Utilities');
+const ZK = require('../../../modules/ZK');
+const logger = require('../../../modules/logger');
+const MerkleTree = require('../../../modules/Merkle');
+const fs = require('fs');
 
 
 Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, async function () {
@@ -89,13 +94,13 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
         const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
-        const calculatedImportHash = utilities.calculateImportHash(dataset['@graph']);
+        const calculatedImportHash = ImportUtilities.calculateGraphHash(dataset['@graph']);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         const dataCreator = {
             identifiers: [
                 {
-                    identifierValue: myNode.erc725Identity,
+                    identifierValue: ImportUtilities.getDataCreator(dataset.datasetHeader),
                     identifierType: 'ERC725',
                     validationSchema: '/schemas/erc725-main',
                 },
@@ -132,3 +137,210 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
     });
 });
 
+Given(
+    /^I call traversal from "(\S+)" "(\S+)" with connection types "(\S+)"/,
+    { timeout: 120000 },
+    async function (id_type, id_value, connectionTypes) {
+        expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+        const { dc } = this.state;
+
+        const host = dc.state.node_rpc_url;
+        const trailParams = {
+            identifier_types: [id_type],
+            identifier_values: [id_value],
+            connection_types: connectionTypes.split(','),
+            depth: 50,
+        };
+
+        const trail = await httpApiHelper.apiTrail(host, trailParams);
+
+        this.state.lastTrail = trail;
+    },
+);
+
+Then(
+    /^the custom traversal from "(\S+)" "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
+    { timeout: 120000 },
+    async function (idType, id, connectionTypes, expectedNumberOfObjects) {
+        expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+        const { dc } = this.state;
+
+        const host = dc.state.node_rpc_url;
+        const trailParams = {
+            identifier_types: [idType],
+            identifier_values: [id],
+            connection_types: connectionTypes.split(','),
+            depth: 10,
+        };
+
+        const trail = await httpApiHelper.apiTrail(host, trailParams);
+
+        expect(trail, 'should not be null').to.not.be.undefined;
+        expect(trail, 'should be an Array').to.be.an.instanceof(Array);
+        expect(
+            trail.length,
+            `Traversal result should contain ${expectedNumberOfObjects} object(s)`,
+        ).to.be.equal(expectedNumberOfObjects);
+
+        this.state.lastTrail = trail;
+    },
+);
+
+Then(/^zk check should pass/, { timeout: 120000 }, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+
+    const transformationEvent = this.state.lastTrail.find(x => x.otObject.properties.transformationID === 'BOM12345PO987');
+
+    const params = [{ enc: '16cafc73e9e5a1c15f2982c572e45b444feaf9b41447241', r: '2588f56ba7da' },
+        { enc: '1433f36cb15be0228fbac077b8cd020e373b0050fca601c', r: '7ad6c63383f' },
+        { enc: 'cb6fc2ced36d5c7c8edbb5b1fe4f9cc0439549d95f4074', r: '1eef0ee83632' },
+        { enc: '150f1ac43b69118201c6f9a429d308bfc4e7d8560ba444d', r: '22fe928695c9' }];
+
+    const e = '8b697fe0e';
+    const a = '14d7a652dd2d55af08817556ab785b959ca7782d82420ff';
+    const zp = '34f8573ca16512a6c1736ac5f3b4f9d5c68b9ff3683583';
+
+    const inputList = [];
+    const outputList = [];
+    let i;
+    for (i = 0; i < transformationEvent.otObject.properties.inputEPCList.epc.length; i += 1) {
+        inputList.push({
+            object: transformationEvent.otObject.properties.inputEPCList.epc[i],
+            public: {
+                enc: params[i].enc,
+            },
+            private: {
+                object: transformationEvent.otObject.properties.inputEPCList.epc[i],
+                r: params[i].r,
+                quantity: Number(transformationEvent.otObject.properties.inputQuantityList.quantityElement[i].quantity),
+            },
+        });
+    }
+
+    for (let j = 0; j < transformationEvent.otObject.properties.outputEPCList.epc.length; j += 1) {
+        outputList.push({
+            object: transformationEvent.otObject.properties.outputEPCList.epc[j],
+            public: {
+                enc: params[i + j].enc,
+            },
+            private: {
+                object: transformationEvent.otObject.properties.outputEPCList.epc[j],
+                r: params[i + j].r,
+                quantity: Number(transformationEvent.otObject.properties.outputQuantityList.quantityElement[j].quantity),
+            },
+        });
+    }
+
+    const zk = new ZK({ logger });
+
+    const inQuantities = inputList.map(o => o.public.enc).sort();
+    const outQuantities = outputList.map(o => o.public.enc).sort();
+
+    const z = zk.calculateZero(inQuantities, outQuantities);
+
+    const valid = zk.V(
+        e, a, z,
+        zp,
+    );
+
+    expect(valid, 'Zero Knowledge passed').to.be.equal(true);
+});
+
+Then(
+    /^the last traversal should contain (\d+) objects with type "(\S+)" and value "(\S+)"/,
+    async function (expectedNumberOfObjects, keySequenceString, value) {
+        expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
+        const { lastTrail } = this.state;
+
+        const keySequenceArray = keySequenceString.split('.');
+
+        const filteredTrail = lastTrail.filter((trailElement) => {
+            let property = trailElement;
+            for (const key of keySequenceArray) {
+                if (!property[key]) {
+                    return false;
+                }
+                property = property[key];
+            }
+            return property === value;
+        });
+
+        expect(filteredTrail, 'should be an Array').to.be.an.instanceof(Array);
+        expect(
+            filteredTrail.length,
+            `Traversal should contain ${expectedNumberOfObjects} of selected objects`,
+        ).to.be.equal(expectedNumberOfObjects);
+    },
+);
+
+Then(
+    /^the last traversal should contain (\d+) objects in total/,
+    async function (expectedNumberOfObjects) {
+        expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
+        const { lastTrail } = this.state;
+
+        expect(
+            lastTrail.length,
+            `Traversal should contain ${expectedNumberOfObjects} objects`,
+        ).to.be.equal(expectedNumberOfObjects);
+    },
+);
+
+Then(
+    'Corrupted node should not have last replication dataset',
+    async function () {
+        expect(!!this.state.corruptedNode, 'Corrupted node not defined. Use other step to define it.').to.be.equal(true);
+
+        const erc725 = JSON.parse(fs.readFileSync(`${this.state.corruptedNode.options.configDir}/${this.state.corruptedNode.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+        expect(
+            erc725.identity.toUpperCase(),
+            'Declined identity should be the one that db was corrupted.',
+        ).to.be.equal(this.state.dc.state.declinedDhIdentity.toUpperCase());
+    },
+);
+
+Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastTrail, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const { lastTrail } = this.state;
+
+    const datasetObjectMap = {};
+    for (const trailElement of lastTrail) {
+        const { otObject } = trailElement;
+
+        for (const dataset of trailElement.datasets) {
+            if (datasetObjectMap[dataset] != null) {
+                datasetObjectMap[dataset].push(otObject['@id']);
+            } else {
+                datasetObjectMap[dataset] = [otObject['@id']];
+            }
+        }
+    }
+
+    for (const dataset of Object.keys(datasetObjectMap)) {
+        const proofResponse = await httpApiHelper.apiMerkleProofs(host, {
+            dataset_id: dataset,
+            object_ids: datasetObjectMap[dataset],
+        });
+
+        for (const proofData of proofResponse) {
+            const { otObject } = lastTrail.find((element) => {
+                const { object_id } = proofData;
+                return element.otObject['@id'] === object_id;
+            });
+
+            const { proof, object_index } = proofData;
+            const objectText = Utilities.sortedStringify(otObject);
+
+            const merkleTree = new MerkleTree(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1'], 'distribution', 'sha3');
+            const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);
+
+            const myFingerprint = await httpApiHelper.apiFingerprint(host, dataset);
+            expect(`0x${rootHash}`).to.be.equal(myFingerprint.root_hash);
+        }
+    }
+});

@@ -1,9 +1,9 @@
 const BN = require('bn.js');
 const path = require('path');
+const fs = require('fs');
 
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
-const MerkleTree = require('../Merkle');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
 
@@ -23,8 +23,13 @@ class ReplicationService {
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
-        this.replicationCache = {};
-        this.otJsonImporter = ctx.otJsonImporter;
+        this.importService = ctx.importService;
+
+        const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
+
+        if (!fs.existsSync(replicationPath)) {
+            fs.mkdirSync(replicationPath);
+        }
     }
 
     /**
@@ -38,55 +43,57 @@ class ReplicationService {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
 
-        const otJson = await this.otJsonImporter.getImport(offer.data_set_id);
-        const flavor = {
-            [COLOR.RED]: otJson,
-            [COLOR.BLUE]: Utilities.copyObject(otJson),
-            [COLOR.GREEN]: Utilities.copyObject(otJson),
-        };
+        const otJson = await this.importService.getImport(offer.data_set_id);
 
-        const that = this;
-        this.replicationCache[internalOfferId] = {};
-        return Promise.all([COLOR.RED, COLOR.BLUE, COLOR.GREEN]
-            .map(async (color) => {
-                const document = flavor[color];
+        const hashes = {};
 
+        const writeFilePromises = [];
 
-                const litigationKeyPair = Encryption.generateKeyPair(512);
-                const distributionKeyPair = Encryption.generateKeyPair(512);
+        for (let i = 0; i < 3; i += 1) {
+            const color = this.castNumberToColor(i);
 
-                const encryptedDataset =
-                    ImportUtilities.encryptDataset(document, litigationKeyPair.privateKey);
+            const litigationKeyPair = Encryption.generateKeyPair(2048);
+            const distributionKeyPair = Encryption.generateKeyPair(512);
 
-                const distEncDataset =
-                    ImportUtilities.encryptDataset(document, distributionKeyPair.privateKey);
+            // TODO Optimize encryption to reduce memory usage
+            let encryptedDataset =
+                ImportUtilities.encryptDataset(otJson, distributionKeyPair.privateKey);
 
-                const litRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
+            const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
-                const distRootHash = ImportUtilities.calculateDatasetRootHash(distEncDataset['@graph'], distEncDataset['@id'], distEncDataset.datasetHeader.dataCreator);
+            encryptedDataset =
+                ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
-                const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-                // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-                // TODO Why are there zeroes here
-                const distributionEpkChecksum =
-                 Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
+            const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
 
-                const replication = {
-                    color,
-                    otJson: encryptedDataset,
-                    litigationPublicKey: litigationKeyPair.publicKey,
-                    litigationPrivateKey: litigationKeyPair.privateKey,
-                    distributionPublicKey: distributionKeyPair.publicKey,
-                    distributionPrivateKey: distributionKeyPair.privateKey,
-                    distributionEpkChecksum,
-                    litigationRootHash: litRootHash,
-                    distributionRootHash: distRootHash,
-                    distributionEpk: distEpk,
-                };
+            const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+            // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+            // TODO Why are there zeroes here
+            const distributionEpkChecksum =
+                Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
-                that.replicationCache[internalOfferId][color] = replication;
-                return replication;
-            }));
+            const replication = {
+                color,
+                otJson: encryptedDataset,
+                litigationPublicKey: litigationKeyPair.publicKey,
+                litigationPrivateKey: litigationKeyPair.privateKey,
+                distributionPublicKey: distributionKeyPair.publicKey,
+                distributionPrivateKey: distributionKeyPair.privateKey,
+                distributionEpkChecksum,
+                litigationRootHash: litRootHash,
+                distributionRootHash: distRootHash,
+                distributionEpk: distEpk,
+            };
+
+            writeFilePromises.push(this.saveReplication(internalOfferId, color, replication));
+
+            hashes[`${color}LitigationHash`] = litRootHash;
+            hashes[`${color}DistributionHash`] = distRootHash;
+        }
+
+        await Promise.all(writeFilePromises);
+
+        return hashes;
     }
 
     /**
@@ -133,8 +140,6 @@ class ReplicationService {
      * @return {Promise<void>}
      */
     async cleanup(internalOfferId) {
-        delete this.replicationCache[internalOfferId];
-
         this.logger.info(`Deleting replications directory and cache for offer with internal ID ${internalOfferId}`);
         const offerDirPath = this._getOfferDirPath(internalOfferId);
         await Utilities.deleteDirectory(offerDirPath);
@@ -147,10 +152,8 @@ class ReplicationService {
      * @param internalOfferId
      */
     async saveReplication(internalOfferId, color, data) {
-        this.replicationCache[internalOfferId][color] = data;
-
         const offerDirPath = this._getOfferDirPath(internalOfferId);
-        await Utilities.writeContentsToFile(offerDirPath, `${color}.json`, JSON.stringify(data, null, 2));
+        await Utilities.writeContentsToFile(offerDirPath, `${color}.json`, JSON.stringify(data));
     }
 
     /**
@@ -160,20 +163,13 @@ class ReplicationService {
      * @return {Promise<*>}
      */
     async loadReplication(internalOfferId, color) {
-        let data;
-        if (this.replicationCache[internalOfferId]) {
-            data = this.replicationCache[internalOfferId][color];
-        }
-
-        if (data) {
-            this.logger.trace(`Loaded replication from cache for offer internal ID ${internalOfferId} and color ${color}`);
-            return data;
-        }
-
         const offerDirPath = this._getOfferDirPath(internalOfferId);
         const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
+        const data = JSON.parse(await Utilities.fileContents(colorFilePath));
         this.logger.trace(`Loaded replication from file for offer internal ID ${internalOfferId} and color ${color}`);
+
+        return data;
     }
 
     /**

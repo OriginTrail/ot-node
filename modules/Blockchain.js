@@ -130,17 +130,18 @@ class Blockchain {
      * @param offerId - Offer ID
      * @param holderIdentity - DH identity
      * @param litigatorIdentity - Litigator identity
-     * @param requestedDataIndex - Block ID
+     * @param requestedObjectIndex - Order number of the object from the OT-dataset
+     * @param requestedBlockIndex - Order number of the block inside the sorted object
      * @param hashArray - Merkle proof
      * @return {Promise<any>}
      */
     async initiateLitigation(
         offerId, holderIdentity, litigatorIdentity,
-        requestedDataIndex, hashArray,
+        requestedObjectIndex, requestedBlockIndex, hashArray,
     ) {
         return this.blockchain.initiateLitigation(
             offerId,
-            holderIdentity, litigatorIdentity, requestedDataIndex, hashArray,
+            holderIdentity, litigatorIdentity, requestedObjectIndex, requestedBlockIndex, hashArray,
         );
     }
 
@@ -150,12 +151,21 @@ class Blockchain {
      * @param holderIdentity - DH identity
      * @param challengerIdentity - DC identity
      * @param proofData - answer
+     * @param leafIndex - the number of the block in the lowest level of the merkle tree
+     * @param urgent - Whether max gas price should or not
      * @return {Promise<void>}
      */
-    async completeLitigation(offerId, holderIdentity, challengerIdentity, proofData) {
+    async completeLitigation(
+        offerId,
+        holderIdentity,
+        challengerIdentity,
+        proofData,
+        leafIndex,
+        urgent,
+    ) {
         return this.blockchain.completeLitigation(
             offerId, holderIdentity,
-            challengerIdentity, proofData,
+            challengerIdentity, proofData, leafIndex, urgent,
         );
     }
 
@@ -164,10 +174,11 @@ class Blockchain {
      * @param offerId
      * @param holderIdentity
      * @param answer
+     * @param urgent - Whether maximum gas price should be used
      * @return {Promise<any>}
      */
-    answerLitigation(offerId, holderIdentity, answer) {
-        return this.blockchain.answerLitigation(offerId, holderIdentity, answer);
+    answerLitigation(offerId, holderIdentity, answer, urgent) {
+        return this.blockchain.answerLitigation(offerId, holderIdentity, answer, urgent);
     }
 
     /**
@@ -185,10 +196,25 @@ class Blockchain {
      * Pay out tokens
      * @param blockchainIdentity
      * @param offerId
+     * @param urgent
      * @returns {Promise}
      */
-    payOut(blockchainIdentity, offerId) {
-        return this.blockchain.payOut(blockchainIdentity, offerId);
+    payOut(blockchainIdentity, offerId, urgent) {
+        return this.blockchain.payOut(blockchainIdentity, offerId, urgent);
+    }
+
+    /**
+     * PayOut for multiple offers.
+     * @returns {Promise<any>}
+     */
+    payOutMultiple(
+        blockchainIdentity,
+        offerIds,
+    ) {
+        return this.blockchain.payOutMultiple(
+            blockchainIdentity,
+            offerIds,
+        );
     }
 
     /**
@@ -207,6 +233,7 @@ class Blockchain {
         tokenAmountPerHolder,
         dataSizeInBytes,
         litigationIntervalInMinutes,
+        urgent,
     ) {
         return this.blockchain.createOffer(
             blockchainIdentity,
@@ -220,6 +247,7 @@ class Blockchain {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            urgent,
         );
     }
 
@@ -246,10 +274,11 @@ class Blockchain {
         encryptionType,
         holders,
         parentIdentity,
+        urgent,
     ) {
         return this.blockchain.finalizeOffer(
             blockchainIdentity, offerId, shift, confirmation1,
-            confirmation2, confirmation3, encryptionType, holders, parentIdentity,
+            confirmation2, confirmation3, encryptionType, holders, parentIdentity, urgent,
         );
     }
 
@@ -545,7 +574,17 @@ class Blockchain {
     }
 
     /**
-     * Gets last litigation timestamp for the holder
+     * Gets litigation information for the holder
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getLitigation(offerId, holderIdentity) {
+        return this.blockchain.getLitigation(offerId, holderIdentity);
+    }
+
+    /**
+     * Gets litigation timestamp for the holder
      * @param offerId - Offer ID
      * @param holderIdentity - Holder identity
      * @return {Promise<any>}

@@ -6,11 +6,6 @@ const constants = require('../../constants');
  * Increases approval for Bidding contract on blockchain
  */
 class CleanerCommand extends Command {
-    constructor(ctx) {
-        super(ctx);
-        this.logger = ctx.logger;
-    }
-
     /**
      * Executes command and produces one or more events
      * @param command

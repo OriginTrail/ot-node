@@ -1,5 +1,8 @@
 const constants = require('../constants');
 const importUtilities = require('../ImportUtilities');
+const Merkle = require('../Merkle');
+const utilities = require('../Utilities');
+
 
 class ChallengeService {
     constructor(ctx) {
@@ -54,6 +57,7 @@ class ChallengeService {
         for (let i = 0; i < numberOfTests; i += 1) {
             testBlockId = Math.floor(Math.random() * blocks.length);
             const answer = blocks[testBlockId].data;
+
             tests.push({
                 testIndex: testBlockId,
                 objectIndex: blocks[testBlockId].objectIndex,
@@ -76,46 +80,92 @@ class ChallengeService {
         blockIndex, encryptedObject,
         blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-        let answer = JSON.stringify(encryptedObject).substring(
-            blockIndex * blockSizeInBytes,
-            (blockIndex + 1) * blockSizeInBytes,
-        );
-        answer = answer.padEnd(blockSizeInBytes, '#');
+        const answer = this.getBlockFromObject(encryptedObject, blockIndex, blockSizeInBytes);
         return answer;
     }
 
     /**
      * Creates array of blocks based on the vertex data.
      * @note Last block can be smaller than desired blockSizeBytes.
-     * @param vertices Vertex data in form { ..., data: "vertex-data" }
+     * @param graphObjects OT-JSON objects in form { ..., data: "vertex-data" }
      * @param blockSizeInBytes Desired size of each block.
      * @returns {Array} of blocks.
      */
-    getBlocks(vertices, blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
-        importUtilities.sort(vertices);
+    getBlocks(graphObjects, blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
+        importUtilities.sortGraphRecursively(graphObjects);
 
         const blocks = [];
-        let block = String();
 
-        for (let i = 0; i < vertices.length; i += 1) {
-            const data = JSON.stringify(vertices[i]);
+        for (let objectIndex = 0; objectIndex < graphObjects.length; objectIndex += 1) {
+            const numberOfBlocksInObject =
+                Math.ceil(Buffer.byteLength(JSON.stringify(graphObjects[objectIndex]), 'utf-8') / blockSizeInBytes);
 
-            if (data) {
-                for (let j = 0; j < data.length; j += blockSizeInBytes) {
-                    block = String();
+            for (let blockIndex = 0; blockIndex < numberOfBlocksInObject; blockIndex += 1) {
+                const block = this.getBlockFromObject(
+                    graphObjects[objectIndex],
+                    blockIndex,
+                    blockSizeInBytes,
+                );
 
-                    const substring = data.substring(j, j + blockSizeInBytes);
-                    block += substring;
-                    block = block.padEnd(blockSizeInBytes, '#');
-                    blocks.push({
-                        data: block,
-                        objectIndex: i,
-                        blockIndex: j / blockSizeInBytes,
-                    });
-                }
+                blocks.push({
+                    data: block,
+                    objectIndex,
+                    blockIndex,
+                });
             }
         }
         return blocks;
+    }
+
+    getBlockFromObject(
+        object,
+        index,
+        blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
+    ) {
+        const sortedObject = utilities.sortedStringify(object, true);
+        const rawObject = Buffer.from(sortedObject, 'utf-8');
+
+        const rawBlock = Buffer.alloc(blockSizeInBytes);
+
+        const rawSubstring = rawObject.slice(
+            index * blockSizeInBytes,
+            (index + 1) * blockSizeInBytes,
+        );
+
+        rawBlock.write(rawSubstring.toString('utf-8'));
+
+        if (rawSubstring.length < blockSizeInBytes) {
+            const padding = '0'.repeat(blockSizeInBytes - rawSubstring.length);
+            rawBlock.write(padding, rawSubstring.length);
+        }
+
+        const block = rawBlock.toString('utf-8');
+
+        return block;
+    }
+
+    getLitigationRootHash(
+        encryptedGraphData,
+        blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
+    ) {
+        const blocks = this.getBlocks(encryptedGraphData, blockSizeInBytes);
+
+        const litigationMerkleTree = new Merkle(blocks, 'litigation');
+
+        return litigationMerkleTree.getRoot();
+    }
+
+    createChallengeProof(
+        encryptedGraphData,
+        objectIndex,
+        blockIndex,
+        blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
+    ) {
+        const blocks = this.getBlocks(encryptedGraphData, blockSizeInBytes);
+
+        const litigationMerkleTree = new Merkle(blocks, 'litigation');
+
+        return litigationMerkleTree.createProof(objectIndex, blockIndex);
     }
 }
 

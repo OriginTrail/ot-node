@@ -32,16 +32,6 @@ class ArangoJS {
      * @return {Promise<void>}
      */
     async initialize() {
-        // Create database if doesn't exist.
-        const listOfDatabases = await this.db.listDatabases();
-        if (!listOfDatabases.includes(this.dbInfo.database)) {
-            await
-            this.db.createDatabase(
-                this.dbInfo.database,
-                [{ username: this.dbInfo.username, passwd: this.dbInfo.password, active: true }],
-            );
-        }
-
         this.db.useDatabase(this.dbInfo.database);
         await this.createCollection('ot_datasets');
         await this.createCollection('ot_vertices');
@@ -77,6 +67,37 @@ class ArangoJS {
         return this.runQuery(queryString, params);
     }
 
+
+    /**
+     * Find set of documents with _key, vertex_type and identifiers values
+     * @param queryObject       Query for getting documents
+     * @returns {Promise<any>}
+     */
+    async findConnectors(objectKey) {
+        const queryString = `LET identifier = (
+                                RETURN document('ot_vertices', @objectKey)
+                            )
+                                                        
+                            LET otConnector = (
+                                FOR v, e IN 1..1 OUTBOUND identifier[0] ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                RETURN v
+                            )
+                            
+                                FOR c in otConnector
+                                FOR v, e IN 1..1 OUTBOUND c ot_edges
+                                FILTER e.edgeType IN ['dataRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                RETURN {"_key":c._key, "expectedConnectionCreators":v.data.expectedConnectionCreators, "datasets": c.datasets  }`;
+
+        const result = await this.runQuery(queryString, { objectKey });
+
+        return result;
+    }
+
     /**
      * Finds imports IDs based on data location query
      *
@@ -93,6 +114,85 @@ class ArangoJS {
         }
         return [];
     }
+
+    async findTrail(queryObject) {
+        const {
+            identifierKeys,
+            depth,
+            connectionTypes,
+        } = queryObject;
+
+        const queryParams = {
+            identifierKeys,
+            depth,
+        };
+        let queryString = `// Get identifier
+                            LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
+                            
+                            // Fetch the start entity for trail
+                            LET startObjects = UNIQUE(FLATTEN(
+                                FOR identifierObject IN identifierObjects
+                                    FILTER identifierObject != null
+                                    LET identifiedObject = (
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    RETURN v
+                                    )
+                                RETURN identifiedObject
+                            ))
+                             
+                            LET trailObjects = (
+                                FILTER startObjects[0] != null
+                                FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
+        if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
+            queryString += `
+                                    PRUNE (LENGTH(p.edges) == 2 && p.edges[-1].relationType == p.edges[-2].relationType) || (LENGTH(p.edges) > 2 && p.edges[-1].relationType == p.edges[-2].relationType && p.edges[-3].relationType != 'CONNECTOR_FOR')
+                                    OPTIONS {
+                                        bfs: true,
+                                        uniqueVertices: 'global',
+                                        uniqueEdges: 'path'
+                                    }
+                                    FILTER (
+                                        ((LENGTH(p.edges) < 2) == true) ||
+                                        ((p.edges[-1].relationType != p.edges[-2].relationType) == true) ||
+                                        ((p.edges[-3].relationType == 'CONNECTOR_FOR') == true)
+                                        ) == true
+                                    FILTER p.edges[*].relationType ALL in @connectionTypes`;
+            queryParams.connectionTypes = connectionTypes;
+        } else {
+            queryString += `
+                                OPTIONS {
+                                    bfs: true,
+                                        uniqueVertices: 'global',
+                                        uniqueEdges: 'path'
+                                }`;
+        }
+        queryString += `
+                                RETURN DISTINCT v
+                            )
+                            
+                            FOR trailObject in trailObjects
+                                FILTER trailObject != null
+                                LET objectsRelated = (
+                                    FOR v, e in 1..1 OUTBOUND trailObject ot_edges
+                                        FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                        AND e.datasets != null
+                                        AND v.datasets != null
+                                        AND LENGTH(INTERSECTION(e.datasets, v.datasets, trailObject.datasets)) > 0
+                                        RETURN  {
+                                        "vertex": v,
+                                        "edge": e
+                                        }
+                                    )
+                                RETURN {
+                                    "rootObject": trailObject,
+                                    "relatedObjects": objectsRelated
+                                }`;
+
+        const result = await this.runQuery(queryString, queryParams);
+        return result;
+    }
+
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
@@ -677,13 +777,13 @@ class ArangoJS {
     }
 
     /**
-    * Get ArangoDB version
-    * @param {string} - host
-    * @param {string} - port
-    * @param {string} - username
-    * @param {string} - password
-    * @returns {Promise<any>}
-    */
+     * Get ArangoDB version
+     * @param {string} - host
+     * @param {string} - port
+     * @param {string} - username
+     * @param {string} - password
+     * @returns {Promise<any>}
+     */
     async version(host, port, username, password) {
         const result = await request
             .get(`http://${host}:${port}/_api/version`)
@@ -766,7 +866,26 @@ class ArangoJS {
      * @param datasetId
      */
     async findMetadataByImportId(datasetId) {
-        const queryString = 'FOR v IN ot_datasets FILTER v._key == @datasetId RETURN v';
+        const queryString = 'RETURN DOCUMENT(\'ot_datasets\', @datasetId)';
+        return this.runQuery(queryString, { datasetId });
+    }
+
+    /**
+     * Retrieves all elements of a dataset ID
+     * @return {Promise<*>}
+     * @param datasetId
+     */
+    async getDatasetWithVerticesAndEdges(datasetId) {
+        const queryString = `LET datasetMetadata = DOCUMENT('ot_datasets', @datasetId)
+
+                            LET datasetVertices = DOCUMENT('ot_vertices', datasetMetadata.vertices)
+                            LET datasetEdges = DOCUMENT('ot_edges', datasetMetadata.edges)
+
+                            RETURN {
+                                metadata: datasetMetadata,
+                                vertices: datasetVertices,
+                                edges: datasetEdges
+                            }`;
         return this.runQuery(queryString, { datasetId });
     }
 
@@ -842,10 +961,10 @@ class ArangoJS {
      */
     async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges ' +
-                'FILTER v.datasets != null ' +
-                'AND POSITION(v.datasets, @importId, false) != false ' +
-                'SORT v._key ' +
-                'RETURN v';
+            'FILTER v.datasets != null ' +
+            'AND POSITION(v.datasets, @importId, false) != false ' +
+            'SORT v._key ' +
+            'RETURN v';
 
         const params = { importId: data_id };
         const edges = await this.runQuery(queryString, params);
@@ -902,6 +1021,43 @@ class ArangoJS {
             }
             return false;
         });
+    }
+
+    /**
+     * Returns data creator identity for dataset ID
+     * @param datasetId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForDatasetId(datasetId) {
+        const queryString = `let dataset_info = (
+                                return document('ot_datasets', @datasetId) 
+                            )
+                            return dataset_info[0].datasetHeader.dataCreator.identifiers[0]`;
+        const params = { datasetId };
+        return this.runQuery(queryString, params);
+    }
+
+    /**
+     * Returns data creator identity for vertex with elementId
+     * @param elementId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForElementId(elementId) {
+        const queryString = `let dataset_ids = (
+                                FOR v IN ot_vertices
+                                FILTER v.vertexType == "Identifier"
+                                AND v.identifierValue == @elementId
+                                RETURN v.datasets[0]
+                            )
+                            
+                            let identity = ( 
+                                for d in ot_datasets
+                                filter d._key in dataset_ids
+                                return {dataset_id: d._key, identifiers: d.datasetHeader.dataCreator.identifiers}
+                            )
+                            return identity[0]`;
+        const params = { elementId };
+        return this.runQuery(queryString, params);
     }
 
     /**

@@ -36,21 +36,24 @@ class DCChallengeCommand extends Command {
 
         challenge.end_time = new Date().getTime() + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
 
-        await this.transport.challengeRequest({
-            payload: {
-                data_set_id: challenge.data_set_id,
-                offer_id: challenge.offer_id,
-                object_index: challenge.object_index,
-                block_index: challenge.block_index,
-                challenge_id: challenge.id,
-                litigator_id: this.config.identity,
-            },
-        }, challenge.dh_id);
-
-        let checkCommandDelay = this.config.challengeResponseTimeMills;
-        if (checkCommandDelay == null) {
-            checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        try {
+            await this.transport.challengeRequest({
+                payload: {
+                    offer_id: challenge.offer_id,
+                    data_set_id: challenge.data_set_id,
+                    object_index: challenge.object_index,
+                    block_index: challenge.block_index,
+                    challenge_id: challenge.id,
+                    litigator_id: this.config.identity,
+                },
+            }, challenge.dh_id);
+        } catch (e) {
+            command.delay = this.config.dc_challenge_retry_delay_in_millis;
+            throw new Error(`Peer with ID ${challenge.dh_id} could not be reached on challenge attempt ${5 - command.retries}`);
         }
+
+        const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+
         return {
             commands: [
                 {
@@ -91,7 +94,7 @@ class DCChallengeCommand extends Command {
             throw new Error(`Failed to find challenge ${challenge_id}`);
         }
 
-        this.logger.info(`Failed to send challenge for block ${challenge.block_id} to DH ${challenge.dh_id}.`);
+        this.logger.info(`Failed to send challenge for object ${challenge.object_index} and block ${challenge.block_index} to DH ${challenge.dh_id}.`);
         return {
             commands: [
                 {
@@ -99,7 +102,8 @@ class DCChallengeCommand extends Command {
                     period: 5000,
                     data: {
                         offerId: challenge.offer_id,
-                        blockId: challenge.block_id,
+                        objectIndex: challenge.object_index,
+                        blockIndex: challenge.block_index,
                         dhIdentity: challenge.dh_identity,
                         litigationPrivateKey,
                     },

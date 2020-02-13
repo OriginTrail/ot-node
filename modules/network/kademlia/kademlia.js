@@ -3,18 +3,18 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const async = require('async');
 const levelup = require('levelup');
 const encoding = require('encoding-down');
-const kadence = require('@kadenceproject/kadence');
+const kadence = require('@deadcanaries/kadence');
 const fs = require('fs');
 const path = require('path');
 const utilities = require('../../Utilities');
 const _ = require('lodash');
 const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
-const PeerCache = require('./peer-cache');
 const ip = require('ip');
 const uuidv4 = require('uuid/v4');
+const secp256k1 = require('secp256k1');
 
-const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+const KadenceUtils = require('@deadcanaries/kadence/lib/utils.js');
 const { IncomingMessage, OutgoingMessage } = require('./logger');
 
 const pjson = require('../../../package.json');
@@ -59,43 +59,40 @@ class Kademlia {
             this.config.appDataPath,
             this.config.identity_filepath,
         );
+
         if (fs.existsSync(identityFilePath)) {
+            this.log.info('Using existing identity...');
             const identityFileContent =
                 JSON.parse(fs.readFileSync(identityFilePath).toString());
-            this.xprivkey = identityFileContent.xprivkey;
-            this.index = identityFileContent.index;
+            this.privateKey = Buffer.from(identityFileContent.privateKey, 'hex');
+            this.nonce = identityFileContent.nonce;
+            this.proof = Buffer.from(identityFileContent.proof, 'hex');
         } else {
             this.log.info('Identity not provided, generating new one...');
-            this.xprivkey = kadence.utils.toHDKeyFromSeed().privateExtendedKey;
-            const [xprivkey, childIndex] = await this.kademliaUtilities.solveIdentity(
-                this.xprivkey,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-            );
-            this.index = childIndex;
-            fs.writeFileSync(identityFilePath, JSON.stringify({
-                xprivkey: this.xprivkey,
-                index: this.index,
-            }));
+            this.privateKey = kadence.utils.generatePrivateKey();
+            this._saveIdentityToFile(this.privateKey.toString('hex'));
         }
+        const publicKey = secp256k1.publicKeyCreate(this.privateKey);
         this.identity = new kadence.eclipse.EclipseIdentity(
-            this.xprivkey,
-            this.index,
-            kadence.constants.HD_KEY_DERIVATION_PATH,
+            publicKey,
+            this.nonce,
+            this.proof,
         );
 
-        this.log.info('Checking the identity');
-        // Check if identity is valid
-        this.kademliaUtilities.checkIdentity(this.identity);
+        // If identity is not solved yet, start trying to solve it
+        if (!this.identity.validate()) {
+            this.log.info('identity proof not yet solved, this can take a while');
+            await this.identity.solve();
+            this._saveIdentityToFile(
+                this.privateKey.toString('hex'),
+                this.identity.nonce,
+                this.identity.proof.toString('hex'),
+            );
+        }
 
-        const { childKey } = this.kademliaUtilities.getIdentityKeys(
-            this.xprivkey,
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-            this.index,
-        );
-        this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
+        this.config.identity = this.identity.fingerprint.toString('hex');
 
-        this.log.notify(`My network identity: ${this.identity}`);
-        this.config.identity = this.identity;
+        this.log.notify(`My network identity: ${this.config.identity}`);
     }
 
     /**
@@ -105,12 +102,6 @@ class Kademlia {
     start() {
         return new Promise(async (resolve) => {
             this.log.info('Initializing network');
-
-            const { parentKey } = this.kademliaUtilities.getIdentityKeys(
-                this.xprivkey,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-                this.index,
-            );
 
             const { hostname } = this.config.network;
             if (!this.config.local_network_only && !this.config.traverse_nat_enabled) {
@@ -125,11 +116,10 @@ class Kademlia {
                 hostname,
                 protocol: 'https:',
                 port: this.config.node_port,
-                xpub: parentKey.publicExtendedKey,
-                index: this.index,
-                agent: kadence.version.protocol,
+                // agent: kadence.version.protocol,
                 wallet: this.config.node_wallet,
                 network_id: this.config.network.id,
+                identity: this.config.identity,
             };
 
             const { key, cert } = this.kademliaUtilities.getCertificates();
@@ -142,96 +132,11 @@ class Kademlia {
             this.node = new kadence.KademliaNode({
                 logger: this.log,
                 transport,
-                identity: Buffer.from(this.identity, 'hex'),
                 contact,
                 storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
-            const that = this;
-            // Override node's _updateContact method to filter contacts.
-            this.node._updateContact = (identity, contact) => {
-                try {
-                    if (!that.validateContact(identity, contact)) {
-                        that.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
-                        return;
-                    }
-                } catch (err) {
-                    that.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
-                    return;
-                }
-
-                // Simulate node's "super._updateContact(identity, contact)".
-                this.node.constructor.prototype.constructor.prototype
-                    ._updateContact.call(this.node, identity, contact);
-            };
-
-            this.node.use((request, response, next) => {
-                if (!that.validateContact(request.contact[0], request.contact[1])) {
-                    return next(new NetworkRequestIgnoredError('Contact not valid.', request));
-                }
-                next();
-            });
-
             this.log.info('Starting OT Node...');
-            this.node.eclipse = this.node.plugin(kadence.eclipse());
-            this.node.quasar = this.node.plugin(kadence.quasar());
-
-            const quasarPublish = function (topic, contents, options = {}, callback = () => null) {
-                if (typeof options === 'function') {
-                    callback = options;
-                    options = {};
-                }
-
-                const publicationId = uuidv4();
-                const neighbors = [...this.node.router.getClosestContactsToKey(
-                    options.routingKey || this.node.identity.toString('hex'),
-                    this.node.router.size,
-                ).entries()];
-
-                const errors = [];
-                let sentSoFar = 0;
-                async.eachLimit(neighbors, kadence.constants.ALPHA, (contact, done) => {
-                    if (sentSoFar >= kadence.constants.ALPHA) {
-                        // Achieved desired publications.
-                        done();
-                        return;
-                    }
-                    this.node.send(kadence.quasar.QuasarPlugin.PUBLISH_METHOD, {
-                        uuid: publicationId,
-                        topic,
-                        contents,
-                        publishers: [this.node.identity.toString('hex')],
-                        ttl: kadence.constants.MAX_RELAY_HOPS,
-                    }, contact, (error) => {
-                        if (error) {
-                            errors.push(error);
-                        } else {
-                            sentSoFar += 1;
-                        }
-                        done();
-                    });
-                }, (error) => {
-                    callback(error, sentSoFar);
-                });
-            };
-
-            this.node.quasar.quasarPublish = quasarPublish.bind(this.node.quasar);
-
-            this.log.info('Quasar initialised');
-            this.node.peercache =
-                this.node.plugin(PeerCache(path.join(
-                    this.config.appDataPath,
-                    this.config.embedded_peercache_path,
-                )));
-            this.log.info('Peercache initialised');
-
-            this.node.spartacus = this.node.plugin(kadence.spartacus(
-                this.xprivkey,
-                this.index,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-            ));
-            this.log.info('Spartacus initialised');
-
             this.node.hashcash = this.node.plugin(kadence.hashcash({
                 methods: [
                     'kad-data-location-request',
@@ -244,33 +149,66 @@ class Kademlia {
             }));
             this.log.info('Hashcash initialised');
 
-            this.node.blacklist = this.node.plugin(kadence.churnfilter({
-                cooldownBaseTimeout: this.config.network.churnPlugin.cooldownBaseTimeout,
-                cooldownMultiplier: this.config.network.churnPlugin.cooldownMultiplier,
-                cooldownResetTime: this.config.network.churnPlugin.cooldownResetTime,
-            }));
-            this.log.info('Churn filter initialised');
+            this.node.quasar = this.node.plugin(kadence.quasar());
 
-            // Patch Churn to ignore all outgoing requests towards blacklisted contacts.
-            const send = this.node.send.bind(this.node);
-            this.node.send = function (method, params, target, handler) {
-                try {
-                    const contactId = target[0].toString('hex');
-                    if (this.node.blacklist.hasBlock(contactId)) {
-                        this.log.debug('Trying to send to blacklisted contact: %s.', contactId);
-                        return handler(Error('Contact blacklisted.'));
-                    }
-                    send(method, params, target, handler);
-                } catch (e) {
-                    this.log.error('Failed to check for blacklist');
-                    handler(Error('Failed to check for blacklist.'));
-                }
-            }.bind(this);
+            this.log.info('Quasar initialised');
 
-            if (this.config.onion_enabled) {
-                this.enableOnion();
+            const spartacusPlugin = kadence.spartacus(
+                this.privateKey,
+                { checkPublicKeyHash: false },
+            );
+            this.node.spartacus = this.node.plugin(spartacusPlugin);
+
+            this.log.info('Spartacus initialised');
+
+            this.node.content = this.node.plugin(kadence.contentaddress({ valueEncoding: 'hex' }));
+            this.log.info('Content initialised');
+
+            this.node.eclipse = this.node.plugin(kadence.eclipse(this.identity));
+            this.log.info('Eclipse initialised');
+
+            const peerCacheFilePath = path.join(
+                this.config.appDataPath,
+                this.config.embedded_peercache_path,
+            );
+
+            if (!fs.existsSync(peerCacheFilePath)) {
+                fs.writeFileSync(peerCacheFilePath, '{}');
             }
 
+            this.node.rolodex = this.node.plugin(kadence.rolodex(peerCacheFilePath));
+            this.log.info('Rolodex initialised');
+
+            // Override node's _updateContact method to filter contacts.
+            this.node._updateContact = (identity, contact) => {
+                try {
+                    if (!this.validateContact(identity, contact)) {
+                        this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
+                        return;
+                    }
+                } catch (err) {
+                    this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
+                    return;
+                }
+
+                // Simulate node's "super._updateContact(identity, contact)".
+                this.node.constructor.prototype.constructor.prototype
+                    ._updateContact.call(this.node, identity, contact);
+            };
+
+            this.node.use((request, response, next) => {
+                if (!this.validateContact(request.contact[0], request.contact[1])) {
+                    return next(new NetworkRequestIgnoredError('Contact not valid.', request));
+                }
+                next();
+            });
+
+            // this.node.blacklist = this.node.plugin(kadence.churnfilter({
+            //     cooldownBaseTimeout: this.config.network.churnPlugin.cooldownBaseTimeout,
+            //     cooldownMultiplier:
+            //         parseInt(this.config.network.churnPlugin.cooldownMultiplier, 10),
+            //     cooldownResetTime: this.config.network.churnPlugin.cooldownResetTime,
+            // }));
             if (this.config.traverse_nat_enabled) {
                 this.enableNatTraversal();
             }
@@ -297,7 +235,7 @@ class Kademlia {
                 while (!connected) {
                     try {
                         // eslint-disable-next-line
-                        const connected = await this._joinNetwork(contact);
+                        const connected = await this._joinNetwork();
                         if (connected) {
                             this.log.info('Joined to the network.');
                             resolve();
@@ -332,7 +270,6 @@ class Kademlia {
             }),
         ]));
     }
-
 
     /**
      * Try to join network
@@ -519,9 +456,16 @@ class Kademlia {
                     this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                     return contact;
                 }
-                const peerContact = await this.node.peercache.getExternalPeerInfo(contactId);
+                let peerContact;
+                try {
+                    peerContact = await this.node.rolodex.getExternalPeerInfo(contactId);
+                } catch (e) {
+                    this.log.debug("Can't find external peer info.");
+                }
                 if (peerContact) {
-                    const peerContactArray = KadenceUtils.parseContactURL(peerContact);
+                    const peerURL = `${peerContact.protocol}//${peerContact.hostname}:${peerContact.port}/#${peerContact.identity}`;
+                    this.log.debug(`Searching for contact with URL ${peerContact}`);
+                    const peerContactArray = KadenceUtils.parseContactURL(peerURL);
 
                     if (peerContactArray.length === 2 && peerContactArray[1].hostname) {
                         [, contact] = peerContactArray;
@@ -566,7 +510,7 @@ class Kademlia {
 
                 this.log.debug(`No knowledge about contact ${contactId}, searching for it.`);
                 return new Promise(async (accept, reject) => {
-                    this.node.iterativeFindNode(contactId, (err, result) => {
+                    await this.node.iterativeFindNode(contactId, (err, result) => {
                         if (err) {
                             reject(Error(`Failed to find contact ${contactId}. ${err}`));
                             return;
@@ -877,6 +821,18 @@ class Kademlia {
                 accept(result);
             });
         });
+    }
+
+    _saveIdentityToFile(privateKey, nonce = null, proof = null) {
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            this.config.identity_filepath,
+        );
+        fs.writeFileSync(identityFilePath, JSON.stringify({
+            privateKey,
+            nonce,
+            proof,
+        }));
     }
 }
 

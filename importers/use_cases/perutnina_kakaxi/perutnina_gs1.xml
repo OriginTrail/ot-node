@@ -1,0 +1,2142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+	<EPCISHeader>
+		<sbdh:StandardBusinessDocumentHeader>
+			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+			<sbdh:Sender>
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:SLO_PERUTNINA_PTUJ_2015</sbdh:Identifier>
+				<sbdh:ContactInformation>
+					<sbdh:Contact>Eta Kamnik</sbdh:Contact>
+					<sbdh:EmailAddress>noreply@natureta.com</sbdh:EmailAddress>
+				</sbdh:ContactInformation>
+			</sbdh:Sender>
+			<sbdh:Receiver>
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:OriginTrail</sbdh:Identifier>
+				<sbdh:ContactInformation>
+					<sbdh:Contact>OTR</sbdh:Contact>
+					<sbdh:EmailAddress>noreply@origintraio.io</sbdh:EmailAddress>
+				</sbdh:ContactInformation>
+			</sbdh:Receiver>
+			<sbdh:DocumentIdentification>
+				<sbdh:Standard>GS1</sbdh:Standard>
+				<sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
+				<sbdh:InstanceIdentifier>200002</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
+				<sbdh:Type>Shipment</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
+				<sbdh:CreationDateAndTime>2018-02-02T00:31:52Z</sbdh:CreationDateAndTime>
+			</sbdh:DocumentIdentification>
+			<sbdh:BusinessScope>
+				<sbdh:Scope>
+					<sbdh:Type>BusinessProcess</sbdh:Type>
+					<sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
+					<sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+				</sbdh:Scope>
+			</sbdh:BusinessScope>
+		</sbdh:StandardBusinessDocumentHeader>
+		
+<extension>
+<EPCISMasterData>
+<VocabularyList>
+<Vocabulary type="urn:ot:object:actor">
+	<VocabularyElementList>	<VocabularyElement id="urn:ot:object:actor:id:SLO_PERUTNINA_PTUJ_2015">
+		<attribute id="urn:ot:object:actor:name">Perutnina Ptuj</attribute>
+		<attribute id="urn:ot:object:actor:actorId" identifier="true">urn:ot:object:actor:id:SLO_PERUTNINA_PTUJ_2015</attribute>
+		<attribute id="urn:ot:object:actor:wallet">0xc6F21B4d100503A48829e36b562aEfa9eb96b06b</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:actor:id:KrabonjaPeter">
+		<attribute id="urn:ot:object:actor:name">Krabonja Peter</attribute>
+		<attribute id="urn:ot:object:actor:actorId" identifier="true">urn:ot:object:actor:id:KrabonjaPeter</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:actor:id:PZP,farmaBoreci">
+		<attribute id="urn:ot:object:actor:name">PZP, farma Boreci</attribute>
+		<attribute id="urn:ot:object:actor:actorId" identifier="true">urn:ot:object:actor:id:PZP,farmaBoreci</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:actor:id:PodgoršekAnica">
+		<attribute id="urn:ot:object:actor:name">Podgoršek Anica</attribute>
+		<attribute id="urn:ot:object:actor:actorId" identifier="true">urn:ot:object:actor:id:PodgoršekAnica</attribute>
+	</VocabularyElement>
+	</VocabularyElementList>
+</Vocabulary>
+<Vocabulary type="urn:ot:object:location">
+	<VocabularyElementList>	<VocabularyElement id="urn:ot:object:location:id:1000">
+		<attribute id="urn:ot:object:location:type">factory</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">1000</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:SLO_PERUTNINA_PTUJ_2015</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:location:id:0000000593">
+		<attribute id="urn:ot:object:location:type">farm</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">0000000593</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:KrabonjaPeter</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:location:id:0000001108">
+		<attribute id="urn:ot:object:location:type">farm</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">0000001108</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:PZP,farmaBoreci</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:location:id:0000001111">
+		<attribute id="urn:ot:object:location:type">farm</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">0000001111</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:PZP,farmaBoreci</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:location:id:0000001262">
+		<attribute id="urn:ot:object:location:type">farm</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">0000001262</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:PZP,farmaBoreci</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:location:id:0000001264">
+		<attribute id="urn:ot:object:location:type">farm</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">0000001264</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:PZP,farmaBoreci</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:location:id:0000001714">
+		<attribute id="urn:ot:object:location:type">farm</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">0000001714</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:PodgoršekAnica</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:location:id:0000001716">
+		<attribute id="urn:ot:object:location:type">farm</attribute>
+		<attribute id="urn:ot:object:location:internal_facility_id">0000001716</attribute>
+		<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:PodgoršekAnica</attribute>
+	</VocabularyElement>
+	</VocabularyElementList>
+</Vocabulary>
+<Vocabulary type="urn:ot:object:product">
+	<VocabularyElementList>	<VocabularyElement id="urn:ot:object:product:id:1000-3687">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3687</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Pišč. IK Promo Pack SV cca.1,6/4,8kg</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">2200320000003</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">2604172000004</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3079">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3079</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščanec z dod.drob.6,4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">2223068000005</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">2623068000003</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3395">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3395</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piš.z dod.drob.cca.1,6kg/11,2kg AT</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">2732416000005</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3077">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3077</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančja stegna BKK 500g/4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977030778</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3078">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3078</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančji file 500g/4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977030785</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3080">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3080</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančje krače 500g/4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977030808</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3081">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3081</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančje peruti 500g/4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977030815</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3082">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3082</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Pišč.file zrezek 500g/4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977030822</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3083">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3083</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piš.peruti zg.del 500g/4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977030839</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3150">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3150</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančji file 500g/2kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977031508</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3151">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3151</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščanja stegna BKK 500g/2kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977031515</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3256">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3256</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančja bedra KA 550g/4,4kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977032567</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3391">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3391</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančje peruti SV 500g/7,5kg AT</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977033915</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3393">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3393</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščančje krače SV 500g/7,5kg AT</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977033939</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3394">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3394</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Pišč.stegna BKK 500g/7,5kg AT</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977033946</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3678">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3678</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piš.mini file SV KA IK 800g/6,4kg SI</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977036787</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3680">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3680</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Pišč.peru. BŠ SV KA IK 800g/6,4kg SI</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977036800</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3681">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3681</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Pišč. krače SV KA IK 800g/6,4kg SI</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977036817</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3689">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3689</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Piščanec razrezan za poh. 1kg/6kg IK</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977036893</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:1000-3721">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">3721</attribute>
+		<attribute id="urn:ot:object:product:name">PPR Pišč.file zrezki KA 500g/7,5kg AT</attribute>
+		<attribute id="urn:ot:object:product:ean13" identifier="true">3838977037210</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000000593-200383">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200383</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni M</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000000593-200384">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni S</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000000593-200385">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni V</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001108-200383">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200383</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni M</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001108-200384">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni S</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001108-200385">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni V</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001111-200383">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200383</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni M</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001111-200384">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni S</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001111-200385">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni V</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001262-200383">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200383</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni M</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001262-200384">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni S</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001262-200385">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni V</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001264-200383">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200383</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni M</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001264-200384">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni S</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001264-200385">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni V</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001714-200383">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200383</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni M</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001714-200384">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni S</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001714-200385">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni V</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001716-200383">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200383</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni M</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001716-200384">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni S</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:product:id:0000001716-200385">
+		<attribute id="urn:ot:object:product:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:name">Brojlerji vzrejeni V</attribute>
+	</VocabularyElement>
+	</VocabularyElementList>
+</Vocabulary>
+<Vocabulary type="urn:ot:object:batch">
+	<VocabularyElementList>	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000000593-200384-2019-09-06T00:00:00.000Z-3838977036893-1201700795">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000000593-200384</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977036893:2019-09-15T00:00:00+02:00:1201700795">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3689</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3689</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700795</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977036893</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001108-200385-2019-09-06T00:00:00.000Z-3838977032567-1201700369">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001108-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977032567:2019-09-14T00:00:00+02:00:1201700369">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3256</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3256</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700369</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977032567</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977030785-1201700445">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001111-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977030785:2019-09-14T00:00:00+02:00:1201700445">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3078</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3078</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700445</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977030785</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977031508-1201700445">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001111-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977031508:2019-09-14T00:00:00+02:00:1201700445">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3150</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3150</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700445</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977031508</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030778-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977030778:2019-09-14T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3077</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3077</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977030778</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030808-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977030808:2019-09-14T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3080</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3080</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977030808</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030815-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977030815:2019-09-14T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3081</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3081</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977030815</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030822-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977030822:2019-09-14T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3082</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3082</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977030822</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977031515-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977031515:2019-09-14T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3151</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3151</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977031515</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977036817-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977036817:2019-09-15T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3681</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3681</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977036817</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033915-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3391</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3391</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977033915</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033939-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977033939:2019-09-15T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3393</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3393</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977033939</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033946-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977033946:2019-09-15T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3394</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3394</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977033946</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977037210-1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001262-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977037210:2019-09-15T00:00:00+02:00:1201700340">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3721</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3721</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700340</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977037210</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2623068000003-1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001264-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:2623068000003:2019-09-11T00:00:00+02:00:1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3079</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3079</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-11T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-11</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700337</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">2623068000003</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2223068000005-1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001264-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:2223068000005:2019-09-11T00:00:00+02:00:1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3079</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3079</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-11T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-11</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700337</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">2223068000005</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-3838977036787-1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001264-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977036787:2019-09-15T00:00:00+02:00:1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3678</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3678</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700337</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977036787</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2604172000004-1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001264-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:2604172000004:2019-09-11T00:00:00+02:00:1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3687</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3687</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-11T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-11</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700337</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">2604172000004</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2200320000003-1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001264-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:2200320000003:2019-09-11T00:00:00+02:00:1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3687</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3687</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-11T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-11</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700337</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">2200320000003</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2732416000005-1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200385</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001264-200385</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:2732416000005:2019-09-12T00:00:00+02:00:1201700337">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3395</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3395</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-12T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-12</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700337</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">2732416000005</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001714-200384-2019-09-06T00:00:00.000Z-3838977030839-1201700381">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001714-200384</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977030839:2019-09-14T00:00:00+02:00:1201700381">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3083</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3083</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-14T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-14</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700381</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977030839</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977036800-1201700573">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001716-200384</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977036800:2019-09-15T00:00:00+02:00:1201700573">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3680</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3680</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700573</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977036800</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977033915-1201700573">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">200384</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:0000001716-200384</attribute>
+	</VocabularyElement>
+	<VocabularyElement id="urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700573">
+		<attribute id="urn:ot:object:product:batch:internalProductId" identifier="true">3391</attribute>
+		<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:1000-3391</attribute>
+		<attribute id="urn:ot:object:product:batch:expTimestamp" identifier="true">2019-09-15T00:00:00+02:00</attribute>
+		<attribute id="urn:ot:object:product:batch:expDate" identifier="true">2019-09-15</attribute>
+		<attribute id="urn:ot:object:product:batch:lot" identifier="true">1201700573</attribute>
+		<attribute id="urn:ot:object:product:batch:ean13" identifier="true">3838977033915</attribute>
+	</VocabularyElement>
+	</VocabularyElementList>
+</Vocabulary>
+</VocabularyList>
+</EPCISMasterData>
+</extension>
+</EPCISHeader>
+<EPCISBody>
+<EventList>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000000593-200384-2019-09-06T00:00:00.000Z-3838977036893-1201700795</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000000593-200384-2019-09-06T00:00:00.000Z-3838977036893-1201700795</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000000593</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000000593</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000000593-200384-2019-09-06T00:00:00.000Z-3838977036893-1201700795-urn:ot:object:batch:id:3838977036893:2019-09-15T00:00:00+02:00:1201700795</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000000593-200384-2019-09-06T00:00:00.000Z-3838977036893-1201700795</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977036893:2019-09-15T00:00:00+02:00:1201700795</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000000593-200384-2019-09-06T00:00:00.000Z-3838977036893-1201700795-urn:ot:object:batch:id:3838977036893:2019-09-15T00:00:00+02:00:1201700795</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001108-200385-2019-09-06T00:00:00.000Z-3838977032567-1201700369</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001108-200385-2019-09-06T00:00:00.000Z-3838977032567-1201700369</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001108</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001108</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001108-200385-2019-09-06T00:00:00.000Z-3838977032567-1201700369-urn:ot:object:batch:id:3838977032567:2019-09-14T00:00:00+02:00:1201700369</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001108-200385-2019-09-06T00:00:00.000Z-3838977032567-1201700369</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977032567:2019-09-14T00:00:00+02:00:1201700369</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001108-200385-2019-09-06T00:00:00.000Z-3838977032567-1201700369-urn:ot:object:batch:id:3838977032567:2019-09-14T00:00:00+02:00:1201700369</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977030785-1201700445</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977030785-1201700445</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001111</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001111</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977030785-1201700445-urn:ot:object:batch:id:3838977030785:2019-09-14T00:00:00+02:00:1201700445</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977030785-1201700445</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977030785:2019-09-14T00:00:00+02:00:1201700445</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977030785-1201700445-urn:ot:object:batch:id:3838977030785:2019-09-14T00:00:00+02:00:1201700445</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977031508-1201700445</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977031508-1201700445</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001111</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001111</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977031508-1201700445-urn:ot:object:batch:id:3838977031508:2019-09-14T00:00:00+02:00:1201700445</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977031508-1201700445</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977031508:2019-09-14T00:00:00+02:00:1201700445</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001111-200385-2019-09-06T00:00:00.000Z-3838977031508-1201700445-urn:ot:object:batch:id:3838977031508:2019-09-14T00:00:00+02:00:1201700445</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030778-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030778-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030778-1201700340-urn:ot:object:batch:id:3838977030778:2019-09-14T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030778-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977030778:2019-09-14T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030778-1201700340-urn:ot:object:batch:id:3838977030778:2019-09-14T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030808-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030808-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030808-1201700340-urn:ot:object:batch:id:3838977030808:2019-09-14T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030808-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977030808:2019-09-14T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030808-1201700340-urn:ot:object:batch:id:3838977030808:2019-09-14T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030815-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030815-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030815-1201700340-urn:ot:object:batch:id:3838977030815:2019-09-14T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030815-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977030815:2019-09-14T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030815-1201700340-urn:ot:object:batch:id:3838977030815:2019-09-14T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030822-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030822-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030822-1201700340-urn:ot:object:batch:id:3838977030822:2019-09-14T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030822-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977030822:2019-09-14T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977030822-1201700340-urn:ot:object:batch:id:3838977030822:2019-09-14T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977031515-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977031515-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977031515-1201700340-urn:ot:object:batch:id:3838977031515:2019-09-14T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977031515-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977031515:2019-09-14T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977031515-1201700340-urn:ot:object:batch:id:3838977031515:2019-09-14T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977036817-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977036817-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977036817-1201700340-urn:ot:object:batch:id:3838977036817:2019-09-15T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977036817-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977036817:2019-09-15T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977036817-1201700340-urn:ot:object:batch:id:3838977036817:2019-09-15T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033915-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033915-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033915-1201700340-urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033915-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033915-1201700340-urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033939-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033939-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033939-1201700340-urn:ot:object:batch:id:3838977033939:2019-09-15T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033939-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977033939:2019-09-15T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033939-1201700340-urn:ot:object:batch:id:3838977033939:2019-09-15T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033946-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033946-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033946-1201700340-urn:ot:object:batch:id:3838977033946:2019-09-15T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033946-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977033946:2019-09-15T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977033946-1201700340-urn:ot:object:batch:id:3838977033946:2019-09-15T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977037210-1201700340</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977037210-1201700340</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001262</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001262</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977037210-1201700340-urn:ot:object:batch:id:3838977037210:2019-09-15T00:00:00+02:00:1201700340</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977037210-1201700340</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977037210:2019-09-15T00:00:00+02:00:1201700340</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001262-200385-2019-09-06T00:00:00.000Z-3838977037210-1201700340-urn:ot:object:batch:id:3838977037210:2019-09-15T00:00:00+02:00:1201700340</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2623068000003-1201700337</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2623068000003-1201700337</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001264</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001264</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2623068000003-1201700337-urn:ot:object:batch:id:2623068000003:2019-09-11T00:00:00+02:00:1201700337</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2623068000003-1201700337</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:2623068000003:2019-09-11T00:00:00+02:00:1201700337</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2623068000003-1201700337-urn:ot:object:batch:id:2623068000003:2019-09-11T00:00:00+02:00:1201700337</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2223068000005-1201700337</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2223068000005-1201700337</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001264</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001264</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2223068000005-1201700337-urn:ot:object:batch:id:2223068000005:2019-09-11T00:00:00+02:00:1201700337</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2223068000005-1201700337</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:2223068000005:2019-09-11T00:00:00+02:00:1201700337</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2223068000005-1201700337-urn:ot:object:batch:id:2223068000005:2019-09-11T00:00:00+02:00:1201700337</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-3838977036787-1201700337</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-3838977036787-1201700337</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001264</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001264</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-3838977036787-1201700337-urn:ot:object:batch:id:3838977036787:2019-09-15T00:00:00+02:00:1201700337</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-3838977036787-1201700337</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977036787:2019-09-15T00:00:00+02:00:1201700337</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-3838977036787-1201700337-urn:ot:object:batch:id:3838977036787:2019-09-15T00:00:00+02:00:1201700337</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2604172000004-1201700337</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2604172000004-1201700337</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001264</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001264</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2604172000004-1201700337-urn:ot:object:batch:id:2604172000004:2019-09-11T00:00:00+02:00:1201700337</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2604172000004-1201700337</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:2604172000004:2019-09-11T00:00:00+02:00:1201700337</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2604172000004-1201700337-urn:ot:object:batch:id:2604172000004:2019-09-11T00:00:00+02:00:1201700337</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2200320000003-1201700337</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2200320000003-1201700337</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001264</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001264</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2200320000003-1201700337-urn:ot:object:batch:id:2200320000003:2019-09-11T00:00:00+02:00:1201700337</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2200320000003-1201700337</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:2200320000003:2019-09-11T00:00:00+02:00:1201700337</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2200320000003-1201700337-urn:ot:object:batch:id:2200320000003:2019-09-11T00:00:00+02:00:1201700337</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2732416000005-1201700337</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2732416000005-1201700337</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001264</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001264</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2732416000005-1201700337-urn:ot:object:batch:id:2732416000005:2019-09-12T00:00:00+02:00:1201700337</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2732416000005-1201700337</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:2732416000005:2019-09-12T00:00:00+02:00:1201700337</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001264-200385-2019-09-06T00:00:00.000Z-2732416000005-1201700337-urn:ot:object:batch:id:2732416000005:2019-09-12T00:00:00+02:00:1201700337</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001714-200384-2019-09-06T00:00:00.000Z-3838977030839-1201700381</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001714-200384-2019-09-06T00:00:00.000Z-3838977030839-1201700381</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001714</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001714</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001714-200384-2019-09-06T00:00:00.000Z-3838977030839-1201700381-urn:ot:object:batch:id:3838977030839:2019-09-14T00:00:00+02:00:1201700381</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001714-200384-2019-09-06T00:00:00.000Z-3838977030839-1201700381</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977030839:2019-09-14T00:00:00+02:00:1201700381</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001714-200384-2019-09-06T00:00:00.000Z-3838977030839-1201700381-urn:ot:object:batch:id:3838977030839:2019-09-14T00:00:00+02:00:1201700381</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977036800-1201700573</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977036800-1201700573</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001716</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001716</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977036800-1201700573-urn:ot:object:batch:id:3838977036800:2019-09-15T00:00:00+02:00:1201700573</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977036800-1201700573</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977036800:2019-09-15T00:00:00+02:00:1201700573</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977036800-1201700573-urn:ot:object:batch:id:3838977036800:2019-09-15T00:00:00+02:00:1201700573</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+
+<ObjectEvent>
+        <!-- Transport Shipment-->
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>+01:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSPORT-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977033915-1201700573</eventID>
+        </baseExtension>
+        <epcList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977033915-1201700573</epc>
+
+        </epcList>
+        <action>OBSERVE</action>
+        <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:0000001716</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>
+        <extension>
+            <extension>
+                <OTEventClass>urn:ot:event:Transport</OTEventClass>
+<OTEventClass>urn:ot:event:Ownership</OTEventClass>
+
+                <OTEventType>Sales</OTEventType>
+                <sourceList>
+                    <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:0000001716</source>
+                </sourceList>
+                <destinationList>
+                    <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:ot:object:location:id:1000</destination>
+                </destinationList>
+            </extension>
+        </extension>
+    </ObjectEvent>
+    
+
+<extension>
+    <TransformationEvent>
+        <eventTime>2019-09-06T00:00:00.000Z</eventTime>
+        <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+        <baseExtension>
+            <eventID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977033915-1201700573-urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700573</eventID>
+</baseExtension>
+        <inputEPCList>
+            <epc>urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977033915-1201700573</epc>
+
+        </inputEPCList>
+        <outputEPCList>
+            <epc>urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700573</epc>
+
+        </outputEPCList>
+        <transformationID>TRANSFORMATION-2019-09-06T00:00:00.000Z-urn:ot:object:batch:id:ingredient-0000001716-200384-2019-09-06T00:00:00.000Z-3838977033915-1201700573-urn:ot:object:batch:id:3838977033915:2019-09-15T00:00:00+02:00:1201700573</transformationID>
+        <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep>
+        <disposition>urn:epcglobal:cbv:disp:active</disposition>
+        <readPoint>
+            <id>urn:ot:object:location:id:1000</id>
+        </readPoint>
+        <bizLocation>
+            <id>urn:ot:object:location:id:1000</id>
+        </bizLocation>						 				 
+        <extension>
+            <OTEventClass>urn:ot:event:Transformation</OTEventClass>
+
+        </extension>
+    </TransformationEvent>
+</extension>
+</EventList>
+</EPCISBody>
+</epcis:EPCISDocument>

@@ -23,15 +23,7 @@ class DCOfferPrepareCommand extends Command {
             internalOfferId,
         } = command.data;
 
-        const colorsInfo = await this.replicationService.createReplications(internalOfferId);
-        const distLitRootHashes = (await Promise.all(colorsInfo.map(async (cInfo) => {
-            await this.replicationService.saveReplication(internalOfferId, cInfo.color, cInfo);
-
-            const hashes = {};
-            hashes[`${cInfo.color}LitigationHash`] = cInfo.litigationRootHash;
-            hashes[`${cInfo.color}DistributionHash`] = cInfo.distributionRootHash;
-            return hashes;
-        }))).reduce((acc, value) => Object.assign(acc, value));
+        const distLitRootHashes = await this.replicationService.createReplications(internalOfferId);
 
         const { data } = command;
         Object.assign(data, distLitRootHashes);
@@ -44,7 +36,7 @@ class DCOfferPrepareCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { internalOfferId } = command.data;
+        const { internalOfferId, handler_id } = command.data;
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
@@ -53,7 +45,9 @@ class DCOfferPrepareCommand extends Command {
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });
-
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

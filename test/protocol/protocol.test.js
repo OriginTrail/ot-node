@@ -425,8 +425,6 @@ describe.skip('Protocol tests', () => {
                     gas_limit: 800000,
                     gas_price: 5000000000,
                 },
-                total_escrow_time_in_milliseconds: '60000',
-                max_token_amount_per_dh: '1000000000000000000000', // 1e22 == 10000 tokens
                 dh_min_stake_amount: '100000000000000000', // 1e18 == 1 token
                 dh_min_reputation: '0',
             };

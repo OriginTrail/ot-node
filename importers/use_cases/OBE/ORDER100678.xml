@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2019-11-18T13:27:20Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+    <EPCISHeader>
+        <sbdh:StandardBusinessDocumentHeader>
+            <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+            <sbdh:Sender>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:OBE</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>OBE</sbdh:Contact>
+                    <sbdh:EmailAddress>mlawn@obeorganic.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Sender>
+            <sbdh:Receiver>
+                <sbdh:Identifier Authority="OriginTrail">OriginTrail</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>OriginTrail</sbdh:Contact>
+                    <sbdh:EmailAddress>support@origin-trail.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Receiver>
+            <sbdh:DocumentIdentification>
+                <sbdh:Standard>GS1</sbdh:Standard>
+                <sbdh:TypeVersion>V1.3</sbdh:TypeVersion>
+                <sbdh:InstanceIdentifier>CertificationEventwNUj</sbdh:InstanceIdentifier>
+                <sbdh:Type>Shipment</sbdh:Type>
+                <sbdh:CreationDateAndTime>2019-11-18T13:27:20Z</sbdh:CreationDateAndTime>
+            </sbdh:DocumentIdentification>
+            <sbdh:BusinessScope>
+                <sbdh:Scope>
+                    <sbdh:Type>BusinessProcess</sbdh:Type>
+                    <sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
+                    <sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+                </sbdh:Scope>
+            </sbdh:BusinessScope>
+        </sbdh:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="urn:epcglobal:epcis:vtype:BusinessLocation">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgln:7253416794747">
+                                <attribute id="http://epcis.example.com/mda/latitude">42.431824</attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude">-76.463564</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:3148418687524">
+                                <attribute id="http://epcis.example.com/mda/latitude"></attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude"></attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:3032340715857">
+                                <attribute id="http://epcis.example.com/mda/latitude"></attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude"></attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:8313644704673">
+                                <attribute id="http://epcis.example.com/mda/latitude"></attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude"></attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:2706048695508">
+                                <attribute id="http://epcis.example.com/mda/latitude"></attribute>
+                                <attribute id="http://epcis.example.com/mda/longitude"></attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    <Vocabulary type="urn:epcglobal:epcis:vtype:EPCClass">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:idpat:sgtin:100678">
+                                <attribute id="urn:ot:object:location:category">Order</attribute>
+                                <attribute id="urn:ot:object:location:description">100678</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                </VocabularyList>
+            </EPCISMasterData>
+        </extension>
+    </EPCISHeader>
+    <EPCISBody>
+        <EventList>
+            <ObjectEvent>
+                <eventTime>2019-10-23T00:00:00</eventTime>
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                <epcList>
+                    <epc>100678</epc>
+                </epcList>
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:3032340715857</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:3032340715857</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-10-23T00:00:00</eventTime>
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                <epcList>
+                    <epc>100678</epc>
+                </epcList>
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:transporting</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:3148418687524</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:3148418687524</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-10-25T00:00:00</eventTime>
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                <epcList>
+                    <epc>100678</epc>
+                </epcList>
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:8313644704673</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:8313644704673</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-10-26T00:00:00</eventTime>
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                <epcList>
+                    <epc>100678</epc>
+                </epcList>
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:8313644704673</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:8313644704673</id>
+                </bizLocation>
+            </ObjectEvent>
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>

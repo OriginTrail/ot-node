@@ -28,7 +28,9 @@ describe('GraphStorage module', () => {
     const edgeCollectionName = 'ot_edges';
     const vertexOne = databaseData.vertices[0];
     const vertexTwo = databaseData.vertices[1];
+    const vertexThree = databaseData.vertices[2];
     const edgeOne = databaseData.edges[0];
+    const edgeTwo = databaseData.edges[1];
     const newImportValue = 2520345631;
 
     before('Init myGraphStorage', async () => {
@@ -213,5 +215,29 @@ describe('GraphStorage module', () => {
         } else {
             throw Error('Not implemented database provider.');
         }
+    });
+
+    it('call to findTrail from storage, expect three vertices', async () => {
+        const responseVertexOne = await myGraphStorage.addVertex(vertexOne);
+        const responseVertexTwo = await myGraphStorage.addVertex(vertexTwo);
+        const responseVertexThree = await myGraphStorage.addVertex(vertexThree);
+        const responseEdgeOne = await myGraphStorage.addEdge(edgeOne);
+        const responseEdgeTwo = await myGraphStorage.addEdge(edgeTwo);
+
+        assert.equal(responseVertexOne._key, vertexOne._key);
+        assert.equal(responseVertexTwo._key, vertexTwo._key);
+        assert.equal(responseVertexThree._key, vertexThree._key);
+        assert.equal(responseEdgeOne._key, edgeOne._key);
+        assert.equal(responseEdgeTwo._key, edgeTwo._key);
+
+        const result = await myGraphStorage.findTrail({
+            identifierKeys: vertexThree._key, depth: 1, connectionTypes: [],
+        });
+        assert.equal(result.length, 3);
+        const keyArray = [vertexOne._key, vertexTwo._key, vertexThree._key].sort();
+        const resultKeyArray = result.map(element => element.rootObject._key).sort();
+        keyArray.forEach((element, index) => {
+            assert.equal(element, resultKeyArray[index]);
+        });
     });
 });

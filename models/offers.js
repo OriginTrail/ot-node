@@ -16,10 +16,17 @@ module.exports = (sequelize, DataTypes) => {
         blue_litigation_hash: DataTypes.STRING,
         green_litigation_hash: DataTypes.STRING,
         task: DataTypes.STRING,
+        urgent: DataTypes.BOOLEAN,
         status: DataTypes.STRING,
         global_status: DataTypes.STRING,
         message: DataTypes.STRING,
         transaction_hash: DataTypes.STRING(128),
+        number_of_replications: DataTypes.INTEGER,
+        number_of_verified_replications: DataTypes.INTEGER,
+        trac_in_eth_used_for_price_calculation: DataTypes.STRING,
+        gas_price_used_for_price_calculation: DataTypes.STRING,
+        price_factor_used_for_price_calculation: DataTypes.INTEGER,
+        offer_finalize_transaction_hash: DataTypes.STRING(128),
     }, {});
     offers.associate = (models) => {
     // associations can be defined here

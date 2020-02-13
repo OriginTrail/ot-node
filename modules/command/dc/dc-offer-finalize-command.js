@@ -2,6 +2,7 @@ const BN = require('../../../node_modules/bn.js/lib/bn');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 const Models = require('../../../models/index');
 
@@ -32,6 +33,7 @@ class DCOfferFinalizeCommand extends Command {
             offerId,
             solution,
             handler_id,
+            urgent,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -67,20 +69,30 @@ class DCOfferFinalizeCommand extends Command {
                 where: { handler_id },
             },
         );
-
-
-        await this.blockchain.finalizeOffer(
-            Utilities.normalizeHex(this.config.erc725Identity),
-            offerId,
-            new BN(solution.shift, 10),
-            confirmations[0],
-            confirmations[1],
-            confirmations[2],
-            colors,
-            nodeIdentifiers,
-            parentIdentity,
-        );
-
+        let result;
+        try {
+            result = await this.blockchain.finalizeOffer(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                offerId,
+                new BN(solution.shift, 10),
+                confirmations[0],
+                confirmations[1],
+                confirmations[2],
+                colors,
+                nodeIdentifiers,
+                parentIdentity,
+                urgent,
+            );
+        } catch (error) {
+            if (error.message.includes('Gas price higher than maximum allowed price')) {
+                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                return Command.repeat();
+            }
+            throw error;
+        }
+        const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
+        offer.offer_finalize_transaction_hash = result.transactionHash;
+        await offer.save({ fields: ['offer_finalize_transaction_hash'] });
         return {
             commands: [
                 {
@@ -102,6 +114,7 @@ class DCOfferFinalizeCommand extends Command {
         const {
             offerId,
             solution,
+            handler_id,
         } = command.data;
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
@@ -155,6 +168,9 @@ class DCOfferFinalizeCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
+        Models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
 
         return Command.empty();
     }
@@ -168,6 +184,7 @@ class DCOfferFinalizeCommand extends Command {
         const command = {
             name: 'dcOfferFinalizeCommand',
             delay: 0,
+            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
             transactional: false,
         };
         Object.assign(command, map);

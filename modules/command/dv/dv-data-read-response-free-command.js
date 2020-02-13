@@ -1,10 +1,14 @@
 const bytes = require('utf8-length');
+const fs = require('fs');
+const path = require('path');
 
 const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
 const Graph = require('../../Graph');
 const Utilities = require('../../Utilities');
+
+const uuidv4 = require('uuid/v4');
 
 /**
  * Handles data read response for free.
@@ -18,7 +22,7 @@ class DVDataReadResponseFreeCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
-        this.importer = ctx.importer;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -51,6 +55,7 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             wallet: dhWallet,
             transaction_hash,
+            handler_id,
         } = message;
 
         // Find the particular reply.
@@ -72,8 +77,8 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
+        const { document } = message;
         // Calculate root hash and check is it the same on the SC.
-        const { vertices, edges } = message.data;
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
         if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
@@ -84,12 +89,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-
-        ImportUtilities.sort(vertices);
-        ImportUtilities.sort(edges);
-
-        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
-        const rootHash = merkle.tree.getRoot();
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
 
         if (fingerprint !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
@@ -100,12 +100,34 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         try {
-            await this.importer.importJSON({
-                vertices: message.data.vertices,
-                edges: message.data.edges,
-                dataSetId,
-                wallet: dcWallet,
-            }, false);
+            const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+
+            await Utilities.writeContentsToFile(
+                cacheDirectory,
+                handler_id,
+                JSON.stringify(document),
+            );
+
+            const commandData = {
+                documentPath: path.join(cacheDirectory, handler_id),
+                handler_id,
+                data_provider_wallet: dcWallet,
+                purchased: true,
+            };
+
+            const commandSequence = [
+                'dcConvertToGraphCommand',
+                'dcWriteImportToGraphDbCommand',
+                'dcFinalizeImportCommand',
+            ];
+
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: commandData,
+                transactional: false,
+            });
         } catch (error) {
             this.logger.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);
@@ -114,24 +136,13 @@ class DVDataReadResponseFreeCommand extends Command {
             return Command.empty();
         }
 
-        const dataSize = bytes(JSON.stringify(vertices));
-        await Models.data_info.create({
-            data_set_id: dataSetId,
-            total_documents: vertices.length,
-            root_hash: rootHash,
-            data_provider_wallet: dcWallet,
-            import_timestamp: new Date(),
-            data_size: dataSize,
-            origin: 'PURCHASED',
-        });
-
         // Store holding information and generate keys for eventual data replication.
         await Models.purchased_data.create({
             data_set_id: dataSetId,
             transaction_hash,
         });
 
-        this.logger.info(`Data set ID ${dataSetId} imported successfully.`);
+        this.logger.info(`Data set ID ${dataSetId} import started.`);
         this.logger.trace(`DataSet ${dataSetId} purchased for query ID ${networkQueryResponse.query_id}, ` +
             `reply ID ${replyId}.`);
         this.remoteControl.readNotification({

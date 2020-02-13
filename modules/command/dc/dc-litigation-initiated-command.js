@@ -19,7 +19,8 @@ class DcLitigationInitiatedCommand extends Command {
         const {
             offerId,
             dhIdentity,
-            blockId,
+            objectIndex,
+            blockIndex,
         } = command.data;
 
         const events = await Models.events.findAll({
@@ -33,23 +34,19 @@ class DcLitigationInitiatedCommand extends Command {
                 const {
                     offerId: eventOfferId,
                     holderIdentity,
-                    requestedDataIndex,
+                    requestedObjectIndex,
+                    requestedBlockIndex,
                 } = JSON.parse(e.data);
                 return Utilities.compareHexStrings(offerId, eventOfferId)
                     && Utilities.compareHexStrings(dhIdentity, holderIdentity)
-                    && blockId === parseInt(requestedDataIndex, 10);
+                    && objectIndex === parseInt(requestedObjectIndex, 10)
+                    && blockIndex === parseInt(requestedBlockIndex, 10);
             });
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Litigation initiated for DH ${dhIdentity} and offer ${offerId}.`);
-
-                const replicatedData = await Models.replicated_data.findOne({
-                    where: { offer_id: offerId, dh_identity: dhIdentity },
-                });
-                replicatedData.status = 'LITIGATION_STARTED';
-                await replicatedData.save({ fields: ['status'] });
 
                 const offer = await Models.offers.findOne({
                     where: { offer_id: offerId },
@@ -60,7 +57,8 @@ class DcLitigationInitiatedCommand extends Command {
                             data: {
                                 offerId,
                                 dhIdentity,
-                                blockId,
+                                objectIndex,
+                                blockIndex,
                             },
                             name: 'dcLitigationAnsweredCommand',
                             period: 5000,

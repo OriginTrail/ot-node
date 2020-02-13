@@ -1,8 +1,7 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
 const bytes = require('utf8-length');
-
+const fs = require('fs');
+const { sha3_256 } = require('js-sha3');
 const Command = require('../command');
-const MerkleTree = require('../../Merkle');
 const Encryption = require('../../Encryption');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
@@ -15,13 +14,14 @@ class DhReplicationImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
-        this.importer = ctx.importer;
+        this.importService = ctx.importService;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
         this.blockchain = ctx.blockchain;
+        this.challengeService = ctx.challengeService;
     }
 
     /**
@@ -32,7 +32,7 @@ class DhReplicationImportCommand extends Command {
         const {
             offerId,
             dataSetId,
-            otJson,
+            documentPath,
             dcWallet,
             dcNodeId,
             litigationPublicKey,
@@ -43,6 +43,8 @@ class DhReplicationImportCommand extends Command {
             transactionHash,
             encColor,
         } = command.data;
+        const otJson = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+
         const { decryptedDataset, encryptedMap } =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
         const calculatedDataSetId =
@@ -60,7 +62,7 @@ class DhReplicationImportCommand extends Command {
         }
 
         // Verify litigation root hash
-        const encryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(otJson['@graph'], otJson['@id'], otJson.datasetHeader.dataCreator);
+        const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(otJson['@graph']);
 
         if (encryptedGraphRootHash !== litigationRootHash) {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);
@@ -107,17 +109,23 @@ class DhReplicationImportCommand extends Command {
             },
         });
 
-        const importResult = await this.importer.importOTJSON(decryptedDataset, encryptedMap);
+        const importResult = await this.importService.importFile({
+            document: decryptedDataset,
+            encryptedMap,
+        });
+
+        fs.unlinkSync(documentPath);
 
         if (importResult.error) {
             throw Error(importResult.error);
         }
 
         if (dataInfo == null) {
-            const dataSize = bytes(JSON.stringify(otJson));
+            const dataSize = bytes(JSON.stringify(decryptedDataset));
+            const dataHash = Utilities.normalizeHex(sha3_256(`${otJson}`));
             await Models.data_info.create({
                 data_set_id: dataSetId,
-                total_documents: otJson['@graph'].length,
+                total_documents: decryptedDataset['@graph'].length,
                 root_hash: decryptedGraphRootHash,
                 // TODO: add field data_provider_id: 'Perutnina Ptuj ERC...'
                 // otjson.datasetHeader.dataProvider || 'Unknown'
@@ -126,7 +134,8 @@ class DhReplicationImportCommand extends Command {
                 // TODO: add field data_creator_id_type: 'ERC725' || 'Unknown'
                 data_provider_wallet: dcWallet, // TODO: rename to data_creator_wallet
                 import_timestamp: new Date(),
-                data_size: dataSize,
+                otjson_size_in_bytes: dataSize,
+                data_hash: dataHash,
                 origin: 'HOLDING',
             });
         }

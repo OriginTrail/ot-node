@@ -1,5 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models');
+const bugsnag = require('bugsnag');
 
 /**
  *  Checks one DH's challenge response
@@ -11,6 +12,7 @@ class DCChallengeCheckCommand extends Command {
         this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
+        this.config = ctx.config;
     }
 
     /**
@@ -46,6 +48,27 @@ class DCChallengeCheckCommand extends Command {
             await challenge.save({ fields: ['status'] });
             return Command.empty();
         }
+        let bugsnagMessage = 'Challenge check failed. Initiating litigation. ';
+        if (!challenge || !challenge.answer) {
+            bugsnagMessage = `${bugsnagMessage}No answer from challenged Node!`;
+        } else {
+            bugsnagMessage = `${bugsnagMessage}Node responded with wrong answer!`;
+        }
+        bugsnag.notify(bugsnagMessage, {
+            user: {
+                id: challenge.dh_id,
+                dc_identity: this.config.identity,
+                dh_identity: dhIdentity,
+                challenge_id: challenge.id,
+                data_set_id: challenge.data_set_id,
+                object_index: challenge.object_index,
+                block_index: challenge.block_index,
+                expected_answer: challenge.expected_answer,
+                answer: challenge.answer,
+            },
+            severity: 'info',
+        });
+
 
         this.logger.info(`Wrong answer to challenge '${challenge.id}' for DH ID ${challenge.dh_id}. Got ${challenge.answer} for expected answer ${challenge.expected_answer}.`);
         return {
@@ -55,9 +78,8 @@ class DCChallengeCheckCommand extends Command {
                     period: 5000,
                     data: {
                         offerId,
-                        test_index: challenge.test_index,
-                        object_index: challenge.object_index,
-                        block_index: challenge.block_index,
+                        objectIndex: challenge.object_index,
+                        blockIndex: challenge.block_index,
                         dhIdentity,
                         litigationPrivateKey,
                     },

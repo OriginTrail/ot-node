@@ -8,7 +8,7 @@ const Utilities = require('../../modules/Utilities');
 const databaseData = require('./test_data/arangodb-data.js');
 
 describe('Utilities module', () => {
-    const environments = ['development', 'staging', 'stable', 'production'];
+    const environments = ['development', 'mainnet', 'testnet'];
     const configJson = JSON.parse(fs.readFileSync(`${__dirname}/../../config/config.json`).toString());
 
     it('node_config should contain certain entries', () => {
@@ -17,17 +17,18 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config, ['node_rpc_ip', 'node_port', 'blockchain', 'database', 'identity', 'logs_level_debug',
                     'request_timeout', 'ssl_keypath', 'node_remote_control_port', 'send_logs',
-                    'ssl_certificate_path', 'identity_filepath', 'cpus', 'embedded_wallet_directory',
+                    'ssl_certificate_path', 'identity_filepath', 'cpus',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled',
                     'ssl_authority_paths', 'node_rpc_port',
-                    'remote_control_enabled', 'probability_threshold',
-                    'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
-                    'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
-                    'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
+                    'remote_control_enabled', 'dc_challenge_retry_delay_in_millis', 'dh_challenge_retry_delay_in_millis',
+                    'read_stake_factor', 'send_logs_to_origintrail',
+                    'dh_min_reputation', 'dh_min_stake_amount', 'houston_password_file_name',
+                    'is_bootstrap_node', 'houston_password', 'reverse_tunnel_address', 'reverse_tunnel_port',
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
-                    'dc_token_amount_per_holder', 'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes', 'dh_min_token_price',
-                    'erc725_identity_filepath', 'deposit_on_demand', 'requireApproval', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled'],
+                    'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes',
+                    'erc725_identity_filepath', 'requireApproval', 'dh_maximum_dataset_filesize_in_mb', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled',
+                    'reputationWindowInMinutes'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -36,8 +37,8 @@ describe('Utilities module', () => {
             );
             assert.hasAllKeys(
                 config.blockchain, [
-                    'blockchain_title', 'network_id', 'gas_limit', 'gas_price',
-                    'hub_contract_address', 'plugins'],
+                    'blockchain_title', 'network_id', 'gas_limit', 'gas_price', 'max_allowed_gas_price',
+                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth'],
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -96,7 +97,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'hub_contract_address']);
+                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth']);
             assert.equal(config.blockchain.blockchain_title, 'Ethereum');
         });
     });

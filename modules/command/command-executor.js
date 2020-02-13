@@ -134,7 +134,7 @@ class CommandExecutor {
                 }, transaction);
 
                 command.data = handler.unpack(command.data);
-                const result = await handler.execute(command, transaction);
+                let result = await handler.execute(command, transaction);
                 if (result.repeat) {
                     await CommandExecutor._update(command, {
                         status: STATUS.repeating,
@@ -146,6 +146,13 @@ class CommandExecutor {
                         command.period : constants.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS;
                     await this.add(command, period, false);
                     return Command.repeat();
+                }
+
+                if (result.retry) {
+                    result = await this._handleRetry(command, handler);
+                    if (result.retry) {
+                        return result;
+                    }
                 }
 
                 const children = result.commands.map((c) => {
@@ -162,7 +169,7 @@ class CommandExecutor {
                 };
             }, command.transactional);
 
-            if (!result.repeat) {
+            if (!result.repeat && !result.retry) {
                 if (this.verboseLoggingEnabled) {
                     this.logger.trace(`Command ${command.name} and ID ${command.id} processed.`);
                 }
@@ -239,6 +246,27 @@ class CommandExecutor {
         }
     }
 
+
+    /**
+     * Handles command retry
+     * @param command
+     * @param handler
+     * @return {Promise<void>}
+     * @private
+     */
+    async _handleRetry(command, handler) {
+        if (command.retries > 0) {
+            command.data = handler.pack(command.data);
+            await CommandExecutor._update(command, {
+                status: STATUS.pending,
+                retries: command.retries - 1,
+            });
+            await this.add(command, command.delay ? command.delay : 0, false);
+            return Command.retry();
+        }
+        return Command.empty();
+    }
+
     /**
      * Handles command error
      * @param command
@@ -252,7 +280,7 @@ class CommandExecutor {
             await CommandExecutor._update(command, {
                 retries: command.retries - 1,
             });
-            await this.add(command, 0, false);
+            await this.add(command, command.delay ? command.delay : 0, false);
         } else {
             try {
                 await CommandExecutor._update(command, {

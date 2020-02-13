@@ -16,7 +16,7 @@ const defaultConfiguration = require('../../../../config/config.json').developme
 const uuidRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const walletRegex = /\b0x[0-9A-F]{40}\b/gi;
 const identityRegex = /\b[0-9A-F]{40}\b/gi;
-const identityWithPrefixRegex = /\b0x[0-9A-F]{40}\b/gi;
+const identityWithPrefixRegex = /\b0x[0-9a-f]{40}\b/gi;
 const offerIdRegex = /\b0x[0-9A-F]{64}\b/gi;
 const dataSetRegex = /\b0x[0-9A-F]{64}\b/gi;
 const walletAmountRegex = /\b\d+\b/g;
@@ -65,6 +65,7 @@ class OtNode extends EventEmitter {
         this.state.addedBids = []; // List of offer IDs (DH side).
         this.state.takenBids = []; // List of offer IDs (DH side).
         this.state.pendingLitigationDhIdentities = []; // List of pending litigations (DHs)
+        this.state.penalizedDHIdentities = [];
         this.state.takenReplacements = []; // List of replacement offer IDs (DH side).
         // Valid replications (DH side). List of internal offer IDs and their replications DH IDs
         // in pairs. { internalOfferId, dhId }.
@@ -227,9 +228,9 @@ class OtNode extends EventEmitter {
             // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
             // TODO: Poor man's parsing. Use regular expressions.
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
-        } else if (line.match(/.*Import complete/gi)) {
+        } else if (line.match(/Import complete/gi)) {
             this.emit('import-complete');
-        } else if (line.match(/.*Export complete/gi)) {
+        } else if (line.match(/Export complete.*/gi)) {
             this.emit('export-complete');
         } else if (line.match(/.*\[DH] Replication finished for offer ID .+/gi)) {
             const offerId = line.match(offerIdRegex)[0];
@@ -350,6 +351,9 @@ class OtNode extends EventEmitter {
             this.emit('offer-written-blockchain');
         } else if (line.match(/Command dhPayOutCommand and ID .+ processed\./gi)) {
             this.emit('dh-pay-out-finalized');
+        } else if (line.match(/Accepting offer with price: .+ TRAC\./gi)) {
+            const result = line.match(walletAmountRegex);
+            this.state.calculatedOfferPrice = result[result.length - 1];
         } else if (line.match(/Payout for offer .+ successfully completed\./gi)) {
             const offerId = line.match(/Payout for offer .+ successfully completed\./gi)[0].match(/Payout for offer (.*?) successfully completed\./)[1];
             this.emit(`dh-pay-out-offer-${offerId}-completed`);
@@ -370,6 +374,8 @@ class OtNode extends EventEmitter {
             this.state.pendingLitigationDhIdentities.push(dhIdentity);
             this.emit('dc-litigation-pending');
         } else if (line.match(/DH .+ was penalized for the offer .+\./gi)) {
+            const dhIdentity = line.match(identityWithPrefixRegex)[0];
+            this.state.penalizedDHIdentities.push(dhIdentity);
             this.emit('dc-litigation-completed-dh-penalized');
         } else if (line.match(/DH .+ was not penalized for the offer .+\./gi)) {
             this.emit('dc-litigation-completed-dh-not-penalized');
@@ -385,8 +391,17 @@ class OtNode extends EventEmitter {
             this.emit('dh-litigation-replacement-received');
         } else if (line.match(/Successfully replaced DH .+ with DH .+ for offer .+/gi)) {
             this.emit('dc-litigation-replacement-completed');
-        } else if (line.match(/Challenge answer .+ sent to .+\./gi)) {
-            this.emit('dh-challenge-sent');
+        } else if (line.match(/Calculated answer for dataset .+, color .+, object index .+, and block index .+ is .+/gi)) {
+            const answer =
+                line.match(/Calculated answer for dataset .+, color .+, object index .+, and block index .+ is .+/gi)[0]
+                    .match(new RegExp('is (.*)'))[1];
+            this.emit('dh-challenge-sent', answer);
+        } else if (line.match(/Sending challenge to .+ Offer ID .+, object_index .+, block_index .+/gi)) {
+            const dhIdentity = line.match(/Sending challenge to .+ Offer ID .+, object_index .+, block_index .+/gi)[0].match(new RegExp('to (.*). Offer ID'))[1];
+            this.emit(`dc-challenge-sent-${dhIdentity}`);
+        } else if (line.match(/Challenge response arrived for challenge .+\. Answer .+/gi)) {
+            const answer = line.match(/Challenge response arrived for challenge .+\. Answer .+/gi)[0].match(new RegExp('Answer (.*)'))[1];
+            this.emit(`dc-challenge-verified-${answer}`);
         } else if (line.match(/Not chosen as a replacement for offer .+\./gi)) {
             this.emit('dh-not-chosen-as-replacement');
         } else if (line.match(/Chosen as a replacement for offer .+\./gi)) {
@@ -396,6 +411,9 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Replication finished for DH node .+/gi)) {
             const nodeId = line.match(identityRegex)[0];
             this.emit('dh-replication-verified', nodeId);
+        } else if (line.match(/Replication request from holder identity .+ declined! Unacceptable reputation: .+./gi)) {
+            const dhIdentity = line.match(identityWithPrefixRegex)[0];
+            this.state.declinedDhIdentity = dhIdentity;
         }
     }
 

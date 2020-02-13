@@ -66,6 +66,20 @@ class GraphStorage {
         });
     }
 
+    findTrail(queryObject) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.findTrail(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     /**
      * Finds imports IDs based on data location query
      *
@@ -171,7 +185,7 @@ class GraphStorage {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findDocuments('ot_vertices', { connectionId: connectorId })
+                this.db.findConnectors(connectorId)
                     .then((result) => {
                         resolve(result);
                     }).catch((err) => {
@@ -397,6 +411,29 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findMetadataByImportId(datasetId).then((result) => {
+                    if (!result) {
+                        resolve(null);
+                    } else {
+                        resolve(result[0]);
+                    }
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Retrieves all elements of a dataset ID
+     * @param datasetId - Dataset ID
+     * @returns {Promise}
+     */
+    getDatasetWithVerticesAndEdges(datasetId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getDatasetWithVerticesAndEdges(datasetId).then((result) => {
                     resolve(result[0]);
                 }).catch((err) => {
                     reject(err);
@@ -420,6 +457,25 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findEvent(senderId, partnerId, documentId, bizStep).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Returns data creator identity for vertex with elementId
+     * @param elementId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForElementId(elementId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findIssuerIdentityForElementId(elementId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -505,6 +561,25 @@ class GraphStorage {
                 reject(Error('Method not implemented for Neo4j database yet'));
             } else {
                 this.db.getDocumentsCount(collectionName).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Returns data creator identity for dataset ID
+     * @param datasetId
+     * @returns {Promise}
+     */
+    async findIssuerIdentityForDatasetId(datasetId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findIssuerIdentityForDatasetId(datasetId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

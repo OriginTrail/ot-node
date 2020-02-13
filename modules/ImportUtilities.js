@@ -161,15 +161,17 @@ class ImportUtilities {
             if (obj.relations != null) {
                 encryptedMap.relations[obj['@id']] = {};
                 for (const rel of obj.relations) {
-                    const encryptedProperties = rel.properties;
-                    rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
-                    if (encryptionColor != null) {
-                        const encColor = colorMap[encryptionColor];
-                        const relationKey = sha3_256(Utilities.stringify(rel, 0));
-                        encryptedMap.relations[obj['@id']][relationKey] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
-                        encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
-                            encryptedProperties;
+                    if (rel.properties != null) {
+                        const encryptedProperties = rel.properties;
+                        rel.properties = Encryption.decryptObject(rel.properties, decryptionKey);
+                        if (encryptionColor != null) {
+                            const encColor = colorMap[encryptionColor];
+                            const relationKey = sha3_256(Utilities.stringify(rel, 0));
+                            encryptedMap.relations[obj['@id']][relationKey] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId] = {};
+                            encryptedMap.relations[obj['@id']][relationKey][offerId][encColor] =
+                                encryptedProperties;
+                        }
                     }
                 }
             }
@@ -324,7 +326,7 @@ class ImportUtilities {
         };
     }
 
-    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+    static createDistributionMerkleTree(graph, datasetId, datasetCreator) {
         const datasetSummary =
             this.calculateDatasetSummary(graph, datasetId, datasetCreator);
 
@@ -335,10 +337,20 @@ class ImportUtilities {
             stringifiedGraph.push(Utilities.sortedStringify(obj));
         }
 
-        const merkle = new MerkleTree(
+        return new MerkleTree(
             [Utilities.sortedStringify(datasetSummary), ...stringifiedGraph],
+            'distribution',
             'sha3',
         );
+    }
+
+    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
+        const merkle = ImportUtilities.createDistributionMerkleTree(
+            graph,
+            datasetId,
+            datasetCreator,
+        );
+
         return merkle.getRoot();
     }
 
@@ -358,8 +370,8 @@ class ImportUtilities {
                     .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
         });
-        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-        return Utilities.sortedStringify(graph);
+        graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
+        return Utilities.sortedStringify(graph, true);
     }
 
     /**
@@ -561,6 +573,40 @@ class ImportUtilities {
         }
 
         return header;
+    }
+
+    /**
+     * Extract Dataset creator identifier value from OT-JSON or graph header
+     * @static
+     * @param datasetHeader Header of the dataset in which the dataCreator field exists
+     * @returns String - Dataset creator identifier value (Currently ERC725 Identity)
+     */
+    static getDataCreator(datasetHeader) {
+        return datasetHeader.dataCreator.identifiers[0].identifierValue;
+    }
+
+    /**
+     * Process successfull import
+     * @static
+     * @param unpack  Unpack keys
+     * @param objects  Graph vertices and edges
+     * @return {Promise<>}
+     */
+    static unpackKeysAndSortVertices(objects, unpack = false) {
+        let {
+            vertices, edges,
+        } = objects;
+        if (unpack) {
+            ImportUtilities.unpackKeys(vertices, edges);
+        }
+
+        edges = Graph.sortVertices(edges);
+        vertices = Graph.sortVertices(vertices);
+
+        return {
+            vertices,
+            edges,
+        };
     }
 }
 

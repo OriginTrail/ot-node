@@ -28,6 +28,7 @@ class DCOfferCreateDbCommand extends Command {
             holdingTimeInMinutes,
             tokenAmountPerHolder,
             litigationIntervalInMinutes,
+            urgent,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -37,6 +38,7 @@ class DCOfferCreateDbCommand extends Command {
         offer.blue_litigation_hash = blueLitigationHash.toString('hex');
         offer.green_litigation_hash = greenLitigationHash.toString('hex');
         offer.litigation_interval_in_minutes = litigationIntervalInMinutes.toString();
+        offer.urgent = !!urgent;
         offer.message = 'Offer has been prepared for BC.';
         offer.status = 'PREPARED';
 
@@ -44,7 +46,7 @@ class DCOfferCreateDbCommand extends Command {
             fields: [
                 'holding_time_in_minutes', 'token_amount_per_holder',
                 'red_litigation_hash', 'blue_litigation_hash', 'green_litigation_hash',
-                'litigation_interval_in_minutes', 'message', 'status'],
+                'litigation_interval_in_minutes', 'urgent', 'message', 'status'],
         });
         this.remoteControl.offerUpdate({
             id: internalOfferId,
@@ -60,7 +62,7 @@ class DCOfferCreateDbCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { internalOfferId } = command.data;
+        const { internalOfferId, handler_id } = command.data;
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
@@ -69,6 +71,9 @@ class DCOfferCreateDbCommand extends Command {
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });
+        models.handler_ids.update({
+            status: 'FAILED',
+        }, { where: { handler_id } });
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
@@ -106,7 +111,7 @@ class DCOfferCreateDbCommand extends Command {
             greenLitigationHash: new BN(Utilities.denormalizeHex(data.greenLitigationHash), 16),
             blueLitigationHash: new BN(Utilities.denormalizeHex(data.blueLitigationHash), 16),
             holdingTimeInMinutes: new BN(data.holdingTimeInMinutes, 10),
-            tokenAmountPerHolder: new BN(data.tokenAmountPerHolder, 10),
+            tokenAmountPerHolder: new BN(data.tokenAmountPerHolder.toString(), 10),
             dataSizeInBytes: new BN(data.dataSizeInBytes, 10),
             litigationIntervalInMinutes: new BN(data.litigationIntervalInMinutes, 10),
         });

@@ -44,10 +44,10 @@ module.exports = {
             network_id: '5777',
         },
 
-        update: {
+        updateRinkeby: {
             host: 'localhost', // Connect to geth on the specified
             port: 8545,
-            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${process.env.RINKEBY_ACCESS_KEY}`),
+            provider: () => new HDWalletProvider(mnemonic, `${process.env.RINKEBY_ACCESS_KEY}`),
             network_id: 4,
             gas: 6000000, // Gas limit used for deploys
             websockets: true,

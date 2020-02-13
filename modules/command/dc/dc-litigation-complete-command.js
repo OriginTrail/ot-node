@@ -24,19 +24,20 @@ class DCLitigationCompleteCommand extends Command {
         const {
             offerId,
             dhIdentity,
-            blockId,
+            blockIndex,
+            objectIndex,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (offer.global_status === 'COMPLETED') {
             // offer has already been completed
-            this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} with objectIndex ${objectIndex} and blockIndex ${blockIndex}`);
             return Command.empty();
         }
 
         if (offer.global_status === 'FAILED') {
             // offer has already been failed
-            this.logger.warn(`Offer ${offerId} has already been failed. Skipping litigation for DH identity ${dhIdentity} and block ${blockId}`);
+            this.logger.warn(`Offer ${offerId} has already been failed. Skipping litigation for DH identity ${dhIdentity} with objectIndex ${objectIndex} and blockIndex ${blockIndex}`);
             return Command.empty();
         }
 
@@ -46,13 +47,21 @@ class DCLitigationCompleteCommand extends Command {
             where:
                 {
                     dh_identity: dhIdentity,
-                    block_id: blockId,
+                    block_index: blockIndex,
+                    object_index: objectIndex,
                     offer_id: offerId,
                 },
         });
 
         const answer = utilities.normalizeHex(Buffer.from(challenge.expected_answer, 'utf-8').toString('hex').padStart(64, '0'));
-        await this.blockchain.completeLitigation(offerId, dhIdentity, dcIdentity, answer);
+        await this.blockchain.completeLitigation(
+            offerId,
+            dhIdentity,
+            dcIdentity,
+            answer,
+            challenge.test_index,
+            true,
+        );
         return {
             commands: [
                 {

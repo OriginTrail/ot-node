@@ -15,7 +15,6 @@ class DHReplacementImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
-        this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
@@ -95,7 +94,7 @@ class DHReplacementImportCommand extends Command {
 
         ImportUtilities.sort(litigationVertices);
         const litigationBlocks = this.challengeService.getBlocks(litigationVertices);
-        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks, 'litigation');
         const calculatedLitigationRootHash = litigationBlocksMerkleTree.getRoot();
 
         if (litigationRootHash !== calculatedLitigationRootHash) {
@@ -141,16 +140,16 @@ class DHReplacementImportCommand extends Command {
             },
         });
 
-        if (holdingData == null) {
-            // import does not exist
-
-            await this.importer.importJSON({
-                dataSetId,
-                vertices: litigationVertices,
-                edges,
-                wallet: dcWallet,
-            }, true, encColor);
-        }
+        // if (holdingData == null) {
+        //     // import does not exist
+        //
+        //     await this.importer.importJSON({
+        //         dataSetId,
+        //         vertices: litigationVertices,
+        //         edges,
+        //         wallet: dcWallet,
+        //     }, true, encColor);
+        // }
 
         // Store holding information and generate keys for eventual data replication.
         await Models.holding_data.create({
@@ -173,12 +172,15 @@ class DHReplacementImportCommand extends Command {
         });
 
         if (dataInfo == null) {
-            let importResult = await this.importer.importJSON({
-                dataSetId,
-                vertices: decryptedVertices,
-                edges,
-                wallet: dcWallet,
-            }, false);
+            // TODO refactor with new importer
+            // let importResult = await this.importer.importJSON({
+            //     dataSetId,
+            //     vertices: decryptedVertices,
+            //     edges,
+            //     wallet: dcWallet,
+            // }, false);
+
+            let importResult;
 
             if (importResult.error) {
                 throw Error(importResult.error);
