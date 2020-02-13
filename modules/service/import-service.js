@@ -5,6 +5,7 @@ const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
 
+const Constants = require('../constants');
 /**
  * Returns value of '@id' property.
  * @param jsonLdObject JSON-LD object.
@@ -221,13 +222,23 @@ class ImportService {
                 }
                 // Add data vertex.
                 if (otObject.properties != null) {
+                    const otObjectData = Utilities.copyObject(otObject.properties);
+                    Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+                        if (otObject.properties[private_data_array] &&
+                            Array.isArray(otObject.properties[private_data_array])) {
+                            otObject.properties[private_data_array].forEach((private_object) => {
+                                delete private_object.isPrivate;
+                                delete private_object.data;
+                            });
+                        }
+                    });
                     const dataVertex = {
                         _key: Utilities.keyFrom(
                             dataCreator,
                             Utilities.keyFrom(otObject.properties),
                         ),
                         vertexType: constants.vertexType.data,
-                        data: otObject.properties,
+                        data: otObjectData,
                         datasets: [datasetId],
                     };
                     if (encryptedMap && encryptedMap.objects &&

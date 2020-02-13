@@ -180,7 +180,7 @@ class DCController {
         };
 
         const dataPurchaseResponseObject = {
-            response,
+            message: response,
             messageSignature: Utilities.generateRsvSignature(
                 JSON.stringify(response),
                 this.web3,

@@ -149,7 +149,7 @@ class DVController {
                 name: 'dvDataReadRequestCommand',
                 delay: 0,
                 data: {
-                    readOnlyPrivateData: isPrivateData,
+                    readOnlyPrivateData: dataInfo && isPrivateData,
                     dataSetId: data_set_id,
                     replyId: reply_id,
                     handlerId,
