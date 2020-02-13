@@ -109,7 +109,6 @@ class DHReadDataLocationRequestCommand extends Command {
             importDetails.forEach((item) => {
                 privateData.push({
                     is_private: item.isPrivate,
-                    data_element_key: item.data_element_key,
                     ot_object_id: item.id,
                 });
             });

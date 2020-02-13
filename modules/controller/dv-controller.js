@@ -13,6 +13,8 @@ class DVController {
         this.remoteControl = ctx.remoteControl;
         this.transport = ctx.transport;
         this.config = ctx.config;
+        this.web3 = ctx.web3;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -110,7 +112,16 @@ class DVController {
             const dataInfo = await Models.data_info.findOne({
                 where: { data_set_id },
             });
-            if (dataInfo && !offer.private_data) {
+
+            let isPrivateData = false;
+            for (const element of JSON.parse(offer.data_set_ids)) {
+                if (element.data_set_id === data_set_id && element.private_data) {
+                    isPrivateData = true;
+                    break;
+                }
+            }
+
+            if (dataInfo && !isPrivateData) {
                 const message = `I've already stored data for data set ID ${data_set_id}.`;
                 this.logger.trace(message);
                 res.status(200);
@@ -138,7 +149,7 @@ class DVController {
                 name: 'dvDataReadRequestCommand',
                 delay: 0,
                 data: {
-                    readOnlyPrivateData: (dataInfo && offer.private_data),
+                    readOnlyPrivateData: isPrivateData,
                     dataSetId: data_set_id,
                     replyId: reply_id,
                     handlerId,
@@ -153,52 +164,51 @@ class DVController {
         }
     }
 
+    _validatePrivateData(data) {
+        let validated = false;
+        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (data[private_data_array] && Array.isArray(data[private_data_array])) {
+                data[private_data_array].forEach((private_object) => {
+                    if (private_object.isPrivate && private_object.data) {
+                        // todo validate private object hash
+                        validated = true;
+                    }
+                });
+            }
+        });
+        return validated;
+    }
+
     async handlePrivateDataReadResponse(message) {
         const {
-            handler_id, ot_object, data_creator,
+            handler_id, ot_objects,
         } = message;
-
-        // calculate key using ot_object.properties and data_creator
-        const objectKey = Utilities.keyFrom(
-            data_creator,
-            Utilities.keyFrom(ot_object.properties),
-        );
-        // update whole ot_object
-        const queryObject = { _key: objectKey };
-        const document = await this.graphStorage.findDocuments('ot_vertices', queryObject);
-
-        if (document) {
-            // go through private data elements
-            constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                if (ot_object.properties[private_data_array] &&
-                    Array.isArray(ot_object.properties[private_data_array])) {
-                    ot_object.properties[private_data_array].forEach((private_object, index) => {
-                        if (document[private_data_array]
-                            && document[private_data_array].length() === index - 1) {
-                            if (private_object.private_data_hash === document[private_data_array][index].private_data_hash) {
-                                document[private_data_array][index].data = private_object.data;
-                                // todo add hash calculation and check
-                            }
-                        }
-                    });
+        const documentsToBeUpdated = [];
+        ot_objects.forEach((otObject) => {
+            otObject.relatedObjects.forEach((relatedObject) => {
+                if (relatedObject.vertex.vertexType === 'Data') {
+                    if (this._validatePrivateData(relatedObject.vertex.data)) {
+                        documentsToBeUpdated.push(relatedObject.vertex);
+                    }
                 }
             });
-
-            await this.graphStorage.updateDocument('ot_vertices', document);
-            await Models.handler_ids.update({
-                status: 'SUCCESSFULL',
-            }, { where: { handler_id } });
-        }
+        });
+        const promises = [];
+        documentsToBeUpdated.forEach((document) => {
+            promises.push(this.graphStorage.updateDocument('ot_vertices', document));
+        });
+        await Promise.all(promises);
         await Models.handler_ids.update({
-            status: 'FAILED',
+            status: 'SUCCESSFULL',
         }, { where: { handler_id } });
     }
 
-    async sendNetworkPurchase(dataElementKey, dataSetId, nodeId, handlerId) {
+    async sendNetworkPurchase(dataSetId, nodeId, otJsonObjectId, handlerId) {
         const message = {
-            data_element_key: dataElementKey,
             data_set_id: dataSetId,
             handler_id: handlerId,
+            ot_json_object_id: otJsonObjectId,
+            wallet: this.config.node_wallet,
         };
         const dataPurchaseRequestObject = {
             message,

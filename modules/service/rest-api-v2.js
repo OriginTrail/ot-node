@@ -122,7 +122,7 @@ class RestAPIServiceV2 {
             await this._networkPurchase(req, res);
         });
 
-        server.get(`/api/${this.version_id}/network/purchase/:handler_id`, async (req, res) => {
+        server.get(`/api/${this.version_id}/network/purchase/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
         });
 
@@ -967,16 +967,21 @@ class RestAPIServiceV2 {
     async _networkPurchase(req, res) {
         this.logger.api('POST: Network purchase request received.');
 
-        if (req.body == null || req.body.data_element_key == null
+        if (req.body == null
             || req.body.data_set_id == null
-            || req.body.node_id == null) {
+            || req.body.node_id == null
+            || req.body.ot_json_object_id == null) {
             res.status(400);
-            res.send({ message: 'Params data_element_key, data_set_id and node_id are required.' });
+            res.send({ message: 'Params data_set_id, node_id and ot json object id are required.' });
             return;
         }
-        const { data_element_key, data_set_id, node_id } = req.body;
+        const {
+            data_set_id, node_id, ot_json_object_id,
+        } = req.body;
         const inserted_object = await Models.handler_ids.create({
-            data: { data_element_key, data_set_id, node_id },
+            data: JSON.stringify({
+                data_set_id, node_id, ot_json_object_id,
+            }),
             status: 'PENDING',
         });
         const handlerId = inserted_object.dataValues.handler_id;
@@ -985,7 +990,12 @@ class RestAPIServiceV2 {
             handler_id: handlerId,
         });
 
-        await this.dvController.sendNetworkPurchase(data_element_key, data_set_id, node_id, handlerId);
+        await this.dvController.sendNetworkPurchase(
+            data_set_id,
+            node_id,
+            ot_json_object_id,
+            handlerId,
+        );
     }
 }
 

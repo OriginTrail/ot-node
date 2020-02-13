@@ -431,7 +431,7 @@ class DCService {
             Utilities.normalizeHex(this.config.node_private_key),
         );
 
-        const allowedPrivateDataElements = await models.private_data.findAll({
+        const allowedPrivateDataElements = await models.private_data_permissions.findAll({
             where: {
                 data_set_id: offer.data_set_id,
                 node_id: identity,

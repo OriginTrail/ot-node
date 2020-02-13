@@ -309,6 +309,16 @@ class GraphStorage {
     }
 
     /**
+     * Update document in graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async updateDocument(collectionName, document) {
+        return this.db.updateDocument(collectionName, document);
+    }
+
+    /**
      * Updates document with the import ID
      * @param collectionName
      * @param document

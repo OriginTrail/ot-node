@@ -17,6 +17,7 @@ class DCController {
         this.graphStorage = ctx.graphStorage;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
+        this.web3 = ctx.web3;
     }
 
     /**
@@ -107,39 +108,46 @@ class DCController {
             networkReply.receiver_identity) {
             throw Error('Sorry not your read request');
         }
-        const networkReplyData = JSON.parse(networkReply.data);
 
-        const networkQuery = await Models.network_queries.find({
-            where: {
-                id: networkReplyData.id,
-            },
+        const objectIds = [];
+        const datasetIds = [];
+        networkReply.data.imports.forEach((imports) => {
+            if (imports.private_data) {
+                datasetIds.push(imports.data_set_id);
+                imports.private_data.forEach((privateData) => {
+                    objectIds.push(privateData.ot_object_id);
+                });
+            }
         });
-
-        if (!networkQuery) {
-            throw Error(`Can't find network query with ID ${networkReplyData.id}`);
+        if (objectIds.length <= 0 || datasetIds <= 0) {
+            throw Error('No private data to read');
         }
-        const networkQuerySearch = JSON.parse(networkQuery.queries);
-        const elementId = networkQuerySearch.value;
-        const privateDataPermission = await Models.private_data_permission.findOne({
+
+        const privateDataPermissions = await Models.private_data_permissions.findAll({
             where: {
                 data_set_id,
-                data_element_key: elementId,
+                ot_json_object_id: { [Models.Sequelize.Op.in]: objectIds },
                 node_id: nodeId,
             },
         });
-
-        if (!privateDataPermission) {
-            throw Error(`You don't have permission to view elementId: ${elementId} from dataset: ${data_set_id}`);
+        if (!privateDataPermissions || privateDataPermissions.length === 0) {
+            throw Error(`You don't have permission to view objectIds: ${objectIds} from dataset: ${data_set_id}`);
         }
-        const returnValue = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(data_set_id, `ot_vertices/${elementId}`);
-        const otObject = this.importService._constructOtObject(returnValue.relatedObjects);
-        const metadata = await this.graphStorage.findMetadataByImportId(data_set_id);
-        const dataCreator = ImportUtilities.getDataCreator(metadata.datasetHeader);
+
         const replayMessage = {
-            data_creator: dataCreator,
-            ot_object: otObject,
+            wallet: this.config.node_wallet,
             handler_id,
         };
+        const promises = [];
+        privateDataPermissions.forEach((privateDataPermisssion) => {
+            promises.push(this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+                data_set_id,
+                privateDataPermisssion.ot_json_object_id,
+            ));
+        });
+        const otObjects = await Promise.all(promises);
+        replayMessage.ot_objects = otObjects;
+
         const privateDataReadResponseObject = {
             message: replayMessage,
             messageSignature: Utilities.generateRsvSignature(
@@ -156,24 +164,25 @@ class DCController {
 
     async handleNetworkPurchaseRequest(message) {
         const {
-            data_element_key, data_set_id, handler_id, dv_node_id,
+            data_set_id, handler_id, dv_node_id, ot_json_object_id,
         } = message;
 
-        await Models.private_data_permission.create({
+        await Models.private_data_permissions.create({
             node_id: dv_node_id,
             data_set_id,
-            data_element_key,
+            ot_json_object_id,
         });
         const response = {
             handler_id,
             status: 'SUCCESS',
+            wallet: this.config.node_wallet,
             message: 'Data purchase successfully finalized!',
         };
 
         const dataPurchaseResponseObject = {
             response,
             messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(message),
+                JSON.stringify(response),
                 this.web3,
                 this.config.node_private_key,
             ),

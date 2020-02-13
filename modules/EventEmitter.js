@@ -819,12 +819,10 @@ class EventEmitter {
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
-                logger.warn(returnMessage);
                 return;
             }
             try {
-                await dvController.handlePrivateDataReadRequest(message);
+                await dcController.handlePrivateDataReadRequest(message);
             } catch (error) {
                 logger.warn(`Failed to process private data read request. ${error}.`);
                 // todo send error to dv
@@ -839,8 +837,6 @@ class EventEmitter {
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
-                logger.warn(returnMessage);
                 return;
             }
             try {
@@ -853,7 +849,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-purchase-request', async (request) => {
-            logger.info('Encrypted data received');
+            logger.info('Data purchase received');
             const dvNodeId = transport.extractSenderID(request);
             const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);
@@ -861,11 +857,9 @@ class EventEmitter {
                 logger.warn(`Failed to send data-purchase-request. ${reqMessage}`);
                 return;
             }
-            const dataPurchaseRequestObject = reqMessage;
-            const { message, messageSignature } = dataPurchaseRequestObject;
+            const { message, messageSignature } = reqMessage;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                console.log('kad-data-purchase-request', JSON.stringify(message), JSON.stringify(messageSignature));
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
@@ -889,11 +883,9 @@ class EventEmitter {
                 logger.warn(`Failed to send data-purchase-response. ${reqMessage}`);
                 return;
             }
-            const dataPurchaseResponseObject = reqMessage;
-            const { message, messageSignature } = dataPurchaseResponseObject;
+            const { message, messageSignature } = reqMessage;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                console.log('kad-data-purchase-response', JSON.stringify(message), JSON.stringify(messageSignature));
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
