@@ -170,8 +170,9 @@ class DVController {
             if (data[private_data_array] && Array.isArray(data[private_data_array])) {
                 data[private_data_array].forEach((private_object) => {
                     if (private_object.isPrivate && private_object.data) {
-                        // todo validate private object hash
-                        validated = true;
+                        const calculatedPrivateHash = ImportUtilities
+                            .calculatePrivateDataHash(private_object);
+                        validated = calculatedPrivateHash === private_object.private_data_hash;
                     }
                 });
             }
@@ -225,11 +226,11 @@ class DVController {
         );
     }
 
-    async handleNetworkPurchaseResponse(message) {
-        const { handler_id, status, responseMessage } = message;
+    async handleNetworkPurchaseResponse(response) {
+        const { handler_id, status, message } = response;
 
         await Models.handler_ids.update({
-            data: JSON.stringify({ responseMessage }),
+            data: JSON.stringify({ message }),
             status,
         }, {
             where: {

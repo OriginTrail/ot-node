@@ -585,7 +585,8 @@ class ImportUtilities {
             if (ot_object.properties[private_data_array] &&
                 Array.isArray(ot_object.properties[private_data_array])) {
                 ot_object.properties[private_data_array].forEach((private_object) => {
-                    ImportUtilities.calculatePrivateDataHash(private_object);
+                    const privateHash = ImportUtilities.calculatePrivateDataHash(private_object);
+                    private_object.private_data_hash = privateHash;
                 });
             }
         });
@@ -616,8 +617,8 @@ class ImportUtilities {
             const block = data.slice(i, i + block_size).toString('hex');
             blocks.push(block.padEnd(default_block_size, '0'));
         }
-
-        private_object.private_data_hash = (new MerkleTree(blocks, 'distribution', 'sha3')).getRoot();
+        const merkletree = new MerkleTree(blocks, 'distribution', 'sha3');
+        return merkletree.getRoot();
     }
 
     static sortStringifyDataset(dataset) {
