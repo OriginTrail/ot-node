@@ -199,21 +199,21 @@ class Kademlia {
             this.log.info('Rolodex initialised');
 
             // Override node's _updateContact method to filter contacts.
-            this.node._updateContact = (identity, contact) => {
-                try {
-                    if (!this.validateContact(identity, contact)) {
-                        this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
-                        return;
-                    }
-                } catch (err) {
-                    this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
-                    return;
-                }
-
-                // Simulate node's "super._updateContact(identity, contact)".
-                this.node.constructor.prototype.constructor.prototype
-                    ._updateContact.call(this.node, identity, contact);
-            };
+            // this.node._updateContact = (identity, contact) => {
+            //     try {
+            //         if (!this.validateContact(identity, contact)) {
+            //             this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
+            //             return;
+            //         }
+            //     } catch (err) {
+            //         this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
+            //         return;
+            //     }
+            //
+            //     // Simulate node's "super._updateContact(identity, contact)".
+            //     this.node.constructor.prototype.constructor.prototype
+            //         ._updateContact.call(this.node, identity, contact);
+            // };
 
             this.node.use((request, response, next) => {
                 if (!this.validateContact(request.contact[0], request.contact[1])) {
@@ -855,9 +855,10 @@ class Kademlia {
         const message = {};
         this.node.router.forEach((value, key, map) => {
             if (value.length > 0) {
-                value.forEach((bValue, bKey, bMap) => {
-                    message[bKey] = bValue;
-                });
+                message[key] = value.length;
+                // value.forEach((bValue, bKey, bMap) => {
+                //     message[bKey] = bValue;
+                // });
             }
         });
         return message;
