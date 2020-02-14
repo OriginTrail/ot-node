@@ -82,9 +82,11 @@ class DHDataReadRequestFreeCommand extends Command {
                                 ot_object.properties[privateDataArray];
                         }
                     });
-                    privateData[ot_object['@id']] = privateDataObject;
+                    privateData[ot_object['@id']] = Utilities.copyObject(privateDataObject);
                 }
             }
+
+            ImportUtilities.hideGraphPrivateData(document['@graph']);
 
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
