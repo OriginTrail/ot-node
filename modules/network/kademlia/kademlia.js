@@ -148,6 +148,7 @@ class Kademlia {
                 logger: this.log,
                 transport,
                 contact,
+                identity: this.config.identity,
                 storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
@@ -172,6 +173,7 @@ class Kademlia {
 
             const spartacusPlugin = kadence.spartacus(
                 this.privateKey,
+                this.node.identity,
                 { checkPublicKeyHash: false },
             );
             this.node.spartacus = this.node.plugin(spartacusPlugin);
