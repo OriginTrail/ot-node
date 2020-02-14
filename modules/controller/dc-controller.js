@@ -167,7 +167,7 @@ class DCController {
             data_set_id, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
-        const permission = Models.private_data_permissions.findOne({
+        const permission = await Models.private_data_permissions.findOne({
             where: {
                 node_id: dv_node_id,
                 data_set_id,
