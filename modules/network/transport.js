@@ -170,6 +170,10 @@ class Transport {
         return this.network.dumpContacts();
     }
 
+    dumpSummary() {
+        return this.network.dumpSummary();
+    }
+
     async findNode(nodeId) {
         return this.network.findNode(nodeId);
     }
