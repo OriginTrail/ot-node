@@ -67,6 +67,7 @@ Given(/^I start (\d+)[st|nd|rd|th]+ stopped holder*$/, { timeout: 300000 }, func
 });
 
 Then(/^(\d+)[st|nd|rd|th]+ holder to litigate should answer litigation$/, { timeout: 300000 }, async function (nodeIndex) {
+    this.logger.log(`${nodeIndex} holder to litigate should answer litigation`);
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 

@@ -54,7 +54,7 @@ class ReplicationService {
         for (let i = 0; i < 3; i += 1) {
             const color = this.castNumberToColor(i);
 
-            const litigationKeyPair = Encryption.generateKeyPair(512);
+            const litigationKeyPair = Encryption.generateKeyPair(2048);
             const distributionKeyPair = Encryption.generateKeyPair(512);
 
             // TODO Optimize encryption to reduce memory usage

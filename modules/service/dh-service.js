@@ -12,7 +12,6 @@ const Graph = require('../Graph');
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const ObjectValidator = require('../validator/object-validator');
-const constants = require('../constants');
 
 class DHService {
     constructor(ctx) {
@@ -381,36 +380,6 @@ class DHService {
                 challengeId,
                 litigatorNodeId,
             },
-        });
-    }
-
-    /**
-     * Handle started litigated
-     * @param offerId - Offer ID
-     * @param objectIndex - Index of the selected object from the sorted OT dataset
-     * @param blockIndex - Index of the selected block from the sorted object
-     * @return {Promise<void>}
-     */
-    async handleLitigation(offerId, objectIndex, blockIndex) {
-        this.logger.warn(`Litigation initiated for offer ${offerId}, object index ${objectIndex} and block index ${blockIndex}.`);
-
-        const bid = await Models.bids.findOne({
-            where: { offer_id: offerId },
-        });
-        if (bid == null) {
-            this.logger.info(`I am not a holder for offer ${offerId}. Ignoring litigation.`);
-            return;
-        }
-
-        await this.commandExecutor.add({
-            name: 'dhLitigationAnswerCommand',
-            data: {
-                offerId,
-                objectIndex,
-                blockIndex,
-                dataSetId: bid.data_set_id,
-            },
-            retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
         });
     }
 

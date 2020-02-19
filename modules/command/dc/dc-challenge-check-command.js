@@ -39,7 +39,7 @@ class DCChallengeCheckCommand extends Command {
         });
 
         if (challenge.answer === challenge.expected_answer) {
-            this.logger.trace('Successfully answered to challenge.');
+            this.logger.trace(`Holder ${dhIdentity} successfully answered to challenge for offer ${offerId}.`);
 
             replicatedData.status = 'HOLDING';
             await replicatedData.save({ fields: ['status'] });
