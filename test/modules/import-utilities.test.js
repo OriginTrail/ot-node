@@ -185,12 +185,9 @@ describe('Import utilities module ', () => {
         const shuffledObject = Utilities.copyObject(sample_data.private_data_object_shuffled);
         const differentObject = Utilities.copyObject(sample_data.private_data_object_2);
 
-        ImportUtilities.calculatePrivateDataHash(originalObject);
-        const originalRootHash = originalObject.private_data_hash;
-        ImportUtilities.calculatePrivateDataHash(shuffledObject);
-        const shuffledRootHash = shuffledObject.private_data_hash;
-        ImportUtilities.calculatePrivateDataHash(differentObject);
-        const differentRootHash = differentObject.private_data_hash;
+        const originalRootHash = ImportUtilities.calculatePrivateDataHash(originalObject);
+        const shuffledRootHash = ImportUtilities.calculatePrivateDataHash(shuffledObject);
+        const differentRootHash = ImportUtilities.calculatePrivateDataHash(differentObject);
 
         assert(originalRootHash != null);
         assert(shuffledRootHash != null);

@@ -499,6 +499,38 @@ class ImportUtilities {
     }
 
     /**
+     * Removes the data attribute from objects that are private
+     * @param graph
+     * @returns {Array}
+     */
+    static hideGraphPrivateData(graph) {
+        graph.forEach((object) => {
+            ImportUtilities.hideObjectPrivateData(object);
+        });
+    }
+
+    /**
+     * Removes the data attribute from objects if it is set to private
+     * @param ot_object
+     * @returns {object}
+     */
+    static hideObjectPrivateData(ot_object) {
+        if (!ot_object || !ot_object.properties) {
+            return;
+        }
+        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (ot_object.properties[private_data_array] &&
+                Array.isArray(ot_object.properties[private_data_array])) {
+                ot_object.properties[private_data_array].forEach((private_object) => {
+                    if (private_object.isPrivate) {
+                        delete private_object.data;
+                    }
+                });
+            }
+        });
+    }
+
+    /**
      * Removes the isPrivate and data attributes from all data that can be private
      * @param graph
      * @returns {null}
@@ -553,7 +585,8 @@ class ImportUtilities {
             if (ot_object.properties[private_data_array] &&
                 Array.isArray(ot_object.properties[private_data_array])) {
                 ot_object.properties[private_data_array].forEach((private_object) => {
-                    ImportUtilities.calculatePrivateDataHash(private_object);
+                    const privateHash = ImportUtilities.calculatePrivateDataHash(private_object);
+                    private_object.private_data_hash = privateHash;
                 });
             }
         });
@@ -584,8 +617,8 @@ class ImportUtilities {
             const block = data.slice(i, i + block_size).toString('hex');
             blocks.push(block.padEnd(default_block_size, '0'));
         }
-
-        private_object.private_data_hash = (new MerkleTree(blocks, 'distribution', 'sha3')).getRoot();
+        const merkletree = new MerkleTree(blocks, 'distribution', 'sha3');
+        return merkletree.getRoot();
     }
 
     static sortStringifyDataset(dataset) {

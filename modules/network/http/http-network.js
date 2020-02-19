@@ -72,6 +72,42 @@ class HttpNetwork {
             return HttpNetwork.send(contact.hostname, data, this.config.identity);
         };
 
+        this.node.sendPrivateDataReadRequest = async (message, contactId) => {
+            const data = {
+                type: 'kad-private-data-read-request',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendPrivateDataReadResponse = async (message, contactId) => {
+            const data = {
+                type: 'kad-private-data-read-response',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendDataPurchaseRequest = async (message, contactId) => {
+            const data = {
+                type: 'kad-data-purchase-request',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendDataPurchaseResponse = async (message, contactId) => {
+            const data = {
+                type: 'kad-data-purchase-response',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
         this.node.sendEncryptedKey = async (message, contactId) => {
             const data = {
                 type: 'kad-send-encrypted-key',

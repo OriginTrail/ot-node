@@ -1,6 +1,8 @@
 const uuidv4 = require('uuid/v4');
 const Models = require('../../models');
-
+const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
+const constants = require('../constants');
 /**
  * Encapsulates DV related methods
  */
@@ -9,6 +11,10 @@ class DVController {
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
+        this.transport = ctx.transport;
+        this.config = ctx.config;
+        this.web3 = ctx.web3;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -83,9 +89,10 @@ class DVController {
 
     /**
      * Handles data read request
-     * @param queryId
-     * @param dataSetId
-     * @param replyId
+     * @param data_set_id - Dataset to be read
+     * @param reply_id - Id of DH reply previously sent to user
+     * @param res - API result object
+     * @returns null
      */
     async handleDataReadRequest(data_set_id, reply_id, res) {
         this.logger.info(`Choose offer triggered with reply ID ${reply_id} and import ID ${data_set_id}`);
@@ -105,7 +112,16 @@ class DVController {
             const dataInfo = await Models.data_info.findOne({
                 where: { data_set_id },
             });
-            if (dataInfo) {
+
+            let isPrivateData = false;
+            for (const element of JSON.parse(offer.data_set_ids)) {
+                if (element.data_set_id === data_set_id && element.private_data) {
+                    isPrivateData = true;
+                    break;
+                }
+            }
+
+            if (dataInfo && !isPrivateData) {
                 const message = `I've already stored data for data set ID ${data_set_id}.`;
                 this.logger.trace(message);
                 res.status(200);
@@ -120,22 +136,24 @@ class DVController {
                 status: 'PENDING',
                 data: JSON.stringify(handler_data),
             });
-
-            this.logger.info(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
-            this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
+            const handlerId = inserted_object.dataValues.handler_id;
+            this.logger.info(`Read offer for query ${offer.query_id} with handler id ${handlerId} initiated.`);
+            this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${handlerId} initiated.`);
 
             res.status(200);
             res.send({
-                handler_id: inserted_object.dataValues.handler_id,
+                handler_id: handlerId,
             });
 
             this.commandExecutor.add({
                 name: 'dvDataReadRequestCommand',
                 delay: 0,
                 data: {
+                    readOnlyPrivateData: dataInfo && isPrivateData,
                     dataSetId: data_set_id,
                     replyId: reply_id,
-                    handlerId: inserted_object.dataValues.handler_id,
+                    handlerId,
+                    nodeId: offer.node_id,
                 },
                 transactional: false,
             });
@@ -144,6 +162,81 @@ class DVController {
             res.status(400);
             res.send({ message });
         }
+    }
+
+    _validatePrivateData(data) {
+        let validated = false;
+        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (data[private_data_array] && Array.isArray(data[private_data_array])) {
+                data[private_data_array].forEach((private_object) => {
+                    if (private_object.isPrivate && private_object.data) {
+                        const calculatedPrivateHash = ImportUtilities
+                            .calculatePrivateDataHash(private_object);
+                        validated = calculatedPrivateHash === private_object.private_data_hash;
+                    }
+                });
+            }
+        });
+        return validated;
+    }
+
+    async handlePrivateDataReadResponse(message) {
+        const {
+            handler_id, ot_objects,
+        } = message;
+        const documentsToBeUpdated = [];
+        ot_objects.forEach((otObject) => {
+            otObject.relatedObjects.forEach((relatedObject) => {
+                if (relatedObject.vertex.vertexType === 'Data') {
+                    if (this._validatePrivateData(relatedObject.vertex.data)) {
+                        documentsToBeUpdated.push(relatedObject.vertex);
+                    }
+                }
+            });
+        });
+        const promises = [];
+        documentsToBeUpdated.forEach((document) => {
+            promises.push(this.graphStorage.updateDocument('ot_vertices', document));
+        });
+        await Promise.all(promises);
+        await Models.handler_ids.update({
+            status: 'SUCCESSFULL',
+        }, { where: { handler_id } });
+    }
+
+    async sendNetworkPurchase(dataSetId, nodeId, otJsonObjectId, handlerId) {
+        const message = {
+            data_set_id: dataSetId,
+            handler_id: handlerId,
+            ot_json_object_id: otJsonObjectId,
+            wallet: this.config.node_wallet,
+        };
+        const dataPurchaseRequestObject = {
+            message,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(message),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendDataPurchaseRequest(
+            dataPurchaseRequestObject,
+            nodeId,
+        );
+    }
+
+    async handleNetworkPurchaseResponse(response) {
+        const { handler_id, status, message } = response;
+
+        await Models.handler_ids.update({
+            data: JSON.stringify({ message }),
+            status,
+        }, {
+            where: {
+                handler_id,
+            },
+        });
     }
 
     async handleDataLocationResponse(message) {

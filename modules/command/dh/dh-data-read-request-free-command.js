@@ -5,6 +5,8 @@ const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Graph = require('../../Graph');
 
+const constants = require('../../constants');
+
 /**
  * Free read request command.
  */
@@ -57,7 +59,34 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
+            const allowedPrivateDataElements = await Models.private_data_permissions.findAll({
+                where: {
+                    data_set_id: importId,
+                    node_id: nodeId,
+                },
+            });
+
+            const privateData = {};
+
+            allowedPrivateDataElements.forEach(element =>
+                privateData[element.ot_json_object_id] = {});
+
             const document = await this.importService.getImport(importId);
+
+            for (const ot_object of document['@graph']) {
+                if (ot_object['@id'] in privateData) {
+                    const privateDataObject = {};
+                    constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
+                        if (Array.isArray(ot_object.properties[privateDataArray])) {
+                            privateDataObject[privateDataArray] =
+                                ot_object.properties[privateDataArray];
+                        }
+                    });
+                    privateData[ot_object['@id']] = Utilities.copyObject(privateDataObject);
+                }
+            }
+
+            ImportUtilities.hideGraphPrivateData(document['@graph']);
 
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
@@ -69,6 +98,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
                 document,
+                privateData,
                 data_set_id: importId,
                 transaction_hash: transactionHash,
                 handler_id,

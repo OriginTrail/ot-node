@@ -566,6 +566,7 @@ class EventEmitter {
             dhService,
             dcService,
             dvController,
+            dcController,
             notifyError,
         } = this.ctx;
 
@@ -807,6 +808,92 @@ class EventEmitter {
                 await dvController.handleDataReadResponseFree(message);
             } catch (error) {
                 logger.warn(`Failed to process data read response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        this._on('kad-private-data-read-request', async (request) => {
+            logger.info('Request for private data read received');
+            const dataReadRequestObject = transport.extractMessage(request);
+            const { message, messageSignature } = dataReadRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+            try {
+                await dcController.handlePrivateDataReadRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process private data read request. ${error}.`);
+                // todo send error to dv
+            }
+        });
+
+        this._on('kad-private-data-read-response', async (request) => {
+            logger.info('Response for private data read received');
+
+            const dataReadRequestObject = transport.extractMessage(request);
+            const { message, messageSignature } = dataReadRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+            try {
+                await dvController.handlePrivateDataReadResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process private data read response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-data-purchase-request', async (request) => {
+            logger.info('Data purchase received');
+            const dvNodeId = transport.extractSenderID(request);
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-purchase-request. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                message.dv_node_id = dvNodeId;
+                await dcController.handleNetworkPurchaseRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process data purchase request. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-data-purchase-response', async (request) => {
+            logger.info('Encrypted data received');
+
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-purchase-response. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                await dvController.handleNetworkPurchaseResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process data purchase response. ${error}.`);
                 notifyError(error);
             }
         });

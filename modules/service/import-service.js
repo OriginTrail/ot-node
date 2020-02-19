@@ -5,6 +5,7 @@ const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
 
+const Constants = require('../constants');
 /**
  * Returns value of '@id' property.
  * @param jsonLdObject JSON-LD object.
@@ -221,13 +222,23 @@ class ImportService {
                 }
                 // Add data vertex.
                 if (otObject.properties != null) {
+                    const otObjectData = Utilities.copyObject(otObject.properties);
+                    Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+                        if (otObject.properties[private_data_array] &&
+                            Array.isArray(otObject.properties[private_data_array])) {
+                            otObject.properties[private_data_array].forEach((private_object) => {
+                                delete private_object.isPrivate;
+                                delete private_object.data;
+                            });
+                        }
+                    });
                     const dataVertex = {
                         _key: Utilities.keyFrom(
                             dataCreator,
                             Utilities.keyFrom(otObject.properties),
                         ),
                         vertexType: constants.vertexType.data,
-                        data: otObject.properties,
+                        data: otObjectData,
                         datasets: [datasetId],
                     };
                     if (encryptedMap && encryptedMap.objects &&
@@ -805,14 +816,14 @@ class ImportService {
     async getImportedOtObject(datasetId, objectIndex, offerId = null, color = null) {
         // get metadata id using otObjectId
         const metadata = await this.db.findMetadataByImportId(datasetId);
-        const otObjectId = metadata.objectIds[objectIndex];
-        const result = await this.db.findDocumentsByImportIdAndOtObjectId(datasetId, otObjectId);
+        const otObjectKey = metadata.objectIds[objectIndex];
+        const result = await this.db.findDocumentsByImportIdAndOtObjectKey(datasetId, otObjectKey);
 
         if (!result || !result.rootObject) {
-            throw Error(`Unable to find object for objectId: ${otObjectId} and importId: ${datasetId}`);
+            throw Error(`Unable to find object for object key: ${otObjectKey} and dataset_id: ${datasetId}`);
         }
         if (!result.relatedObjects || result.relatedObjects.length === 0) {
-            throw Error(`Unable to find related objects for objectId: ${otObjectId} and importId: ${datasetId}`);
+            throw Error(`Unable to find related objects for object key: ${otObjectKey} and dataset_id: ${datasetId}`);
         }
 
         for (const object of result.relatedObjects) {
@@ -827,6 +838,26 @@ class ImportService {
                 && object.edge.properties != null) {
                 object.edge.properties = object.edge.encrypted[offerId][color];
             }
+        }
+
+        const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);
+
+        return otObject;
+    }
+
+    /**
+     * Retrieves one ot-object from a dataset, given the ot-object id
+     * @param datasetId
+     * @param otObjectId
+     */
+    async getOtObjectById(datasetId, otObjectId) {
+        const result = await this.db.findDocumentsByImportIdAndOtObjectId(datasetId, otObjectId);
+
+        if (!result || !result.rootObject) {
+            throw Error(`Unable to find object for object_id: ${otObjectId} and dataset_id: ${datasetId}`);
+        }
+        if (!result.relatedObjects || result.relatedObjects.length === 0) {
+            throw Error(`Unable to find related objects for object_id: ${otObjectId} and dataset_id: ${datasetId}`);
         }
 
         const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);

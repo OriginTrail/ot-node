@@ -35,7 +35,13 @@ class DHReadDataLocationRequestCommand extends Command {
         }
 
         // Handle query here.
-        const graphImports = await this.graphStorage.findImportIds(msgQuery);
+        const graphImportDetails = await this.graphStorage.dataLocationQuery(msgQuery);
+        let graphImports = [];
+        graphImportDetails.forEach((item) => {
+            const { datasets } = item;
+            graphImports = graphImports.concat(datasets.filter(x => graphImports.indexOf(x) < 0));
+        });
+
         // Filter imports not stored in local DB.
         let imports = await Models.data_info.findAll({
             attributes: ['data_set_id'],
@@ -92,9 +98,30 @@ class DHReadDataLocationRequestCommand extends Command {
                 },
             },
         });
+
         let size = 0;
         const importObjects = replicatedImportIds.map((dataSetId) => {
             size = dataInfos.find(di => di.data_set_id === dataSetId).otjson_size_in_bytes;
+            const importDetails = graphImportDetails
+                .filter(x => x.datasets.indexOf(dataSetId) >= 0);
+            const privateData = [];
+
+            importDetails.forEach((item) => {
+                if (item.hasData && item.isPrivate) {
+                    privateData.push({
+                        is_private: item.isPrivate,
+                        ot_object_id: item.id,
+                    });
+                }
+            });
+            if (privateData.length > 0) {
+                return {
+                    data_set_id: dataSetId,
+                    size,
+                    calculated_price: new BN(size, 10).mul(new BN(dataPrice, 10)).toString(),
+                    private_data: privateData,
+                };
+            }
             return {
                 data_set_id: dataSetId,
                 size,

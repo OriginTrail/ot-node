@@ -45,6 +45,8 @@ class ReplicationService {
 
         const otJson = await this.importService.getImport(offer.data_set_id);
 
+        ImportUtilities.hideGraphPrivateData(otJson['@graph']);
+
         const hashes = {};
 
         const writeFilePromises = [];
@@ -61,8 +63,11 @@ class ReplicationService {
 
             const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
+            const publicOtJson = Utilities.copyObject(otJson);
+            ImportUtilities.hideGraphPrivateData(publicOtJson['@graph']);
+
             encryptedDataset =
-                ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
+                ImportUtilities.encryptDataset(publicOtJson, litigationKeyPair.privateKey);
 
             const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
 

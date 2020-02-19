@@ -1,6 +1,6 @@
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('private_data', {
+        await queryInterface.createTable('private_data_permissions', {
             id: {
                 allowNull: false,
                 primaryKey: true,
@@ -10,19 +10,7 @@ module.exports = {
                 allowNull: false,
                 type: Sequelize.STRING,
             },
-            element_id: {
-                allowNull: false,
-                type: Sequelize.STRING,
-            },
-        });
-
-        await queryInterface.createTable('data_permission', {
-            id: {
-                allowNull: false,
-                primaryKey: true,
-                type: Sequelize.STRING,
-            },
-            id_private_data: {
+            ot_json_object_id: {
                 allowNull: false,
                 type: Sequelize.STRING,
             },
@@ -33,7 +21,6 @@ module.exports = {
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('private_data');
-        await queryInterface.dropTable('data_permission');
+        await queryInterface.dropTable('private_data_permissions');
     },
 };

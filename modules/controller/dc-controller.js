@@ -1,5 +1,7 @@
 const utilities = require('../Utilities');
 const Models = require('../../models');
+const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 
 /**
  * DC related API controller
@@ -12,6 +14,10 @@ class DCController {
         this.config = ctx.config;
         this.dcService = ctx.dcService;
         this.remoteControl = ctx.remoteControl;
+        this.graphStorage = ctx.graphStorage;
+        this.transport = ctx.transport;
+        this.importService = ctx.importService;
+        this.web3 = ctx.web3;
     }
 
     /**
@@ -85,6 +91,121 @@ class DCController {
                 message: 'Invalid parameters!',
             });
         }
+    }
+
+    async handlePrivateDataReadRequest(message) {
+        const {
+            handler_id, nodeId, data_set_id, wallet,
+        } = message;
+        const replyId = message.id;
+
+        const networkReply = await Models.network_replies.find({ where: { id: replyId } });
+        if (!networkReply) {
+            throw Error(`Couldn't find reply with ID ${replyId}.`);
+        }
+
+        if (networkReply.receiver_wallet !== wallet &&
+            networkReply.receiver_identity) {
+            throw Error('Sorry not your read request');
+        }
+
+        const objectIds = [];
+        const datasetIds = [];
+        networkReply.data.imports.forEach((imports) => {
+            if (imports.private_data) {
+                datasetIds.push(imports.data_set_id);
+                imports.private_data.forEach((privateData) => {
+                    objectIds.push(privateData.ot_object_id);
+                });
+            }
+        });
+        if (objectIds.length <= 0 || datasetIds <= 0) {
+            throw Error('No private data to read');
+        }
+
+        const privateDataPermissions = await Models.private_data_permissions.findAll({
+            where: {
+                data_set_id,
+                ot_json_object_id: { [Models.Sequelize.Op.in]: objectIds },
+                node_id: nodeId,
+            },
+        });
+        if (!privateDataPermissions || privateDataPermissions.length === 0) {
+            throw Error(`You don't have permission to view objectIds: ${objectIds} from dataset: ${data_set_id}`);
+        }
+
+        const replayMessage = {
+            wallet: this.config.node_wallet,
+            handler_id,
+        };
+        const promises = [];
+        privateDataPermissions.forEach((privateDataPermisssion) => {
+            promises.push(this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+                data_set_id,
+                privateDataPermisssion.ot_json_object_id,
+            ));
+        });
+        const otObjects = await Promise.all(promises);
+        replayMessage.ot_objects = otObjects;
+
+        const privateDataReadResponseObject = {
+            message: replayMessage,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(replayMessage),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+        await this.transport.sendPrivateDataReadResponse(
+            privateDataReadResponseObject,
+            nodeId,
+        );
+    }
+
+    async handleNetworkPurchaseRequest(request) {
+        const {
+            data_set_id, handler_id, dv_node_id, ot_json_object_id,
+        } = request;
+
+        const permission = await Models.private_data_permissions.findOne({
+            where: {
+                node_id: dv_node_id,
+                data_set_id,
+                ot_json_object_id,
+            },
+        });
+        let message = '';
+        if (permission) {
+            message = 'Data already purchased!';
+        } else {
+            await Models.private_data_permissions.create({
+                node_id: dv_node_id,
+                data_set_id,
+                ot_json_object_id,
+            });
+            message = 'Data purchase successfully finalized!';
+        }
+
+        const response = {
+            handler_id,
+            status: 'SUCCESS',
+            wallet: this.config.node_wallet,
+            message,
+        };
+
+        const dataPurchaseResponseObject = {
+            message: response,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(response),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendDataPurchaseResponse(
+            dataPurchaseResponseObject,
+            dv_node_id,
+        );
     }
 }
 
