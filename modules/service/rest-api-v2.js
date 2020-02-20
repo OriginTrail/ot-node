@@ -130,6 +130,26 @@ class RestAPIServiceV2 {
             await this._getChallenges(req, res);
         });
 
+        server.get(`/api/${this.version_id}/private_data/info`, async (req, res) => {
+            await this._getPrivateDataInfo(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/private_data/get_price`, async (req, res) => {
+            await this._getPrivateDataPrice(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/private_data/set_price`, async (req, res) => {
+            await this._setPrivateDataPrice(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/private_data/get_price/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/private_data/trading/:status`, async (req, res) => {
+            await this._getTradingData(req, res);
+        });
+
 
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
@@ -996,6 +1016,46 @@ class RestAPIServiceV2 {
             ot_json_object_id,
             handlerId,
         );
+    }
+
+    async _getPrivateDataInfo(req, res) {
+        this.logger.api('GET: Get private data info.');
+    }
+
+    async _getPrivateDataPrice(req, res) {
+        this.logger.api('POST: Get private data price.');
+        if (req.body == null
+            || req.body.data_set_id == null
+            || req.body.seller_node_id == null
+            || req.body.ot_json_object_id == null) {
+            res.status(400);
+            res.send({ message: 'Params data_set_id, seller_node_id and ot_json_object_id are required.' });
+            return;
+        }
+
+    }
+
+    async _setPrivateDataPrice(req, res) {
+        this.logger.api('POST: Set private data price.');
+        if (req.body == null
+            || req.body.data_set_id == null
+            || req.body.ot_json_objects == null) {
+            res.status(400);
+            res.send({ message: 'Params data_set_id, ot_json_object_id, and price_in_trac are required.' });
+            return;
+        }
+    }
+
+    async _getTradingData(req, res) {
+        this.logger.api('GET: Get private data info.');
+        const { status } = req.params;
+        if (!status) {
+            res.status(400);
+            res.send({
+                message: 'Param status is required.',
+            });
+            return;
+        }
     }
 }
 
