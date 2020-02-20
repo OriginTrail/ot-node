@@ -2,6 +2,7 @@ const utilities = require('../Utilities');
 const Models = require('../../models');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
+const fs = require('fs');
 
 /**
  * DC related API controller
@@ -207,6 +208,52 @@ class DCController {
 
         await this.transport.sendDataPurchaseResponse(
             dataPurchaseResponseObject,
+            dv_node_id,
+        );
+    }
+
+    async handleNetworkPriceRequest(request) {
+        const {
+            data_set_id, handler_id, dv_node_id, ot_json_object_id,
+        } = request;
+
+        const erc725Identity = JSON.parse(fs.readFileSync(this.config.erc725_identity_filepath));
+        const condition = {
+            where: {
+                seller_erc_id: erc725Identity.identity,
+                data_set_id,
+                ot_json_object_id,
+            },
+        };
+        let response;
+        const data = await Models.data_sellers.findOne(condition);
+        if (data) {
+            response = {
+                handler_id,
+                status: 'SUCCESS',
+                wallet: this.config.node_wallet,
+                message: { price_in_trac: data.price },
+            };
+        } else {
+            response = {
+                handler_id,
+                status: 'FAILED',
+                wallet: this.config.node_wallet,
+            };
+        }
+
+
+        const dataPriceResponseObject = {
+            message: response,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(response),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendPrivateDataPriceResponse(
+            dataPriceResponseObject,
             dv_node_id,
         );
     }

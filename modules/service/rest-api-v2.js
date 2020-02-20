@@ -138,8 +138,8 @@ class RestAPIServiceV2 {
             await this._getPrivateDataPrice(req, res);
         });
 
-        server.post(`/api/${this.version_id}/private_data/set_price`, async (req, res) => {
-            await this._setPrivateDataPrice(req, res);
+        server.post(`/api/${this.version_id}/private_data/update_price`, async (req, res) => {
+            await this._updatePrivateDataPrice(req, res);
         });
 
         server.get(`/api/${this.version_id}/private_data/get_price/result/:handler_id`, async (req, res) => {
@@ -1030,20 +1030,68 @@ class RestAPIServiceV2 {
             || req.body.ot_json_object_id == null) {
             res.status(400);
             res.send({ message: 'Params data_set_id, seller_node_id and ot_json_object_id are required.' });
-            return;
         }
+
+        const {
+            data_set_id, seller_node_id, ot_json_object_id,
+        } = req.body;
+        const inserted_object = await Models.handler_ids.create({
+            data: JSON.stringify({
+                data_set_id, seller_node_id, ot_json_object_id,
+            }),
+            status: 'PENDING',
+        });
+        const handlerId = inserted_object.dataValues.handler_id;
+        res.status(200);
+        res.send({
+            handler_id: handlerId,
+        });
+
+        await this.dvController.sendPrivateDataPriceRequest(
+            data_set_id,
+            seller_node_id,
+            ot_json_object_id,
+            handlerId,
+        );
 
     }
 
-    async _setPrivateDataPrice(req, res) {
+    async _updatePrivateDataPrice(req, res) {
         this.logger.api('POST: Set private data price.');
         if (req.body == null
             || req.body.data_set_id == null
-            || req.body.ot_json_objects == null) {
+            || req.body.ot_object_ids == null) {
             res.status(400);
-            res.send({ message: 'Params data_set_id, ot_json_object_id, and price_in_trac are required.' });
+            res.send({ message: 'Params data_set_id and ot_object_ids are required.' });
             return;
         }
+
+        const erc725Identity = JSON.parse(fs.readFileSync(this.config.erc725_identity_filepath));
+
+        const promises = [];
+        req.body.ot_object_ids.forEach((ot_object) => {
+            promises.push(new Promise(async (accept, reject) => {
+                const condition = {
+                    where: {
+                        seller_erc_id: erc725Identity.identity,
+                        data_set_id: req.body.data_set_id,
+                        ot_json_object_id: ot_object.id,
+                    },
+                };
+                const data = await Models.data_sellers.findOne(condition);
+                if (data) {
+                    data.price = ot_object.price_in_trac;
+                    await Models.data_sellers.update(data, condition);
+                    accept();
+                } else {
+                    reject();
+                }
+            }));
+        });
+        await Promise.all(promises).then(() => {
+            res.status(200);
+            res.send({ status: 'COMPLETED' });
+        });
     }
 
     async _getTradingData(req, res) {
@@ -1054,7 +1102,6 @@ class RestAPIServiceV2 {
             res.send({
                 message: 'Param status is required.',
             });
-            return;
         }
     }
 }

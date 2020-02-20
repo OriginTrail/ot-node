@@ -226,6 +226,28 @@ class DVController {
         );
     }
 
+    async sendPrivateDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
+        const message = {
+            data_set_id: dataSetId,
+            handler_id: handlerId,
+            ot_json_object_id: otJsonObjectId,
+            wallet: this.config.node_wallet,
+        };
+        const dataPriceRequestObject = {
+            message,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(message),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendPrivateDataPriceRequest(
+            dataPriceRequestObject,
+            nodeId,
+        );
+    }
+
     async handleNetworkPurchaseResponse(response) {
         const { handler_id, status, message } = response;
 
@@ -238,6 +260,20 @@ class DVController {
             },
         });
     }
+
+    async handlePrivateDataPriceResponse(response) {
+        const { handler_id, status, message } = response;
+
+        await Models.handler_ids.update({
+            data: JSON.stringify({ message }),
+            status,
+        }, {
+            where: {
+                handler_id,
+            },
+        });
+    }
+
 
     async handleDataLocationResponse(message) {
         const queryId = message.id;
