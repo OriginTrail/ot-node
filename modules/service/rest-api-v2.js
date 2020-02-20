@@ -26,6 +26,7 @@ class RestAPIServiceV2 {
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
+        this.trading_types = ['PURCHASED', 'SOLD', 'ALL'];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'ot-json');
@@ -146,7 +147,7 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
 
-        server.get(`/api/${this.version_id}/private_data/trading/:status`, async (req, res) => {
+        server.get(`/api/${this.version_id}/private_data/trading_info/:type`, async (req, res) => {
             await this._getTradingData(req, res);
         });
 
@@ -1096,13 +1097,14 @@ class RestAPIServiceV2 {
 
     async _getTradingData(req, res) {
         this.logger.api('GET: Get private data info.');
-        const { status } = req.params;
-        if (!status) {
+        const { type } = req.params;
+        if (!type && this.trading_types.includes(type)) {
             res.status(400);
             res.send({
-                message: 'Param status is required.',
+                message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
             });
         }
+        // read db for data
     }
 }
 
