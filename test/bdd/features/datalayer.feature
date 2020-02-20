@@ -187,6 +187,10 @@ Feature: Data layer related features
   @first
   Scenario: Challenge request-response test
     Given I setup 4 nodes
+    And I override configuration for all nodes
+      | dc_holding_time_in_minutes | 5 |
+      | numberOfChallenges | 100 |
+      | challengeResponseTimeMills | 5000 |
     And I start the nodes
     And I use 1st node as DC
     And I use 3th node as DH
