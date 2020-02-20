@@ -822,7 +822,7 @@ class RestAPIServiceV2 {
 
         const object_to_export =
             {
-                dataset_id: requested_dataset,
+                dataset_id,
             };
 
         const inserted_object = await Models.handler_ids.create({
