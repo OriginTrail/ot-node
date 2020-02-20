@@ -123,7 +123,7 @@ class DCController {
             throw Error('No private data to read');
         }
 
-        const privateDataPermissions = await Models.private_data_trades.findAll({
+        const privateDataPermissions = await Models.data_trades.findAll({
             where: {
                 data_set_id,
                 ot_json_object_id: { [Models.Sequelize.Op.in]: objectIds },
