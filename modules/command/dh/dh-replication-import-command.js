@@ -42,6 +42,8 @@ class DhReplicationImportCommand extends Command {
             distributionEpk,
             transactionHash,
             encColor,
+            dataPrice,
+            replicatedPrivateData,
         } = command.data;
         const { otJson, privateData }
             = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
@@ -73,6 +75,7 @@ class DhReplicationImportCommand extends Command {
         if (decryptedGraphRootHash !== originalRootHash) {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from document root hash ${originalRootHash}`);
         }
+
 
         // TODO: Verify EPK checksum
         // TODO: Verify distribution keys and hashes
@@ -156,6 +159,16 @@ class DhReplicationImportCommand extends Command {
             });
         }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
+
+        replicatedPrivateData.forEach(async (otObjectId) => {
+            await Models.data_sellers.create({
+                data_set_id: dataSetId,
+                ot_json_object_id: otObjectId,
+                seller_node_id: dcNodeId,
+                seller_erc_id: dcWallet,
+                price: dataPrice,
+            });
+        });
 
         const toSign = [
             Utilities.denormalizeHex(offerId),

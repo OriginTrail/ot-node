@@ -498,6 +498,31 @@ class ImportUtilities {
         return `0x${sha3_256(sorted, null, 0)}`;
     }
 
+
+    /**
+     * Removes the data attribute from objects that are private
+     * @param graph
+     * @returns {Array}
+     */
+    static getGraphPrivateData(graph) {
+        const result = [];
+        graph.forEach((ot_object) => {
+            if (ot_object && ot_object.properties) {
+                constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+                    if (ot_object.properties[private_data_array] &&
+                        Array.isArray(ot_object.properties[private_data_array])) {
+                        ot_object.properties[private_data_array].forEach((private_object) => {
+                            if (private_object.isPrivate && !result.includes(ot_object['@id'])) {
+                                result.push(ot_object['@id']);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        return result;
+    }
+
     /**
      * Removes the data attribute from objects that are private
      * @param graph
