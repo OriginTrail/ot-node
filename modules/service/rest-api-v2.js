@@ -1054,7 +1054,6 @@ class RestAPIServiceV2 {
             ot_json_object_id,
             handlerId,
         );
-
     }
 
     async _updatePrivateDataPrice(req, res) {
