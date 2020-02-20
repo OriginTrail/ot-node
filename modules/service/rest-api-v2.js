@@ -1097,30 +1097,31 @@ class RestAPIServiceV2 {
     }
 
     async _getTradingData(req, res) {
-        this.logger.api('GET: Get private data info.');
+        this.logger.api('GET: Get trading data.');
         const requestedType = req.params.type;
-        if (!requestedType && this.trading_types.includes(requestedType)) {
+        if (!requestedType || !this.trading_types.includes(requestedType)) {
             res.status(400);
             res.send({
                 message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
             });
         }
+        const normalizedIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         const whereCondition = {};
         if (requestedType === this.trading_type_purchased) {
-            whereCondition.buyer_erc_id = this.config.erc725Identity;
+            whereCondition.buyer_erc_id = normalizedIdentity;
         } else if (requestedType === this.trading_type_sold) {
-            whereCondition.seller_erc_id = this.config.erc725Identity;
+            whereCondition.seller_erc_id = normalizedIdentity;
         }
 
         const tradingData = await Models.data_trades.findAll({
-            whereCondition,
+            where: whereCondition,
             order: [
                 ['timestamp', 'DESC'],
             ],
         });
         const returnArray = [];
         tradingData.forEach((element) => {
-            const type = this.config.erc725Identity === element.buyerErcId ? 'PURCHASED' : 'SOLD';
+            const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
             returnArray.push({
                 data_set_id: element.data_set_id,
                 ot_json_object_id: element.ot_json_object_id,
