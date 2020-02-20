@@ -14,6 +14,10 @@ module.exports = {
                 allowNull: false,
                 type: Sequelize.STRING,
             },
+            seller_node_id: {
+                allowNull: false,
+                type: Sequelize.STRING,
+            },
             seller_erc_id: {
                 allowNull: false,
                 type: Sequelize.STRING,
