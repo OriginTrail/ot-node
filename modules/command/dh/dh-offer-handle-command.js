@@ -107,6 +107,7 @@ class DHOfferHandleCommand extends Command {
             encColor: response.color,
             dataPrice: response.dataPrice,
             replicatedPrivateData: response.replicatedPrivateData,
+            dcIdentity: response.dcIdentity,
         };
     }
 

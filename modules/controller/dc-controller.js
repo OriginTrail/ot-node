@@ -217,10 +217,9 @@ class DCController {
             data_set_id, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
-        const erc725Identity = JSON.parse(fs.readFileSync(this.config.erc725_identity_filepath));
         const condition = {
             where: {
-                seller_erc_id: erc725Identity.identity,
+                seller_erc_id: this.config.erc725Identity.toLowerCase(),
                 data_set_id,
                 ot_json_object_id,
             },

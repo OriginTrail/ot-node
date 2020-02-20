@@ -44,6 +44,7 @@ class DhReplicationImportCommand extends Command {
             encColor,
             dataPrice,
             replicatedPrivateData,
+            dcIdentity,
         } = command.data;
         const { otJson, privateData }
             = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
@@ -165,7 +166,7 @@ class DhReplicationImportCommand extends Command {
                 data_set_id: dataSetId,
                 ot_json_object_id: otObjectId,
                 seller_node_id: dcNodeId,
-                seller_erc_id: dcWallet,
+                seller_erc_id: dcIdentity,
                 price: dataPrice,
             });
         });

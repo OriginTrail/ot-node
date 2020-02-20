@@ -1053,7 +1053,6 @@ class RestAPIServiceV2 {
             ot_json_object_id,
             handlerId,
         );
-
     }
 
     async _updatePrivateDataPrice(req, res) {
@@ -1066,22 +1065,21 @@ class RestAPIServiceV2 {
             return;
         }
 
-        const erc725Identity = JSON.parse(fs.readFileSync(this.config.erc725_identity_filepath));
-
         const promises = [];
         req.body.ot_object_ids.forEach((ot_object) => {
             promises.push(new Promise(async (accept, reject) => {
                 const condition = {
-                    where: {
-                        seller_erc_id: erc725Identity.identity,
-                        data_set_id: req.body.data_set_id,
-                        ot_json_object_id: ot_object.id,
-                    },
+                    seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                    data_set_id: req.body.data_set_id.toLowerCase(),
+                    ot_json_object_id: ot_object.id,
                 };
-                const data = await Models.data_sellers.findOne(condition);
+
+                const data = await Models.data_sellers.findOne({
+                    where: condition,
+                });
+
                 if (data) {
-                    data.price = ot_object.price_in_trac;
-                    await Models.data_sellers.update(data, condition);
+                    await Models.data_sellers.update({ price: ot_object.price_in_trac }, { where: { id: data.id } });
                     accept();
                 } else {
                     reject();

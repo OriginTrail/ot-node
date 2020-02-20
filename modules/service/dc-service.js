@@ -483,6 +483,7 @@ class DCService {
             color: colorNumber,
             dataPrice: this.config.default_data_price,
             replicatedPrivateData,
+            dcIdentity: this.config.erc725Identity,
         };
 
         // send replication to DH
