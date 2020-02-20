@@ -1213,11 +1213,22 @@ class RestAPIServiceV2 {
                 ['timestamp', 'DESC'],
             ],
         });
+
+        const allDatasets = tradingData.map(element => element.data_set_id);
+
+        const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
         const returnArray = [];
-        tradingData.forEach((element) => {
+        tradingData.forEach((element, index) => {
+            const { datasetHeader } = allMetadata[index];
             const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
             returnArray.push({
-                data_set_id: element.data_set_id,
+                data_set: {
+                    id: element.data_set_id,
+                    name: datasetHeader.datasetTitle,
+                    description: datasetHeader.datasetDescription,
+                    tags: datasetHeader.datasetTags,
+                },
                 ot_json_object_id: element.ot_json_object_id,
                 buyer_erc_id: element.buyer_erc_id,
                 seller_erc_id: element.seller_erc_id,
