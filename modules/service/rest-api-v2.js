@@ -1,4 +1,5 @@
 const path = require('path');
+const { QueryTypes } = require('sequelize');
 const fs = require('fs');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
@@ -1024,6 +1025,96 @@ class RestAPIServiceV2 {
 
     async _getPrivateDataInfo(req, res) {
         this.logger.api('GET: Get private data info.');
+
+        const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
+        const data = await Models.sequelize.query(
+            query,
+            {
+                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const result = [];
+
+        if (data.length > 0) {
+            const not_owned_objects = {};
+            const allDatasets = [];
+            /*
+               Creating a map of the following structure
+               not_owned_objects: {
+                    dataset_0x456: {
+                        seller_0x123: [ot_object_0x789, ...]
+                        ...,
+                    },
+                    ...
+               }
+             */
+            data.forEach((obj) => {
+                if (not_owned_objects[obj.data_set_id]) {
+                    if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
+                            .push(obj.ot_json_object_id);
+                    } else {
+                        not_owned_objects[obj.seller_node_id][obj.data_set_id]
+                            = [obj.ot_json_object_id];
+                    }
+                } else {
+                    allDatasets.push(obj.data_set_id);
+                    not_owned_objects[obj.data_set_id] = {};
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id] =
+                        [obj.ot_json_object_id];
+                }
+            });
+
+            const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
+            const dataInfo = await Models.data_info.findAll({
+                where: {
+                    data_set_id: {
+                        [Models.sequelize.Op.in]: allDatasets,
+                    },
+                },
+            });
+
+            for (let i = 0; i < allMetadata.length; i += 1) {
+                const { datasetHeader } = allMetadata[i];
+                not_owned_objects[allDatasets[i]].metadata = {};
+                not_owned_objects[allDatasets[i]].metadata.datasetTitle =
+                    datasetHeader.datasetTitle;
+                not_owned_objects[allDatasets[i]].metadata.datasetTags =
+                    datasetHeader.datasetTags;
+                not_owned_objects[allDatasets[i]].metadata.datasetDescription =
+                    datasetHeader.datasetDescription;
+            }
+
+            for (let i = 0; i < dataInfo.length; i += 1) {
+                not_owned_objects[dataInfo[i].data_set_id].metadata.timestamp =
+                    dataInfo[i].import_timestamp;
+            }
+
+
+            for (const dataset in not_owned_objects) {
+                for (const data_seller in not_owned_objects[dataset]) {
+                    if (data_seller !== 'metadata') {
+                        result.push({
+                            seller_node_id: data_seller,
+                            timestamp: not_owned_objects[dataset].metadata.timestamp,
+                            dataset: {
+                                id: dataset,
+                                name: not_owned_objects[dataset].metadata.datasetTitle,
+                                description: not_owned_objects[dataset].metadata.datasetDescription,
+                                tags: not_owned_objects[dataset].metadata.datasetTags,
+                            },
+                            ot_objects: not_owned_objects[dataset][data_seller],
+                        });
+                    }
+                }
+            }
+        }
+
+        res.status(200);
+        res.send(result);
     }
 
     async _getPrivateDataPrice(req, res) {
@@ -1083,7 +1174,10 @@ class RestAPIServiceV2 {
                 });
 
                 if (data) {
-                    await Models.data_sellers.update({ price: ot_object.price_in_trac }, { where: { id: data.id } });
+                    await Models.data_sellers.update(
+                        { price: ot_object.price_in_trac },
+                        { where: { id: data.id } },
+                    );
                     accept();
                 } else {
                     reject();
