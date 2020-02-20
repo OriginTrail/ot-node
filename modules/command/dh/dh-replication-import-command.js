@@ -42,8 +42,6 @@ class DhReplicationImportCommand extends Command {
             distributionEpk,
             transactionHash,
             encColor,
-            dataPrice,
-            replicatedPrivateData,
             dcIdentity,
         } = command.data;
         const { otJson, privateData }
@@ -161,13 +159,14 @@ class DhReplicationImportCommand extends Command {
         }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
+        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(decryptedDataset['@graph']);
         replicatedPrivateData.forEach(async (otObjectId) => {
             await Models.data_sellers.create({
                 data_set_id: dataSetId,
                 ot_json_object_id: otObjectId,
                 seller_node_id: dcNodeId,
                 seller_erc_id: dcIdentity,
-                price: dataPrice,
+                price: 0,
             });
         });
 

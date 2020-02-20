@@ -461,9 +461,6 @@ class DCService {
             privateData[ot_json_object_id] = privateDataObject;
         });
 
-        const otJson = await this.importService.getImport(offer.data_set_id);
-        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(otJson['@graph']);
-
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
@@ -481,8 +478,6 @@ class DCService {
             transaction_hash: offer.transaction_hash,
             distributionSignature,
             color: colorNumber,
-            dataPrice: this.config.default_data_price,
-            replicatedPrivateData,
             dcIdentity: this.config.erc725Identity,
         };
 
