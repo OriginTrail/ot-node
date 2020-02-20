@@ -565,6 +565,15 @@ class ImportService {
     }
 
     /**
+     * Retrieves dataset metadata of multiple datasets by their ids
+     * @param datasetIds - Array of dataset ids
+     * @return {Promise<*>}
+     */
+    async getMultipleDatasetMetadata(datasetIds) {
+        const metadata = await this.db.findMultipleMetadataByDatasetIds(datasetIds);
+        return metadata;
+    }
+    /**
      * @param objectIdsArray id values of objects for which the proofs need to be generated
      * @param datasetId The dataset id to which the objects belong to
      * @returns {Promise<[]>}

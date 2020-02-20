@@ -453,6 +453,29 @@ class GraphStorage {
     }
 
     /**
+     * Retrieves dataset metadata of multiple datasets by their ids
+     * @param datasetIds - Array of dataset ids
+     * @return {Promise<*>}
+     */
+    findMultipleMetadataByDatasetIds(datasetIds) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findMultipleMetadataByDatasetIds(datasetIds).then((result) => {
+                    if (!result) {
+                        resolve(null);
+                    } else {
+                        resolve(result[0]);
+                    }
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Retrieves all elements of a dataset ID
      * @param datasetId - Dataset ID
      * @returns {Promise}
