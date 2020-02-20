@@ -26,7 +26,10 @@ class RestAPIServiceV2 {
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
-        this.trading_types = ['PURCHASED', 'SOLD', 'ALL'];
+        this.trading_type_purchased = 'PURCHASED';
+        this.trading_type_sold = 'SOLD';
+        this.trading_type_all = 'ALL';
+        this.trading_types = [this.trading_type_purchased, this.trading_type_sold, this.trading_type_all];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'ot-json');
@@ -1096,14 +1099,43 @@ class RestAPIServiceV2 {
 
     async _getTradingData(req, res) {
         this.logger.api('GET: Get private data info.');
-        const { type } = req.params;
-        if (!type && this.trading_types.includes(type)) {
+        const requestedType = req.params.type;
+        if (!requestedType && this.trading_types.includes(requestedType)) {
             res.status(400);
             res.send({
                 message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
             });
         }
-        // read db for data
+        const whereCondition = {};
+        if (requestedType === this.trading_type_purchased) {
+            whereCondition.buyer_erc_id = this.config.erc725Identity;
+        } else if (requestedType === this.trading_type_sold) {
+            whereCondition.seller_erc_id = this.config.erc725Identity;
+        }
+
+        const tradingData = await Models.data_trades.findAll({
+            whereCondition,
+            order: [
+                ['timestamp', 'DESC'],
+            ],
+        });
+        const returnArray = [];
+        tradingData.forEach((element) => {
+            const type = this.config.erc725Identity === element.buyerErcId ? 'PURCHASED' : 'SOLD';
+            returnArray.push({
+                data_set_id: element.data_set_id,
+                ot_json_object_id: element.ot_json_object_id,
+                buyer_erc_id: element.buyer_erc_id,
+                seller_erc_id: element.seller_erc_id,
+                price_in_trac: element.price_in_trac,
+                purchase_id: element.purchase_id,
+                timestamp: element.timestamp,
+                type,
+            });
+        });
+
+        res.status(200);
+        res.send(returnArray);
     }
 }
 
