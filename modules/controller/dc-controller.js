@@ -123,11 +123,12 @@ class DCController {
             throw Error('No private data to read');
         }
 
-        const privateDataPermissions = await Models.private_data_permissions.findAll({
+        const privateDataPermissions = await Models.private_data_trades.findAll({
             where: {
                 data_set_id,
                 ot_json_object_id: { [Models.Sequelize.Op.in]: objectIds },
-                node_id: nodeId,
+                buyer_node_id: nodeId,
+                status: 'Completed',
             },
         });
         if (!privateDataPermissions || privateDataPermissions.length === 0) {
@@ -167,21 +168,23 @@ class DCController {
             data_set_id, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
-        const permission = await Models.private_data_permissions.findOne({
+        const permission = await Models.data_trades.findOne({
             where: {
-                node_id: dv_node_id,
+                buyer_node_id: dv_node_id,
                 data_set_id,
                 ot_json_object_id,
+                status: 'Completed',
             },
         });
         let message = '';
         if (permission) {
             message = 'Data already purchased!';
         } else {
-            await Models.private_data_permissions.create({
+            await Models.data_trades.create({
                 node_id: dv_node_id,
                 data_set_id,
                 ot_json_object_id,
+                status: 'Completed',
             });
             message = 'Data purchase successfully finalized!';
         }
