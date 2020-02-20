@@ -1,6 +1,6 @@
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('private_data_trades', {
+        await queryInterface.createTable('data_trades', {
             id: {
                 allowNull: false,
                 primaryKey: true,
@@ -38,9 +38,13 @@ module.exports = {
                 allowNull: false,
                 type: Sequelize.STRING,
             },
+            timestamp: {
+                allowNull: false,
+                type: Sequelize.INTEGER,
+            },
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('private_data_trades');
+        await queryInterface.dropTable('data_trades');
     },
 };
