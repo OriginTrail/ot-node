@@ -63,11 +63,7 @@ class ReplicationService {
 
             const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
-            const publicOtJson = Utilities.copyObject(otJson);
-            ImportUtilities.hideGraphPrivateData(publicOtJson['@graph']);
-
-            encryptedDataset =
-                ImportUtilities.encryptDataset(publicOtJson, litigationKeyPair.privateKey);
+            encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
             const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
 
