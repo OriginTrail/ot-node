@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         price: DataTypes.STRING,
         purchase_id: DataTypes.STRING,
         timestamp: DataTypes.INTEGER,
+        status: DataTypes.STRING,
     }, {});
     data_trades.associate = function (models) {
     // associations can be defined here

@@ -42,6 +42,10 @@ module.exports = {
                 allowNull: false,
                 type: Sequelize.INTEGER,
             },
+            status: {
+                allowNull: false,
+                type: Sequelize.STRING,
+            },
         });
     },
     down: async (queryInterface) => {
