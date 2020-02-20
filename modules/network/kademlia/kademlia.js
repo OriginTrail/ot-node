@@ -227,30 +227,24 @@ class Kademlia {
 
             this._registerRoutes();
 
-            this.node.listen(this.config.node_port, async () => {
+            this.node.listen(this.config.node_port, () => {
                 this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
                 this.kademliaUtilities.registerControlInterface(this.config, this.node);
 
-                const connected = false;
-                const retryPeriodSeconds = 5;
-                while (!connected) {
-                    try {
-                        // eslint-disable-next-line
-                        const connected = await this._joinNetwork();
-                        if (connected) {
-                            this.log.info('Joined to the network.');
-                            resolve();
-                            break;
-                        }
-                    } catch (e) {
-                        this.log.error(`Failed to join network ${e}`);
-                        this.notifyError(e);
+                async.retry({
+                    times: Infinity,
+                    interval: 60000,
+                }, done => this.joinNetwork(done), (err, entry) => {
+                    if (err) {
+                        this.log.error(`Failed to join network ${err}`);
+                        this.notifyError(err);
+                        process.exit(1);
                     }
 
-                    this.log.trace(`Not joined to the network. Retrying in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
-                    // eslint-disable-next-line
-                    await sleep.sleep(retryPeriodSeconds * 1000);
-                }
+                    this.log.info(`connected to network via ${entry}`);
+                    this.log.info(`discovered ${this.node.router.size} peers from seed`);
+                    resolve();
+                });
             });
         });
     }
@@ -276,43 +270,39 @@ class Kademlia {
      * Try to join network
      * Note: this method tries to find possible bootstrap nodes
      */
-    async _joinNetwork() {
-        return new Promise(async (accept, reject) => {
-            const bootstrapNodes = this.config.network.bootstraps;
-            utilities.shuffle(bootstrapNodes);
+    async joinNetwork(callback) {
+        let peers = this.config.network.bootstraps
+            .concat(await this.node.rolodex.getBootstrapCandidates());
+        peers = utilities.shuffle(peers);
 
-            if (this.config.is_bootstrap_node) {
-                this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
+        if (peers.length === 0) {
+            this.log.info('no bootstrap seeds provided and no known profiles');
+            this.log.info('running in seed mode (waiting for connections)');
+
+            return this.node.router.events.once('add', (identity) => {
+                this.config.network.bootstraps = [
+                    kadence.utils.getContactURL([
+                        identity,
+                        this.node.router.getContactByNodeId(identity),
+                    ]),
+                ];
+                this.joinNetwork(callback);
+            });
+        }
+
+        this.log.info(`joining network from ${peers.length} seeds`);
+        async.detectSeries(peers, (url, done) => {
+            const contact = kadence.utils.parseContactURL(url);
+            this.node.join(contact, (err) => {
+                done(null, (!err) && this.node.router.size > 1);
+            });
+        }, (err, result) => {
+            if (!result) {
+                this.log.error('failed to join network, will retry in 1 minute');
+                callback(new Error('Failed to join network'));
             } else {
-                this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
+                callback(null, result);
             }
-
-            this.log.info(`Sync with network from ${bootstrapNodes.length} unique peers`);
-            if (bootstrapNodes.length === 0) {
-                this.log.info('No bootstrap seeds provided and no known profiles');
-                this.log.info('Running in seed mode (waiting for connections)');
-                accept(true);
-                return;
-            }
-
-            let connected = false;
-            const promises = bootstrapNodes.map(address => new Promise((acc, rej) => {
-                const contact = kadence.utils.parseContactURL(address);
-                this.log.debug(`Joining ${address}`);
-                this.node.join(contact, (err) => {
-                    if (err) {
-                        this.log.warn(`Failed to join ${address}`);
-                        acc(false);
-                        return;
-                    }
-                    this.log.trace(`Finished joining to ${address}`);
-                    connected = this._isConnected();
-                    acc(true);
-                });
-            }));
-
-            await Promise.all(promises);
-            accept(connected);
         });
     }
 
