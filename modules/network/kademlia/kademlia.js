@@ -241,8 +241,10 @@ class Kademlia {
                         process.exit(1);
                     }
 
-                    this.log.info(`connected to network via ${entry}`);
-                    this.log.info(`discovered ${this.node.router.size} peers from seed`);
+                    if (entry) {
+                        this.log.info(`connected to network via ${entry}`);
+                        this.log.info(`discovered ${this.node.router.size} peers from seed`);
+                    }
                     resolve();
                 });
             });
@@ -271,13 +273,16 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes
      */
     async joinNetwork(callback) {
-        let peers = this.config.network.bootstraps
-            .concat(await this.node.rolodex.getBootstrapCandidates());
+        let peers = Array.from(new Set(
+            this.config.network.bootstraps.concat(
+                await this.node.rolodex.getBootstrapCandidates())));
         peers = utilities.shuffle(peers);
 
         if (peers.length === 0) {
             this.log.info('no bootstrap seeds provided and no known profiles');
             this.log.info('running in seed mode (waiting for connections)');
+
+            callback(null, null);
 
             return this.node.router.events.once('add', (identity) => {
                 this.config.network.bootstraps = [
@@ -294,7 +299,7 @@ class Kademlia {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             this.node.join(contact, (err) => {
-                done(null, (!err) && this.node.router.size > 1);
+                done(null, (!err) && this.node.router.size > 0);
             });
         }, (err, result) => {
             if (!result) {
