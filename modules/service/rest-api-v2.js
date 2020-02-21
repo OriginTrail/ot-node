@@ -1,6 +1,7 @@
 const path = require('path');
 const { QueryTypes } = require('sequelize');
 const fs = require('fs');
+const BN = require('bn.js');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 const ImportUtilities = require('../ImportUtilities');
@@ -145,8 +146,13 @@ class RestAPIServiceV2 {
             await this._getChallenges(req, res);
         });
 
-        server.get(`/api/${this.version_id}/private_data/info`, async (req, res) => {
-            await this._getPrivateDataInfo(req, res);
+        server.get(`/api/${this.version_id}/private_data/available`, async (req, res) => {
+            await this._getPrivateDataAvailable(req, res);
+        });
+
+
+        server.get(`/api/${this.version_id}/private_data/owned`, async (req, res) => {
+            await this._getPrivateDataOwned(req, res);
         });
 
         server.post(`/api/${this.version_id}/private_data/get_price`, async (req, res) => {
@@ -1037,8 +1043,8 @@ class RestAPIServiceV2 {
         );
     }
 
-    async _getPrivateDataInfo(req, res) {
-        this.logger.api('GET: Get private data info.');
+    async _getPrivateDataAvailable(req, res) {
+        this.logger.api('GET: Private Data Available for purchase.');
 
         const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
         const data = await Models.sequelize.query(
@@ -1124,6 +1130,102 @@ class RestAPIServiceV2 {
                         });
                     }
                 }
+            }
+        }
+
+        res.status(200);
+        res.send(result);
+    }
+
+    async _getPrivateDataOwned(req, res) {
+        this.logger.api('GET: Private Data Owned.');
+
+        const query = 'SELECT ds.data_set_id, ds.ot_json_object_id, ds.price, ( SELECT Count(*) FROM data_trades dt Where dt.seller_erc_id = ds.seller_erc_id and ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id ) as sales FROM  data_sellers ds where ds.seller_erc_id = :seller_erc ';
+        const data = await Models.sequelize.query(
+            query,
+            {
+                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const result = [];
+
+        if (data.length > 0) {
+            const owned_objects = {};
+            const allDatasets = [];
+            /*
+               Creating a map of the following structure
+               owned_objects: {
+                    dataset_0x456: {
+                        ot_objects: [ot_object_0x789, ...]
+                        ...,
+                    },
+                    ...
+               }
+             */
+            data.forEach((obj) => {
+                if (owned_objects[obj.data_set_id]) {
+                    owned_objects[obj.data_set_id].ot_objects.push({
+                        id: obj.ot_json_object_id,
+                        price: obj.price,
+                        sales: obj.sales,
+                    });
+                    owned_objects[obj.data_set_id].total_sales.iadd(new BN(obj.sales, 10));
+                    owned_objects[obj.data_set_id].total_price.iadd(new BN(obj.price, 10));
+                } else {
+                    allDatasets.push(obj.data_set_id);
+                    owned_objects[obj.data_set_id] = {};
+                    owned_objects[obj.data_set_id].ot_objects = [{
+                        id: obj.ot_json_object_id,
+                        price: obj.price,
+                        sales: obj.sales,
+                    }];
+                    owned_objects[obj.data_set_id].total_sales = new BN(obj.sales, 10);
+                    owned_objects[obj.data_set_id].total_price = new BN(obj.price, 10);
+                }
+            });
+
+            const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
+            const dataInfo = await Models.data_info.findAll({
+                where: {
+                    data_set_id: {
+                        [Models.sequelize.Op.in]: allDatasets,
+                    },
+                },
+            });
+
+            for (let i = 0; i < allMetadata.length; i += 1) {
+                const { datasetHeader } = allMetadata[i];
+                owned_objects[allDatasets[i]].metadata = {};
+                owned_objects[allDatasets[i]].metadata.datasetTitle =
+                    datasetHeader.datasetTitle;
+                owned_objects[allDatasets[i]].metadata.datasetTags =
+                    datasetHeader.datasetTags;
+                owned_objects[allDatasets[i]].metadata.datasetDescription =
+                    datasetHeader.datasetDescription;
+            }
+
+            for (let i = 0; i < dataInfo.length; i += 1) {
+                owned_objects[dataInfo[i].data_set_id].metadata.timestamp =
+                    dataInfo[i].import_timestamp;
+            }
+
+
+            for (const dataset in owned_objects) {
+                result.push({
+                    timestamp: owned_objects[dataset].metadata.timestamp,
+                    dataset: {
+                        id: dataset,
+                        name: owned_objects[dataset].metadata.datasetTitle,
+                        description: owned_objects[dataset].metadata.datasetDescription || 'No description given',
+                        tags: owned_objects[dataset].metadata.datasetTags,
+                    },
+                    ot_objects: owned_objects[dataset].ot_objects,
+                    total_sales: owned_objects[dataset].total_sales.toString(),
+                    total_price: owned_objects[dataset].total_price.toString(),
+                });
             }
         }
 
