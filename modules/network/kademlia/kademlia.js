@@ -273,9 +273,8 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes
      */
     async joinNetwork(callback) {
-        let peers = Array.from(new Set(
-            this.config.network.bootstraps.concat(
-                await this.node.rolodex.getBootstrapCandidates())));
+        let peers = Array.from(new Set(this.config.network.bootstraps
+            .concat(await this.node.rolodex.getBootstrapCandidates())));
         peers = utilities.shuffle(peers);
 
         if (peers.length === 0) {
