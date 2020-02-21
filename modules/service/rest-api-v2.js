@@ -30,7 +30,9 @@ class RestAPIServiceV2 {
         this.trading_type_purchased = 'PURCHASED';
         this.trading_type_sold = 'SOLD';
         this.trading_type_all = 'ALL';
-        this.trading_types = [this.trading_type_purchased, this.trading_type_sold, this.trading_type_all];
+        this.trading_types = [
+            this.trading_type_purchased, this.trading_type_sold, this.trading_type_all,
+        ];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'ot-json');
@@ -120,6 +122,14 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/network/read/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/network/private_data/read`, async (req, res) => {
+            await this._privateDataReadNetwork(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/network/private_data/read/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
         });
 
@@ -564,6 +574,10 @@ class RestAPIServiceV2 {
         const { reply_id, data_set_id } = req.body;
 
         await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
+    }
+
+    async _privateDataReadNetwork(req, res) {
+
     }
 
     async _checkForReplicationHandlerStatus(req, res) {
