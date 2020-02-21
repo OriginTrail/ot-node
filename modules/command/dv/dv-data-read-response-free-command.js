@@ -114,6 +114,20 @@ class DVDataReadResponseFreeCommand extends Command {
             }
         }
 
+        const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        const profile = await this.blockchain.getProfile(erc725Identity);
+
+        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(document['@graph']);
+        replicatedPrivateData.forEach(async (otObjectId) => {
+            await Models.data_sellers.create({
+                data_set_id: dataSetId,
+                ot_json_object_id: otObjectId,
+                seller_node_id: Utilities.normalizeHex(profile.nodeId).slice(0, 42),
+                seller_erc_id: Utilities.normalizeHex(erc725Identity),
+                price: 0,
+            });
+        });
+
         try {
             const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
