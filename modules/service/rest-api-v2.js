@@ -583,7 +583,17 @@ class RestAPIServiceV2 {
     }
 
     async _privateDataReadNetwork(req, res) {
+        this.logger.api('Private data network read request received.');
 
+        if (!req.body || !req.body.seller_node_id
+        || !req.body.data_set_id
+        || !req.body.ot_object_id) {
+            res.status(400);
+            res.send({ message: 'Params data_set_id, ot_object_id and seller_node_id are required.' });
+        }
+        const { data_set_id, ot_object_id, seller_node_id } = req.body;
+        await this.dvController
+            .handlePrivateDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
     }
 
     async _checkForReplicationHandlerStatus(req, res) {

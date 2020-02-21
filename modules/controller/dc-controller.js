@@ -96,44 +96,19 @@ class DCController {
 
     async handlePrivateDataReadRequest(message) {
         const {
-            handler_id, nodeId, data_set_id, wallet,
+            data_set_id, ot_object_id, handler_id, nodeId,
         } = message;
-        const replyId = message.id;
-
-        const networkReply = await Models.network_replies.find({ where: { id: replyId } });
-        if (!networkReply) {
-            throw Error(`Couldn't find reply with ID ${replyId}.`);
-        }
-
-        if (networkReply.receiver_wallet !== wallet &&
-            networkReply.receiver_identity) {
-            throw Error('Sorry not your read request');
-        }
-
-        const objectIds = [];
-        const datasetIds = [];
-        networkReply.data.imports.forEach((imports) => {
-            if (imports.private_data) {
-                datasetIds.push(imports.data_set_id);
-                imports.private_data.forEach((privateData) => {
-                    objectIds.push(privateData.ot_object_id);
-                });
-            }
-        });
-        if (objectIds.length <= 0 || datasetIds <= 0) {
-            throw Error('No private data to read');
-        }
 
         const privateDataPermissions = await Models.data_trades.findAll({
             where: {
                 data_set_id,
-                ot_json_object_id: { [Models.Sequelize.Op.in]: objectIds },
+                ot_json_object_id: ot_object_id,
                 buyer_node_id: nodeId,
                 status: 'Completed',
             },
         });
         if (!privateDataPermissions || privateDataPermissions.length === 0) {
-            throw Error(`You don't have permission to view objectIds: ${objectIds} from dataset: ${data_set_id}`);
+            throw Error(`You don't have permission to view objectId: ${ot_object_id} from dataset: ${data_set_id}`);
         }
 
         const replayMessage = {

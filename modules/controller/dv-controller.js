@@ -113,15 +113,7 @@ class DVController {
                 where: { data_set_id },
             });
 
-            let isPrivateData = false;
-            for (const element of JSON.parse(offer.data_set_ids)) {
-                if (element.data_set_id === data_set_id && element.private_data) {
-                    isPrivateData = true;
-                    break;
-                }
-            }
-
-            if (dataInfo && !isPrivateData) {
+            if (dataInfo) {
                 const message = `I've already stored data for data set ID ${data_set_id}.`;
                 this.logger.trace(message);
                 res.status(200);
@@ -149,7 +141,6 @@ class DVController {
                 name: 'dvDataReadRequestCommand',
                 delay: 0,
                 data: {
-                    readOnlyPrivateData: dataInfo && isPrivateData,
                     dataSetId: data_set_id,
                     replyId: reply_id,
                     handlerId,
@@ -162,6 +153,45 @@ class DVController {
             res.status(400);
             res.send({ message });
         }
+    }
+
+    /**
+     * Handles private data read request
+     * @param data_set_id - Dataset that holdsprivate data
+     * @param ot_object_id - Object id that holds private data
+     * @param seller_node_id - Node id that holds private data
+     * @param res - API result object
+     * @returns null
+     */
+    async handlePrivateDataReadRequest(data_set_id, ot_object_id, seller_node_id, response) {
+        const handler_data = {
+            data_set_id,
+            ot_object_id,
+            seller_node_id,
+        };
+        const inserted_object = await Models.handler_ids.create({
+            status: 'PENDING',
+            data: JSON.stringify(handler_data),
+        });
+        const handlerId = inserted_object.dataValues.handler_id;
+        this.logger.info(`Read private data with id ${ot_object_id} with handler id ${handlerId} initiated.`);
+
+        response.status(200);
+        response.send({
+            handler_id: handlerId,
+        });
+
+        this.commandExecutor.add({
+            name: 'dvPrivateDataReadRequestCommand',
+            delay: 0,
+            data: {
+                data_set_id,
+                ot_object_id,
+                seller_node_id,
+                handlerId,
+            },
+            transactional: false,
+        });
     }
 
     _validatePrivateData(data) {
