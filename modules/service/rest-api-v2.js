@@ -1220,7 +1220,9 @@ class RestAPIServiceV2 {
 
         const returnArray = [];
         tradingData.forEach((element, index) => {
-            const { datasetHeader } = allMetadata[index];
+            const { datasetHeader } =
+                allMetadata.find(metadata => metadata._key === element.data_set_id);
+            // const { datasetHeader } = allMetadata[index];
             const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
             returnArray.push({
                 data_set: {
