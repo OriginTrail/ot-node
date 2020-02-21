@@ -1214,15 +1214,15 @@ class RestAPIServiceV2 {
             ],
         });
 
-        const allDatasets = tradingData.map(element => element.data_set_id);
+        const allDatasets = tradingData.map(element => element.data_set_id)
+            .filter((value, index, self) => self.indexOf(value) === index);
 
         const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
 
         const returnArray = [];
-        tradingData.forEach((element, index) => {
+        tradingData.forEach((element) => {
             const { datasetHeader } =
                 allMetadata.find(metadata => metadata._key === element.data_set_id);
-            // const { datasetHeader } = allMetadata[index];
             const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
             returnArray.push({
                 data_set: {
