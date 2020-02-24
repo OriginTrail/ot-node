@@ -229,12 +229,30 @@ class DVController {
             promises.push(this.graphStorage.updateDocument('ot_vertices', document));
         });
         await Promise.all(promises);
+
+        const handlerData = await Models.handler_ids.findOne({
+            where: {
+                handler_id,
+            },
+        });
+
+        const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+
+        await Models.data_sellers.create({
+            data_set_id,
+            ot_json_object_id: ot_object_id,
+            seller_node_id: this.config.identity.toLowerCase(),
+            seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+            price: this.config.default_data_price,
+        });
+
+
         await Models.handler_ids.update({
             status: 'SUCCESSFULL',
         }, { where: { handler_id } });
     }
 
-    async sendNetworkPurchase(dataSetId, erc725Identity,  nodeId, otJsonObjectId, handlerId) {
+    async sendNetworkPurchase(dataSetId, erc725Identity, nodeId, otJsonObjectId, handlerId) {
         const message = {
             data_set_id: dataSetId,
             dv_erc725_identity: erc725Identity,
@@ -280,7 +298,29 @@ class DVController {
     }
 
     async handleNetworkPurchaseResponse(response) {
-        const { handler_id, status, message } = response;
+        const {
+            handler_id, status, message, seller_node_id, seller_erc_id, price,
+        } = response;
+
+        const handlerData = await Models.handler_ids.findOne({
+            where: {
+                handler_id,
+            },
+        });
+
+        const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+
+        await Models.data_trades.create({
+            data_set_id,
+            ot_json_object_id: ot_object_id,
+            buyer_node_id: this.config.identity,
+            buyer_erc_id: this.config.erc725Identity.toLowerCase(),
+            seller_node_id,
+            seller_erc_id,
+            price,
+            purchase_id: '',
+            status,
+        });
 
         await Models.handler_ids.update({
             data: JSON.stringify({ message }),

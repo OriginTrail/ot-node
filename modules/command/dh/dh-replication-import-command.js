@@ -127,6 +127,17 @@ class DhReplicationImportCommand extends Command {
             },
         });
 
+        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(decryptedDataset['@graph']);
+        replicatedPrivateData.forEach(async (otObjectId) => {
+            await Models.data_sellers.create({
+                data_set_id: dataSetId,
+                ot_json_object_id: otObjectId,
+                seller_node_id: dcNodeId.toLowerCase(),
+                seller_erc_id: Utilities.normalizeHex(dcIdentity),
+                price: 0,
+            });
+        });
+
         const importResult = await this.importService.importFile({
             document: decryptedDataset,
             encryptedMap,
@@ -159,16 +170,7 @@ class DhReplicationImportCommand extends Command {
         }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
-        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(decryptedDataset['@graph']);
-        replicatedPrivateData.forEach(async (otObjectId) => {
-            await Models.data_sellers.create({
-                data_set_id: dataSetId,
-                ot_json_object_id: otObjectId,
-                seller_node_id: dcNodeId.toLowerCase(),
-                seller_erc_id: Utilities.normalizeHex(dcIdentity),
-                price: 0,
-            });
-        });
+
 
         const toSign = [
             Utilities.denormalizeHex(offerId),

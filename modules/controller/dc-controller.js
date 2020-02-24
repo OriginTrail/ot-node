@@ -96,7 +96,7 @@ class DCController {
 
     async handlePrivateDataReadRequest(message) {
         const {
-            data_set_id, ot_object_id, handler_id, nodeId,
+            data_set_id, dv_erc725_identity, ot_object_id, handler_id, nodeId,
         } = message;
 
         const privateDataPermissions = await Models.data_trades.findAll({
@@ -124,6 +124,16 @@ class DCController {
         });
         const otObjects = await Promise.all(promises);
         replayMessage.ot_objects = otObjects;
+
+        privateDataPermissions.forEach(async (privateDataPermisssion) => {
+            await Models.data_sellers.create({
+                data_set_id,
+                ot_json_object_id: privateDataPermisssion.ot_json_object_id,
+                seller_node_id: nodeId.toLowerCase(),
+                seller_erc_id: Utilities.normalizeHex(dv_erc725_identity),
+                price: 0,
+            });
+        });
 
         const privateDataReadResponseObject = {
             message: replayMessage,
@@ -154,41 +164,45 @@ class DCController {
         });
         let message = '';
         let status = '';
+        const sellingData = await Models.data_sellers.findOne({
+            where: {
+                data_set_id,
+                ot_json_object_id,
+                seller_node_id: this.config.identity,
+            },
+        });
+
         if (permission) {
             message = 'Data already purchased!';
+            status = 'COMPLETED';
+        } else if (!sellingData) {
+            status = 'FAILED';
+            message = 'I dont have requested data';
         } else {
-            const sellingData = await Models.data_sellers.findOne({
-                where: {
-                    data_set_id,
-                    ot_json_object_id,
-                    seller_node_id: this.config.identity,
-                },
+            await Models.data_trades.create({
+                data_set_id,
+                ot_json_object_id,
+                buyer_node_id: dv_node_id,
+                buyer_erc_id: dv_erc725_identity,
+                seller_node_id: this.config.identity,
+                seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                price: sellingData.price,
+                purchase_id: '',
+                status: 'COMPLETED',
             });
-            if (!sellingData) {
-                status = 'FAILED';
-                message = 'I dont have requested data';
-            } else {
-                await Models.data_trades.create({
-                    data_set_id,
-                    ot_json_object_id,
-                    buyer_node_id: dv_node_id,
-                    buyer_erc_id: dv_erc725_identity,
-                    seller_node_id: this.config.identity,
-                    seller_erc_id: this.config.erc725Identity,
-                    price: sellingData.price,
-                    purchase_id: '',
-                    status: 'COMPLETED',
-                });
-                message = 'Data purchase successfully finalized!';
-                status = 'SUCCESS';
-            }
+            message = 'Data purchase successfully finalized!';
+            status = 'COMPLETED';
         }
+
 
         const response = {
             handler_id,
             status,
             wallet: this.config.node_wallet,
             message,
+            price: sellingData.price,
+            seller_node_id: this.config.identity,
+            seller_erc_id: this.config.erc725Identity,
         };
 
         const dataPurchaseResponseObject = {

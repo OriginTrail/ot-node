@@ -33,6 +33,7 @@ class DVPrivateDataReadRequestCommand extends Command {
             ot_object_id,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
+            dv_erc725_identity: this.config.erc725Identity,
             handler_id: handlerId,
         };
         const dataReadRequestObject = {
