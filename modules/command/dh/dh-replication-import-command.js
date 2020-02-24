@@ -170,8 +170,6 @@ class DhReplicationImportCommand extends Command {
         }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
-
-
         const toSign = [
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(this.config.erc725Identity)];
