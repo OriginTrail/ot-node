@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         seller_erc_id: DataTypes.STRING,
         price: DataTypes.STRING,
         purchase_id: DataTypes.STRING,
-        timestamp:  {
+        timestamp: {
             type: DataTypes.INTEGER,
             defaultValue: () => Date.now(),
         },
