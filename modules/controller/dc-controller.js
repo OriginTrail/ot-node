@@ -104,7 +104,7 @@ class DCController {
                 data_set_id,
                 ot_json_object_id: ot_object_id,
                 buyer_node_id: nodeId,
-                status: 'Completed',
+                status: 'COMPLETED',
             },
         });
         if (!privateDataPermissions || privateDataPermissions.length === 0) {
@@ -149,7 +149,7 @@ class DCController {
                 buyer_node_id: dv_node_id,
                 data_set_id,
                 ot_json_object_id,
-                status: 'Completed',
+                status: 'COMPLETED',
             },
         });
         let message = '';
@@ -177,7 +177,7 @@ class DCController {
                     seller_erc_id: this.config.erc725Identity,
                     price: sellingData.price,
                     purchase_id: '',
-                    status: 'SUCCESS',
+                    status: 'COMPLETED',
                 });
                 message = 'Data purchase successfully finalized!';
                 status = 'SUCCESS';

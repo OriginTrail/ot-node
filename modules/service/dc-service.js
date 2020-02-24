@@ -436,7 +436,7 @@ class DCService {
             where: {
                 data_set_id: offer.data_set_id,
                 buyer_node_id: identity,
-                status: 'Completed',
+                status: 'COMPLETED',
             },
         });
 
