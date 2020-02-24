@@ -15,7 +15,10 @@ module.exports = (sequelize, DataTypes) => {
         seller_erc_id: DataTypes.STRING,
         price: DataTypes.STRING,
         purchase_id: DataTypes.STRING,
-        timestamp: DataTypes.INTEGER,
+        timestamp:  {
+            type: DataTypes.INTEGER,
+            defaultValue: () => Date.now(),
+        },
         status: DataTypes.STRING,
     }, {});
     data_trades.associate = function (models) {

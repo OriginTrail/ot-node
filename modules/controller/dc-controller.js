@@ -141,7 +141,7 @@ class DCController {
 
     async handleNetworkPurchaseRequest(request) {
         const {
-            data_set_id,dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
+            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
         const permission = await Models.data_trades.findOne({
@@ -153,21 +153,40 @@ class DCController {
             },
         });
         let message = '';
+        let status = '';
         if (permission) {
             message = 'Data already purchased!';
         } else {
-            await Models.data_trades.create({
-                node_id: dv_node_id,
-                data_set_id,
-                ot_json_object_id,
-                status: 'Completed',
+            const sellingData = await Models.data_sellers.findOne({
+                where: {
+                    data_set_id,
+                    ot_json_object_id,
+                    seller_node_id: this.config.identity,
+                },
             });
-            message = 'Data purchase successfully finalized!';
+            if (!sellingData) {
+                status = 'FAILED';
+                message = 'I dont have requested data';
+            } else {
+                await Models.data_trades.create({
+                    data_set_id,
+                    ot_json_object_id,
+                    buyer_node_id: dv_node_id,
+                    buyer_erc_id: dv_erc725_identity,
+                    seller_node_id: this.config.identity,
+                    seller_erc_id: this.config.erc725Identity,
+                    price: sellingData.price,
+                    purchase_id: '',
+                    status: 'SUCCESS',
+                });
+                message = 'Data purchase successfully finalized!';
+                status = 'SUCCESS';
+            }
         }
 
         const response = {
             handler_id,
-            status: 'SUCCESS',
+            status,
             wallet: this.config.node_wallet,
             message,
         };
