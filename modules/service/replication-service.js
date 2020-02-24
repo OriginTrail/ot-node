@@ -50,7 +50,7 @@ class ReplicationService {
             await Models.data_sellers.create({
                 data_set_id: offer.data_set_id,
                 ot_json_object_id: otObjectId,
-                seller_node_id: Utilities.normalizeHex(this.config.identity),
+                seller_node_id: this.config.identity.toLowerCase(),
                 seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
                 price: this.config.default_data_price,
             });

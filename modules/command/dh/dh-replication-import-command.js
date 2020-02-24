@@ -164,7 +164,7 @@ class DhReplicationImportCommand extends Command {
             await Models.data_sellers.create({
                 data_set_id: dataSetId,
                 ot_json_object_id: otObjectId,
-                seller_node_id: Utilities.normalizeHex(dcNodeId),
+                seller_node_id: dcNodeId.toLowerCase(),
                 seller_erc_id: Utilities.normalizeHex(dcIdentity),
                 price: 0,
             });

@@ -234,9 +234,10 @@ class DVController {
         }, { where: { handler_id } });
     }
 
-    async sendNetworkPurchase(dataSetId, nodeId, otJsonObjectId, handlerId) {
+    async sendNetworkPurchase(dataSetId, erc725Identity,  nodeId, otJsonObjectId, handlerId) {
         const message = {
             data_set_id: dataSetId,
+            dv_erc725_identity: erc725Identity,
             handler_id: handlerId,
             ot_json_object_id: otJsonObjectId,
             wallet: this.config.node_wallet,

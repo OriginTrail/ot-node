@@ -141,7 +141,7 @@ class DCController {
 
     async handleNetworkPurchaseRequest(request) {
         const {
-            data_set_id, handler_id, dv_node_id, ot_json_object_id,
+            data_set_id,dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
         const permission = await Models.data_trades.findOne({

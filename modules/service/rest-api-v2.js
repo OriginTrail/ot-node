@@ -1047,6 +1047,7 @@ class RestAPIServiceV2 {
 
         await this.dvController.sendNetworkPurchase(
             data_set_id,
+            this.config.erc725Identity,
             node_id,
             ot_json_object_id,
             handlerId,
@@ -1248,32 +1249,34 @@ class RestAPIServiceV2 {
         if (req.body == null
             || req.body.data_set_id == null
             || req.body.seller_node_id == null
-            || req.body.ot_json_object_id == null) {
+            || req.body.ot_object_id == null) {
             res.status(400);
             res.send({ message: 'Params data_set_id, seller_node_id and ot_json_object_id are required.' });
         }
 
         const {
-            data_set_id, seller_node_id, ot_json_object_id,
+            data_set_id, seller_node_id, ot_object_id,
         } = req.body;
         const inserted_object = await Models.handler_ids.create({
             data: JSON.stringify({
-                data_set_id, seller_node_id, ot_json_object_id,
+                data_set_id, seller_node_id, ot_object_id,
             }),
             status: 'PENDING',
         });
+
         const handlerId = inserted_object.dataValues.handler_id;
-        res.status(200);
-        res.send({
-            handler_id: handlerId,
-        });
 
         await this.dvController.sendPrivateDataPriceRequest(
             data_set_id,
             seller_node_id,
-            ot_json_object_id,
+            ot_object_id,
             handlerId,
         );
+
+        res.status(200);
+        res.send({
+            handler_id: handlerId,
+        });
     }
 
     async _updatePrivateDataPrice(req, res) {
