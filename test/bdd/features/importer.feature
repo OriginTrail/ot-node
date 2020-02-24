@@ -75,14 +75,12 @@ Feature: Test basic importer features
 
   @third
   Scenario: Return all data related to a specific identifier
-    Given I setup 4 node
-    And I start the nodes
+    Given I setup 1 node
+    And I start the node
     And I use 1st node as DC
     And DC imports "importers/use_cases/OBE/ORDER100678.xml" as GS1-EPCIS
     And DC waits for import to finish
-    And DC initiates the replication for last imported dataset
-    And I wait for replications to finish
-    Then I call traversal from "id" "100678" with connection types "EPC"
+    Then I call traversal from "sgtin" "urn:epc:idpat:sgtin:100678" with connection types "EPC"
     Then the last traversal should contain 5 objects in total
     And I calculate and validate the proof of the last traversal
 
