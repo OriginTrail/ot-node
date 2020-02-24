@@ -112,10 +112,16 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(graph, config, web3) {
+    static prepareDataset(document, config, web3) {
+        const graph = document['@graph'];
+        const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPrivateDataHashes(graph);
         const id = this.calculateGraphPublicHash(graph);
-        const header = this.createDatasetHeader(config);
+
+        const header = this.createDatasetHeader(
+            config, null,
+            datasetHeader.datasetTags, datasetHeader.datasetTitle, datasetHeader.datasetDescription,
+        );
         const dataset = {
             '@id': id,
             '@type': 'Dataset',
@@ -689,12 +695,13 @@ class ImportUtilities {
      * Fill in dataset header
      * @private
      */
-    static createDatasetHeader(config, transpilationInfo = null, tags = []) {
+    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '') {
         const header = {
             OTJSONVersion: '1.0',
             datasetCreationTimestamp: new Date().toISOString(),
-            datasetTitle: '',
-            datasetTags: tags,
+            datasetTitle,
+            datasetDescription,
+            datasetTags,
             /*
             relatedDatasets may contain objects like this:
             {
