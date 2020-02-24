@@ -1,12 +1,19 @@
 pragma solidity ^0.4.0;
 
-contract MarketplaceStorage {
+import './Hub.sol';
 
+contract MarketplaceStorage {
     Hub public hub;
 
+    modifier onlyContracts(){
+        require(hub.isContract(msg.sender),
+            "Function can only be called by contracts!");
+        _;
+    }
+
     constructor(address hubAddress) public {
+        require(hubAddress != address(0));
         hub = Hub(hubAddress);
-        activeNodes = 1;
     }
 
     function setHubAddress(address newHubAddress)
@@ -15,27 +22,17 @@ contract MarketplaceStorage {
         hub = Hub(newHubAddress);
     }
 
-    modifier onlyContracts(){
-        require(hub.isContract(msg.sender),
-            "Function can only be called by contracts!");
-        _;
-    }
+    enum StageDefinition {created, initialized, keyRevealed, finished}
 
     struct PurchaseDefinition{
         address seller;
         address buyer;
-        uint keyCommit;
-        uint price;
-        uint key;
-        bytes32 root;
-
-//        uint256 stake;
-//        uint256 stakeReserved;
-//        uint256 reputation;
-//        bool withdrawalPending;
-//        uint256 withdrawalTimestamp;
-//        uint256 withdrawalAmount;
-//        bytes32 nodeId;
+        uint256 price;
+        bytes32 key;
+        uint256 timestamp;
+        bytes32 originalDataRootHash;
+        bytes32 encodedDataRootHash;
+        StageDefinition stage;
     }
     mapping(bytes32 => PurchaseDefinition) public purchase;
 
@@ -60,16 +57,6 @@ contract MarketplaceStorage {
         return purchase[purchaseId].buyer;
     }
 
-    function setKeyCommit (bytes32 purchaseId, uint keyCommit)
-    public onlyContracts {
-        purchase[purchaseId].keyCommit = keyCommit;
-    }
-
-    function getKeyCommit (bytes32 purchaseId)
-    public view returns(uint keyCommit){
-        return purchase[purchaseId].keyCommit;
-    }
-
     function setPrice (bytes32 purchaseId, uint price)
     public onlyContracts {
         purchase[purchaseId].price = price;
@@ -80,13 +67,53 @@ contract MarketplaceStorage {
         return purchase[purchaseId].price;
     }
 
-    function setKey (bytes32 purchaseId, uint key)
+    function setKey (bytes32 purchaseId, bytes32 key)
     public onlyContracts {
         purchase[purchaseId].key = key;
     }
 
     function getKey (bytes32 purchaseId)
-    public view returns(uint key){
+    public view returns(bytes32 key){
         return purchase[purchaseId].key;
+    }
+
+    function setTimestamp (bytes32 purchaseId, uint256 timestamp)
+    public onlyContracts {
+        purchase[purchaseId].timestamp = timestamp;
+    }
+
+    function getTimestamp (bytes32 purchaseId)
+    public view returns(uint256 timestamp){
+        return purchase[purchaseId].timestamp;
+    }
+
+    function setOriginalDataRootHash (bytes32 purchaseId, bytes32 originalDataRootHash)
+    public onlyContracts {
+        purchase[purchaseId].originalDataRootHash = originalDataRootHash;
+    }
+
+    function getOriginalDataRootHash (bytes32 purchaseId)
+    public view returns(bytes32 originalDataRootHash){
+        return purchase[purchaseId].originalDataRootHash;
+    }
+
+    function setEncodedDataRootHash (bytes32 purchaseId, bytes32 encodedDataRootHash)
+    public onlyContracts {
+        purchase[purchaseId].encodedDataRootHash = encodedDataRootHash;
+    }
+
+    function getEncodedDataRootHash (bytes32 purchaseId)
+    public view returns(bytes32 encodedDataRootHash){
+        return purchase[purchaseId].encodedDataRootHash;
+    }
+
+    function setStage (bytes32 purchaseId, uint stage)
+    public onlyContracts {
+        purchase[purchaseId].stage = StageDefinition(stage);
+    }
+
+    function getStage (bytes32 purchaseId)
+    public view returns(uint stage){
+        return uint(purchase[purchaseId].stage);
     }
 }
