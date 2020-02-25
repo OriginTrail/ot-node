@@ -120,7 +120,7 @@ class ImportUtilities {
 
         const header = this.createDatasetHeader(
             config, null,
-            datasetHeader.datasetTags, datasetHeader.datasetTitle, datasetHeader.datasetDescription,
+            datasetHeader.datasetTags, datasetHeader.datasetTitle, datasetHeader.datasetDescription, datasetHeader.OTJSONVersion
         );
         const dataset = {
             '@id': id,
@@ -695,9 +695,9 @@ class ImportUtilities {
      * Fill in dataset header
      * @private
      */
-    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '') {
+    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '', OTJSONVersion = '1.0') {
         const header = {
-            OTJSONVersion: '1.0',
+            OTJSONVersion,
             datasetCreationTimestamp: new Date().toISOString(),
             datasetTitle,
             datasetDescription,
