@@ -82,7 +82,7 @@ Feature: Test basic importer features
     And DC waits for import to finish
     And DC initiates the replication for last imported dataset
     And I wait for replications to finish
-    Then I call traversal from "id" "100678" with connection types "EPC"
+    Then I call traversal from "sgtin" "urn:epc:idpat:sgtin:100678" with connection types "EPC"
     Then the last traversal should contain 5 objects in total
     And I calculate and validate the proof of the last traversal
 
