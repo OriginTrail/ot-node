@@ -2,6 +2,7 @@ const utilities = require('../Utilities');
 const Models = require('../../models');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
+const fs = require('fs');
 
 /**
  * DC related API controller
@@ -95,43 +96,19 @@ class DCController {
 
     async handlePrivateDataReadRequest(message) {
         const {
-            handler_id, nodeId, data_set_id, wallet,
+            data_set_id, dv_erc725_identity, ot_object_id, handler_id, nodeId,
         } = message;
-        const replyId = message.id;
 
-        const networkReply = await Models.network_replies.find({ where: { id: replyId } });
-        if (!networkReply) {
-            throw Error(`Couldn't find reply with ID ${replyId}.`);
-        }
-
-        if (networkReply.receiver_wallet !== wallet &&
-            networkReply.receiver_identity) {
-            throw Error('Sorry not your read request');
-        }
-
-        const objectIds = [];
-        const datasetIds = [];
-        networkReply.data.imports.forEach((imports) => {
-            if (imports.private_data) {
-                datasetIds.push(imports.data_set_id);
-                imports.private_data.forEach((privateData) => {
-                    objectIds.push(privateData.ot_object_id);
-                });
-            }
-        });
-        if (objectIds.length <= 0 || datasetIds <= 0) {
-            throw Error('No private data to read');
-        }
-
-        const privateDataPermissions = await Models.private_data_permissions.findAll({
+        const privateDataPermissions = await Models.data_trades.findAll({
             where: {
                 data_set_id,
-                ot_json_object_id: { [Models.Sequelize.Op.in]: objectIds },
-                node_id: nodeId,
+                ot_json_object_id: ot_object_id,
+                buyer_node_id: nodeId,
+                status: 'COMPLETED',
             },
         });
         if (!privateDataPermissions || privateDataPermissions.length === 0) {
-            throw Error(`You don't have permission to view objectIds: ${objectIds} from dataset: ${data_set_id}`);
+            throw Error(`You don't have permission to view objectId: ${ot_object_id} from dataset: ${data_set_id}`);
         }
 
         const replayMessage = {
@@ -147,6 +124,16 @@ class DCController {
         });
         const otObjects = await Promise.all(promises);
         replayMessage.ot_objects = otObjects;
+
+        privateDataPermissions.forEach(async (privateDataPermisssion) => {
+            await Models.data_sellers.create({
+                data_set_id,
+                ot_json_object_id: privateDataPermisssion.ot_json_object_id,
+                seller_node_id: nodeId.toLowerCase(),
+                seller_erc_id: Utilities.normalizeHex(dv_erc725_identity),
+                price: 0,
+            });
+        });
 
         const privateDataReadResponseObject = {
             message: replayMessage,
@@ -164,33 +151,58 @@ class DCController {
 
     async handleNetworkPurchaseRequest(request) {
         const {
-            data_set_id, handler_id, dv_node_id, ot_json_object_id,
+            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
-        const permission = await Models.private_data_permissions.findOne({
+        const permission = await Models.data_trades.findOne({
             where: {
-                node_id: dv_node_id,
+                buyer_node_id: dv_node_id,
                 data_set_id,
                 ot_json_object_id,
+                status: 'COMPLETED',
             },
         });
         let message = '';
-        if (permission) {
-            message = 'Data already purchased!';
-        } else {
-            await Models.private_data_permissions.create({
-                node_id: dv_node_id,
+        let status = '';
+        const sellingData = await Models.data_sellers.findOne({
+            where: {
                 data_set_id,
                 ot_json_object_id,
+                seller_node_id: this.config.identity,
+            },
+        });
+
+        if (permission) {
+            message = 'Data already purchased!';
+            status = 'COMPLETED';
+        } else if (!sellingData) {
+            status = 'FAILED';
+            message = 'I dont have requested data';
+        } else {
+            await Models.data_trades.create({
+                data_set_id,
+                ot_json_object_id,
+                buyer_node_id: dv_node_id,
+                buyer_erc_id: dv_erc725_identity,
+                seller_node_id: this.config.identity,
+                seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                price: sellingData.price,
+                purchase_id: '',
+                status: 'COMPLETED',
             });
             message = 'Data purchase successfully finalized!';
+            status = 'COMPLETED';
         }
+
 
         const response = {
             handler_id,
-            status: 'SUCCESS',
+            status,
             wallet: this.config.node_wallet,
             message,
+            price: sellingData.price,
+            seller_node_id: this.config.identity,
+            seller_erc_id: this.config.erc725Identity,
         };
 
         const dataPurchaseResponseObject = {
@@ -204,6 +216,51 @@ class DCController {
 
         await this.transport.sendDataPurchaseResponse(
             dataPurchaseResponseObject,
+            dv_node_id,
+        );
+    }
+
+    async handleNetworkPriceRequest(request) {
+        const {
+            data_set_id, handler_id, dv_node_id, ot_json_object_id,
+        } = request;
+
+        const condition = {
+            where: {
+                seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                data_set_id,
+                ot_json_object_id,
+            },
+        };
+        let response;
+        const data = await Models.data_sellers.findOne(condition);
+        if (data) {
+            response = {
+                handler_id,
+                status: 'SUCCESS',
+                wallet: this.config.node_wallet,
+                message: { price_in_trac: data.price },
+            };
+        } else {
+            response = {
+                handler_id,
+                status: 'FAILED',
+                wallet: this.config.node_wallet,
+            };
+        }
+
+
+        const dataPriceResponseObject = {
+            message: response,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(response),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendPrivateDataPriceResponse(
+            dataPriceResponseObject,
             dv_node_id,
         );
     }

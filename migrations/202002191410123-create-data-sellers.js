@@ -1,6 +1,6 @@
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('private_data_permissions', {
+        await queryInterface.createTable('data_sellers', {
             id: {
                 allowNull: false,
                 primaryKey: true,
@@ -14,13 +14,21 @@ module.exports = {
                 allowNull: false,
                 type: Sequelize.STRING,
             },
-            node_id: {
+            seller_node_id: {
+                allowNull: false,
+                type: Sequelize.STRING,
+            },
+            seller_erc_id: {
+                allowNull: false,
+                type: Sequelize.STRING,
+            },
+            price: {
                 allowNull: false,
                 type: Sequelize.STRING,
             },
         });
     },
     down: async (queryInterface) => {
-        await queryInterface.dropTable('private_data_permissions');
+        await queryInterface.dropTable('data_sellers');
     },
 };

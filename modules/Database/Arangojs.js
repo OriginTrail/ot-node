@@ -892,6 +892,16 @@ class ArangoJS {
     }
 
     /**
+     * Retrieves dataset metadata of multiple datasets by their ids
+     * @param datasetIds - Array of dataset ids
+     * @return {Promise<*>}
+     */
+    async findMultipleMetadataByDatasetIds(datasetIds) {
+        const queryString = 'RETURN DOCUMENT(\'ot_datasets\', @datasetIds)';
+        return this.runQuery(queryString, { datasetIds });
+    }
+
+    /**
      * Retrieves all elements of a dataset ID
      * @return {Promise<*>}
      * @param datasetId

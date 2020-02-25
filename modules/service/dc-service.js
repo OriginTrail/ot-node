@@ -5,6 +5,7 @@ const Encryption = require('../Encryption');
 const models = require('../../models');
 
 const constants = require('../constants');
+const ImportUtilities = require('../ImportUtilities');
 
 class DCService {
     constructor(ctx) {
@@ -431,10 +432,11 @@ class DCService {
             Utilities.normalizeHex(this.config.node_private_key),
         );
 
-        const allowedPrivateDataElements = await models.private_data_permissions.findAll({
+        const allowedPrivateDataElements = await models.data_trades.findAll({
             where: {
                 data_set_id: offer.data_set_id,
-                node_id: identity,
+                buyer_node_id: identity,
+                status: 'COMPLETED',
             },
         });
 
@@ -476,6 +478,7 @@ class DCService {
             transaction_hash: offer.transaction_hash,
             distributionSignature,
             color: colorNumber,
+            dcIdentity: this.config.erc725Identity,
         };
 
         // send replication to DH

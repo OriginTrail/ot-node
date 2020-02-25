@@ -45,6 +45,17 @@ class ReplicationService {
 
         const otJson = await this.importService.getImport(offer.data_set_id);
 
+        const privateData = ImportUtilities.getGraphPrivateData(otJson['@graph']);
+        privateData.forEach(async (otObjectId) => {
+            await Models.data_sellers.create({
+                data_set_id: offer.data_set_id,
+                ot_json_object_id: otObjectId,
+                seller_node_id: this.config.identity.toLowerCase(),
+                seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                price: this.config.default_data_price,
+            });
+        });
+
         ImportUtilities.hideGraphPrivateData(otJson['@graph']);
 
         const hashes = {};
@@ -63,11 +74,7 @@ class ReplicationService {
 
             const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
-            const publicOtJson = Utilities.copyObject(otJson);
-            ImportUtilities.hideGraphPrivateData(publicOtJson['@graph']);
-
-            encryptedDataset =
-                ImportUtilities.encryptDataset(publicOtJson, litigationKeyPair.privateKey);
+            encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
             const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
 

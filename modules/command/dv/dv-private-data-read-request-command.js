@@ -5,7 +5,7 @@ const Utilities = require('../../Utilities');
 /**
  * Handles data read request.
  */
-class DVDataReadRequestCommand extends Command {
+class DVPrivateDataReadRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -22,14 +22,18 @@ class DVDataReadRequestCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            dataSetId, replyId, handlerId, nodeId,
+            data_set_id,
+            ot_object_id,
+            seller_node_id,
+            handlerId,
         } = command.data;
 
         const message = {
-            id: replyId,
-            data_set_id: dataSetId,
+            data_set_id,
+            ot_object_id,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
+            dv_erc725_identity: this.config.erc725Identity,
             handler_id: handlerId,
         };
         const dataReadRequestObject = {
@@ -40,12 +44,12 @@ class DVDataReadRequestCommand extends Command {
                 this.config.node_private_key,
             ),
         };
-        await this.transport.dataReadRequest(
+
+        await this.transport.sendPrivateDataReadRequest(
             dataReadRequestObject,
-            nodeId,
+            seller_node_id,
         );
 
-        this.logger.info(`Data request sent for reply ID ${message.id}.`);
         return Command.empty();
     }
 
@@ -54,19 +58,19 @@ class DVDataReadRequestCommand extends Command {
      * @param command
      * @param err
      */
-    async recover(command, err) {
-        const { replyId, handlerId } = command.data;
-        this.logger.warn(`Data request failed for reply ID ${replyId}. ${err}.`);
+    async recover(command, error) {
+        const { handler_id } = command.data;
+        this.logger.warn(`Private Data request failed for handler ID ${handler_id}. ${error}.`);
         await Models.handler_ids.update(
             {
                 status: 'FAILED',
                 data: JSON.stringify({
-                    error: err.message,
+                    error: error.message,
                 }),
             },
             {
                 where: {
-                    handler_id: handlerId,
+                    handler_id,
                 },
             },
         );
@@ -79,7 +83,7 @@ class DVDataReadRequestCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dvDataReadRequestCommand',
+            name: 'dvPrivateDataReadRequestCommand',
             delay: 0,
             deadline_at: Date.now() + (5 * 60 * 1000),
             transactional: false,
@@ -89,4 +93,4 @@ class DVDataReadRequestCommand extends Command {
     }
 }
 
-module.exports = DVDataReadRequestCommand;
+module.exports = DVPrivateDataReadRequestCommand;

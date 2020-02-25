@@ -105,6 +105,7 @@ class DHOfferHandleCommand extends Command {
             distributionEpk: response.distribution_epk,
             transactionHash: response.transaction_hash,
             encColor: response.color,
+            dcIdentity: response.dcIdentity,
         };
     }
 

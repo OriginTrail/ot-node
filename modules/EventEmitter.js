@@ -898,6 +898,58 @@ class EventEmitter {
             }
         });
 
+
+        // async
+        this._on('kad-data-price-request', async (request) => {
+            logger.info('Data price request received');
+            const dvNodeId = transport.extractSenderID(request);
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-price-request. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                message.dv_node_id = dvNodeId;
+                await dcController.handleNetworkPriceRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process data price request. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-data-price-response', async (request) => {
+            logger.info('Encrypted data received');
+
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-price-response. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                await dvController.handlePrivateDataPriceResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process data price response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
         // async
         this._on('kad-send-encrypted-key', async (request, response) => {
             await transport.sendResponse(response, []);
