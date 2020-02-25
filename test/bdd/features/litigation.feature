@@ -92,7 +92,7 @@ Feature: Test various litigation scenarios
     And I setup 4 nodes
     When I override configuration for all nodes
       | dc_holding_time_in_minutes | 5 |
-      | numberOfChallenges | 1 |
+      | numberOfChallenges | 100 |
       | challengeResponseTimeMills | 5000 |
     And I start the nodes
     And I use 1st node as DC
@@ -113,7 +113,7 @@ Feature: Test various litigation scenarios
     And I setup 5 nodes
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 10 |
-      | numberOfChallenges | 10 |
+      | numberOfChallenges | 100 |
       | challengeResponseTimeMills | 5000 |
       | dh_min_reputation | 0 |
     And I start the nodes
