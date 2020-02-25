@@ -1085,22 +1085,31 @@ class RestAPIServiceV2 {
                 if (not_owned_objects[obj.data_set_id]) {
                     if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
                         not_owned_objects[obj.data_set_id][obj.seller_node_id]
-                            .push(obj.ot_json_object_id);
+                            .push({
+                                seller_erc_id: obj.seller_erc_id,
+                                ot_json_object_id: [obj.ot_json_object_id],
+                            });
                     } else {
                         not_owned_objects[obj.seller_node_id][obj.data_set_id]
-                            = [obj.ot_json_object_id];
+                            = {
+                                seller_erc_id: obj.seller_erc_id,
+                                ot_json_object_id: [obj.ot_json_object_id],
+                            };
                     }
                 } else {
                     allDatasets.push(obj.data_set_id);
                     not_owned_objects[obj.data_set_id] = {};
                     not_owned_objects[obj.data_set_id][obj.seller_node_id] =
-                        [obj.ot_json_object_id];
+                        {
+                            seller_erc_id: obj.seller_erc_id,
+                            ot_json_object_id: [obj.ot_json_object_id],
+                        };
                 }
             });
 
             const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
 
-            const dataInfo = await Models.data_info.findAll({
+            const dataInfos = await Models.data_info.findAll({
                 where: {
                     data_set_id: {
                         [Models.sequelize.Op.in]: allDatasets,
@@ -1108,22 +1117,16 @@ class RestAPIServiceV2 {
                 },
             });
 
-            for (let i = 0; i < allMetadata.length; i += 1) {
-                const { datasetHeader } = allMetadata[i];
-                not_owned_objects[allDatasets[i]].metadata = {};
-                not_owned_objects[allDatasets[i]].metadata.datasetTitle =
-                    datasetHeader.datasetTitle;
-                not_owned_objects[allDatasets[i]].metadata.datasetTags =
-                    datasetHeader.datasetTags;
-                not_owned_objects[allDatasets[i]].metadata.datasetDescription =
-                    datasetHeader.datasetDescription;
-            }
-
-            for (let i = 0; i < dataInfo.length; i += 1) {
-                not_owned_objects[dataInfo[i].data_set_id].metadata.timestamp =
-                    dataInfo[i].import_timestamp;
-            }
-
+            allDatasets.forEach((datasetId) => {
+                const { datasetHeader } = allMetadata.find(metadata => metadata._key === datasetId);
+                const dataInfo = dataInfos.find(info => info.data_set_id === datasetId);
+                not_owned_objects[datasetId].metadata = {
+                    datasetTitle: datasetHeader.datasetTitle,
+                    datasetTags: datasetHeader.datasetTags,
+                    datasetDescription: datasetHeader.datasetDescription,
+                    timestamp: dataInfo.import_timestamp,
+                };
+            });
 
             for (const dataset in not_owned_objects) {
                 for (const data_seller in not_owned_objects[dataset]) {
@@ -1137,7 +1140,8 @@ class RestAPIServiceV2 {
                                 description: not_owned_objects[dataset].metadata.datasetDescription,
                                 tags: not_owned_objects[dataset].metadata.datasetTags,
                             },
-                            ot_objects: not_owned_objects[dataset][data_seller],
+                            ot_objects: not_owned_objects[dataset][data_seller].ot_json_object_id,
+                            seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,
                         });
                     }
                 }
@@ -1199,7 +1203,7 @@ class RestAPIServiceV2 {
 
             const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
 
-            const dataInfo = await Models.data_info.findAll({
+            const dataInfos = await Models.data_info.findAll({
                 where: {
                     data_set_id: {
                         [Models.sequelize.Op.in]: allDatasets,
@@ -1207,22 +1211,16 @@ class RestAPIServiceV2 {
                 },
             });
 
-            for (let i = 0; i < allMetadata.length; i += 1) {
-                const { datasetHeader } = allMetadata[i];
-                owned_objects[allDatasets[i]].metadata = {};
-                owned_objects[allDatasets[i]].metadata.datasetTitle =
-                    datasetHeader.datasetTitle;
-                owned_objects[allDatasets[i]].metadata.datasetTags =
-                    datasetHeader.datasetTags;
-                owned_objects[allDatasets[i]].metadata.datasetDescription =
-                    datasetHeader.datasetDescription;
-            }
-
-            for (let i = 0; i < dataInfo.length; i += 1) {
-                owned_objects[dataInfo[i].data_set_id].metadata.timestamp =
-                    dataInfo[i].import_timestamp;
-            }
-
+            allDatasets.forEach((datasetId) => {
+                const { datasetHeader } = allMetadata.find(metadata => metadata._key === datasetId);
+                const dataInfo = dataInfos.find(info => info.data_set_id === datasetId);
+                owned_objects[datasetId].metadata = {
+                    datasetTitle: datasetHeader.datasetTitle,
+                    datasetTags: datasetHeader.datasetTags,
+                    datasetDescription: datasetHeader.datasetDescription,
+                    timestamp: dataInfo.import_timestamp,
+                };
+            });
 
             for (const dataset in owned_objects) {
                 result.push({
@@ -1367,6 +1365,7 @@ class RestAPIServiceV2 {
                 purchase_id: element.purchase_id,
                 timestamp: element.timestamp,
                 type,
+                status: element.status,
             });
         });
 
