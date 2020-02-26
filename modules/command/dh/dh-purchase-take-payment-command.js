@@ -27,7 +27,7 @@ class DhPurchaseTakePaymentCommand extends Command {
     default(map) {
         const command = {
             name: 'dhPurchaseTakePaymentCommand',
-            delay: 0,
+            delay: 5 * 60 * 1000, // 5 min
             transactional: false,
         };
         Object.assign(command, map);
