@@ -7,6 +7,7 @@ const Models = require('../../../models');
 class DvPurchaseKeyDepositedCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.remoteControl = ctx.remoteControl;
         this.logger = ctx.logger;
     }
 
@@ -16,11 +17,13 @@ class DvPurchaseKeyDepositedCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
+        this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating confirmation and storing data on your local node');
         // get key deposited event from bc
         // if no event try again in x min
         // when event received validate encoded data
         // if ok update tables
         // if !ok call purchase dispute command
+        this.remoteControl.purchaseStatus('Purchase completed','You can preview the purchased data in My Purchases page.');
     }
 
     /**

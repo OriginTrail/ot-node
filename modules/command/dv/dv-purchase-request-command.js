@@ -8,6 +8,7 @@ const Models = require('../../../models');
 class DvPurchaseRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
         this.logger = ctx.logger;
     }
@@ -24,6 +25,8 @@ class DvPurchaseRequestCommand extends Command {
             ot_object_id,
             seller_node_id,
         } = command.data;
+
+        this.remoteControl.purchaseStatus('Initiating purchase', 'Your purchase request is being processed. Please be patient');
 
         const dataSeller = await Models.data_sellers.findOne({
             where: {
@@ -79,6 +82,7 @@ class DvPurchaseRequestCommand extends Command {
                 this.config.node_private_key,
             ),
         };
+
 
         await this.transport.sendDataPurchaseRequest(
             dataPurchaseRequestObject,

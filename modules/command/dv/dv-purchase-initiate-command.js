@@ -7,6 +7,7 @@ const Models = require('../../../models');
 class DvPurchaseInitiateCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.remoteControl = ctx.remoteControl;
         this.logger = ctx.logger;
     }
 
@@ -34,6 +35,8 @@ class DvPurchaseInitiateCommand extends Command {
                 data: commandData,
                 transactional: false,
             });
+
+            this.remoteControl.purchaseStatus('Purchase initiated', 'Waiting for data seller to confirm your order. This may take a few minutes.');
         } else {
             // todo should we add message if status is failed for data_trades
             this.logger.trace(`Unable to initiate purchase dh returned status: ${status} with message: ${message}`);
