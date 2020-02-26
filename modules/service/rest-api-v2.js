@@ -155,7 +155,7 @@ class RestAPIServiceV2 {
             await this._getPrivateDataOwned(req, res);
         });
 
-        server.post(`/api/${this.version_id}/private_data/get_price`, async (req, res) => {
+        server.post(`/api/${this.version_id}/network/private_data/get_price`, async (req, res) => {
             await this._getPrivateDataPrice(req, res);
         });
 
@@ -163,7 +163,7 @@ class RestAPIServiceV2 {
             await this._updatePrivateDataPrice(req, res);
         });
 
-        server.get(`/api/${this.version_id}/private_data/get_price/result/:handler_id`, async (req, res) => {
+        server.get(`/api/${this.version_id}/network/private_data/get_price/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
         });
 

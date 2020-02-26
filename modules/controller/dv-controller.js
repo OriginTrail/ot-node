@@ -248,7 +248,7 @@ class DVController {
 
 
         await Models.handler_ids.update({
-            status: 'SUCCESSFULL',
+            status: 'COMPLETED',
         }, { where: { handler_id } });
     }
 
