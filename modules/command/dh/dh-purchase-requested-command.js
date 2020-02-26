@@ -1,7 +1,7 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
-
+const constants = require('../../constants');
 /**
  * Handles data location response.
  */
@@ -9,6 +9,7 @@ class DhPurchaseRequestedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -28,8 +29,11 @@ class DhPurchaseRequestedCommand extends Command {
                 ot_json_object_id,
             },
         });
-        let message = '';
-        let status = '';
+        const response = {
+            handler_id,
+            wallet: this.config.node_wallet,
+        };
+
         const sellingData = await Models.data_sellers.findOne({
             where: {
                 data_set_id,
@@ -39,42 +43,49 @@ class DhPurchaseRequestedCommand extends Command {
         });
 
         if (permission) {
-            message = `Data purchase already completed or in progress! Previous purchase status: ${permission.status}`;
-            status = 'FAILED';
+            response.message = `Data purchase already completed or in progress! Previous purchase status: ${permission.status}`;
+            response.status = 'FAILED';
         } else if (!sellingData) {
-            status = 'FAILED';
-            message = 'I dont have requested data';
+            response.status = 'FAILED';
+            response.message = 'I dont have requested data';
         } else if (sellingData.price !== price) {
-            message = `Can't accept purchase with price: ${price}, my price: ${sellingData.price}`;
-            status = 'FAILED';
+            response.message = `Can't accept purchase with price: ${price}, my price: ${sellingData.price}`;
+            response.status = 'FAILED';
         } else {
-            await Models.data_trades.create({
-                data_set_id,
-                ot_json_object_id,
-                buyer_node_id: dv_node_id,
-                buyer_erc_id: dv_erc725_identity,
-                seller_node_id: this.config.identity,
-                seller_erc_id: this.config.erc725Identity.toLowerCase(),
-                price,
-                status: 'REQUESTED',
-            });
+            const privateObject = await this._getPrivateObject(data_set_id, ot_json_object_id);
+            if (privateObject) {
+                const encodedObject = await this._encodePrivateData(privateObject);
+                await Models.data_trades.create({
+                    data_set_id,
+                    ot_json_object_id,
+                    buyer_node_id: dv_node_id,
+                    buyer_erc_id: dv_erc725_identity,
+                    seller_node_id: this.config.identity,
+                    seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                    price,
+                    status: 'REQUESTED',
+                });
+                response.encoded_data = encodedObject.encoded_data;
+                response.message = 'Data purchase request completed!';
+                response.status = 'SUCCESSFUL';
 
-            // todo encode data and send it to dv
-
-            message = 'Data purchase request completed!';
-            status = 'SUCCESSFUL';
+                const commandData = {
+                    data_set_id,
+                    ot_json_object_id,
+                    buyer_node_id: dv_node_id,
+                    encoded_object: encodedObject,
+                };
+                await this.commandExecutor.add({
+                    name: 'dhPurchaseInitiatedCommand',
+                    delay: 5 * 60 * 1000, // 5 min
+                    data: commandData,
+                    transactional: false,
+                });
+            } else {
+                response.message = `Unable to find private data with object id: ${ot_json_object_id} and dataset id: ${data_set_id}`;
+                response.status = 'FAILED';
+            }
         }
-
-
-        const response = {
-            handler_id,
-            status,
-            wallet: this.config.node_wallet,
-            message,
-            price: sellingData.price,
-            seller_node_id: this.config.identity,
-            seller_erc_id: this.config.erc725Identity,
-        };
 
         const dataPurchaseResponseObject = {
             message: response,
@@ -89,21 +100,6 @@ class DhPurchaseRequestedCommand extends Command {
             dataPurchaseResponseObject,
             dv_node_id,
         );
-
-        if (status === 'FAILED') {
-            return Command.empty();
-        }
-        const commandData = {
-            data_set_id,
-            ot_json_object_id,
-            buyer_node_id: dv_node_id,
-        };
-        await this.commandExecutor.add({
-            name: 'dvPurchaseKeyDepositedCommand',
-            delay: 5 * 60 * 1000, // 5 min
-            data: commandData,
-            transactional: false,
-        });
     }
 
     /**
@@ -119,6 +115,42 @@ class DhPurchaseRequestedCommand extends Command {
         };
         Object.assign(command, map);
         return command;
+    }
+
+    async _getPrivateObject(data_set_id, ot_json_object_id) {
+        const privateDataObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+            data_set_id,
+            ot_json_object_id,
+        );
+
+        const privateObjectArray = [];
+        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (privateDataObject.properties[private_data_array] &&
+                Array.isArray(privateDataObject.properties[private_data_array])) {
+                privateDataObject.properties[private_data_array].forEach((private_object) => {
+                    if (private_object.isPrivate) {
+                        privateObjectArray.push(private_object);
+                    }
+                });
+            }
+        });
+
+        if (privateObjectArray.length > 1) {
+            this.logger.trace(`Found multiple private data in object with id: ${ot_json_object_id}, using first one`);
+        }
+        if (privateObjectArray.length === 1) {
+            return privateObjectArray[0];
+        }
+        return null;
+    }
+
+    async _encodePrivateData(privateObject) {
+        const key = '123';
+        return {
+            key,
+            encoded_data: privateObject.data,
+            private_data_hash: privateObject.private_data_hash,
+        };
     }
 }
 
