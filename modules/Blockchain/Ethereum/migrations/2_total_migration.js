@@ -154,6 +154,13 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('HoldingStorage', holdingStorage.address);
 
+        marketplaceStorage = await deployer.deploy(
+            MarketplaceStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('MarketplaceStorage', marketplaceStorage.address);
+
         litigationStorage = await deployer.deploy(
             LitigationStorage,
             hub.address,
@@ -186,6 +193,13 @@ module.exports = async (deployer, network, accounts) => {
             { gas: 6000000, from: accounts[0] },
         );
         await hub.setContractAddress('Litigation', litigation.address);
+
+        marketplace = await deployer.deploy(
+            Marketplace,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('Marketplace', marketplace.address);
 
         replacement = await deployer.deploy(
             Replacement,
@@ -361,6 +375,13 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('LitigationStorage', litigationStorage.address);
 
+        marketplaceStorage = await deployer.deploy(
+            MarketplaceStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('MarketplaceStorage', marketplaceStorage.address);
+
         approval = await deployer.deploy(Approval);
         await hub.setContractAddress('Approval', approval.address);
 
@@ -377,6 +398,13 @@ module.exports = async (deployer, network, accounts) => {
             hub.address,
         );
         await hub.setContractAddress('Litigation', litigation.address);
+
+        marketplace = await deployer.deploy(
+            Marketplace,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('Marketplace', marketplace.address);
 
         replacement = await deployer.deploy(
             Replacement,
