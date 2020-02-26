@@ -332,59 +332,59 @@ class DVController {
             nodeId,
         );
     }
-    async handleNetworkPurchaseResponse(response) {
-        const {
-            handler_id, status, message, seller_node_id, seller_erc_id, price,
-        } = response;
-
-        const handlerData = await Models.handler_ids.findOne({
-            where: {
-                handler_id,
-            },
-        });
-
-        const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
-
-        await Models.data_trades.create({
-            data_set_id,
-            ot_json_object_id: ot_object_id,
-            buyer_node_id: this.config.identity,
-            buyer_erc_id: this.config.erc725Identity.toLowerCase(),
-            seller_node_id,
-            seller_erc_id,
-            price,
-            purchase_id: '',
-            status,
-        });
-
-        await Models.handler_ids.update({
-            data: JSON.stringify({ message }),
-            status,
-        }, {
-            where: {
-                handler_id,
-            },
-        });
-    }
-
-
-    //         async handleNetworkPurchaseResponse(response) {
+    // async handleNetworkPurchaseResponse(response) {
     //     const {
-    //         handler_id, status, message, encodedData,
+    //         handler_id, status, message, seller_node_id, seller_erc_id, price,
     //     } = response;
     //
-    //     const commandData = {
-    //         handler_id,
-    //         status,
-    //         message,
-    //         encodedData,
-    //     };
+    //     const handlerData = await Models.handler_ids.findOne({
+    //         where: {
+    //             handler_id,
+    //         },
+    //     });
     //
-    //     await this.commandExecutor.add({
-    //         name: 'dvPurchaseRequestCommand',
-    //         data: commandData,
+    //     const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+    //
+    //     await Models.data_trades.create({
+    //         data_set_id,
+    //         ot_json_object_id: ot_object_id,
+    //         buyer_node_id: this.config.identity,
+    //         buyer_erc_id: this.config.erc725Identity.toLowerCase(),
+    //         seller_node_id,
+    //         seller_erc_id,
+    //         price,
+    //         purchase_id: '',
+    //         status,
+    //     });
+    //
+    //     await Models.handler_ids.update({
+    //         data: JSON.stringify({ message }),
+    //         status,
+    //     }, {
+    //         where: {
+    //             handler_id,
+    //         },
     //     });
     // }
+
+
+    async handleNetworkPurchaseResponse(response) {
+        const {
+            handler_id, status, message, encodedData,
+        } = response;
+
+        const commandData = {
+            handler_id,
+            status,
+            message,
+            encodedData,
+        };
+
+        await this.commandExecutor.add({
+            name: 'dvPurchaseInitiateCommand',
+            data: commandData,
+        });
+    }
 
     async handlePrivateDataPriceResponse(response) {
         const { handler_id, status, message } = response;
