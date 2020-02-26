@@ -135,7 +135,7 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/network/private_data/purchase`, async (req, res) => {
-            await this._networkPurchase(req, res);
+            await this.dvController.sendNetworkPurchase(req, res);
         });
 
         server.get(`/api/${this.version_id}/network/private_data/purchase/result/:handler_id`, async (req, res) => {
@@ -1017,41 +1017,6 @@ class RestAPIServiceV2 {
         };
         response.status(200);
         response.send(result);
-    }
-
-    async _networkPurchase(req, res) {
-        this.logger.api('POST: Network purchase request received.');
-
-        if (req.body == null
-            || req.body.data_set_id == null
-            || req.body.seller_node_id == null
-            || req.body.ot_object_id == null) {
-            res.status(400);
-            res.send({ message: 'Params data_set_id, seller_node_id and ot_object_id are required.' });
-            return;
-        }
-        const {
-            data_set_id, seller_node_id, ot_object_id,
-        } = req.body;
-        const inserted_object = await Models.handler_ids.create({
-            data: JSON.stringify({
-                data_set_id, seller_node_id, ot_object_id,
-            }),
-            status: 'PENDING',
-        });
-        const handlerId = inserted_object.dataValues.handler_id;
-        res.status(200);
-        res.send({
-            handler_id: handlerId,
-        });
-
-        await this.dvController.sendNetworkPurchase(
-            data_set_id,
-            this.config.erc725Identity,
-            seller_node_id,
-            ot_object_id,
-            handlerId,
-        );
     }
 
     async _getPrivateDataAvailable(req, res) {

@@ -120,7 +120,10 @@ class ImportUtilities {
 
         const header = this.createDatasetHeader(
             config, null,
-            datasetHeader.datasetTags, datasetHeader.datasetTitle, datasetHeader.datasetDescription, datasetHeader.OTJSONVersion
+            datasetHeader.datasetTags,
+            datasetHeader.datasetTitle,
+            datasetHeader.datasetDescription,
+            datasetHeader.OTJSONVersion,
         );
         const dataset = {
             '@id': id,
