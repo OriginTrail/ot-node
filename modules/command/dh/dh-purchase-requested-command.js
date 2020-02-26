@@ -81,9 +81,7 @@ class DhPurchaseRequestedCommand extends Command {
                 };
                 await this.commandExecutor.add({
                     name: 'dhPurchaseInitiatedCommand',
-                    delay: 5 * 60 * 1000, // 5 min
                     data: commandData,
-                    transactional: false,
                 });
             } else {
                 response.message = `Unable to find private data with object id: ${ot_json_object_id} and dataset id: ${data_set_id}`;
