@@ -371,6 +371,7 @@ class DVController {
     async handleNetworkPurchaseResponse(response) {
         const {
             handler_id, status, message, encoded_data,
+            private_data_root_hash, encoded_data_root_hash,
         } = response;
 
         const commandData = {
@@ -378,6 +379,8 @@ class DVController {
             status,
             message,
             encoded_data,
+            private_data_root_hash,
+            encoded_data_root_hash,
         };
 
         await this.commandExecutor.add({

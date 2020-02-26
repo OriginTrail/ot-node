@@ -2,6 +2,7 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
 const constants = require('../../constants');
+const ImportUtilities = require('../../ImportUtilities');
 /**
  * Handles data location response.
  */
@@ -52,9 +53,10 @@ class DhPurchaseRequestedCommand extends Command {
             response.message = `Can't accept purchase with price: ${price}, my price: ${sellingData.price}`;
             response.status = 'FAILED';
         } else {
-            const privateObject = await this._getPrivateObject(data_set_id, ot_json_object_id);
+            const privateObject = await ImportUtilities
+                .getPrivateDataObject(data_set_id, ot_json_object_id);
             if (privateObject) {
-                const encodedObject = await this._encodePrivateData(privateObject);
+                const encodedObject = await ImportUtilities.encodePrivateData(privateObject);
                 await Models.data_trades.create({
                     data_set_id,
                     ot_json_object_id,
@@ -66,6 +68,8 @@ class DhPurchaseRequestedCommand extends Command {
                     status: 'REQUESTED',
                 });
                 response.encoded_data = encodedObject.encoded_data;
+                response.private_data_root_hash = encodedObject.private_data_root_hash;
+                response.encoded_data_root_hash = encodedObject.encoded_data_root_hash;
                 response.message = 'Data purchase request completed!';
                 response.status = 'SUCCESSFUL';
 
@@ -115,42 +119,6 @@ class DhPurchaseRequestedCommand extends Command {
         };
         Object.assign(command, map);
         return command;
-    }
-
-    async _getPrivateObject(data_set_id, ot_json_object_id) {
-        const privateDataObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
-            data_set_id,
-            ot_json_object_id,
-        );
-
-        const privateObjectArray = [];
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            if (privateDataObject.properties[private_data_array] &&
-                Array.isArray(privateDataObject.properties[private_data_array])) {
-                privateDataObject.properties[private_data_array].forEach((private_object) => {
-                    if (private_object.isPrivate) {
-                        privateObjectArray.push(private_object);
-                    }
-                });
-            }
-        });
-
-        if (privateObjectArray.length > 1) {
-            this.logger.trace(`Found multiple private data in object with id: ${ot_json_object_id}, using first one`);
-        }
-        if (privateObjectArray.length === 1) {
-            return privateObjectArray[0];
-        }
-        return null;
-    }
-
-    async _encodePrivateData(privateObject) {
-        const key = '123';
-        return {
-            key,
-            encoded_data: privateObject.data,
-            private_data_hash: privateObject.private_data_hash,
-        };
     }
 }
 

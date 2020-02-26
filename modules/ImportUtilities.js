@@ -633,7 +633,19 @@ class ImportUtilities {
      * @param private_object
      * @returns {null}
      */
-    static calculatePrivateDataHash(private_object) {
+    static calculatePrivateDataHash(private_object, type = 'distribution') {
+        const merkleTree = this.calculatePrivateDataMerkleTree(private_object, type);
+        return merkleTree.getRoot();
+    }
+
+    /**
+     * Calculates the merkle tree of an object
+     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
+     * The tree contains at least NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS
+     * @param private_object
+     * @returns {null}
+     */
+    static calculatePrivateDataMerkleTree(private_object, type = 'distribution') {
         if (!private_object || !private_object.data) {
             throw Error('Cannot calculate root hash of an empty object');
         }
@@ -651,8 +663,57 @@ class ImportUtilities {
             const block = data.slice(i, i + block_size).toString('hex');
             blocks.push(block.padEnd(default_block_size, '0'));
         }
-        const merkletree = new MerkleTree(blocks, 'distribution', 'sha3');
-        return merkletree.getRoot();
+        const merkleTree = new MerkleTree(blocks, type, 'sha3');
+        return merkleTree;
+    }
+
+    static encodePrivateData(privateObject) {
+        const merkleTree = ImportUtilities.calculatePrivateDataMerkleTree(privateObject, 'purchase');
+        const key = '123';
+        const encodedArray = [];
+        merkleTree.levels.forEach((leaf) => {
+            // encrypt to encoded array
+        });
+        const encodedRootHash = '';
+        encodedArray.push(encodedRootHash);
+        const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
+        const encodedDataRootHash = encodedMerkleTree.getRoot();
+        return {
+            key,
+            encoded_data: encodedArray,
+            private_data_root_hash: privateObject.private_data_hash,
+            encoded_data_root_hash: encodedDataRootHash,
+        };
+    }
+
+    static decodePrivateDataArray(encodedPrivateDataArray, key) {
+
+    }
+
+    static async getPrivateDataObject(data_set_id, ot_json_object_id) {
+        const privateDataObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+            data_set_id,
+            ot_json_object_id,
+        );
+
+        const privateObjectArray = [];
+        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (privateDataObject.properties[private_data_array] &&
+                Array.isArray(privateDataObject.properties[private_data_array])) {
+                privateDataObject.properties[private_data_array].forEach((private_object) => {
+                    if (private_object.isPrivate) {
+                        privateObjectArray.push(private_object);
+                    }
+                });
+            }
+        });
+
+        if (privateObjectArray.length > 1) {
+            this.logger.trace(`Found multiple private data in object with id: ${ot_json_object_id}, using first one`);
+        } else if (privateObjectArray.length === 0) {
+            return null;
+        }
+        return privateObjectArray[0];
     }
 
     static sortStringifyDataset(dataset) {

@@ -11,20 +11,24 @@ class MerkleTree {
         this.hashFunction = hashFunction;
         this.type = type;
         const leavesHashes = [];
-        for (let i = 0; i < leaves.length; i += 1) {
-            switch (this.type) {
-            case 'distribution':
-                leavesHashes.push(this._generateDistributionLeafHash(leaves[i], i));
-                break;
-            case 'litigation':
-                leavesHashes.push(this._generateLitigationLeafHash(
-                    leaves[i].data,
-                    leaves[i].objectIndex,
-                    leaves[i].blockIndex,
-                ));
-                break;
-            default:
-                throw Error(`Unsupported Merkle tree type: ${type}`);
+        if (this.type === 'purchase') {
+            leavesHashes.push(this.levels);
+        } else {
+            for (let i = 0; i < leaves.length; i += 1) {
+                switch (this.type) {
+                case 'distribution':
+                    leavesHashes.push(this._generateDistributionLeafHash(leaves[i], i));
+                    break;
+                case 'litigation':
+                    leavesHashes.push(this._generateLitigationLeafHash(
+                        leaves[i].data,
+                        leaves[i].objectIndex,
+                        leaves[i].blockIndex,
+                    ));
+                    break;
+                default:
+                    throw Error(`Unsupported Merkle tree type: ${type}`);
+                }
             }
         }
 
@@ -66,6 +70,7 @@ class MerkleTree {
         let i;
         const { levels } = this;
         switch (this.type) {
+        case 'purchase':
         case 'distribution':
             i = firstIndex;
             break;
@@ -102,6 +107,10 @@ class MerkleTree {
         let leafNumber;
         const { levels } = this;
         switch (this.type) {
+        case 'purchase':
+            leafNumber = firstIndex;
+            h = data;
+            break;
         case 'distribution':
             leafNumber = firstIndex;
             h = this._generateDistributionLeafHash(data, firstIndex);
