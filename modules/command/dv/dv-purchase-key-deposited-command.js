@@ -17,7 +17,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
-        this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating confirmation and storing data on your local node');
+        this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');
         // get key deposited event from bc
         // if no event try again in x min
         // when event received validate encoded data

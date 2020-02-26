@@ -26,7 +26,7 @@ class DvPurchaseRequestCommand extends Command {
             seller_node_id,
         } = command.data;
 
-        this.remoteControl.purchaseStatus('Initiating purchase', 'Your purchase request is being processed. Please be patient');
+        this.remoteControl.purchaseStatus('Initiating purchase', 'Your purchase request is being processed. Please be patient.');
 
         const dataSeller = await Models.data_sellers.findOne({
             where: {
