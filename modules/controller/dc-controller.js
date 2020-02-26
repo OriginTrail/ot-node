@@ -148,30 +148,99 @@ class DCController {
             nodeId,
         );
     }
-
     async handleNetworkPurchaseRequest(request) {
         const {
-            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
+            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
-        // todo valideta data in request
+        const permission = await Models.data_trades.findOne({
+            where: {
+                buyer_node_id: dv_node_id,
+                data_set_id,
+                ot_json_object_id,
+                status: 'COMPLETED',
+            },
+        });
+        let message = '';
+        let status = '';
+        const sellingData = await Models.data_sellers.findOne({
+            where: {
+                data_set_id,
+                ot_json_object_id,
+                seller_node_id: this.config.identity,
+            },
+        });
 
-        const commandData = {
-            data_set_id,
-            dv_erc725_identity,
+        if (permission) {
+            message = 'Data already purchased!';
+            status = 'COMPLETED';
+        } else if (!sellingData) {
+            status = 'FAILED';
+            message = 'I dont have requested data';
+        } else {
+            await Models.data_trades.create({
+                data_set_id,
+                ot_json_object_id,
+                buyer_node_id: dv_node_id,
+                buyer_erc_id: dv_erc725_identity,
+                seller_node_id: this.config.identity,
+                seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                price: sellingData.price,
+                purchase_id: '',
+                status: 'COMPLETED',
+            });
+            message = 'Data purchase successfully finalized!';
+            status = 'COMPLETED';
+        }
+
+
+        const response = {
             handler_id,
-            dv_node_id,
-            ot_json_object_id,
-            price,
+            status,
+            wallet: this.config.node_wallet,
+            message,
+            price: sellingData.price,
+            seller_node_id: this.config.identity,
+            seller_erc_id: this.config.erc725Identity,
         };
 
-        await this.commandExecutor.add({
-            name: 'dhPurchaseRequestedCommand',
-            delay: 0,
-            data: commandData,
-            transactional: false,
-        });
+        const dataPurchaseResponseObject = {
+            message: response,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(response),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendDataPurchaseResponse(
+            dataPurchaseResponseObject,
+            dv_node_id,
+        );
     }
+    // async handleNetworkPurchaseRequest(request) {
+    //     const {
+    //         data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
+    //     } = request;
+    //
+    //     // todo valideta data in request
+    //
+    //     const commandData = {
+    //         data_set_id,
+    //         dv_erc725_identity,
+    //         handler_id,
+    //         dv_node_id,
+    //         ot_json_object_id,
+    //         price,
+    //     };
+    //
+    //     await this.commandExecutor.add({
+    //         name: 'dhPurchaseRequestedCommand',
+    //         delay: 0,
+    //         data: commandData,
+    //         transactional: false,
+    //     });
+    // }
 
     async handleNetworkPriceRequest(request) {
         const {
