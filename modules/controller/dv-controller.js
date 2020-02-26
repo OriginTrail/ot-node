@@ -252,65 +252,64 @@ class DVController {
         }, { where: { handler_id } });
     }
 
-    async sendNetworkPurchase(dataSetId, erc725Identity, nodeId, otJsonObjectId, handlerId) {
-        const message = {
-            data_set_id: dataSetId,
-            dv_erc725_identity: erc725Identity,
-            handler_id: handlerId,
-            ot_json_object_id: otJsonObjectId,
-            wallet: this.config.node_wallet,
-        };
-        const dataPurchaseRequestObject = {
-            message,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(message),
-                this.web3,
-                this.config.node_private_key,
-            ),
-        };
-        await this.transport.sendDataPurchaseRequest(
-            dataPurchaseRequestObject,
-            nodeId,
-        );
-    }
-
-    // async sendNetworkPurchase(response, request) {
-    //     if (response.body == null
-    //         || request.body.data_set_id == null
-    //         || request.body.seller_node_id == null
-    //         || request.body.ot_object_id == null) {
-    //         response.status(400);
-    //         response.send({ message:
-    //         'Params data_set_id, seller_node_id and ot_object_id are required.' });
-    //         return;
-    //     }
-    //     const {
-    //         data_set_id, seller_node_id, ot_object_id,
-    //     } = request.body;
-    //     const inserted_object = await Models.handler_ids.create({
-    //         data: JSON.stringify({
-    //             data_set_id, seller_node_id, ot_object_id,
-    //         }),
-    //         status: 'REQUESTED',
-    //     });
-    //     const { handler_id } = inserted_object.dataValues;
-    //     response.status(200);
-    //     response.send({
-    //         handler_id,
-    //     });
-    //
-    //     const commandData = {
-    //         data_set_id,
-    //         handler_id,
-    //         ot_object_id,
-    //         seller_node_id,
+    // async sendNetworkPurchase(dataSetId, erc725Identity, nodeId, otJsonObjectId, handlerId) {
+    //     const message = {
+    //         data_set_id: dataSetId,
+    //         dv_erc725_identity: erc725Identity,
+    //         handler_id: handlerId,
+    //         ot_json_object_id: otJsonObjectId,
+    //         wallet: this.config.node_wallet,
     //     };
-    //
-    //     await this.commandExecutor.add({
-    //         name: 'dvPurchaseRequestCommand',
-    //         data: commandData,
-    //     });
+    //     const dataPurchaseRequestObject = {
+    //         message,
+    //         messageSignature: Utilities.generateRsvSignature(
+    //             JSON.stringify(message),
+    //             this.web3,
+    //             this.config.node_private_key,
+    //         ),
+    //     };
+    //     await this.transport.sendDataPurchaseRequest(
+    //         dataPurchaseRequestObject,
+    //         nodeId,
+    //     );
     // }
+
+    async sendNetworkPurchase(response, request) {
+        if (response.body == null
+            || request.body.data_set_id == null
+            || request.body.seller_node_id == null
+            || request.body.ot_object_id == null) {
+            response.status(400);
+            response.send({ message: 'Params data_set_id, seller_node_id and ot_object_id are required.' });
+            return;
+        }
+        const {
+            data_set_id, seller_node_id, ot_object_id,
+        } = request.body;
+        const inserted_object = await Models.handler_ids.create({
+            data: JSON.stringify({
+                data_set_id, seller_node_id, ot_object_id,
+            }),
+            status: 'REQUESTED',
+        });
+        const { handler_id } = inserted_object.dataValues;
+        response.status(200);
+        response.send({
+            handler_id,
+        });
+
+        const commandData = {
+            data_set_id,
+            handler_id,
+            ot_object_id,
+            seller_node_id,
+        };
+
+        await this.commandExecutor.add({
+            name: 'dvPurchaseRequestCommand',
+            data: commandData,
+        });
+    }
 
     async sendPrivateDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
         const message = {
