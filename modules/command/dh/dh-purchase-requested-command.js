@@ -5,7 +5,7 @@ const Models = require('../../../models');
 /**
  * Handles data location response.
  */
-class DhPurchaseResponseCommand extends Command {
+class DhPurchaseRequestedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -107,13 +107,13 @@ class DhPurchaseResponseCommand extends Command {
     }
 
     /**
-     * Builds default DhPurchaseResponseCommand
+     * Builds default DhPurchaseRequestedCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'dhPurchaseResponseCommand',
+            name: 'dhPurchaseRequestedCommand',
             delay: 0,
             transactional: false,
         };
@@ -122,4 +122,4 @@ class DhPurchaseResponseCommand extends Command {
     }
 }
 
-module.exports = DhPurchaseResponseCommand;
+module.exports = DhPurchaseRequestedCommand;

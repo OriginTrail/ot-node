@@ -166,7 +166,7 @@ class DCController {
         };
 
         await this.commandExecutor.add({
-            name: 'dhPurchaseResponseCommand',
+            name: 'dhPurchaseRequestedCommand',
             delay: 0,
             data: commandData,
             transactional: false,
