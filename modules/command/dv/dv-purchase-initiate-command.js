@@ -11,6 +11,7 @@ class DvPurchaseInitiateCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -36,10 +37,10 @@ class DvPurchaseInitiateCommand extends Command {
             ot_object_id,
         } = await this._getHandlerData(handler_id);
 
-        if (await this._validatePrivateDataRootHash(
+        if (!(await this._validatePrivateDataRootHash(
             data_set_id,
             ot_object_id, private_data_root_hash,
-        )) {
+        ))) {
             return this._handleError(handler_id, 'Unable to initiate purchase private data root hash validation failed');
         }
 
@@ -50,11 +51,14 @@ class DvPurchaseInitiateCommand extends Command {
                 seller_node_id,
             },
         });
-
-        const purchaseId = await this._sendInitiatePurchaseToBc(
-            dataTrade.buyer_erc_id, dataTrade.seller_erc_id,
-            dataTrade.price, private_data_root_hash, encoded_data_root_hash,
+        const result = await this.blockchain.initiatePurchase(
+            dataTrade.seller_erc_id, dataTrade.buyer_erc_id,
+            dataTrade.price,
+            private_data_root_hash, encoded_data_root_hash,
         );
+
+        const { purchaseId } = this.blockchain
+            .decodePurchaseInitiatedEventFromTransaction(result);
 
         dataTrade.purchase_id = purchaseId;
         await dataTrade.save({ fields: ['purchase_id'] });
@@ -99,7 +103,7 @@ class DvPurchaseInitiateCommand extends Command {
         const handlerData = await this._getHandlerData(handler_id);
 
         await Models.data_trades.update({
-            status,
+            status: 'FAILED',
         }, {
             where: {
                 data_set_id: handlerData.data_set_id,
@@ -109,6 +113,7 @@ class DvPurchaseInitiateCommand extends Command {
         });
 
         await Models.handler_ids.update({
+            data: JSON.stringify({ message: status }),
             status: 'FAILED',
         }, { where: { handler_id } });
 
@@ -116,7 +121,7 @@ class DvPurchaseInitiateCommand extends Command {
     }
 
     async _validatePrivateDataRootHash(dataSetId, otObjectId, private_data_root_hash) {
-        const privateObject = await ImportUtilities.getPrivateDataObject(dataSetId, otObjectId);
+        const privateObject = await this.importService.getPrivateDataObject(dataSetId, otObjectId);
         return private_data_root_hash === privateObject.private_data_hash;
     }
 
@@ -128,18 +133,6 @@ class DvPurchaseInitiateCommand extends Command {
         });
 
         return JSON.parse(handler.data);
-    }
-
-    async _sendInitiatePurchaseToBc(
-        buyer_erc, seller_erc, price,
-        private_data_root_hash, encoded_data_root_hash,
-    ) {
-        const result = await this.blockchain.initiatePurchase(
-            buyer_erc, seller_erc,
-            price,
-            encoded_data_root_hash, private_data_root_hash,
-        );
-        return result.logs[0].args.purchaseId;
     }
 }
 

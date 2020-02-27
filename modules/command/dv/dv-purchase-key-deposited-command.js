@@ -12,6 +12,8 @@ class DvPurchaseKeyDepositedCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.commandExecutor = ctx.commandExecutor;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -100,7 +102,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 return Command.empty();
             }
         }
-        return Command.repeat();
+        return Command.retry();
     }
 
     /**
@@ -111,8 +113,9 @@ class DvPurchaseKeyDepositedCommand extends Command {
     default(map) {
         const command = {
             name: 'dvPurchaseKeyDepositedCommand',
-            delay: 5 * 60 * 1000, // 5 min
+            delay: 1 * 60 * 1000, // 5 min todo update to 5 min
             transactional: false,
+            retries: 3,
         };
         Object.assign(command, map);
         return command;

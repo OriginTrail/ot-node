@@ -11,6 +11,8 @@ class DvPurchaseRequestCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.web3 = ctx.web3;
+        this.transport = ctx.transport;
     }
 
     /**
@@ -46,10 +48,11 @@ class DvPurchaseRequestCommand extends Command {
             where: {
                 data_set_id,
                 ot_json_object_id: ot_object_id,
+                seller_node_id,
             },
         });
 
-        if (!dataTrade && dataTrade.status !== 'FAILED') {
+        if (dataTrade && dataTrade.status !== 'FAILED') {
             this.logger.error(`Data purchase already completed or in progress! Previous purchase status: ${dataTrade.status}`);
             // todo update handler ids table with failed status
             return Command.empty();
@@ -70,7 +73,7 @@ class DvPurchaseRequestCommand extends Command {
             data_set_id,
             dv_erc725_identity: this.config.erc725Identity,
             handler_id,
-            ot_object_id,
+            ot_json_object_id: ot_object_id,
             price: dataSeller.price,
             wallet: this.config.node_wallet,
         };

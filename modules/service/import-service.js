@@ -982,6 +982,32 @@ class ImportService {
             }
         });
     }
+
+    async getPrivateDataObject(data_set_id, ot_json_object_id) {
+        const privateDataObject = await this.getOtObjectById(
+            data_set_id,
+            ot_json_object_id,
+        );
+
+        const privateObjectArray = [];
+        Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+            if (privateDataObject.properties[private_data_array] &&
+                Array.isArray(privateDataObject.properties[private_data_array])) {
+                privateDataObject.properties[private_data_array].forEach((private_object) => {
+                    if (private_object.isPrivate) {
+                        privateObjectArray.push(private_object);
+                    }
+                });
+            }
+        });
+
+        if (privateObjectArray.length > 1) {
+            this.log.trace(`Found multiple private data in object with id: ${ot_json_object_id}, using first one`);
+        } else if (privateObjectArray.length === 0) {
+            return null;
+        }
+        return privateObjectArray[0];
+    }
 }
 
 module.exports = ImportService;

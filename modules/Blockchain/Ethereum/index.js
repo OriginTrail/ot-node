@@ -1052,26 +1052,26 @@ class Ethereum {
     }
 
     async initiatePurchase(
-        buyerIdentity, sellerIdentity,
+        sellerIdentity, buyerIdentity,
         tokenAmount,
-        encodedDataRootHash, originalDataRootHash,
+        originalDataRootHash, encodedDataRootHash,
     ) {
         const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
+            to: this.marketplaceContractAddress,
         };
 
-        this.log.trace(`initiatePurchase (${buyerIdentity}, ${sellerIdentity}, ${tokenAmount}, ${encodedDataRootHash}, ${originalDataRootHash})`);
+        this.log.trace(`initiatePurchase (${sellerIdentity}, ${buyerIdentity}, ${tokenAmount}, ${originalDataRootHash}, ${encodedDataRootHash})`);
         return this.transactions.queueTransaction(
             this.marketplaceContractAbi, 'initiatePurchase',
             [
-                buyerIdentity,
                 sellerIdentity,
+                buyerIdentity,
                 tokenAmount,
-                encodedDataRootHash,
                 originalDataRootHash,
+                encodedDataRootHash,
             ], options,
         );
     }
@@ -1102,7 +1102,7 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
+            to: this.marketplaceContractAddress,
         };
 
         this.log.trace(`depositKey(${purchaseId}, ${key})`);
@@ -1117,7 +1117,7 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
+            to: this.marketplaceContractAddress,
         };
 
         this.log.trace(`takePayment(${purchaseId})`);

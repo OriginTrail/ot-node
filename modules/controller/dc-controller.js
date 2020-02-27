@@ -263,7 +263,7 @@ class DCController {
                 handler_id,
                 status: 'COMPLETED',
                 wallet: this.config.node_wallet,
-                message: { price_in_trac: data.price },
+                price_in_trac: data.price,
             };
         } else {
             response = {

@@ -756,32 +756,6 @@ class ImportUtilities {
 
     }
 
-    static async getPrivateDataObject(data_set_id, ot_json_object_id) {
-        const privateDataObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
-            data_set_id,
-            ot_json_object_id,
-        );
-
-        const privateObjectArray = [];
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            if (privateDataObject.properties[private_data_array] &&
-                Array.isArray(privateDataObject.properties[private_data_array])) {
-                privateDataObject.properties[private_data_array].forEach((private_object) => {
-                    if (private_object.isPrivate) {
-                        privateObjectArray.push(private_object);
-                    }
-                });
-            }
-        });
-
-        if (privateObjectArray.length > 1) {
-            this.logger.trace(`Found multiple private data in object with id: ${ot_json_object_id}, using first one`);
-        } else if (privateObjectArray.length === 0) {
-            return null;
-        }
-        return privateObjectArray[0];
-    }
-
     static sortStringifyDataset(dataset) {
         ImportUtilities.sortGraphRecursively(dataset['@graph']);
         return Utilities.sortedStringify(dataset);

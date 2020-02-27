@@ -392,14 +392,14 @@ class Blockchain {
     }
 
     async initiatePurchase(
-        buyerIdentity, sellerIdentity,
+        sellerIdentity, buyerIdentity,
         tokenAmount,
-        encodedDataRootHash, originalDataRootHash,
+        originalDataRootHash, encodedDataRootHash,
     ) {
         return this.blockchain.initiatePurchase(
-            buyerIdentity, sellerIdentity,
+            sellerIdentity, buyerIdentity,
             tokenAmount,
-            encodedDataRootHash, originalDataRootHash,
+            originalDataRootHash, encodedDataRootHash,
         );
     }
 

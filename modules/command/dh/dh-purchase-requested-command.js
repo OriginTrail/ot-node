@@ -1,7 +1,6 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
-const constants = require('../../constants');
 const ImportUtilities = require('../../ImportUtilities');
 /**
  * Handles data location response.
@@ -11,6 +10,11 @@ class DhPurchaseRequestedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
+        this.config = ctx.config;
+        this.commandExecutor = ctx.commandExecutor;
+        this.web3 = ctx.web3;
+        this.transport = ctx.transport;
+        this.importService = ctx.importService;
     }
 
     /**
@@ -53,7 +57,7 @@ class DhPurchaseRequestedCommand extends Command {
             response.message = `Can't accept purchase with price: ${price}, my price: ${sellingData.price}`;
             response.status = 'FAILED';
         } else {
-            const privateObject = await ImportUtilities
+            const privateObject = await this.importService
                 .getPrivateDataObject(data_set_id, ot_json_object_id);
             if (privateObject) {
                 const encodedObject = await ImportUtilities.encodePrivateData(privateObject);
@@ -104,6 +108,7 @@ class DhPurchaseRequestedCommand extends Command {
             dataPurchaseResponseObject,
             dv_node_id,
         );
+        return Command.empty();
     }
 
     /**

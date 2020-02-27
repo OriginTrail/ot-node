@@ -275,8 +275,8 @@ class DVController {
     //     );
     // }
 
-    async sendNetworkPurchase(response, request) {
-        if (response.body == null
+    async sendNetworkPurchase(request, response) {
+        if (request.body == null
             || request.body.data_set_id == null
             || request.body.seller_node_id == null
             || request.body.ot_object_id == null) {
@@ -394,10 +394,35 @@ class DVController {
     }
 
     async handlePrivateDataPriceResponse(response) {
-        const { handler_id, status, message } = response;
+        const {
+            handler_id, status, price_in_trac,
+        } = response;
+
+        if (status === 'COMPLETED') {
+            const handler = await Models.handler_ids.findOne({
+                where: {
+                    handler_id,
+                },
+            });
+
+            const {
+                data_set_id,
+                seller_node_id,
+                ot_object_id,
+            } = JSON.parse(handler.data);
+
+            await Models.data_sellers.update({
+                price: price_in_trac,
+            }, {
+                where: {
+                    data_set_id,
+                    seller_node_id,
+                    ot_json_object_id: ot_object_id,
+                },
+            });
+        }
 
         await Models.handler_ids.update({
-            data: JSON.stringify({ message }),
             status,
         }, {
             where: {

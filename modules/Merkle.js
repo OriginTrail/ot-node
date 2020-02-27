@@ -10,9 +10,9 @@ class MerkleTree {
         this.levels.push(leaves);
         this.hashFunction = hashFunction;
         this.type = type;
-        const leavesHashes = [];
+        let leavesHashes = [];
         if (this.type === 'purchase') {
-            leavesHashes.push(this.levels);
+            leavesHashes = leaves;
         } else {
             for (let i = 0; i < leaves.length; i += 1) {
                 switch (this.type) {
