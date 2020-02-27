@@ -67,6 +67,8 @@ class DhPurchaseRequestedCommand extends Command {
                     price,
                     status: 'REQUESTED',
                 });
+                response.private_data_original_length = encodedObject.private_data_original_length;
+                response.private_data_array_length = encodedObject.private_data_array_length;
                 response.encoded_data = encodedObject.encoded_data;
                 response.private_data_root_hash = encodedObject.private_data_root_hash;
                 response.encoded_data_root_hash = encodedObject.encoded_data_root_hash;

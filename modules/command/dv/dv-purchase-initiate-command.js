@@ -22,6 +22,7 @@ class DvPurchaseInitiateCommand extends Command {
         const {
             handler_id, status, message, encoded_data,
             private_data_root_hash, encoded_data_root_hash,
+            private_data_array_length, private_data_original_length,
         } = command.data;
 
 
@@ -66,6 +67,8 @@ class DvPurchaseInitiateCommand extends Command {
             handler_id,
             encoded_data,
             purchase_id: purchaseId,
+            private_data_array_length,
+            private_data_original_length,
         };
 
         await this.commandExecutor.add({

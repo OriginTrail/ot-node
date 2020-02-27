@@ -32,6 +32,8 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 handler_id,
                 encoded_data,
                 purchase_id,
+                private_data_array_length,
+                private_data_original_length,
             } = command.data;
 
             const event = events.find((e) => {
@@ -44,7 +46,10 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');
                 const { key } = JSON.parse(event.data);
                 const decodedPrivateData = ImportUtilities
-                    .validateAndDecodePrivateData(encoded_data, key);
+                    .validateAndDecodePrivateData(
+                        encoded_data, key, private_data_array_length,
+                        private_data_original_length,
+                    );
 
                 if (decodedPrivateData.errorStatus) {
                     const commandData = {

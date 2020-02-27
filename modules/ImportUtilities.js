@@ -9,6 +9,8 @@ const Encryption = require('./Encryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const constants = require('./constants');
+const crypto = require('crypto');
+const abi = require('ethereumjs-abi');
 
 /**
  * Import related utilities
@@ -661,7 +663,7 @@ class ImportUtilities {
         const blocks = [];
         for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
             const block = data.slice(i, i + block_size).toString('hex');
-            blocks.push(block.padEnd(default_block_size, '0'));
+            blocks.push(block.padStart(default_block_size, '0'));
         }
         const merkleTree = new MerkleTree(blocks, type, 'sha3');
         return merkleTree;
@@ -669,16 +671,27 @@ class ImportUtilities {
 
     static encodePrivateData(privateObject) {
         const merkleTree = ImportUtilities.calculatePrivateDataMerkleTree(privateObject, 'purchase');
-        const key = '123';
+        const key = crypto.randomBytes(32);
         const encodedArray = [];
-        merkleTree.levels.forEach((leaf) => {
-            // encrypt to encoded array
+        let index = 0;
+        merkleTree.levels.forEach((level) => {
+            for (let i = 0; i < level.length; i += 1) {
+                const leaf = level[i];
+                const keyHash = abi.soliditySHA3(
+                    ['bytes32', 'uint256'],
+                    [Utilities.normalizeHex(Buffer.from(`${key}`, 'utf8').toString('hex').padStart(64, '0')), index],
+                ).toString('hex');
+                encodedArray.push(Encryption.xor(leaf, keyHash));
+                index += 1;
+            }
         });
-        const encodedRootHash = ''; // probably not neaded
-        encodedArray.push(encodedRootHash); // probably not neaded
         const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
+        const sorted_data = Utilities.sortedStringify(privateObject.data, true);
+        const data = Buffer.from(sorted_data);
         return {
+            private_data_original_length: data.length,
+            private_data_array_length: merkleTree.levels[0].length,
             key,
             encoded_data: encodedArray,
             private_data_root_hash: privateObject.private_data_hash,
@@ -686,14 +699,56 @@ class ImportUtilities {
         };
     }
 
-    static validateAndDecodePrivateData(privateDataArray, key) {
+    static validateAndDecodePrivateData(
+        privateDataArray, key,
+        private_data_array_length,
+        private_data_original_length,
+    ) {
         const decodedDataArray = [];
-        privateDataArray.forEach((element) => {
-            // decode elements
+        privateDataArray.forEach((element, index) => {
+            const keyHash = abi.soliditySHA3(
+                ['bytes32', 'uint256'],
+                [Utilities.normalizeHex(Buffer.from(`${key}`, 'utf8').toString('hex').padStart(64, '0')), index],
+            ).toString('hex');
+            decodedDataArray.push(Encryption.xor(element, keyHash));
         });
+
+        const originalDataArray = decodedDataArray.slice(0, private_data_array_length);
+
+        // todo add validation
+        // const originalDataMarkleTree = new MerkleTree(originalDataArray, 'purchase', 'sha3');
+        // var index = 0;
+        // originalDataMarkleTree.levels.forEach((level) => {
+        //     level.forEach((leaf) => {
+        //         if (leaf !== decodedDataArray[index]){
+        //             //found non matching index
+        //             return {
+        //                 : {},
+        //                 errorStatus: 'VALIDATION_FAILED',
+        //             };
+        //         }
+        //         index += 1;
+        //     });
+        // });
+
+        // recreate original object
+
+        const first_level_blocks = constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+
+        let block_size = Math.min(Math
+            .round(private_data_original_length / first_level_blocks), default_block_size);
+        block_size = block_size < 1 ? 1 : block_size;
+
+        let originalDataString = '';
+        for (let i = 0; i < originalDataArray; i += 1) {
+            const dataElement = originalDataArray[i];
+            const block = dataElement.slice(dataElement.length - block_size, dataElement.length).toString('hex');
+            originalDataString += Buffer.from(block, 'hex').toString();
+        }
+
         return {
-            privateData: {},
-            errorStatus: null,
+            privateData: JSON.parse(originalDataString),
         };
     }
 

@@ -373,6 +373,7 @@ class DVController {
         const {
             handler_id, status, message, encoded_data,
             private_data_root_hash, encoded_data_root_hash,
+            private_data_array_length, private_data_original_length,
         } = response;
 
         const commandData = {
@@ -382,6 +383,8 @@ class DVController {
             encoded_data,
             private_data_root_hash,
             encoded_data_root_hash,
+            private_data_array_length,
+            private_data_original_length,
         };
 
         await this.commandExecutor.add({
