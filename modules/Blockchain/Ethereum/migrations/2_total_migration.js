@@ -222,11 +222,13 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
+        console.log(`\t Marketplace contract address: \t\t${marketplace.address}`);
         console.log(`\t Replacement contract address: \t\t${replacement.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
+        console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
 
         break;
     case 'setIdentity':
@@ -418,11 +420,13 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
+        console.log(`\t Marketplace contract address: \t\t${marketplace.address}`);
         console.log(`\t Replacement contract address: \t\t${replacement.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
+        console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
 
         break;
     case 'live':
