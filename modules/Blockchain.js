@@ -403,6 +403,16 @@ class Blockchain {
         );
     }
 
+    /**
+     * Decodes offer task event data from offer creation event
+     * @param result Blockchain transaction receipt
+     * @returns {Promise<any>}
+     */
+    decodePurchaseInitiatedEventFromTransaction(result) {
+        return this.blockchain.decodePurchaseInitiatedEventFromTransaction(result);
+    }
+
+
     async depositKey(purchaseId, key) {
         return this.blockchain.depositKey(purchaseId, key);
     }

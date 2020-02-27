@@ -1076,6 +1076,27 @@ class Ethereum {
         );
     }
 
+    /**
+     * Decodes offer task event data from offer creation event
+     * @param result Blockchain transaction receipt
+     * @returns {Object<any>}
+     */
+    decodePurchaseInitiatedEventFromTransaction(result) {
+        let purchaseInitiatedEventInputs;
+        const purchaseInitiatedEventAbi = this.marketplaceContractAbi.find(element => element.name === 'PurchaseInitiated');
+        if (purchaseInitiatedEventAbi) {
+            purchaseInitiatedEventInputs = purchaseInitiatedEventAbi.inputs;
+        } else {
+            throw Error('Could not find OfferTask event interface in Holding contract abi');
+        }
+
+        return this.web3.eth.abi.decodeLog(
+            purchaseInitiatedEventInputs,
+            result.logs[0].data,
+            result.logs[0].topics,
+        );
+    }
+
     async depositKey(purchaseId, key) {
         const gasPrice = await this.getGasPrice();
         const options = {
