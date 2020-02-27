@@ -43,7 +43,7 @@ contract Marketplace {
         bytes32 purchaseId,
         address sellerIdentity, address buyerIdentity,
         uint256 price,
-        bytes32 encodedDataRootHash, bytes32 encodedDataRootHash
+        bytes32 originalDataRootHash, bytes32 encodedDataRootHash
     );
     event KeyRevealed(bytes32 purchaseId, bytes32 key);
     event MisbehaviourProven(bytes32 purchaseId, address sellerIdentity, address buyerIdentity);
