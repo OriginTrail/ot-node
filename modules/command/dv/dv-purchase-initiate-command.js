@@ -54,6 +54,9 @@ class DvPurchaseInitiateCommand extends Command {
             dataTrade.price, private_data_root_hash, encoded_data_root_hash,
         );
 
+        dataTrade.purchase_id = purchaseId;
+        await dataTrade.save({ fields: ['purchase_id'] });
+
         if (!purchaseId) {
             return this._handleError(handler_id, 'Unable to initiate purchase to bc');
         }
@@ -66,9 +69,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         await this.commandExecutor.add({
             name: 'dvPurchaseKeyDepositedCommand',
-            delay: 5 * 60 * 1000, // 5 min
             data: commandData,
-            transactional: false,
         });
 
         this.remoteControl.purchaseStatus('Purchase initiated', 'Waiting for data seller to confirm your order. This may take a few minutes.');

@@ -19,7 +19,7 @@ class DhPurchaseInitiatedCommand extends Command {
         // todo limit purchase initiated commad repeat
         const events = await Models.events.findAll({
             where: {
-                event: 'PurchaseInitiated', // todo check event name
+                event: 'PurchaseInitiated',
                 finished: 0,
             },
         });

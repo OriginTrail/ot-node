@@ -674,8 +674,8 @@ class ImportUtilities {
         merkleTree.levels.forEach((leaf) => {
             // encrypt to encoded array
         });
-        const encodedRootHash = '';
-        encodedArray.push(encodedRootHash);
+        const encodedRootHash = ''; // probably not neaded
+        encodedArray.push(encodedRootHash); // probably not neaded
         const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
         return {
@@ -683,6 +683,17 @@ class ImportUtilities {
             encoded_data: encodedArray,
             private_data_root_hash: privateObject.private_data_hash,
             encoded_data_root_hash: encodedDataRootHash,
+        };
+    }
+
+    static validateAndDecodePrivateData(privateDataArray, key) {
+        const decodedDataArray = [];
+        privateDataArray.forEach((element) => {
+            // decode elements
+        });
+        return {
+            privateData: {},
+            errorStatus: null,
         };
     }
 
