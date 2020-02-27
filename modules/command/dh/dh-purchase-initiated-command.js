@@ -8,6 +8,7 @@ class DhPurchaseInitiatedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -42,16 +43,19 @@ class DhPurchaseInitiatedCommand extends Command {
             const event = events.find((e) => {
                 const {
                     sellerIdentity, buyerIdentity, encodedDataRootHash,
+                    originalDataRootHash, price,
                 } = JSON.parse(e.data);
                 return sellerIdentity === dataTrade.seller_erc_id &&
                     buyerIdentity === dataTrade.buyer_erc_id &&
-                    encodedDataRootHash === encoded_object.encoded_data_root_hash;
+                    encodedDataRootHash === encoded_object.encoded_data_root_hash &&
+                    originalDataRootHash === encoded_object.private_data_root_hash &&
+                    price === dataTrade.price;
             });
             if (event) {
-                // todo validate root
-                // todo validate price
-                // todo send deposit key
                 const { purchaseId } = JSON.parse(event.data);
+
+                await this.blockchain.depositKey(purchaseId, encoded_object.key);
+
                 dataTrade.purchase_id = purchaseId;
                 await dataTrade.save({ fields: ['purchase_id'] });
 

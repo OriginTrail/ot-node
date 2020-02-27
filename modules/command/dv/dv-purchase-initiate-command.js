@@ -10,6 +10,7 @@ class DvPurchaseInitiateCommand extends Command {
         super(ctx);
         this.remoteControl = ctx.remoteControl;
         this.logger = ctx.logger;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -130,8 +131,12 @@ class DvPurchaseInitiateCommand extends Command {
         buyer_erc, seller_erc, price,
         private_data_root_hash, encoded_data_root_hash,
     ) {
-        // method for sending bc request
-        return 'purchaseID';
+        const result = await this.blockchain.initiatePurchase(
+            buyer_erc, seller_erc,
+            price,
+            encoded_data_root_hash, private_data_root_hash,
+        );
+        return result.logs[0].args.purchaseId;
     }
 }
 

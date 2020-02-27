@@ -155,102 +155,103 @@ class DVController {
         }
     }
 
-    /**
-     * Handles private data read request
-     * @param data_set_id - Dataset that holdsprivate data
-     * @param ot_object_id - Object id that holds private data
-     * @param seller_node_id - Node id that holds private data
-     * @param res - API result object
-     * @returns null
-     */
-    async handlePrivateDataReadRequest(data_set_id, ot_object_id, seller_node_id, response) {
-        const handler_data = {
-            data_set_id,
-            ot_object_id,
-            seller_node_id,
-        };
-        const inserted_object = await Models.handler_ids.create({
-            status: 'PENDING',
-            data: JSON.stringify(handler_data),
-        });
-        const handlerId = inserted_object.dataValues.handler_id;
-        this.logger.info(`Read private data with id ${ot_object_id} with handler id ${handlerId} initiated.`);
+    // /**
+    //  * Handles private data read request
+    //  * @param data_set_id - Dataset that holdsprivate data
+    //  * @param ot_object_id - Object id that holds private data
+    //  * @param seller_node_id - Node id that holds private data
+    //  * @param res - API result object
+    //  * @returns null
+    //  */
+    // async handlePrivateDataReadRequest(data_set_id, ot_object_id, seller_node_id, response) {
+    //     const handler_data = {
+    //         data_set_id,
+    //         ot_object_id,
+    //         seller_node_id,
+    //     };
+    //     const inserted_object = await Models.handler_ids.create({
+    //         status: 'PENDING',
+    //         data: JSON.stringify(handler_data),
+    //     });
+    //     const handlerId = inserted_object.dataValues.handler_id;
+    //     this.logger.info(`Read private data with id
+    //     ${ot_object_id} with handler id ${handlerId} initiated.`);
+    //
+    //     response.status(200);
+    //     response.send({
+    //         handler_id: handlerId,
+    //     });
+    //
+    //     this.commandExecutor.add({
+    //         name: 'dvPrivateDataReadRequestCommand',
+    //         delay: 0,
+    //         data: {
+    //             data_set_id,
+    //             ot_object_id,
+    //             seller_node_id,
+    //             handlerId,
+    //         },
+    //         transactional: false,
+    //     });
+    // }
 
-        response.status(200);
-        response.send({
-            handler_id: handlerId,
-        });
-
-        this.commandExecutor.add({
-            name: 'dvPrivateDataReadRequestCommand',
-            delay: 0,
-            data: {
-                data_set_id,
-                ot_object_id,
-                seller_node_id,
-                handlerId,
-            },
-            transactional: false,
-        });
-    }
-
-    _validatePrivateData(data) {
-        let validated = false;
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            if (data[private_data_array] && Array.isArray(data[private_data_array])) {
-                data[private_data_array].forEach((private_object) => {
-                    if (private_object.isPrivate && private_object.data) {
-                        const calculatedPrivateHash = ImportUtilities
-                            .calculatePrivateDataHash(private_object);
-                        validated = calculatedPrivateHash === private_object.private_data_hash;
-                    }
-                });
-            }
-        });
-        return validated;
-    }
-
-    async handlePrivateDataReadResponse(message) {
-        const {
-            handler_id, ot_objects,
-        } = message;
-        const documentsToBeUpdated = [];
-        ot_objects.forEach((otObject) => {
-            otObject.relatedObjects.forEach((relatedObject) => {
-                if (relatedObject.vertex.vertexType === 'Data') {
-                    if (this._validatePrivateData(relatedObject.vertex.data)) {
-                        documentsToBeUpdated.push(relatedObject.vertex);
-                    }
-                }
-            });
-        });
-        const promises = [];
-        documentsToBeUpdated.forEach((document) => {
-            promises.push(this.graphStorage.updateDocument('ot_vertices', document));
-        });
-        await Promise.all(promises);
-
-        const handlerData = await Models.handler_ids.findOne({
-            where: {
-                handler_id,
-            },
-        });
-
-        const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
-
-        await Models.data_sellers.create({
-            data_set_id,
-            ot_json_object_id: ot_object_id,
-            seller_node_id: this.config.identity.toLowerCase(),
-            seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
-            price: this.config.default_data_price,
-        });
-
-
-        await Models.handler_ids.update({
-            status: 'COMPLETED',
-        }, { where: { handler_id } });
-    }
+    // _validatePrivateData(data) {
+    //     let validated = false;
+    //     constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+    //         if (data[private_data_array] && Array.isArray(data[private_data_array])) {
+    //             data[private_data_array].forEach((private_object) => {
+    //                 if (private_object.isPrivate && private_object.data) {
+    //                     const calculatedPrivateHash = ImportUtilities
+    //                         .calculatePrivateDataHash(private_object);
+    //                     validated = calculatedPrivateHash === private_object.private_data_hash;
+    //                 }
+    //             });
+    //         }
+    //     });
+    //     return validated;
+    // }
+    //
+    // async handlePrivateDataReadResponse(message) {
+    //     const {
+    //         handler_id, ot_objects,
+    //     } = message;
+    //     const documentsToBeUpdated = [];
+    //     ot_objects.forEach((otObject) => {
+    //         otObject.relatedObjects.forEach((relatedObject) => {
+    //             if (relatedObject.vertex.vertexType === 'Data') {
+    //                 if (this._validatePrivateData(relatedObject.vertex.data)) {
+    //                     documentsToBeUpdated.push(relatedObject.vertex);
+    //                 }
+    //             }
+    //         });
+    //     });
+    //     const promises = [];
+    //     documentsToBeUpdated.forEach((document) => {
+    //         promises.push(this.graphStorage.updateDocument('ot_vertices', document));
+    //     });
+    //     await Promise.all(promises);
+    //
+    //     const handlerData = await Models.handler_ids.findOne({
+    //         where: {
+    //             handler_id,
+    //         },
+    //     });
+    //
+    //     const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+    //
+    //     await Models.data_sellers.create({
+    //         data_set_id,
+    //         ot_json_object_id: ot_object_id,
+    //         seller_node_id: this.config.identity.toLowerCase(),
+    //         seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+    //         price: this.config.default_data_price,
+    //     });
+    //
+    //
+    //     await Models.handler_ids.update({
+    //         status: 'COMPLETED',
+    //     }, { where: { handler_id } });
+    // }
 
     // async sendNetworkPurchase(dataSetId, erc725Identity, nodeId, otJsonObjectId, handlerId) {
     //     const message = {
