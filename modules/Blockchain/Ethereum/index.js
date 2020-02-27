@@ -187,6 +187,7 @@ class Ethereum {
             PROFILE_CONTRACT: this.profileContract,
             APPROVAL_CONTRACT: this.approvalContract,
             LITIGATION_CONTRACT: this.litigationContract,
+            MARKETPLACE_CONTRACT: this.marketplaceContract,
             REPLACEMENT_CONTRACT: this.replacementContract,
         };
     }
