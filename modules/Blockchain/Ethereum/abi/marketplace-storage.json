@@ -1,0 +1,404 @@
+[
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "hub",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x365a86fc"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "purchase",
+    "outputs": [
+      {
+        "name": "seller",
+        "type": "address"
+      },
+      {
+        "name": "buyer",
+        "type": "address"
+      },
+      {
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "name": "key",
+        "type": "bytes32"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "name": "originalDataRootHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "encodedDataRootHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "stage",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xcc445611"
+  },
+  {
+    "inputs": [
+      {
+        "name": "hubAddress",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor",
+    "signature": "constructor"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newHubAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setHubAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0xc7eb4522"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "sellerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setSeller",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x96bf399c"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSeller",
+    "outputs": [
+      {
+        "name": "seller",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x7e44e504"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "buyerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setBuyer",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0xf3d0da7d"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getBuyer",
+    "outputs": [
+      {
+        "name": "buyer",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x87cc5a1c"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPrice",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x10d8d74d"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getPrice",
+    "outputs": [
+      {
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x31d98b3f"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "key",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setKey",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x07a00330"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getKey",
+    "outputs": [
+      {
+        "name": "key",
+        "type": "bytes32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x12aaac70"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTimestamp",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x30743726"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getTimestamp",
+    "outputs": [
+      {
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xd45c4435"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "originalDataRootHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setOriginalDataRootHash",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x751b64fa"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getOriginalDataRootHash",
+    "outputs": [
+      {
+        "name": "originalDataRootHash",
+        "type": "bytes32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x05f28db8"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "encodedDataRootHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setEncodedDataRootHash",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0xb5d8e518"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getEncodedDataRootHash",
+    "outputs": [
+      {
+        "name": "encodedDataRootHash",
+        "type": "bytes32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xab32e569"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "stage",
+        "type": "uint256"
+      }
+    ],
+    "name": "setStage",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0xbfc73cfd"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getStage",
+    "outputs": [
+      {
+        "name": "stage",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xae844f74"
+  }
+]
