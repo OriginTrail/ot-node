@@ -39,7 +39,12 @@ contract Marketplace {
         _;
     }
 
-    event PurchaseInitiated(bytes32 purchaseId, address sellerIdentity, address buyerIdentity, uint256 price, bytes32 encodedDataRootHash);
+    event PurchaseInitiated(
+        bytes32 purchaseId,
+        address sellerIdentity, address buyerIdentity,
+        uint256 price,
+        bytes32 encodedDataRootHash, bytes32 encodedDataRootHash
+    );
     event KeyRevealed(bytes32 purchaseId, bytes32 key);
     event MisbehaviourProven(bytes32 purchaseId, address sellerIdentity, address buyerIdentity);
 
@@ -74,7 +79,7 @@ contract Marketplace {
         // Secure funds from buyer
         reserveTokens(buyerIdentity, price);
 
-        emit PurchaseInitiated(purchaseId, sellerIdentity, buyerIdentity, price, encodedDataRootHash);
+        emit PurchaseInitiated(purchaseId, sellerIdentity, buyerIdentity, price, originalDataRootHash, encodedDataRootHash);
     }
 
     function revealKey(bytes32 purchaseId, bytes32 key) public {
