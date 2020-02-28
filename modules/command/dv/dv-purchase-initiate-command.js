@@ -12,6 +12,7 @@ class DvPurchaseInitiateCommand extends Command {
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
         this.importService = ctx.importService;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -77,10 +78,13 @@ class DvPurchaseInitiateCommand extends Command {
 
         await this.commandExecutor.add({
             name: 'dvPurchaseKeyDepositedCommand',
+            delay: 1 * 60 * 1000, // todo check why isn't it reading the default value
             data: commandData,
         });
 
         this.remoteControl.purchaseStatus('Purchase initiated', 'Waiting for data seller to confirm your order. This may take a few minutes.');
+
+        return Command.empty();
     }
 
     /**

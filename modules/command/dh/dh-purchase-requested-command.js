@@ -87,6 +87,7 @@ class DhPurchaseRequestedCommand extends Command {
                 };
                 await this.commandExecutor.add({
                     name: 'dhPurchaseInitiatedCommand',
+                    delay: 1 * 60 * 1000, // todo check why is this necessary
                     data: commandData,
                 });
             } else {

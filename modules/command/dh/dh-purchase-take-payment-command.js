@@ -36,7 +36,7 @@ class DhPurchaseTakePaymentCommand extends Command {
                     seller_erc_id: dataTrade.seller_erc_id,
                     price: dataTrade.price,
                 });
-                return Command.empty;
+                return Command.empty();
             } catch (error) {
                 if (error.message.contains('Complaint window has not yet expired!')) {
                     return Command.repeat();
@@ -44,12 +44,12 @@ class DhPurchaseTakePaymentCommand extends Command {
                 this.logger.error(error.message);
                 dataTrade.status = 'FAILED';
                 await dataTrade.save({ fields: ['status'] });
-                return Command.empty;
+                return Command.empty();
             }
         } else {
             dataTrade.status = 'DISPUTED';
             await dataTrade.save({ fields: ['status'] });
-            return Command.empty;
+            return Command.empty();
         }
     }
 
