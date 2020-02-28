@@ -39,8 +39,23 @@ class DvPurchaseRequestCommand extends Command {
         });
 
         if (!dataSeller) {
-            this.logger.error(`Unable to find data seller info with params: ${data_set_id}, ${ot_object_id}, ${seller_node_id}`);
-            // todo update handler ids table with failed status
+            const error = `Unable to find data seller info with params: ${data_set_id}, ${ot_object_id}, ${seller_node_id}`;
+            this.logger.error(error);
+            await Models.handler_ids.update(
+                {
+                    status: 'FAILED',
+                    data: JSON.stringify({
+                        error,
+                    }),
+                },
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+
+            this.remoteControl.purchaseStatus('Purchase initiation failed', 'Unable to find data seller. Please try again.', true);
             return Command.empty();
         }
 
@@ -53,8 +68,23 @@ class DvPurchaseRequestCommand extends Command {
         });
 
         if (dataTrade && dataTrade.status !== 'FAILED') {
-            this.logger.error(`Data purchase already completed or in progress! Previous purchase status: ${dataTrade.status}`);
-            // todo update handler ids table with failed status
+            const error = `Data purchase already completed or in progress! Previous purchase status: ${dataTrade.status}`;
+            this.logger.error(error);
+            await Models.handler_ids.update(
+                {
+                    status: 'FAILED',
+                    data: JSON.stringify({
+                        error,
+                    }),
+                },
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+
+            this.remoteControl.purchaseStatus('Purchase initiation failed', 'Data purchase already completed or in progress.', true);
             return Command.empty();
         }
 

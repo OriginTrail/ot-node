@@ -65,6 +65,7 @@ class DvPurchaseInitiateCommand extends Command {
         await dataTrade.save({ fields: ['purchase_id'] });
 
         if (!purchaseId) {
+            this.remoteControl.purchaseStatus('Purchase failed', 'Unabled to initiate purchase to Blockchain.', true);
             return this._handleError(handler_id, 'Unable to initiate purchase to bc');
         }
 
