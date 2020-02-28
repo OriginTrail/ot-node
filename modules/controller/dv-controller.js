@@ -398,19 +398,19 @@ class DVController {
             handler_id, status, price_in_trac,
         } = response;
 
+        const handler = await Models.handler_ids.findOne({
+            where: {
+                handler_id,
+            },
+        });
+
+        const {
+            data_set_id,
+            seller_node_id,
+            ot_object_id,
+        } = JSON.parse(handler.data);
+
         if (status === 'COMPLETED') {
-            const handler = await Models.handler_ids.findOne({
-                where: {
-                    handler_id,
-                },
-            });
-
-            const {
-                data_set_id,
-                seller_node_id,
-                ot_object_id,
-            } = JSON.parse(handler.data);
-
             await Models.data_sellers.update({
                 price: price_in_trac,
             }, {
@@ -423,6 +423,14 @@ class DVController {
         }
 
         await Models.handler_ids.update({
+            data: JSON.stringify({
+                message: {
+                    data_set_id,
+                    seller_node_id,
+                    ot_object_id,
+                    price_in_trac,
+                },
+            }),
             status,
         }, {
             where: {
