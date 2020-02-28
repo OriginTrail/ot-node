@@ -2,6 +2,7 @@ const Command = require('../command');
 const Models = require('../../../models');
 const Utilities = require('../../Utilities');
 
+const { Op } = Models.Sequelize;
 /**
  * Handles data location response.
  */
@@ -19,6 +20,13 @@ class DhPurchaseInitiatedCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
+        const {
+            data_set_id,
+            ot_json_object_id,
+            buyer_node_id,
+            encoded_object,
+        } = command.data;
+
         const events = await Models.events.findAll({
             where: {
                 event: 'PurchaseInitiated',
@@ -26,17 +34,12 @@ class DhPurchaseInitiatedCommand extends Command {
             },
         });
         if (events && events.length > 0) {
-            const {
-                data_set_id,
-                ot_json_object_id,
-                buyer_node_id,
-                encoded_object,
-            } = command.data;
             const dataTrade = await Models.data_trades.findOne({
                 where: {
                     data_set_id,
                     ot_json_object_id,
                     buyer_node_id,
+                    status: { [Op.ne]: 'FAILED' },
                 },
             });
             const event = events.find((e) => {
@@ -54,6 +57,9 @@ class DhPurchaseInitiatedCommand extends Command {
                     price === dataTrade.price;
             });
             if (event) {
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
+
                 const { purchaseId } = JSON.parse(event.data);
 
                 await this.blockchain.depositKey(purchaseId, encoded_object.key);
@@ -66,11 +72,21 @@ class DhPurchaseInitiatedCommand extends Command {
                 };
 
                 await this.commandExecutor.add({
-                    name: 'DhPurchaseTakePaymentCommand',
+                    name: 'dhPurchaseTakePaymentCommand',
                     data: commandData,
+                    delay: 3 * 60 * 1000, // 5 min todo set to 5 min
+                    retries: 3,
                 });
                 return Command.empty();
             }
+        }
+        if (command.retries === 0) {
+            await this._handleError(
+                data_set_id,
+                ot_json_object_id,
+                buyer_node_id, 'Couldn\'t find PurchaseInitiated event on blockchain.',
+            );
+            return Command.empty();
         }
         return Command.retry();
     }
@@ -89,6 +105,44 @@ class DhPurchaseInitiatedCommand extends Command {
         };
         Object.assign(command, map);
         return command;
+    }
+
+    async recover(command, err) {
+        const {
+            data_set_id,
+            ot_json_object_id,
+            buyer_node_id,
+        } = command.data;
+
+        await this._handleError(
+            data_set_id,
+            ot_json_object_id,
+            buyer_node_id, `Failed to process dhPurchaseInitiatedCommand. Error: ${err}`,
+        );
+
+        return Command.empty();
+    }
+
+    async _handleError(
+        data_set_id,
+        ot_json_object_id,
+        buyer_node_id,
+        errorMessage,
+    ) {
+        this.logger.error(errorMessage);
+        await Models.data_trades.update(
+            {
+                status: 'FAILED',
+            },
+            {
+                where: {
+                    data_set_id,
+                    ot_json_object_id,
+                    buyer_node_id,
+                    status: { [Op.ne]: 'FAILED' },
+                },
+            },
+        );
     }
 }
 

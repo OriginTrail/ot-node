@@ -1,7 +1,7 @@
 const Command = require('../command');
 const Models = require('../../../models');
-const ImportUtilities = require('../../ImportUtilities');
 
+const { Op } = Models.Sequelize;
 /**
  * Handles data location response.
  */
@@ -29,8 +29,9 @@ class DvPurchaseInitiateCommand extends Command {
 
 
         if (status !== 'SUCCESSFUL') {
-            this.logger.trace(`Unable to initiate purchase dh returned status: ${status} with message: ${message}`);
-            return this._handleError(handler_id, status);
+            this.logger.trace(`Unable to initiate purchase, seller returned status: ${status} with message: ${message}`);
+            this._handleError(handler_id, status);
+            return Command.empty();
         }
         const {
             data_set_id,
@@ -42,7 +43,8 @@ class DvPurchaseInitiateCommand extends Command {
             data_set_id,
             ot_object_id, private_data_root_hash,
         ))) {
-            return this._handleError(handler_id, 'Unable to initiate purchase private data root hash validation failed');
+            this._handleError(handler_id, 'Unable to initiate purchase private data root hash validation failed');
+            return Command.empty();
         }
 
         const dataTrade = await Models.data_trades.findOne({
@@ -50,6 +52,7 @@ class DvPurchaseInitiateCommand extends Command {
                 data_set_id,
                 ot_json_object_id: ot_object_id,
                 seller_node_id,
+                status: { [Op.ne]: 'FAILED' },
             },
         });
         const result = await this.blockchain.initiatePurchase(
@@ -61,13 +64,15 @@ class DvPurchaseInitiateCommand extends Command {
         const { purchaseId } = this.blockchain
             .decodePurchaseInitiatedEventFromTransaction(result);
 
-        dataTrade.purchase_id = purchaseId;
-        await dataTrade.save({ fields: ['purchase_id'] });
-
         if (!purchaseId) {
             this.remoteControl.purchaseStatus('Purchase failed', 'Unabled to initiate purchase to Blockchain.', true);
-            return this._handleError(handler_id, 'Unable to initiate purchase to bc');
+            this._handleError(handler_id, 'Unable to initiate purchase to bc');
+            return Command.empty();
         }
+
+        dataTrade.purchase_id = purchaseId;
+        dataTrade.status = 'INITIATED';
+        await dataTrade.save({ fields: ['purchase_id', 'status'] });
 
         const commandData = {
             handler_id,
@@ -79,7 +84,8 @@ class DvPurchaseInitiateCommand extends Command {
 
         await this.commandExecutor.add({
             name: 'dvPurchaseKeyDepositedCommand',
-            delay: 1 * 60 * 1000, // todo check why isn't it reading the default value
+            delay: 2 * 60 * 1000, // todo check why isn't it reading the default value
+            retries: 3,
             data: commandData,
         });
 
@@ -103,8 +109,15 @@ class DvPurchaseInitiateCommand extends Command {
         return command;
     }
 
-    async _handleError(handler_id, status) {
-        // todo should we add message if status is failed for data_trades
+    async recover(command, err) {
+        const { handler_id } = command.data;
+
+        await this._handleError(handler_id, `Failed to process dvPurchaseInitiateCommand. Error: ${err}`);
+
+        return Command.empty();
+    }
+
+    async _handleError(handler_id, errorMessage) {
         const handlerData = await this._getHandlerData(handler_id);
 
         await Models.data_trades.update({
@@ -114,15 +127,14 @@ class DvPurchaseInitiateCommand extends Command {
                 data_set_id: handlerData.data_set_id,
                 seller_node_id: handlerData.seller_node_id,
                 ot_json_object_id: handlerData.ot_object_id,
+                status: { [Op.ne]: 'FAILED' },
             },
         });
 
         await Models.handler_ids.update({
-            data: JSON.stringify({ message: status }),
+            data: JSON.stringify({ message: errorMessage }),
             status: 'FAILED',
         }, { where: { handler_id } });
-
-        return Command.empty();
     }
 
     async _validatePrivateDataRootHash(dataSetId, otObjectId, private_data_root_hash) {

@@ -1043,7 +1043,7 @@ class Ethereum {
 
     async getPurchase(purchaseId) {
         this.log.trace(`Asking for purchase with id [${purchaseId}].`);
-        return this.marketplaceContract.methods.purchase(purchaseId).call();
+        return this.marketplaceStorageContract.methods.purchase(purchaseId).call();
     }
 
     async getPurchasedData(importId, wallet) {

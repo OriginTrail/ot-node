@@ -22,22 +22,21 @@ class DvPurchaseKeyDepositedCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
-        // todo limit purchase initiated commad repeat
+        const {
+            handler_id,
+            encoded_data,
+            purchase_id,
+            private_data_array_length,
+            private_data_original_length,
+        } = command.data;
+
         const events = await Models.events.findAll({
             where: {
-                event: 'KeyRevealed',
+                event: 'KeyDeposited',
                 finished: 0,
             },
         });
-        if (events) {
-            const {
-                handler_id,
-                encoded_data,
-                purchase_id,
-                private_data_array_length,
-                private_data_original_length,
-            } = command.data;
-
+        if (events && events.length > 0) {
             const event = events.find((e) => {
                 const {
                     purchaseId,
@@ -45,6 +44,9 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 return purchaseId === purchase_id;
             });
             if (event) {
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
+
                 this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');
                 const { key } = JSON.parse(event.data);
                 const decodedPrivateData = ImportUtilities
@@ -52,7 +54,6 @@ class DvPurchaseKeyDepositedCommand extends Command {
                         encoded_data, key, private_data_array_length,
                         private_data_original_length,
                     );
-
                 if (decodedPrivateData.errorStatus) {
                     const commandData = {
                         encoded_data,
@@ -70,25 +71,30 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     },
                 });
 
+                handler.status = 'COMPLETED';
+                await handler.save({ fields: ['status'] });
+
                 const {
                     data_set_id,
-                    seller_node_id,
                     ot_object_id,
                 } = JSON.parse(handler.data);
 
-                await this._updatePrivateDataInDb(data_set_id, ot_object_id);
+                await this._updatePrivateDataInDb(
+                    data_set_id,
+                    ot_object_id,
+                    decodedPrivateData.privateData,
+                );
 
-                await Models.data_trades.update({
-                    status: 'COMPLETED', // todo validate status message
-                    where: {
-                        data_set_id,
-                        ot_json_object_id: ot_object_id,
-                        seller_node_id,
+                await Models.data_trades.update(
+                    {
+                        status: 'COMPLETED',
                     },
-                });
-
-                handler.status = 'COMPLETED';
-                await handler.save({ fields: ['status'] });
+                    {
+                        where: {
+                            purchase_id,
+                        },
+                    },
+                );
 
                 await Models.data_sellers.create({
                     data_set_id,
@@ -102,7 +108,38 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 return Command.empty();
             }
         }
+        if (command.retries === 0) {
+            await this._handleError(
+                handler_id,
+                purchase_id,
+                'Couldn\'t find KeyDeposited event on blockchain.',
+            );
+            return Command.empty();
+        }
         return Command.retry();
+    }
+
+    async recover(command, err) {
+        const { handler_id, purchase_id } = command.data;
+
+        await this._handleError(handler_id, purchase_id, `Failed to process dvPurchaseKeyDepositedCommand. Error: ${err}`);
+
+        return Command.empty();
+    }
+
+    async _handleError(handler_id, purchase_id, errorMessage) {
+        await Models.data_trades.update({
+            status: 'FAILED',
+        }, {
+            where: {
+                purchase_id,
+            },
+        });
+
+        await Models.handler_ids.update({
+            data: JSON.stringify({ message: errorMessage }),
+            status: 'FAILED',
+        }, { where: { handler_id } });
     }
 
     /**
@@ -121,17 +158,29 @@ class DvPurchaseKeyDepositedCommand extends Command {
         return command;
     }
 
-    async _updatePrivateDataInDb(dataSetId, otObjectId) {
+    async _updatePrivateDataInDb(dataSetId, otObjectId, privateData) {
         const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
             dataSetId,
             otObjectId,
         );
         const documentsToBeUpdated = [];
+        const calculatedPrivateHash = ImportUtilities
+            .calculatePrivateDataHash({ data: privateData });
         otObject.relatedObjects.forEach((relatedObject) => {
             if (relatedObject.vertex.vertexType === 'Data') {
-                if (this._validatePrivateDataRootHash(relatedObject.vertex.data)) {
-                    documentsToBeUpdated.push(relatedObject.vertex);
-                }
+                const vertexData = relatedObject.vertex.data;
+                constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+                    if (vertexData[private_data_array] &&
+                        Array.isArray(vertexData[private_data_array])) {
+                        vertexData[private_data_array].forEach((private_object) => {
+                            if (private_object.isPrivate &&
+                                calculatedPrivateHash === private_object.private_data_hash) {
+                                private_object.data = privateData;
+                                documentsToBeUpdated.push(relatedObject.vertex);
+                            }
+                        });
+                    }
+                });
             }
         });
 
@@ -140,22 +189,6 @@ class DvPurchaseKeyDepositedCommand extends Command {
             promises.push(this.graphStorage.updateDocument('ot_vertices', document));
         });
         await Promise.all(promises);
-    }
-
-    _validatePrivateDataRootHash(data) {
-        let validated = false;
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            if (data[private_data_array] && Array.isArray(data[private_data_array])) {
-                data[private_data_array].forEach((private_object) => {
-                    if (private_object.isPrivate && private_object.data) {
-                        const calculatedPrivateHash = ImportUtilities
-                            .calculatePrivateDataHash(private_object);
-                        validated = calculatedPrivateHash === private_object.private_data_hash;
-                    }
-                });
-            }
-        });
-        return validated;
     }
 }
 
