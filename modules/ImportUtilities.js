@@ -663,7 +663,7 @@ class ImportUtilities {
         const blocks = [];
         for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
             const block = data.slice(i, i + block_size).toString('hex');
-            blocks.push(block.padStart(default_block_size, '0'));
+            blocks.push(block.padStart(64, '0'));
         }
         const merkleTree = new MerkleTree(blocks, type, 'sha3');
         return merkleTree;
@@ -742,7 +742,7 @@ class ImportUtilities {
         block_size = block_size < 1 ? 1 : block_size;
 
         let originalDataString = '';
-        for (let i = 0; i < originalDataArray; i += 1) {
+        for (let i = 0; i < originalDataArray.length; i += 1) {
             const dataElement = originalDataArray[i];
             const block = dataElement.slice(dataElement.length - block_size, dataElement.length).toString('hex');
             originalDataString += Buffer.from(block, 'hex').toString();

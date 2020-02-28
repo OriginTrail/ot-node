@@ -292,4 +292,32 @@ describe('Import utilities module ', () => {
         assert.equal(signerOfOriginal, signerOfShuffled);
         assert.equal(signerOfShuffled, signingWallet.wallet);
     });
+
+    it('Encoding verification', () => {
+        const privateObject = {
+            data: {
+                'urn:ot:object:product:batch:humidity': '19.7',
+                'urn:ot:object:product:batch:power_feeding': '85',
+                'urn:ot:object:product:batch:productId': 'urn:ot:object:actor:id:KakaxiSN687',
+                'urn:ot:object:product:batch:rainfall': '0.0',
+                'urn:ot:object:product:batch:solar_radiation': '0.0',
+                'urn:ot:object:product:batch:temperature': '22.0',
+                vocabularyType: 'urn:ot:object:batch',
+            },
+        };
+
+        const {
+            private_data_original_length, private_data_array_length, key,
+            encoded_data, private_data_root_hash, encoded_data_root_hash,
+        } = ImportUtilities.encodePrivateData(privateObject);
+
+        const result = ImportUtilities.validateAndDecodePrivateData(
+            encoded_data,
+            key,
+            private_data_array_length,
+            private_data_original_length,
+        );
+
+        assert.equal(privateObject, result);
+    });
 });
