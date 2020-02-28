@@ -1136,7 +1136,8 @@ class RestAPIServiceV2 {
                     if (data_seller !== 'metadata') {
                         result.push({
                             seller_node_id: data_seller,
-                            timestamp: not_owned_objects[dataset].metadata.timestamp,
+                            timestamp: (new Date(not_owned_objects[dataset].metadata.timestamp))
+                                .getTime(),
                             dataset: {
                                 id: dataset,
                                 name: not_owned_objects[dataset].metadata.datasetTitle,
@@ -1227,7 +1228,7 @@ class RestAPIServiceV2 {
 
             for (const dataset in owned_objects) {
                 result.push({
-                    timestamp: owned_objects[dataset].metadata.timestamp,
+                    timestamp: (new Date(owned_objects[dataset].metadata.timestamp)).getTime(),
                     dataset: {
                         id: dataset,
                         name: owned_objects[dataset].metadata.datasetTitle,
