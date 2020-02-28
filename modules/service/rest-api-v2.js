@@ -130,9 +130,9 @@ class RestAPIServiceV2 {
         //     await this._privateDataReadNetwork(req, res);
         // });
 
-        server.get(`/api/${this.version_id}/network/private_data/read/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
-        });
+        // server.get(`/api/${this.version_id}/network/private_data/read/result/:handler_id`, async (req, res) => {
+        //     await this._checkForHandlerStatus(req, res);
+        // });
 
         server.post(`/api/${this.version_id}/network/private_data/purchase`, async (req, res) => {
             await this.dvController.sendNetworkPurchase(req, res);
