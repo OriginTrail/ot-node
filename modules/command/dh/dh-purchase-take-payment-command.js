@@ -1,6 +1,8 @@
 const Command = require('../command');
 const Models = require('../../../models');
 
+const { Op } = Models.Sequelize;
+
 /**
  * Handles data location response.
  */
@@ -36,21 +38,29 @@ class DhPurchaseTakePaymentCommand extends Command {
                     seller_erc_id: dataTrade.seller_erc_id,
                     price: dataTrade.price,
                 });
-                return Command.empty();
             } catch (error) {
                 if (error.message.contains('Complaint window has not yet expired!')) {
-                    return Command.repeat();
+                    if (command.retries !== 0) {
+                        return Command.retry();
+                    }
                 }
                 this.logger.error(error.message);
                 dataTrade.status = 'FAILED';
                 await dataTrade.save({ fields: ['status'] });
-                return Command.empty();
+
+                await this._handleError(
+                    purchase_id,
+                    `Couldn't execute takePayment command. Error: ${error.message}`,
+                );
             }
         } else {
             dataTrade.status = 'DISPUTED';
             await dataTrade.save({ fields: ['status'] });
-            return Command.empty();
+
+            this.logger.warn(`Couldn't take payment for purchase ${purchase_id}`);
         }
+
+        return Command.empty();
     }
 
     /**
@@ -66,6 +76,24 @@ class DhPurchaseTakePaymentCommand extends Command {
         };
         Object.assign(command, map);
         return command;
+    }
+
+    async _handleError(
+        purchase_id,
+        errorMessage,
+    ) {
+        this.logger.error(errorMessage);
+        await Models.data_trades.update(
+            {
+                status: 'FAILED',
+            },
+            {
+                where: {
+                    purchase_id,
+                    status: { [Op.ne]: 'FAILED' },
+                },
+            },
+        );
     }
 }
 
