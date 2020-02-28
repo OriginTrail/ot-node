@@ -74,7 +74,7 @@ class DhPurchaseInitiatedCommand extends Command {
                 await this.commandExecutor.add({
                     name: 'dhPurchaseTakePaymentCommand',
                     data: commandData,
-                    delay: 3 * 60 * 1000, // 5 min todo set to 5 min
+                    delay: 5 * 60 * 1000,
                     retries: 3,
                 });
                 return Command.empty();
