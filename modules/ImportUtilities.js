@@ -743,9 +743,9 @@ class ImportUtilities {
 
         let originalDataString = '';
         for (let i = 0; i < originalDataArray.length; i += 1) {
-            const dataElement = originalDataArray[i];
-            const block = dataElement.slice(dataElement.length - block_size, dataElement.length).toString('hex');
-            originalDataString += Buffer.from(block, 'hex').toString();
+            const dataElement = Buffer.from(originalDataArray[i], 'hex');
+            const block = dataElement.slice(dataElement.length - block_size, dataElement.length);
+            originalDataString += block.toString();
         }
 
         return {

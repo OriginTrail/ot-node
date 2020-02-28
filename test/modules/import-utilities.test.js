@@ -318,6 +318,9 @@ describe('Import utilities module ', () => {
             private_data_original_length,
         );
 
-        assert.equal(privateObject, result);
+        assert.equal(
+            Utilities.sortedStringify(privateObject.data),
+            Utilities.sortedStringify(result.privateData),
+        );
     });
 });
