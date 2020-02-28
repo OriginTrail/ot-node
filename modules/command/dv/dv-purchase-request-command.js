@@ -59,7 +59,7 @@ class DvPurchaseRequestCommand extends Command {
             return Command.empty();
         }
 
-        const dataTrade = await Models.data_trades.findOne({
+        const dataTrades = await Models.data_trades.findAll({
             where: {
                 data_set_id,
                 ot_json_object_id: ot_object_id,
@@ -67,37 +67,14 @@ class DvPurchaseRequestCommand extends Command {
             },
         });
 
-        if (dataTrade && dataTrade.status !== 'FAILED') {
-            const error = `Data purchase already completed or in progress! Previous purchase status: ${dataTrade.status}`;
-            this.logger.error(error);
-            await Models.handler_ids.update(
-                {
-                    status: 'FAILED',
-                    data: JSON.stringify({
-                        error,
-                    }),
-                },
-                {
-                    where: {
-                        handler_id,
-                    },
-                },
-            );
-
-            this.remoteControl.purchaseStatus('Purchase initiation failed', 'Data purchase already completed or in progress.', true);
-            return Command.empty();
+        if (dataTrades && dataTrades.length > 0) {
+            const dataTrade = dataTrades.find(dataTrade => dataTrade.status !== 'FAILED');
+            if (dataTrade) {
+                const errorMessage = `Data purchase already completed or in progress! Previous purchase status: ${dataTrade.status}`;
+                await this._handleError(errorMessage, handler_id);
+                return Command.empty();
+            }
         }
-
-        await Models.data_trades.create({
-            data_set_id,
-            ot_json_object_id: ot_object_id,
-            buyer_node_id: this.config.identity,
-            buyer_erc_id: this.config.erc725Identity.toLowerCase(),
-            seller_node_id,
-            seller_erc_id: dataSeller.seller_erc_id,
-            price: dataSeller.price,
-            status: 'REQUESTED',
-        });
 
         const message = {
             data_set_id,
@@ -122,8 +99,50 @@ class DvPurchaseRequestCommand extends Command {
             seller_node_id,
         );
 
+        await Models.data_trades.create({
+            data_set_id,
+            ot_json_object_id: ot_object_id,
+            buyer_node_id: this.config.identity,
+            buyer_erc_id: this.config.erc725Identity.toLowerCase(),
+            seller_node_id,
+            seller_erc_id: dataSeller.seller_erc_id,
+            price: dataSeller.price,
+            status: 'REQUESTED',
+        });
+
         return Command.empty();
     }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { handler_id } = command.data;
+        await this._handleError(`${err}.`, handler_id);
+        return Command.empty();
+    }
+
+    async _handleError(errorMessage, handler_id) {
+        this.logger.error(`Purchase initiation failed. ${errorMessage}`);
+        await Models.handler_ids.update(
+            {
+                status: 'FAILED',
+                data: JSON.stringify({
+                    errorMessage: `Purchase initiation failed. ${errorMessage}`,
+                }),
+            },
+            {
+                where: {
+                    handler_id,
+                },
+            },
+        );
+
+        this.remoteControl.purchaseStatus('Purchase initiation failed', errorMessage, true);
+    }
+
 
     /**
      * Builds default DvPurchaseRequestCommand

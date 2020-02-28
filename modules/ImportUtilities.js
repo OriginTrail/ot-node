@@ -740,9 +740,9 @@ class ImportUtilities {
         let block_size = Math.min(Math
             .round(private_data_original_length / first_level_blocks), default_block_size);
         block_size = block_size < 1 ? 1 : block_size;
-
+        const numberOfBlocks = private_data_original_length / block_size;
         let originalDataString = '';
-        for (let i = 0; i < originalDataArray.length; i += 1) {
+        for (let i = 0; i < numberOfBlocks; i += 1) {
             const dataElement = Buffer.from(originalDataArray[i], 'hex');
             const block = dataElement.slice(dataElement.length - block_size, dataElement.length);
             originalDataString += block.toString();
