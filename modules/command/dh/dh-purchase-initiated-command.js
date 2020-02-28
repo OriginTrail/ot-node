@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models');
+const Utilities = require('../../Utilities');
 
 /**
  * Handles data location response.
@@ -31,7 +32,6 @@ class DhPurchaseInitiatedCommand extends Command {
                 buyer_node_id,
                 encoded_object,
             } = command.data;
-
             const dataTrade = await Models.data_trades.findOne({
                 where: {
                     data_set_id,
@@ -39,16 +39,18 @@ class DhPurchaseInitiatedCommand extends Command {
                     buyer_node_id,
                 },
             });
-
             const event = events.find((e) => {
                 const {
                     sellerIdentity, buyerIdentity, encodedDataRootHash,
                     originalDataRootHash, price,
                 } = JSON.parse(e.data);
-                return sellerIdentity === dataTrade.seller_erc_id &&
-                    buyerIdentity === dataTrade.buyer_erc_id &&
-                    encodedDataRootHash === encoded_object.encoded_data_root_hash &&
-                    originalDataRootHash === encoded_object.private_data_root_hash &&
+                return Utilities.normalizeHex(sellerIdentity) === dataTrade.seller_erc_id &&
+                    Utilities.normalizeHex(buyerIdentity)
+                    === Utilities.normalizeHex(dataTrade.buyer_erc_id) &&
+                    Utilities.normalizeHex(encodedDataRootHash)
+                    === encoded_object.encoded_data_root_hash &&
+                    Utilities.normalizeHex(originalDataRootHash)
+                    === encoded_object.private_data_root_hash &&
                     price === dataTrade.price;
             });
             if (event) {
@@ -56,7 +58,7 @@ class DhPurchaseInitiatedCommand extends Command {
 
                 await this.blockchain.depositKey(purchaseId, encoded_object.key);
 
-                dataTrade.purchase_id = purchaseId;
+                dataTrade.purchase_id = Utilities.normalizeHex(purchaseId);
                 await dataTrade.save({ fields: ['purchase_id'] });
 
                 const commandData = {

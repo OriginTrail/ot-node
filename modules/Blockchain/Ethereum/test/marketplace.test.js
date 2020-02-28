@@ -174,7 +174,7 @@ contract('Marketplace testing', async (accounts) => {
         assert(buyerStartStakeReserved.add(price).eq(result), 'Reserved stake amount incorrect for buyer account upon initialization! '
             + `Expected ${buyerStartStakeReserved.add(price).toString()}, but got ${result.toString()}!`);
 
-        result = await marketplace.revealKey(
+        result = await marketplace.depositKey(
             purchaseId,
             key,
             { from: seller_wallet },
@@ -325,7 +325,7 @@ contract('Marketplace testing', async (accounts) => {
         assert(buyerStartStakeReserved.add(price).eq(result), 'Reserved stake amount incorrect for buyer account upon initialization! '
             + `Expected ${buyerStartStakeReserved.add(price).toString()}, but got ${result.toString()}!`);
 
-        result = await marketplace.revealKey(
+        result = await marketplace.depositKey(
             purchaseId,
             key,
             { from: seller_wallet },
@@ -429,7 +429,7 @@ contract('Marketplace testing', async (accounts) => {
         assert(buyerStartStakeReserved.add(price).eq(result), 'Reserved stake amount incorrect for buyer account upon initialization! '
             + `Expected ${buyerStartStakeReserved.add(price).toString()}, but got ${result.toString()}!`);
 
-        result = await marketplace.revealKey(
+        result = await marketplace.depositKey(
             purchaseId,
             key,
             { from: seller_wallet },
@@ -460,7 +460,7 @@ contract('Marketplace testing', async (accounts) => {
         try {
             await marketplace.takePayment(purchaseId, { from: seller_wallet });
         } catch (e) {
-            const expectedMessage = 'Payment can only be taken in the keyRevealed stage';
+            const expectedMessage = 'Payment can only be taken in the KeyDeposited stage';
             if (e.message.toString().includes(expectedMessage)) {
                 errored = true;
             } else {
@@ -594,7 +594,7 @@ contract('Marketplace testing', async (accounts) => {
         assert(buyerStartStakeReserved.add(price).eq(result), 'Reserved stake amount incorrect for buyer account upon initialization! '
             + `Expected ${buyerStartStakeReserved.add(price).toString()}, but got ${result.toString()}!`);
 
-        result = await marketplace.revealKey(
+        result = await marketplace.depositKey(
             purchaseId,
             key,
             { from: seller_wallet },
@@ -624,7 +624,7 @@ contract('Marketplace testing', async (accounts) => {
         try {
             await marketplace.takePayment(purchaseId, { from: seller_wallet });
         } catch (e) {
-            const expectedMessage = 'Payment can only be taken in the keyRevealed stage';
+            const expectedMessage = 'Payment can only be taken in the KeyDeposited stage';
             if (e.message.toString().includes(expectedMessage)) {
                 errored = true;
             } else {

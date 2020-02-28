@@ -22,7 +22,7 @@ contract MarketplaceStorage {
         hub = Hub(newHubAddress);
     }
 
-    enum StageDefinition {created, initialized, keyRevealed, finished}
+    enum StageDefinition {created, initialized, keyDeposited, finished}
 
     struct PurchaseDefinition{
         address seller;

@@ -45,7 +45,7 @@ contract Marketplace {
         uint256 price,
         bytes32 originalDataRootHash, bytes32 encodedDataRootHash
     );
-    event KeyRevealed(bytes32 purchaseId, bytes32 key);
+    event KeyDeposited(bytes32 purchaseId, bytes32 key);
     event MisbehaviourProven(bytes32 purchaseId, address sellerIdentity, address buyerIdentity);
 
     function initiatePurchase(
@@ -82,7 +82,7 @@ contract Marketplace {
         emit PurchaseInitiated(purchaseId, sellerIdentity, buyerIdentity, price, originalDataRootHash, encodedDataRootHash);
     }
 
-    function revealKey(bytes32 purchaseId, bytes32 key) public {
+    function depositKey(bytes32 purchaseId, bytes32 key) public {
         require(uint256(purchaseId) != 0, "Cannot reveal key without purchase id submitted");
         require(uint256(key) != 0, "Cannot reveal key without key submitted");
 
@@ -100,7 +100,7 @@ contract Marketplace {
         // Secure funds from all parties
         reserveTokens(sellerIdentity, marketplaceStorage.getPrice(purchaseId));
 
-        emit KeyRevealed(purchaseId, key);
+        emit KeyDeposited(purchaseId, key);
     }
 
     function takePayment(bytes32 purchaseId) public {
@@ -108,7 +108,7 @@ contract Marketplace {
 
         MarketplaceStorage marketplaceStorage = MarketplaceStorage(hub.getContractAddress("MarketplaceStorage"));
 
-        require(marketplaceStorage.getStage(purchaseId) == 2, "Payment can only be taken in the keyRevealed stage");
+        require(marketplaceStorage.getStage(purchaseId) == 2, "Payment can only be taken in the KeyDeposited stage");
         require(block.timestamp > marketplaceStorage.getTimestamp(purchaseId) + paymentStageInterval, "Complaint window has not yet expired!");
 
         address buyerIdentity = marketplaceStorage.getBuyer(purchaseId);
@@ -157,7 +157,7 @@ contract Marketplace {
         bytes32 key = marketplaceStorage.getKey(purchaseId);
         bytes32 encodedDataRootHash = marketplaceStorage.getEncodedDataRootHash(purchaseId);
 
-        require(marketplaceStorage.getStage(purchaseId) == 2, "Complaint can only be given in the keyRevealed stage");
+        require(marketplaceStorage.getStage(purchaseId) == 2, "Complaint can only be given in the KeyDeposited stage");
         require(block.timestamp <= marketplaceStorage.getTimestamp(purchaseId) + paymentStageInterval, "Complaint window has expired!");
 
         require (verifyMerkleTreeProof(_indexOfRootHash, _originalDataRootEncoded, _proofOfEncodedData, encodedDataRootHash));
@@ -181,7 +181,7 @@ contract Marketplace {
         bytes32 key = marketplaceStorage.getKey(purchaseId);
         bytes32 encodedDataRootHash = marketplaceStorage.getEncodedDataRootHash(purchaseId);
 
-        require(marketplaceStorage.getStage(purchaseId) == 2, "Complaint can only be given in the keyRevealed stage");
+        require(marketplaceStorage.getStage(purchaseId) == 2, "Complaint can only be given in the KeyDeposited stage");
         require(block.timestamp <= marketplaceStorage.getTimestamp(purchaseId) + paymentStageInterval, "Complaint window has expired!");
 
         // Verify that the output element was sent by seller

@@ -671,7 +671,8 @@ class ImportUtilities {
 
     static encodePrivateData(privateObject) {
         const merkleTree = ImportUtilities.calculatePrivateDataMerkleTree(privateObject, 'purchase');
-        const key = crypto.randomBytes(32);
+        const rawKey = crypto.randomBytes(32);
+        const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
         const encodedArray = [];
         let index = 0;
         merkleTree.levels.forEach((level) => {
@@ -679,7 +680,7 @@ class ImportUtilities {
                 const leaf = level[i];
                 const keyHash = abi.soliditySHA3(
                     ['bytes32', 'uint256'],
-                    [Utilities.normalizeHex(Buffer.from(`${key}`, 'utf8').toString('hex').padStart(64, '0')), index],
+                    [key, index],
                 ).toString('hex');
                 encodedArray.push(Encryption.xor(leaf, keyHash));
                 index += 1;
@@ -694,8 +695,8 @@ class ImportUtilities {
             private_data_array_length: merkleTree.levels[0].length,
             key,
             encoded_data: encodedArray,
-            private_data_root_hash: privateObject.private_data_hash,
-            encoded_data_root_hash: encodedDataRootHash,
+            private_data_root_hash: Utilities.normalizeHex(privateObject.private_data_hash),
+            encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
         };
     }
 
@@ -708,7 +709,7 @@ class ImportUtilities {
         privateDataArray.forEach((element, index) => {
             const keyHash = abi.soliditySHA3(
                 ['bytes32', 'uint256'],
-                [Utilities.normalizeHex(Buffer.from(`${key}`, 'utf8').toString('hex').padStart(64, '0')), index],
+                [key, index],
             ).toString('hex');
             decodedDataArray.push(Encryption.xor(element, keyHash));
         });
