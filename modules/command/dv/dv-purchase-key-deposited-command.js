@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Models = require('../../../models');
 const ImportUtilities = require('../../ImportUtilities');
+const Utilities = require('../../Utilities');
 const constants = require('../../constants');
 
 /**
@@ -100,7 +101,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     data_set_id,
                     ot_json_object_id: ot_object_id,
                     seller_node_id: this.config.identity,
-                    seller_erc_id: this.config.erc725Identity,
+                    seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
                     price: this.config.default_data_price,
                 });
 
