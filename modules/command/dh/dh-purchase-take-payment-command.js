@@ -8,6 +8,7 @@ class DhPurchaseTakePaymentCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -16,7 +17,40 @@ class DhPurchaseTakePaymentCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
-        // if no dispute started send bc take payment
+        const { purchase_id } = command.data;
+        const dataTrade = await Models.data_trades.findOne({
+            where: {
+                purchase_id,
+            },
+        });
+        const bcPurchase = await this.blockchain.getPurchase(purchase_id);
+        if (bcPurchase.stage === 2) {
+            try {
+                await this.blockchain.takePayment(purchase_id);
+                dataTrade.status = 'COMPLETED';
+                await dataTrade.save({ fields: ['status'] });
+                await Models.data_sellers.create({
+                    data_set_id: dataTrade.data_set_id,
+                    ot_json_object_id: dataTrade.ot_json_object_id,
+                    seller_node_id: dataTrade.seller_node_id,
+                    seller_erc_id: dataTrade.seller_erc_id,
+                    price: dataTrade.price,
+                });
+                return Command.empty();
+            } catch (error) {
+                if (error.message.contains('Complaint window has not yet expired!')) {
+                    return Command.repeat();
+                }
+                this.logger.error(error.message);
+                dataTrade.status = 'FAILED';
+                await dataTrade.save({ fields: ['status'] });
+                return Command.empty();
+            }
+        } else {
+            dataTrade.status = 'DISPUTED';
+            await dataTrade.save({ fields: ['status'] });
+            return Command.empty();
+        }
     }
 
     /**
@@ -27,7 +61,7 @@ class DhPurchaseTakePaymentCommand extends Command {
     default(map) {
         const command = {
             name: 'dhPurchaseTakePaymentCommand',
-            delay: 0,
+            delay: 5 * 60 * 1000, // 5 min
             transactional: false,
         };
         Object.assign(command, map);

@@ -35,7 +35,7 @@ module.exports = {
                 type: Sequelize.STRING,
             },
             purchase_id: {
-                allowNull: false,
+                allowNull: true,
                 type: Sequelize.STRING,
             },
             timestamp: {
