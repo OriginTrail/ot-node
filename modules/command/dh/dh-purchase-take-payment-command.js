@@ -26,7 +26,7 @@ class DhPurchaseTakePaymentCommand extends Command {
             },
         });
         const bcPurchase = await this.blockchain.getPurchase(purchase_id);
-        if (bcPurchase.stage === 2) {
+        if (bcPurchase.stage === '2') {
             try {
                 await this.blockchain.takePayment(purchase_id);
                 dataTrade.status = 'COMPLETED';
@@ -71,7 +71,7 @@ class DhPurchaseTakePaymentCommand extends Command {
     default(map) {
         const command = {
             name: 'dhPurchaseTakePaymentCommand',
-            delay: 5 * 60 * 1000, // 5 min
+            delay: 5 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
