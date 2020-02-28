@@ -150,6 +150,24 @@ class Ethereum {
             this.litigationStorageContractAddress,
         );
 
+        // Marketplace contract data
+        const marketplaceAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/marketplace.json');
+        this.marketplaceContractAddress = await this._getMarketplaceContractAddress();
+        this.marketplaceContractAbi = JSON.parse(marketplaceAbiFile);
+        this.marketplaceContract = new this.web3.eth.Contract(
+            this.marketplaceContractAbi,
+            this.marketplaceContractAddress,
+        );
+
+        // Marketplace storage contract data
+        const marketplaceStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/marketplace-storage.json');
+        this.marketplaceStorageContractAddress = await this._getMarketplaceStorageContractAddress();
+        this.marketplaceStorageContractAbi = JSON.parse(marketplaceStorageAbiFile);
+        this.marketplaceStorageContract = new this.web3.eth.Contract(
+            this.marketplaceStorageContractAbi,
+            this.marketplaceStorageContractAddress,
+        );
+
         // Litigation contract data
         const replacementAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/replacement.json');
         this.replacementContractAddress = await this._getReplacementContractAddress();
@@ -169,6 +187,7 @@ class Ethereum {
             PROFILE_CONTRACT: this.profileContract,
             APPROVAL_CONTRACT: this.approvalContract,
             LITIGATION_CONTRACT: this.litigationContract,
+            MARKETPLACE_CONTRACT: this.marketplaceContract,
             REPLACEMENT_CONTRACT: this.replacementContract,
         };
     }
@@ -314,6 +333,20 @@ class Ethereum {
     }
 
     /**
+     * Gets Marketplace contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getMarketplaceContractAddress() {
+        this.log.trace('Asking Hub for Marketplace contract address...');
+        const address = await this.hubContract.methods.getContractAddress('Marketplace').call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`Marketplace contract address is ${address}`);
+        return address;
+    }
+
+    /**
      * Gets Replacement contract address from Hub
      * @returns {Promise<any>}
      * @private
@@ -338,6 +371,20 @@ class Ethereum {
             from: this.config.wallet_address,
         });
         this.log.trace(`LitigationStorage contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Marketplace storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getMarketplaceStorageContractAddress() {
+        this.log.trace('Asking Hub for MarketplaceStorage contract address...');
+        const address = await this.hubContract.methods.getContractAddress('MarketplaceStorage').call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`MarketplaceStorage contract address is ${address}`);
         return address;
     }
 
@@ -994,9 +1041,9 @@ class Ethereum {
         return this.escrowContract.methods.escrow(importId, dhWallet).call();
     }
 
-    async getPurchase(dhWallet, dvWallet, importId) {
-        this.log.trace(`Asking purchase for import (purchase[${dhWallet}][${dvWallet}][${importId}].`);
-        return this.readingContract.methods.purchase(dhWallet, dvWallet, importId).call();
+    async getPurchase(purchaseId) {
+        this.log.trace(`Asking for purchase with id [${purchaseId}].`);
+        return this.marketplaceStorageContract.methods.purchase(purchaseId).call();
     }
 
     async getPurchasedData(importId, wallet) {
@@ -1004,18 +1051,79 @@ class Ethereum {
         return this.readingContract.methods.purchased_data(importId, wallet).call();
     }
 
-    async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
+    async initiatePurchase(
+        sellerIdentity, buyerIdentity,
+        tokenAmount,
+        originalDataRootHash, encodedDataRootHash,
+    ) {
         const gasPrice = await this.getGasPrice();
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
+            to: this.marketplaceContractAddress,
         };
 
-        this.log.trace(`initiatePurchase (${importId}, ${dhWallet}, ${tokenAmount}, ${stakeFactor})`);
+        this.log.trace(`initiatePurchase (${sellerIdentity}, ${buyerIdentity}, ${tokenAmount}, ${originalDataRootHash}, ${encodedDataRootHash})`);
         return this.transactions.queueTransaction(
-            this.readingContractAbi, 'initiatePurchase',
-            [importId, dhWallet, tokenAmount, stakeFactor], options,
+            this.marketplaceContractAbi, 'initiatePurchase',
+            [
+                sellerIdentity,
+                buyerIdentity,
+                tokenAmount,
+                originalDataRootHash,
+                encodedDataRootHash,
+            ], options,
+        );
+    }
+
+    /**
+     * Decodes offer task event data from offer creation event
+     * @param result Blockchain transaction receipt
+     * @returns {Object<any>}
+     */
+    decodePurchaseInitiatedEventFromTransaction(result) {
+        let purchaseInitiatedEventInputs;
+        const purchaseInitiatedEventAbi = this.marketplaceContractAbi.find(element => element.name === 'PurchaseInitiated');
+        if (purchaseInitiatedEventAbi) {
+            purchaseInitiatedEventInputs = purchaseInitiatedEventAbi.inputs;
+        } else {
+            throw Error('Could not find OfferTask event interface in Holding contract abi');
+        }
+
+        return this.web3.eth.abi.decodeLog(
+            purchaseInitiatedEventInputs,
+            result.logs[0].data,
+            result.logs[0].topics,
+        );
+    }
+
+    async depositKey(purchaseId, key) {
+        const gasPrice = await this.getGasPrice();
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.marketplaceContractAddress,
+        };
+
+        this.log.trace(`depositKey(${purchaseId}, ${key})`);
+        return this.transactions.queueTransaction(
+            this.marketplaceContractAbi, 'depositKey',
+            [purchaseId, key], options,
+        );
+    }
+
+    async takePayment(purchaseId) {
+        const gasPrice = await this.getGasPrice();
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.marketplaceContractAddress,
+        };
+
+        this.log.trace(`takePayment(${purchaseId})`);
+        return this.transactions.queueTransaction(
+            this.marketplaceContractAbi, 'takePayment',
+            [purchaseId], options,
         );
     }
 

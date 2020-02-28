@@ -19,6 +19,7 @@ class DCController {
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -94,153 +95,154 @@ class DCController {
         }
     }
 
-    async handlePrivateDataReadRequest(message) {
-        const {
-            data_set_id, dv_erc725_identity, ot_object_id, handler_id, nodeId,
-        } = message;
-
-        const privateDataPermissions = await Models.data_trades.findAll({
-            where: {
-                data_set_id,
-                ot_json_object_id: ot_object_id,
-                buyer_node_id: nodeId,
-                status: 'COMPLETED',
-            },
-        });
-        if (!privateDataPermissions || privateDataPermissions.length === 0) {
-            throw Error(`You don't have permission to view objectId: ${ot_object_id} from dataset: ${data_set_id}`);
-        }
-
-        const replayMessage = {
-            wallet: this.config.node_wallet,
-            handler_id,
-        };
-        const promises = [];
-        privateDataPermissions.forEach((privateDataPermisssion) => {
-            promises.push(this.graphStorage.findDocumentsByImportIdAndOtObjectId(
-                data_set_id,
-                privateDataPermisssion.ot_json_object_id,
-            ));
-        });
-        const otObjects = await Promise.all(promises);
-        replayMessage.ot_objects = otObjects;
-
-        privateDataPermissions.forEach(async (privateDataPermisssion) => {
-            await Models.data_sellers.create({
-                data_set_id,
-                ot_json_object_id: privateDataPermisssion.ot_json_object_id,
-                seller_node_id: nodeId.toLowerCase(),
-                seller_erc_id: Utilities.normalizeHex(dv_erc725_identity),
-                price: 0,
-            });
-        });
-
-        const privateDataReadResponseObject = {
-            message: replayMessage,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(replayMessage),
-                this.web3,
-                this.config.node_private_key,
-            ),
-        };
-        await this.transport.sendPrivateDataReadResponse(
-            privateDataReadResponseObject,
-            nodeId,
-        );
-    }
-    async handleNetworkPurchaseRequest(request) {
-        const {
-            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
-        } = request;
-
-        const permission = await Models.data_trades.findOne({
-            where: {
-                buyer_node_id: dv_node_id,
-                data_set_id,
-                ot_json_object_id,
-                status: 'COMPLETED',
-            },
-        });
-        let message = '';
-        let status = '';
-        const sellingData = await Models.data_sellers.findOne({
-            where: {
-                data_set_id,
-                ot_json_object_id,
-                seller_node_id: this.config.identity,
-            },
-        });
-
-        if (permission) {
-            message = 'Data already purchased!';
-            status = 'COMPLETED';
-        } else if (!sellingData) {
-            status = 'FAILED';
-            message = 'I dont have requested data';
-        } else {
-            await Models.data_trades.create({
-                data_set_id,
-                ot_json_object_id,
-                buyer_node_id: dv_node_id,
-                buyer_erc_id: dv_erc725_identity,
-                seller_node_id: this.config.identity,
-                seller_erc_id: this.config.erc725Identity.toLowerCase(),
-                price: sellingData.price,
-                purchase_id: '',
-                status: 'COMPLETED',
-            });
-            message = 'Data purchase successfully finalized!';
-            status = 'COMPLETED';
-        }
-
-
-        const response = {
-            handler_id,
-            status,
-            wallet: this.config.node_wallet,
-            message,
-            price: sellingData.price,
-            seller_node_id: this.config.identity,
-            seller_erc_id: this.config.erc725Identity,
-        };
-
-        const dataPurchaseResponseObject = {
-            message: response,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(response),
-                this.web3,
-                this.config.node_private_key,
-            ),
-        };
-
-        await this.transport.sendDataPurchaseResponse(
-            dataPurchaseResponseObject,
-            dv_node_id,
-        );
-    }
+    // async handlePrivateDataReadRequest(message) {
+    //     const {
+    //         data_set_id, dv_erc725_identity, ot_object_id, handler_id, nodeId,
+    //     } = message;
+    //
+    //     const privateDataPermissions = await Models.data_trades.findAll({
+    //         where: {
+    //             data_set_id,
+    //             ot_json_object_id: ot_object_id,
+    //             buyer_node_id: nodeId,
+    //             status: 'COMPLETED',
+    //         },
+    //     });
+    //     if (!privateDataPermissions || privateDataPermissions.length === 0) {
+    //         throw Error(`You don't have permission to view objectId:
+    //         ${ot_object_id} from dataset: ${data_set_id}`);
+    //     }
+    //
+    //     const replayMessage = {
+    //         wallet: this.config.node_wallet,
+    //         handler_id,
+    //     };
+    //     const promises = [];
+    //     privateDataPermissions.forEach((privateDataPermisssion) => {
+    //         promises.push(this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+    //             data_set_id,
+    //             privateDataPermisssion.ot_json_object_id,
+    //         ));
+    //     });
+    //     const otObjects = await Promise.all(promises);
+    //     replayMessage.ot_objects = otObjects;
+    //
+    //     privateDataPermissions.forEach(async (privateDataPermisssion) => {
+    //         await Models.data_sellers.create({
+    //             data_set_id,
+    //             ot_json_object_id: privateDataPermisssion.ot_json_object_id,
+    //             seller_node_id: nodeId.toLowerCase(),
+    //             seller_erc_id: Utilities.normalizeHex(dv_erc725_identity),
+    //             price: 0,
+    //         });
+    //     });
+    //
+    //     const privateDataReadResponseObject = {
+    //         message: replayMessage,
+    //         messageSignature: Utilities.generateRsvSignature(
+    //             JSON.stringify(replayMessage),
+    //             this.web3,
+    //             this.config.node_private_key,
+    //         ),
+    //     };
+    //     await this.transport.sendPrivateDataReadResponse(
+    //         privateDataReadResponseObject,
+    //         nodeId,
+    //     );
+    // }
     // async handleNetworkPurchaseRequest(request) {
     //     const {
-    //         data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
+    //         data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
     //     } = request;
     //
-    //     // todo valideta data in request
+    //     const permission = await Models.data_trades.findOne({
+    //         where: {
+    //             buyer_node_id: dv_node_id,
+    //             data_set_id,
+    //             ot_json_object_id,
+    //             status: 'COMPLETED',
+    //         },
+    //     });
+    //     let message = '';
+    //     let status = '';
+    //     const sellingData = await Models.data_sellers.findOne({
+    //         where: {
+    //             data_set_id,
+    //             ot_json_object_id,
+    //             seller_node_id: this.config.identity,
+    //         },
+    //     });
     //
-    //     const commandData = {
-    //         data_set_id,
-    //         dv_erc725_identity,
+    //     if (permission) {
+    //         message = 'Data already purchased!';
+    //         status = 'COMPLETED';
+    //     } else if (!sellingData) {
+    //         status = 'FAILED';
+    //         message = 'I dont have requested data';
+    //     } else {
+    //         await Models.data_trades.create({
+    //             data_set_id,
+    //             ot_json_object_id,
+    //             buyer_node_id: dv_node_id,
+    //             buyer_erc_id: dv_erc725_identity,
+    //             seller_node_id: this.config.identity,
+    //             seller_erc_id: this.config.erc725Identity.toLowerCase(),
+    //             price: sellingData.price,
+    //             purchase_id: '',
+    //             status: 'COMPLETED',
+    //         });
+    //         message = 'Data purchase successfully finalized!';
+    //         status = 'COMPLETED';
+    //     }
+    //
+    //
+    //     const response = {
     //         handler_id,
-    //         dv_node_id,
-    //         ot_json_object_id,
-    //         price,
+    //         status,
+    //         wallet: this.config.node_wallet,
+    //         message,
+    //         price: sellingData.price,
+    //         seller_node_id: this.config.identity,
+    //         seller_erc_id: this.config.erc725Identity,
     //     };
     //
-    //     await this.commandExecutor.add({
-    //         name: 'dhPurchaseRequestedCommand',
-    //         delay: 0,
-    //         data: commandData,
-    //         transactional: false,
-    //     });
+    //     const dataPurchaseResponseObject = {
+    //         message: response,
+    //         messageSignature: Utilities.generateRsvSignature(
+    //             JSON.stringify(response),
+    //             this.web3,
+    //             this.config.node_private_key,
+    //         ),
+    //     };
+    //
+    //     await this.transport.sendDataPurchaseResponse(
+    //         dataPurchaseResponseObject,
+    //         dv_node_id,
+    //     );
     // }
+    async handleNetworkPurchaseRequest(request) {
+        const {
+            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
+        } = request;
+
+        // todo validate data in request
+
+        const commandData = {
+            data_set_id,
+            dv_erc725_identity,
+            handler_id,
+            dv_node_id,
+            ot_json_object_id,
+            price,
+        };
+
+        await this.commandExecutor.add({
+            name: 'dhPurchaseRequestedCommand',
+            delay: 0,
+            data: commandData,
+            transactional: false,
+        });
+    }
 
     async handleNetworkPriceRequest(request) {
         const {
@@ -261,7 +263,7 @@ class DCController {
                 handler_id,
                 status: 'COMPLETED',
                 wallet: this.config.node_wallet,
-                message: { price_in_trac: data.price },
+                price_in_trac: data.price,
             };
         } else {
             response = {

@@ -8,6 +8,7 @@ class DvPurchaseDisputeCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -17,6 +18,8 @@ class DvPurchaseDisputeCommand extends Command {
      */
     async execute(command, transaction) {
         // send dispute purchase to bc
+
+        this.remoteControl.purchaseStatus('Purchase not confirmed', 'Sending dispute purchase to Blockchain.', true);
     }
 
     /**
