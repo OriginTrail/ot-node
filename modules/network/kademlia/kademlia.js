@@ -569,7 +569,6 @@ class Kademlia {
                 //         });
                 //     }
                 // }
-
             };
 
             node.replicationRequest = async (message, contactId) => {
@@ -860,7 +859,12 @@ class Kademlia {
     }
 
     async findNode(contactId) {
-        const contact = await this.node.getContact(contactId);
+        let contact;
+        try {
+            contact = await this.node.getContact(contactId);
+        } catch (e) {
+
+        }
         return contact;
         // return new Promise((accept, reject) => {
         //     this.node.iterativeFindNode(contactId, (error, result) => {
