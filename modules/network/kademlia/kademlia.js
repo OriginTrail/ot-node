@@ -506,14 +506,15 @@ class Kademlia {
                             return;
                         }
                         if (result && Array.isArray(result)) {
-                            const contact = result.find(c => c[0] === contactId);
-                            if (contact) {
-                                accept(contact[1]);
-                            } else {
-                                reject(Error(`Failed to find contact ${contactId}`));
-                            }
+                            const contact = result[1];
+                            // const contact = result.find(c => c[0] === contactId);
+                            // if (contact) {
+                            accept(contact);
+                            // } else {
+                            //     reject(Error(`Failed to find contact ${contactId}`));
+                            // }
                         } else {
-                            reject(Error(`Failed to find contact ${contactId}`));
+                            reject(Error(`Failed to find contact ${contactId}. Not array: ${result}`));
                         }
                     });
                 });
