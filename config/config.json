@@ -74,8 +74,6 @@
       "id": "Devnet",
       "bootstraps": ["https://developbs.origintrial.me:5278/#05edf19bd36906240503e2e2e2f18d13f8211d2f"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
-      "solutionDifficulty": 8,
-      "identityDifficulty": 8,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
@@ -183,8 +181,6 @@
         "https://rinkeby-mariner-bootstrap-03.origin-trail.network:5278/#ad3c3325e50c3bedcb5c6ee6a73592b2ca7e07aa"
       ],
       "remoteWhitelist": ["127.0.0.1", "localhost"],
-      "solutionDifficulty": 14,
-      "identityDifficulty": 12,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
@@ -294,8 +290,6 @@
         "https://mainnet-bootstrap-wm-kaleigh-schaefer-47.origin-trail.network:5278/#95f54eb6bc713706e2ec76881ea11db390cad51d"
       ],
       "remoteWhitelist": ["127.0.0.1"],
-      "solutionDifficulty": 14,
-      "identityDifficulty": 12,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,

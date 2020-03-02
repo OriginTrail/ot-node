@@ -44,8 +44,7 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.network, [
                     'id', 'hostname', 'bootstraps', 'churnPlugin',
-                    'remoteWhitelist', 'identityDifficulty',
-                    'solutionDifficulty',
+                    'remoteWhitelist',
                 ],
                 `Some config items are missing in config.network for environment '${environment}'`,
             );

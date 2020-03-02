@@ -36,12 +36,8 @@ class Kademlia {
         this.notifyError = ctx.notifyError;
         this.config = ctx.config;
         this.approvalService = ctx.approvalService;
-
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
-        kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
-        kadence.constants.IDENTITY_DIFFICULTY = this.config.network.identityDifficulty;
-        this.log.info(`Network solution difficulty ${kadence.constants.SOLUTION_DIFFICULTY}.`);
-        this.log.info(`Network identity difficulty ${kadence.constants.IDENTITY_DIFFICULTY}.`);
+        kadence.constants.ALPHA = kadence.constants.K + 1;
     }
 
     /**
@@ -562,18 +558,33 @@ class Kademlia {
             /**
              * Gets contact by ID
              * @param contactId Contact ID
-             * @returns {{"{": Object}|Array}
+             * @returns
              */
             node.getContact = async (contactId) => {
-                if (contactId === this.node.identity.toString('hex')) {
-                    return this.node.contact;
-                }
-
                 const contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                     return contact;
                 }
+
+                return new Promise((accept, reject) => {
+                    this.node.iterativeFindNode(contactId, (err, result) => {
+                        if (err) {
+                            reject(Error(`Failed to find contact ${contactId}. ${err}`));
+                            return;
+                        }
+                        if (result && Array.isArray(result)) {
+                            const contact = result.find(c => c[0] === contactId);
+                            if (contact) {
+                                accept(contact[1]);
+                            } else {
+                                reject(Error(`Failed to find contact ${contactId}`));
+                            }
+                        } else {
+                            reject(Error(`Failed to find contact ${contactId}`));
+                        }
+                    });
+                });
 
                 // let peerContact;
                 // try {
@@ -626,32 +637,7 @@ class Kademlia {
                 //         });
                 //     }
                 // }
-                console.log(`contactId: ${contactId}`);
-                this.log.debug(`No knowledge about contact ${contactId}, searching for it.`);
-                return new Promise(async (accept, reject) => {
-                    await this.node.iterativeFindNode(contactId, (err, result) => {
-                        if (err) {
-                            reject(Error(`Failed to find contact ${contactId}. ${err}`));
-                            return;
-                        }
-                        if (result && Array.isArray(result)) {
-                            const contact = result.find(c => c[0] === contactId);
-                            if (contact) {
-                                console.log(`accept: ${JSON.stringify(contact[1])}`);
-                                accept(contact[1]);
-                            } else {
-                                reject(Error(`Failed to find contact ${contactId}`));
-                            }
-                        } else {
-                            reject(Error(`Failed to find contact ${contactId}`));
-                        }
-                    });
-                }).then((contact) => {
-                    console.log(`then: ${JSON.stringify(contact)}`);
-                    if (contact) {
-                        return contact;
-                    }
-                });
+
             };
 
             node.replicationRequest = async (message, contactId) => {
