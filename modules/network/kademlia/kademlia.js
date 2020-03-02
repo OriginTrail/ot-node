@@ -860,20 +860,22 @@ class Kademlia {
     }
 
     async findNode(contactId) {
-        return new Promise((accept, reject) => {
-            this.node.iterativeFindNode(contactId, (error, result) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-
-                accept({
-                    contact: this.node.router.getContactByNodeId(contactId),
-                    neighbors: result,
-                });
-                accept(result);
-            });
-        });
+        const contact = await this.node.getContact(contactId);
+        return contact;
+        // return new Promise((accept, reject) => {
+        //     this.node.iterativeFindNode(contactId, (error, result) => {
+        //         if (error) {
+        //             reject(error);
+        //             return;
+        //         }
+        //
+        //         accept({
+        //             contact: this.node.router.getContactByNodeId(contactId),
+        //             neighbors: result,
+        //         });
+        //         accept(result);
+        //     });
+        // });
     }
 
     _saveIdentityToFile(privateKey, nonce = null, proof = null) {
