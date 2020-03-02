@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "4.0.3",
+  "version": "4.0.6",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -80,7 +80,7 @@
   "homepage": "https://origintrail.io",
   "snyk": true,
   "dependencies": {
-    "@deadcanaries/kadence": "^6.1.6",
+    "@deadcanaries/kadence": "^6.1.9",
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",

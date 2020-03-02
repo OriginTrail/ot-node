@@ -1,0 +1,21 @@
+name-template: 'OriginTrail Release $NEXT_PATCH_VERSION'
+tag-template: "$NEXT_PATCH_VERSION"
+version-template: "v$MAJOR.$MINOR.$PATCH"
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'enhancement'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'internal process'
+  - title: '⚠️ Breaking changes'
+    labels:
+      - 'breaking change'
+change-template: '- $TITLE (#$NUMBER)'
+template: |
+  # Changes
+
+  $CHANGES

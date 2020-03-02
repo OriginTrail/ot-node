@@ -35,6 +35,7 @@
     "dh_min_stake_amount": "100000000000",
     "dh_min_reputation": -50,
     "latest_api_version" : "v2.0",
+    "send_challenges_log" : true,
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -138,6 +139,7 @@
     "dh_min_stake_amount": "100000000000",
     "dh_min_reputation": -50,
     "latest_api_version" : "v2.0",
+    "send_challenges_log" : true,
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -245,6 +247,7 @@
     "dh_min_stake_amount": "100000000000",
     "dh_min_reputation": -50,
     "latest_api_version" : "v2.0",
+    "send_challenges_log" : true,
     "database": {
       "provider": "arangodb",
       "username": "root",
