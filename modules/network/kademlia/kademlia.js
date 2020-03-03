@@ -308,7 +308,7 @@ class Kademlia {
             callback(null, null);
 
             return this.node.router.events.once('add', (identity) => {
-                console.log('Joining add ...'+identity);
+                console.log(`Joining add ...${identity}`);
                 this.config.network.bootstraps = [
                     kadence.utils.getContactURL([
                         identity,
@@ -402,23 +402,22 @@ class Kademlia {
                             resolve();
                         }
                     });
-                }else {
-                    return new Promise(async (resolve, reject) => {
-                        const contact = await this.node.getContact(ultimateContactId);
-                        console.log(`Forwarding to ${contact[0]}`);
-                        if ((contact[0]).toLowerCase() !== this.node.identity.toString('hex').toLowerCase() && contact[0] === contact[1].identity) {
-                            this.node.send('kad-ping-request', {message: JSON.stringify(message)}, contact, (err, res) => {
-                                if (err) {
-                                    reject(err);
-                                } else {
-                                    resolve(res);
-                                }
-                            });
-                        } else {
-                            resolve();
-                        }
-                    });
                 }
+                return new Promise(async (resolve, reject) => {
+                    const contact = await this.node.getContact(ultimateContactId);
+                    console.log(`Forwarding to ${contact[0]}`);
+                    if ((contact[0]).toLowerCase() !== this.node.identity.toString('hex').toLowerCase() && contact[0] === contact[1].identity) {
+                        this.node.send('kad-ping-request', { message: JSON.stringify(message) }, contact, (err, res) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(res);
+                            }
+                        });
+                    } else {
+                        resolve();
+                    }
+                });
             }
         });
 
