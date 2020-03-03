@@ -300,7 +300,7 @@ class Kademlia {
         const peers = Array.from(new Set(this.config.network.bootstraps
             .concat(await this.node.rolodex.getBootstrapCandidates())));
         // peers = utilities.shuffle(peers);
-
+        console.log('Joining...');
         if (peers.length === 0) {
             this.log.info('no bootstrap seeds provided and no known profiles');
             this.log.info('running in seed mode (waiting for connections)');
@@ -320,6 +320,7 @@ class Kademlia {
 
         this.log.info(`joining network from ${peers.length} seeds`);
         async.detectSeries(peers, (url, done) => {
+            console.log(`Joining ${url}`);
             const contact = kadence.utils.parseContactURL(url);
             this.node.join(contact, (err) => {
                 done(null, (!err) && this.node.router.size > 1);
