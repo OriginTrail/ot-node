@@ -74,7 +74,8 @@ contract Litigation {
         litigationStorage.setLitigationRequestedObjectIndex(offerId, holderIdentity, requestedObjectIndex);
         litigationStorage.setLitigationRequestedBlockIndex(offerId, holderIdentity, requestedBlockIndex);
         litigationStorage.setLitigationHashArray(offerId, holderIdentity, hashArray);
-
+        // Clears last litigation answer from storage
+        litigationStorage.setLitigationRequestedData(offerId, holderIdentity, bytes32(0));
         litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.initiated);
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
@@ -166,7 +167,7 @@ contract Litigation {
 
 
         if(calculateMerkleTrees(offerId, holderIdentity, proofData, bytes32(parameters[3]), leafIndex)) {
-            // DH has the reRquested data -> Set litigation as completed, no transfer of tokens
+            // DH has the reRequested data -> Set litigation as completed, no transfer of tokens
             litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
             litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
