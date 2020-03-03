@@ -105,9 +105,9 @@ try {
 }
 
 process.on('unhandledRejection', (reason, p) => {
-    if (reason.message.startsWith('Invalid JSON RPC response')) {
-        return;
-    }
+    // if (reason.message.startsWith('Invalid JSON RPC response')) {
+    //     return;
+    // }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
 
     if (process.env.NODE_ENV !== 'development') {
