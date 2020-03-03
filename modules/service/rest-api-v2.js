@@ -158,6 +158,24 @@ class RestAPIServiceV2 {
             res.send(body);
         });
 
+        server.get(`/api/${this.version_id}/network/ping/:node_id`, async (req, res) => {
+            const nodeId = req.params.node_id;
+            this.logger.api(`Ping node ${nodeId}`);
+
+            const isDirectory = source => lstatSync(source).isDirectory();
+            const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
+            const broadcastDir = (getDirectories(`${homeDir}/kademlia/logs/`).sort()).slice(-1)[0];
+
+            const result = await transport.pingNode(nodeId,broadcastDir);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
         server.get(`/api/${this.version_id}/network/broadcast`, async (req, res) => {
             this.logger.api('Broadcasting');
 

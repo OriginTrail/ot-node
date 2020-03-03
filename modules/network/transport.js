@@ -178,6 +178,10 @@ class Transport {
         return this.network.findNode(nodeId);
     }
 
+    async pingNode(nodeId, broadcastDir) {
+        return this.network.pingNode(nodeId,broadcastDir);
+    }
+
     async getContact(contactId) {
         return this.network.node.getContact(contactId);
     }

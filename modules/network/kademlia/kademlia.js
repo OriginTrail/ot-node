@@ -22,6 +22,10 @@ const pjson = require('../../../package.json');
 
 const { NetworkRequestIgnoredError } = require('../../errors/index');
 
+
+const { lstatSync, readdirSync } = require('fs');
+const { join, basename, parse } = require('path');
+
 /**
  * DHT module (Kademlia)
  */
@@ -371,6 +375,70 @@ class Kademlia {
             });
         });
 
+        this.node.use('kad-ping-request', (request, response, next) => {
+            response.send([]);
+            const message = JSON.parse(request.params.message);
+            const ultimateContactId = message.to;
+            const originContactId = message.from;
+            this.log.info(`Ping request received for ${ultimateContactId}`);
+            if (ultimateContactId.toLowerCase() === this.node.identity.toString('hex').toLowerCase()) {
+                console.log('It is me!');
+                return new Promise(async (resolve, reject) => {
+                    const contact = await this.node.getContact(originContactId);
+                    this.node.send('kad-ping-response', { message: JSON.stringify(message) }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            }
+            return new Promise(async (resolve, reject) => {
+                const contact = await this.node.getContact(ultimateContactId);
+                console.log(`Forwarding to ${contact[0]}`);
+                this.node.send('kad-ping-request', { message: JSON.stringify(message) }, contact, (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(res);
+                    }
+                });
+            });
+        });
+
+        this.node.use('kad-ping-response', (request, response, next) => {
+            response.send([]);
+            const message = JSON.parse(request.params.message);
+            const ultimateContactId = message.to;
+            const originContactId = message.from;
+            this.log.info(`Ping response received for ${originContactId}`);
+            if (originContactId.toLowerCase() === this.node.identity.toString('hex').toLowerCase()) {
+                console.log(`Ping found: ${ultimateContactId}`);
+                const isDirectory = source => lstatSync(source).isDirectory();
+                const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
+                const broadcastDir = (getDirectories(`${homeDir}/kademlia/logs/`).sort()).slice(-1)[0];
+
+                const pingArray = JSON.parse(fs.readFileSync(`${broadcastDir}/ping.json`));
+                pingArray.push(ultimateContactId);
+                fs.writeFileSync(`${broadcastDir}/ping.json`, JSON.stringify(pingArray));
+
+                response.send([]);
+            } else {
+                return new Promise(async (resolve, reject) => {
+                    const contact = await this.node.getContact(originContactId);
+                    console.log(`Forwarding to ${contact[0]}`);
+                    this.node.send('kad-ping-response', { message: JSON.stringify(message) }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            }
+        });
+
         this.node.use('kad-broadcast-response', (request, response, next) => {
             this.log.info(`Broadcast response received for ${request.contact[0]}`);
             const broadcastDir = JSON.parse(request.params.broadcastDir);
@@ -496,7 +564,7 @@ class Kademlia {
                 const contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
-                    return contact;
+                    return [contactId, contact];
                 }
 
                 return new Promise((accept, reject) => {
@@ -506,7 +574,7 @@ class Kademlia {
                             return;
                         }
                         if (result && Array.isArray(result)) {
-                            const contact = result[1];
+                            const contact = result;
                             // const contact = result.find(c => c[0] === contactId);
                             // if (contact) {
                             accept(contact);
@@ -881,6 +949,24 @@ class Kademlia {
         //         accept(result);
         //     });
         // });
+    }
+
+    async pingNode(contactId, broadcastDir) {
+        return new Promise(async (resolve, reject) => {
+            const contact = await this.node.getContact(contactId);
+            const message = JSON.stringify({
+                from: this.node.identity.toString('hex').toLowerCase(),
+                to: contactId,
+                message: 'ping',
+            });
+            this.node.send('kad-ping-request', { message }, contact, (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            });
+        });
     }
 
     _saveIdentityToFile(privateKey, nonce = null, proof = null) {
