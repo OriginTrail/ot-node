@@ -959,6 +959,7 @@ class Kademlia {
                 to: contactId,
                 message: 'ping',
             });
+            console.log(JSON.stringify(contact));
             this.node.send('kad-ping-request', { message }, contact, (err, res) => {
                 if (err) {
                     reject(err);
