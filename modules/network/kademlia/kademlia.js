@@ -307,7 +307,7 @@ class Kademlia {
 
             callback(null, null);
 
-            return this.node.router.events.once('add', (identity) => {
+            return this.node.router.events.on('add', (identity) => {
                 console.log(`Joining add ...${identity}`);
                 this.config.network.bootstraps = [
                     kadence.utils.getContactURL([
