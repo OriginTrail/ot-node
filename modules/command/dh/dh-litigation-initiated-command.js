@@ -11,6 +11,7 @@ class DHLitigationInitiatedCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -56,7 +57,7 @@ class DHLitigationInitiatedCommand extends Command {
                 }
             }
         } catch (e) {
-            this.logger.error(`Failed to process LitigationInitiatedCommand. ${e}`);
+            this.logger.error(`Failed to process dhLitigationInitiatedCommand. ${e}`);
         }
 
         return Command.repeat();
