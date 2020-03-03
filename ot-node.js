@@ -693,7 +693,9 @@ function main() {
             },
         };
 
-        const result = await request(options);
+        try {
+            const result = await request(options);
+        } catch (e) {}
     });
 }
 

@@ -148,7 +148,7 @@ class Kademlia {
 
             // Initialize transport adapter
             const transport = new kadence.HTTPSTransport({ key, cert, ca });
-
+            // const transport = new kadence.HTTPTransport();
             // Initialize protocol implementation
             this.node = new kadence.KademliaNode({
                 logger: this.log,
@@ -305,7 +305,7 @@ class Kademlia {
             this.log.info('no bootstrap seeds provided and no known profiles');
             this.log.info('running in seed mode (waiting for connections)');
 
-            callback(null, null);
+            // callback(null, null);
 
             return this.node.router.events.once('add', (identity) => {
                 console.log(`Joining add ...${identity}`);
@@ -320,6 +320,14 @@ class Kademlia {
         }
 
         this.log.info(`joining network from ${peers.length} seeds`);
+        // // for (const url of peers) {
+        // const url = peers[0];
+        //     console.log(`Joining ${url}`);
+        //     const contact = kadence.utils.parseContactURL(url);
+        //     await this.node.join(contact, (err) => {console.log(err)});
+        // // }
+        // callback(null,peers);
+
         async.detectSeries(peers, (url, done) => {
             console.log(`Joining ${url}`);
             const contact = kadence.utils.parseContactURL(url);
