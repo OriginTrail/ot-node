@@ -44,19 +44,15 @@ class DHLitigationInitiatedCommand extends Command {
 
                     this.logger.warn(`Litigation initiated for offer ${offerId}, object index ${requestedObjectIndex} and block index ${requestedBlockIndex}.`);
 
-                    return {
-                        commands: [
-                            {
-                                name: 'dhLitigationAnswerCommand',
-                                data: {
-                                    offerId,
-                                    objectIndex: requestedObjectIndex,
-                                    blockIndex: requestedBlockIndex,
-                                },
-                                retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
-                            },
-                        ],
-                    };
+                    await this.commandExecutor.add({
+                        name: 'dhLitigationAnswerCommand',
+                        data: {
+                            offerId,
+                            objectIndex: requestedObjectIndex,
+                            blockIndex: requestedBlockIndex,
+                        },
+                        retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
+                    });
                 }
             }
         } catch (e) {
