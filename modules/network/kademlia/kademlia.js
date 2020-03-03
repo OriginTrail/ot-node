@@ -297,9 +297,9 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes
      */
     async joinNetwork(callback) {
-        let peers = Array.from(new Set(this.config.network.bootstraps
+        const peers = Array.from(new Set(this.config.network.bootstraps
             .concat(await this.node.rolodex.getBootstrapCandidates())));
-        peers = utilities.shuffle(peers);
+        // peers = utilities.shuffle(peers);
 
         if (peers.length === 0) {
             this.log.info('no bootstrap seeds provided and no known profiles');
@@ -322,7 +322,7 @@ class Kademlia {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             this.node.join(contact, (err) => {
-                done(null, (!err) && this.node.router.size > 0);
+                done(null, (!err) && this.node.router.size > 1);
             });
         }, (err, result) => {
             if (!result) {
