@@ -416,16 +416,16 @@ class Kademlia {
         this.node.use('*', (request, response, next) => {
             if (request.params.header) {
                 const header = JSON.parse(request.params.header);
-
+                const destContact = header.to;
                 header.ttl -= 1;
                 if (header.ttl > 0) {
-                    this.log.info(`Request received for ${header.to}`);
-                    if (header.to === this.node.identity.toString('hex').toLowerCase()) {
+                    this.log.info(`Request received for ${destContact}`);
+                    if (destContact === this.node.identity.toString('hex').toLowerCase()) {
                         response.send([]);
                         next();
                     } else {
                         return new Promise(async (accept, reject) => {
-                            const { contact, header } = await this.node.getContact(header.to);
+                            const { contact, header } = await this.node.getContact(destContact);
                             console.log(`Forwarding to ${contact[0]}`);
                             this.node.send(
                                 request.method,
