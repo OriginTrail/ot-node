@@ -421,8 +421,7 @@ class Kademlia {
                 if (header.ttl > 0) {
                     this.log.info(`Request received for ${destContact}`);
                     if (destContact === this.node.identity.toString('hex').toLowerCase()) {
-                        response.send([]);
-                        next();
+                        response.send(next());
                     } else {
                         return new Promise(async (accept, reject) => {
                             const { contact, header } = await this.node.getContact(destContact);
