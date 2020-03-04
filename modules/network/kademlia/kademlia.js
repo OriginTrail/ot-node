@@ -155,15 +155,17 @@ class Kademlia {
 
             this.log.info('Quasar initialised');
 
+            const nodeIdentity = this.node.identity;
+
             const spartacusPlugin = kadence.spartacus(
                 this.privateKey,
                 { checkPublicKeyHash: false },
             );
             this.node.spartacus = this.node.plugin(spartacusPlugin);
 
-            this.node.identity = this.config.identity;
-            this.node.router.identity = this.config.identity;
-            this.node.spartacus.identity = this.config.identity;
+            this.node.identity = nodeIdentity;
+            this.node.router.identity = nodeIdentity;
+            this.node.spartacus.identity = nodeIdentity;
 
             this.log.info('Spartacus initialised');
 
@@ -425,6 +427,7 @@ class Kademlia {
                         const result = new Promise(async (accept, reject) => {
                             const { contact, header } = await this.node.getContact(destContact);
                             this.log.debug(`Request received for ${destContact}. Forwarding to: ${contact[0]}`);
+                            // should await?
                             this.node.send(
                                 request.method,
                                 { message: request.params.message, header },
