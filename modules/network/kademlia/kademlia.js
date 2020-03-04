@@ -134,6 +134,7 @@ class Kademlia {
                 logger: this.log,
                 transport,
                 contact,
+                identity: this.config.identity,
                 storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
@@ -310,7 +311,7 @@ class Kademlia {
             return;
         }
 
-        this.node.quasar.quasarSubscribe('kad-data-location-request', (request, message, err) => {
+        this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
         });
@@ -366,7 +367,6 @@ class Kademlia {
         this.node.use('kad-send-encrypted-key', (request, response, next) => {
             this.log.debug('kad-send-encrypted-key received');
             this.emitter.emit('kad-send-encrypted-key', request, response);
-            response.send([]);
         });
 
         // async
