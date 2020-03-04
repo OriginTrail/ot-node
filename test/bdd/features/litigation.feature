@@ -86,27 +86,6 @@ Feature: Test various litigation scenarios
 #    Then I wait for 3 replacement replications to finish
 #    Then I wait for replacement to be completed
 
-  @fourth
-  Scenario: Test litigation case
-    Given the replication difficulty is 0
-    And I setup 4 nodes
-    When I override configuration for all nodes
-      | dc_holding_time_in_minutes | 5 |
-      | numberOfChallenges | 100 |
-      | challengeResponseTimeMills | 5000 |
-    And I start the nodes
-    And I use 1st node as DC
-    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
-    And DC waits for import to finish
-    Given DC initiates the replication for last imported dataset
-    And DC waits for last offer to get written to blockchain
-    And I wait for 4th node to verify replication
-    And I stop the 4th node
-    And I wait for replications to finish
-    When I wait for litigation initiation
-    And I simulate true litigation answer for 4th node
-    Then the last replication status for 4th node should be holding
-
   @first
   Scenario: DC should discriminate DH which has reputation lower than threshold
     Given the replication difficulty is 0

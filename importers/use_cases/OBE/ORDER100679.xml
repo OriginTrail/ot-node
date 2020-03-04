@@ -77,7 +77,7 @@
                 <eventTime>2019-10-25T00:00:00</eventTime>
                 <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
                 <epcList>
-                    <epc>100679</epc>
+                    <epc>urn:epc:idpat:sgtin:100679</epc>
                 </epcList>
                 <action>OBSERVE</action>
                 <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
@@ -93,7 +93,7 @@
                 <eventTime>2019-10-25T00:00:00</eventTime>
                 <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
                 <epcList>
-                    <epc>100679</epc>
+                    <epc>urn:epc:idpat:sgtin:100679</epc>
                 </epcList>
                 <action>OBSERVE</action>
                 <bizStep>urn:epcglobal:cbv:bizstep:transporting</bizStep>
@@ -109,7 +109,7 @@
                 <eventTime>2019-10-27T00:00:00</eventTime>
                 <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
                 <epcList>
-                    <epc>100679</epc>
+                    <epc>urn:epc:idpat:sgtin:100679</epc>
                 </epcList>
                 <action>OBSERVE</action>
                 <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
@@ -125,7 +125,7 @@
                 <eventTime>2019-10-28T00:00:00</eventTime>
                 <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
                 <epcList>
-                    <epc>100679</epc>
+                    <epc>urn:epc:idpat:sgtin:100679</epc>
                 </epcList>
                 <action>OBSERVE</action>
                 <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
