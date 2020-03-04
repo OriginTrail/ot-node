@@ -184,11 +184,12 @@ class Kademlia {
             );
             this.node.spartacus = this.node.plugin(spartacusPlugin);
 
-            ,
-            this.node.identity = this.node.router.identity = this.node.spartacus.identity = this.config.identity;
+            this.node.identity = this.config.identity;
+            this.node.router.identity = this.config.identity;
+            this.node.spartacus.identity = this.config.identity;
 
 
-            this.log.info('Spartacus initialised');
+                this.log.info('Spartacus initialised');
 
             this.node.content = this.node.plugin(kadence.contentaddress({ valueEncoding: 'hex' }));
             this.log.info('Content initialised');
@@ -664,7 +665,7 @@ class Kademlia {
             node.challengeRequest = async (message, contactId) => {
                 const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-challenge-request', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -677,7 +678,7 @@ class Kademlia {
             node.challengeResponse = async (message, contactId) => {
                 const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-response',{ message, header }, contact, (err, res) => {
+                    node.send('kad-challenge-response', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -690,7 +691,7 @@ class Kademlia {
             node.sendDataLocationResponse = async (message, contactId) => {
                 const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-data-location-response', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-data-location-response', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -742,7 +743,7 @@ class Kademlia {
             node.sendEncryptedKeyProcessResult = async (message, contactId) => {
                 const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-encrypted-key-process-result', { message, header }, [contactId, contact], (err, res) => {
+                    node.send('kad-encrypted-key-process-result', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -899,7 +900,7 @@ class Kademlia {
     async findNode(contactId) {
         let contact;
         try {
-            contact = await this.node.getContact(contactId);
+            {contact, header } = await this.node.getContact(contactId);
         } catch (e) {
 
         }
