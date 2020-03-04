@@ -92,10 +92,10 @@ class DHService {
         if (dcNodeId === this.config.identity) {
             return; // the offer is mine
         }
-        const dcContact = await this.transport.getContact(dcNodeId, true);
-        if (dcContact == null || dcContact.hostname == null) {
-            return; // wait until peers are synced
-        }
+        // const dcContact = await this.transport.getContact(dcNodeId, true);
+        // if (dcContact == null || dcContact.hostname == null) {
+        //     return; // wait until peers are synced
+        // }
 
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
         if (dataSetSizeInBytes) {
