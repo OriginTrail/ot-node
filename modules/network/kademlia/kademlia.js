@@ -91,7 +91,7 @@ class Kademlia {
             );
         }
 
-        this.config.identity = this.identity.fingerprint.toString('hex');
+        this.config.identity = this.identity.fingerprint.toString('hex').toLowerCase();
 
         this.log.notify(`My network identity: ${this.config.identity}`);
     }
@@ -413,19 +413,18 @@ class Kademlia {
             }
         });
 
-        this.node.use('*', (request, response, next) => {
+        this.node.use('*', async (request, response, next) => {
             if (request.params.header) {
                 const header = JSON.parse(request.params.header);
                 const destContact = header.to;
                 header.ttl -= 1;
-                if (header.ttl > 0) {
-                    this.log.info(`Request received for ${destContact}`);
-                    if (destContact === this.node.identity.toString('hex').toLowerCase()) {
+                if (header.ttl >= 0) {
+                    if (destContact === this.config.identity) {
                         response.send(next());
                     } else {
-                        return new Promise(async (accept, reject) => {
+                        const result = new Promise(async (accept, reject) => {
                             const { contact, header } = await this.node.getContact(destContact);
-                            console.log(`Forwarding to ${contact[0]}`);
+                            this.log.debug(`Request received for ${destContact}. Forwarding to: ${contact[0]}`);
                             this.node.send(
                                 request.method,
                                 { message: request.params.message, header },
@@ -439,6 +438,7 @@ class Kademlia {
                                 },
                             );
                         });
+                        response.send(result);
                     }
                 } else response.send('Message includes invalid TTL.');
             } else next();
@@ -461,7 +461,7 @@ class Kademlia {
             node.getContact = async (contactId) => {
                 contactId = contactId.toLowerCase();
                 const header = JSON.stringify({
-                    from: this.node.identity.toString('hex').toLowerCase(),
+                    from: this.config.identity,
                     to: contactId,
                     ttl: kadence.constants.MAX_RELAY_HOPS,
                 });
