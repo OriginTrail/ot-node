@@ -9,7 +9,7 @@ __OriginTrail is an ecosystem dedicated to making global supply chains work toge
  
 This repository contains a work-in-progress code for a network node.
 
-__OriginTrail Decentralized Network (ODN)__ is currently running in the __Freedom-Gemini__ stage. For further information about the roadmap please see our [website](https://tech.origintrail.io/roadmap).
+__OriginTrail Decentralized Network (ODN)__ is currently running in the __OriginTrail v4 Freedom-Gemini Mainnet__ stage. For further information about the roadmap please see our [website](https://tech.origintrail.io/roadmap).
 
 [Please see our main documentation page for more information](http://docs.origintrail.io)
 
