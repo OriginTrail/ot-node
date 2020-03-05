@@ -176,11 +176,18 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        for (let i = 0; i < 10; i += 1) {
-            amounts.push(amountToMint);
-            recepients.push(accounts[i]);
+        for (let k = 0; k < 10; k += 1) {
+            amounts = [];
+            recepients = [];
+
+            for (let i = 0; i < 100; i += 1) {
+                amounts.push(amountToMint);
+                recepients.push(accounts[(k * 100) + i]);
+            }
+
+            await token.mintMany(recepients, amounts, { from: accounts[0] });
         }
-        await token.mintMany(recepients, amounts, { from: accounts[0] });
+
         await token.finishMinting({ from: accounts[0] });
 
         console.log('\n\n \t Contract adressess on ganache:');

@@ -1,6 +1,7 @@
 const Command = require('../command');
 const models = require('../../../models');
 const bugsnag = require('bugsnag');
+const fs = require('fs');
 
 /**
  *  Checks one DH's challenge response
@@ -69,6 +70,25 @@ class DCChallengeCheckCommand extends Command {
             severity: 'info',
         });
 
+        if (!fs.existsSync('answers.json')) {
+            fs.writeFileSync('answers.json', '[]');
+        }
+        const forwardArray = JSON.parse(fs.readFileSync('answers.json'));
+        forwardArray.push({
+            user: {
+                id: challenge.dh_id,
+                dc_identity: this.config.identity,
+                dh_identity: dhIdentity,
+                challenge_id: challenge.id,
+                data_set_id: challenge.data_set_id,
+                object_index: challenge.object_index,
+                block_index: challenge.block_index,
+                expected_answer: challenge.expected_answer,
+                answer: challenge.answer,
+            },
+            severity: 'info',
+        });
+        fs.writeFileSync('answers.json', JSON.stringify(forwardArray));
 
         this.logger.info(`Wrong answer to challenge '${challenge.id}' for DH ID ${challenge.dh_id}. Got ${challenge.answer} for expected answer ${challenge.expected_answer}.`);
         return {

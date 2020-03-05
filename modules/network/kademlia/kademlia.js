@@ -226,8 +226,8 @@ class Kademlia {
                     }
 
                     if (entry) {
-                        this.log.info(`connected to network via ${entry}`);
-                        this.log.info(`discovered ${this.node.router.size} peers from seed`);
+                        this.log.info(`Connected to network via ${entry}`);
+                        this.log.info(`Discovered ${this.node.router.size} peers from seed`);
                     }
                     resolve();
                 });
@@ -257,13 +257,12 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes
      */
     async joinNetwork(callback) {
-        let peers = Array.from(new Set(this.config.network.bootstraps
+        const peers = Array.from(new Set(this.config.network.bootstraps
             .concat(await this.node.rolodex.getBootstrapCandidates())));
-        peers = utilities.shuffle(peers);
 
         if (peers.length === 0) {
-            this.log.info('no bootstrap seeds provided and no known profiles');
-            this.log.info('running in seed mode (waiting for connections)');
+            this.log.info('No bootstrap seeds provided and no known profiles');
+            this.log.info('Running in seed mode (waiting for connections)');
 
             this.node.router.events.once('add', (identity) => {
                 this.config.network.bootstraps = [
@@ -276,22 +275,22 @@ class Kademlia {
             });
 
             callback(null, null);
-        }
-
-        this.log.info(`joining network from ${peers.length} seeds`);
-        async.detectSeries(peers, (url, done) => {
-            const contact = kadence.utils.parseContactURL(url);
-            this.node.join(contact, (err) => {
-                done(null, (!err) && this.node.router.size > 0);
+        } else {
+            this.log.info(`Joining network from ${peers.length} seeds`);
+            async.detectSeries(peers, (url, done) => {
+                const contact = kadence.utils.parseContactURL(url);
+                this.node.join(contact, (err) => {
+                    done(null, (!err) && this.node.router.size > 0);
+                });
+            }, (err, result) => {
+                if (!result) {
+                    this.log.error('Failed to join network, will retry in 1 minute');
+                    callback(new Error('Failed to join network'));
+                } else {
+                    callback(null, result);
+                }
             });
-        }, (err, result) => {
-            if (!result) {
-                this.log.error('failed to join network, will retry in 1 minute');
-                callback(new Error('Failed to join network'));
-            } else {
-                callback(null, result);
-            }
-        });
+        }
     }
 
     /**
@@ -418,19 +417,20 @@ class Kademlia {
         this.node.use('*', async (request, response, next) => {
             if (request.params.header) {
                 const header = JSON.parse(request.params.header);
+                const srcContact = header.from;
                 const destContact = header.to;
                 header.ttl -= 1;
                 if (header.ttl >= 0) {
                     if (destContact === this.config.identity) {
                         response.send(next());
                     } else {
-                        const result = new Promise(async (accept, reject) => {
-                            const { contact, header } = await this.node.getContact(destContact);
-                            this.log.debug(`Request received for ${destContact}. Forwarding to: ${contact[0]}`);
+                        const result = await new Promise(async (accept, reject) => {
+                            const { contact } = await this.node.getContact(destContact);
+                            this.log.warn(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
                             // should await?
                             this.node.send(
                                 request.method,
-                                { message: request.params.message, header },
+                                { message: request.params.message, header: request.params.header },
                                 contact,
                                 (err, res) => {
                                     if (err) {
@@ -710,7 +710,8 @@ class Kademlia {
      * @returns {*}
      */
     extractSenderID(request) {
-        return request.contact[0];
+        const header = JSON.parse(request.params.header);
+        return header.from.toLowerCase();
     }
 
     /**
