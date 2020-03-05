@@ -92,7 +92,7 @@
       "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/develop.zip"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 15,
+    "dc_holding_time_in_minutes": 60,
     "dc_litigation_interval_in_minutes": 5,
     "dc_challenge_retry_delay_in_millis": 1000,
     "dh_challenge_retry_delay_in_millis": 1000,
