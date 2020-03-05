@@ -185,6 +185,7 @@ module.exports = async (deployer, network, accounts) => {
                 recepients.push(accounts[(k * 100) + i]);
             }
 
+            // eslint-disable-next-line no-await-in-loop
             await token.mintMany(recepients, amounts, { from: accounts[0] });
         }
 
