@@ -39,6 +39,7 @@ class Kademlia {
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
         kadence.constants.IDENTITY_DIFFICULTY = this.config.network.identityDifficulty;
+        kadence.constants.K = this.config.network.bucket_size;
         kadence.constants.ALPHA = kadence.constants.K + 1;
         this.log.info(`Network solution difficulty ${kadence.constants.SOLUTION_DIFFICULTY}.`);
         this.log.info(`Network identity difficulty ${kadence.constants.IDENTITY_DIFFICULTY}.`);

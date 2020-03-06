@@ -81,7 +81,8 @@
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
         "cooldownResetTime": "1s"
-      }
+      },
+      "bucket_size": 2
     },
     "bugSnag": {
       "releaseStage": "development"
@@ -191,7 +192,8 @@
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
         "cooldownResetTime": "1s"
-      }
+      },
+      "bucket_size": 4
     },
     "bugSnag": {
       "releaseStage": "testnet"
@@ -303,7 +305,8 @@
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
         "cooldownResetTime": "1s"
-      }
+      },
+      "bucket_size": 20
     },
     "bugSnag": {
       "releaseStage": "mainnet"
