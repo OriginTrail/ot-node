@@ -180,8 +180,6 @@ module.exports = async (deployer, network, accounts) => {
             amounts.push(amountToMint);
             recepients.push(accounts[i]);
         }
-
-        // eslint-disable-next-line no-await-in-loop
         await token.mintMany(recepients, amounts, { from: accounts[0] });
         await token.finishMinting({ from: accounts[0] });
 
