@@ -427,7 +427,7 @@ class Kademlia {
                         } else {
                             const result = await new Promise(async (accept, reject) => {
                                 const { contact } = await this.node.getContact(destContact);
-                                this.log.warn(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
+                                this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
                                 // should await?
                                 this.node.send(
                                     request.method,
