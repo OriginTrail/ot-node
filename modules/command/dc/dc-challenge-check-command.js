@@ -69,7 +69,6 @@ class DCChallengeCheckCommand extends Command {
             severity: 'info',
         });
 
-
         this.logger.info(`Wrong answer to challenge '${challenge.id}' for DH ID ${challenge.dh_id}. Got ${challenge.answer} for expected answer ${challenge.expected_answer}.`);
         return {
             commands: [
