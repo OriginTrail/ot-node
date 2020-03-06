@@ -664,8 +664,13 @@ class EventEmitter {
                 const dhNodeId = transport.extractSenderID(request);
                 const replicationFinishedMessage = transport.extractMessage(request);
                 const {
-                    offerId, messageSignature, dhIdentity, wallet,
+                    offerId, messageSignature, dhIdentity,
                 } = replicationFinishedMessage;
+
+                let { wallet } = replicationFinishedMessage;
+                if (!wallet) {
+                    wallet = transport.extractSenderInfo(request);
+                }
                 await dcService.verifyDHReplication(
                     offerId, messageSignature,
                     dhNodeId, dhIdentity, wallet, false,
