@@ -81,7 +81,8 @@
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
         "cooldownResetTime": "1s"
-      }
+      },
+      "bucket_size": 4
     },
     "bugSnag": {
       "releaseStage": "development"
@@ -180,7 +181,6 @@
       "hostname": "127.0.0.1",
       "id": "TestnetV4.0",
       "bootstraps": [
-        "https://rinkeby-mariner-bootstrap-01.origin-trail.network:5278/#f4092d1795e2fd442308911db2c1df31faf4fe2f",
         "https://rinkeby-mariner-bootstrap-02.origin-trail.network:5278/#d3951837f8100e6ea4a74417d560bcc8c6d4ffe5",
         "https://rinkeby-mariner-bootstrap-03.origin-trail.network:5278/#ad3c3325e50c3bedcb5c6ee6a73592b2ca7e07aa"
       ],
@@ -191,7 +191,8 @@
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
         "cooldownResetTime": "1s"
-      }
+      },
+      "bucket_size": 4
     },
     "bugSnag": {
       "releaseStage": "testnet"
@@ -303,7 +304,8 @@
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
         "cooldownResetTime": "1s"
-      }
+      },
+      "bucket_size": 20
     },
     "bugSnag": {
       "releaseStage": "mainnet"

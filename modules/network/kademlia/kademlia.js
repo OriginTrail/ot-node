@@ -39,6 +39,7 @@ class Kademlia {
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
         kadence.constants.IDENTITY_DIFFICULTY = this.config.network.identityDifficulty;
+        kadence.constants.K = this.config.network.bucket_size;
         kadence.constants.ALPHA = kadence.constants.K + 1;
         this.log.info(`Network solution difficulty ${kadence.constants.SOLUTION_DIFFICULTY}.`);
         this.log.info(`Network identity difficulty ${kadence.constants.IDENTITY_DIFFICULTY}.`);
@@ -91,7 +92,7 @@ class Kademlia {
             );
         }
 
-        this.config.identity = this.identity.fingerprint.toString('hex');
+        this.config.identity = this.identity.fingerprint.toString('hex').toLowerCase();
 
         this.log.notify(`My network identity: ${this.config.identity}`);
     }
@@ -134,6 +135,7 @@ class Kademlia {
                 logger: this.log,
                 transport,
                 contact,
+                identity: this.config.identity,
                 storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
@@ -154,11 +156,17 @@ class Kademlia {
 
             this.log.info('Quasar initialised');
 
+            const nodeIdentity = this.node.identity;
+
             const spartacusPlugin = kadence.spartacus(
                 this.privateKey,
                 { checkPublicKeyHash: false },
             );
             this.node.spartacus = this.node.plugin(spartacusPlugin);
+
+            this.node.identity = nodeIdentity;
+            this.node.router.identity = nodeIdentity;
+            this.node.spartacus.identity = nodeIdentity;
 
             this.log.info('Spartacus initialised');
 
@@ -180,29 +188,6 @@ class Kademlia {
             this.node.rolodex = this.node.plugin(kadence.rolodex(peerCacheFilePath));
             this.log.info('Rolodex initialised');
 
-            // Override node's _updateContact method to filter contacts.
-            this.node._updateContact = (identity, contact) => {
-                try {
-                    if (!this.validateContact(identity, contact)) {
-                        this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
-                        return;
-                    }
-                } catch (err) {
-                    this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
-                    return;
-                }
-
-                // Simulate node's "super._updateContact(identity, contact)".
-                this.node.constructor.prototype.constructor.prototype
-                    ._updateContact.call(this.node, identity, contact);
-            };
-
-            this.node.use((request, response, next) => {
-                if (!this.validateContact(request.contact[0], request.contact[1])) {
-                    return next(new NetworkRequestIgnoredError('Contact not valid.', request));
-                }
-                next();
-            });
 
             // this.node.blacklist = this.node.plugin(kadence.churnfilter({
             //     cooldownBaseTimeout: this.config.network.churnPlugin.cooldownBaseTimeout,
@@ -242,8 +227,8 @@ class Kademlia {
                     }
 
                     if (entry) {
-                        this.log.info(`connected to network via ${entry}`);
-                        this.log.info(`discovered ${this.node.router.size} peers from seed`);
+                        this.log.info(`Connected to network via ${entry}`);
+                        this.log.info(`Discovered ${this.node.router.size} peers from seed`);
                     }
                     resolve();
                 });
@@ -273,17 +258,14 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes
      */
     async joinNetwork(callback) {
-        let peers = Array.from(new Set(this.config.network.bootstraps
+        const peers = Array.from(new Set(this.config.network.bootstraps
             .concat(await this.node.rolodex.getBootstrapCandidates())));
-        peers = utilities.shuffle(peers);
 
         if (peers.length === 0) {
-            this.log.info('no bootstrap seeds provided and no known profiles');
-            this.log.info('running in seed mode (waiting for connections)');
+            this.log.info('No bootstrap seeds provided and no known profiles');
+            this.log.info('Running in seed mode (waiting for connections)');
 
-            callback(null, null);
-
-            return this.node.router.events.once('add', (identity) => {
+            this.node.router.events.once('add', (identity) => {
                 this.config.network.bootstraps = [
                     kadence.utils.getContactURL([
                         identity,
@@ -292,22 +274,24 @@ class Kademlia {
                 ];
                 this.joinNetwork(callback);
             });
-        }
 
-        this.log.info(`joining network from ${peers.length} seeds`);
-        async.detectSeries(peers, (url, done) => {
-            const contact = kadence.utils.parseContactURL(url);
-            this.node.join(contact, (err) => {
-                done(null, (!err) && this.node.router.size > 0);
+            callback(null, null);
+        } else {
+            this.log.info(`Joining network from ${peers.length} seeds`);
+            async.detectSeries(peers, (url, done) => {
+                const contact = kadence.utils.parseContactURL(url);
+                this.node.join(contact, (err) => {
+                    done(null, (!err) && this.node.router.size > 0);
+                });
+            }, (err, result) => {
+                if (!result) {
+                    this.log.error('Failed to join network, will retry in 1 minute');
+                    callback(new Error('Failed to join network'));
+                } else {
+                    callback(null, result);
+                }
             });
-        }, (err, result) => {
-            if (!result) {
-                this.log.error('failed to join network, will retry in 1 minute');
-                callback(new Error('Failed to join network'));
-            } else {
-                callback(null, result);
-            }
-        });
+        }
     }
 
     /**
@@ -431,6 +415,44 @@ class Kademlia {
             }
         });
 
+        this.node.use('*', async (request, response, next) => {
+            if (request.params.header) {
+                const header = JSON.parse(request.params.header);
+                if (header.ttl && header.from && header.to) {
+                    const srcContact = header.from;
+                    const destContact = header.to;
+                    header.ttl -= 1;
+                    if (header.ttl >= 0) {
+                        if (destContact === this.config.identity) {
+                            response.send(next());
+                        } else {
+                            const result = await new Promise(async (accept, reject) => {
+                                const { contact } = await this.node.getContact(destContact);
+                                this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
+                                // should await?
+                                this.node.send(
+                                    request.method,
+                                    {
+                                        message: request.params.message,
+                                        header: request.params.header,
+                                    },
+                                    contact,
+                                    (err, res) => {
+                                        if (err) {
+                                            reject(err);
+                                        } else {
+                                            accept(res);
+                                        }
+                                    },
+                                );
+                            });
+                            response.send(result);
+                        }
+                    } else response.send('Message includes invalid TTL.');
+                } else response.send('Message includes invalid header.');
+            } else next();
+        });
+
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
             /**
@@ -441,93 +463,51 @@ class Kademlia {
                 [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
 
             /**
-             * Gets contact by ID
-             * @param contactId Contact ID
-             * @returns {{"{": Object}|Array}
+             * Get contact by Node ID
+             * @param contactId
+             * @returns Promise{ contact: [contactId, contact], header }
              */
             node.getContact = async (contactId) => {
-                let contact = node.router.getContactByNodeId(contactId);
-                if (contact && contact.hostname) {
-                    this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
-                    return contact;
-                }
-                let peerContact;
-                try {
-                    peerContact = await this.node.rolodex.getExternalPeerInfo(contactId);
-                } catch (e) {
-                    this.log.debug("Can't find external peer info.");
-                }
-                if (peerContact) {
-                    const peerURL = `${peerContact.protocol}//${peerContact.hostname}:${peerContact.port}/#${peerContact.identity}`;
-                    this.log.debug(`Searching for contact with URL ${peerContact}`);
-                    const peerContactArray = KadenceUtils.parseContactURL(peerURL);
+                contactId = contactId.toLowerCase();
+                const header = JSON.stringify({
+                    from: this.config.identity,
+                    to: contactId,
+                    ttl: kadence.constants.MAX_RELAY_HOPS,
+                });
 
-                    if (peerContactArray.length === 2 && peerContactArray[1].hostname) {
-                        [, contact] = peerContactArray;
-
-                        this.log.debug(`Found contact in peer cache. ${contactId} - ${contact.hostname}:${contact.port}.`);
-                        return new Promise((accept, reject) => {
-                            this.node.ping(peerContactArray, (error) => {
-                                if (error) {
-                                    this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
-                                    accept(null);
-                                    return;
-                                }
-                                this.log.debug(`Contact ${contactId} reachable at ${contact.hostname}:${contact.port}.`);
-                                accept(contact);
-                            });
-                        }).then((contact) => {
-                            if (contact) {
-                                return contact;
-                            }
-                            return new Promise((accept, reject) => {
-                                this.log.debug(`Searching for contact: ${contactId}.`);
-                                this.node.iterativeFindNode(contactId, (err, result) => {
-                                    if (err) {
-                                        reject(Error(`Failed to find contact ${contactId}. ${err}`));
-                                        return;
-                                    }
-                                    if (result && Array.isArray(result)) {
-                                        const contact = result.find(c => c[0] === contactId);
-                                        if (contact) {
-                                            accept(contact[1]);
-                                        } else {
-                                            reject(Error(`Failed to find contact ${contactId}`));
-                                        }
-                                    } else {
-                                        reject(Error(`Failed to find contact ${contactId}`));
-                                    }
-                                });
-                            });
-                        });
+                return new Promise((accept, reject) => {
+                    // find contact in routing table
+                    const contact = node.router.getContactByNodeId(contactId);
+                    if (contact && contactId === contact.identity &&
+                        contact.hostname && contact.port) {
+                        this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
+                        accept({ contact: [contactId, contact], header });
                     }
-                }
 
-                this.log.debug(`No knowledge about contact ${contactId}, searching for it.`);
-                return new Promise(async (accept, reject) => {
-                    await this.node.iterativeFindNode(contactId, (err, result) => {
+                    // iterative find node
+                    this.node.iterativeFindNode(contactId, (err, result) => {
                         if (err) {
                             reject(Error(`Failed to find contact ${contactId}. ${err}`));
-                            return;
                         }
                         if (result && Array.isArray(result)) {
-                            const contact = result.find(c => c[0] === contactId);
-                            if (contact) {
-                                accept(contact[1]);
-                            } else {
-                                reject(Error(`Failed to find contact ${contactId}`));
+                            const contact = result[0];
+                            if (contact && Array.isArray(contact) && contact.length === 2
+                                && contact[1].hostname && contact[1].port
+                                && contact[0] === contact[1].identity) {
+                                this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
+                                accept({ contact, header });
                             }
-                        } else {
-                            reject(Error(`Failed to find contact ${contactId}`));
+                            reject(Error(`Unknown contact ${contactId}.`));
                         }
+                        reject(Error(`Failed to find contact ${contactId}. Not array: ${result}`));
                     });
                 });
             };
 
             node.replicationRequest = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-replication-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-replication-request', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -538,9 +518,9 @@ class Kademlia {
             };
 
             node.replacementReplicationRequest = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-replacement-replication-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-replacement-replication-request', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -551,9 +531,9 @@ class Kademlia {
             };
 
             node.replicationFinished = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-replication-finished', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-replication-finished', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -564,9 +544,9 @@ class Kademlia {
             };
 
             node.replacementReplicationFinished = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-replacement-replication-finished', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-replacement-replication-finished', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -577,9 +557,9 @@ class Kademlia {
             };
 
             node.challengeRequest = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-challenge-request', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -590,9 +570,9 @@ class Kademlia {
             };
 
             node.challengeResponse = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-response', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-challenge-response', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -603,9 +583,9 @@ class Kademlia {
             };
 
             node.sendDataLocationResponse = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-data-location-response', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-data-location-response', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -616,9 +596,9 @@ class Kademlia {
             };
 
             node.dataReadRequest = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-data-read-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-data-read-request', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -629,9 +609,9 @@ class Kademlia {
             };
 
             node.sendDataReadResponse = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-data-read-response', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-data-read-response', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -642,9 +622,9 @@ class Kademlia {
             };
 
             node.sendEncryptedKey = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-send-encrypted-key', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-send-encrypted-key', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -655,9 +635,9 @@ class Kademlia {
             };
 
             node.sendEncryptedKeyProcessResult = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
+                const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-encrypted-key-process-result', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-encrypted-key-process-result', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -738,6 +718,10 @@ class Kademlia {
      * @returns {*}
      */
     extractSenderID(request) {
+        if (request.params.header) {
+            const header = JSON.parse(request.params.header);
+            return header.from.toLowerCase();
+        }
         return request.contact[0];
     }
 
