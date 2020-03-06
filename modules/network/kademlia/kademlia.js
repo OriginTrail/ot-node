@@ -417,33 +417,38 @@ class Kademlia {
         this.node.use('*', async (request, response, next) => {
             if (request.params.header) {
                 const header = JSON.parse(request.params.header);
-                const srcContact = header.from;
-                const destContact = header.to;
-                header.ttl -= 1;
-                if (header.ttl >= 0) {
-                    if (destContact === this.config.identity) {
-                        response.send(next());
-                    } else {
-                        const result = await new Promise(async (accept, reject) => {
-                            const { contact } = await this.node.getContact(destContact);
-                            this.log.warn(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
-                            // should await?
-                            this.node.send(
-                                request.method,
-                                { message: request.params.message, header: request.params.header },
-                                contact,
-                                (err, res) => {
-                                    if (err) {
-                                        reject(err);
-                                    } else {
-                                        accept(res);
-                                    }
-                                },
-                            );
-                        });
-                        response.send(result);
-                    }
-                } else response.send('Message includes invalid TTL.');
+                if (header.ttl && header.from && header.to) {
+                    const srcContact = header.from;
+                    const destContact = header.to;
+                    header.ttl -= 1;
+                    if (header.ttl >= 0) {
+                        if (destContact === this.config.identity) {
+                            response.send(next());
+                        } else {
+                            const result = await new Promise(async (accept, reject) => {
+                                const { contact } = await this.node.getContact(destContact);
+                                this.log.warn(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
+                                // should await?
+                                this.node.send(
+                                    request.method,
+                                    {
+                                        message: request.params.message,
+                                        header: request.params.header,
+                                    },
+                                    contact,
+                                    (err, res) => {
+                                        if (err) {
+                                            reject(err);
+                                        } else {
+                                            accept(res);
+                                        }
+                                    },
+                                );
+                            });
+                            response.send(result);
+                        }
+                    } else response.send('Message includes invalid TTL.');
+                } else response.send('Message includes invalid header.');
             } else next();
         });
 
@@ -459,7 +464,7 @@ class Kademlia {
             /**
              * Get contact by Node ID
              * @param contactId
-             * @returns [contactId,contact]
+             * @returns Promise{ contact: [contactId, contact], header }
              */
             node.getContact = async (contactId) => {
                 contactId = contactId.toLowerCase();
@@ -472,7 +477,8 @@ class Kademlia {
                 return new Promise((accept, reject) => {
                     // find contact in routing table
                     const contact = node.router.getContactByNodeId(contactId);
-                    if (contact && contact.hostname && contactId === contact.identity) {
+                    if (contact && contactId === contact.identity &&
+                        contact.hostname && contact.port) {
                         this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                         accept({ contact: [contactId, contact], header });
                     }
@@ -485,7 +491,8 @@ class Kademlia {
                         if (result && Array.isArray(result)) {
                             const contact = result[0];
                             if (contact && Array.isArray(contact) && contact.length === 2
-                                && contact[1].hostname && contact[0] === contact[1].identity) {
+                                && contact[1].hostname && contact[1].port
+                                && contact[0] === contact[1].identity) {
                                 this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
                                 accept({ contact, header });
                             }
@@ -710,8 +717,11 @@ class Kademlia {
      * @returns {*}
      */
     extractSenderID(request) {
-        const header = JSON.parse(request.params.header);
-        return header.from.toLowerCase();
+        if (request.params.header) {
+            const header = JSON.parse(request.params.header);
+            return header.from.toLowerCase();
+        }
+        return request.contact[0];
     }
 
     /**

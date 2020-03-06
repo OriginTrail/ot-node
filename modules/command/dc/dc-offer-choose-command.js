@@ -1,7 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models/index');
 const Utilities = require('../../Utilities');
-const fs = require('fs');
 
 const { Op } = models.Sequelize;
 
@@ -55,13 +54,6 @@ class DCOfferChooseCommand extends Command {
         if (excludedDHs == null) {
             const action = isReplacement === true ? 'Replacement' : 'Replication';
             this.logger.notify(`${action} window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
-
-            if (!fs.existsSync('replications.json')) {
-                fs.writeFileSync('replications.json', '[]');
-            }
-            const forwardArray = JSON.parse(fs.readFileSync('replications.json'));
-            forwardArray.push(`${action} window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
-            fs.writeFileSync('replications.json', JSON.stringify(forwardArray));
         }
 
         let identities = verifiedReplications
