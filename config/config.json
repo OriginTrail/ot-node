@@ -82,7 +82,7 @@
         "cooldownMultiplier": 2,
         "cooldownResetTime": "1s"
       },
-      "bucket_size": 2
+      "bucket_size": 4
     },
     "bugSnag": {
       "releaseStage": "development"
