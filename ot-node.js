@@ -585,7 +585,7 @@ class OTNode {
         });
 
         container.register({
-            emitter: awilix.asValue({}),
+            emitter: awilix.asClass(EventEmitter).singleton(),
             web3: awilix.asValue(web3),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
@@ -605,6 +605,8 @@ class OTNode {
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
+            product: awilix.asClass(Product).singleton(),
+            dvService: awilix.asClass(DVService).singleton(),
         });
 
         const transport = container.resolve('transport');
