@@ -78,9 +78,9 @@ class DHDataReadRequestFreeCommand extends Command {
                 if (ot_object['@id'] in privateData) {
                     const privateDataObject = {};
                     constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
-                        if (Array.isArray(ot_object.properties[privateDataArray])) {
-                            privateDataObject[privateDataArray] =
-                                ot_object.properties[privateDataArray];
+                        const privateObject = ot_object.properties[privateDataArray];
+                        if (privateObject) {
+                            privateDataObject[privateDataArray] = privateObject;
                         }
                     });
                     privateData[ot_object['@id']] = Utilities.copyObject(privateDataObject);

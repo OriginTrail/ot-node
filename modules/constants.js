@@ -84,7 +84,7 @@ exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
  *
  * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
  */
-exports.PRIVATE_DATA_OBJECT_NAMES = ['private_data', 'claims'];
+exports.PRIVATE_DATA_OBJECT_NAMES = ['private_data', 'claim'];
 /**
  *
  * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data

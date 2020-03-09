@@ -511,7 +511,7 @@ class ImportUtilities {
 
 
     /**
-     * Removes the data attribute from objects that are private
+     * returns ot objects with private data
      * @param graph
      * @returns {Array}
      */
@@ -520,13 +520,11 @@ class ImportUtilities {
         graph.forEach((ot_object) => {
             if (ot_object && ot_object.properties) {
                 constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                    if (ot_object.properties[private_data_array] &&
-                        Array.isArray(ot_object.properties[private_data_array])) {
-                        ot_object.properties[private_data_array].forEach((private_object) => {
-                            if (private_object.isPrivate && !result.includes(ot_object['@id'])) {
-                                result.push(ot_object['@id']);
-                            }
-                        });
+                    const privateObject = ot_object.properties[private_data_array];
+                    if (privateObject) {
+                        if (privateObject.isPrivate && !result.includes(ot_object['@id'])) {
+                            result.push(ot_object['@id']);
+                        }
                     }
                 });
             }
@@ -555,13 +553,9 @@ class ImportUtilities {
             return;
         }
         constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            if (ot_object.properties[private_data_array] &&
-                Array.isArray(ot_object.properties[private_data_array])) {
-                ot_object.properties[private_data_array].forEach((private_object) => {
-                    if (private_object.isPrivate) {
-                        delete private_object.data;
-                    }
-                });
+            const privateObject = ot_object.properties[private_data_array];
+            if (privateObject && privateObject.isPrivate) {
+                delete privateObject.data;
             }
         });
     }
@@ -587,12 +581,10 @@ class ImportUtilities {
             return;
         }
         constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            if (ot_object.properties[private_data_array] &&
-                Array.isArray(ot_object.properties[private_data_array])) {
-                ot_object.properties[private_data_array].forEach((private_object) => {
-                    delete private_object.isPrivate;
-                    delete private_object.data;
-                });
+            const privateObject = ot_object.properties[private_data_array];
+            if (privateObject) {
+                delete privateObject.isPrivate;
+                delete privateObject.data;
             }
         });
     }
@@ -618,12 +610,10 @@ class ImportUtilities {
             throw Error(`Cannot calculate private data hash for invalid ot-json object ${ot_object}`);
         }
         constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            if (ot_object.properties[private_data_array] &&
-                Array.isArray(ot_object.properties[private_data_array])) {
-                ot_object.properties[private_data_array].forEach((private_object) => {
-                    const privateHash = ImportUtilities.calculatePrivateDataHash(private_object);
-                    private_object.private_data_hash = privateHash;
-                });
+            const privateObject = ot_object.properties[private_data_array];
+            if (privateObject && privateObject.isPrivate) {
+                const privateHash = ImportUtilities.calculatePrivateDataHash(privateObject);
+                privateObject.private_data_hash = privateHash;
             }
         });
     }

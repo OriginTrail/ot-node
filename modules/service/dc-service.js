@@ -453,9 +453,7 @@ class DCService {
         ot_objects.forEach((ot_object, index) => {
             const privateDataObject = {};
             constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
-                if (Array.isArray(ot_object.properties[privateDataArray])) {
-                    privateDataObject[privateDataArray] = ot_object.properties[privateDataArray];
-                }
+                privateDataObject[privateDataArray] = ot_object.properties[privateDataArray];
             });
             const { ot_json_object_id } = allowedPrivateDataElements[index];
             privateData[ot_json_object_id] = privateDataObject;

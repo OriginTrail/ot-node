@@ -130,7 +130,8 @@ class RestAPIServiceV2 {
         //     await this._privateDataReadNetwork(req, res);
         // });
 
-        // server.get(`/api/${this.version_id}/network/private_data/read/result/:handler_id`, async (req, res) => {
+        // server.get(`/api/${this.version_id}/network/private_data/read/resu
+        // lt/:handler_id`, async (req, res) => {
         //     await this._checkForHandlerStatus(req, res);
         // });
 
@@ -1087,26 +1088,22 @@ class RestAPIServiceV2 {
             data.forEach((obj) => {
                 if (not_owned_objects[obj.data_set_id]) {
                     if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
-                            .push({
-                                seller_erc_id: obj.seller_erc_id,
-                                ot_json_object_id: [obj.ot_json_object_id],
-                            });
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                            .push(obj.ot_json_object_id);
                     } else {
-                        not_owned_objects[obj.seller_node_id][obj.data_set_id]
-                            = {
-                                seller_erc_id: obj.seller_erc_id,
-                                ot_json_object_id: [obj.ot_json_object_id],
-                            };
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                            = [obj.ot_json_object_id];
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
+                            = obj.seller_erc_id;
                     }
                 } else {
                     allDatasets.push(obj.data_set_id);
                     not_owned_objects[obj.data_set_id] = {};
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id] =
-                        {
-                            seller_erc_id: obj.seller_erc_id,
-                            ot_json_object_id: [obj.ot_json_object_id],
-                        };
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                        = [obj.ot_json_object_id];
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
+                        = obj.seller_erc_id;
                 }
             });
 
