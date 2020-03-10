@@ -171,15 +171,11 @@ class DvPurchaseKeyDepositedCommand extends Command {
             if (relatedObject.vertex.vertexType === 'Data') {
                 const vertexData = relatedObject.vertex.data;
                 constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                    if (vertexData[private_data_array] &&
-                        Array.isArray(vertexData[private_data_array])) {
-                        vertexData[private_data_array].forEach((private_object) => {
-                            if (private_object.isPrivate &&
-                                calculatedPrivateHash === private_object.private_data_hash) {
-                                private_object.data = privateData;
-                                documentsToBeUpdated.push(relatedObject.vertex);
-                            }
-                        });
+                    const privateObject = vertexData[private_data_array];
+                    if (privateObject && privateObject.isPrivate
+                    && privateObject.private_data_hash === calculatedPrivateHash) {
+                        privateObject.data = privateData;
+                        documentsToBeUpdated.push(relatedObject.vertex);
                     }
                 });
             }

@@ -175,12 +175,10 @@ process.on('message', async (dataFromParent) => {
                 if (otObject.properties != null) {
                     const otObjectData = Utilities.copyObject(otObject.properties);
                     Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                        if (otObject.properties[private_data_array] &&
-                            Array.isArray(otObject.properties[private_data_array])) {
-                            otObject.properties[private_data_array].forEach((private_object) => {
-                                delete private_object.isPrivate;
-                                delete private_object.data;
-                            });
+                        const privateObject = otObject.properties[private_data_array];
+                        if (privateObject) {
+                            delete privateObject.isPrivate;
+                            delete privateObject.data;
                         }
                     });
                     const dataVertex = {

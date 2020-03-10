@@ -312,17 +312,13 @@ class ArangoJS {
                             LET privateArray = (
                             let properties = dataVertex['data']
                             for p in ${JSON.stringify(constants.PRIVATE_DATA_OBJECT_NAMES)}
-                            filter IS_ARRAY(properties[p]) == true
-                            for d in properties[p]
-                            RETURN d.isPrivate == null? false : d.isPrivate)
+                            RETURN p.isPrivate == null? false : p.isPrivate)
                             let isPrivate = POSITION (privateArray, true)
                             
                             LET dataArray = (
                             let properties = dataVertex['data']
                             for p in ${JSON.stringify(constants.PRIVATE_DATA_OBJECT_NAMES)}
-                            filter IS_ARRAY(properties[p]) == true
-                            for d in properties[p]
-                            RETURN d.data == null? false : true)
+                            RETURN p.data == null? false : true)
                             let hasData = POSITION (dataArray, true)
                             
                             return {"id": v${count}.identifierValue, "datasets": dataVertex.datasets, "data_element_key": dataVertex._key, "isPrivate": isPrivate, "hasData": hasData}
