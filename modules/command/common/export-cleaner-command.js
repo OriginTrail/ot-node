@@ -25,7 +25,7 @@ class ExportCleanerCommand extends Command {
         }
         const fileList = fs.readdirSync(cacheDirectoryPath);
         fileList.forEach((fileName) => {
-            const filePath = cacheDirectoryPath + fileName;
+            const filePath = path.join(cacheDirectoryPath, fileName);
             const now = new Date();
             const createdDate = fs.lstatSync(filePath).mtime;
             if (now.getTime() + constants.EXPORT_COMMAND_CLEANUP_TIME_MILLS <
