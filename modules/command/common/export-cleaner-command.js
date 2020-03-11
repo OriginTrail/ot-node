@@ -28,8 +28,8 @@ class ExportCleanerCommand extends Command {
             const createdDate = fs.lstatSync(filePath).mtime;
             if (now.getTime() + constants.EXPORT_COMMAND_CLEANUP_TIME_MILLS <
                 createdDate.getTime()) {
-                this.logger.trace(`Removing export cache file: ${filePath}`);
                 fs.unlinkSync(filePath);
+                this.logger.trace(`Successfully removed export cache file: ${filePath}`);
             }
         });
         return Command.repeat();
