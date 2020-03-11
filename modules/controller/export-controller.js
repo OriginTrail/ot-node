@@ -116,7 +116,9 @@ class ExportController {
             const dataset = JSON.parse(fileContent);
             response.status(200);
             response.send({
-                data: dataset,
+                data: {
+                    formatted_dataset: JSON.stringify(dataset),
+                },
                 status,
             });
         } else {

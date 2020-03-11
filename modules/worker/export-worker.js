@@ -11,7 +11,7 @@ process.on('message', async (data) => {
     var dataset;
     try {
         switch (standardId) {
-        case 'gs1': {
+        case 'gs1-epcis': {
             const transpiler = new EpcisOtJsonTranspiler({ config });
             dataset = transpiler.convertFromOTJson(importResult);
             break;
