@@ -19,6 +19,7 @@ class RestAPIServiceV2 {
         this.dcController = ctx.dcController;
 
         this.dvController = ctx.dvController;
+        this.exportController = ctx.exportController;
         this.remoteControl = ctx.remoteControl;
 
         this.graphStorage = ctx.graphStorage;
@@ -67,7 +68,7 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/export`, async (req, res) => {
-            await this._exportDataset(req, res);
+            await this.exportController.exportDataset(req, res);
         });
 
         server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
@@ -759,84 +760,6 @@ class RestAPIServiceV2 {
         this.logger.api('POST: Replication of imported data request received.');
 
         this.dcController.handleReplicateRequest(req, res);
-    }
-
-    /**
-     * Still not implemented in another layers
-     * @param req
-     * @param res
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _exportDataset(req, res) {
-        this.logger.api('POST: Export of data request received.');
-
-        if (req.body === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        let standard_id;
-        // Check if import type is valid
-        if (req.body.standard_id === undefined ||
-            this.stanards.indexOf(req.body.standard_id) === -1) {
-            standard_id = 'GRAPH'.toLowerCase();
-        } else {
-            // eslint-disable-next-line prefer-destructuring
-            standard_id = req.body.standard_id.toLowerCase();
-        }
-
-        if (!this.mapping_standards_for_event.get(standard_id)) {
-            res.status(400);
-            res.send({
-                message: 'Standard ID not supported',
-            });
-        }
-
-
-        if (req.body.dataset_id === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Dataset_id is not provided',
-            });
-        }
-
-        const requested_dataset = await Models.data_info.findOne({
-            where: {
-                data_set_id: req.body.dataset_id,
-            },
-        });
-
-        if (requested_dataset === null) {
-            res.status(400);
-            res.send({
-                message: 'Data set does not exist',
-            });
-            return;
-        }
-
-        const dataset_id = requested_dataset.dataValues.data_set_id;
-
-        const object_to_export =
-            {
-                dataset_id,
-            };
-
-        const inserted_object = await Models.handler_ids.create({
-            data: JSON.stringify(object_to_export),
-            status: 'PENDING',
-        });
-
-        const { handler_id } = inserted_object.dataValues;
-        res.status(200);
-        res.send({
-            handler_id,
-        });
-
-        this.emitter.emit('api-export-request', { dataset_id, handler_id, standard: this.mapping_standards_for_event.get(standard_id) });
     }
 
     /**
