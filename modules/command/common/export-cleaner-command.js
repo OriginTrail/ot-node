@@ -20,7 +20,9 @@ class ExportCleanerCommand extends Command {
      */
     async execute(command) {
         const cacheDirectoryPath = path.join(this.config.appDataPath, 'export_cache');
-
+        if (!fs.existsSync(cacheDirectoryPath)) {
+            return Command.repeat();
+        }
         const fileList = fs.readdirSync(cacheDirectoryPath);
         fileList.forEach((fileName) => {
             const filePath = cacheDirectoryPath + fileName;
@@ -54,6 +56,7 @@ class ExportCleanerCommand extends Command {
         const command = {
             name: 'exportCleanerCommand',
             period: constants.EXPORT_COMMAND_CLEANUP_TIME_MILLS,
+            data: {},
             transactional: false,
         };
         Object.assign(command, map);

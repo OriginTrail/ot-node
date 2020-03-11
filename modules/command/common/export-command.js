@@ -43,7 +43,7 @@ class ExportCommand extends Command {
                         },
                         {
                             where: {
-                                handlerId,
+                                handler_id: handlerId,
                             },
                         },
                     );
@@ -66,7 +66,7 @@ class ExportCommand extends Command {
     }
 
     async handleError(handlerId, error) {
-        this.logger.info(`Export failed for export handler_id: ${handlerId}`);
+        this.logger.error(`Export failed for export handler_id: ${handlerId}, error: ${error}`);
         await Models.handler_ids.update(
             {
                 status: 'FAILED',
@@ -76,7 +76,7 @@ class ExportCommand extends Command {
             },
             {
                 where: {
-                    handlerId,
+                    handler_id: handlerId,
                 },
             },
         );

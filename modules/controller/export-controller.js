@@ -10,7 +10,7 @@ class ExportController {
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
-
+        this.config = ctx.config;
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'ot-json');
@@ -30,16 +30,16 @@ class ExportController {
             return;
         }
 
-        let standard_id;
+        let standardId;
 
         if (request.body.standard_id === undefined ||
             this.stanards.indexOf(request.body.standard_id) === -1) {
-            standard_id = 'graph';
+            standardId = 'ot-json';
         } else {
-            standard_id = request.body.standard_id.toLowerCase();
+            standardId = request.body.standard_id.toLowerCase();
         }
 
-        if (!this.mapping_standards_for_event.get(standard_id)) {
+        if (!this.mapping_standards_for_event.get(standardId)) {
             response.status(400);
             response.send({
                 message: 'Standard ID not supported',
@@ -85,6 +85,7 @@ class ExportController {
             data: {
                 handlerId: handler_id,
                 datasetId,
+                standardId,
             },
         });
     }
@@ -111,12 +112,11 @@ class ExportController {
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
             const filePath = path.join(cacheDirectory, handlerId);
 
-            const dataset = JSON.parse(fs.readFileSync(filePath, { encoding: 'utf-8' }));
+            const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
+            const dataset = JSON.parse(fileContent);
             response.status(200);
             response.send({
-                data: JSON.stringify({
-                    dataset,
-                }),
+                data: dataset,
                 status,
             });
         } else {

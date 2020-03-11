@@ -21,22 +21,22 @@ process.on('message', async (data) => {
             dataset = transpiler.convertFromOTJson(importResult);
             break;
         }
-        case 'ot-json': {
-            process.send('COMPLETED');
+        case 'ot-json':
+        case 'graph': {
             dataset = importResult;
-            return;
+            break;
         }
         default:
             throw new Error('Export for unsupported standard');
         }
 
-        const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+        const cacheDirectory = path.join(config.appDataPath, 'export_cache');
 
         try {
             await Utilities.writeContentsToFile(
                 cacheDirectory,
                 handlerId,
-                dataset,
+                JSON.stringify(dataset),
             );
         } catch (e) {
             const filePath = path.join(cacheDirectory, handlerId);
