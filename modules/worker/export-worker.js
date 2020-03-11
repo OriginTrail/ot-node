@@ -1,7 +1,7 @@
 const EpcisOtJsonTranspiler = require('.././transpiler/epcis/epcis-otjson-transpiler');
 const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler');
 
-process.on('message', (data) => {
+process.on('message', async (data) => {
     // try {
     //     const { standardId, config, dataset } = JSON.parse(data);
     //     let transpiler;
@@ -31,37 +31,31 @@ process.on('message', (data) => {
     //
     // const result = await this.importService.getImport(datasetId);
     //
-    // if (result.error != null) {
-    //     await processExport(result.error, data);
-    // } else {
-    //     switch (data.standard) {
-    //         case 'gs1': {
-    //             const formatted_dataset =
-    //                 this.epcisOtJsonTranspiler.convertFromOTJson(result);
-    //             await processExport(
-    //                 null,
-    //                 { formatted_dataset, handler_id: data.handler_id },
-    //             );
-    //             break;
-    //         }
-    //         case 'wot': {
-    //             const formatted_dataset =
-    //                 this.wotOtJsonTranspiler.convertFromOTJson(result);
-    //             await processExport(
-    //                 null,
-    //                 { formatted_dataset, handler_id: data.handler_id },
-    //             );
-    //             break;
-    //         }
-    //         case 'ot-json': {
-    //             await processExport(
-    //                 null,
-    //                 { formatted_dataset: result, handler_id: data.handler_id },
-    //             );
-    //             break;
-    //         }
-    //         default:
-    //             throw new Error('Export for unsuported standard');
-    //     }
-    // }
+    const {
+        standardId, handlerId, config, importResult,
+    } = JSON.parse(data);
+    var transpiler;
+    try {
+        switch (standardId) {
+        case 'gs1': {
+            transpiler = new EpcisOtJsonTranspiler({ config });
+            break;
+        }
+        case 'wot': {
+            transpiler = new WotOtJsonTranspiler({ config });
+            break;
+        }
+        case 'ot-json': {
+            process.send({ formatted_dataset: importResult });
+            return;
+        }
+        default:
+            throw new Error('Export for unsupported standard');
+        }
+
+        const formatted_dataset = transpiler.convertFromOTJson(importResult);
+        process.send('COMPLETED');
+    } catch (error) {
+        process.send({ error: `${error.message}\n${error.stack}` });
+    }
 });

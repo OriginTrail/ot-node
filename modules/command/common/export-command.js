@@ -10,38 +10,48 @@ class ExportCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.notifyError = ctx.notifyError;
+        this.importService = ctx.importService;
+        this.config = ctx.config;
     }
 
     async execute(command) {
         const {
             datasetId,
             handlerId,
+            standardId,
         } = command.data;
 
-        const forked = fork('modules/worker/export-worker.js');
+        const importResult = await this.importService.getImport(datasetId);
 
-        forked.send(JSON.stringify({
-            datasetId, handlerId,
-        }));
+        if (importResult.error) {
+            await this.handleError(importResult.error);
+        } else {
+            const forked = fork('modules/worker/export-worker.js');
 
-        forked.on('message', async (response) => {
-            if (response.error) {
-                await this.handleError(handlerId, response.error);
-            } else {
-                this.logger.info(`Export complete for export handler_id: ${handlerId}`);
-                await Models.handler_ids.update(
-                    {
-                        status: 'COMPLETED',
-                    },
-                    {
-                        where: {
-                            handlerId,
+            forked.send(JSON.stringify({
+                datasetId, standardId, importResult, handlerId, config: this.config,
+            }));
+
+            forked.on('message', async (response) => {
+                if (response.error) {
+                    await this.handleError(handlerId, response.error);
+                } else {
+                    this.logger.info(`Export complete for export handler_id: ${handlerId}`);
+                    await Models.handler_ids.update(
+                        {
+                            status: 'COMPLETED',
                         },
-                    },
-                );
-            }
-            forked.kill();
-        });
+                        {
+                            where: {
+                                handlerId,
+                            },
+                        },
+                    );
+                }
+                forked.kill();
+            });
+        }
+        return Command.empty();
     }
 
     /**
