@@ -1,59 +1,51 @@
 const EpcisOtJsonTranspiler = require('.././transpiler/epcis/epcis-otjson-transpiler');
 const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler');
+const path = require('path');
+const Utilities = require('../Utilities');
+const fs = require('fs');
 
 process.on('message', async (data) => {
-    // try {
-    //     const { standardId, config, dataset } = JSON.parse(data);
-    //     let transpiler;
-    //     switch (standardId) {
-    //         case 'gs1': {
-    //             transpiler = new EpcisOtJsonTranspiler({ config });
-    //             break;
-    //         }
-    //         case 'wot': {
-    //             transpiler = new WotOtJsonTranspiler({ config });
-    //             break;
-    //         }
-    //         default:
-    //             process.send({ error: `Unsupported standardId: ${standardId}` });
-    //             return;
-    //     }
-    //
-    //     const stringifiedJson = transpiler.convertToOTJson(dataset);
-    //     process.send(stringifiedJson);
-    // } catch (e) {
-    //     process.send({ error: `${e.message}\n${e.stack}` });
-    // }
-    //
-    // // todo get import form db
-    // // todo depending on standard id call transpiler
-    // // todo save to file
-    //
-    // const result = await this.importService.getImport(datasetId);
-    //
     const {
         standardId, handlerId, config, importResult,
     } = JSON.parse(data);
-    var transpiler;
+    var dataset;
     try {
         switch (standardId) {
         case 'gs1': {
-            transpiler = new EpcisOtJsonTranspiler({ config });
+            const transpiler = new EpcisOtJsonTranspiler({ config });
+            dataset = transpiler.convertFromOTJson(importResult);
             break;
         }
         case 'wot': {
-            transpiler = new WotOtJsonTranspiler({ config });
+            const transpiler = new WotOtJsonTranspiler({ config });
+            dataset = transpiler.convertFromOTJson(importResult);
             break;
         }
         case 'ot-json': {
-            process.send({ formatted_dataset: importResult });
+            process.send('COMPLETED');
+            dataset = importResult;
             return;
         }
         default:
             throw new Error('Export for unsupported standard');
         }
 
-        const formatted_dataset = transpiler.convertFromOTJson(importResult);
+        const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+
+        try {
+            await Utilities.writeContentsToFile(
+                cacheDirectory,
+                handlerId,
+                dataset,
+            );
+        } catch (e) {
+            const filePath = path.join(cacheDirectory, handlerId);
+
+            if (fs.existsSync(filePath)) {
+                await Utilities.deleteDirectory(filePath);
+            }
+            throw new Error(`Error when creating export cache file for handler_id ${handlerId}. ${e.message}`);
+        }
         process.send('COMPLETED');
     } catch (error) {
         process.send({ error: `${error.message}\n${error.stack}` });

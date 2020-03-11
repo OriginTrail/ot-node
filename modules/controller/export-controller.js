@@ -1,4 +1,6 @@
 const Models = require('../../models');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * Encapsulates Export related methods
@@ -85,6 +87,45 @@ class ExportController {
                 datasetId,
             },
         });
+    }
+
+    async checkForHandlerStatus(request, response) {
+        const handlerId = request.params.handler_id;
+        const handler_object = await Models.handler_ids.findOne({
+            where: {
+                handler_id: handlerId,
+            },
+        });
+
+        if (!handler_object) {
+            this.logger.info('Invalid request');
+            response.status(404);
+            response.send({
+                message: 'Unable to find data with given parameters! handler_id is required!',
+            });
+            return;
+        }
+        const { data, status } = handler_object;
+
+        if (handler_object.status === 'COMPLETED') {
+            const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+            const filePath = path.join(cacheDirectory, handlerId);
+
+            const dataset = JSON.parse(fs.readFileSync(filePath, { encoding: 'utf-8' }));
+            response.status(200);
+            response.send({
+                data: JSON.stringify({
+                    dataset,
+                }),
+                status,
+            });
+        } else {
+            response.status(200);
+            response.send({
+                data: JSON.parse(data),
+                status,
+            });
+        }
     }
 }
 

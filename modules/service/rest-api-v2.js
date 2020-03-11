@@ -72,7 +72,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
+            await this.exportController.checkForHandlerStatus(req, res);
         });
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
