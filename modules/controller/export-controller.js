@@ -30,22 +30,18 @@ class ExportController {
             return;
         }
 
-        let standardId;
 
         if (request.body.standard_id === undefined ||
             this.stanards.indexOf(request.body.standard_id) === -1) {
-            standardId = 'ot-json';
-        } else {
-            standardId = request.body.standard_id.toLowerCase();
-        }
-
-        if (!this.mapping_standards_for_event.get(standardId)) {
             response.status(400);
             response.send({
-                message: 'Standard ID not supported',
+                message: `Standard ID not supported. Supported IDs: ${this.stanards}`,
             });
+            return;
         }
 
+        const standardId =
+            this.mapping_standards_for_event.get(request.body.standard_id.toLowerCase());
 
         if (request.body.dataset_id === undefined) {
             response.status(400);
