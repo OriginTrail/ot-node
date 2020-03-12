@@ -13,12 +13,12 @@ process.on('message', async (data) => {
         switch (standardId) {
         case 'gs1': {
             const transpiler = new EpcisOtJsonTranspiler({ config });
-            dataset = JSON.stringify(transpiler.convertFromOTJson(importResult));
+            dataset = transpiler.convertFromOTJson(importResult);
             break;
         }
         case 'wot': {
             const transpiler = new WotOtJsonTranspiler({ config });
-            dataset = JSON.stringify(transpiler.convertFromOTJson(importResult));
+            dataset = transpiler.convertFromOTJson(importResult);
             break;
         }
         case 'ot-json': {
