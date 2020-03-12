@@ -71,7 +71,7 @@ class ExportCommand extends Command {
             {
                 status: 'FAILED',
                 data: JSON.stringify({
-                    error: error.message,
+                    error,
                 }),
             },
             {

@@ -29,19 +29,20 @@ class ExportController {
             });
             return;
         }
-
-
-        if (request.body.standard_id === undefined ||
-            this.stanards.indexOf(request.body.standard_id) === -1) {
+        var standardId = '';
+        if (!request.body.standard_id) {
+            standardId = 'ot-json';
+        } else if (this.stanards.indexOf(request.body.standard_id) === -1) {
             response.status(400);
             response.send({
                 message: `Standard ID not supported. Supported IDs: ${this.stanards}`,
             });
             return;
+        } else {
+            standardId =
+                this.mapping_standards_for_event.get(request.body.standard_id.toLowerCase());
         }
 
-        const standardId =
-            this.mapping_standards_for_event.get(request.body.standard_id.toLowerCase());
 
         if (request.body.dataset_id === undefined) {
             response.status(400);
@@ -113,7 +114,7 @@ class ExportController {
             response.status(200);
             response.send({
                 data: {
-                    formatted_dataset: JSON.stringify(dataset),
+                    formatted_dataset: dataset.formatted_dataset,
                 },
                 status,
             });

@@ -11,18 +11,17 @@ process.on('message', async (data) => {
     var dataset;
     try {
         switch (standardId) {
-        case 'gs1-epcis': {
+        case 'gs1': {
             const transpiler = new EpcisOtJsonTranspiler({ config });
-            dataset = transpiler.convertFromOTJson(importResult);
+            dataset = JSON.stringify(transpiler.convertFromOTJson(importResult));
             break;
         }
         case 'wot': {
             const transpiler = new WotOtJsonTranspiler({ config });
-            dataset = transpiler.convertFromOTJson(importResult);
+            dataset = JSON.stringify(transpiler.convertFromOTJson(importResult));
             break;
         }
-        case 'ot-json':
-        case 'graph': {
+        case 'ot-json': {
             dataset = importResult;
             break;
         }
@@ -36,7 +35,7 @@ process.on('message', async (data) => {
             await Utilities.writeContentsToFile(
                 cacheDirectory,
                 handlerId,
-                JSON.stringify(dataset),
+                JSON.stringify({ formatted_dataset: dataset }),
             );
         } catch (e) {
             const filePath = path.join(cacheDirectory, handlerId);
