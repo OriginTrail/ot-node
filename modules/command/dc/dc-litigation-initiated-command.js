@@ -51,6 +51,25 @@ class DcLitigationInitiatedCommand extends Command {
                 const offer = await Models.offers.findOne({
                     where: { offer_id: offerId },
                 });
+
+                if (offer.global_status === 'COMPLETED') {
+                    // offer has already been completed
+                    this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} with objectIndex ${objectIndex} and blockIndex ${blockIndex}`);
+                    return Command.empty();
+                }
+
+                await Models.replicated_data.update(
+                    {
+                        last_litigation_timestamp: new Date(),
+                    },
+                    {
+                        where: {
+                            dh_id: dhIdentity,
+                            offer_id: offerId,
+                        },
+                    },
+                );
+
                 return {
                     commands: [
                         {

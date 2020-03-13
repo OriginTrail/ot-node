@@ -31,12 +31,20 @@ class DCChallengeCheckCommand extends Command {
 
         const challenge = await models.challenges.findOne({ where: { id: challengeId } });
 
+        if (!challenge) {
+            return Command.empty();
+        }
+
         const replicatedData = await models.replicated_data.findOne({
             where:
                 {
                     offer_id: offerId, dh_id: dhId,
                 },
         });
+
+        if (!replicatedData) {
+            return Command.empty();
+        }
 
         if (challenge.answer === challenge.expected_answer) {
             this.logger.trace(`Holder ${dhIdentity} successfully answered to challenge for offer ${offerId}.`);
