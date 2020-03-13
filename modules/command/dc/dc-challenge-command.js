@@ -31,6 +31,10 @@ class DCChallengeCommand extends Command {
                 id: challenge_id,
             },
         });
+        if (!challenge) {
+            // this is in case that offer expired but old commands remained
+            return Command.empty();
+        }
 
         this.logger.trace(`Sending challenge to ${challenge.dh_id}. Offer ID ${challenge.offer_id}, object_index ${challenge.object_index}, block_index ${challenge.block_index}.`);
 

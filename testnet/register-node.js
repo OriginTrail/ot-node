@@ -113,7 +113,7 @@ function checkForUpdate() {
                 && filePath !== updateInfo.path
                 && filePath !== previousVersionPath
                 && /^\d+\.\d+\.\d+$/.test(fileName)) {
-                fs.rmdirSync(filePath);
+                execSync(`rm -r ${filePath}`);
                 logger.trace(`Successfully removed old version directory: ${filePath}`);
             }
         });
