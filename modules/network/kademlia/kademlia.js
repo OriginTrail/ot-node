@@ -45,6 +45,7 @@ class Kademlia {
         kadence.constants.ALPHA = kadence.constants.K + 1;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
         kadence.constants.IDENTITY_DIFFICULTY = this.config.network.identityDifficulty;
+        kadence.constants.K = this.config.network.bucket_size;
         kadence.constants.ALPHA = kadence.constants.K + 1;
         this.log.info(`Network solution difficulty ${kadence.constants.SOLUTION_DIFFICULTY}.`);
         this.log.info(`Network identity difficulty ${kadence.constants.IDENTITY_DIFFICULTY}.`);
@@ -97,7 +98,7 @@ class Kademlia {
             );
         }
 
-        this.config.identity = this.identity.fingerprint.toString('hex');
+        this.config.identity = this.identity.fingerprint.toString('hex').toLowerCase();
 
         this.log.notify(`My network identity: ${this.config.identity}`);
 
@@ -177,6 +178,8 @@ class Kademlia {
 
             this.log.info('Quasar initialised');
 
+            const nodeIdentity = this.node.identity;
+
             const spartacusPlugin = kadence.spartacus(
                 this.privateKey,
                 this.node.identity,
@@ -184,12 +187,11 @@ class Kademlia {
             );
             this.node.spartacus = this.node.plugin(spartacusPlugin);
 
-            this.node.identity = this.config.identity;
-            this.node.router.identity = this.config.identity;
-            this.node.spartacus.identity = this.config.identity;
+            this.node.identity = nodeIdentity;
+            this.node.router.identity = nodeIdentity;
+            this.node.spartacus.identity = nodeIdentity;
 
-
-                this.log.info('Spartacus initialised');
+            this.log.info('Spartacus initialised');
 
             this.node.content = this.node.plugin(kadence.contentaddress({ valueEncoding: 'hex' }));
             this.log.info('Content initialised');
@@ -209,29 +211,6 @@ class Kademlia {
             this.node.rolodex = this.node.plugin(kadence.rolodex(peerCacheFilePath));
             this.log.info('Rolodex initialised');
 
-            // Override node's _updateContact method to filter contacts.
-            // this.node._updateContact = (identity, contact) => {
-            //     try {
-            //         if (!this.validateContact(identity, contact)) {
-            //             this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
-            //             return;
-            //         }
-            //     } catch (err) {
-            //         this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
-            //         return;
-            //     }
-            //
-            //     // Simulate node's "super._updateContact(identity, contact)".
-            //     this.node.constructor.prototype.constructor.prototype
-            //         ._updateContact.call(this.node, identity, contact);
-            // };
-
-            this.node.use((request, response, next) => {
-                if (!this.validateContact(request.contact[0], request.contact[1])) {
-                    return next(new NetworkRequestIgnoredError('Contact not valid.', request));
-                }
-                next();
-            });
 
             // this.node.blacklist = this.node.plugin(kadence.churnfilter({
             //     cooldownBaseTimeout: this.config.network.churnPlugin.cooldownBaseTimeout,
@@ -271,8 +250,8 @@ class Kademlia {
                     }
 
                     if (entry) {
-                        this.log.info(`connected to network via ${entry}`);
-                        this.log.info(`discovered ${this.node.router.size} peers from seed`);
+                        this.log.info(`Connected to network via ${entry}`);
+                        this.log.info(`Discovered ${this.node.router.size} peers from seed`);
                     }
                     resolve();
                 });
@@ -306,12 +285,10 @@ class Kademlia {
             .concat(await this.node.rolodex.getBootstrapCandidates())));
 
         if (peers.length === 0) {
-            this.log.info('no bootstrap seeds provided and no known profiles');
-            this.log.info('running in seed mode (waiting for connections)');
+            this.log.info('No bootstrap seeds provided and no known profiles');
+            this.log.info('Running in seed mode (waiting for connections)');
 
-            callback(null, null);
-
-            return this.node.router.events.once('add', (identity) => {
+            this.node.router.events.once('add', (identity) => {
                 this.config.network.bootstraps = [
                     kadence.utils.getContactURL([
                         identity,
@@ -320,23 +297,24 @@ class Kademlia {
                 ];
                 this.joinNetwork(callback);
             });
-        }
 
-        this.log.info(`joining network from ${peers.length} seeds`);
-        async.detectSeries(peers, (url, done) => {
-            console.log(`Joining ${url}`);
-            const contact = kadence.utils.parseContactURL(url);
-            this.node.join(contact, (err) => {
-                done(null, (!err) && this.node.router.size > 0);
+            callback(null, null);
+        } else {
+            this.log.info(`Joining network from ${peers.length} seeds`);
+            async.detectSeries(peers, (url, done) => {
+                const contact = kadence.utils.parseContactURL(url);
+                this.node.join(contact, (err) => {
+                    done(null, (!err) && this.node.router.size > 0);
+                });
+            }, (err, result) => {
+                if (!result) {
+                    this.log.error('Failed to join network, will retry in 1 minute');
+                    callback(new Error('Failed to join network'));
+                } else {
+                    callback(null, result);
+                }
             });
-        }, (err, result) => {
-            if (!result) {
-                this.log.error('failed to join network, will retry in 1 minute');
-                callback(new Error('Failed to join network'));
-            } else {
-                callback(null, result);
-            }
-        });
+        }
     }
 
     /**
@@ -561,6 +539,44 @@ class Kademlia {
             }
         });
 
+        this.node.use('*', async (request, response, next) => {
+            if (request.params.header) {
+                const header = JSON.parse(request.params.header);
+                if (header.ttl && header.from && header.to) {
+                    const srcContact = header.from;
+                    const destContact = header.to;
+                    header.ttl -= 1;
+                    if (header.ttl >= 0) {
+                        if (destContact === this.config.identity) {
+                            response.send(next());
+                        } else {
+                            const result = await new Promise(async (accept, reject) => {
+                                const { contact } = await this.node.getContact(destContact);
+                                this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
+                                // should await?
+                                this.node.send(
+                                    request.method,
+                                    {
+                                        message: request.params.message,
+                                        header: request.params.header,
+                                    },
+                                    contact,
+                                    (err, res) => {
+                                        if (err) {
+                                            reject(err);
+                                        } else {
+                                            accept(res);
+                                        }
+                                    },
+                                );
+                            });
+                            response.send(result);
+                        }
+                    } else response.send('Message includes invalid TTL.');
+                } else response.send('Message includes invalid header.');
+            } else next();
+        });
+
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
             /**
@@ -573,12 +589,12 @@ class Kademlia {
             /**
              * Get contact by Node ID
              * @param contactId
-             * @returns [contactId,contact]
+             * @returns Promise{ contact: [contactId, contact], header }
              */
             node.getContact = async (contactId) => {
                 contactId = contactId.toLowerCase();
                 const header = JSON.stringify({
-                    from: this.node.identity.toString('hex').toLowerCase(),
+                    from: this.config.identity,
                     to: contactId,
                     ttl: kadence.constants.MAX_RELAY_HOPS,
                 });
@@ -586,7 +602,8 @@ class Kademlia {
                 return new Promise((accept, reject) => {
                     // find contact in routing table
                     const contact = node.router.getContactByNodeId(contactId);
-                    if (contact && contact.hostname && contactId === contact.identity) {
+                    if (contact && contactId === contact.identity &&
+                        contact.hostname && contact.port) {
                         this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                         accept({ contact: [contactId, contact], header });
                     }
@@ -599,7 +616,8 @@ class Kademlia {
                         if (result && Array.isArray(result)) {
                             const contact = result[0];
                             if (contact && Array.isArray(contact) && contact.length === 2
-                                && contact[1].hostname && contact[0] === contact[1].identity) {
+                                && contact[1].hostname && contact[1].port
+                                && contact[0] === contact[1].identity) {
                                 this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
                                 accept({ contact, header });
                             }
@@ -824,6 +842,10 @@ class Kademlia {
      * @returns {*}
      */
     extractSenderID(request) {
+        if (request.params.header) {
+            const header = JSON.parse(request.params.header);
+            return header.from.toLowerCase();
+        }
         return request.contact[0];
     }
 

@@ -11,6 +11,7 @@ class DHLitigationInitiatedCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -44,23 +45,19 @@ class DHLitigationInitiatedCommand extends Command {
 
                     this.logger.warn(`Litigation initiated for offer ${offerId}, object index ${requestedObjectIndex} and block index ${requestedBlockIndex}.`);
 
-                    return {
-                        commands: [
-                            {
-                                name: 'dhLitigationAnswerCommand',
-                                data: {
-                                    offerId,
-                                    objectIndex: requestedObjectIndex,
-                                    blockIndex: requestedBlockIndex,
-                                },
-                                retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
-                            },
-                        ],
-                    };
+                    await this.commandExecutor.add({
+                        name: 'dhLitigationAnswerCommand',
+                        data: {
+                            offerId,
+                            objectIndex: requestedObjectIndex,
+                            blockIndex: requestedBlockIndex,
+                        },
+                        retries: constants.ANSWER_LITIGATION_COMMAND_RETRIES,
+                    });
                 }
             }
         } catch (e) {
-            this.logger.error(`Failed to process LitigationInitiatedCommand. ${e}`);
+            this.logger.error(`Failed to process dhLitigationInitiatedCommand. ${e}`);
         }
 
         return Command.repeat();
