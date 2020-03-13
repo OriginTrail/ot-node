@@ -922,7 +922,7 @@ class Kademlia {
     async findNode(contactId) {
         let contact;
         try {
-            {contact, header } = await this.node.getContact(contactId);
+            const { contact, header } = await this.node.getContact(contactId);
         } catch (e) {
 
         }
