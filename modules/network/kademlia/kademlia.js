@@ -182,7 +182,6 @@ class Kademlia {
 
             const spartacusPlugin = kadence.spartacus(
                 this.privateKey,
-                this.node.identity,
                 { checkPublicKeyHash: false },
             );
             this.node.spartacus = this.node.plugin(spartacusPlugin);
@@ -345,10 +344,15 @@ class Kademlia {
             this.log.info('Broadcast request received');
             this.log.info(`ALPHA is ${kadence.constants.ALPHA}.`);
             this.log.info(`MAX_RELAY_HOPS is ${kadence.constants.MAX_RELAY_HOPS}.`);
-            const contact = await this.node.getContact(message.nodeId);
+            const { contact, header } = await this.node.getContact(message.nodeId);
+
+            if (this.node.identity.toString('hex') === contact[0]) {
+                return;
+            }
+
             const myIdentity = this.node.identity.toString('hex');
             return new Promise((resolve, reject) => {
-                this.node.send('kad-broadcast-response', { myIdentity, broadcastDir: JSON.stringify(message.broadcastDir) }, [message.nodeId, contact], (err, res) => {
+                this.node.send('kad-broadcast-response', { message: { myIdentity, broadcastDir: JSON.stringify(message.broadcastDir) }, header }, contact, (err, res) => {
                     if (err) {
                         reject(err);
                     } else {
@@ -358,51 +362,9 @@ class Kademlia {
             });
         });
 
-        this.node.use('kad-ping-request', (request, response, next) => {
-            response.send([]);
-            console.log('It is me!');
-        });
-
-        this.node.use('kad-ping-response', (request, response, next) => {
-            response.send([]);
-            const message = JSON.parse(request.params.message);
-            const ultimateContactId = message.to;
-            const originContactId = message.from;
-            message.ttl -= 1;
-            if (message.ttl > 0) {
-                this.log.info(`Ping response received for ${originContactId}`);
-                if (originContactId.toLowerCase() === this.node.identity.toString('hex').toLowerCase()) {
-                    console.log(`Ping found: ${ultimateContactId}`);
-                    const isDirectory = source => lstatSync(source).isDirectory();
-                    const getDirectories = source => readdirSync(source).map(name => join(source, name)).filter(isDirectory);
-                    const broadcastDir = (getDirectories(`${homeDir}/kademlia/logs/`).sort()).slice(-1)[0];
-
-                    const pingArray = JSON.parse(fs.readFileSync(`${broadcastDir}/ping.json`));
-                    pingArray.push(ultimateContactId);
-                    fs.writeFileSync(`${broadcastDir}/ping.json`, JSON.stringify(pingArray));
-                } else {
-                    return new Promise(async (resolve, reject) => {
-                        const contact = await this.node.getContact(originContactId);
-                        console.log(`Forwarding to ${contact[0]}`);
-                        if ((contact[0]).toLowerCase() !== this.node.identity.toString('hex').toLowerCase() && contact[0] === contact[1].identity) {
-                            this.node.send('kad-ping-response', { message: JSON.stringify(message) }, contact, (err, res) => {
-                                if (err) {
-                                    reject(err);
-                                } else {
-                                    resolve(res);
-                                }
-                            });
-                        } else {
-                            resolve();
-                        }
-                    });
-                }
-            }
-        });
-
         this.node.use('kad-broadcast-response', (request, response, next) => {
             this.log.info(`Broadcast response received for ${request.contact[0]}`);
-            const broadcastDir = JSON.parse(request.params.broadcastDir);
+            const broadcastDir = JSON.parse(request.params.message.broadcastDir);
             const broadcastArray = JSON.parse(fs.readFileSync(`${broadcastDir}/broadcast.json`));
             broadcastArray.push(request.contact[0]);
             fs.writeFileSync(`${broadcastDir}/broadcast.json`, JSON.stringify(broadcastArray));
@@ -474,38 +436,6 @@ class Kademlia {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
             response.send([]);
-        });
-
-        this.node.use('*', (request, response, next) => {
-            if (request.params.header) {
-                const header = JSON.parse(request.params.header);
-
-                header.ttl -= 1;
-                if (header.ttl > 0) {
-                    this.log.info(`Request received for ${header.to}`);
-                    if (header.to === this.node.identity.toString('hex').toLowerCase()) {
-                        response.send([]);
-                        next();
-                    } else {
-                        return new Promise(async (accept, reject) => {
-                            const { contact, header } = await this.node.getContact(header.to);
-                            console.log(`Forwarding to ${contact[0]}`);
-                            this.node.send(
-                                request.method,
-                                { message: request.params.message, header },
-                                contact,
-                                (err, res) => {
-                                    if (err) {
-                                        reject(err);
-                                    } else {
-                                        accept(res);
-                                    }
-                                },
-                            );
-                        });
-                    }
-                } else response.send('Message includes invalid TTL.');
-            } else next();
         });
 
         // async
