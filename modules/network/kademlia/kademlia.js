@@ -553,7 +553,8 @@ class Kademlia {
                 return new Promise((accept, reject) => {
                     // find contact in routing table
                     const contact = node.router.getContactByNodeId(contactId);
-                    if (contact && contactId === contact.identity) {
+                    if (contact && contactId === contact.identity &&
+                        contact.hostname && contact.port) {
                         this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                         accept({ contact: [contactId, contact], header });
                     }
@@ -571,7 +572,7 @@ class Kademlia {
                                 this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
                                 accept({ contact, header });
                             }
-                            reject(Error(`Unknown contact ${contactId}.`));
+                            reject(Error(`Unknown contact ${contactId}. ${JSON.stringify(result)}`));
                         }
                         reject(Error(`Failed to find contact ${contactId}. Not array: ${result}`));
                     });
