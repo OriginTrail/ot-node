@@ -4,6 +4,7 @@ const async = require('async');
 const levelup = require('levelup');
 const encoding = require('encoding-down');
 const kadence = require('@deadcanaries/kadence');
+const broadcast = require('./broadcast');
 const fs = require('fs');
 const path = require('path');
 const utilities = require('../../Utilities');
@@ -173,10 +174,30 @@ class Kademlia {
             }));
             this.log.info('Hashcash initialised');
 
-            this.node.quasar = this.node.plugin(kadence.quasar());
-            this.node.quasar.appDataPath = this.config.appDataPath;
+            this.node.broadcast = this.node.plugin(broadcast());
+            this.node.broadcast.appDataPath = this.config.appDataPath;
 
-            this.log.info('Quasar initialised');
+            this.node.router.shuffle = (a) => {
+                let j; let x; let i;
+                for (i = a.length - 1; i > 0; i -= 1) {
+                    j = Math.floor(Math.random() * (i + 1));
+                    x = a[i];
+                    a[i] = a[j];
+                    a[j] = x;
+                }
+                return a;
+            };
+
+            this.node.router.getRandomContact = (k) => {
+                const bucket = this.node.router.get(k);
+                const bucketEntries = [...bucket.entries()];
+                const contacts = this.node.router.shuffle(bucketEntries);
+                if (contacts.length > 0) { return contacts[0]; }
+                return null;
+            };
+
+
+            this.log.info('Broadcast initialised');
 
             const nodeIdentity = this.node.identity;
 
@@ -335,12 +356,12 @@ class Kademlia {
             return;
         }
 
-        this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
+        this.node.broadcast.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
         });
 
-        this.node.quasar.quasarSubscribe('kad-broadcast-request', async (message, err) => {
+        this.node.broadcast.quasarSubscribe('kad-broadcast-request', async (message, err) => {
             this.log.info('Broadcast request received');
             this.log.info(`ALPHA is ${kadence.constants.ALPHA}.`);
             this.log.info(`MAX_RELAY_HOPS is ${kadence.constants.MAX_RELAY_HOPS}.`);
@@ -702,7 +723,7 @@ class Kademlia {
             };
 
             node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
-                node.quasar.quasarPublish(
+                node.broadcast.quasarPublish(
                     topic, message, opts,
                     (err, successfulPublishes) => {
                         if (err) {
