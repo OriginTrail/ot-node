@@ -4,7 +4,7 @@ const async = require('async');
 const levelup = require('levelup');
 const encoding = require('encoding-down');
 const kadence = require('@deadcanaries/kadence');
-const broadcast = require('./broadcast');
+// const broadcast = require('./broadcast');
 const fs = require('fs');
 const path = require('path');
 const utilities = require('../../Utilities');
@@ -15,6 +15,7 @@ const ip = require('ip');
 const uuidv4 = require('uuid/v4');
 const secp256k1 = require('secp256k1');
 const homeDir = require('os').homedir();
+const uuid = require('uuid');
 
 const KadenceUtils = require('@deadcanaries/kadence/lib/utils.js');
 const { IncomingMessage, OutgoingMessage } = require('./logger');
@@ -174,8 +175,8 @@ class Kademlia {
             }));
             this.log.info('Hashcash initialised');
 
-            this.node.broadcast = this.node.plugin(broadcast());
-            this.node.broadcast.appDataPath = this.config.appDataPath;
+            this.node.quasar = this.node.plugin(kadence.quasar());
+            this.node.quasar.appDataPath = this.config.appDataPath;
 
             this.node.router.shuffle = (a) => {
                 let j; let x; let i;
@@ -196,8 +197,136 @@ class Kademlia {
                 return null;
             };
 
+            this.node.quasar.quasarPublish = (topic, contents, options = {}, callback = () => null) => {
+                if (typeof options === 'function') {
+                    callback = options;
+                    options = {};
+                }
 
-            this.log.info('Broadcast initialised');
+                const publicationId = uuid.v4();
+                const neighbors = [];
+
+                for (let i = 1; i < kadence.constants.B; i += 1) {
+                    const contact = this.node.router.getRandomContact(i);
+                    if (contact != null) { neighbors.push(contact); }
+                }
+
+                const deliveries = [];
+                let retries = 3;
+
+                // console.log(JSON.stringify(neighbors));
+
+                async.until(() => retries === 0 || !neighbors.length, (done) => {
+                    const candidates = [];
+                    retries -= 1;
+
+                    for (let i = 0; i < neighbors.length; i++) {
+                        candidates.push(neighbors.shift());
+                    }
+
+
+                    async.each(candidates, (contact, next) => {
+                        contents.broadcastDistance = kadence.constants.B - kadence.utils.getBucketIndex(this.node.router.identity, contact[0]);
+                        this.node.send(kadence.quasar.QuasarPlugin.PUBLISH_METHOD, {
+                            uuid: publicationId,
+                            topic,
+                            contents,
+                            publishers: [this.node.identity.toString('hex')],
+                            ttl: kadence.constants.MAX_RELAY_HOPS,
+                        }, contact, (err) => {
+                            if (err) {
+                                this.node.logger.warn(err.message);
+                            } else {
+                                console.log(`Forward to: ${contact[0]}`);
+                                deliveries.push(contact);
+                            }
+
+                            next();
+                        });
+                    }, done);
+                }, (err) => {
+                    if (!err && deliveries.length === 0) {
+                        err = new Error('Failed to deliver any publication messages');
+                    }
+
+                    callback(err, deliveries);
+                });
+            };
+
+            const handlers = new kadence.quasar.QuasarRules(this.node.quasar);
+            handlers.publish = (request, response, next) => {
+                /* eslint max-statements: [2, 18] */
+                const {
+                    ttl, topic, uuid, contents,
+                } = request.params;
+                const neighbors = [];
+
+                const bucketRange = kadence.constants.B - contents.broadcastDistance;
+                for (let i = 1; i < bucketRange; i += 1) {
+                    const contact = this.node.router.getRandomContact(i);
+                    if (contact != null) { neighbors.push(contact); }
+                }
+
+                if (this.node.quasar.cached.get(uuid)) {
+                    return next(new Error('Message previously routed'));
+                }
+
+                if (ttl > kadence.constants.MAX_RELAY_HOPS || ttl < 0) {
+                    return next(new Error('Message includes invalid TTL'));
+                }
+
+                request.params.publishers.push(this.node.identity.toString('hex'));
+                this.node.quasar.cached.set(uuid, Date.now());
+
+                if (this.node.quasar.isSubscribedTo(topic)) {
+                    this.node.quasar.groups.get(topic)(contents, topic);
+                    console.log(neighbors);
+                    async.each(neighbors, (contact, done) => {
+                        console.log(`Forward to: ${contact[0]}`);
+
+                        const broadcastDir = request.params.contents.broadcastDir;
+
+                        if (!fs.existsSync(`${broadcastDir}`)) {
+                            fs.mkdirSync(`${broadcastDir}`);
+                        }
+
+                        if (!fs.existsSync(`${broadcastDir}/${this.node.identity.toString('hex')}.json`)) {
+                            fs.writeFileSync(`${broadcastDir}/${this.node.identity.toString('hex')}.json`, '[]');
+                        }
+                        const forwardArray = JSON.parse(fs.readFileSync(`${broadcastDir}/${this.node.identity.toString('hex')}.json`));
+                        forwardArray.push(contact[0]);
+                        fs.writeFileSync(`${broadcastDir}/${this.node.identity.toString('hex')}.json`, JSON.stringify(forwardArray));
+
+                        request.params.contents.broadcastDistance = kadence.constants.B - kadence.utils.getBucketIndex(this.node.identity.toString('hex'), contact[0]);
+                        handlers._relayPublication(request, contact, done);
+                    });
+                    return response.send([]);
+                }
+
+                if (ttl - 1 === 0) {
+                    return response.send([]);
+                }
+
+                async.each(neighbors, (contact, done) => {
+                    this.node.quasar.pullFilterFrom(contact, (err, filter) => {
+                        if (err) {
+                            return done();
+                        }
+
+                        if (!kadence.quasar.QuasarRules.shouldRelayPublication(request, filter)) {
+                            contact = this.node.quasar._getRandomContact();
+                        }
+                        console.log(`Forward to: ${contact[0]}`);
+                        handlers._relayPublication(request, contact, done);
+                    });
+                });
+                response.send([]);
+            };
+
+            (this.node._middlewares[kadence.quasar.QuasarPlugin.PUBLISH_METHOD]).pop();
+            this.node.use(kadence.quasar.QuasarPlugin.PUBLISH_METHOD, handlers.publish.bind(handlers));
+
+            this.log.info('Quasar initialised');
 
             const nodeIdentity = this.node.identity;
 
@@ -356,12 +485,12 @@ class Kademlia {
             return;
         }
 
-        this.node.broadcast.quasarSubscribe('kad-data-location-request', (message, err) => {
+        this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
         });
 
-        this.node.broadcast.quasarSubscribe('kad-broadcast-request', async (message, err) => {
+        this.node.quasar.quasarSubscribe('kad-broadcast-request', async (message, err) => {
             this.log.info('Broadcast request received');
             this.log.info(`ALPHA is ${kadence.constants.ALPHA}.`);
             this.log.info(`MAX_RELAY_HOPS is ${kadence.constants.MAX_RELAY_HOPS}.`);
@@ -720,7 +849,7 @@ class Kademlia {
             };
 
             node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
-                node.broadcast.quasarPublish(
+                node.quasar.quasarPublish(
                     topic, message, opts,
                     (err, successfulPublishes) => {
                         if (err) {

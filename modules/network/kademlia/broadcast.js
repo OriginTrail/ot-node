@@ -36,6 +36,7 @@ class BroadcastPlugin extends kadence.quasar.QuasarPlugin {
 
         if (super.quasar.isSubscribedTo(topic)) {
             super.quasar.groups.get(topic)(contents, topic);
+            console.log(neighbors);
             async.each(neighbors, (contact, done) => {
                 console.log(`Forward to: ${contact[0]}`);
 
