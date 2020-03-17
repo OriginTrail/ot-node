@@ -1,4 +1,4 @@
-'use strict';
+
 
 const kadence = require('@deadcanaries/kadence');
 const async = require('async');
@@ -71,7 +71,7 @@ class BroadcastPlugin extends kadence.quasar.QuasarPlugin {
                 if (!super.shouldRelayPublication(request, filter)) {
                     contact = super.quasar._getRandomContact();
                 }
-                // console.log("Forward to: "+contact[0]);
+                console.log(`Forward to: ${contact[0]}`);
                 super._relayPublication(request, contact, done);
             });
         });
@@ -124,7 +124,7 @@ class BroadcastRules extends kadence.quasar.QuasarRules {
                     if (err) {
                         this.node.logger.warn(err.message);
                     } else {
-                        // console.log("Forward to: "+contact[0]);
+                        console.log(`Forward to: ${contact[0]}`);
                         deliveries.push(contact);
                     }
 
