@@ -553,9 +553,7 @@ class Kademlia {
                 return new Promise((accept, reject) => {
                     // find contact in routing table
                     const contact = node.router.getContactByNodeId(contactId);
-                    console.log(JSON.stringify(contact));
-                    if (contact && contactId === contact.identity &&
-                        contact.hostname && contact.port) {
+                    if (contact) {
                         this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                         accept({ contact: [contactId, contact], header });
                     }
@@ -567,9 +565,7 @@ class Kademlia {
                         }
                         if (result && Array.isArray(result)) {
                             const contact = result[0];
-                            if (contact && Array.isArray(contact) && contact.length === 2
-                                && contact[1].hostname && contact[1].port
-                                && contact[0] === contact[1].identity) {
+                            if (contact && Array.isArray(contact) && contact.length === 2) {
                                 this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
                                 accept({ contact, header });
                             }
