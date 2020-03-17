@@ -553,8 +553,7 @@ class Kademlia {
                 return new Promise((accept, reject) => {
                     // find contact in routing table
                     const contact = node.router.getContactByNodeId(contactId);
-                    if (contact && contactId === contact.identity &&
-                        contact.hostname && contact.port) {
+                    if (contact && contactId === contact.identity) {
                         this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                         accept({ contact: [contactId, contact], header });
                     }
