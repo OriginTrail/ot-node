@@ -2,14 +2,28 @@ const EpcisOtJsonTranspiler = require('.././transpiler/epcis/epcis-otjson-transp
 const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler');
 const path = require('path');
 const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 const fs = require('fs');
 
 process.on('message', async (data) => {
     const {
-        standardId, handlerId, config, importResult,
+        datasetId, standardId, handlerId, config, vertices,
+        edges,
+        metadata,
     } = JSON.parse(data);
-    var dataset;
+
     try {
+        const document = {
+            '@id': datasetId,
+            '@type': 'Dataset',
+            '@graph': await ImportUtilities.createDocumentGraph(vertices, edges),
+        };
+
+        document.datasetHeader = metadata.datasetHeader;
+        document.signature = metadata.signature;
+
+        const importResult = JSON.parse(ImportUtilities.sortStringifyDataset(document));
+        var dataset;
         switch (standardId) {
         case 'gs1': {
             const transpiler = new EpcisOtJsonTranspiler({ config });

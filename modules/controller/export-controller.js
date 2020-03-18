@@ -11,12 +11,11 @@ class ExportController {
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
-        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.mapping_standards_for_event = new Map();
-        this.mapping_standards_for_event.set('ot-json', 'ot-json');
-        this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
-        this.mapping_standards_for_event.set('graph', 'ot-json');
-        this.mapping_standards_for_event.set('wot', 'wot');
+        this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
+        this.mapping_standards_for_event.set('GS1-EPCIS', 'gs1');
+        this.mapping_standards_for_event.set('GRAPH', 'ot-json');
+        this.mapping_standards_for_event.set('WOT', 'wot');
     }
 
     async exportDataset(request, response) {
@@ -32,22 +31,23 @@ class ExportController {
         var standardId = '';
         if (!request.body.standard_id) {
             standardId = 'ot-json';
-        } else if (this.stanards.indexOf(request.body.standard_id) === -1) {
-            response.status(400);
-            response.send({
-                message: `Standard ID not supported. Supported IDs: ${this.stanards}`,
-            });
-            return;
         } else {
             standardId =
-                this.mapping_standards_for_event.get(request.body.standard_id.toLowerCase());
+                this.mapping_standards_for_event.get(request.body.standard_id);
+            if (!standardId) {
+                response.status(400);
+                response.send({
+                    message: `Standard ID not supported. Supported IDs: ${this.mapping_standards_for_event.keys()}`,
+                });
+                return;
+            }
         }
 
 
         if (request.body.dataset_id === undefined) {
             response.status(400);
             response.send({
-                message: 'Bad request dataset_id is not provided',
+                message: 'Bad request, dataset_id is not provided',
             });
         }
         const datasetId = request.body.dataset_id;
