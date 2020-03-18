@@ -277,13 +277,19 @@ class Kademlia {
                 request.params.publishers.push(this.node.identity.toString('hex'));
                 this.node.quasar.cached.set(uuid, Date.now());
 
+
+                const broadcastDir = request.params.contents.broadcastDir;
+
+                if (!fs.existsSync(`${broadcastDir}/${this.node.identity.toString('hex')}.json`)) {
+                    fs.writeFileSync(`${broadcastDir}/${this.node.identity.toString('hex')}.json`, `[${bucketRange}]`);
+                }
+
                 if (this.node.quasar.isSubscribedTo(topic)) {
                     this.node.quasar.groups.get(topic)(contents, topic);
                     console.log(neighbors);
                     async.each(neighbors, (contact, done) => {
                         console.log(`Forward to: ${contact[0]}`);
 
-                        const broadcastDir = request.params.contents.broadcastDir;
 
                         if (!fs.existsSync(`${broadcastDir}`)) {
                             fs.mkdirSync(`${broadcastDir}`);
