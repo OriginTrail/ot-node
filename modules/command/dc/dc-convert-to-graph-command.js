@@ -22,6 +22,7 @@ class DcConvertToGraphCommand extends Command {
                 data: {
                     error: { message: error.message },
                     handler_id: command.data.handler_id,
+                    standard_id: command.data.standard_id,
                     documentPath: command.data.documentPath,
                 },
             });

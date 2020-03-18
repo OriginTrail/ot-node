@@ -118,6 +118,14 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
 
+        server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
+            await this._readExportNetwork(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/read_export/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
+
         server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
             await this._getChallenges(req, res);
         });
@@ -531,6 +539,21 @@ class RestAPIServiceV2 {
         const { reply_id, data_set_id } = req.body;
 
         await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
+    }
+
+    async _readExportNetwork(req, res) {
+        this.logger.api('POST: Network read and export request received.');
+
+        if (req.body == null || req.body.reply_id == null
+            || req.body.data_set_id == null
+            || req.body.standard_id == null) {
+            res.status(400);
+            res.send({ message: 'Params reply_id, data_set_id, and standard_id are required.' });
+            return;
+        }
+        const { reply_id, data_set_id, standard_id } = req.body;
+
+        await this.dvController.handleDataReadExportRequest(data_set_id, reply_id, standard_id, res);
     }
 
     async _checkForReplicationHandlerStatus(req, res) {

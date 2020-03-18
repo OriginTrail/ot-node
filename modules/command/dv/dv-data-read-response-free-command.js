@@ -23,6 +23,7 @@ class DVDataReadResponseFreeCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
         this.commandExecutor = ctx.commandExecutor;
+        this.emitter = ctx.emitter;
     }
 
     /**
@@ -99,6 +100,51 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
+        // todo add export with details
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id },
+        });
+
+        const {
+            data_set_id,
+            reply_id,
+            standard_id,
+        } = JSON.parse(handler.data);
+
+        try {
+            switch (standard_id) {
+            case 'gs1': {
+                const formatted_dataset =
+                            this.epcisOtJsonTranspiler.convertFromOTJson(document);
+                await this.emitter.processExport(
+                    null,
+                    { formatted_dataset, handler_id },
+                );
+                break;
+            }
+            case 'wot': {
+                const formatted_dataset =
+                            this.wotOtJsonTranspiler.convertFromOTJson(document);
+                await this.emitter.processExport(
+                    null,
+                    { formatted_dataset, handler_id },
+                );
+                break;
+            }
+            case 'ot-json': {
+                await this.emitter.processExport(
+                    null,
+                    { formatted_dataset: document, handler_id },
+                );
+                break;
+            }
+            default:
+                throw new Error('Export for unsuported standard');
+            }
+        } catch (error) {
+            await this.emitter.processExport(error, document);
+        }
+
         try {
             const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
@@ -112,6 +158,7 @@ class DVDataReadResponseFreeCommand extends Command {
                 documentPath: path.join(cacheDirectory, handler_id),
                 handler_id,
                 data_provider_wallet: dcWallet,
+                standard_id,
                 purchased: true,
             };
 

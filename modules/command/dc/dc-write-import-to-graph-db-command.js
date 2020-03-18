@@ -21,7 +21,7 @@ class DcWriteImportToGraphDbCommand extends Command {
     async execute(command) {
         this.logger.info('Importing data to database');
         const {
-            handler_id, documentPath,
+            handler_id, documentPath, standard_id
         } = command.data;
         try {
             const { vertices, edges, metadata } = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
@@ -115,6 +115,7 @@ class DcWriteImportToGraphDbCommand extends Command {
                 data: {
                     handler_id,
                     documentPath,
+                    standard_id,
                     error: { message: error.message },
                 },
             });

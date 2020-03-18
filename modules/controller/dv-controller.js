@@ -9,6 +9,13 @@ class DVController {
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
+        this.emitter = ctx.emitter;
+
+        this.mapping_standards_for_event = new Map();
+        this.mapping_standards_for_event.set('ot-json', 'ot-json');
+        this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
+        this.mapping_standards_for_event.set('graph', 'ot-json');
+        this.mapping_standards_for_event.set('wot', 'wot');
     }
 
     /**
@@ -138,6 +145,73 @@ class DVController {
                     handlerId: inserted_object.dataValues.handler_id,
                 },
                 transactional: false,
+            });
+        } catch (e) {
+            const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
+            res.status(400);
+            res.send({ message });
+        }
+    }
+
+    /**
+     * Handles data read request
+     * @param queryId
+     * @param dataSetId
+     * @param replyId
+     */
+    async handleDataReadExportRequest(data_set_id, reply_id, standard_id, res) {
+        this.logger.info(`Choose offer triggered with reply ID ${reply_id} and import ID ${data_set_id}`);
+
+        const offer = await Models.network_query_responses.findOne({
+            where: {
+                reply_id,
+            },
+        });
+
+        if (offer == null) {
+            res.status(400);
+            res.send({ message: 'Reply not found' });
+            return;
+        }
+        try {
+            const standard = this.mapping_standards_for_event.get(standard_id.toLowerCase());
+            const handler_data = {
+                data_set_id,
+                reply_id,
+                standard_id: standard,
+            };
+            const inserted_object = await Models.handler_ids.create({
+                status: 'PENDING',
+                data: JSON.stringify(handler_data),
+            });
+
+
+            const dataInfo = await Models.data_info.findOne({
+                where: { data_set_id },
+            });
+            if (dataInfo) {
+                this.emitter.emit('api-export-request', { dataset_id: data_set_id, handler_id: inserted_object.handler_id, standard });
+                // TODO add export details
+            } else {
+                this.logger.info(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
+                this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
+
+
+                this.commandExecutor.add({
+                    name: 'dvDataReadRequestCommand',
+                    delay: 0,
+                    data: {
+                        dataSetId: data_set_id,
+                        replyId: reply_id,
+                        handlerId: inserted_object.dataValues.handler_id,
+                    },
+                    transactional: false,
+                });
+            }
+
+            res.status(200);
+            res.send({
+                handler_id: inserted_object.dataValues.handler_id,
             });
         } catch (e) {
             const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
