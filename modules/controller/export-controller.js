@@ -88,6 +88,7 @@ class ExportController {
     }
 
     async checkForHandlerStatus(request, response) {
+        this.logger.api('POST: Export result request received.');
         const handlerId = request.params.handler_id;
         const handler_object = await Models.handler_ids.findOne({
             where: {

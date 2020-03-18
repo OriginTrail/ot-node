@@ -36,7 +36,7 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            dataset = importResult;
+            dataset = JSON.stringify(importResult);
             break;
         }
         default:
