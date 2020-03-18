@@ -192,8 +192,7 @@ class Kademlia {
             this.node.router.getRandomContact = (k) => {
                 const bucket = this.node.router.get(k);
                 const bucketEntries = [...bucket.entries()];
-                const contacts = this.node.router.shuffle(bucketEntries);
-                if (contacts.length > 0) { return contacts[0]; }
+                if (bucketEntries.length > 0) { return bucketEntries[0]; }
                 return null;
             };
 
