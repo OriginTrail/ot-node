@@ -181,6 +181,7 @@
       "hostname": "127.0.0.1",
       "id": "TestnetV4.0",
       "bootstraps": [
+        "https://rinkeby-mariner-bootstrap-01.origin-trail.network:5278/#3f89be24b1cee4d80f5059993260322f9998b189",
         "https://rinkeby-mariner-bootstrap-02.origin-trail.network:5278/#d3951837f8100e6ea4a74417d560bcc8c6d4ffe5",
         "https://rinkeby-mariner-bootstrap-03.origin-trail.network:5278/#ad3c3325e50c3bedcb5c6ee6a73592b2ca7e07aa"
       ],

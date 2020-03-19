@@ -266,40 +266,6 @@ Given(/^I stop \[(.+)\] nodes[s]*$/, { timeout: 3000000 }, function (nodeIndices
     return Promise.all(nodesStops);
 });
 
-
-Then(/^all nodes should be aware of each other$/, function (done) {
-    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
-
-    const promises = [];
-    this.state.nodes.forEach((node) => {
-        promises.push(new Promise((accept, reject) => {
-            request(`${node.state.node_rpc_url}/api/latest/dump/rt`, { json: true }, (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
-                this.state.nodes.forEach((testNode) => {
-                    if (testNode.state.identity !== node.state.identity) {
-                        expect(body.message).to.have.property(testNode.state.identity);
-                    }
-                });
-
-                this.state.bootstraps.forEach((bootstrap) => {
-                    if (bootstrap.state.identity !== node.state.identity) {
-                        expect(body.message).to.have.property(bootstrap.state.identity);
-                    }
-                });
-
-                accept();
-            });
-        }));
-    });
-
-    Promise.all(promises).then(() => done());
-});
-
 Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeIndex, nodeType) {
     expect(nodeType, 'Node type can only be DC, DH, DV or DV2.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV' || val === 'DV2'));
     expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
