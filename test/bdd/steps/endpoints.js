@@ -126,8 +126,8 @@ Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async
             if (this.state.lastExport) {
                 this.state.secondLastExport = this.state.lastExport;
             }
-
             this.state.lastExport = await httpApiHelper.apiExportResult(host, this.state.lastExportHandler);
+            this.state.lastExport.data.formatted_dataset = JSON.parse(this.state.lastExport.data.formatted_dataset);
             acc();
         });
     });
