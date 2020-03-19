@@ -84,6 +84,9 @@
       },
       "bucket_size": 4
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "development"
     },
@@ -194,6 +197,9 @@
       },
       "bucket_size": 4
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "testnet"
     },
@@ -307,6 +313,9 @@
       },
       "bucket_size": 20
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "mainnet"
     },
