@@ -328,6 +328,7 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
 
     expect(response.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
+    response.data.formatted_dataset = JSON.parse(response.data.formatted_dataset);
 
     expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
@@ -349,7 +350,7 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
 
     expect(response.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
-
+    response.data.formatted_dataset = JSON.parse(response.data.formatted_dataset);
     expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 

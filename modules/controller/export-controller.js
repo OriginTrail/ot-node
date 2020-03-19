@@ -119,6 +119,12 @@ class ExportController {
                 },
                 status,
             });
+            await Models.handler_ids.destroy({
+                where: {
+                    handler_id: handlerId,
+                },
+            });
+            fs.unlinkSync(filePath);
         } else {
             response.status(200);
             response.send({
