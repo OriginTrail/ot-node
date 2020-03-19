@@ -393,9 +393,11 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     } else {
         const originalJson = await fs.readFileSync(importedFilePath, 'utf8');
 
-        const actual = modulesUtilities.sortedStringify(JSON.parse(lastExport.data.formatted_dataset));
-        const expected = modulesUtilities.sortedStringify(JSON.parse(originalJson), true);
-        expect(actual, 'Exported file not equal to imported one!').to.be.equal(expected);
+        assert.deepEqual(
+            utilities.stringifyWithoutComments(JSON.parse(lastExport.data.formatted_dataset)),
+            utilities.stringifyWithoutComments(JSON.parse(originalJson)),
+            'Exported file not equal to imported one!',
+        );
     }
 });
 
