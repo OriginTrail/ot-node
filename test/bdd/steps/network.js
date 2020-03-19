@@ -397,7 +397,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     } else {
         const originalJson = await fs.readFileSync(importedFilePath, 'utf8');
 
-        const actual = modulesUtilities.sortedStringify(response.data.formatted_dataset, true);
+        const actual = response.data.formatted_dataset;
         const expected = modulesUtilities.sortedStringify(JSON.parse(originalJson), true);
         expect(actual, 'Exported file not equal to imported one!').to.be.equal(expected);
     }
