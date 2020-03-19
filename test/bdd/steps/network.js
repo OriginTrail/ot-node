@@ -331,7 +331,7 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
 
     expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
-
+    response.data.formatted_dataset = JSON.parse(response.data.formatted_dataset);
     expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 });
 
