@@ -329,10 +329,9 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(lastExport.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
     lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
-
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
-    lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
+
     expect(utilities.verifySignature(lastExport.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 });
 
@@ -341,7 +340,6 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
     expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
 
     const ot_logo = utilities.base64_encode(path.resolve(__dirname, filePath));
-    const { dc } = this.state;
 
     const { lastExport } = this.state;
 
