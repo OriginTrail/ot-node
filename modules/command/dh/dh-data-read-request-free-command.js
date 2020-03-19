@@ -62,6 +62,11 @@ class DHDataReadRequestFreeCommand extends Command {
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
 
+
+            const identity = await this.graphStorage.findIssuerIdentityForDatasetId(importId);
+            const offer = await Models.offers.findOne({ where: { data_set_id } });
+
+
             const replyMessage = {
                 id,
                 wallet: this.config.node_wallet,
@@ -71,6 +76,14 @@ class DHDataReadRequestFreeCommand extends Command {
                 document,
                 data_set_id: importId,
                 transaction_hash: transactionHash,
+                root_hash: dataInfo.root_hash,
+                data_hash: dataInfo.data_hash,
+                offer_id: offer.offer_id,
+                data_creator: {
+                    identifier_type: identity[0].identifierType,
+                    identifier_value: identity[0].identifierValue,
+                    validation_schema: identity[0].validationSchema,
+                },
                 handler_id,
             };
             const dataReadResponseObject = {

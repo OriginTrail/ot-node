@@ -159,7 +159,18 @@ class DVController {
      * @param dataSetId
      * @param replyId
      */
-    async handleDataReadExportRequest(data_set_id, reply_id, standard_id, res) {
+    async handleDataReadExportRequest(req, res) {
+        this.logger.api('POST: Network read and export request received.');
+
+        if (req.body == null || req.body.reply_id == null
+            || req.body.data_set_id == null
+            || req.body.standard_id == null) {
+            res.status(400);
+            res.send({ message: 'Params reply_id, data_set_id, and standard_id are required.' });
+            return;
+        }
+        const { reply_id, data_set_id, standard_id } = req.body;
+
         this.logger.info(`Choose offer triggered with reply ID ${reply_id} and import ID ${data_set_id}`);
 
         const offer = await Models.network_query_responses.findOne({
@@ -175,23 +186,58 @@ class DVController {
         }
         try {
             const standard = this.mapping_standards_for_event.get(standard_id.toLowerCase());
+            if (!standard) {
+                res.status(400);
+                res.send({
+                    message: `Standard ID not supported. Supported IDs: ${this.mapping_standards_for_event.keys()}`,
+                });
+                return;
+            }
             const handler_data = {
                 data_set_id,
                 reply_id,
                 standard_id: standard,
+                export_status: 'PENDING',
+                import_status: 'PENDING',
+                readExport: true,
             };
             const inserted_object = await Models.handler_ids.create({
                 status: 'PENDING',
                 data: JSON.stringify(handler_data),
             });
 
-
             const dataInfo = await Models.data_info.findOne({
                 where: { data_set_id },
             });
             if (dataInfo) {
-                this.emitter.emit('api-export-request', { dataset_id: data_set_id, handler_id: inserted_object.handler_id, standard });
-                // TODO add export details
+                handler_data.import_status = 'COMPLETED';
+                await Models.handler_ids.update(
+                    {
+                        data: JSON.stringify(handler_data),
+                    },
+                    {
+                        where: {
+                            handler_id: inserted_object.handler_id,
+                        },
+                    },
+                );
+
+                const commandSequence = [
+                    'exportDataCommand',
+                    'exportWorkerCommand',
+                ];
+
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: {
+                        handlerId: inserted_object.handler_id,
+                        datasetId: data_set_id,
+                        standardId: standard,
+                    },
+                    transactional: false,
+                });
             } else {
                 this.logger.info(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
                 this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);

@@ -56,6 +56,10 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             wallet: dhWallet,
             transaction_hash,
+            root_hash,
+            data_hash,
+            offer_id,
+            data_creator,
             handler_id,
         } = message;
 
@@ -100,49 +104,67 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        // todo add export with details
         const handler = await Models.handler_ids.findOne({
             where: { handler_id },
         });
-
         const {
             data_set_id,
-            reply_id,
             standard_id,
+            readExport,
         } = JSON.parse(handler.data);
 
-        try {
-            switch (standard_id) {
-            case 'gs1': {
-                const formatted_dataset =
-                            this.epcisOtJsonTranspiler.convertFromOTJson(document);
-                await this.emitter.processExport(
-                    null,
-                    { formatted_dataset, handler_id },
+        if (readExport) {
+            const fileContent = ImportUtilities.sortStringifyDataset(document);
+
+            const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+
+            try {
+                await Utilities.writeContentsToFile(
+                    cacheDirectory,
+                    handler_id,
+                    fileContent,
                 );
-                break;
+            } catch (e) {
+                const filePath = path.join(cacheDirectory, handler_id);
+
+                if (fs.existsSync(filePath)) {
+                    await Utilities.deleteDirectory(filePath);
+                }
+                this.handleError(handler_id, `Error when creating export cache file for handler_id ${handler_id}. ${e.message}`);
             }
-            case 'wot': {
-                const formatted_dataset =
-                            this.wotOtJsonTranspiler.convertFromOTJson(document);
-                await this.emitter.processExport(
-                    null,
-                    { formatted_dataset, handler_id },
-                );
-                break;
-            }
-            case 'ot-json': {
-                await this.emitter.processExport(
-                    null,
-                    { formatted_dataset: document, handler_id },
-                );
-                break;
-            }
-            default:
-                throw new Error('Export for unsuported standard');
-            }
-        } catch (error) {
-            await this.emitter.processExport(error, document);
+
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+
+            const data = JSON.parse(handler.data);
+            data.root_hash = root_hash;
+            data.data_hash = data_hash;
+            data.transaction_hash = transaction_hash;
+            data.data_creator = data_creator;
+            data.offer_id = offer_id;
+            data.signature = document.signature;
+            // data.dc_node_wallet = ImportUtilities.extractDatasetSigner(document);
+            handler.data = JSON.stringify(data);
+
+            await Models.handler_ids.update(
+                { data: handler.data },
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+
+            await this.commandExecutor.add({
+                name: 'exportWorkerCommand',
+                transactional: false,
+                data: {
+                    handlerId: handler.handler_id,
+                    datasetId: data_set_id,
+                    standardId: standard_id,
+                },
+            });
         }
 
         try {
@@ -158,7 +180,6 @@ class DVDataReadResponseFreeCommand extends Command {
                 documentPath: path.join(cacheDirectory, handler_id),
                 handler_id,
                 data_provider_wallet: dcWallet,
-                standard_id,
                 purchased: true,
             };
 
@@ -199,6 +220,32 @@ class DVDataReadResponseFreeCommand extends Command {
         });
 
         return Command.empty();
+    }
+
+    async handleError(handlerId, error) {
+        this.logger.error(`Export failed for export handler_id: ${handlerId}, error: ${error}`);
+
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id: handlerId },
+        });
+
+        const data = JSON.parse(handler.data);
+        data.export_status = 'FAILED';
+        handler.status = data.import_status === 'PENDING' ? 'PENDING' : 'FAILED';
+        handler.data = JSON.stringify(data);
+
+        await Models.handler_ids.update(
+            handler,
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+
+        if (error.type !== 'ExporterError') {
+            this.notifyError(error);
+        }
     }
 
     /**

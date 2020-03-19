@@ -7,36 +7,45 @@ const fs = require('fs');
 
 process.on('message', async (data) => {
     const {
-        datasetId, standardId, handlerId, config, vertices,
-        edges,
-        metadata,
+        datasetId, standardId, handlerId, config,
     } = JSON.parse(data);
 
+    let { document } = JSON.parse(data);
+
     try {
-        const document = {
-            '@id': datasetId,
-            '@type': 'Dataset',
-            '@graph': await ImportUtilities.createDocumentGraph(vertices, edges),
-        };
+        if (!document['@id']) {
+            const {
+                vertices,
+                edges,
+                metadata,
+            } = document;
 
-        document.datasetHeader = metadata.datasetHeader;
-        document.signature = metadata.signature;
+            document = {
+                '@id': datasetId,
+                '@type': 'Dataset',
+                '@graph': await ImportUtilities.createDocumentGraph(vertices, edges),
+            };
 
-        const importResult = JSON.parse(ImportUtilities.sortStringifyDataset(document));
+            document.datasetHeader = metadata.datasetHeader;
+            document.signature = metadata.signature;
+
+            document = JSON.parse(ImportUtilities.sortStringifyDataset(document));
+        }
+
         var dataset;
         switch (standardId) {
         case 'gs1': {
             const transpiler = new EpcisOtJsonTranspiler({ config });
-            dataset = transpiler.convertFromOTJson(importResult);
+            dataset = transpiler.convertFromOTJson(document);
             break;
         }
         case 'wot': {
             const transpiler = new WotOtJsonTranspiler({ config });
-            dataset = transpiler.convertFromOTJson(importResult);
+            dataset = transpiler.convertFromOTJson(document);
             break;
         }
         case 'ot-json': {
-            dataset = JSON.stringify(importResult);
+            dataset = JSON.stringify(document);
             break;
         }
         default:

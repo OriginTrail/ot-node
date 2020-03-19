@@ -28,15 +28,12 @@ class DcFinalizeImport extends Command {
             data_hash,
             otjson_size_in_bytes,
             total_documents,
-            standard_id,
         } = command.data;
 
         await Utilities.deleteDirectory(documentPath);
 
         if (error) {
-            if (!standard_id){
-                await this._processError(error, handler_id, documentPath);
-            }
+            await this._processError(error, handler_id, documentPath);
             return Command.empty();
         }
 
@@ -55,12 +52,56 @@ class DcFinalizeImport extends Command {
             }).catch(async (error) => {
                 this.logger.error(error);
                 this.notifyError(error);
+                const handler = await Models.handler_ids.findOne({
+                    where: { handler_id },
+                });
+                const data = JSON.parse(handler.data);
+                if (data && data.readExport) {
+                    data.import_status = 'FAILED';
+                    handler.status = data.export_status === 'PENDING' ? 'PENDING' : 'FAILED';
+                    handler.data = JSON.stringify(data);
+
+                    await Models.handler_ids.update(
+                        {
+                            data: handler.data,
+                            status: handler.status,
+                        },
+                        {
+                            where: {
+                                handler_id,
+                            },
+                        },
+                    );
+                } else {
+                    await Models.handler_ids.update(
+                        {
+                            status: 'FAILED',
+                            data: JSON.stringify({
+                                error,
+                            }),
+                        },
+                        {
+                            where: {
+                                handler_id,
+                            },
+                        },
+                    );
+                }
+                this.remoteControl.importFailed(error);
+            });
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+            const data = JSON.parse(handler.data);
+            if (data && data.readExport) {
+                data.import_status = 'COMPLETED';
+                handler.status = data.export_status === 'COMPLETED' ? 'COMPLETED' : handler.status;
+                handler.data = JSON.stringify(data);
+
                 await Models.handler_ids.update(
                     {
-                        status: 'FAILED',
-                        data: JSON.stringify({
-                            error,
-                        }),
+                        data: handler.data,
+                        status: handler.status,
                     },
                     {
                         where: {
@@ -68,9 +109,7 @@ class DcFinalizeImport extends Command {
                         },
                     },
                 );
-                this.remoteControl.importFailed(error);
-            });
-            if (!standard_id) {
+            } else {
                 await Models.handler_ids.update(
                     {
                         status: 'COMPLETED',
@@ -97,7 +136,27 @@ class DcFinalizeImport extends Command {
         } catch (error) {
             this.logger.error(`Failed to register import. Error ${error}.`);
             this.notifyError(error);
-            if (!standard_id) {
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+            const data = JSON.parse(handler.data);
+            if (data && data.readExport) {
+                data.import_status = 'FAILED';
+                handler.status = data.export_status === 'PENDING' ? 'PENDING' : 'FAILED';
+                handler.data = JSON.stringify(data);
+
+                await Models.handler_ids.update(
+                    {
+                        data: handler.data,
+                        status: handler.status,
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+            } else {
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',
