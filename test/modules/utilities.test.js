@@ -216,7 +216,7 @@ describe('Utilities module', () => {
     it('executeCallback() callback not defined scenario', async () => {
         // helper function
         function first(timeInterval) {
-            setTimeout(() => function () {
+            setTimeout(() => {
                 console.log('Helper function log');
             }, 1000);
         }
