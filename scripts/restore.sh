@@ -63,7 +63,7 @@ else
 fi
 
 # Load backup directory path
-if [ ${BACKUPDIR} == "none" ] 
+if [ ${BACKUPDIR} == "none" ]
 then
 	echo "No backup directory specified, loading last backup from ./backup folder"
 	echo ""
@@ -84,7 +84,7 @@ else
 fi
 
 # Load config directory path
-if [ ${CONFIGDIR} == "none" ] 
+if [ ${CONFIGDIR} == "none" ]
 then
 	echo "No config directory specified, using /ot-node/data as default"
 	echo ""
@@ -134,7 +134,7 @@ then
 
 	echo "cp ${BACKUPDIR}/privkey.pem ./${temp_folder}/certs/"
 	cp ${BACKUPDIR}/privkey.pem ./${temp_folder}/certs
-	
+
 	echo "docker cp ${temp_folder}/certs otnode:/ot-node/"
 	docker cp ${temp_folder}/certs otnode:/ot-node/
 else
@@ -155,7 +155,7 @@ echo "database username ${databaseUsername}"
 
 databasePassword=($(cat config.json | grep "\"password\": \"" | sed -r "s_([[:blank:]]+)\"password\":[[:blank:]]\"__" | sed "s/\",$//"))
 databasePassword=${databasePassword[@]:${environmentIndex}:1}
-echo "database password ${databasePassword}"
+echo "database password read from configuration"
 
 rm config.json
 
