@@ -259,6 +259,28 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
+Given(/^([DV|DV2]+) publishes network read and export consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network$/, { timeout: 90000 }, async function (whichDV, path, value, opcode) {
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    const dv = this.state[whichDV.toLowerCase()];
+
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const queryNetworkResponse =
+        await httpApiHelper.apiQueryNetworkReadAndExport(dv.state.node_rpc_url, jsonQuery);
+    expect(Object.keys(queryNetworkResponse), 'Response should have message and query_id').to.have.members(['query_id']);
+    this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
+    return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
+});
+
 Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
     expect(whichImport, 'last import or second last import are only allowed values').to.be.oneOf(['last import', 'second last import']);
