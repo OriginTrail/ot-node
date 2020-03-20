@@ -160,12 +160,8 @@ Feature: Data layer related features
     And I start additional nodes
     And I use 5th node as DV
     Given DV publishes network read and export consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    And DV waits for import to finish
-    When DC exports the last imported dataset as OT-JSON
-    And DC waits for export to finish
-    When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
-    Then the last import should be the same on DC and DV nodes
+    Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
 
   @second
   Scenario: Data location with multiple identifiers
