@@ -163,14 +163,16 @@ class DVController {
         this.logger.api('POST: Network read and export request received.');
 
         if (req.body == null || req.body.reply_id == null
-            || req.body.data_set_id == null
-            || req.body.standard_id == null) {
+            || req.body.data_set_id == null) {
             res.status(400);
-            res.send({ message: 'Params reply_id, data_set_id, and standard_id are required.' });
+            res.send({ message: 'Params reply_id, data_set_id are required.' });
             return;
         }
-        const { reply_id, data_set_id, standard_id } = req.body;
-
+        const { reply_id, data_set_id } = req.body;
+        let { standard_id } = req.body;
+        if (!standard_id) {
+            standard_id = 'ot-json';
+        }
         this.logger.info(`Choose offer triggered with reply ID ${reply_id} and import ID ${data_set_id}`);
 
         const offer = await Models.network_query_responses.findOne({
