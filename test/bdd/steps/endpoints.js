@@ -273,12 +273,18 @@ Given(/^the ([DV|DV2]+) sends read and export for (last import|second last impor
     const dataSetId = this.state[whichImport].data.dataset_id;
     const { replyId } =
         dv.state.dataLocationQueriesConfirmations[queryId][dc.state.identity];
+    let readExportNetworkResponse;
+    try {
+        readExportNetworkResponse =
+        await httpApiHelper.apiQueryNetworkReadAndExport(
+            dv.state.node_rpc_url,
+            dataSetId,
+            replyId,
+        );
+    } catch (error) {
+        console.log(error);
+    }
 
-    const readExportNetworkResponse =
-        await httpApiHelper.apiQueryNetworkReadAndExport(dv.state.node_rpc_url, {
-            data_set_id: dataSetId,
-            reply_id: replyId,
-        });
     expect(Object.keys(readExportNetworkResponse), 'Response should have message and query_id').to.have.members(['query_id']);
     this.state.lastQueryNetworkId = readExportNetworkResponse.query_id;
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
