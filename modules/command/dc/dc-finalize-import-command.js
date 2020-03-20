@@ -95,6 +95,8 @@ class DcFinalizeImport extends Command {
             const data = JSON.parse(handler.data);
             if (data && data.readExport) {
                 data.import_status = 'COMPLETED';
+                data.root_hash = root_hash;
+                data.data_hash = data_hash;
                 handler.status = data.export_status === 'COMPLETED' ? 'COMPLETED' : handler.status;
                 handler.data = JSON.stringify(data);
 

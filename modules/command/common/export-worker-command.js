@@ -49,7 +49,13 @@ class ExportWorkerCommand extends Command {
                     where: { handler_id: handlerId },
                 });
                 const data = JSON.parse(handler.data);
-                data.dc_node_wallet = response.dc_node_wallet;
+
+                const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+                const documentPath = path.join(cacheDirectory, handlerId);
+
+                const { dc_node_wallet, data_creator } = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+                data.dc_node_wallet = dc_node_wallet;
+                data.data_creator = data_creator;
 
                 if (data.readExport) {
                     data.export_status = 'COMPLETED';

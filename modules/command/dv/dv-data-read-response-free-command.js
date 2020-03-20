@@ -56,10 +56,6 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             wallet: dhWallet,
             transaction_hash,
-            root_hash,
-            data_hash,
-            offer_id,
-            data_creator,
             handler_id,
         } = message;
 
@@ -115,7 +111,6 @@ class DVDataReadResponseFreeCommand extends Command {
 
         if (readExport) {
             const fileContent = ImportUtilities.sortStringifyDataset(document);
-
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
 
             try {
@@ -138,11 +133,9 @@ class DVDataReadResponseFreeCommand extends Command {
             });
 
             const data = JSON.parse(handler.data);
-            data.root_hash = root_hash;
-            data.data_hash = data_hash;
             data.transaction_hash = transaction_hash;
-            data.data_creator = data_creator;
-            data.offer_id = offer_id;
+            data.data_creator = document.datasetHeader.dataCreator;
+            data.offer_id = null;
             data.signature = document.signature;
             handler.data = JSON.stringify(data);
 

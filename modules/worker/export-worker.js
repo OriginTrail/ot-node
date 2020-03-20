@@ -35,6 +35,7 @@ process.on('message', async (data) => {
 
         const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
         const dc_node_wallet = ImportUtilities.extractDatasetSigner(document, web3);
+        const data_creator = document.datasetHeader.dataCreator;
 
         var dataset;
         switch (standardId) {
@@ -62,7 +63,7 @@ process.on('message', async (data) => {
             await Utilities.writeContentsToFile(
                 cacheDirectory,
                 handlerId,
-                JSON.stringify({ formatted_dataset: dataset }),
+                JSON.stringify({ formatted_dataset: dataset, dc_node_wallet, data_creator }),
             );
         } catch (e) {
             const filePath = path.join(cacheDirectory, handlerId);
@@ -72,7 +73,7 @@ process.on('message', async (data) => {
             }
             throw new Error(`Error when creating export cache file for handler_id ${handlerId}. ${e.message}`);
         }
-        process.send({ dc_node_wallet, status: 'COMPLETED' });
+        process.send({ status: 'COMPLETED' });
     } catch (error) {
         process.send({ error: `${error.message}\n${error.stack}` });
     }
