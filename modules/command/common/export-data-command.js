@@ -1,6 +1,5 @@
 const Command = require('../command');
 const Models = require('../../../models');
-const { fork } = require('child_process');
 const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const fs = require('fs');

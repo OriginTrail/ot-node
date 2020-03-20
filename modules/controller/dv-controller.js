@@ -10,12 +10,11 @@ class DVController {
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
         this.emitter = ctx.emitter;
-
         this.mapping_standards_for_event = new Map();
-        this.mapping_standards_for_event.set('ot-json', 'ot-json');
-        this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
-        this.mapping_standards_for_event.set('graph', 'ot-json');
-        this.mapping_standards_for_event.set('wot', 'wot');
+        this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
+        this.mapping_standards_for_event.set('GS1-EPCIS', 'gs1');
+        this.mapping_standards_for_event.set('GRAPH', 'ot-json');
+        this.mapping_standards_for_event.set('WOT', 'wot');
     }
 
     /**
@@ -169,7 +168,8 @@ class DVController {
             return;
         }
         const { reply_id, data_set_id } = req.body;
-        let { standard_id } = req.body;
+        let standard_id =
+            this.mapping_standards_for_event.get(req.body.standard_id);
         if (!standard_id) {
             standard_id = 'ot-json';
         }
@@ -187,18 +187,10 @@ class DVController {
             return;
         }
         try {
-            const standard = this.mapping_standards_for_event.get(standard_id.toLowerCase());
-            if (!standard) {
-                res.status(400);
-                res.send({
-                    message: `Standard ID not supported. Supported IDs: ${this.mapping_standards_for_event.keys()}`,
-                });
-                return;
-            }
             const handler_data = {
                 data_set_id,
                 reply_id,
-                standard_id: standard,
+                standard_id,
                 export_status: 'PENDING',
                 import_status: 'PENDING',
                 readExport: true,
@@ -236,7 +228,7 @@ class DVController {
                     data: {
                         handlerId: inserted_object.handler_id,
                         datasetId: data_set_id,
-                        standardId: standard,
+                        standardId: standard_id,
                     },
                     transactional: false,
                 });

@@ -23,7 +23,6 @@ class DVDataReadResponseFreeCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
         this.commandExecutor = ctx.commandExecutor;
-        this.emitter = ctx.emitter;
     }
 
     /**
