@@ -56,7 +56,10 @@ class DCChallengeCommand extends Command {
             throw new Error(`Peer with ID ${challenge.dh_id} could not be reached on challenge attempt ${5 - command.retries}`);
         }
 
-        const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        let checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        if (this.config.challengeResponseTimeMills) {
+            checkCommandDelay = this.config.challengeResponseTimeMills;
+        }
 
         return {
             commands: [
