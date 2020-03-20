@@ -24,11 +24,6 @@ class ExportWorkerCommand extends Command {
             standardId,
         } = command.data;
 
-        const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
-        const documentPath = path.join(cacheDirectory, handlerId);
-
-        const document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
-
         const forked = fork('modules/worker/export-worker.js');
 
         forked.send(JSON.stringify({
@@ -36,7 +31,6 @@ class ExportWorkerCommand extends Command {
             standardId,
             handlerId,
             config: this.config,
-            document,
         }));
 
         forked.on('message', async (response) => {

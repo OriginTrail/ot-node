@@ -11,7 +11,10 @@ process.on('message', async (data) => {
         datasetId, standardId, handlerId, config,
     } = JSON.parse(data);
 
-    let { document } = JSON.parse(data);
+    const cacheDirectory = path.join(config.appDataPath, 'export_cache');
+    const documentPath = path.join(cacheDirectory, handlerId);
+
+    let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
     try {
         if (!document['@id']) {
@@ -30,14 +33,14 @@ process.on('message', async (data) => {
             document.datasetHeader = metadata.datasetHeader;
             document.signature = metadata.signature;
 
-            document = JSON.parse(ImportUtilities.sortStringifyDataset(document));
+            // document = JSON.parse(ImportUtilities.sortStringifyDataset(document));
         }
 
         const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
         const dc_node_wallet = ImportUtilities.extractDatasetSigner(document, web3);
         const data_creator = document.datasetHeader.dataCreator;
 
-        var dataset;
+        let dataset;
         switch (standardId) {
         case 'gs1': {
             const transpiler = new EpcisOtJsonTranspiler({ config });
@@ -46,11 +49,11 @@ process.on('message', async (data) => {
         }
         case 'wot': {
             const transpiler = new WotOtJsonTranspiler({ config });
-            dataset = transpiler.convertFromOTJson(document);
+            dataset = ImportUtilities.sortStringifyDataset(transpiler.convertFromOTJson(document));
             break;
         }
         case 'ot-json': {
-            dataset = JSON.stringify(document);
+            dataset = ImportUtilities.sortStringifyDataset(document);
             break;
         }
         default:
