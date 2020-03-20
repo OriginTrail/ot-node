@@ -101,8 +101,10 @@ Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|O
 Then(/^the consensus check should pass for the two last imports$/, function () {
     expect(!!this.state.lastExport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.secondLastExport, 'Second last import data not defined. Use other step to define it.').to.be.equal(true);
-    const objectEvent1 = this.state.lastExport.data.formatted_dataset['@graph'].find(x => x.properties.action === 'OBSERVE');
-    const objectEvent2 = this.state.secondLastExport.data.formatted_dataset['@graph'].find(x => x.properties.action === 'OBSERVE');
+    const dataset1 = JSON.parse(this.state.lastExport.data.formatted_dataset);
+    const dataset2 = JSON.parse(this.state.secondLastExport.data.formatted_dataset);
+    const objectEvent1 = dataset1['@graph'].find(x => x.properties.action === 'OBSERVE');
+    const objectEvent2 = dataset2['@graph'].find(x => x.properties.action === 'OBSERVE');
 
     expect(objectEvent1.properties.action === objectEvent2.properties.action, 'Consensus not valid. Action is not the same.').to.be.equal(true);
     expect(['urn:epcglobal:cbv:bizstep:shipping', 'urn:epcglobal:cbv:bizstep:receiving'].includes(objectEvent1.properties.bizStep)
@@ -126,7 +128,6 @@ Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async
             if (this.state.lastExport) {
                 this.state.secondLastExport = this.state.lastExport;
             }
-
             this.state.lastExport = await httpApiHelper.apiExportResult(host, this.state.lastExportHandler);
             acc();
         });
