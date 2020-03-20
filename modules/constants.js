@@ -12,7 +12,7 @@ exports.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES = 31;
 /**
  * @constant {number} DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS - Challenge response time
  */
-exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 60000;
+exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 300000;
 
 /**
  * @constant {number} DEFAULT_REPUTATION_UPDATE_PERIOD_MILLS - Period for updating reputation table
