@@ -14,6 +14,7 @@ class ExportWorkerCommand extends Command {
         this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
         this.config = ctx.config;
+        this.web3 = ctx.web3;
     }
 
     async execute(command) {
@@ -48,6 +49,8 @@ class ExportWorkerCommand extends Command {
                     where: { handler_id: handlerId },
                 });
                 const data = JSON.parse(handler.data);
+                data.dc_node_wallet = response.dc_node_wallet;
+
                 if (data.readExport) {
                     data.export_status = 'COMPLETED';
                     handler.status = data.import_status === 'COMPLETED' ? 'COMPLETED' : handler.status;
@@ -65,9 +68,11 @@ class ExportWorkerCommand extends Command {
                         },
                     );
                 } else {
+                    handler.data = JSON.stringify(data);
                     await Models.handler_ids.update(
                         {
                             status: 'COMPLETED',
+                            data: handler.data,
                         },
                         {
                             where: {
@@ -95,7 +100,7 @@ class ExportWorkerCommand extends Command {
         return Command.empty();
     }
 
-    async handleError(handlerId, readExport, error) {
+    async handleError(handlerId, error) {
         this.logger.error(`Export failed for export handler_id: ${handlerId}, error: ${error}`);
 
         const handler = await Models.handler_ids.findOne({

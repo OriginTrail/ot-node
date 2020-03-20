@@ -130,6 +130,8 @@ class ExportController {
                     data_hash: data.data_hash,
                     transaction_hash: data.transaction_hash,
                     data_creator: data.data_creator,
+                    dc_node_wallet: data.dc_node_wallet,
+                    offer_id: data.offer_id,
                     import_status: data.import_status,
                     export_status: data.export_status,
                 },
@@ -138,7 +140,7 @@ class ExportController {
         } else {
             response.status(200);
             response.send({
-                data: JSON.parse(data),
+                data,
                 status,
             });
         }

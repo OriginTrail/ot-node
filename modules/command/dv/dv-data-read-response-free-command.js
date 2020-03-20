@@ -144,7 +144,6 @@ class DVDataReadResponseFreeCommand extends Command {
             data.data_creator = data_creator;
             data.offer_id = offer_id;
             data.signature = document.signature;
-            // data.dc_node_wallet = ImportUtilities.extractDatasetSigner(document);
             handler.data = JSON.stringify(data);
 
             await Models.handler_ids.update(

@@ -78,7 +78,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 transaction_hash: transactionHash,
                 root_hash: dataInfo.root_hash,
                 data_hash: dataInfo.data_hash,
-                offer_id: offer.offer_id,
+                offer_id: offer !== null ? offer.offer_id : null,
                 data_creator: {
                     identifier_type: identity[0].identifierType,
                     identifier_value: identity[0].identifierValue,

@@ -4,6 +4,7 @@ const path = require('path');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 const fs = require('fs');
+const Web3 = require('web3');
 
 process.on('message', async (data) => {
     const {
@@ -31,6 +32,9 @@ process.on('message', async (data) => {
 
             document = JSON.parse(ImportUtilities.sortStringifyDataset(document));
         }
+
+        const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
+        const dc_node_wallet = ImportUtilities.extractDatasetSigner(document, web3);
 
         var dataset;
         switch (standardId) {
@@ -68,7 +72,7 @@ process.on('message', async (data) => {
             }
             throw new Error(`Error when creating export cache file for handler_id ${handlerId}. ${e.message}`);
         }
-        process.send('COMPLETED');
+        process.send({ dc_node_wallet, status: 'COMPLETED' });
     } catch (error) {
         process.send({ error: `${error.message}\n${error.stack}` });
     }

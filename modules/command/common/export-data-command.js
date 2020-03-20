@@ -62,7 +62,7 @@ class ExportDataCommand extends Command {
             identifier_value: identity[0].identifierValue,
             validation_schema: identity[0].validationSchema,
         };
-        data.offer_id = offer.offer_id;
+        data.offer_id = offer !== null ? offer.offer_id : null;
         data.signature = fileContent.metadata.signature;
         handler.data = JSON.stringify(data);
 
