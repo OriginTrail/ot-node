@@ -84,6 +84,9 @@
       },
       "bucket_size": 4
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "development"
     },
@@ -100,7 +103,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
-    "dc_choose_time": 1200000,
+    "dc_choose_time": 300000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
@@ -195,6 +198,9 @@
       },
       "bucket_size": 4
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "testnet"
     },
@@ -211,7 +217,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
-    "dc_choose_time": 1200000,
+    "dc_choose_time": 300000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": true,
@@ -308,6 +314,9 @@
       },
       "bucket_size": 20
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "mainnet"
     },
@@ -324,7 +333,7 @@
     "dh_max_holding_time_in_minutes": 5256000,
     "dh_maximum_dataset_filesize_in_mb": 3,
     "dh_min_litigation_interval_in_minutes": 5,
-    "dc_choose_time": 1200000,
+    "dc_choose_time": 600000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,

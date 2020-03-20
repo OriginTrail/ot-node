@@ -144,6 +144,25 @@ Feature: Data layer related features
     Given I create json query with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
     Then response should return same dataset_ids as second last import and last import
 
+  @forth
+  Scenario: Data read and export successfully
+    Given the replication difficulty is 0
+    And I setup 4 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    Given I additionally setup 1 node
+    And I start additional nodes
+    And I use 5th node as DV
+    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
+    Then all nodes with last import should answer to last network query by DV
+    Given the DV sends read and export for last import from DC
+    And DV waits for export to finish
+    Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
+
   @second
   Scenario: Data location with multiple identifiers
     Given I setup 1 node

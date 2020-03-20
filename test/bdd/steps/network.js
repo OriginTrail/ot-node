@@ -313,47 +313,46 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
     expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
 
     const myNode = this.state[nodeType.toLowerCase()];
 
-    const response = await httpApiHelper.apiExportResult(myNode.state.node_rpc_url, this.state.lastExportHandler);
+    const { lastExport } = this.state;
 
-    expect(response, 'response should contain data and status keys').to.have.keys([
+    expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
 
-    expect(response.status, 'response.status should be "COMPLETED"')
+    expect(lastExport.status, 'response.status should be "COMPLETED"')
         .to.be.equal('COMPLETED');
 
-    expect(response.data, 'response.data should have the formatted_dataset field')
+    expect(lastExport.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
-
-    expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+    lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
+    expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    expect(utilities.verifySignature(response.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+    expect(utilities.verifySignature(lastExport.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 });
 
 Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
 
     const ot_logo = utilities.base64_encode(path.resolve(__dirname, filePath));
-    const { dc } = this.state;
 
-    const response = await httpApiHelper.apiExportResult(dc.state.node_rpc_url, this.state.lastExportHandler);
+    const { lastExport } = this.state;
 
-    expect(response.status, 'response.status should be "COMPLETED"')
+    expect(lastExport.status, 'response.status should be "COMPLETED"')
         .to.be.equal('COMPLETED');
 
-    expect(response.data, 'response.data should have the formatted_dataset field')
+    expect(lastExport.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
-
-    expect(response.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+    lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
+    expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    expect(response.data.formatted_dataset['@graph']
+    expect(lastExport.data.formatted_dataset['@graph']
         .find(x => x['@id'] === dataId).properties['urn:ot:object:product:batch:image'])
         .to.be.equal(ot_logo);
 });
@@ -361,24 +360,22 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
 Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async function (importedFilePath) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(!!this.state.lastExportHandler, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
 
-    const { dc } = this.state;
+    const { lastExport } = this.state;
 
-    const response = await httpApiHelper.apiExportResult(dc.state.node_rpc_url, this.state.lastExportHandler);
-
-    expect(response, 'response should contain data and status keys').to.have.keys([
+    expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
 
-    expect(response.status, 'response.status should be "COMPLETED"')
+    expect(lastExport.status, 'response.status should be "COMPLETED"')
         .to.be.equal('COMPLETED');
 
-    expect(response.data, 'response.data should have the formatted_dataset field')
+    expect(lastExport.data, 'response.data should have the formatted_dataset field')
         .to.have.keys(['formatted_dataset']);
 
     if (this.state.lastExportType === 'GS1-EPCIS') {
-        const exportedXml = xmljs.xml2js(response.data.formatted_dataset, {
+        const exportedXml = xmljs.xml2js(lastExport.data.formatted_dataset, {
             compact: true,
             spaces: 4,
         });
@@ -396,9 +393,11 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     } else {
         const originalJson = await fs.readFileSync(importedFilePath, 'utf8');
 
-        const actual = modulesUtilities.sortedStringify(response.data.formatted_dataset, true);
-        const expected = modulesUtilities.sortedStringify(JSON.parse(originalJson), true);
-        expect(actual, 'Exported file not equal to imported one!').to.be.equal(expected);
+        assert.deepEqual(
+            utilities.stringifyWithoutComments(JSON.parse(lastExport.data.formatted_dataset)),
+            utilities.stringifyWithoutComments(JSON.parse(originalJson)),
+            'Exported file not equal to imported one!',
+        );
     }
 });
 
