@@ -259,7 +259,7 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC$/, { timeout: 90000 }, async function (whichDV, whichImport, done) {
+Given(/^the ([DV|DV2]+) sends read and export request for (last import|second last import) to DC$/, { timeout: 90000 }, async function (whichDV, whichImport, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
     expect(whichImport, 'last import or second last import are only allowed values').to.be.oneOf(['last import', 'second last import']);
     whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
@@ -282,7 +282,7 @@ Given(/^the ([DV|DV2]+) sends read and export for (last import|second last impor
     this.state.lastExport = readExportNetworkResponse.handler_id;
 });
 
-Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from dc$/, function (whichDV, whichImport, fromWhom, done) {
+Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
     expect(whichImport, 'last import or second last import are only allowed values').to.be.oneOf(['last import', 'second last import']);
     whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
