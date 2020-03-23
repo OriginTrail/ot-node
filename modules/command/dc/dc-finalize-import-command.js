@@ -97,7 +97,7 @@ class DcFinalizeImport extends Command {
                 data.import_status = 'COMPLETED';
                 data.root_hash = root_hash;
                 data.data_hash = data_hash;
-                handler.status = data.export_status === 'COMPLETED' ? 'COMPLETED' : handler.status;
+                handler.status = data.export_status;
                 handler.data = JSON.stringify(data);
 
                 await Models.handler_ids.update(

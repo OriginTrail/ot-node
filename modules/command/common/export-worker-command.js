@@ -48,7 +48,7 @@ class ExportWorkerCommand extends Command {
 
                 if (data.readExport) {
                     data.export_status = 'COMPLETED';
-                    handler.status = data.import_status === 'COMPLETED' ? 'COMPLETED' : handler.status;
+                    handler.status = data.import_status;
                     handler.data = JSON.stringify(data);
 
                     await Models.handler_ids.update(
