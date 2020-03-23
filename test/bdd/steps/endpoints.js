@@ -285,9 +285,8 @@ Given(/^the ([DV|DV2]+) sends read and export for (last import|second last impor
         console.log(error);
     }
 
-    expect(Object.keys(readExportNetworkResponse), 'Response should have message and query_id').to.have.members(['query_id']);
-    this.state.lastQueryNetworkId = readExportNetworkResponse.query_id;
-    return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
+    expect(Object.keys(readExportNetworkResponse), 'Response should have message and query_id').to.have.members(['handler_id']);
+    this.state.lastReadExportHandlerId = readExportNetworkResponse.handler_id;
 });
 
 Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from dc$/, function (whichDV, whichImport, fromWhom, done) {
