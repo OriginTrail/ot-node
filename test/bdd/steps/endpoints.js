@@ -271,22 +271,15 @@ Given(/^the ([DV|DV2]+) sends read and export for (last import|second last impor
     const dv = this.state[whichDV.toLowerCase()];
     const queryId = this.state.lastQueryNetworkId;
     const dataSetId = this.state[whichImport].data.dataset_id;
-    const { replyId } =
-        dv.state.dataLocationQueriesConfirmations[queryId][dc.state.identity];
-    let readExportNetworkResponse;
-    try {
-        readExportNetworkResponse =
-        await httpApiHelper.apiQueryNetworkReadAndExport(
-            dv.state.node_rpc_url,
-            dataSetId,
-            replyId,
-        );
-    } catch (error) {
-        console.log(error);
-    }
+    const { replyId } = dv.state.dataLocationQueriesConfirmations[queryId][dc.state.identity];
+    const readExportNetworkResponse = await httpApiHelper.apiQueryNetworkReadAndExport(
+        dv.state.node_rpc_url,
+        dataSetId,
+        replyId,
+    );
 
     expect(Object.keys(readExportNetworkResponse), 'Response should have message and query_id').to.have.members(['handler_id']);
-    this.state.lastReadExportHandlerId = readExportNetworkResponse.handler_id;
+    this.state.lastExport = readExportNetworkResponse.handler_id;
 });
 
 Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from dc$/, function (whichDV, whichImport, fromWhom, done) {
