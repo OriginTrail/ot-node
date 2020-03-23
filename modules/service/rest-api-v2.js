@@ -119,6 +119,14 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
 
+        server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
+            await this.dvController.handleDataReadExportRequest(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/read_export/result/:handler_id`, async (req, res) => {
+            await this.exportController.checkForHandlerStatus(req, res);
+        });
+
         server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
             await this._getChallenges(req, res);
         });

@@ -11,7 +11,7 @@ const httpApiHelper = require('./lib/http-api-helper');
 
 Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 20000 }, async function (importFilePath, importType) {
     this.logger.log(`DC imports '${importFilePath}' as ${importType}.`);
-    expect(importType, 'importType can only be GS1-EPCIS or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
+    expect(importType, 'importType can only be OT-JSON, GS1-EPCIS, WOT or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -78,7 +78,7 @@ Given(/^(DC|DV|DV2) waits for import to finish$/, { timeout: 1200000 }, async fu
 });
 
 Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, async function (targetNode, exportType) {
-    expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
+    expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, WOT, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(targetNode, 'Node type can only be DC, DV2 or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
     expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
@@ -93,6 +93,7 @@ Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|O
     // sometimes there is a need to remember export before the last one
     if (this.state.lastExportHandler) {
         this.state.secondLastExportHandler = this.state.lastExportHandler;
+        this.state.secondLastExportType = this.state.lastExportType;
     }
     this.state.lastExportHandler = exportResponse.handler_id;
     this.state.lastExportType = exportType;
@@ -256,6 +257,35 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     expect(Object.keys(queryNetworkResponse), 'Response should have message and query_id').to.have.members(['query_id']);
     this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
+});
+
+Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 90000 }, async function (whichDV, whichImport, exportType) {
+    this.logger.log(`${whichDV} sends read and export request.`);
+    expect(exportType, 'exportType can only be OT-JSON, GS1-EPCIS, WOT or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
+    expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
+    expect(whichImport, 'last import or second last import are only allowed values').to.be.oneOf(['last import', 'second last import']);
+    whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state[whichImport], 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+
+    const { dc } = this.state;
+    const dv = this.state[whichDV.toLowerCase()];
+    const queryId = this.state.lastQueryNetworkId;
+    const dataSetId = this.state[whichImport].data.dataset_id;
+    const { replyId } = dv.state.dataLocationQueriesConfirmations[queryId][dc.state.identity];
+    const readExportNetworkResponse = await httpApiHelper.apiQueryNetworkReadAndExport(
+        dv.state.node_rpc_url,
+        {
+            data_set_id: dataSetId,
+            reply_id: replyId,
+            standard_id: exportType,
+        },
+    );
+
+    expect(Object.keys(readExportNetworkResponse), 'Response should have handler_id').to.have.members(['handler_id']);
+    this.state.lastExportHandler = readExportNetworkResponse.handler_id;
+    this.state.lastExportType = exportType;
 });
 
 Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
