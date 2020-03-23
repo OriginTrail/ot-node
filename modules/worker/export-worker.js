@@ -49,7 +49,7 @@ process.on('message', async (data) => {
         }
         case 'wot': {
             const transpiler = new WotOtJsonTranspiler({ config });
-            dataset = ImportUtilities.sortStringifyDataset(transpiler.convertFromOTJson(document));
+            dataset = JSON.stringify(transpiler.convertFromOTJson(document));
             break;
         }
         case 'ot-json': {

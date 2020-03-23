@@ -93,6 +93,7 @@ Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|O
     // sometimes there is a need to remember export before the last one
     if (this.state.lastExportHandler) {
         this.state.secondLastExportHandler = this.state.lastExportHandler;
+        this.state.secondLastExportType = this.state.lastExportType;
     }
     this.state.lastExportHandler = exportResponse.handler_id;
     this.state.lastExportType = exportType;
@@ -129,7 +130,6 @@ Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async
                 this.state.secondLastExport = this.state.lastExport;
             }
             this.state.lastExport = await httpApiHelper.apiExportResult(host, this.state.lastExportHandler);
-            this.state.lastExport.data.formatted_dataset = JSON.parse(this.state.lastExport.data.formatted_dataset);
             acc();
         });
     });
