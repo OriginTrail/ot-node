@@ -26,6 +26,7 @@ class RestAPIServiceV2 {
 
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
@@ -142,6 +143,10 @@ class RestAPIServiceV2 {
 
         server.get(`/api/${this.version_id}/network/private_data/purchase/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/permissioned_data/whitelist_viewer`, async (req, res) => {
+            await this.permissionedDataService.whitelistViewer(req, res);
         });
 
         server.post(`/api/${this.version_id}/challenges`, async (req, res) => {

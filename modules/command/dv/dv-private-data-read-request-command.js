@@ -77,7 +77,7 @@ class DVPrivateDataReadRequestCommand extends Command {
     }
 
     /**
-     * Builds default DVDataReadRequestCommand
+     * Builds default DVPrivateDataReadRequestCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

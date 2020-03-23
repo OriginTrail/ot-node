@@ -8,7 +8,7 @@ const Graph = require('./Graph');
 const Encryption = require('./Encryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
-const constants = require('./constants');
+const ot_constants = require('./constants');
 const crypto = require('crypto');
 const abi = require('ethereumjs-abi');
 
@@ -545,7 +545,7 @@ class ImportUtilities {
         const result = [];
         graph.forEach((ot_object) => {
             if (ot_object && ot_object.properties) {
-                constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+                ot_constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
                     const privateObject = ot_object.properties[private_data_array];
                     if (privateObject) {
                         if (privateObject.isPrivate && !result.includes(ot_object['@id'])) {
@@ -578,7 +578,7 @@ class ImportUtilities {
         if (!ot_object || !ot_object.properties) {
             return;
         }
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+        ot_constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
             const privateObject = ot_object.properties[private_data_array];
             if (privateObject && privateObject.isPrivate) {
                 delete privateObject.data;
@@ -606,7 +606,7 @@ class ImportUtilities {
         if (!ot_object || !ot_object.properties) {
             return;
         }
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+        ot_constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
             const privateObject = ot_object.properties[private_data_array];
             if (privateObject) {
                 delete privateObject.isPrivate;
@@ -635,7 +635,7 @@ class ImportUtilities {
         if (!ot_object || !ot_object.properties) {
             throw Error(`Cannot calculate private data hash for invalid ot-json object ${ot_object}`);
         }
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+        ot_constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
             const privateObject = ot_object.properties[private_data_array];
             if (privateObject && privateObject.isPrivate) {
                 const privateHash = ImportUtilities.calculatePrivateDataHash(privateObject);
@@ -670,8 +670,8 @@ class ImportUtilities {
         const sorted_data = Utilities.sortedStringify(private_object.data, true);
         const data = Buffer.from(sorted_data);
 
-        const first_level_blocks = constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+        const first_level_blocks = ot_constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = ot_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
         let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
         block_size = block_size < 1 ? 1 : block_size;
@@ -750,8 +750,8 @@ class ImportUtilities {
 
         // recreate original object
 
-        const first_level_blocks = constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+        const first_level_blocks = ot_constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = ot_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
         let block_size = Math.min(Math
             .round(private_data_original_length / first_level_blocks), default_block_size);
