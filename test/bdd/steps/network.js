@@ -372,7 +372,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
         .to.be.equal('COMPLETED');
 
     expect(lastExport.data, 'response.data should have the formatted_dataset field')
-        .to.have.keys(['formatted_dataset', 'data_creator', 'dc_node_wallet', 'offer_id', 'root_hash', 'transaction_hash']);
+        .to.have.keys(['formatted_dataset', 'data_creator', 'dc_node_wallet', 'offer_id', 'root_hash', 'transaction_hash', 'data_hash']);
 
     if (this.state.lastExportType === 'GS1-EPCIS') {
         const exportedXml = xmljs.xml2js(lastExport.data.formatted_dataset, {
