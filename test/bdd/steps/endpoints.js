@@ -102,8 +102,8 @@ Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|O
 Then(/^the consensus check should pass for the two last imports$/, function () {
     expect(!!this.state.lastExport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.secondLastExport, 'Second last import data not defined. Use other step to define it.').to.be.equal(true);
-    const dataset1 = this.state.lastExport.data.formatted_dataset;
-    const dataset2 = this.state.secondLastExport.data.formatted_dataset;
+    const dataset1 = JSON.parse(this.state.lastExport.data.formatted_dataset);
+    const dataset2 = JSON.parse(this.state.secondLastExport.data.formatted_dataset);
     const objectEvent1 = dataset1['@graph'].find(x => x.properties.action === 'OBSERVE');
     const objectEvent2 = dataset2['@graph'].find(x => x.properties.action === 'OBSERVE');
 
