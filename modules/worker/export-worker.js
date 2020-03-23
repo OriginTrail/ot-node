@@ -78,6 +78,10 @@ process.on('message', async (data) => {
         }
         process.send({ status: 'COMPLETED' });
     } catch (error) {
+        const filePath = path.join(cacheDirectory, handlerId);
+        if (fs.existsSync(filePath)) {
+            await Utilities.deleteDirectory(filePath);
+        }
         process.send({ error: `${error.message}\n${error.stack}` });
     }
 });
