@@ -11,9 +11,7 @@ class ExportWorkerCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.notifyError = ctx.notifyError;
-        this.importService = ctx.importService;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
     }
 
     async execute(command) {

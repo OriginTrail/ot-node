@@ -5,7 +5,8 @@ const ImportUtilities = require('../../ImportUtilities');
 const fs = require('fs');
 const path = require('path');
 /**
- * Increases approval for Bidding contract on blockchain
+ * Retrieves data from the Graph Database for export and stores it in a cache file
+ * Fetches the dataset metadata and stores it in the handler data
  */
 class ExportDataCommand extends Command {
     constructor(ctx) {
@@ -13,7 +14,6 @@ class ExportDataCommand extends Command {
         this.logger = ctx.logger;
         this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
-        this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
     }
 
@@ -57,10 +57,9 @@ class ExportDataCommand extends Command {
         data.data_creator = fileContent.metadata.dataCreator;
         data.offer_id = offer !== null ? offer.offer_id : null;
         data.signature = fileContent.metadata.signature;
-        handler.data = JSON.stringify(data);
 
         await Models.handler_ids.update(
-            { data: handler.data },
+            { data: JSON.stringify(data) },
             {
                 where: {
                     handler_id: handlerId,

@@ -120,12 +120,11 @@ class ExportController {
 
             const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
             const dataset = JSON.parse(fileContent);
-            data.formatted_dataset = dataset.formatted_dataset;
 
             response.status(200);
             response.send({
                 data: {
-                    formatted_dataset: data.formatted_dataset,
+                    formatted_dataset: dataset.formatted_dataset,
                     root_hash: data.root_hash,
                     data_hash: data.data_hash,
                     transaction_hash: data.transaction_hash,

@@ -1,14 +1,10 @@
-const bytes = require('utf8-length');
 const fs = require('fs');
 const path = require('path');
 
 const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
-const Graph = require('../../Graph');
 const Utilities = require('../../Utilities');
-
-const uuidv4 = require('uuid/v4');
 
 /**
  * Handles data read response for free.
@@ -18,7 +14,6 @@ class DVDataReadResponseFreeCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
