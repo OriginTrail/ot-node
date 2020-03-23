@@ -36,8 +36,6 @@ class ExportWorkerCommand extends Command {
             if (response.error) {
                 await this.handleError(handlerId, response.error);
             } else {
-                this.logger.info(`Export complete for export handler_id: ${handlerId}`);
-
                 const handler = await Models.handler_ids.findOne({
                     where: { handler_id: handlerId },
                 });
@@ -80,6 +78,7 @@ class ExportWorkerCommand extends Command {
                         },
                     );
                 }
+                this.logger.info(`Export complete for export handler_id: ${handlerId}`);
             }
             forked.kill();
         });

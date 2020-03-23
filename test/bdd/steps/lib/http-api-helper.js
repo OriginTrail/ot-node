@@ -761,5 +761,4 @@ module.exports = {
     apiGetElementIssuerIdentity,
     apiGetDatasetInfo,
     apiQueryNetworkReadAndExport,
-    apiQueryNetworkReadAndExportResult,
 };

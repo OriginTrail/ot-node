@@ -101,8 +101,8 @@ Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|O
 Then(/^the consensus check should pass for the two last imports$/, function () {
     expect(!!this.state.lastExport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.secondLastExport, 'Second last import data not defined. Use other step to define it.').to.be.equal(true);
-    const dataset1 = JSON.parse(this.state.lastExport.data.formatted_dataset);
-    const dataset2 = JSON.parse(this.state.secondLastExport.data.formatted_dataset);
+    const dataset1 = this.state.lastExport.data.formatted_dataset;
+    const dataset2 = this.state.secondLastExport.data.formatted_dataset;
     const objectEvent1 = dataset1['@graph'].find(x => x.properties.action === 'OBSERVE');
     const objectEvent2 = dataset2['@graph'].find(x => x.properties.action === 'OBSERVE');
 
@@ -259,7 +259,8 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Given(/^the ([DV|DV2]+) sends read and export request for (last import|second last import) to DC$/, { timeout: 90000 }, async function (whichDV, whichImport, done) {
+Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC$/, { timeout: 90000 }, async function (whichDV, whichImport, done) {
+    this.logger.log(`${whichDV} sends read and export request.`);
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
     expect(whichImport, 'last import or second last import are only allowed values').to.be.oneOf(['last import', 'second last import']);
     whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
@@ -278,8 +279,9 @@ Given(/^the ([DV|DV2]+) sends read and export request for (last import|second la
         replyId,
     );
 
-    expect(Object.keys(readExportNetworkResponse), 'Response should have message and query_id').to.have.members(['handler_id']);
+    expect(Object.keys(readExportNetworkResponse), 'Response should have handler_id').to.have.members(['handler_id']);
     this.state.lastExport = readExportNetworkResponse.handler_id;
+    done();
 });
 
 Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {
