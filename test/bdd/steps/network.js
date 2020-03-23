@@ -376,6 +376,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
             keys = keys.concat(['offer_id', 'root_hash', 'data_hash']);
         }
     } else {
+        keys = keys.concat(['root_hash', 'data_hash']);
         expect(lastExport.status, 'response.status should be "COMPLETED"')
             .to.be.equal('COMPLETED');
     }
