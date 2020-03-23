@@ -259,8 +259,9 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC$/, { timeout: 90000 }, async function (whichDV, whichImport, done) {
+Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 90000 }, async function (whichDV, whichImport, exportType) {
     this.logger.log(`${whichDV} sends read and export request.`);
+    expect(exportType, 'exportType can only be OT-JSON, GS1-EPCIS, WOT or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
     expect(whichImport, 'last import or second last import are only allowed values').to.be.oneOf(['last import', 'second last import']);
     whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
@@ -275,13 +276,16 @@ Given(/^the ([DV|DV2]+) sends read and export for (last import|second last impor
     const { replyId } = dv.state.dataLocationQueriesConfirmations[queryId][dc.state.identity];
     const readExportNetworkResponse = await httpApiHelper.apiQueryNetworkReadAndExport(
         dv.state.node_rpc_url,
-        dataSetId,
-        replyId,
+        {
+            data_set_id: dataSetId,
+            reply_id: replyId,
+            standard_id: exportType,
+        },
     );
 
     expect(Object.keys(readExportNetworkResponse), 'Response should have handler_id').to.have.members(['handler_id']);
-    this.state.lastExport = readExportNetworkResponse.handler_id;
-    done();
+    this.state.lastExportHandler = readExportNetworkResponse.handler_id;
+    this.state.lastExportType = exportType;
 });
 
 Given(/^the ([DV|DV2]+) purchases (last import|second last import) from the last query from (a DH|the DC|a DV)$/, function (whichDV, whichImport, fromWhom, done) {

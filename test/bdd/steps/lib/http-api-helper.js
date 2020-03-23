@@ -454,17 +454,15 @@ async function apiQueryNetwork(nodeRpcUrl, jsonQuery) {
  * @param {json} jsonQuery
  * @return {Promise.<NetworkQueryId>}
  */
-async function apiQueryNetworkReadAndExport(nodeRpcUrl, dataSetId, replyId) {
+async function apiQueryNetworkReadAndExport(nodeRpcUrl, body) {
     return new Promise((accept, reject) => {
         request(
             {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 uri: `${nodeRpcUrl}/api/latest/network/read_export`,
                 json: true,
-                body: {
-                    data_set_id: dataSetId,
-                    reply_id: replyId,
-                },
+                body,
             },
             (err, res, body) => {
                 if (err) {

@@ -95,8 +95,8 @@ class ExportController {
     }
 
     async checkForHandlerStatus(request, response) {
-        this.logger.api('POST: Export result request received.');
         const handlerId = request.params.handler_id;
+        this.logger.api(`POST: Export result request received with handler id: ${handlerId}`);
         const handler_object = await Models.handler_ids.findOne({
             where: {
                 handler_id: handlerId,
@@ -114,7 +114,8 @@ class ExportController {
         const { status } = handler_object;
         const data = JSON.parse(handler_object.data);
 
-        if (handler_object.status === 'COMPLETED') {
+        if (handler_object.status === 'COMPLETED' ||
+            (data.readExport && data.export_status === 'COMPLETED')) {
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
             const filePath = path.join(cacheDirectory, handlerId);
 
@@ -136,12 +137,6 @@ class ExportController {
                 },
                 status,
             });
-            await Models.handler_ids.destroy({
-                where: {
-                    handler_id: handlerId,
-                },
-            });
-            fs.unlinkSync(filePath);
         } else {
             response.status(200);
             response.send({

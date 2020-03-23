@@ -129,7 +129,6 @@ class DVDataReadResponseFreeCommand extends Command {
             const data = JSON.parse(handler.data);
             data.transaction_hash = transaction_hash;
             data.data_creator = document.datasetHeader.dataCreator;
-            data.offer_id = null;
             data.signature = document.signature;
             handler.data = JSON.stringify(data);
 

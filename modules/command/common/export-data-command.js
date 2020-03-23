@@ -26,47 +26,38 @@ class ExportDataCommand extends Command {
         const fileContent = await this.importService.getImportDbData(datasetId);
         const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
 
-        try {
-            await Utilities.writeContentsToFile(
-                cacheDirectory,
-                handlerId,
-                JSON.stringify(fileContent),
-            );
+        await Utilities.writeContentsToFile(
+            cacheDirectory,
+            handlerId,
+            JSON.stringify(fileContent),
+        );
 
-            const dataInfo = await Models.data_info.findOne({ where: { data_set_id: datasetId } });
-            const offer = await Models.offers.findOne({ where: { data_set_id: datasetId } });
+        const dataInfo = await Models.data_info.findOne({ where: { data_set_id: datasetId } });
+        const offer = await Models.offers.findOne({ where: { data_set_id: datasetId } });
 
-            const handler = await Models.handler_ids.findOne({
-                where: { handler_id: handlerId },
-            });
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id: handlerId },
+        });
 
-            const data = JSON.parse(handler.data);
-            data.root_hash = dataInfo.root_hash;
-            data.data_hash = dataInfo.data_hash;
-            data.transaction_hash = await ImportUtilities
-                .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
-            data.data_creator = fileContent.metadata.dataCreator;
-            data.offer_id = offer !== null ? offer.offer_id : null;
-            data.signature = fileContent.metadata.signature;
-
-            await Models.handler_ids.update(
-                { data: JSON.stringify(data) },
-                {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
-        } catch (e) {
-            const filePath = path.join(cacheDirectory, handlerId);
-
-            if (fs.existsSync(filePath)) {
-                await Utilities.deleteDirectory(filePath);
-            }
-            this.handleError(handlerId, `Error when creating export cache file for handler_id ${handlerId}. ${e.message}`);
-            return Command.empty();
+        const data = JSON.parse(handler.data);
+        data.root_hash = dataInfo.root_hash;
+        data.data_hash = dataInfo.data_hash;
+        data.transaction_hash = await ImportUtilities
+            .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
+        data.data_creator = fileContent.metadata.dataCreator;
+        if (offer) {
+            data.offer_id = offer.offer_id;
         }
+        data.signature = fileContent.metadata.signature;
 
+        await Models.handler_ids.update(
+            { data: JSON.stringify(data) },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
         return this.continueSequence(command.data, command.sequence);
     }
 
@@ -100,6 +91,13 @@ class ExportDataCommand extends Command {
 
         if (error.type !== 'ExporterError') {
             this.notifyError(error);
+        }
+
+        const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+        const filePath = path.join(cacheDirectory, handlerId);
+
+        if (fs.existsSync(filePath)) {
+            await Utilities.deleteDirectory(filePath);
         }
     }
 
