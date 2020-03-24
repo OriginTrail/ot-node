@@ -226,14 +226,6 @@ function main() {
 
     web3.setProvider(new Web3.providers.HttpProvider(externalConfig.blockchain.rpc_server_url));
 
-    // Check for old env variables for the sake of compatibility.
-    if (process.env.NODE_WALLET) {
-        externalConfig.node_wallet = process.env.NODE_WALLET;
-    }
-    if (process.env.NODE_PRIVATE_KEY) {
-        externalConfig.node_private_key = process.env.NODE_PRIVATE_KEY;
-    }
-
     if (!externalConfig.node_wallet ||
         !externalConfig.node_private_key ||
         !web3.utils.isAddress(externalConfig.node_wallet)) {

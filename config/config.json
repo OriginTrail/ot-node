@@ -84,6 +84,9 @@
       },
       "bucket_size": 4
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "development"
     },
@@ -100,7 +103,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
-    "dc_choose_time": 1200000,
+    "dc_choose_time": 300000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
@@ -181,6 +184,7 @@
       "hostname": "127.0.0.1",
       "id": "TestnetV4.0",
       "bootstraps": [
+        "https://rinkeby-mariner-bootstrap-01.origin-trail.network:5278/#3f89be24b1cee4d80f5059993260322f9998b189",
         "https://rinkeby-mariner-bootstrap-02.origin-trail.network:5278/#d3951837f8100e6ea4a74417d560bcc8c6d4ffe5",
         "https://rinkeby-mariner-bootstrap-03.origin-trail.network:5278/#ad3c3325e50c3bedcb5c6ee6a73592b2ca7e07aa"
       ],
@@ -194,6 +198,9 @@
       },
       "bucket_size": 4
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "testnet"
     },
@@ -210,7 +217,7 @@
     "dh_max_holding_time_in_minutes": 10080,
     "dh_maximum_dataset_filesize_in_mb": 1000,
     "dh_min_litigation_interval_in_minutes": 5,
-    "dc_choose_time": 1200000,
+    "dc_choose_time": 300000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": true,
@@ -307,6 +314,9 @@
       },
       "bucket_size": 20
     },
+    "node_rpc_use_ssl": false,
+    "node_rpc_ssl_key_path": "",
+    "node_rpc_ssl_cert_path": "",
     "bugSnag": {
       "releaseStage": "mainnet"
     },
@@ -323,7 +333,7 @@
     "dh_max_holding_time_in_minutes": 5256000,
     "dh_maximum_dataset_filesize_in_mb": 3,
     "dh_min_litigation_interval_in_minutes": 5,
-    "dc_choose_time": 1200000,
+    "dc_choose_time": 600000,
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
