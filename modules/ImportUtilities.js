@@ -12,7 +12,7 @@ const constants = require('./constants');
 const crypto = require('crypto');
 const abi = require('ethereumjs-abi');
 
-const constants = {
+const data_constants = {
     vertexType: {
         entityObject: 'EntityObject',
         identifier: 'Identifier',
@@ -36,7 +36,7 @@ const constants = {
         connectionDownstream: 'CONNECTION_DOWNSTREAM',
     },
 };
-Object.freeze(constants);
+Object.freeze(data_constants);
 
 /**
  * Import related utilities
@@ -908,10 +908,10 @@ class ImportUtilities {
 
     static async createDocumentGraph(vertices, edges) {
         const documentGraph = [];
-        vertices.filter(vertex => (vertex.vertexType === constants.vertexType.entityObject))
+        vertices.filter(vertex => (vertex.vertexType === data_constants.vertexType.entityObject))
             .forEach((entityVertex) => {
                 const otObject = {
-                    '@type': constants.objectType.otObject,
+                    '@type': data_constants.objectType.otObject,
                     '@id': entityVertex.uid,
                     identifiers: [],
                     relations: [],
@@ -919,7 +919,8 @@ class ImportUtilities {
 
                 // Check for identifiers.
                 // Relation 'IDENTIFIES' goes form identifierVertex to entityVertex.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.identifierRelation &&
+                edges.filter(edge =>
+                    (edge.edgeType === data_constants.edgeType.identifierRelation &&
                     edge._to === entityVertex._key))
                     .forEach((edge) => {
                         vertices.filter(vertices => vertices._key === edge._from)
@@ -944,7 +945,7 @@ class ImportUtilities {
                     });
                 // Check for properties.
                 // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.dataRelation
+                edges.filter(edge => (edge.edgeType === data_constants.edgeType.dataRelation
                     && edge._from === entityVertex._key))
                     .forEach((edge) => {
                         vertices.filter(vertices => vertices._key === edge._to)
@@ -953,7 +954,7 @@ class ImportUtilities {
                             });
                     });
                 // Check for relations.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.otRelation
+                edges.filter(edge => (edge.edgeType === data_constants.edgeType.otRelation
                     && edge._from === entityVertex._key))
                     .forEach((edge) => {
                         if (otObject.relations == null) {
@@ -964,7 +965,7 @@ class ImportUtilities {
                         const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
 
                         otObject.relations.push({
-                            '@type': constants.edgeType.otRelation,
+                            '@type': data_constants.edgeType.otRelation,
                             direction: 'direct', // TODO: check this.
                             relationType: edge.relationType,
                             linkedObject: {
@@ -976,14 +977,15 @@ class ImportUtilities {
                 documentGraph.push(otObject);
             });
 
-        vertices.filter(vertex => vertex.vertexType === constants.vertexType.connector)
+        vertices.filter(vertex => vertex.vertexType === data_constants.vertexType.connector)
             .forEach((connectorVertex) => {
                 const otConnector = {
-                    '@type': constants.objectType.otConnector,
+                    '@type': data_constants.objectType.otConnector,
                     '@id': connectorVertex.uid,
                 };
 
-                edges.filter(edge => (edge.edgeType === constants.edgeType.identifierRelation &&
+                edges.filter(edge =>
+                    (edge.edgeType === data_constants.edgeType.identifierRelation &&
                     edge._to === connectorVertex._key))
                     .forEach((edge) => {
                         vertices.filter(vertices => vertices._key === edge._from)
@@ -1008,7 +1010,7 @@ class ImportUtilities {
                     });
                 // Check for properties.
                 // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.dataRelation
+                edges.filter(edge => (edge.edgeType === data_constants.edgeType.dataRelation
                     && edge._from === connectorVertex._key))
                     .forEach((edge) => {
                         vertices.filter(vertices => vertices._key === edge._to)
@@ -1017,7 +1019,7 @@ class ImportUtilities {
                             });
                     });
                 // Check for relations.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.otRelation
+                edges.filter(edge => (edge.edgeType === data_constants.edgeType.otRelation
                     && edge._from === connectorVertex._key))
                     .forEach((edge) => {
                         if (otConnector.relations == null) {
@@ -1028,7 +1030,7 @@ class ImportUtilities {
                         const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
 
                         otConnector.relations.push({
-                            '@type': constants.edgeType.otRelation,
+                            '@type': data_constants.edgeType.otRelation,
                             direction: 'direct', // TODO: check this.
                             relationType: edge.relationType,
                             linkedObject: {
