@@ -1,5 +1,3 @@
-const BN = require('../../node_modules/bn.js/lib/bn');
-
 const Utilities = require('../Utilities');
 const Models = require('../../models');
 
