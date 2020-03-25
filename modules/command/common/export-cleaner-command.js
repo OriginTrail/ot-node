@@ -26,8 +26,13 @@ class ExportCleanerCommand extends Command {
         const fileList = fs.readdirSync(cacheDirectoryPath);
         fileList.forEach((fileName) => {
             const filePath = path.join(cacheDirectoryPath, fileName);
-            fs.unlinkSync(filePath);
-            this.logger.trace(`Successfully removed export cache file: ${filePath}`);
+            const now = new Date();
+            const createdDate = fs.lstatSync(filePath).mtime;
+            if (createdDate.getTime() + constants.EXPORT_COMMAND_CLEANUP_TIME_MILLS <
+                now.getTime()) {
+                fs.unlinkSync(filePath);
+                this.logger.trace(`Successfully removed export cache file: ${filePath}`);
+            }
         });
         return Command.repeat();
     }

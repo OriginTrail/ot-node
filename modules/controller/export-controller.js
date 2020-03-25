@@ -76,20 +76,27 @@ class ExportController {
             handler_id,
         });
 
+        const commandSequence = [
+            'exportDataCommand',
+            'exportWorkerCommand',
+        ];
+
         await this.commandExecutor.add({
-            name: 'exportCommand',
-            transactional: false,
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
             data: {
                 handlerId: handler_id,
                 datasetId,
                 standardId,
             },
+            transactional: false,
         });
     }
 
     async checkForHandlerStatus(request, response) {
-        this.logger.api('POST: Export result request received.');
         const handlerId = request.params.handler_id;
+        this.logger.api(`POST: Export result request received with handler id: ${handlerId}`);
         const handler_object = await Models.handler_ids.findOne({
             where: {
                 handler_id: handlerId,
@@ -104,31 +111,36 @@ class ExportController {
             });
             return;
         }
-        const { data, status } = handler_object;
+        const { status } = handler_object;
+        const data = JSON.parse(handler_object.data);
 
-        if (handler_object.status === 'COMPLETED') {
+        if (handler_object.status === 'COMPLETED' ||
+            (data.readExport && data.export_status === 'COMPLETED')) {
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
             const filePath = path.join(cacheDirectory, handlerId);
 
             const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
             const dataset = JSON.parse(fileContent);
+
             response.status(200);
             response.send({
                 data: {
                     formatted_dataset: dataset.formatted_dataset,
+                    root_hash: data.root_hash,
+                    data_hash: data.data_hash,
+                    transaction_hash: data.transaction_hash,
+                    data_creator: data.data_creator,
+                    dc_node_wallet: data.dc_node_wallet,
+                    offer_id: data.offer_id,
+                    import_status: data.import_status,
+                    export_status: data.export_status,
                 },
                 status,
             });
-            await Models.handler_ids.destroy({
-                where: {
-                    handler_id: handlerId,
-                },
-            });
-            fs.unlinkSync(filePath);
         } else {
             response.status(200);
             response.send({
-                data: JSON.parse(data),
+                data,
                 status,
             });
         }

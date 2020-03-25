@@ -326,8 +326,6 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(lastExport.status, 'response.status should be "COMPLETED"')
         .to.be.equal('COMPLETED');
 
-    expect(lastExport.data, 'response.data should have the formatted_dataset field')
-        .to.have.keys(['formatted_dataset']);
     lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
@@ -346,8 +344,6 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
     expect(lastExport.status, 'response.status should be "COMPLETED"')
         .to.be.equal('COMPLETED');
 
-    expect(lastExport.data, 'response.data should have the formatted_dataset field')
-        .to.have.keys(['formatted_dataset']);
     lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
@@ -367,12 +363,22 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
-
-    expect(lastExport.status, 'response.status should be "COMPLETED"')
-        .to.be.equal('COMPLETED');
+    let keys = ['formatted_dataset', 'data_creator', 'dc_node_wallet', 'transaction_hash'];
+    if (lastExport.data.export_status) {
+        expect(lastExport.data.export_status, 'response.data.export_status should be "COMPLETED"')
+            .to.be.equal('COMPLETED');
+        keys = keys.concat(['export_status', 'import_status']);
+        if (lastExport.data.import_status === 'COMPLETED') {
+            keys = keys.concat(['offer_id', 'root_hash', 'data_hash']);
+        }
+    } else {
+        keys = keys.concat(['root_hash', 'data_hash']);
+        expect(lastExport.status, 'response.status should be "COMPLETED"')
+            .to.be.equal('COMPLETED');
+    }
 
     expect(lastExport.data, 'response.data should have the formatted_dataset field')
-        .to.have.keys(['formatted_dataset']);
+        .to.have.keys(keys);
 
     if (this.state.lastExportType === 'GS1-EPCIS') {
         const exportedXml = xmljs.xml2js(lastExport.data.formatted_dataset, {
@@ -469,6 +475,19 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     });
 
     return Promise.all(promises);
+});
+
+
+Given(/^Last replication should fail$/, { timeout: 10000 }, async function () {
+    this.logger.log('I wait for replication to finish');
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    const { dc } = this.state;
+    const response = await httpApiHelper.apiReplicationResult(dc.state.node_rpc_url, this.state.lastReplicationHandler.handler_id);
+    expect(response.status).to.be.equal('FAILED');
 });
 
 Then(/^DC should send a challenge request$/, { timeout: 1200000 }, function () {

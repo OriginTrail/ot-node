@@ -579,11 +579,16 @@ class EventEmitter {
                 const dhNodeId = transport.extractSenderID(request);
                 const replicationFinishedMessage = transport.extractMessage(request);
                 const {
-                    offerId, messageSignature, dhIdentity, wallet,
+                    offerId, messageSignature, dhIdentity,
                 } = replicationFinishedMessage;
+
+                let dhWallet = replicationFinishedMessage.wallet;
+                if (!dhWallet) {
+                    dhWallet = transport.extractSenderInfo(request).wallet;
+                }
                 await dcService.verifyDHReplication(
                     offerId, messageSignature,
-                    dhNodeId, dhIdentity, wallet, false,
+                    dhNodeId, dhIdentity, dhWallet, false,
                 );
             } catch (e) {
                 const errorMessage = `Failed to handle replication finished request. ${e}.`;
