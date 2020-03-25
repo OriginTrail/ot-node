@@ -17,7 +17,7 @@ exports.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES = 31;
 /**
  * @constant {number} DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS - Challenge response time
  */
-exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 60000;
+exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 300000;
 
 /**
  * @constant {number} DEFAULT_REPUTATION_UPDATE_PERIOD_MILLS - Period for updating reputation table
@@ -33,13 +33,13 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
  * @constant {number} EXPORT_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 1h
  */
-exports.EXPORT_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+exports.EXPORT_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
  * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 1h
  */
-exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands

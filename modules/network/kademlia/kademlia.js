@@ -309,9 +309,89 @@ class Kademlia {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
-        if (this.config.is_bootstrap_node) {
-            // TODO: add here custom methods for bootstrap.
+        this.node.plugin((node) => {
+            /**
+             * Get contact by Node ID
+             * @param contactId
+             * @returns Promise{ contact: [contactId, contact], header }
+             */
+            node.getContact = async (contactId) => {
+                contactId = contactId.toLowerCase();
+                const header = JSON.stringify({
+                    from: this.config.identity,
+                    to: contactId,
+                    ttl: kadence.constants.MAX_RELAY_HOPS,
+                });
 
+                return new Promise((accept, reject) => {
+                    // find contact in routing table
+                    const contact = node.router.getContactByNodeId(contactId);
+                    if (contact && contactId === contact.identity &&
+                        contact.hostname && contact.port) {
+                        this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
+                        accept({ contact: [contactId, contact], header });
+                    }
+
+                    // iterative find node
+                    this.node.iterativeFindNode(contactId, (err, result) => {
+                        if (err) {
+                            reject(Error(`Failed to find contact ${contactId}. ${err}`));
+                        }
+                        if (result && Array.isArray(result)) {
+                            const contact = result[0];
+                            if (contact && Array.isArray(contact) && contact.length === 2
+                                && contact[1].hostname && contact[1].port
+                                && contact[0] === contact[1].identity) {
+                                this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
+                                accept({ contact, header });
+                            }
+                            reject(Error(`Unknown contact ${contactId}.`));
+                        }
+                        reject(Error(`Failed to find contact ${contactId}. Not array: ${result}`));
+                    });
+                });
+            };
+        });
+
+        this.node.use('*', async (request, response, next) => {
+            if (request.params.header) {
+                const header = JSON.parse(request.params.header);
+                if (header.ttl && header.from && header.to) {
+                    const srcContact = header.from;
+                    const destContact = header.to;
+                    header.ttl -= 1;
+                    if (header.ttl >= 0) {
+                        if (destContact === this.config.identity) {
+                            response.send(next());
+                        } else {
+                            const result = await new Promise(async (accept, reject) => {
+                                const { contact } = await this.node.getContact(destContact);
+                                this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
+                                // should await?
+                                this.node.send(
+                                    request.method,
+                                    {
+                                        message: request.params.message,
+                                        header: request.params.header,
+                                    },
+                                    contact,
+                                    (err, res) => {
+                                        if (err) {
+                                            reject(err);
+                                        } else {
+                                            accept(res);
+                                        }
+                                    },
+                                );
+                            });
+                            response.send(result);
+                        }
+                    } else response.send('Message includes invalid TTL.');
+                } else response.send('Message includes invalid header.');
+            } else next();
+        });
+
+        if (this.config.is_bootstrap_node) {
             return;
         }
 
@@ -459,44 +539,6 @@ class Kademlia {
             }
         });
 
-        this.node.use('*', async (request, response, next) => {
-            if (request.params.header) {
-                const header = JSON.parse(request.params.header);
-                if (header.ttl && header.from && header.to) {
-                    const srcContact = header.from;
-                    const destContact = header.to;
-                    header.ttl -= 1;
-                    if (header.ttl >= 0) {
-                        if (destContact === this.config.identity) {
-                            response.send(next());
-                        } else {
-                            const result = await new Promise(async (accept, reject) => {
-                                const { contact } = await this.node.getContact(destContact);
-                                this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
-                                // should await?
-                                this.node.send(
-                                    request.method,
-                                    {
-                                        message: request.params.message,
-                                        header: request.params.header,
-                                    },
-                                    contact,
-                                    (err, res) => {
-                                        if (err) {
-                                            reject(err);
-                                        } else {
-                                            accept(res);
-                                        }
-                                    },
-                                );
-                            });
-                            response.send(result);
-                        }
-                    } else response.send('Message includes invalid TTL.');
-                } else response.send('Message includes invalid header.');
-            } else next();
-        });
-
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
             /**
@@ -505,48 +547,6 @@ class Kademlia {
              */
             node.getNearestNeighbour = () =>
                 [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
-
-            /**
-             * Get contact by Node ID
-             * @param contactId
-             * @returns Promise{ contact: [contactId, contact], header }
-             */
-            node.getContact = async (contactId) => {
-                contactId = contactId.toLowerCase();
-                const header = JSON.stringify({
-                    from: this.config.identity,
-                    to: contactId,
-                    ttl: kadence.constants.MAX_RELAY_HOPS,
-                });
-
-                return new Promise((accept, reject) => {
-                    // find contact in routing table
-                    const contact = node.router.getContactByNodeId(contactId);
-                    if (contact && contactId === contact.identity &&
-                        contact.hostname && contact.port) {
-                        this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
-                        accept({ contact: [contactId, contact], header });
-                    }
-
-                    // iterative find node
-                    this.node.iterativeFindNode(contactId, (err, result) => {
-                        if (err) {
-                            reject(Error(`Failed to find contact ${contactId}. ${err}`));
-                        }
-                        if (result && Array.isArray(result)) {
-                            const contact = result[0];
-                            if (contact && Array.isArray(contact) && contact.length === 2
-                                && contact[1].hostname && contact[1].port
-                                && contact[0] === contact[1].identity) {
-                                this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
-                                accept({ contact, header });
-                            }
-                            reject(Error(`Unknown contact ${contactId}.`));
-                        }
-                        reject(Error(`Failed to find contact ${contactId}. Not array: ${result}`));
-                    });
-                });
-            };
 
             node.replicationRequest = async (message, contactId) => {
                 const { contact, header } = await node.getContact(contactId);

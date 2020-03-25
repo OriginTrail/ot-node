@@ -1,14 +1,10 @@
-const bytes = require('utf8-length');
 const fs = require('fs');
 const path = require('path');
 
 const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
-const Graph = require('../../Graph');
 const Utilities = require('../../Utilities');
-
-const uuidv4 = require('uuid/v4');
 
 /**
  * Handles data read response for free.
@@ -18,7 +14,6 @@ class DVDataReadResponseFreeCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
@@ -127,6 +122,63 @@ class DVDataReadResponseFreeCommand extends Command {
                 price: 0,
             });
         });
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id },
+        });
+        const {
+            data_set_id,
+            standard_id,
+            readExport,
+        } = JSON.parse(handler.data);
+
+        if (readExport) {
+            const fileContent = ImportUtilities.sortStringifyDataset(document);
+            const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+
+            try {
+                await Utilities.writeContentsToFile(
+                    cacheDirectory,
+                    handler_id,
+                    fileContent,
+                );
+            } catch (e) {
+                const filePath = path.join(cacheDirectory, handler_id);
+
+                if (fs.existsSync(filePath)) {
+                    await Utilities.deleteDirectory(filePath);
+                }
+                this.handleError(handler_id, `Error when creating export cache file for handler_id ${handler_id}. ${e.message}`);
+            }
+
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+
+            const data = JSON.parse(handler.data);
+            data.transaction_hash = transaction_hash;
+            data.data_creator = document.datasetHeader.dataCreator;
+            data.signature = document.signature;
+            handler.data = JSON.stringify(data);
+
+            await Models.handler_ids.update(
+                { data: handler.data },
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+
+            await this.commandExecutor.add({
+                name: 'exportWorkerCommand',
+                transactional: false,
+                data: {
+                    handlerId: handler.handler_id,
+                    datasetId: data_set_id,
+                    standardId: standard_id,
+                },
+            });
+        }
 
         try {
             const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
@@ -181,6 +233,32 @@ class DVDataReadResponseFreeCommand extends Command {
         });
 
         return Command.empty();
+    }
+
+    async handleError(handlerId, error) {
+        this.logger.error(`Export failed for export handler_id: ${handlerId}, error: ${error}`);
+
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id: handlerId },
+        });
+
+        const data = JSON.parse(handler.data);
+        data.export_status = 'FAILED';
+        handler.status = data.import_status === 'PENDING' ? 'PENDING' : 'FAILED';
+        handler.data = JSON.stringify(data);
+
+        await Models.handler_ids.update(
+            handler,
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+
+        if (error.type !== 'ExporterError') {
+            this.notifyError(error);
+        }
     }
 
     /**
