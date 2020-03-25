@@ -283,7 +283,7 @@ class DCController {
             ),
         };
 
-        await this.transport.sendPrivateDataPriceResponse(
+        await this.transport.sendPermissionedDataPriceResponse(
             dataPriceResponseObject,
             dv_node_id,
         );

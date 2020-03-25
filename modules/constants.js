@@ -96,11 +96,7 @@ exports.BLOCKCHAIN_RETRY_DELAY_IN_MILLS = 20000;
 exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
 /**
  *
- * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
+ * @constant {array} NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS -
+ *  Minimal number of blocks which are used for creating permissioned data merkle tree
  */
-exports.PRIVATE_DATA_OBJECT_NAMES = ['private_data', 'claim'];
-/**
- *
- * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
- */
-exports.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS = 256;
+exports.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS = 256;

@@ -45,8 +45,8 @@ class ReplicationService {
 
         const otJson = await this.importService.getImport(offer.data_set_id);
 
-        const privateData = ImportUtilities.getGraphPrivateData(otJson['@graph']);
-        privateData.forEach(async (otObjectId) => {
+        const permissionedData = ImportUtilities.getGraphPermissionedData(otJson['@graph']);
+        permissionedData.forEach(async (otObjectId) => {
             await Models.data_sellers.create({
                 data_set_id: offer.data_set_id,
                 ot_json_object_id: otObjectId,
@@ -56,7 +56,7 @@ class ReplicationService {
             });
         });
 
-        ImportUtilities.hideGraphPrivateData(otJson['@graph']);
+        ImportUtilities.removeGraphPermissionedData(otJson['@graph']);
 
         const hashes = {};
 

@@ -44,7 +44,7 @@ class DhReplicationImportCommand extends Command {
             encColor,
             dcIdentity,
         } = command.data;
-        const { otJson, privateData }
+        const { otJson, permissionedData }
             = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
         const { decryptedDataset, encryptedMap } =
@@ -80,17 +80,13 @@ class DhReplicationImportCommand extends Command {
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id
 
-        if (privateData && Object.keys(privateData).length > 0) {
+        if (permissionedData && Object.keys(permissionedData).length > 0) {
             for (const otObject of decryptedDataset['@graph']) {
-                if (otObject['@id'] in privateData) {
-                    const otObjectId = otObject['@id'];
-                    for (const privateDataElement in privateData[otObjectId]) {
-                        if (!otObject.properties) {
-                            otObject.properties = {};
-                        }
-                        otObject.properties[privateDataElement] =
-                            privateData[otObjectId][privateDataElement];
+                if (otObject['@id'] in permissionedData) {
+                    if (!otObject.properties) {
+                        otObject.properties = {};
                     }
+                    otObject.properties.permissioned_data = permissionedData[otObject['@id']];
                 }
             }
         }
@@ -127,12 +123,12 @@ class DhReplicationImportCommand extends Command {
             },
         });
 
-        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(decryptedDataset['@graph']);
-        replicatedPrivateData.forEach(async (otObjectId) => {
+        const replicatedPermissionedData = ImportUtilities.getGraphPermissionedData(decryptedDataset['@graph']);
+        replicatedPermissionedData.forEach(async (otObjectId) => {
             await Models.data_sellers.create({
                 data_set_id: dataSetId,
                 ot_json_object_id: otObjectId,
-                seller_node_id: dcNodeId.toLowerCase(),
+                seller_node_id: Utilities.denormalizeHex(dcNodeId),
                 seller_erc_id: Utilities.normalizeHex(dcIdentity),
                 price: 0,
             });

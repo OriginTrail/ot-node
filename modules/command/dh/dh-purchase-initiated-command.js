@@ -53,7 +53,7 @@ class DhPurchaseInitiatedCommand extends Command {
                     Utilities.normalizeHex(encodedDataRootHash)
                     === encoded_object.encoded_data_root_hash &&
                     Utilities.normalizeHex(originalDataRootHash)
-                    === encoded_object.private_data_root_hash &&
+                    === encoded_object.permissioned_data_root_hash &&
                     price === dataTrade.price;
             });
             if (event) {
@@ -61,6 +61,7 @@ class DhPurchaseInitiatedCommand extends Command {
                 await event.save({ fields: ['finished'] });
 
                 const { purchaseId } = JSON.parse(event.data);
+                this.logger.important(`Purchase ${purchaseId} initiated`);
 
                 await this.blockchain.depositKey(purchaseId, encoded_object.key);
 

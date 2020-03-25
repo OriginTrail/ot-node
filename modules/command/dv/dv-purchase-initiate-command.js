@@ -23,8 +23,8 @@ class DvPurchaseInitiateCommand extends Command {
     async execute(command, transaction) {
         const {
             handler_id, status, message, encoded_data,
-            private_data_root_hash, encoded_data_root_hash,
-            private_data_array_length, private_data_original_length,
+            permissioned_data_root_hash, encoded_data_root_hash,
+            permissioned_data_array_length, permissioned_data_original_length,
         } = command.data;
 
 
@@ -39,11 +39,11 @@ class DvPurchaseInitiateCommand extends Command {
             ot_object_id,
         } = await this._getHandlerData(handler_id);
 
-        if (!(await this._validatePrivateDataRootHash(
+        if (!(await this._validatePermissionedDataRootHash(
             data_set_id,
-            ot_object_id, private_data_root_hash,
+            ot_object_id, permissioned_data_root_hash,
         ))) {
-            this._handleError(handler_id, 'Unable to initiate purchase private data root hash validation failed');
+            this._handleError(handler_id, 'Unable to initiate purchase. Permissioned data root hash validation failed');
             return Command.empty();
         }
 
@@ -58,11 +58,12 @@ class DvPurchaseInitiateCommand extends Command {
         const result = await this.blockchain.initiatePurchase(
             dataTrade.seller_erc_id, dataTrade.buyer_erc_id,
             dataTrade.price,
-            private_data_root_hash, encoded_data_root_hash,
+            permissioned_data_root_hash, encoded_data_root_hash,
         );
 
         const { purchaseId } = this.blockchain
             .decodePurchaseInitiatedEventFromTransaction(result);
+        this.logger.important(`Purchase ${purchaseId} initiated. Waiting for key from seller...`);
 
         if (!purchaseId) {
             this.remoteControl.purchaseStatus('Purchase failed', 'Unabled to initiate purchase to Blockchain.', true);
@@ -78,8 +79,8 @@ class DvPurchaseInitiateCommand extends Command {
             handler_id,
             encoded_data,
             purchase_id: purchaseId,
-            private_data_array_length,
-            private_data_original_length,
+            permissioned_data_array_length,
+            permissioned_data_original_length,
         };
 
         await this.commandExecutor.add({
@@ -137,9 +138,10 @@ class DvPurchaseInitiateCommand extends Command {
         }, { where: { handler_id } });
     }
 
-    async _validatePrivateDataRootHash(dataSetId, otObjectId, private_data_root_hash) {
-        const privateObject = await this.importService.getPrivateDataObject(dataSetId, otObjectId);
-        return private_data_root_hash === privateObject.private_data_hash;
+    async _validatePermissionedDataRootHash(dataSetId, otObjectId, permissioned_data_root_hash) {
+        const permissionedDataObject =
+            await this.importService.getPermissionedDataObject(dataSetId, otObjectId);
+        return permissioned_data_root_hash === permissionedDataObject.permissioned_data_hash;
     }
 
     async _getHandlerData(handler_id) {

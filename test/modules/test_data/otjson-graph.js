@@ -1115,7 +1115,7 @@ module.exports = {
         },
     },
 
-    private_data_graph: {
+    permissioned_data_graph: {
         '@graph': [
             {
                 '@id': 'urn:ot:object:actor:id:company-red',
@@ -1145,52 +1145,21 @@ module.exports = {
                             },
                         ],
                     },
+                    'urn:ot:object:actor:name': 'company-red',
                     objectType: 'vocabularyElement',
                     'urn:ot:object:actor:category': 'Company',
-                    'urn:ot:object:actor:name': 'company-red',
                     vocabularyType: 'urn:ot:object:actor',
-                    claims: [
-                        {
-                            isPrivate: false,
-                            data: {
-                                id: 'certificate_of_authenticity_5143',
-                                transaction_id: '0000000000000000',
-                                claim_title: 'Certificate of Authenticity',
-                                description: 'This product is genuine',
-                                product_name: 'Crystal_vase_269',
-                                certification_issuer: 'Institute_of_genuine_vases',
-                                certification_date: '2019-09-13',
-                                material_id: '99999999999999999',
-                            },
+                    permissioned_data: {
+                        data: {
+                            id: 'usr_addr_654781',
+                            transaction_id: '2222222222222222',
+                            data_title: 'User address',
+                            creation_date: '2018-09-13',
+                            address: 'Example_Avenue_24',
+                            description: 'This user has the following postal address',
+                            user_name: 'John_Doe',
                         },
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'ownership_of_property_762',
-                                transaction_id: '1111111111111111',
-                                claim_title: 'Ownership of product',
-                                description: 'This user is the lawful owner of the product',
-                                product_name: 'Crystal_vase_269',
-                                user_name: 'John_Doe',
-                                certification_issuer: 'Genuine_vase_supreme_council',
-                                certification_date: '2019-09-13',
-                                material_id: '99999999999999999',
-                            },
-                        },
-                    ],
-                    private_data: [
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'usr_addr_654781',
-                                transaction_id: '2222222222222222',
-                                data_title: 'User address',
-                                creation_date: '2018-09-13',
-                                address: 'Example_Avenue_24',
-                                description: 'This user has the following postal address',
-                                user_name: 'John_Doe',
-                            },
-                        }],
+                    },
                 },
                 relations: [],
             },
@@ -1226,53 +1195,23 @@ module.exports = {
                     'urn:ot:object:actor:category': 'Company',
                     'urn:ot:object:actor:name': 'company-green',
                     vocabularyType: 'urn:ot:object:actor',
-                    claims: [
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'organic_product_certificate_3247',
-                                transaction_id: '1231231233312312312333',
-                                claim_title: 'Organic certification',
-                                description: 'This product is grown organically',
-                                product_name: 'Red_tulip_9281',
-                                certification_issuer: 'Mom_and_Pop_flowers',
-                                certification_date: '2020-02-05',
-                                material_id: '7897897899978978978999',
-                            },
+                    permissioned_data: {
+                        data: {
+                            producer_name: 'Mom_and_Pop_flowers',
+                            description: 'This user produces organic products',
+                            creation_date: '2018-09-13',
+                            data_title: 'Organic Producer Certificate',
+                            transaction_id: '0120120122201201201222',
+                            id: 'organic_producer_certificate_1111',
                         },
-                    ],
-                    private_data: [
-                        {
-                            isPrivate: false,
-                            data: {
-                                id: 'organic_producer_certificate_1111',
-                                transaction_id: '0120120122201201201222',
-                                data_title: 'Organic Producer Certificate',
-                                creation_date: '2018-09-13',
-                                description: 'This user produces organical products',
-                                producer_name: 'Mom_and_Pop_flowers',
-                            },
-                        },
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'usr_addr_654781',
-                                transaction_id: '89089089000890890899000',
-                                data_title: 'Producer address',
-                                description: 'This Producer has the following postal address',
-                                address: 'Sample_Boulevard_42',
-                                producer_name: 'Mom_and_Pop_flowers',
-                                creation_date: '2013-09-13',
-                            },
-                        },
-                    ],
+                    },
                 },
                 relations: [],
             },
         ],
     },
 
-    private_data_graph_shuffled: {
+    permissioned_data_graph_shuffled: {
         '@graph': [
             {
                 '@id': 'urn:ot:object:actor:id:company-green',
@@ -1307,46 +1246,16 @@ module.exports = {
                     'urn:ot:object:actor:category': 'Company',
                     'urn:ot:object:actor:name': 'company-green',
                     vocabularyType: 'urn:ot:object:actor',
-                    claims: [
-                        {
-                            data: {
-                                material_id: '7897897899978978978999',
-                                certification_date: '2020-02-05',
-                                certification_issuer: 'Mom_and_Pop_flowers',
-                                product_name: 'Red_tulip_9281',
-                                description: 'This product is grown organically',
-                                claim_title: 'Organic certification',
-                                transaction_id: '1231231233312312312333',
-                                id: 'organic_product_certificate_3247',
-                            },
-                            isPrivate: true,
+                    permissioned_data: {
+                        data: {
+                            id: 'organic_producer_certificate_1111',
+                            transaction_id: '0120120122201201201222',
+                            data_title: 'Organic Producer Certificate',
+                            creation_date: '2018-09-13',
+                            description: 'This user produces organical products',
+                            producer_name: 'Mom_and_Pop_flowers',
                         },
-                    ],
-                    private_data: [
-                        {
-                            data: {
-                                creation_date: '2013-09-13',
-                                producer_name: 'Mom_and_Pop_flowers',
-                                address: 'Sample_Boulevard_42',
-                                description: 'This Producer has the following postal address',
-                                data_title: 'Producer address',
-                                transaction_id: '89089089000890890899000',
-                                id: 'usr_addr_654781',
-                            },
-                            isPrivate: true,
-                        },
-                        {
-                            data: {
-                                id: 'organic_producer_certificate_1111',
-                                transaction_id: '0120120122201201201222',
-                                data_title: 'Organic Producer Certificate',
-                                creation_date: '2018-09-13',
-                                description: 'This user produces organical products',
-                                producer_name: 'Mom_and_Pop_flowers',
-                            },
-                            isPrivate: false,
-                        },
-                    ],
+                    },
                 },
             },
             {
@@ -1381,55 +1290,24 @@ module.exports = {
                     'urn:ot:object:actor:category': 'Company',
                     'urn:ot:object:actor:name': 'company-red',
                     vocabularyType: 'urn:ot:object:actor',
-                    claims: [
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'ownership_of_property_762',
-                                transaction_id: '1111111111111111',
-                                claim_title: 'Ownership of product',
-                                description: 'This user is the lawful owner of the product',
-                                product_name: 'Crystal_vase_269',
-                                user_name: 'John_Doe',
-                                certification_issuer: 'Genuine_vase_supreme_council',
-                                certification_date: '2019-09-13',
-                                material_id: '99999999999999999',
-                            },
+                    permissioned_data: {
+                        data: {
+                            id: 'usr_addr_654781',
+                            transaction_id: '2222222222222222',
+                            data_title: 'User address',
+                            creation_date: '2018-09-13',
+                            address: 'Example_Avenue_24',
+                            description: 'This user has the following postal address',
+                            user_name: 'John_Doe',
                         },
-                        {
-                            isPrivate: false,
-                            data: {
-                                id: 'certificate_of_authenticity_5143',
-                                transaction_id: '0000000000000000',
-                                claim_title: 'Certificate of Authenticity',
-                                description: 'This product is genuine',
-                                product_name: 'Crystal_vase_269',
-                                certification_issuer: 'Institute_of_genuine_vases',
-                                certification_date: '2019-09-13',
-                                material_id: '99999999999999999',
-                            },
-                        },
-                    ],
-                    private_data: [
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'usr_addr_654781',
-                                transaction_id: '2222222222222222',
-                                data_title: 'User address',
-                                creation_date: '2018-09-13',
-                                address: 'Example_Avenue_24',
-                                description: 'This user has the following postal address',
-                                user_name: 'John_Doe',
-                            },
-                        }],
+                    },
                 },
                 relations: [],
             },
         ],
     },
 
-    private_data_graph_2: {
+    permissioned_data_graph_2: {
         '@graph': [
             {
                 '@id': 'urn:ot:object:actor:id:company-lime',
@@ -1464,46 +1342,17 @@ module.exports = {
                     'urn:ot:object:actor:category': 'Company',
                     'urn:ot:object:actor:name': 'company-lime',
                     vocabularyType: 'urn:ot:object:actor',
-                    claims: [
-                        {
-                            data: {
-                                material_id: '7897897899978978978999',
-                                certification_date: '2020-02-05',
-                                certification_issuer: 'Mom_and_Pop_flowers',
-                                product_name: 'Red_tulip_9281',
-                                description: 'This product is grown organically',
-                                claim_title: 'Organic certification',
-                                transaction_id: '1231231233312312312333',
-                                id: 'organic_product_certificate_3247',
-                            },
-                            isPrivate: true,
+                    permissioned_data: {
+                        data: {
+                            creation_date: '2013-09-13',
+                            producer_name: 'Mom_and_Pop_flowers',
+                            address: 'Sample_Boulevard_42',
+                            description: 'This Producer has the following postal address',
+                            data_title: 'Producer address',
+                            transaction_id: '89089089000890890899000',
+                            id: 'usr_addr_654781',
                         },
-                    ],
-                    private_data: [
-                        {
-                            data: {
-                                creation_date: '2013-09-13',
-                                producer_name: 'Mom_and_Pop_flowers',
-                                address: 'Sample_Boulevard_42',
-                                description: 'This Producer has the following postal address',
-                                data_title: 'Producer address',
-                                transaction_id: '89089089000890890899000',
-                                id: 'usr_addr_654781',
-                            },
-                            isPrivate: true,
-                        },
-                        {
-                            data: {
-                                id: 'organic_producer_certificate_1111',
-                                transaction_id: '0120120122201201201222',
-                                data_title: 'Organic Producer Certificate',
-                                creation_date: '2018-09-13',
-                                description: 'This user produces organical products',
-                                producer_name: 'Mom_and_Pop_flowers',
-                            },
-                            isPrivate: false,
-                        },
-                    ],
+                    },
                 },
             },
             {
@@ -1538,48 +1387,17 @@ module.exports = {
                     'urn:ot:object:actor:category': 'Company',
                     'urn:ot:object:actor:name': 'company-burgundy',
                     vocabularyType: 'urn:ot:object:actor',
-                    claims: [
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'ownership_of_property_762',
-                                transaction_id: '1111111111111111',
-                                claim_title: 'Ownership of product',
-                                description: 'This user is the lawful owner of the product',
-                                product_name: 'Crystal_vase_269',
-                                user_name: 'John_Doe',
-                                certification_issuer: 'Genuine_vase_supreme_council',
-                                certification_date: '2019-09-13',
-                                material_id: '99999999999999999',
-                            },
+                    permissioned_data: {
+                        data: {
+                            id: 'usr_addr_654781',
+                            transaction_id: '2222222222222222',
+                            data_title: 'User address',
+                            creation_date: '2018-09-13',
+                            address: 'Example_Avenue_24',
+                            description: 'This user has the following postal address',
+                            user_name: 'John_Doe',
                         },
-                        {
-                            isPrivate: false,
-                            data: {
-                                id: 'certificate_of_authenticity_5143',
-                                transaction_id: '0000000000000000',
-                                claim_title: 'Certificate of Authenticity',
-                                description: 'This product is genuine',
-                                product_name: 'Crystal_vase_269',
-                                certification_issuer: 'Institute_of_genuine_vases',
-                                certification_date: '2019-09-13',
-                                material_id: '99999999999999999',
-                            },
-                        },
-                    ],
-                    private_data: [
-                        {
-                            isPrivate: true,
-                            data: {
-                                id: 'usr_addr_654781',
-                                transaction_id: '2222222222222222',
-                                data_title: 'User address',
-                                creation_date: '2018-09-13',
-                                address: 'Example_Avenue_24',
-                                description: 'This user has the following postal address',
-                                user_name: 'John_Doe',
-                            },
-                        }],
+                    },
                 },
                 relations: [],
             },
@@ -1587,8 +1405,7 @@ module.exports = {
     },
 
 
-    private_data_object: {
-        isPrivate: false,
+    permissioned_data_object: {
         data: {
             id: 'certificate_of_authenticity_5143',
             transaction_id: '0000000000000000',
@@ -1601,8 +1418,7 @@ module.exports = {
         },
     },
 
-    private_data_object_shuffled: {
-        isPrivate: false,
+    permissioned_data_object_shuffled: {
         data: {
             material_id: '99999999999999999',
             certification_date: '2019-09-13',
@@ -1615,8 +1431,7 @@ module.exports = {
         },
     },
 
-    private_data_object_2: {
-        isPrivate: true,
+    permissioned_data_object_2: {
         data: {
             id: 'ownership_of_property_762',
             transaction_id: '1111111111111111',

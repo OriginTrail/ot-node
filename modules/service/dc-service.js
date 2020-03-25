@@ -432,7 +432,7 @@ class DCService {
             Utilities.normalizeHex(this.config.node_private_key),
         );
 
-        const allowedPrivateDataElements = await models.data_trades.findAll({
+        const allowedPermissionedDataElements = await models.data_trades.findAll({
             where: {
                 data_set_id: offer.data_set_id,
                 buyer_node_id: identity,
@@ -440,10 +440,10 @@ class DCService {
             },
         });
 
-        const privateData = {};
+        const permissionedData = {};
 
         const promises = [];
-        allowedPrivateDataElements.forEach((element) => {
+        allowedPermissionedDataElements.forEach((element) => {
             const ot_object_id = element.ot_json_object_id;
             promises.push(this.importService.getOtObjectById(offer.data_set_id, ot_object_id));
         });
@@ -451,12 +451,10 @@ class DCService {
         const ot_objects = await Promise.all(promises);
 
         ot_objects.forEach((ot_object, index) => {
-            const privateDataObject = {};
-            constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
-                privateDataObject[privateDataArray] = ot_object.properties[privateDataArray];
-            });
-            const { ot_json_object_id } = allowedPrivateDataElements[index];
-            privateData[ot_json_object_id] = privateDataObject;
+            const permissionedDataObject = ot_object.properties.permissioned_data;
+
+            const { ot_json_object_id } = allowedPermissionedDataElements[index];
+            permissionedData[ot_json_object_id] = permissionedDataObject;
         });
 
         const payload = {
@@ -464,7 +462,7 @@ class DCService {
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
             otJson: replication.otJson,
-            privateData,
+            permissionedData,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,

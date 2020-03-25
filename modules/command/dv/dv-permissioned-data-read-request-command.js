@@ -5,7 +5,7 @@ const Utilities = require('../../Utilities');
 /**
  * Handles data read request.
  */
-class DVPrivateDataReadRequestCommand extends Command {
+class DVPermissionedDataReadRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -60,7 +60,7 @@ class DVPrivateDataReadRequestCommand extends Command {
      */
     async recover(command, error) {
         const { handler_id } = command.data;
-        this.logger.warn(`Private Data request failed for handler ID ${handler_id}. ${error}.`);
+        this.logger.warn(`Permissioned Data request failed for handler ID ${handler_id}. ${error}.`);
         await Models.handler_ids.update(
             {
                 status: 'FAILED',
@@ -83,7 +83,7 @@ class DVPrivateDataReadRequestCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dvPrivateDataReadRequestCommand',
+            name: 'dvPermissionedDataReadRequestCommand',
             delay: 0,
             deadline_at: Date.now() + (5 * 60 * 1000),
             transactional: false,
@@ -93,4 +93,4 @@ class DVPrivateDataReadRequestCommand extends Command {
     }
 }
 
-module.exports = DVPrivateDataReadRequestCommand;
+module.exports = DVPermissionedDataReadRequestCommand;

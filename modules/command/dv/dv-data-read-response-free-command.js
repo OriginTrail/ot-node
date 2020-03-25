@@ -77,7 +77,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
-        const { document, privateData } = message;
+        const { document, permissionedData } = message;
         // Calculate root hash and check is it the same on the SC.
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
@@ -99,17 +99,14 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        if (privateData && Object.keys(privateData).length > 0) {
+        if (permissionedData && Object.keys(permissionedData).length > 0) {
             for (const otObject of document['@graph']) {
-                if (otObject['@id'] in privateData) {
+                if (otObject['@id'] in permissionedData) {
                     const otObjectId = otObject['@id'];
-                    for (const privateDataElement in privateData[otObjectId]) {
-                        if (!otObject.properties) {
-                            otObject.properties = {};
-                        }
-                        otObject.properties[privateDataElement] =
-                            privateData[otObjectId][privateDataElement];
+                    if (!otObject.properties) {
+                        otObject.properties = {};
                     }
+                    otObject.properties.permissioned_data = permissionedData[otObjectId];
                 }
             }
         }
@@ -117,8 +114,8 @@ class DVDataReadResponseFreeCommand extends Command {
         const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
         const profile = await this.blockchain.getProfile(erc725Identity);
 
-        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(document['@graph']);
-        replicatedPrivateData.forEach(async (otObjectId) => {
+        const replicatedPermissionedData = ImportUtilities.getGraphPermissionedData(document['@graph']);
+        replicatedPermissionedData.forEach(async (otObjectId) => {
             await Models.data_sellers.create({
                 data_set_id: dataSetId,
                 ot_json_object_id: otObjectId,

@@ -143,7 +143,7 @@ class ImportUtilities {
     static prepareDataset(document, config, web3) {
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
-        ImportUtilities.calculateGraphPrivateDataHashes(graph);
+        ImportUtilities.calculateGraphPermissionedDataHashes(graph);
         const id = this.calculateGraphPublicHash(graph);
 
         const header = this.createDatasetHeader(
@@ -383,7 +383,7 @@ class ImportUtilities {
 
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
         const publicGraph = Utilities.copyObject(graph);
-        ImportUtilities.removeGraphPrivateData(publicGraph);
+        ImportUtilities.removeGraphPermissionedData(publicGraph);
 
         ImportUtilities.sortGraphRecursively(publicGraph);
 
@@ -530,147 +530,113 @@ class ImportUtilities {
      */
     static calculateGraphPublicHash(graph) {
         const public_data = Utilities.copyObject(graph);
-        ImportUtilities.removeGraphPrivateData(public_data);
+        ImportUtilities.removeGraphPermissionedData(public_data);
         const sorted = ImportUtilities.sortGraphRecursively(public_data);
         return `0x${sha3_256(sorted, null, 0)}`;
     }
 
 
     /**
-     * returns ot objects with private data
+     * returns @id of ot-objects with permissioned data
      * @param graph
      * @returns {Array}
      */
-    static getGraphPrivateData(graph) {
+    static getGraphPermissionedData(graph) {
         const result = [];
         graph.forEach((ot_object) => {
             if (ot_object && ot_object.properties) {
-                constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                    const privateObject = ot_object.properties[private_data_array];
-                    if (privateObject) {
-                        if (privateObject.isPrivate && !result.includes(ot_object['@id'])) {
-                            result.push(ot_object['@id']);
-                        }
+                const permissionedDataObject = ot_object.properties.permissioned_data;
+                if (permissionedDataObject) {
+                    if (!result.includes(ot_object['@id'])) {
+                        result.push(ot_object['@id']);
                     }
-                });
+                }
             }
         });
         return result;
     }
 
     /**
-     * Removes the data attribute from objects that are private
+     * Removes the data attribute from all permissioned data in a graph
      * @param graph
-     * @returns {Array}
+     * @returns {null}
      */
-    static hideGraphPrivateData(graph) {
+    static removeGraphPermissionedData(graph) {
         graph.forEach((object) => {
-            ImportUtilities.hideObjectPrivateData(object);
+            ImportUtilities.removeObjectPermissionedData(object);
         });
     }
 
     /**
-     * Removes the data attribute from objects if it is set to private
+     * Removes the data attribute from one ot-json object's permissioned data
      * @param ot_object
-     * @returns {object}
+     * @returns {null}
      */
-    static hideObjectPrivateData(ot_object) {
+    static removeObjectPermissionedData(ot_object) {
         if (!ot_object || !ot_object.properties) {
             return;
         }
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            const privateObject = ot_object.properties[private_data_array];
-            if (privateObject && privateObject.isPrivate) {
-                delete privateObject.data;
-            }
-        });
+        const permissionedDataObject = ot_object.properties.permissioned_data;
+        if (permissionedDataObject) {
+            delete permissionedDataObject.data;
+        }
     }
 
     /**
-     * Removes the isPrivate and data attributes from all data that can be private
+     * Add the permissioned data hash to each graph object with permissioned data
      * @param graph
      * @returns {null}
      */
-    static removeGraphPrivateData(graph) {
+    static calculateGraphPermissionedDataHashes(graph) {
         graph.forEach((object) => {
-            ImportUtilities.removeObjectPrivateData(object);
+            ImportUtilities.calculateObjectPermissionedDataHash(object);
         });
     }
 
     /**
-     * Removes the isPrivate and data attributes from one ot-json object
+     * Add permissioned data hash to the permissioned_data object
      * @param ot_object
      * @returns {null}
      */
-    static removeObjectPrivateData(ot_object) {
+    static calculateObjectPermissionedDataHash(ot_object) {
         if (!ot_object || !ot_object.properties) {
-            return;
+            throw Error(`Cannot calculate permissioned data hash for invalid ot-json object ${ot_object}`);
         }
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            const privateObject = ot_object.properties[private_data_array];
-            if (privateObject) {
-                delete privateObject.isPrivate;
-                delete privateObject.data;
-            }
-        });
-    }
-
-    /**
-     * Add the private data hash to each graph object
-     * @param graph
-     * @returns {null}
-     */
-    static calculateGraphPrivateDataHashes(graph) {
-        graph.forEach((object) => {
-            ImportUtilities.calculateObjectPrivateDataHashes(object);
-        });
-    }
-
-    /**
-     * Add private data hash to each object in PRIVATE_DATA_OBJECT_NAMES ot_object properties
-     * @param ot_object
-     * @returns {null}
-     */
-    static calculateObjectPrivateDataHashes(ot_object) {
-        if (!ot_object || !ot_object.properties) {
-            throw Error(`Cannot calculate private data hash for invalid ot-json object ${ot_object}`);
+        const permissionedDataObject = ot_object.properties.permissioned_data;
+        if (permissionedDataObject && permissionedDataObject.data) {
+            const permissionedDataHash =
+                ImportUtilities.calculatePermissionedDataHash(permissionedDataObject);
+            permissionedDataObject.permissioned_data_hash = permissionedDataHash;
         }
-        constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            const privateObject = ot_object.properties[private_data_array];
-            if (privateObject && privateObject.isPrivate) {
-                const privateHash = ImportUtilities.calculatePrivateDataHash(privateObject);
-                privateObject.private_data_hash = privateHash;
-            }
-        });
     }
 
     /**
      * Calculates the merkle tree root hash of an object
      * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
-     * The tree contains at least NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS
-     * @param private_object
+     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
+     * @param permissioned_object
      * @returns {null}
      */
-    static calculatePrivateDataHash(private_object, type = 'distribution') {
-        const merkleTree = this.calculatePrivateDataMerkleTree(private_object, type);
+    static calculatePermissionedDataHash(permissioned_object, type = 'distribution') {
+        const merkleTree = this.calculatePermissionedDataMerkleTree(permissioned_object, type);
         return merkleTree.getRoot();
     }
 
     /**
      * Calculates the merkle tree of an object
      * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
-     * The tree contains at least NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS
-     * @param private_object
+     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
+     * @param permissioned_object
      * @returns {null}
      */
-    static calculatePrivateDataMerkleTree(private_object, type = 'distribution') {
-        if (!private_object || !private_object.data) {
+    static calculatePermissionedDataMerkleTree(permissioned_object, type = 'distribution') {
+        if (!permissioned_object || !permissioned_object.data) {
             throw Error('Cannot calculate root hash of an empty object');
         }
-        const sorted_data = Utilities.sortedStringify(private_object.data, true);
+        const sorted_data = Utilities.sortedStringify(permissioned_object.data, true);
         const data = Buffer.from(sorted_data);
 
-        const first_level_blocks = constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
+        const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
         const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
         let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
@@ -685,8 +651,8 @@ class ImportUtilities {
         return merkleTree;
     }
 
-    static encodePrivateData(privateObject) {
-        const merkleTree = ImportUtilities.calculatePrivateDataMerkleTree(privateObject, 'purchase');
+    static encodePermissionedData(permissionedObject) {
+        const merkleTree = ImportUtilities.calculatePermissionedDataMerkleTree(permissionedObject, 'purchase');
         const rawKey = crypto.randomBytes(32);
         const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
         const encodedArray = [];
@@ -704,25 +670,26 @@ class ImportUtilities {
         });
         const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
-        const sorted_data = Utilities.sortedStringify(privateObject.data, true);
+        const sorted_data = Utilities.sortedStringify(permissionedObject.data, true);
         const data = Buffer.from(sorted_data);
         return {
-            private_data_original_length: data.length,
-            private_data_array_length: merkleTree.levels[0].length,
+            permissioned_data_original_length: data.length,
+            permissioned_data_array_length: merkleTree.levels[0].length,
             key,
             encoded_data: encodedArray,
-            private_data_root_hash: Utilities.normalizeHex(privateObject.private_data_hash),
+            permissioned_data_root_hash:
+                Utilities.normalizeHex(permissionedObject.permissioned_data_hash),
             encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
         };
     }
 
-    static validateAndDecodePrivateData(
-        privateDataArray, key,
-        private_data_array_length,
-        private_data_original_length,
+    static validateAndDecodePermissionedData(
+        permissionedDataArray, key,
+        permissionedDataArrayLength,
+        permissionedDataOriginalLength,
     ) {
         const decodedDataArray = [];
-        privateDataArray.forEach((element, index) => {
+        permissionedDataArray.forEach((element, index) => {
             const keyHash = abi.soliditySHA3(
                 ['bytes32', 'uint256'],
                 [key, index],
@@ -730,7 +697,7 @@ class ImportUtilities {
             decodedDataArray.push(Encryption.xor(element, keyHash));
         });
 
-        const originalDataArray = decodedDataArray.slice(0, private_data_array_length);
+        const originalDataArray = decodedDataArray.slice(0, permissionedDataArrayLength);
 
         // todo add validation
         // const originalDataMarkleTree = new MerkleTree(originalDataArray, 'purchase', 'sha3');
@@ -750,13 +717,13 @@ class ImportUtilities {
 
         // recreate original object
 
-        const first_level_blocks = constants.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS;
+        const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
         const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
         let block_size = Math.min(Math
-            .round(private_data_original_length / first_level_blocks), default_block_size);
+            .round(permissionedDataOriginalLength / first_level_blocks), default_block_size);
         block_size = block_size < 1 ? 1 : block_size;
-        const numberOfBlocks = private_data_original_length / block_size;
+        const numberOfBlocks = permissionedDataOriginalLength / block_size;
         let originalDataString = '';
         for (let i = 0; i < numberOfBlocks; i += 1) {
             const dataElement = Buffer.from(originalDataArray[i], 'hex');
@@ -765,12 +732,8 @@ class ImportUtilities {
         }
 
         return {
-            privateData: JSON.parse(originalDataString),
+            permissionedData: JSON.parse(originalDataString),
         };
-    }
-
-    static decodePrivateDataArray(encodedPrivateDataArray, key) {
-
     }
 
     static sortStringifyDataset(dataset) {
@@ -783,8 +746,8 @@ class ImportUtilities {
      * @static
      */
     static signDataset(otjson, config, web3) {
-        const privateGraph = Utilities.copyObject(otjson['@graph']);
-        ImportUtilities.removeGraphPrivateData(otjson['@graph']);
+        const completeGraph = Utilities.copyObject(otjson['@graph']);
+        ImportUtilities.removeGraphPermissionedData(otjson['@graph']);
         const stringifiedOtjson = this.sortStringifyDataset(otjson);
         const { signature } = web3.eth.accounts.sign(
             stringifiedOtjson,
@@ -795,7 +758,7 @@ class ImportUtilities {
             type: 'ethereum-signature',
         };
 
-        otjson['@graph'] = privateGraph;
+        otjson['@graph'] = completeGraph;
         return otjson;
     }
 

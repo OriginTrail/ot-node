@@ -180,14 +180,14 @@ describe('Import utilities module ', () => {
         );
     });
 
-    it('Calculate the root hash on one private data object', () => {
-        const originalObject = Utilities.copyObject(sample_data.private_data_object);
-        const shuffledObject = Utilities.copyObject(sample_data.private_data_object_shuffled);
-        const differentObject = Utilities.copyObject(sample_data.private_data_object_2);
+    it('Calculate the root hash on one permissioned data object', () => {
+        const originalObject = Utilities.copyObject(sample_data.permissioned_data_object);
+        const shuffledObject = Utilities.copyObject(sample_data.permissioned_data_object_shuffled);
+        const differentObject = Utilities.copyObject(sample_data.permissioned_data_object_2);
 
-        const originalRootHash = ImportUtilities.calculatePrivateDataHash(originalObject);
-        const shuffledRootHash = ImportUtilities.calculatePrivateDataHash(shuffledObject);
-        const differentRootHash = ImportUtilities.calculatePrivateDataHash(differentObject);
+        const originalRootHash = ImportUtilities.calculatePermissionedDataHash(originalObject);
+        const shuffledRootHash = ImportUtilities.calculatePermissionedDataHash(shuffledObject);
+        const differentRootHash = ImportUtilities.calculatePermissionedDataHash(differentObject);
 
         assert(originalRootHash != null);
         assert(shuffledRootHash != null);
@@ -205,22 +205,22 @@ describe('Import utilities module ', () => {
         assert.equal(
             originalRootHash,
             shuffledRootHash,
-            'Private data root hash for same object with attributes in different order!',
+            'Permissioned data root hash for same object with attributes in different order!',
         );
 
         assert.notEqual(
             originalRootHash,
             differentRootHash,
-            'Private data root hash for different objects is the same!',
+            'Permisssioned data root hash for different objects is the same!',
         );
     });
 
-    it('Calculating the root hash of an empty private data object should throw an error', () => {
+    it('Calculating the root hash of an empty permissioned data object should throw an error', () => {
         const testObject = {};
 
         let errorHappened = false;
         try {
-            ImportUtilities.calculatePrivateDataHash(testObject);
+            ImportUtilities.calculatePermissionedDataHash(testObject);
         } catch (e) {
             errorHappened = true;
             assert.equal(
@@ -230,18 +230,18 @@ describe('Import utilities module ', () => {
             );
         }
 
-        assert(errorHappened, 'calculatePrivateDataHash did not throw an error!');
+        assert(errorHappened, 'calculatePermissionedDataHash did not throw an error!');
     });
 
     it('Calculate the public root hash of one graph', () => {
-        const originalGraph = Utilities.copyObject(sample_data.private_data_graph['@graph']);
-        ImportUtilities.calculateGraphPrivateDataHashes(originalGraph);
+        const originalGraph = Utilities.copyObject(sample_data.permissioned_data_graph['@graph']);
+        ImportUtilities.calculateGraphPermissionedDataHashes(originalGraph);
 
-        const shuffledGraph = Utilities.copyObject(sample_data.private_data_graph_shuffled['@graph']);
-        ImportUtilities.calculateGraphPrivateDataHashes(shuffledGraph);
+        const shuffledGraph = Utilities.copyObject(sample_data.permissioned_data_graph_shuffled['@graph']);
+        ImportUtilities.calculateGraphPermissionedDataHashes(shuffledGraph);
 
-        const differentGraph = Utilities.copyObject(sample_data.private_data_graph_2['@graph']);
-        ImportUtilities.calculateGraphPrivateDataHashes(differentGraph);
+        const differentGraph = Utilities.copyObject(sample_data.permissioned_data_graph_2['@graph']);
+        ImportUtilities.calculateGraphPermissionedDataHashes(differentGraph);
 
         const originalGraphRootHash = ImportUtilities.calculateGraphPublicHash(originalGraph);
         const shuffledGraphRootHash = ImportUtilities.calculateGraphPublicHash(shuffledGraph);
@@ -294,7 +294,7 @@ describe('Import utilities module ', () => {
     });
 
     it('Encoding verification', () => {
-        const privateObject = {
+        const permissionedObject = {
             data: {
                 'urn:ot:object:product:batch:humidity': '19.7',
                 'urn:ot:object:product:batch:power_feeding': '85',
@@ -307,20 +307,20 @@ describe('Import utilities module ', () => {
         };
 
         const {
-            private_data_original_length, private_data_array_length, key,
-            encoded_data, private_data_root_hash, encoded_data_root_hash,
-        } = ImportUtilities.encodePrivateData(privateObject);
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
+        } = ImportUtilities.encodePermissionedData(permissionedObject);
 
-        const result = ImportUtilities.validateAndDecodePrivateData(
+        const result = ImportUtilities.validateAndDecodePermissionedData(
             encoded_data,
             key,
-            private_data_array_length,
-            private_data_original_length,
+            permissioned_data_array_length,
+            permissioned_data_original_length,
         );
 
         assert.equal(
-            Utilities.sortedStringify(privateObject.data),
-            Utilities.sortedStringify(result.privateData),
+            Utilities.sortedStringify(permissionedObject.data),
+            Utilities.sortedStringify(result.permissionedData),
         );
     });
 });
