@@ -1,16 +1,16 @@
-const BN = require('bn.js');
+const BN = require('../../node_modules/bn.js/lib/bn');
 
 const Utilities = require('../Utilities');
 const Models = require('../../models');
 
-class PermissionedDataService {
+class PermissionedDataController {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
     }
 
-    static requireParameter(request, response, parameter_name) {
+    isParameterProvided(request, response, parameter_name) {
         if (!parameter_name) {
             throw Error('No parameter_name given');
         }
@@ -37,9 +37,9 @@ class PermissionedDataService {
             return;
         }
 
-        if (!PermissionedDataService.requireParameter(request, response, 'dataset_id')
-        || !PermissionedDataService.requireParameter(request, response, 'ot_object_id')
-        || !PermissionedDataService.requireParameter(request, response, 'viewer_erc_id')) {
+        if (!this.isParameterProvided(request, response, 'dataset_id')
+        || !this.isParameterProvided(request, response, 'ot_object_id')
+        || !this.isParameterProvided(request, response, 'viewer_erc_id')) {
             return;
         }
 
@@ -83,4 +83,4 @@ class PermissionedDataService {
         });
     }
 }
-module.exports = PermissionedDataService;
+module.exports = PermissionedDataController;
