@@ -174,10 +174,7 @@ process.on('message', async (dataFromParent) => {
                 // Add data vertex.
                 if (otObject.properties != null) {
                     const otObjectData = Utilities.copyObject(otObject.properties);
-                    const permissionedObject = otObject.properties.permissioned_data;
-                    if (permissionedObject) {
-                        delete permissionedObject.data;
-                    }
+                    ImportUtilities.removeObjectPermissionedData(otObject);
                     const dataVertex = {
                         _key:
                             Utilities.keyFrom(dataCreator, Utilities.keyFrom(otObject.properties)),
