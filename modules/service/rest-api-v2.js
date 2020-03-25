@@ -18,15 +18,16 @@ class RestAPIServiceV2 {
         this.commandExecutor = ctx.commandExecutor;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
-        this.dcController = ctx.dcController;
 
+        this.dcController = ctx.dcController;
+        this.dhController = ctx.dhController;
         this.dvController = ctx.dvController;
+
         this.exportController = ctx.exportController;
         this.remoteControl = ctx.remoteControl;
 
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
-        this.permissionedDataController = ctx.permissionedDataController;
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
@@ -146,7 +147,7 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/permissioned_data/whitelist_viewer`, async (req, res) => {
-            await this.permissionedDataController.whitelistViewer(req, res);
+            await this.dhController.whitelistViewer(req, res);
         });
 
         server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
