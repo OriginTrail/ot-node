@@ -28,7 +28,7 @@ describe('Utilities module', () => {
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
                     'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes',
                     'erc725_identity_filepath', 'requireApproval', 'dh_maximum_dataset_filesize_in_mb', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled',
-                    'reputationWindowInMinutes', 'send_challenges_log', 'node_rpc_use_ssl', 'node_rpc_ssl_key_path', 'node_rpc_ssl_cert_path'],
+                    'reputationWindowInMinutes', 'default_data_price', 'send_challenges_log', 'node_rpc_use_ssl', 'node_rpc_ssl_key_path', 'node_rpc_ssl_cert_path'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
