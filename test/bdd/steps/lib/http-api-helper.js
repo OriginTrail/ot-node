@@ -448,6 +448,58 @@ async function apiQueryNetwork(nodeRpcUrl, jsonQuery) {
 }
 
 /**
+ * Fetch api/query/read_export response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {json} jsonQuery
+ * @return {Promise.<NetworkQueryId>}
+ */
+async function apiQueryNetworkReadAndExport(nodeRpcUrl, body) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/latest/network/read_export`,
+                json: true,
+                body,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
+ * Fetch api/query/read_export/result response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {json} jsonQuery
+ * @return {Promise.<NetworkQueryId>}
+ */
+async function apiQueryNetworkReadAndExportResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/network/read_export/result${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
  * Fetch api/query/{{query_id}}/responses response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
@@ -706,4 +758,5 @@ module.exports = {
     apiBalance,
     apiGetElementIssuerIdentity,
     apiGetDatasetInfo,
+    apiQueryNetworkReadAndExport,
 };

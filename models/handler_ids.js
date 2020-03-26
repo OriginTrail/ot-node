@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
         },
         data: DataTypes.TEXT,
         status: DataTypes.STRING,
+        timestamp: {
+            type: DataTypes.INTEGER,
+            defaultValue: () => Date.now(),
+        },
     }, {});
     handler_ids.associate = (models) => {
         // associations can be defined here

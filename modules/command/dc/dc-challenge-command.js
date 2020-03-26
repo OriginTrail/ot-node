@@ -31,6 +31,10 @@ class DCChallengeCommand extends Command {
                 id: challenge_id,
             },
         });
+        if (!challenge) {
+            // this is in case that offer expired but old commands remained
+            return Command.empty();
+        }
 
         this.logger.trace(`Sending challenge to ${challenge.dh_id}. Offer ID ${challenge.offer_id}, object_index ${challenge.object_index}, block_index ${challenge.block_index}.`);
 
@@ -52,7 +56,10 @@ class DCChallengeCommand extends Command {
             throw new Error(`Peer with ID ${challenge.dh_id} could not be reached on challenge attempt ${5 - command.retries}`);
         }
 
-        const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        let checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        if (this.config.challengeResponseTimeMills) {
+            checkCommandDelay = this.config.challengeResponseTimeMills;
+        }
 
         return {
             commands: [
