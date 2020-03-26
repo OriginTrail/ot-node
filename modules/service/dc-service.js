@@ -19,6 +19,7 @@ class DCService {
         this.profileService = ctx.profileService;
         this.pricingService = ctx.pricingService;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -432,30 +433,22 @@ class DCService {
             Utilities.normalizeHex(this.config.node_private_key),
         );
 
-        const allowedPermissionedDataElements = await models.data_trades.findAll({
-            where: {
-                data_set_id: offer.data_set_id,
-                buyer_node_id: identity,
-                status: 'COMPLETED',
-            },
-        });
-
-        const permissionedData = {};
+        const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+            offer.data_set_id,
+            identity,
+        );
 
         const promises = [];
-        allowedPermissionedDataElements.forEach((element) => {
-            const ot_object_id = element.ot_json_object_id;
+        for (const ot_object_id in permissionedData) {
             promises.push(this.importService.getOtObjectById(offer.data_set_id, ot_object_id));
-        });
+        }
 
         const ot_objects = await Promise.all(promises);
 
-        ot_objects.forEach((ot_object, index) => {
-            const permissionedDataObject = ot_object.properties.permissioned_data;
-
-            const { ot_json_object_id } = allowedPermissionedDataElements[index];
-            permissionedData[ot_json_object_id] = permissionedDataObject;
-        });
+        await this.permissionedDataService.attachPermissionedDataToMap(
+            permissionedData,
+            ot_objects,
+        );
 
         const payload = {
             offer_id: offer.offer_id,

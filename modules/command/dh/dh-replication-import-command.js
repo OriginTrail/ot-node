@@ -15,6 +15,7 @@ class DhReplicationImportCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
@@ -80,16 +81,10 @@ class DhReplicationImportCommand extends Command {
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id
 
-        if (permissionedData && Object.keys(permissionedData).length > 0) {
-            for (const otObject of decryptedDataset['@graph']) {
-                if (otObject['@id'] in permissionedData) {
-                    if (!otObject.properties) {
-                        otObject.properties = {};
-                    }
-                    otObject.properties.permissioned_data = permissionedData[otObject['@id']];
-                }
-            }
-        }
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            decryptedDataset['@graph'],
+            permissionedData,
+        );
 
         const holdingData = await Models.holding_data.findOne({
             where: {

@@ -94,17 +94,10 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        if (permissionedData && Object.keys(permissionedData).length > 0) {
-            for (const otObject of document['@graph']) {
-                if (otObject['@id'] in permissionedData) {
-                    const otObjectId = otObject['@id'];
-                    if (!otObject.properties) {
-                        otObject.properties = {};
-                    }
-                    otObject.properties.permissioned_data = permissionedData[otObjectId];
-                }
-            }
-        }
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            document['@graph'],
+            permissionedData,
+        );
 
         const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
         const profile = await this.blockchain.getProfile(erc725Identity);
