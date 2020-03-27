@@ -24,7 +24,7 @@ class ReplicationService {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.importService = ctx.importService;
-
+        this.permissionedDataService = ctx.permissionedDataService;
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
 
         if (!fs.existsSync(replicationPath)) {
@@ -45,16 +45,13 @@ class ReplicationService {
 
         const otJson = await this.importService.getImport(offer.data_set_id);
 
-        const permissionedData = ImportUtilities.getGraphPermissionedData(otJson['@graph']);
-        permissionedData.forEach(async (otObjectId) => {
-            await Models.data_sellers.create({
-                data_set_id: offer.data_set_id,
-                ot_json_object_id: otObjectId,
-                seller_node_id: this.config.identity.toLowerCase(),
-                seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
-                price: this.config.default_data_price,
-            });
-        });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            offer.data_set_id,
+            this.config.erc725Identity,
+            this.config.default_data_price,
+            this.config.identity,
+            otJson['@graph'],
+        );
 
         ImportUtilities.removeGraphPermissionedData(otJson['@graph']);
 

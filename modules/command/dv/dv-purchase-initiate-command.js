@@ -13,6 +13,7 @@ class DvPurchaseInitiateCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.importService = ctx.importService;
         this.commandExecutor = ctx.commandExecutor;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -39,10 +40,12 @@ class DvPurchaseInitiateCommand extends Command {
             ot_object_id,
         } = await this._getHandlerData(handler_id);
 
-        if (!(await this._validatePermissionedDataRootHash(
+        const permissionedObject = await this.importService.getOtObjectById(
             data_set_id,
-            ot_object_id, permissioned_data_root_hash,
-        ))) {
+            ot_object_id,
+        );
+
+        if (permissioned_data_root_hash !== permissionedObject.permissioned_data_hash) {
             this._handleError(handler_id, 'Unable to initiate purchase. Permissioned data root hash validation failed');
             return Command.empty();
         }
@@ -136,12 +139,6 @@ class DvPurchaseInitiateCommand extends Command {
             data: JSON.stringify({ message: errorMessage }),
             status: 'FAILED',
         }, { where: { handler_id } });
-    }
-
-    async _validatePermissionedDataRootHash(dataSetId, otObjectId, permissioned_data_root_hash) {
-        const permissionedDataObject =
-            await this.importService.getPermissionedDataObject(dataSetId, otObjectId);
-        return permissioned_data_root_hash === permissionedDataObject.permissioned_data_hash;
     }
 
     async _getHandlerData(handler_id) {

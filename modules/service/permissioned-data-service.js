@@ -1,10 +1,16 @@
 const Models = require('../../models');
 const Utilities = require('../Utilities');
+const node_constants = require('../constants');
+const MerkleTree = require('../Merkle');
+const crypto = require('crypto');
+const Encryption = require('../Encryption');
+const abi = require('ethereumjs-abi');
 
 class PermissionedDataService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -82,6 +88,226 @@ class PermissionedDataService {
             permissionedData[element.ot_json_object_id] = {});
 
         return permissionedData;
+    }
+
+    /**
+     * returns @id of ot-objects with permissioned data
+     * @param graph
+     * @returns {Array}
+     */
+    getGraphPermissionedData(graph) {
+        const result = [];
+        graph.forEach((ot_object) => {
+            if (ot_object && ot_object.properties) {
+                const permissionedDataObject = ot_object.properties.permissioned_data;
+                if (permissionedDataObject) {
+                    if (!result.includes(ot_object['@id'])) {
+                        result.push(ot_object['@id']);
+                    }
+                }
+            }
+        });
+        return result;
+    }
+
+    async addDataSellerForPermissionedData(dataSetId, sellerErcId, price, sellerNodeId, dataset) {
+        const permissionedData = this.getGraphPermissionedData(dataset['@graph']);
+        if (permissionedData.length === 0) {
+            return;
+        }
+        const promises = [];
+        permissionedData.forEach((otObjectId) => {
+            promises.push(Models.data_sellers.create({
+                data_set_id: dataSetId,
+                ot_json_object_id: otObjectId,
+                seller_node_id: Utilities.denormalizeHex(sellerNodeId),
+                seller_erc_id: Utilities.normalizeHex(sellerErcId),
+                price,
+            }));
+        });
+        await Promise.all(promises);
+    }
+
+    /**
+     * Add the permissioned data hash to each graph object with permissioned data
+     * @param graph
+     * @returns {null}
+     */
+    calculateGraphPermissionedDataHashes(graph) {
+        graph.forEach((object) => {
+            this.calculateObjectPermissionedDataHash(object);
+        });
+    }
+
+    /**
+     * Add permissioned data hash to the permissioned_data object
+     * @param ot_object
+     * @returns {null}
+     */
+    calculateObjectPermissionedDataHash(ot_object) {
+        if (!ot_object || !ot_object.properties) {
+            throw Error(`Cannot calculate permissioned data hash for invalid ot-json object ${ot_object}`);
+        }
+        const permissionedDataObject = ot_object.properties.permissioned_data;
+        if (permissionedDataObject && permissionedDataObject.data) {
+            const permissionedDataHash =
+                this.calculatePermissionedDataHash(permissionedDataObject);
+            permissionedDataObject.permissioned_data_hash = permissionedDataHash;
+        }
+    }
+
+    /**
+     * Calculates the merkle tree root hash of an object
+     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
+     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
+     * @param permissioned_object
+     * @returns {null}
+     */
+    calculatePermissionedDataHash(permissioned_object, type = 'distribution') {
+        const merkleTree = this.calculatePermissionedDataMerkleTree(permissioned_object, type);
+        return merkleTree.getRoot();
+    }
+
+    /**
+     * Calculates the merkle tree of an object
+     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
+     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
+     * @param permissioned_object
+     * @returns {null}
+     */
+    calculatePermissionedDataMerkleTree(permissioned_object, type = 'distribution') {
+        if (!permissioned_object || !permissioned_object.data) {
+            throw Error('Cannot calculate root hash of an empty object');
+        }
+        const sorted_data = Utilities.sortedStringify(permissioned_object.data, true);
+        const data = Buffer.from(sorted_data);
+
+        const first_level_blocks = node_constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = node_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+
+        let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
+        block_size = block_size < 1 ? 1 : block_size;
+
+        const blocks = [];
+        for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
+            const block = data.slice(i, i + block_size).toString('hex');
+            blocks.push(block.padStart(64, '0'));
+        }
+        const merkleTree = new MerkleTree(blocks, type, 'sha3');
+        return merkleTree;
+    }
+
+    encodePermissionedData(permissionedObject) {
+        const merkleTree = this.calculatePermissionedDataMerkleTree(permissionedObject, 'purchase');
+        const rawKey = crypto.randomBytes(32);
+        const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
+        const encodedArray = [];
+        let index = 0;
+        merkleTree.levels.forEach((level) => {
+            for (let i = 0; i < level.length; i += 1) {
+                const leaf = level[i];
+                const keyHash = abi.soliditySHA3(
+                    ['bytes32', 'uint256'],
+                    [key, index],
+                ).toString('hex');
+                encodedArray.push(Encryption.xor(leaf, keyHash));
+                index += 1;
+            }
+        });
+        const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
+        const encodedDataRootHash = encodedMerkleTree.getRoot();
+        const sorted_data = Utilities.sortedStringify(permissionedObject.data, true);
+        const data = Buffer.from(sorted_data);
+        return {
+            permissioned_data_original_length: data.length,
+            permissioned_data_array_length: merkleTree.levels[0].length,
+            key,
+            encoded_data: encodedArray,
+            permissioned_data_root_hash:
+                Utilities.normalizeHex(permissionedObject.permissioned_data_hash),
+            encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
+        };
+    }
+
+    static validateAndDecodePermissionedData(
+        permissionedDataArray, key,
+        permissionedDataArrayLength,
+        permissionedDataOriginalLength,
+    ) {
+        const decodedDataArray = [];
+        permissionedDataArray.forEach((element, index) => {
+            const keyHash = abi.soliditySHA3(
+                ['bytes32', 'uint256'],
+                [key, index],
+            ).toString('hex');
+            decodedDataArray.push(Encryption.xor(element, keyHash));
+        });
+
+        const originalDataArray = decodedDataArray.slice(0, permissionedDataArrayLength);
+
+        // todo add validation
+        // const originalDataMarkleTree = new MerkleTree(originalDataArray, 'purchase', 'sha3');
+        // var index = 0;
+        // originalDataMarkleTree.levels.forEach((level) => {
+        //     level.forEach((leaf) => {
+        //         if (leaf !== decodedDataArray[index]){
+        //             //found non matching index
+        //             return {
+        //                 : {},
+        //                 errorStatus: 'VALIDATION_FAILED',
+        //             };
+        //         }
+        //         index += 1;
+        //     });
+        // });
+
+        // recreate original object
+
+        const first_level_blocks = node_constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = node_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+
+        let block_size = Math.min(Math
+            .round(permissionedDataOriginalLength / first_level_blocks), default_block_size);
+        block_size = block_size < 1 ? 1 : block_size;
+        const numberOfBlocks = permissionedDataOriginalLength / block_size;
+        let originalDataString = '';
+        for (let i = 0; i < numberOfBlocks; i += 1) {
+            const dataElement = Buffer.from(originalDataArray[i], 'hex');
+            const block = dataElement.slice(dataElement.length - block_size, dataElement.length);
+            originalDataString += block.toString();
+        }
+
+        return {
+            permissionedData: JSON.parse(originalDataString),
+        };
+    }
+
+
+    async updatePermissionedDataInDb(dataSetId, otObjectId, permissionedData) {
+        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+            dataSetId,
+            otObjectId,
+        );
+        const documentsToBeUpdated = [];
+        const calculatedPermissionedDataHash = this
+            .calculatePermissionedDataHash({ data: permissionedData });
+        otObject.relatedObjects.forEach((relatedObject) => {
+            if (relatedObject.vertex.vertexType === 'Data') {
+                const vertexData = relatedObject.vertex.data;
+                const permissionedObject = vertexData.permissioned_data;
+                if (permissionedObject &&
+                    permissionedObject.permissioned_data_hash === calculatedPermissionedDataHash) {
+                    permissionedObject.data = permissionedData;
+                    documentsToBeUpdated.push(relatedObject.vertex);
+                }
+            }
+        });
+
+        const promises = [];
+        documentsToBeUpdated.forEach((document) => {
+            promises.push(this.graphStorage.updateDocument('ot_vertices', document));
+        });
+        await Promise.all(promises);
     }
 }
 

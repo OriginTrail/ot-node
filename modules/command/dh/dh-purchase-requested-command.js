@@ -1,7 +1,6 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
-const ImportUtilities = require('../../ImportUtilities');
 /**
  * Handles data location response.
  */
@@ -15,6 +14,7 @@ class DhPurchaseRequestedCommand extends Command {
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -66,11 +66,14 @@ class DhPurchaseRequestedCommand extends Command {
         }
 
         if (response.status !== 'FAILED') {
-            const permissionedObject = await this.importService
-                .getPermissionedDataObject(data_set_id, ot_json_object_id);
+            const permissionedObject = await this.importService.getOtObjectById(
+                data_set_id,
+                ot_json_object_id,
+            );
+
             if (permissionedObject) {
                 const encodedObject =
-                    await ImportUtilities.encodePermissionedData(permissionedObject);
+                    await this.permissionedDataService.encodePermissionedData(permissionedObject);
                 response.permissioned_data_original_length =
                     encodedObject.permissioned_data_original_length;
                 response.permissioned_data_array_length =

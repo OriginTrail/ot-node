@@ -8,9 +8,6 @@ const Graph = require('./Graph');
 const Encryption = require('./Encryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
-const constants = require('./constants');
-const crypto = require('crypto');
-const abi = require('ethereumjs-abi');
 
 const data_constants = {
     vertexType: {
@@ -138,33 +135,6 @@ class ImportUtilities {
             }
         });
         return graph;
-    }
-
-    static prepareDataset(document, config, web3) {
-        const graph = document['@graph'];
-        const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
-        ImportUtilities.calculateGraphPermissionedDataHashes(graph);
-        const id = this.calculateGraphPublicHash(graph);
-
-        const header = this.createDatasetHeader(
-            config, null,
-            datasetHeader.datasetTags,
-            datasetHeader.datasetTitle,
-            datasetHeader.datasetDescription,
-            datasetHeader.OTJSONVersion,
-        );
-        const dataset = {
-            '@id': id,
-            '@type': 'Dataset',
-            datasetHeader: header,
-            '@graph': graph,
-        };
-
-        const rootHash = this.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
-        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
-
-        const signed = this.signDataset(dataset, config, web3);
-        return signed;
     }
 
     /**
@@ -535,27 +505,6 @@ class ImportUtilities {
         return `0x${sha3_256(sorted, null, 0)}`;
     }
 
-
-    /**
-     * returns @id of ot-objects with permissioned data
-     * @param graph
-     * @returns {Array}
-     */
-    static getGraphPermissionedData(graph) {
-        const result = [];
-        graph.forEach((ot_object) => {
-            if (ot_object && ot_object.properties) {
-                const permissionedDataObject = ot_object.properties.permissioned_data;
-                if (permissionedDataObject) {
-                    if (!result.includes(ot_object['@id'])) {
-                        result.push(ot_object['@id']);
-                    }
-                }
-            }
-        });
-        return result;
-    }
-
     /**
      * Removes the data attribute from all permissioned data in a graph
      * @param graph
@@ -580,160 +529,6 @@ class ImportUtilities {
         if (permissionedDataObject) {
             delete permissionedDataObject.data;
         }
-    }
-
-    /**
-     * Add the permissioned data hash to each graph object with permissioned data
-     * @param graph
-     * @returns {null}
-     */
-    static calculateGraphPermissionedDataHashes(graph) {
-        graph.forEach((object) => {
-            ImportUtilities.calculateObjectPermissionedDataHash(object);
-        });
-    }
-
-    /**
-     * Add permissioned data hash to the permissioned_data object
-     * @param ot_object
-     * @returns {null}
-     */
-    static calculateObjectPermissionedDataHash(ot_object) {
-        if (!ot_object || !ot_object.properties) {
-            throw Error(`Cannot calculate permissioned data hash for invalid ot-json object ${ot_object}`);
-        }
-        const permissionedDataObject = ot_object.properties.permissioned_data;
-        if (permissionedDataObject && permissionedDataObject.data) {
-            const permissionedDataHash =
-                ImportUtilities.calculatePermissionedDataHash(permissionedDataObject);
-            permissionedDataObject.permissioned_data_hash = permissionedDataHash;
-        }
-    }
-
-    /**
-     * Calculates the merkle tree root hash of an object
-     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
-     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
-     * @param permissioned_object
-     * @returns {null}
-     */
-    static calculatePermissionedDataHash(permissioned_object, type = 'distribution') {
-        const merkleTree = this.calculatePermissionedDataMerkleTree(permissioned_object, type);
-        return merkleTree.getRoot();
-    }
-
-    /**
-     * Calculates the merkle tree of an object
-     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
-     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
-     * @param permissioned_object
-     * @returns {null}
-     */
-    static calculatePermissionedDataMerkleTree(permissioned_object, type = 'distribution') {
-        if (!permissioned_object || !permissioned_object.data) {
-            throw Error('Cannot calculate root hash of an empty object');
-        }
-        const sorted_data = Utilities.sortedStringify(permissioned_object.data, true);
-        const data = Buffer.from(sorted_data);
-
-        const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
-
-        let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
-        block_size = block_size < 1 ? 1 : block_size;
-
-        const blocks = [];
-        for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
-            const block = data.slice(i, i + block_size).toString('hex');
-            blocks.push(block.padStart(64, '0'));
-        }
-        const merkleTree = new MerkleTree(blocks, type, 'sha3');
-        return merkleTree;
-    }
-
-    static encodePermissionedData(permissionedObject) {
-        const merkleTree = ImportUtilities.calculatePermissionedDataMerkleTree(permissionedObject, 'purchase');
-        const rawKey = crypto.randomBytes(32);
-        const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
-        const encodedArray = [];
-        let index = 0;
-        merkleTree.levels.forEach((level) => {
-            for (let i = 0; i < level.length; i += 1) {
-                const leaf = level[i];
-                const keyHash = abi.soliditySHA3(
-                    ['bytes32', 'uint256'],
-                    [key, index],
-                ).toString('hex');
-                encodedArray.push(Encryption.xor(leaf, keyHash));
-                index += 1;
-            }
-        });
-        const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
-        const encodedDataRootHash = encodedMerkleTree.getRoot();
-        const sorted_data = Utilities.sortedStringify(permissionedObject.data, true);
-        const data = Buffer.from(sorted_data);
-        return {
-            permissioned_data_original_length: data.length,
-            permissioned_data_array_length: merkleTree.levels[0].length,
-            key,
-            encoded_data: encodedArray,
-            permissioned_data_root_hash:
-                Utilities.normalizeHex(permissionedObject.permissioned_data_hash),
-            encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
-        };
-    }
-
-    static validateAndDecodePermissionedData(
-        permissionedDataArray, key,
-        permissionedDataArrayLength,
-        permissionedDataOriginalLength,
-    ) {
-        const decodedDataArray = [];
-        permissionedDataArray.forEach((element, index) => {
-            const keyHash = abi.soliditySHA3(
-                ['bytes32', 'uint256'],
-                [key, index],
-            ).toString('hex');
-            decodedDataArray.push(Encryption.xor(element, keyHash));
-        });
-
-        const originalDataArray = decodedDataArray.slice(0, permissionedDataArrayLength);
-
-        // todo add validation
-        // const originalDataMarkleTree = new MerkleTree(originalDataArray, 'purchase', 'sha3');
-        // var index = 0;
-        // originalDataMarkleTree.levels.forEach((level) => {
-        //     level.forEach((leaf) => {
-        //         if (leaf !== decodedDataArray[index]){
-        //             //found non matching index
-        //             return {
-        //                 : {},
-        //                 errorStatus: 'VALIDATION_FAILED',
-        //             };
-        //         }
-        //         index += 1;
-        //     });
-        // });
-
-        // recreate original object
-
-        const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
-
-        let block_size = Math.min(Math
-            .round(permissionedDataOriginalLength / first_level_blocks), default_block_size);
-        block_size = block_size < 1 ? 1 : block_size;
-        const numberOfBlocks = permissionedDataOriginalLength / block_size;
-        let originalDataString = '';
-        for (let i = 0; i < numberOfBlocks; i += 1) {
-            const dataElement = Buffer.from(originalDataArray[i], 'hex');
-            const block = dataElement.slice(dataElement.length - block_size, dataElement.length);
-            originalDataString += block.toString();
-        }
-
-        return {
-            permissionedData: JSON.parse(originalDataString),
-        };
     }
 
     static sortStringifyDataset(dataset) {

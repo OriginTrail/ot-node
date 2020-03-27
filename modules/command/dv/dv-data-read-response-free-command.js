@@ -102,16 +102,14 @@ class DVDataReadResponseFreeCommand extends Command {
         const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
         const profile = await this.blockchain.getProfile(erc725Identity);
 
-        const replicatedPermissionedData = ImportUtilities.getGraphPermissionedData(document['@graph']);
-        replicatedPermissionedData.forEach(async (otObjectId) => {
-            await Models.data_sellers.create({
-                data_set_id: dataSetId,
-                ot_json_object_id: otObjectId,
-                seller_node_id: profile.nodeId.toLowerCase().slice(0, 42),
-                seller_erc_id: Utilities.normalizeHex(erc725Identity),
-                price: 0,
-            });
-        });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            erc725Identity,
+            0,
+            profile.nodeId.toLowerCase().slice(0, 42),
+            document['@graph'],
+        );
+
         const handler = await Models.handler_ids.findOne({
             where: { handler_id },
         });

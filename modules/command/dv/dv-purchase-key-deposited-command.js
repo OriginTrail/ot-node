@@ -1,8 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models');
-const ImportUtilities = require('../../ImportUtilities');
 const Utilities = require('../../Utilities');
-const constants = require('../../constants');
 
 /**
  * Handles data location response.
@@ -15,6 +13,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
         this.graphStorage = ctx.graphStorage;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -50,7 +49,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 this.logger.important(`Purchase ${purchase_id} verified. Decoding data from given key`);
                 this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');
                 const { key } = JSON.parse(event.data);
-                const decodedPermissionedData = ImportUtilities
+                const decodedPermissionedData = this.permissionedDataService
                     .validateAndDecodePermissionedData(
                         encoded_data, key, permissioned_data_array_length,
                         permissioned_data_original_length,
@@ -80,7 +79,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     ot_object_id,
                 } = JSON.parse(handler.data);
 
-                await this._updatePermissionedDataInDb(
+                await this.permissionedDataService.updatePermissionedDataInDb(
                     data_set_id,
                     ot_object_id,
                     decodedPermissionedData.permissionedData,
@@ -157,33 +156,6 @@ class DvPurchaseKeyDepositedCommand extends Command {
         };
         Object.assign(command, map);
         return command;
-    }
-
-    async _updatePermissionedDataInDb(dataSetId, otObjectId, permissionedData) {
-        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
-            dataSetId,
-            otObjectId,
-        );
-        const documentsToBeUpdated = [];
-        const calculatedPermissionedDataHash = ImportUtilities
-            .calculatePermissionedDataHash({ data: permissionedData });
-        otObject.relatedObjects.forEach((relatedObject) => {
-            if (relatedObject.vertex.vertexType === 'Data') {
-                const vertexData = relatedObject.vertex.data;
-                const permissionedObject = vertexData.permissioned_data;
-                if (permissionedObject &&
-                    permissionedObject.permissioned_data_hash === calculatedPermissionedDataHash) {
-                    permissionedObject.data = permissionedData;
-                    documentsToBeUpdated.push(relatedObject.vertex);
-                }
-            }
-        });
-
-        const promises = [];
-        documentsToBeUpdated.forEach((document) => {
-            promises.push(this.graphStorage.updateDocument('ot_vertices', document));
-        });
-        await Promise.all(promises);
     }
 }
 

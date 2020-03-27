@@ -1,11 +1,8 @@
-const path = require('path');
-const fs = require('fs');
 const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
 
-const Constants = require('../constants');
 /**
  * Returns value of '@id' property.
  * @param jsonLdObject JSON-LD object.
@@ -79,6 +76,7 @@ class ImportService {
         this.web3 = ctx.web3;
         this.log = ctx.logger;
         this.config = ctx.config;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     async getImportDbData(datasetId, encColor = null) {
@@ -849,17 +847,31 @@ class ImportService {
         });
     }
 
-    async getPermissionedDataObject(data_set_id, ot_json_object_id) {
-        const permissionedDataObject = await this.getOtObjectById(
-            data_set_id,
-            ot_json_object_id,
-        );
+    prepareDataset(document) {
+        const graph = document['@graph'];
+        const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
+        this.permissionedDataService.calculateGraphPermissionedDataHashes(graph);
+        const id = ImportUtilities.calculateGraphPublicHash(graph);
 
-        if (!permissionedDataObject || !permissionedDataObject.properties
-            || !permissionedDataObject.properties.permissioned_data) {
-            return null;
-        }
-        return permissionedDataObject.properties.permissioned_data;
+        const header = ImportUtilities.createDatasetHeader(
+            this.config, null,
+            datasetHeader.datasetTags,
+            datasetHeader.datasetTitle,
+            datasetHeader.datasetDescription,
+            datasetHeader.OTJSONVersion,
+        );
+        const dataset = {
+            '@id': id,
+            '@type': 'Dataset',
+            datasetHeader: header,
+            '@graph': graph,
+        };
+
+        const rootHash = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
+        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+
+        const signed = ImportUtilities.signDataset(dataset, this.config, this.web3);
+        return signed;
     }
 }
 

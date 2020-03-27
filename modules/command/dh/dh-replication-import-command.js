@@ -117,17 +117,13 @@ class DhReplicationImportCommand extends Command {
                 data_set_id: dataSetId,
             },
         });
-
-        const replicatedPermissionedData = ImportUtilities.getGraphPermissionedData(decryptedDataset['@graph']);
-        replicatedPermissionedData.forEach(async (otObjectId) => {
-            await Models.data_sellers.create({
-                data_set_id: dataSetId,
-                ot_json_object_id: otObjectId,
-                seller_node_id: Utilities.denormalizeHex(dcNodeId),
-                seller_erc_id: Utilities.normalizeHex(dcIdentity),
-                price: 0,
-            });
-        });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            dcIdentity,
+            0,
+            dcNodeId,
+            decryptedDataset['@graph'],
+        );
 
         const importResult = await this.importService.importFile({
             document: decryptedDataset,
