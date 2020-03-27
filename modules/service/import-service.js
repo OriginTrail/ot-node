@@ -84,9 +84,12 @@ class ImportService {
         if (![null, 'red', 'green', 'blue'].includes(encColor)) {
             throw Error('Invalid encryption color.');
         }
-        const vertices = await this.db.findVerticesByImportId(datasetId);
-        const edges = await this.db.findEdgesByImportId(datasetId);
-        const metadata = await this.db.findMetadataByImportId(datasetId);
+
+        const {
+            metadata,
+            vertices,
+            edges,
+        } = await this.db.getDatasetWithVerticesAndEdges(datasetId);
 
         // TODO: Check if date with specified encryption exists
         if (encColor != null) {
