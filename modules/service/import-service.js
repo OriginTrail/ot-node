@@ -76,7 +76,6 @@ class ImportService {
         this.web3 = ctx.web3;
         this.log = ctx.logger;
         this.config = ctx.config;
-        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     async getImportDbData(datasetId, encColor = null) {
@@ -845,33 +844,6 @@ class ImportService {
                 throw Error('[Validation Error] OT-JSON relations not valid');
             }
         });
-    }
-
-    prepareDataset(document) {
-        const graph = document['@graph'];
-        const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
-        this.permissionedDataService.calculateGraphPermissionedDataHashes(graph);
-        const id = ImportUtilities.calculateGraphPublicHash(graph);
-
-        const header = ImportUtilities.createDatasetHeader(
-            this.config, null,
-            datasetHeader.datasetTags,
-            datasetHeader.datasetTitle,
-            datasetHeader.datasetDescription,
-            datasetHeader.OTJSONVersion,
-        );
-        const dataset = {
-            '@id': id,
-            '@type': 'Dataset',
-            datasetHeader: header,
-            '@graph': graph,
-        };
-
-        const rootHash = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
-        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
-
-        const signed = ImportUtilities.signDataset(dataset, this.config, this.web3);
-        return signed;
     }
 }
 

@@ -5,6 +5,7 @@ const MerkleTree = require('../Merkle');
 const crypto = require('crypto');
 const Encryption = require('../Encryption');
 const abi = require('ethereumjs-abi');
+const ImportUtilities = require('../ImportUtilities');
 
 class PermissionedDataService {
     constructor(ctx) {
@@ -128,77 +129,9 @@ class PermissionedDataService {
         await Promise.all(promises);
     }
 
-    /**
-     * Add the permissioned data hash to each graph object with permissioned data
-     * @param graph
-     * @returns {null}
-     */
-    calculateGraphPermissionedDataHashes(graph) {
-        graph.forEach((object) => {
-            this.calculateObjectPermissionedDataHash(object);
-        });
-    }
-
-    /**
-     * Add permissioned data hash to the permissioned_data object
-     * @param ot_object
-     * @returns {null}
-     */
-    calculateObjectPermissionedDataHash(ot_object) {
-        if (!ot_object || !ot_object.properties) {
-            throw Error(`Cannot calculate permissioned data hash for invalid ot-json object ${ot_object}`);
-        }
-        const permissionedDataObject = ot_object.properties.permissioned_data;
-        if (permissionedDataObject && permissionedDataObject.data) {
-            const permissionedDataHash =
-                this.calculatePermissionedDataHash(permissionedDataObject);
-            permissionedDataObject.permissioned_data_hash = permissionedDataHash;
-        }
-    }
-
-    /**
-     * Calculates the merkle tree root hash of an object
-     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
-     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
-     * @param permissioned_object
-     * @returns {null}
-     */
-    calculatePermissionedDataHash(permissioned_object, type = 'distribution') {
-        const merkleTree = this.calculatePermissionedDataMerkleTree(permissioned_object, type);
-        return merkleTree.getRoot();
-    }
-
-    /**
-     * Calculates the merkle tree of an object
-     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
-     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
-     * @param permissioned_object
-     * @returns {null}
-     */
-    calculatePermissionedDataMerkleTree(permissioned_object, type = 'distribution') {
-        if (!permissioned_object || !permissioned_object.data) {
-            throw Error('Cannot calculate root hash of an empty object');
-        }
-        const sorted_data = Utilities.sortedStringify(permissioned_object.data, true);
-        const data = Buffer.from(sorted_data);
-
-        const first_level_blocks = node_constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = node_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
-
-        let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
-        block_size = block_size < 1 ? 1 : block_size;
-
-        const blocks = [];
-        for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
-            const block = data.slice(i, i + block_size).toString('hex');
-            blocks.push(block.padStart(64, '0'));
-        }
-        const merkleTree = new MerkleTree(blocks, type, 'sha3');
-        return merkleTree;
-    }
-
     encodePermissionedData(permissionedObject) {
-        const merkleTree = this.calculatePermissionedDataMerkleTree(permissionedObject, 'purchase');
+        const merkleTree = ImportUtilities
+            .calculatePermissionedDataMerkleTree(permissionedObject, 'purchase');
         const rawKey = crypto.randomBytes(32);
         const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
         const encodedArray = [];

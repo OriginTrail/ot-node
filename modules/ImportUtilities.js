@@ -1,7 +1,7 @@
 const bytes = require('utf8-length');
 const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
-
+const node_constants = require('./constants');
 const Utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
@@ -135,6 +135,103 @@ class ImportUtilities {
             }
         });
         return graph;
+    }
+
+    static prepareDataset(document) {
+        const graph = document['@graph'];
+        const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
+        ImportUtilities.calculateGraphPermissionedDataHashes(graph);
+        const id = ImportUtilities.calculateGraphPublicHash(graph);
+
+        const header = ImportUtilities.createDatasetHeader(
+            this.config, null,
+            datasetHeader.datasetTags,
+            datasetHeader.datasetTitle,
+            datasetHeader.datasetDescription,
+            datasetHeader.OTJSONVersion,
+        );
+        const dataset = {
+            '@id': id,
+            '@type': 'Dataset',
+            datasetHeader: header,
+            '@graph': graph,
+        };
+
+        const rootHash = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
+        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+
+        const signed = ImportUtilities.signDataset(dataset, this.config, this.web3);
+        return signed;
+    }
+
+    /**
+     * Add the permissioned data hash to each graph object with permissioned data
+     * @param graph
+     * @returns {null}
+     */
+    static calculateGraphPermissionedDataHashes(graph) {
+        graph.forEach((object) => {
+            ImportUtilities.calculateObjectPermissionedDataHash(object);
+        });
+    }
+
+    /**
+     * Add permissioned data hash to the permissioned_data object
+     * @param ot_object
+     * @returns {null}
+     */
+    static calculateObjectPermissionedDataHash(ot_object) {
+        if (!ot_object || !ot_object.properties) {
+            throw Error(`Cannot calculate permissioned data hash for invalid ot-json object ${ot_object}`);
+        }
+        const permissionedDataObject = ot_object.properties.permissioned_data;
+        if (permissionedDataObject && permissionedDataObject.data) {
+            const permissionedDataHash =
+                ImportUtilities.calculatePermissionedDataHash(permissionedDataObject);
+            permissionedDataObject.permissioned_data_hash = permissionedDataHash;
+        }
+    }
+
+    /**
+     * Calculates the merkle tree root hash of an object
+     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
+     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
+     * @param permissioned_object
+     * @returns {null}
+     */
+    static calculatePermissionedDataHash(permissioned_object, type = 'distribution') {
+        const merkleTree = ImportUtilities
+            .calculatePermissionedDataMerkleTree(permissioned_object, type);
+        return merkleTree.getRoot();
+    }
+
+    /**
+     * Calculates the merkle tree of an object
+     * The object is sliced to DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES sized blocks (potentially padded)
+     * The tree contains at least NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS
+     * @param permissioned_object
+     * @returns {null}
+     */
+    static calculatePermissionedDataMerkleTree(permissioned_object, type = 'distribution') {
+        if (!permissioned_object || !permissioned_object.data) {
+            throw Error('Cannot calculate root hash of an empty object');
+        }
+        const sorted_data = Utilities.sortedStringify(permissioned_object.data, true);
+        const data = Buffer.from(sorted_data);
+
+        const first_level_blocks = node_constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = node_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+
+        let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
+        block_size = block_size < 1 ? 1 : block_size;
+
+        const blocks = [];
+        for (let i = 0; i < data.length || blocks.length < first_level_blocks; i += block_size) {
+            const block = data.slice(i, i + block_size).toString('hex');
+            blocks.push(block.padStart(64, '0'));
+        }
+        const merkleTree = new MerkleTree(blocks, type, 'sha3');
+        return merkleTree;
     }
 
     /**
