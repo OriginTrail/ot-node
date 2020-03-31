@@ -250,8 +250,6 @@ Given(/^I corrupt (\d+)[st|nd|rd|th]+ holder's database ot_vertices collection$/
                 objectType: "corrupted"
             } IN ot_vertices`);
 
-    // await systemDb.query('FOR u IN ot_vertices REMOVE { _key: u._key } IN ot_vertices');
-
     this.state.holdersToLitigate.push(node);
 });
 

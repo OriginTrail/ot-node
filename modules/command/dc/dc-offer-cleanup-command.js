@@ -27,17 +27,6 @@ class DCOfferCleanupCommand extends Command {
             throw new Error(`Failed to find offer ${offerId}`);
         }
 
-        const challengingHolders = await models.replicated_data.findAll({
-            where: {
-                offer_id: offer.offer_id,
-                status: 'CHALLENGING',
-            },
-        });
-        if (challengingHolders.length > 0) {
-            this.logger.trace(`There are still challenges in progress for offer: ${offer.offer_id}, repeating cleanup command in 1 min.`);
-            return Command.repeat();
-        }
-
         offer.status = 'COMPLETED';
         offer.global_status = 'COMPLETED';
         await offer.save({ fields: ['status', 'global_status'] });
@@ -74,7 +63,6 @@ class DCOfferCleanupCommand extends Command {
             {
                 where: {
                     offer_id: offer.offer_id,
-                    status: 'HOLDING',
                 },
             },
         );
