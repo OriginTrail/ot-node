@@ -906,7 +906,13 @@ class ArangoJS {
                                 vertices: datasetVertices,
                                 edges: datasetEdges
                             }`;
-        return this.runQuery(queryString, { datasetId });
+
+        const result = await this.runQuery(queryString, { datasetId });
+
+        for (const edge of result[0].edges) {
+            ArangoJS._normalizeConnection(edge);
+        }
+        return result;
     }
 
     /**
