@@ -20,7 +20,7 @@ describe('Utilities module', () => {
                     'ssl_certificate_path', 'identity_filepath', 'cpus',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled',
-                    'ssl_authority_paths', 'node_rpc_port',
+                    'ssl_authority_paths', 'node_rpc_port', 'default_data_price',
                     'remote_control_enabled', 'dc_challenge_retry_delay_in_millis', 'dh_challenge_retry_delay_in_millis',
                     'read_stake_factor', 'send_logs_to_origintrail',
                     'dh_min_reputation', 'dh_min_stake_amount', 'houston_password_file_name',

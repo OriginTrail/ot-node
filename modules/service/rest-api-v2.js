@@ -127,22 +127,24 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
         //
-        // server.post(`/api/${this.version_id}/network/private_data/read`, async (req, res) => {
+        // server.post(`/api/${this.version_id}/network/permissioned_data/read`,async(req, res) => {
         //     await this._privateDataReadNetwork(req, res);
         // });
 
-        // server.get(`/api/${this.version_id}/network/private_data/read/resu
+        // server.get(`/api/${this.version_id}/network/permissioned_data/read/resu
         // lt/:handler_id`, async (req, res) => {
         //     await this._checkForHandlerStatus(req, res);
         // });
 
-        server.post(`/api/${this.version_id}/network/private_data/purchase`, async (req, res) => {
-            await this.dvController.sendNetworkPurchase(req, res);
-        });
+        // server.post(`/api/${this.version_id}/network/
+        // permissioned_data/purchase`, async (req, res) => {
+        //     await this.dvController.sendNetworkPurchase(req, res);
+        // });
 
-        server.get(`/api/${this.version_id}/network/private_data/purchase/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
-        });
+        // server.get(`/api/${this.version_id}/network/
+        // permissioned_data/purchase/result/:handler_id`, async (req, res) => {
+        //     await this._checkForHandlerStatus(req, res);
+        // });
 
         server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
             await this.dvController.handleDataReadExportRequest(req, res);
@@ -156,30 +158,34 @@ class RestAPIServiceV2 {
             await this._getChallenges(req, res);
         });
 
-        server.get(`/api/${this.version_id}/private_data/available`, async (req, res) => {
-            await this._getPrivateDataAvailable(req, res);
-        });
-
-
-        server.get(`/api/${this.version_id}/private_data/owned`, async (req, res) => {
-            await this._getPrivateDataOwned(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/network/private_data/get_price`, async (req, res) => {
-            await this._getPrivateDataPrice(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/private_data/update_price`, async (req, res) => {
-            await this._updatePrivateDataPrice(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/network/private_data/get_price/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/private_data/trading_info/:type`, async (req, res) => {
-            await this._getTradingData(req, res);
-        });
+        // server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
+        //     await this._getPermissionedDataAvailable(req, res);
+        // });
+        //
+        //
+        // server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
+        //     await this._getPermissionedDataOwned(req, res);
+        // });
+        //
+        // server.post(`/api/${this.version_id}/network/
+        // permissioned_data/get_price`, async (req, res) => {
+        //     await this._getPermissionedDataPrice(req, res);
+        // });
+        //
+        // server.post(`/api/${this.version_id}/
+        // permissioned_data/update_price`, async (req, res) => {
+        //     await this._updatePermissionedDataPrice(req, res);
+        // });
+        //
+        // server.get(`/api/${this.version_id}/network/
+        // permissioned_data/get_price/result/:handler_id`, async (req, res) => {
+        //     await this._checkForHandlerStatus(req, res);
+        // });
+        //
+        // server.get(`/api/${this.version_id}/
+        // permissioned_data/trading_info/:type`, async (req, res) => {
+        //     await this._getTradingData(req, res);
+        // });
 
 
         /** Network related routes */
@@ -604,7 +610,7 @@ class RestAPIServiceV2 {
     //     }
     //     const { data_set_id, ot_object_id, seller_node_id } = req.body;
     //     await this.dvController
-    //         .handlePrivateDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
+    //         .handlePermissionedDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
     // }
 
     async _checkForReplicationHandlerStatus(req, res) {
@@ -989,8 +995,8 @@ class RestAPIServiceV2 {
     //     );
     // }
 
-    async _getPrivateDataAvailable(req, res) {
-        this.logger.api('GET: Private Data Available for purchase.');
+    async _getPermissionedDataAvailable(req, res) {
+        this.logger.api('GET: Permissioned data Available for purchase.');
 
         const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
         const data = await Models.sequelize.query(
@@ -1084,8 +1090,8 @@ class RestAPIServiceV2 {
         res.send(result);
     }
 
-    async _getPrivateDataOwned(req, res) {
-        this.logger.api('GET: Private Data Owned.');
+    async _getPermissionedDataOwned(req, res) {
+        this.logger.api('GET: Permissioned Data Owned.');
 
         const query = 'SELECT ds.data_set_id, ds.ot_json_object_id, ds.price, ( SELECT Count(*) FROM data_trades dt Where dt.seller_erc_id = ds.seller_erc_id and ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id ) as sales FROM  data_sellers ds where ds.seller_erc_id = :seller_erc ';
         const data = await Models.sequelize.query(
@@ -1174,8 +1180,8 @@ class RestAPIServiceV2 {
         res.send(result);
     }
 
-    async _getPrivateDataPrice(req, res) {
-        this.logger.api('POST: Get private data price.');
+    async _getPermissionedDataPrice(req, res) {
+        this.logger.api('POST: Get permissioned data price.');
         if (req.body == null
             || req.body.data_set_id == null
             || req.body.seller_node_id == null
@@ -1196,7 +1202,7 @@ class RestAPIServiceV2 {
 
         const handlerId = inserted_object.dataValues.handler_id;
 
-        await this.dvController.sendPrivateDataPriceRequest(
+        await this.dvController.sendPermissionedDataPriceRequest(
             data_set_id,
             seller_node_id,
             ot_object_id,
@@ -1209,8 +1215,8 @@ class RestAPIServiceV2 {
         });
     }
 
-    async _updatePrivateDataPrice(req, res) {
-        this.logger.api('POST: Set private data price.');
+    async _updatePermissionedDataPrice(req, res) {
+        this.logger.api('POST: Set permissioned data price.');
         if (req.body == null
             || req.body.data_set_id == null
             || req.body.ot_object_ids == null) {

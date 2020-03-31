@@ -20,6 +20,7 @@ class DHDataReadRequestFreeCommand extends Command {
         this.transport = ctx.transport;
         this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -59,35 +60,15 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
-            const allowedPrivateDataElements = await Models.data_trades.findAll({
-                where: {
-                    data_set_id: importId,
-                    buyer_node_id: nodeId,
-                    status: 'COMPLETED',
-                },
-            });
-
-            const privateData = {};
-
-            allowedPrivateDataElements.forEach(element =>
-                privateData[element.ot_json_object_id] = {});
-
             const document = await this.importService.getImport(importId);
 
-            for (const ot_object of document['@graph']) {
-                if (ot_object['@id'] in privateData) {
-                    const privateDataObject = {};
-                    constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
-                        const privateObject = ot_object.properties[privateDataArray];
-                        if (privateObject) {
-                            privateDataObject[privateDataArray] = privateObject;
-                        }
-                    });
-                    privateData[ot_object['@id']] = Utilities.copyObject(privateDataObject);
-                }
-            }
+            const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+                document,
+                nodeId,
+            );
 
-            ImportUtilities.hideGraphPrivateData(document['@graph']);
+
+            ImportUtilities.removeGraphPermissionedData(document['@graph']);
 
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
@@ -99,7 +80,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
                 document,
-                privateData,
+                permissionedData,
                 data_set_id: importId,
                 transaction_hash: transactionHash,
                 handler_id,

@@ -1,11 +1,8 @@
-const path = require('path');
-const fs = require('fs');
 const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
 
-const Constants = require('../constants');
 /**
  * Returns value of '@id' property.
  * @param jsonLdObject JSON-LD object.
@@ -232,13 +229,10 @@ class ImportService {
                 // Add data vertex.
                 if (otObject.properties != null) {
                     const otObjectData = Utilities.copyObject(otObject.properties);
-                    Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                        const privateObject = otObject.properties[private_data_array];
-                        if (privateObject) {
-                            delete privateObject.isPrivate;
-                            delete privateObject.data;
-                        }
-                    });
+                    const permissionedObject = otObject.properties.permissioned_data;
+                    if (permissionedObject) {
+                        delete permissionedObject.data;
+                    }
                     const dataVertex = {
                         _key: Utilities.keyFrom(
                             dataCreator,
@@ -850,28 +844,6 @@ class ImportService {
                 throw Error('[Validation Error] OT-JSON relations not valid');
             }
         });
-    }
-
-    async getPrivateDataObject(data_set_id, ot_json_object_id) {
-        const privateDataObject = await this.getOtObjectById(
-            data_set_id,
-            ot_json_object_id,
-        );
-
-        const privateObjectArray = [];
-        Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            const privateObject = privateDataObject.properties[private_data_array];
-            if (privateObject && privateObject.isPrivate) {
-                privateObjectArray.push(privateObject);
-            }
-        });
-
-        if (privateObjectArray.length > 1) {
-            this.log.trace(`Found multiple private data in object with id: ${ot_json_object_id}, using first one`);
-        } else if (privateObjectArray.length === 0) {
-            return null;
-        }
-        return privateObjectArray[0];
     }
 }
 

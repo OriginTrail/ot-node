@@ -31,8 +31,7 @@
             "urn:ot:object:actor:category":"Company",
             "urn:ot:object:actor:name":"company-red",
             "vocabularyType":"urn:ot:object:actor",
-            "claim": {
-                    "isPrivate": false,
+            "permissioned_data": {
                     "data": {
                         "id": "halal_certificate_56789",
                         "transaction_id": "bsi-nos-demotest-10",
@@ -85,8 +84,7 @@
             "urn:ot:object:actor:name":"OneAgrix",
             "urn:ot:object:actor:wallet":"0x9B4D74EcC3F29467b1d4714a05d833579847096A",
             "vocabularyType":"urn:ot:object:actor",
-            "private_data": {
-                    "isPrivate": true,
+            "permissioned_data": {
                     "data": {
                         "id": "halal_certificate_56789",
                         "transaction_id": "bsi-nos-demotest-10",
@@ -271,8 +269,7 @@
             "urn:ot:object:location:category":"Certificate",
             "urn:ot:object:location:description":"HALAL certificate",
             "vocabularyType":"urn:ot:object:product",
-            "claim": {
-                    "isPrivate": true,
+            "permissioned_data": {
                     "data": {
                         "id": "halal_certificate_12345677",
                         "transaction_id": "bsi-nos-demotest-10",

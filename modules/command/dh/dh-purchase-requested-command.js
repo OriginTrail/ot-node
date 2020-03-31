@@ -1,7 +1,6 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
-const ImportUtilities = require('../../ImportUtilities');
 /**
  * Handles data location response.
  */
@@ -15,6 +14,7 @@ class DhPurchaseRequestedCommand extends Command {
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -26,7 +26,7 @@ class DhPurchaseRequestedCommand extends Command {
         const {
             data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
         } = command.data;
-
+        this.logger.important(`Purchase request for ot_object ${ot_json_object_id} received from ${dv_node_id}.`);
         const dataTrades = await Models.data_trades.findAll({
             where: {
                 buyer_node_id: dv_node_id,
@@ -66,14 +66,20 @@ class DhPurchaseRequestedCommand extends Command {
         }
 
         if (response.status !== 'FAILED') {
-            const privateObject = await this.importService
-                .getPrivateDataObject(data_set_id, ot_json_object_id);
-            if (privateObject) {
-                const encodedObject = await ImportUtilities.encodePrivateData(privateObject);
-                response.private_data_original_length = encodedObject.private_data_original_length;
-                response.private_data_array_length = encodedObject.private_data_array_length;
+            const permissionedObject = await this.importService.getOtObjectById(
+                data_set_id,
+                ot_json_object_id,
+            );
+
+            if (permissionedObject) {
+                const encodedObject =
+                    await this.permissionedDataService.encodePermissionedData(permissionedObject);
+                response.permissioned_data_original_length =
+                    encodedObject.permissioned_data_original_length;
+                response.permissioned_data_array_length =
+                    encodedObject.permissioned_data_array_length;
                 response.encoded_data = encodedObject.encoded_data;
-                response.private_data_root_hash = encodedObject.private_data_root_hash;
+                response.permissioned_data_root_hash = encodedObject.permissioned_data_root_hash;
                 response.encoded_data_root_hash = encodedObject.encoded_data_root_hash;
                 response.message = 'Data purchase request completed!';
                 response.status = 'SUCCESSFUL';
@@ -101,11 +107,12 @@ class DhPurchaseRequestedCommand extends Command {
                     status: 'REQUESTED',
                 });
             } else {
-                response.message = `Unable to find private data with object id: ${ot_json_object_id} and dataset id: ${data_set_id}`;
+                response.message = `Unable to find permissioned data with object id: ${ot_json_object_id} and dataset id: ${data_set_id}`;
                 response.status = 'FAILED';
             }
         }
 
+        this.logger.info(`Purchase confirmed for ot_object ${ot_json_object_id} received from ${dv_node_id}. Sending purchase response.`);
         await this._sendResponseToDv(response, dv_node_id);
 
         return Command.empty();
