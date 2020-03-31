@@ -58,7 +58,7 @@ Feature: Test basic network features
     And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
 
-  @second
+  @skip
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
     And I setup 3 node
@@ -82,7 +82,7 @@ Feature: Test basic network features
     And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
 
-  @third
+  @skip
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
     And I setup 3 node
