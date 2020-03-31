@@ -52,9 +52,9 @@ class DCLitigationCompletedCommand extends Command {
                 const replicatedData = await models.replicated_data.findOne({
                     where: { offer_id: offerId, dh_identity: dhIdentity },
                 });
-
+                replicatedData.last_litigation_timestamp = new Date();
                 replicatedData.status = penalized === true ? 'PENALIZED' : 'HOLDING';
-                await replicatedData.save({ fields: ['status'] });
+                await replicatedData.save({ fields: ['status', 'last_litigation_timestamp'] });
 
                 if (penalized === true) {
                     // remove challenges

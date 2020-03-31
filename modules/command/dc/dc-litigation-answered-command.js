@@ -44,6 +44,16 @@ class DCLitigationAnsweredCommand extends Command {
 
                 this.logger.important(`Litigation answered for DH ${dhIdentity} and offer ${offerId}.`);
 
+                const offer = await models.offers.findOne({
+                    where: { offer_id: offerId },
+                });
+
+                if (offer.global_status === 'COMPLETED') {
+                    // offer has already been completed
+                    this.logger.warn(`Offer ${offerId} has already been completed. Skipping litigation for DH identity ${dhIdentity} with objectIndex ${objectIndex} and blockIndex ${blockIndex}`);
+                    return Command.empty();
+                }
+
                 const replicatedData = await models.replicated_data.findOne({
                     where: { offer_id: offerId, dh_identity: dhIdentity },
                 });

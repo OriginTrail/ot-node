@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         distribution_epk: DataTypes.STRING,
         confirmation: DataTypes.STRING,
         status: DataTypes.STRING,
+        last_litigation_timestamp: DataTypes.DATE,
     }, {});
     replicated_data.associate = (models) => {
         // associations can be defined here

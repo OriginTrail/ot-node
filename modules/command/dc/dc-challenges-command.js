@@ -98,14 +98,17 @@ class DCChallengesCommand extends Command {
                 this.logger.error(`Failed to find offer ${challenge.offer_id}. Possible database corruption.`);
                 return false;
             }
+            const challenged = await models.replicated_data.findOne({
+                where: {
+                    dh_id: challenge.dh_id,
+                    offer_id: challenge.offer_id,
+                },
+            });
 
             const litigationIntervalMills = offer.litigation_interval_in_minutes * 60 * 1000;
-            const litigationTimestampMills = await this.blockchain.getLitigationTimestamp(
-                offer.offer_id,
-                challenge.dh_identity,
-            ) * 1000;
-
-            return Date.now() + litigationIntervalMills > litigationTimestampMills;
+            const lastLitigationInMills = challenged.last_litigation_timestamp ?
+                challenged.last_litigation_timestamp.valueOf() : 0;
+            return Date.now() > lastLitigationInMills + litigationIntervalMills;
         });
     }
 
