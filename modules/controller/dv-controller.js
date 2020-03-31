@@ -539,6 +539,7 @@ class DVController {
                         dataSetId: data_set_id,
                         replyId: reply_id,
                         handlerId: inserted_object.dataValues.handler_id,
+                        nodeId: offer.node_id,
                     },
                     transactional: false,
                 });
