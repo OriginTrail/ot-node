@@ -25,6 +25,7 @@ const Web3 = require('web3');
 const awilix = require('awilix');
 const logger = require('../../modules/logger');
 const ImportService = require('../../modules/service/import-service');
+const PermissionedDataService = require('../../modules/service/permissioned-data-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 const SchemaValidator = require('../../modules/validator/schema-validator');
 
@@ -118,6 +119,7 @@ describe('GS1 Importer tests', () => {
             product: awilix.asClass(Product),
             web3: awilix.asValue(web3),
             config: awilix.asValue(config),
+            permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
             notifyError: awilix.asFunction(() => {}),
         });
         await graphStorage.connect();

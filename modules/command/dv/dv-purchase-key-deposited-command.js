@@ -1,8 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models');
-const ImportUtilities = require('../../ImportUtilities');
 const Utilities = require('../../Utilities');
-const constants = require('../../constants');
 
 /**
  * Handles data location response.
@@ -15,6 +13,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
         this.graphStorage = ctx.graphStorage;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -27,8 +26,8 @@ class DvPurchaseKeyDepositedCommand extends Command {
             handler_id,
             encoded_data,
             purchase_id,
-            private_data_array_length,
-            private_data_original_length,
+            permissioned_data_array_length,
+            permissioned_data_original_length,
         } = command.data;
 
         const events = await Models.events.findAll({
@@ -47,15 +46,15 @@ class DvPurchaseKeyDepositedCommand extends Command {
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
-
+                this.logger.important(`Purchase ${purchase_id} verified. Decoding data from given key`);
                 this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');
                 const { key } = JSON.parse(event.data);
-                const decodedPrivateData = ImportUtilities
-                    .validateAndDecodePrivateData(
-                        encoded_data, key, private_data_array_length,
-                        private_data_original_length,
+                const decodedPermissionedData = this.permissionedDataService
+                    .validateAndDecodePermissionedData(
+                        encoded_data, key, permissioned_data_array_length,
+                        permissioned_data_original_length,
                     );
-                if (decodedPrivateData.errorStatus) {
+                if (decodedPermissionedData.errorStatus) {
                     const commandData = {
                         encoded_data,
                     };
@@ -80,10 +79,10 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     ot_object_id,
                 } = JSON.parse(handler.data);
 
-                await this._updatePrivateDataInDb(
+                await this.permissionedDataService.updatePermissionedDataInDb(
                     data_set_id,
                     ot_object_id,
-                    decodedPrivateData.privateData,
+                    decodedPermissionedData.permissionedData,
                 );
 
                 await Models.data_trades.update(
@@ -104,7 +103,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
                     price: this.config.default_data_price,
                 });
-
+                this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
                 this.remoteControl.purchaseStatus('Purchase completed', 'You can preview the purchased data in My Purchases page.');
                 return Command.empty();
             }
@@ -157,35 +156,6 @@ class DvPurchaseKeyDepositedCommand extends Command {
         };
         Object.assign(command, map);
         return command;
-    }
-
-    async _updatePrivateDataInDb(dataSetId, otObjectId, privateData) {
-        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
-            dataSetId,
-            otObjectId,
-        );
-        const documentsToBeUpdated = [];
-        const calculatedPrivateHash = ImportUtilities
-            .calculatePrivateDataHash({ data: privateData });
-        otObject.relatedObjects.forEach((relatedObject) => {
-            if (relatedObject.vertex.vertexType === 'Data') {
-                const vertexData = relatedObject.vertex.data;
-                constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                    const privateObject = vertexData[private_data_array];
-                    if (privateObject && privateObject.isPrivate
-                    && privateObject.private_data_hash === calculatedPrivateHash) {
-                        privateObject.data = privateData;
-                        documentsToBeUpdated.push(relatedObject.vertex);
-                    }
-                });
-            }
-        });
-
-        const promises = [];
-        documentsToBeUpdated.forEach((document) => {
-            promises.push(this.graphStorage.updateDocument('ot_vertices', document));
-        });
-        await Promise.all(promises);
     }
 }
 

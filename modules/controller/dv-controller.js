@@ -170,7 +170,7 @@ class DVController {
     //  * @param res - API result object
     //  * @returns null
     //  */
-    // async handlePrivateDataReadRequest(data_set_id, ot_object_id, seller_node_id, response) {
+    // async handlePermissionedDataReadRequest(data_set_id, ot_object_id,seller_node_id,response) {
     //     const handler_data = {
     //         data_set_id,
     //         ot_object_id,
@@ -190,7 +190,7 @@ class DVController {
     //     });
     //
     //     this.commandExecutor.add({
-    //         name: 'dvPrivateDataReadRequestCommand',
+    //         name: 'dvPermissionedDataReadRequestCommand',
     //         delay: 0,
     //         data: {
     //             data_set_id,
@@ -202,15 +202,15 @@ class DVController {
     //     });
     // }
 
-    // _validatePrivateData(data) {
+    // _validatePermissionedData(data) {
     //     let validated = false;
     //     constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
     //         if (data[private_data_array] && Array.isArray(data[private_data_array])) {
     //             data[private_data_array].forEach((private_object) => {
     //                 if (private_object.isPrivate && private_object.data) {
     //                     const calculatedPrivateHash = ImportUtilities
-    //                         .calculatePrivateDataHash(private_object);
-    //                     validated = calculatedPrivateHash === private_object.private_data_hash;
+    //                         .calculatePermissionedDataHash(private_object);
+    //                 validated = calculatedPrivateHash ===private_object.permissioned_data_hash;
     //                 }
     //             });
     //         }
@@ -218,7 +218,7 @@ class DVController {
     //     return validated;
     // }
     //
-    // async handlePrivateDataReadResponse(message) {
+    // async handlePermissionedDataReadResponse(message) {
     //     const {
     //         handler_id, ot_objects,
     //     } = message;
@@ -226,7 +226,7 @@ class DVController {
     //     ot_objects.forEach((otObject) => {
     //         otObject.relatedObjects.forEach((relatedObject) => {
     //             if (relatedObject.vertex.vertexType === 'Data') {
-    //                 if (this._validatePrivateData(relatedObject.vertex.data)) {
+    //                 if (this._validatePermissionedData(relatedObject.vertex.data)) {
     //                     documentsToBeUpdated.push(relatedObject.vertex);
     //                 }
     //             }
@@ -319,7 +319,7 @@ class DVController {
         });
     }
 
-    async sendPrivateDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
+    async sendPermissionedDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
         const message = {
             data_set_id: dataSetId,
             handler_id: handlerId,
@@ -335,7 +335,7 @@ class DVController {
             ),
         };
 
-        await this.transport.sendPrivateDataPriceRequest(
+        await this.transport.sendPermissionedDataPriceRequest(
             dataPriceRequestObject,
             nodeId,
         );
@@ -379,8 +379,8 @@ class DVController {
     async handleNetworkPurchaseResponse(response) {
         const {
             handler_id, status, message, encoded_data,
-            private_data_root_hash, encoded_data_root_hash,
-            private_data_array_length, private_data_original_length,
+            permissioned_data_root_hash, encoded_data_root_hash,
+            permissioned_data_array_length, permissioned_data_original_length,
         } = response;
 
         const commandData = {
@@ -388,10 +388,10 @@ class DVController {
             status,
             message,
             encoded_data,
-            private_data_root_hash,
+            permissioned_data_root_hash,
             encoded_data_root_hash,
-            private_data_array_length,
-            private_data_original_length,
+            permissioned_data_array_length,
+            permissioned_data_original_length,
         };
 
         await this.commandExecutor.add({
@@ -400,7 +400,7 @@ class DVController {
         });
     }
 
-    async handlePrivateDataPriceResponse(response) {
+    async handlePermissionedDataPriceResponse(response) {
         const {
             handler_id, status, price_in_trac,
         } = response;
@@ -539,6 +539,7 @@ class DVController {
                         dataSetId: data_set_id,
                         replyId: reply_id,
                         handlerId: inserted_object.dataValues.handler_id,
+                        nodeId: offer.node_id,
                     },
                     transactional: false,
                 });

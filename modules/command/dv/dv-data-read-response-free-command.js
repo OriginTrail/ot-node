@@ -18,6 +18,7 @@ class DVDataReadResponseFreeCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
         this.commandExecutor = ctx.commandExecutor;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -72,7 +73,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
-        const { document, privateData } = message;
+        const { document, permissionedData } = message;
         // Calculate root hash and check is it the same on the SC.
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
@@ -94,34 +95,22 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        if (privateData && Object.keys(privateData).length > 0) {
-            for (const otObject of document['@graph']) {
-                if (otObject['@id'] in privateData) {
-                    const otObjectId = otObject['@id'];
-                    for (const privateDataElement in privateData[otObjectId]) {
-                        if (!otObject.properties) {
-                            otObject.properties = {};
-                        }
-                        otObject.properties[privateDataElement] =
-                            privateData[otObjectId][privateDataElement];
-                    }
-                }
-            }
-        }
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            document['@graph'],
+            permissionedData,
+        );
 
         const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
         const profile = await this.blockchain.getProfile(erc725Identity);
 
-        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(document['@graph']);
-        replicatedPrivateData.forEach(async (otObjectId) => {
-            await Models.data_sellers.create({
-                data_set_id: dataSetId,
-                ot_json_object_id: otObjectId,
-                seller_node_id: profile.nodeId.toLowerCase().slice(0, 42),
-                seller_erc_id: Utilities.normalizeHex(erc725Identity),
-                price: 0,
-            });
-        });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            erc725Identity,
+            0,
+            profile.nodeId.toLowerCase().slice(0, 42),
+            document['@graph'],
+        );
+
         const handler = await Models.handler_ids.findOne({
             where: { handler_id },
         });

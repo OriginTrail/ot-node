@@ -104,22 +104,21 @@ class DHReadDataLocationRequestCommand extends Command {
             size = dataInfos.find(di => di.data_set_id === dataSetId).otjson_size_in_bytes;
             const importDetails = graphImportDetails
                 .filter(x => x.datasets.indexOf(dataSetId) >= 0);
-            const privateData = [];
+            const permissionedData = [];
 
             importDetails.forEach((item) => {
-                if (item.hasData && item.isPrivate) {
-                    privateData.push({
-                        is_private: item.isPrivate,
+                if (item.hasPermissionedData) {
+                    permissionedData.push({
                         ot_object_id: item.id,
                     });
                 }
             });
-            if (privateData.length > 0) {
+            if (permissionedData.length > 0) {
                 return {
                     data_set_id: dataSetId,
                     size,
                     calculated_price: new BN(size, 10).mul(new BN(dataPrice, 10)).toString(),
-                    private_data: privateData,
+                    permissioned_data: permissionedData,
                 };
             }
             return {

@@ -15,6 +15,7 @@ class DhReplicationImportCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
@@ -44,7 +45,7 @@ class DhReplicationImportCommand extends Command {
             encColor,
             dcIdentity,
         } = command.data;
-        const { otJson, privateData }
+        const { otJson, permissionedData }
             = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
         const { decryptedDataset, encryptedMap } =
@@ -80,20 +81,10 @@ class DhReplicationImportCommand extends Command {
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id
 
-        if (privateData && Object.keys(privateData).length > 0) {
-            for (const otObject of decryptedDataset['@graph']) {
-                if (otObject['@id'] in privateData) {
-                    const otObjectId = otObject['@id'];
-                    for (const privateDataElement in privateData[otObjectId]) {
-                        if (!otObject.properties) {
-                            otObject.properties = {};
-                        }
-                        otObject.properties[privateDataElement] =
-                            privateData[otObjectId][privateDataElement];
-                    }
-                }
-            }
-        }
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            decryptedDataset['@graph'],
+            permissionedData,
+        );
 
         const holdingData = await Models.holding_data.findOne({
             where: {
@@ -126,17 +117,13 @@ class DhReplicationImportCommand extends Command {
                 data_set_id: dataSetId,
             },
         });
-
-        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(decryptedDataset['@graph']);
-        replicatedPrivateData.forEach(async (otObjectId) => {
-            await Models.data_sellers.create({
-                data_set_id: dataSetId,
-                ot_json_object_id: otObjectId,
-                seller_node_id: dcNodeId.toLowerCase(),
-                seller_erc_id: Utilities.normalizeHex(dcIdentity),
-                price: 0,
-            });
-        });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            dcIdentity,
+            0,
+            dcNodeId,
+            decryptedDataset['@graph'],
+        );
 
         const importResult = await this.importService.importFile({
             document: decryptedDataset,

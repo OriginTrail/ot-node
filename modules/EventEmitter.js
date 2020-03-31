@@ -702,7 +702,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-read-response', async (request) => {
-            logger.info('Encrypted data received');
+            logger.info('Received data read response');
 
             const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);
@@ -727,8 +727,8 @@ class EventEmitter {
             }
         });
 
-        this._on('kad-private-data-read-request', async (request) => {
-            logger.info('Request for private data read received');
+        this._on('kad-permissioned-data-read-request', async (request) => {
+            logger.info('Request for permissioned data read received');
             const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
 
@@ -737,15 +737,15 @@ class EventEmitter {
                 return;
             }
             try {
-                await dcController.handlePrivateDataReadRequest(message);
+                await dcController.handlePermissionedDataReadRequest(message);
             } catch (error) {
-                logger.warn(`Failed to process private data read request. ${error}.`);
+                logger.warn(`Failed to process permissioned data read request. ${error}.`);
                 // todo send error to dv
             }
         });
 
-        this._on('kad-private-data-read-response', async (request) => {
-            logger.info('Response for private data read received');
+        this._on('kad-permissioned-data-read-response', async (request) => {
+            logger.info('Response for permissioned data read received');
 
             const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
@@ -755,9 +755,9 @@ class EventEmitter {
                 return;
             }
             try {
-                await dvController.handlePrivateDataReadResponse(message);
+                await dvController.handlePermissionedDataReadResponse(message);
             } catch (error) {
-                logger.warn(`Failed to process private data read response. ${error}.`);
+                logger.warn(`Failed to process permissioned data read response. ${error}.`);
                 notifyError(error);
             }
         });
@@ -790,7 +790,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-purchase-response', async (request) => {
-            logger.info('Encrypted data received');
+            logger.info('Received purchase response');
 
             const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);
@@ -842,7 +842,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-price-response', async (request) => {
-            logger.info('Encrypted data received');
+            logger.info('Received price response');
 
             const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);
@@ -858,7 +858,7 @@ class EventEmitter {
             }
 
             try {
-                await dvController.handlePrivateDataPriceResponse(message);
+                await dvController.handlePermissionedDataPriceResponse(message);
             } catch (error) {
                 logger.warn(`Failed to process data price response. ${error}.`);
                 notifyError(error);
