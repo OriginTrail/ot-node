@@ -33,7 +33,7 @@ Feature: Test basic network features
     Given I wait for 5 seconds
     Then Last replication should fail
 
-  @first
+  @skip
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
