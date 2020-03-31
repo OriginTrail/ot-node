@@ -136,13 +136,15 @@ class RestAPIServiceV2 {
         //     await this._checkForHandlerStatus(req, res);
         // });
 
-        server.post(`/api/${this.version_id}/network/permissioned_data/purchase`, async (req, res) => {
-            await this.dvController.sendNetworkPurchase(req, res);
-        });
+        // server.post(`/api/${this.version_id}/network/
+        // permissioned_data/purchase`, async (req, res) => {
+        //     await this.dvController.sendNetworkPurchase(req, res);
+        // });
 
-        server.get(`/api/${this.version_id}/network/permissioned_data/purchase/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
-        });
+        // server.get(`/api/${this.version_id}/network/
+        // permissioned_data/purchase/result/:handler_id`, async (req, res) => {
+        //     await this._checkForHandlerStatus(req, res);
+        // });
 
         server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
             await this.dvController.handleDataReadExportRequest(req, res);
@@ -156,30 +158,34 @@ class RestAPIServiceV2 {
             await this._getChallenges(req, res);
         });
 
-        server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
-            await this._getPermissionedDataAvailable(req, res);
-        });
-
-
-        server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
-            await this._getPermissionedDataOwned(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/network/permissioned_data/get_price`, async (req, res) => {
-            await this._getPermissionedDataPrice(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/permissioned_data/update_price`, async (req, res) => {
-            await this._updatePermissionedDataPrice(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/network/permissioned_data/get_price/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/permissioned_data/trading_info/:type`, async (req, res) => {
-            await this._getTradingData(req, res);
-        });
+        // server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
+        //     await this._getPermissionedDataAvailable(req, res);
+        // });
+        //
+        //
+        // server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
+        //     await this._getPermissionedDataOwned(req, res);
+        // });
+        //
+        // server.post(`/api/${this.version_id}/network/
+        // permissioned_data/get_price`, async (req, res) => {
+        //     await this._getPermissionedDataPrice(req, res);
+        // });
+        //
+        // server.post(`/api/${this.version_id}/
+        // permissioned_data/update_price`, async (req, res) => {
+        //     await this._updatePermissionedDataPrice(req, res);
+        // });
+        //
+        // server.get(`/api/${this.version_id}/network/
+        // permissioned_data/get_price/result/:handler_id`, async (req, res) => {
+        //     await this._checkForHandlerStatus(req, res);
+        // });
+        //
+        // server.get(`/api/${this.version_id}/
+        // permissioned_data/trading_info/:type`, async (req, res) => {
+        //     await this._getTradingData(req, res);
+        // });
 
 
         /** Network related routes */

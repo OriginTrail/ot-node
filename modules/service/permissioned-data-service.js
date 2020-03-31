@@ -112,7 +112,7 @@ class PermissionedDataService {
     }
 
     async addDataSellerForPermissionedData(dataSetId, sellerErcId, price, sellerNodeId, dataset) {
-        const permissionedData = this.getGraphPermissionedData(dataset['@graph']);
+        const permissionedData = this.getGraphPermissionedData(dataset);
         if (permissionedData.length === 0) {
             return;
         }
