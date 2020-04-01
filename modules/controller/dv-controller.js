@@ -1,5 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const Models = require('../../models');
+const Utilities = require('../Utilities');
 
 /**
  * Encapsulates DV related methods
@@ -9,6 +10,7 @@ class DVController {
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
+        this.blockchain = ctx.blockchain;
         this.emitter = ctx.emitter;
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
@@ -312,6 +314,44 @@ class DVController {
                 message,
             },
             transactional: false,
+        });
+    }
+
+    handleGetFingerprint(req, res) {
+        this.logger.api('GET: Fingerprint request received.');
+        const { dataset_id } = req.params;
+        if (dataset_id == null) {
+            res.status(400);
+            res.send({
+                message: 'data_set_id parameter is missing',
+            });
+            return;
+        }
+
+        this.blockchain.getRootHash(dataset_id).then((dataRootHash) => {
+            if (dataRootHash) {
+                if (!Utilities.isZeroHash(dataRootHash)) {
+                    res.status(200);
+                    res.send({
+                        root_hash: dataRootHash,
+                    });
+                } else {
+                    res.status(404);
+                    res.send({
+                        message: `Root hash not found for ${dataset_id}`,
+                    });
+                }
+            } else {
+                res.status(500);
+                res.send({
+                    message: `Failed to get root hash for ${dataset_id}`,
+                });
+            }
+        }).catch((err) => {
+            res.status(500);
+            res.send({
+                message: err,
+            });
         });
     }
 }
