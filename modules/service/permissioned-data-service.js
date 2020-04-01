@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const Encryption = require('../Encryption');
 const abi = require('ethereumjs-abi');
 const ImportUtilities = require('../ImportUtilities');
+const kadence = require('@deadcanaries/kadence');
 
 class PermissionedDataService {
     constructor(ctx) {
@@ -249,6 +250,20 @@ class PermissionedDataService {
             nonce: this.config.publicKeyData.nonce,
             proof: this.config.publicKeyData.proof,
         };
+    }
+
+    async validatePublicKeyData(publicKeyData, nodeId) {
+        const identity = new kadence.eclipse.EclipseIdentity(
+            publicKeyData.publicKey,
+            publicKeyData.nonce,
+            publicKeyData.proof,
+        );
+
+        if (!identity.validate()) {
+            this.log.info('identity proof not yet solved, this can take a while');
+            await this.identity.solve();
+        }
+        return this.identity.fingerprint.toString('hex').toLowerCase() === nodeId;
     }
 }
 
