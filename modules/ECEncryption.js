@@ -7,7 +7,7 @@ class ECEncryption {
      * Encrypts object data with given EC public key
      * @param obj
      * @param publicKey
-     * @returns base64 encrypted data
+     * @returns {Promise<any>} base64 encrypted data
      */
     static async encryptObject(obj, publicKey) {
         const data = JSON.stringify(Utilities.sortObject(obj));
@@ -19,7 +19,7 @@ class ECEncryption {
      * Encrypts raw data with given EC public key
      * @param data
      * @param publicKey
-     * @returns base64 encrypted data
+     * @returns {Promise<any>} base64 encrypted data
      */
     static async encryptRawData(data, publicKey) {
         const denormalizedPublicKey = Utilities.denormalizeHex(publicKey);
@@ -32,7 +32,7 @@ class ECEncryption {
      * Decrypts raw encrypted data with given EC private key
      * @param {string} - encryptedData
      * @param {string} - privateKey
-     * @returns {string}
+     * @returns {Promise<any>} string
      */
     static async decrypt(encryptedData, privateKey) {
         const denormalizedPrivateKey = Buffer.from(Utilities.denormalizeHex(privateKey), 'hex');
