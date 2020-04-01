@@ -1,6 +1,6 @@
 const BN = require('bn.js');
 const Utilities = require('../Utilities');
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 
 const models = require('../../models');
 

@@ -2,7 +2,7 @@ const BN = require('bn.js');
 const path = require('path');
 const fs = require('fs');
 
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');

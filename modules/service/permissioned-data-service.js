@@ -3,7 +3,7 @@ const Utilities = require('../Utilities');
 const node_constants = require('../constants');
 const MerkleTree = require('../Merkle');
 const crypto = require('crypto');
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 const abi = require('ethereumjs-abi');
 const ImportUtilities = require('../ImportUtilities');
 
