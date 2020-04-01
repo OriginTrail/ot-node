@@ -11,7 +11,7 @@ class ECEncryption {
      */
     static async encryptObject(obj, publicKey) {
         const data = JSON.stringify(Utilities.sortObject(obj));
-        const encryptedData = await this.encryptRawData(data, publicKey);
+        const encryptedData = await ECEncryption.encryptRawData(data, publicKey);
         return encryptedData;
     }
 
@@ -23,7 +23,7 @@ class ECEncryption {
      */
     static async encryptRawData(data, publicKey) {
         const denormalizedPublicKey = Utilities.denormalizeHex(publicKey);
-        const uncompressedPublicKey = await this.uncompressPublicKey(denormalizedPublicKey);
+        const uncompressedPublicKey = await ECEncryption.uncompressPublicKey(denormalizedPublicKey);
         const encryptedData = await eccrypto.encrypt(uncompressedPublicKey, Buffer.from(data));
         return Buffer.from(JSON.stringify(encryptedData)).toString('base64');
     }
