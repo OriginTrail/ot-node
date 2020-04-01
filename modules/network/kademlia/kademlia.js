@@ -502,6 +502,13 @@ class Kademlia {
         });
 
         // async
+        this.node.use('kad-public-key-request', (request, response, next) => {
+            this.log.debug('kad-public-key-request received');
+            this.emitter.emit('kad-public-key-request', request, response);
+            response.send([]);
+        });
+
+        // async
         this.node.use('kad-challenge-request', (request, response, next) => {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);

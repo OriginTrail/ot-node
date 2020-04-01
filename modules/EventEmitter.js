@@ -906,6 +906,17 @@ class EventEmitter {
                 logger.notify(`DV ${senderId} failed to process the encrypted key`);
             }
         });
+
+        // async
+        this._on('kad-public-key-request', async (request, response) => {
+            const senderId = transport.extractSenderID(request);
+            const { status } = transport.extractMessage(request);
+            if (status === 'SUCCESS') {
+                logger.notify(`DV ${senderId} successfully processed the encrypted key`);
+            } else {
+                logger.notify(`DV ${senderId} failed to process the encrypted key`);
+            }
+        });
     }
 
     /**
