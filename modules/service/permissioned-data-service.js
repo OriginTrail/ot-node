@@ -260,10 +260,10 @@ class PermissionedDataService {
         );
 
         if (!identity.validate()) {
-            this.log.info('identity proof not yet solved, this can take a while');
-            await this.identity.solve();
+            this.logger.info('identity proof not yet solved, this can take a while');
+            await identity.solve();
         }
-        return this.identity.fingerprint.toString('hex').toLowerCase() === nodeId;
+        return identity.fingerprint.toString('hex').toLowerCase() === nodeId;
     }
 }
 
