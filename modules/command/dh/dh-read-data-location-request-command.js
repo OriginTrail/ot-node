@@ -107,7 +107,7 @@ class DHReadDataLocationRequestCommand extends Command {
             const permissionedData = [];
 
             importDetails.forEach((item) => {
-                if (item.hasPermissionedData) {
+                if (item.hasPermissionedData && item.permissionedDataAvailable) {
                     permissionedData.push({
                         ot_object_id: item.id,
                     });

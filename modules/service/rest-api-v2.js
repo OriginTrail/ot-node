@@ -18,9 +18,11 @@ class RestAPIServiceV2 {
         this.commandExecutor = ctx.commandExecutor;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
-        this.dcController = ctx.dcController;
 
+        this.dcController = ctx.dcController;
+        this.dhController = ctx.dhController;
         this.dvController = ctx.dvController;
+
         this.exportController = ctx.exportController;
         this.remoteControl = ctx.remoteControl;
 
@@ -145,6 +147,10 @@ class RestAPIServiceV2 {
         // permissioned_data/purchase/result/:handler_id`, async (req, res) => {
         //     await this._checkForHandlerStatus(req, res);
         // });
+
+        server.post(`/api/${this.version_id}/permissioned_data/whitelist_viewer`, async (req, res) => {
+            await this.dhController.whitelistViewer(req, res);
+        });
 
         server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
             await this.dvController.handleDataReadExportRequest(req, res);
