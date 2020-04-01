@@ -267,58 +267,76 @@ class ArangoJS {
             }
 
             const id_value = value;
-            let filter = '';
+            let operator = '';
             switch (opcode) {
             case 'EQ':
-                filter += `FILTER v${count}.vertexType == "Identifier"
-                                     AND v${count}.identifierType == @id_type${count}
-                                     AND v${count}.identifierValue == @id_value${count}
-                                     AND v${count}.encrypted == ${encColor}
-                                     `;
-                params[`id_type${count}`] = id_type;
-                params[`id_value${count}`] = id_value;
+                operator = '==';
                 break;
             case 'IN':
-                filter += `FILTER v${count}.vertexType == "IDENTIFIER"
-                                     AND v${count}.identifierType == @id_type${count}
-                                     AND  @id_value${count} IN v${count}.identifierValue
-                                     AND v${count}.encrypted == ${encColor}
-                                     `;
-
-                params[`id_type${count}`] = id_type;
-                params[`id_value${count}`] = id_value;
+                operator = 'IN';
                 break;
             default:
-                throw new Error(`OPCODE ${opcode} is not defined`);
+                throw new Error(`OPCODE ${opcode} is not supported`);
             }
+            params[`id_type${count}`] = id_type;
+            params[`id_value${count}`] = id_value;
 
-            queryString += `LET v_res${count} = (
-                            FOR v${count} IN ot_vertices
-                            ${filter}
+            queryString += `
+                LET v_res${count} = (
                             
-                            let es =(FOR es IN ot_edges
-                            FILTER es._from == v${count}._id
-                            return es)
-                            for e1 IN es
-                            
-                            for entity in ot_vertices
-                            filter entity._id == e1._to
-                            for e2 in ot_edges
-                            filter e2._from == entity._id
-                            and e2.relationType == "HAS_DATA"
-                            for dataVertex in ot_vertices
-                            filter dataVertex._id == e2._to
-
-                            LET hasPermissionedData = (
-                            let properties = dataVertex['data']
-                            RETURN properties.permissioned_data == null? false : 
-                               (properties.permissioned_data.data == null ? false : true))
-                            
-                            return {"id": v${count}.identifierValue, "datasets": dataVertex.datasets, "data_element_key": dataVertex._key, "hasPermissionedData": hasPermissionedData}
-                            )`;
+                LET identifiers = (
+                    FOR v${count} IN ot_vertices
+                    FILTER v${count}.vertexType == "Identifier"
+                    AND v${count}.identifierType == @id_type${count}
+                    AND v${count}.identifierValue ${operator} @id_value${count}
+                    AND v${count}.encrypted == ${encColor}
+                    RETURN v${count}
+                )
+                
+                LET identifier_datasets = identifiers[*].datasets[**]
+                
+                LET identified_objects = UNIQUE(
+                    FOR identifier IN identifiers
+                        FOR v, e IN 1..1 OUTBOUND identifier ot_edges
+                        FILTER e.edgeType == 'IdentifierRelation'
+                        RETURN v
+                )
+                
+                FOR entity IN identified_objects
+                    FOR dataVertex, e IN 1..1 OUTBOUND entity ot_edges
+                    FILTER e.relationType == "HAS_DATA"
+                    AND LENGTH(INTERSECTION(dataVertex.datasets, identifier_datasets)) > 0
+                
+                    LET permissioned_object = (
+                        LET properties = dataVertex['data']
+                        RETURN properties.permissioned_data == null? false : true
+                    )
+                    LET hasPermissionedData = POSITION(permissioned_object, true)
+    
+                    LET permissioned_data = (
+                        LET properties = dataVertex['data']
+                        RETURN properties.permissioned_data == null ? false :
+                            (properties.permissioned_data.data == null ? false : true)
+                    ) 
+                    LET permissionedDataAvailable = POSITION(permissioned_data, true)
+                                          
+                    RETURN {
+                        "id": entity.uid,
+                        "datasets": INTERSECTION(dataVertex.datasets, identifier_datasets),
+                        "data_element_key": dataVertex._key, 
+                        "hasPermissionedData": hasPermissionedData,
+                        "permissionedDataAvailable": permissionedDataAvailable
+                    }
+                )`;
 
             count += 1;
         }
+
+        let intersectionString = 'INTERSECTION(object1.datasets';
+        for (let i = 1; i < count; i += 1) {
+            intersectionString += `, object${i}.datasets`;
+        }
+        intersectionString += ')';
 
         for (let i = 1; i < count; i += 1) {
             queryString += `
@@ -326,13 +344,34 @@ class ArangoJS {
                     `;
         }
 
-        queryString += ' RETURN INTERSECTION(v_res1';
-
+        queryString += `
+            LET data_object_keys = UNIQUE(INTERSECTION(v_res1[*].data_element_key[**]`;
         for (let i = 1; i < count; i += 1) {
-            queryString += `, v_res${i}`;
+            queryString += `, v_res${i}[*].data_element_key[**]`;
         }
+        queryString += '))';
 
-        queryString += ')[0]';
+        queryString += `
+            LET returned_objects = (
+                FOR data_key in data_object_keys`;
+        for (let i = 1; i < count; i += 1) {
+            queryString += `
+                LET position${i} = POSITION(v_res${i}[*].data_element_key, data_key, true)
+                LET object${i} = NTH(v_res${i}, position${i})
+            `;
+        }
+        queryString += `
+                FILTER LENGTH(${intersectionString}) > 0
+                RETURN {
+                    "id": object1.id,
+                    "datasets": ${intersectionString},
+                    "data_element_key": data_key,
+                    "hasPermissionedData": object1.hasPermissionedData,
+                    "permissionedDataAvailable": object1.permissionedDataAvailable
+                })`;
+
+        queryString += `
+            RETURN returned_objects[0]`;
 
         return this.runQuery(queryString, params);
     }

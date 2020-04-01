@@ -163,8 +163,7 @@ Feature: Data layer related features
     And DV waits for export to finish
     Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
 
-#    set second when fixed on whitelist route
-  @skip
+  @second
   Scenario: Data location with multiple identifiers
     Given I setup 1 node
     And I start the node

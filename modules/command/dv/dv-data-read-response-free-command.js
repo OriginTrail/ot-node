@@ -251,7 +251,7 @@ class DVDataReadResponseFreeCommand extends Command {
     }
 
     /**
-     * Builds default DVDataReadRequestCommand
+     * Builds default DVDataReadResponseFreeCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
