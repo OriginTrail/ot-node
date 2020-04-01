@@ -333,7 +333,7 @@ class ArangoJS {
         }
 
         let intersectionString = 'INTERSECTION(object1.datasets';
-        for (let i = 2; i < count; i += 1) {
+        for (let i = 1; i < count; i += 1) {
             intersectionString += `, object${i}.datasets`;
         }
         intersectionString += ')';
@@ -346,7 +346,7 @@ class ArangoJS {
 
         queryString += `
             LET data_object_keys = UNIQUE(INTERSECTION(v_res1[*].data_element_key[**]`;
-        for (let i = 2; i < count; i += 1) {
+        for (let i = 1; i < count; i += 1) {
             queryString += `, v_res${i}[*].data_element_key[**]`;
         }
         queryString += '))';
