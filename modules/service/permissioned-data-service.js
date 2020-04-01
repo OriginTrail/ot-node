@@ -242,6 +242,14 @@ class PermissionedDataService {
         });
         await Promise.all(promises);
     }
+
+    getPublicKeyData() {
+        return {
+            public_key: this.config.publicKeyData.publicKey,
+            nonce: this.config.publicKeyData.nonce,
+            proof: this.config.publicKeyData.proof,
+        };
+    }
 }
 
 module.exports = PermissionedDataService;
