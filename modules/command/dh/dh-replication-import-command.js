@@ -50,6 +50,7 @@ class DhReplicationImportCommand extends Command {
 
         const { decryptedDataset, encryptedMap } =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
+
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
 
