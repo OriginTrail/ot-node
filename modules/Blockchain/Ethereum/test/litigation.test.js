@@ -186,6 +186,7 @@ contract('Litigation testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     beforeEach(async () => {
+        await holdingStorage.setDifficultyOverride(new BN(1));
         // Creating offer used for litigation
         const res = await holding.createOffer(
             DC_identity,
@@ -278,6 +279,8 @@ contract('Litigation testing', async (accounts) => {
             emptyAddress,
             { from: DC_wallet },
         );
+
+        await holdingStorage.setDifficultyOverride(new BN(0));
     });
 
 
