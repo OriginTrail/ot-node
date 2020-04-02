@@ -58,8 +58,6 @@ class DhReplicationImportCommand extends Command {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }
 
-        decryptedDataset['@graph'] = JSON.parse(ImportUtilities.sortGraphRecursively(decryptedDataset['@graph']));
-
         const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset['@graph'], decryptedDataset['@id'], decryptedDataset.datasetHeader.dataCreator);
         const blockchainRootHash = await this.blockchain.getRootHash(dataSetId);
 
