@@ -6,7 +6,7 @@ const abi = require('ethereumjs-abi');
 const Utilities = require('./Utilities');
 const utils = require('ethereumjs-util');
 
-class Encryption {
+class RSAEncryption {
     /**
      * Returns generated 512b RSA public-private key pair
      * @param Key bit size (optional)
@@ -275,18 +275,18 @@ class Encryption {
      * @returns {boolean}
      */
     static verifyDataChecksum(M1, missing, missingBlockNumber, M2, sd, spdHash, r1, r2) {
-        let M1C = (new BN(Encryption.calculateDataChecksum(M1, 0, 0), 'hex'));
-        let missingC = new BN(Encryption.calculateDataChecksum(missing, 0, 0, missingBlockNumber), 'hex');
-        let M2C = (new BN(Encryption.calculateDataChecksum(M2, 0, 0, missingBlockNumber + 1), 'hex'));
+        let M1C = (new BN(RSAEncryption.calculateDataChecksum(M1, 0, 0), 'hex'));
+        let missingC = new BN(RSAEncryption.calculateDataChecksum(missing, 0, 0, missingBlockNumber), 'hex');
+        let M2C = (new BN(RSAEncryption.calculateDataChecksum(M2, 0, 0, missingBlockNumber + 1), 'hex'));
 
 
         if (M1C.add(missingC).add(M2C).toString('hex') !== sd) {
             return false;
         }
 
-        M1C = (new BN(Encryption.calculateDataChecksum(M1, r1, r2), 'hex'));
-        missingC = new BN(Encryption.calculateDataChecksum(missing, r1, r2, missingBlockNumber), 'hex');
-        M2C = (new BN(Encryption.calculateDataChecksum(M2, r1, r2, missingBlockNumber + 1), 'hex'));
+        M1C = (new BN(RSAEncryption.calculateDataChecksum(M1, r1, r2), 'hex'));
+        missingC = new BN(RSAEncryption.calculateDataChecksum(missing, r1, r2, missingBlockNumber), 'hex');
+        M2C = (new BN(RSAEncryption.calculateDataChecksum(M2, r1, r2, missingBlockNumber + 1), 'hex'));
 
         const spd = M1C.add(missingC).add(M2C);
 
@@ -380,4 +380,4 @@ class Encryption {
     }
 }
 
-module.exports = Encryption;
+module.exports = RSAEncryption;
