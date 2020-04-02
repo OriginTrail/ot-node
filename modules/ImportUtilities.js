@@ -452,10 +452,10 @@ class ImportUtilities {
         const publicGraph = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(publicGraph);
 
-        ImportUtilities.sortGraphRecursively(publicGraph);
+        const sortedPublicGraph = JSON.parse(ImportUtilities.sortGraphRecursively(publicGraph));
 
         const merkle = ImportUtilities.createDistributionMerkleTree(
-            publicGraph,
+            sortedPublicGraph,
             datasetId,
             datasetCreator,
         );

@@ -50,12 +50,15 @@ class DhReplicationImportCommand extends Command {
 
         const { decryptedDataset, encryptedMap } =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
+
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
 
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }
+
+        decryptedDataset['@graph'] = JSON.parse(ImportUtilities.sortGraphRecursively(decryptedDataset['@graph']));
 
         const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset['@graph'], decryptedDataset['@id'], decryptedDataset.datasetHeader.dataCreator);
         const blockchainRootHash = await this.blockchain.getRootHash(dataSetId);
