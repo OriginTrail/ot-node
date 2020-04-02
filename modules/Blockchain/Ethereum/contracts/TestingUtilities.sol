@@ -58,6 +58,16 @@ contract TestingUtilities{
 		return keccak256(abi.encodePacked(a,b,c));
 	}
 
+	function keccakBytesBytes(bytes32 a, bytes32 b)
+	public pure returns (bytes32) {
+		return keccak256(abi.encodePacked(a,b));
+	}
+
+	// function to decrypt hashes of the merkle tree
+	function decryptCiphertext(uint _index, bytes32 key, bytes32 _ciphertext) public pure returns (bytes32){
+		return keccak256(abi.encodePacked(key, _index)) ^ _ciphertext;
+	}
+
 	function keccakAddress(address a)
 	public pure returns (bytes32) {
 		return keccak256(abi.encodePacked(a));
@@ -103,6 +113,11 @@ contract TestingUtilities{
 		return block.number;
 	}
 
+	function xorBytes(bytes32 byt1, bytes32 byt2)
+	public pure returns (bytes32){
+		return byt1 ^ byt2;
+	}
+
 	function moveTheBlock()
 	public{
 		internalData = !internalData;
@@ -111,7 +126,7 @@ contract TestingUtilities{
 	function escrowHash(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id)
 	public pure returns (bytes32){
 		return keccak256(abi.encodePacked(offer_hash, DH_wallet, DH_node_id));
-	} 
+	}
 
 	event PreIPosle(uint a);
 

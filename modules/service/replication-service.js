@@ -2,7 +2,7 @@ const BN = require('bn.js');
 const path = require('path');
 const fs = require('fs');
 
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
@@ -24,7 +24,7 @@ class ReplicationService {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.importService = ctx.importService;
-
+        this.permissionedDataService = ctx.permissionedDataService;
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
 
         if (!fs.existsSync(replicationPath)) {
@@ -45,6 +45,16 @@ class ReplicationService {
 
         const otJson = await this.importService.getImport(offer.data_set_id);
 
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            offer.data_set_id,
+            this.config.erc725Identity,
+            this.config.default_data_price,
+            this.config.identity,
+            otJson['@graph'],
+        );
+
+        ImportUtilities.removeGraphPermissionedData(otJson['@graph']);
+
         const hashes = {};
 
         const writeFilePromises = [];
@@ -61,8 +71,7 @@ class ReplicationService {
 
             const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
 
-            encryptedDataset =
-                ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
+            encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
             const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
 

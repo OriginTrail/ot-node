@@ -18,6 +18,7 @@ class DVDataReadResponseFreeCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
         this.commandExecutor = ctx.commandExecutor;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -72,7 +73,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
-        const { document } = message;
+        const { document, permissionedData } = message;
         // Calculate root hash and check is it the same on the SC.
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
@@ -93,6 +94,22 @@ class DVDataReadResponseFreeCommand extends Command {
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
+
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            document['@graph'],
+            permissionedData,
+        );
+
+        const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        const profile = await this.blockchain.getProfile(erc725Identity);
+
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            erc725Identity,
+            0,
+            profile.nodeId.toLowerCase().slice(0, 42),
+            document['@graph'],
+        );
 
         const handler = await Models.handler_ids.findOne({
             where: { handler_id },
@@ -234,7 +251,7 @@ class DVDataReadResponseFreeCommand extends Command {
     }
 
     /**
-     * Builds default DVDataReadRequestCommand
+     * Builds default DVDataReadResponseFreeCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

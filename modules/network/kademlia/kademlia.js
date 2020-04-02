@@ -144,8 +144,10 @@ class Kademlia {
                 methods: [
                     'kad-data-location-request',
                     'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
-                    'kad-data-read-response', 'kad-send-encrypted-key',
-                    'kad-encrypted-key-process-result',
+                    'kad-data-read-response', 'kad-data-purchase-request', 'kad-data-purchase-response',
+                    'kad-data-price-request', 'kad-data-price-response',
+                    'kad-permissioned-data-read-response', 'kad-permissioned-data-read-request',
+                    'kad-send-encrypted-key', 'kad-encrypted-key-process-result',
                     'kad-replication-request', 'kad-replacement-replication-request', 'kad-replacement-replication-finished',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
@@ -446,6 +448,48 @@ class Kademlia {
         });
 
         // async
+        this.node.use('kad-permissioned-data-read-request', (request, response, next) => {
+            this.log.debug('kad-permissioned-data-read-request received');
+            this.emitter.emit('kad-permissioned-data-read-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-permissioned-data-read-response', (request, response, next) => {
+            this.log.debug('kad-permissioned-data-read-response received');
+            this.emitter.emit('kad-permissioned-data-read-response', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-purchase-request', (request, response, next) => {
+            this.log.debug('kad-data-purchase-request received');
+            this.emitter.emit('kad-data-purchase-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-purchase-response', (request, response, next) => {
+            this.log.debug('kad-data-purchase-response received');
+            this.emitter.emit('kad-data-purchase-response', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-price-request', (request, response, next) => {
+            this.log.debug('kad-data-price-request received');
+            this.emitter.emit('kad-data-price-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-price-response', (request, response, next) => {
+            this.log.debug('kad-data-price-response received');
+            this.emitter.emit('kad-data-price-response', request);
+            response.send([]);
+        });
+
+        // async
         this.node.use('kad-send-encrypted-key', (request, response, next) => {
             this.log.debug('kad-send-encrypted-key received');
             this.emitter.emit('kad-send-encrypted-key', request, response);
@@ -612,6 +656,84 @@ class Kademlia {
                 const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
                     node.send('kad-data-read-response', { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendPermissionedDataReadRequest = async (message, contactId) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-permissioned-data-read-request', { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendPermissionedDataReadResponse = async (message, contactId) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-permissioned-data-read-response', { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendDataPurchaseRequest = async (message, contactId) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-data-purchase-request', { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendDataPurchaseResponse = async (message, contactId) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-data-purchase-response', { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendPermissionedDataPriceRequest = async (message, contactId) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-data-price-request', { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendPermissionedDataPriceResponse = async (message, contactId) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-data-price-response', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
