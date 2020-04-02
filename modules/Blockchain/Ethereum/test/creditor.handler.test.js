@@ -224,6 +224,11 @@ contract('Creditor handler testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
+    afterEach(async () => {
+        await holdingStorage.setDifficultyOverride(new BN(0));
+    });
+
+    // eslint-disable-next-line no-undef
     it('Should set identity[1] as a subidentity of identity[0]', async () => {
         // Get keys used for test
         const subidentityHash = await util.keccakAddress.call(identities[0]);

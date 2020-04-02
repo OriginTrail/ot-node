@@ -302,6 +302,7 @@ class OTNode {
         // Allow identity to be added. Continuity.
         config.identity = '';
         config.erc725Identity = '';
+        config.publicKeyData = {};
         Object.seal(config);
 
         const web3 =

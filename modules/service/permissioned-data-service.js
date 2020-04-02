@@ -3,9 +3,10 @@ const Utilities = require('../Utilities');
 const constants = require('../constants');
 const MerkleTree = require('../Merkle');
 const crypto = require('crypto');
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 const abi = require('ethereumjs-abi');
 const ImportUtilities = require('../ImportUtilities');
+const kadence = require('@deadcanaries/kadence');
 
 class PermissionedDataService {
     constructor(ctx) {
