@@ -482,7 +482,7 @@ class EventEmitter {
             dvController,
             dcController,
             notifyError,
-            permissionedDataService,
+            networkService,
         } = this.ctx;
 
         // sync
@@ -912,7 +912,7 @@ class EventEmitter {
         this._on('kad-public-key-request', async (request, response) => {
             logger.info('Public key request received');
 
-            const publicKeyData = permissionedDataService.getPublicKeyData();
+            const publicKeyData = networkService.getPublicKeyData();
             try {
                 await transport.sendResponse(response, publicKeyData);
             } catch (error) {
