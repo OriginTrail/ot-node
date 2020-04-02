@@ -126,6 +126,15 @@ class HttpNetwork {
             return HttpNetwork.send(contact.hostname, data, this.config.identity);
         };
 
+        this.node.sendPublicKeyRequest = async (message, contactId) => {
+            const data = {
+                type: 'kad-public-key-request',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
         this.node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
             // TODO
         });

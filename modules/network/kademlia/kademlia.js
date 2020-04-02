@@ -91,6 +91,11 @@ class Kademlia {
                 this.identity.proof.toString('hex'),
             );
         }
+        this.config.publicKeyData = {
+            publicKey,
+            nonce: this.nonce,
+            proof: this.proof,
+        };
 
         this.config.identity = this.identity.fingerprint.toString('hex').toLowerCase();
 
@@ -149,6 +154,7 @@ class Kademlia {
                     'kad-permissioned-data-read-response', 'kad-permissioned-data-read-request',
                     'kad-send-encrypted-key', 'kad-encrypted-key-process-result',
                     'kad-replication-request', 'kad-replacement-replication-request', 'kad-replacement-replication-finished',
+                    'kad-public-key-request',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
@@ -502,6 +508,13 @@ class Kademlia {
         });
 
         // async
+        this.node.use('kad-public-key-request', (request, response, next) => {
+            this.log.debug('kad-public-key-request received');
+            this.emitter.emit('kad-public-key-request', request, response);
+            response.send([]);
+        });
+
+        // async
         this.node.use('kad-challenge-request', (request, response, next) => {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
@@ -760,6 +773,19 @@ class Kademlia {
                 const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
                     node.send('kad-encrypted-key-process-result', { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendPublicKeyRequest = async (message, contactId) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-public-key-request', { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {

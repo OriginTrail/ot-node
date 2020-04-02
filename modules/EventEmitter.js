@@ -482,6 +482,7 @@ class EventEmitter {
             dvController,
             dcController,
             notifyError,
+            networkService,
         } = this.ctx;
 
         // sync
@@ -904,6 +905,24 @@ class EventEmitter {
                 logger.notify(`DV ${senderId} successfully processed the encrypted key`);
             } else {
                 logger.notify(`DV ${senderId} failed to process the encrypted key`);
+            }
+        });
+
+        // async
+        this._on('kad-public-key-request', async (request, response) => {
+            logger.info('Public key request received');
+
+            const publicKeyData = networkService.getPublicKeyData();
+            try {
+                await transport.sendResponse(response, publicKeyData);
+            } catch (error) {
+                const errorMessage = `Failed to send public key data. ${error}.`;
+                logger.warn(errorMessage);
+                notifyError(error);
+                await transport.sendResponse(response, {
+                    status: 'FAIL',
+                    message: error.message,
+                });
             }
         });
     }
