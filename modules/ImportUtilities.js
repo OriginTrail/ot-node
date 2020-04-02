@@ -1,7 +1,8 @@
 const bytes = require('utf8-length');
 const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
-const node_constants = require('./constants');
+
+const constants = require('./constants');
 const Utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
@@ -137,14 +138,14 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(document) {
+    static prepareDataset(document, config, web3) {
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(graph);
         const id = ImportUtilities.calculateGraphPublicHash(graph);
 
         const header = ImportUtilities.createDatasetHeader(
-            this.config, null,
+            config, null,
             datasetHeader.datasetTags,
             datasetHeader.datasetTitle,
             datasetHeader.datasetDescription,
@@ -160,7 +161,7 @@ class ImportUtilities {
         const rootHash = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
         dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
 
-        const signed = ImportUtilities.signDataset(dataset, this.config, this.web3);
+        const signed = ImportUtilities.signDataset(dataset, config, web3);
         return signed;
     }
 
@@ -219,8 +220,8 @@ class ImportUtilities {
         const sorted_data = Utilities.sortedStringify(permissioned_object.data, true);
         const data = Buffer.from(sorted_data);
 
-        const first_level_blocks = node_constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = node_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+        const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
         let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
         block_size = block_size < 1 ? 1 : block_size;
