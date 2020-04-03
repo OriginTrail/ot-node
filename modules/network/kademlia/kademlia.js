@@ -14,6 +14,7 @@ const ip = require('ip');
 const uuidv4 = require('uuid/v4');
 const secp256k1 = require('secp256k1');
 const ECEncryption = require('../../ECEncryption');
+const NetworkService = require('../../service/network-service');
 
 const KadenceUtils = require('@deadcanaries/kadence/lib/utils.js');
 const { IncomingMessage, OutgoingMessage } = require('./logger');
@@ -36,6 +37,7 @@ class Kademlia {
         this.notifyError = ctx.notifyError;
         this.config = ctx.config;
         this.approvalService = ctx.approvalService;
+        this.networkService = new NetworkService(ctx);
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
@@ -321,7 +323,11 @@ class Kademlia {
                 const { contact, header } = await node.getContact(contactId);
                 let body = message;
                 if (contact[0] !== contactId) {
-                    body = await ECEncryption.encryptObject(message, null);
+                    let pubKey = await this.networkService.getNodePublicKey(contactId);
+                    if (!pubKey) {
+                        pubKey = await this.node.sendPublicKeyRequest(null, contact);
+                    }
+                    body = await ECEncryption.encryptObject(message, pubKey);
                     header.encrypted = true;
                 }
 
@@ -331,7 +337,8 @@ class Kademlia {
             node.unpackMessage = async (request) => {
                 const header = JSON.parse(request.params.header);
                 if (header.encrypted) {
-                    request.params.message = ECEncryption.decrypt(request.params.message, null);
+                    request.params.message =
+                        ECEncryption.decrypt(request.params.message, this.node.privateKey);
                 }
             };
             /**
@@ -577,10 +584,9 @@ class Kademlia {
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
             node.sendDirectMessage = async (message, contactId, method) => {
-                // TODO Use Milos's packMessage instead of getContact
-                const { contact, header } = await node.getContact(contactId);
+                const { contact, header, body } = await node.packMessage(contactId, message);
                 return new Promise((resolve, reject) => {
-                    node.send(method, { message, header }, contact, (err, res) => {
+                    node.send(method, { message: body, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
