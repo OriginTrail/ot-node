@@ -50,7 +50,10 @@ class NetworkService {
                 timestamp + constants.PUBLIC_KEY_VALIDITY_IN_MILLS < Date.now();
 
             if (keyIsExpired(timestamp)) {
-                this.logger.log(`Public key expired for node ${node_id}`);
+                this.logger.log(`Public key expired for node ${node_id}, removing entry from cache`);
+                await Models.public_keys.destroy({
+                    where: { node_id },
+                });
                 return undefined;
             }
             return public_key;
@@ -87,8 +90,7 @@ class NetworkService {
             });
         }
 
-        this.logger.log(`Public key not found for node ${node_id}`);
-        return undefined;
+        this.logger.log(`Public key cache updated for contact ${node_id}`);
     }
 }
 
