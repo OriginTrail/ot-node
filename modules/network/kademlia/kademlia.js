@@ -348,7 +348,7 @@ class Kademlia {
                             if (contact && Array.isArray(contact) && contact.length === 2
                                 && contact[1].hostname && contact[1].port
                                 && contact[0] === contact[1].identity) {
-                                this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
+                                this.log.debug(`Found a proxy contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
                                 accept({ contact, header });
                             }
                             reject(Error(`Unknown contact ${contactId}.`));
@@ -554,6 +554,33 @@ class Kademlia {
 
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
+            node.sendDirectMessage = async (message, contactId, method) => {
+                // TODO Use Milos's packMessage instead of getContact
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send(method, { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.sendUnpackedMessage = async (message, contactId, method) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send(method, { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
             /**
              * Helper method for getting nearest contact (used for testing purposes only)
              * @returns {*}
@@ -561,239 +588,59 @@ class Kademlia {
             node.getNearestNeighbour = () =>
                 [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
 
-            node.replicationRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replication-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.replicationRequest = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-replication-request');
 
-            node.replacementReplicationRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replacement-replication-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.replacementReplicationRequest = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-replacement-replication-request');
 
-            node.replicationFinished = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replication-finished', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.replicationFinished = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-replication-finished');
 
-            node.replacementReplicationFinished = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replacement-replication-finished', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.replacementReplicationFinished = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-replacement-replication-finished');
 
-            node.challengeRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.challengeRequest = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-challenge-request');
 
-            node.challengeResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.challengeResponse = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-challenge-response');
 
-            node.sendDataLocationResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-location-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendDataLocationResponse = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-data-location-response');
 
-            node.dataReadRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-read-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.dataReadRequest = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-data-read-request');
 
-            node.sendDataReadResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-read-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendDataReadResponse = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-data-read-response');
 
-            node.sendPermissionedDataReadRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-permissioned-data-read-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendPermissionedDataReadRequest = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-permissioned-data-read-request');
 
-            node.sendPermissionedDataReadResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-permissioned-data-read-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendPermissionedDataReadResponse = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-permissioned-data-read-response');
 
-            node.sendDataPurchaseRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-purchase-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendDataPurchaseRequest = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-data-purchase-request');
 
-            node.sendDataPurchaseResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-purchase-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendDataPurchaseResponse = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-data-purchase-response');
 
-            node.sendPermissionedDataPriceRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-price-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendPermissionedDataPriceRequest = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-data-price-request');
 
-            node.sendPermissionedDataPriceResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-price-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendPermissionedDataPriceResponse = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-data-price-response');
 
-            node.sendEncryptedKey = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-send-encrypted-key', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendEncryptedKey = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-send-encrypted-key');
 
-            node.sendEncryptedKeyProcessResult = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-encrypted-key-process-result', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendEncryptedKeyProcessResult = async (message, contactId) =>
+                node.sendDirectMessage(message, contactId, 'kad-encrypted-key-process-result');
 
-            node.sendPublicKeyRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-public-key-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            node.sendPublicKeyRequest = async (message, contactId) =>
+                node.sendUnpackedMessage(message, contactId, 'kad-public-key-request');
 
             node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
                 node.quasar.quasarPublish(
