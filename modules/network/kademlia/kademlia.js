@@ -323,11 +323,16 @@ class Kademlia {
                 const { contact, header } = await node.getContact(contactId);
                 let body = message;
                 if (contact[0] !== contactId) {
-                    let pubKey = await this.networkService.getNodePublicKey(contactId);
-                    if (!pubKey) {
-                        pubKey = await this.node.sendPublicKeyRequest(null, contact);
+                    let publicKey = await this.networkService.getNodePublicKey(contactId);
+                    if (!publicKey) {
+                        try {
+                            publicKey = await node.sendPublicKeyRequest(null, contact);
+                            await this.networkService.setNodePublicKey(contactId, null, publicKey);
+                        } catch (e) {
+                            throw Error('Unable to get node public key for encryption');
+                        }
                     }
-                    body = await ECEncryption.encryptObject(message, pubKey);
+                    body = await ECEncryption.encryptObject(message, publicKey);
                     header.encrypted = true;
                 }
 
@@ -584,16 +589,22 @@ class Kademlia {
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
             node.sendDirectMessage = async (message, contactId, method) => {
-                const { contact, header, body } = await node.packMessage(contactId, message);
-                return new Promise((resolve, reject) => {
-                    node.send(method, { message: body, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
+                try {
+                    const { contact, header, body } = await node.packMessage(contactId, message);
+                    return new Promise((resolve, reject) => {
+                        node.send(method, { message: body, header }, contact, (err, res) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(res);
+                            }
+                        });
                     });
-                });
+                } catch (error) {
+                    return new Promise((resolve, reject) => {
+                        reject(error);
+                    });
+                }
             };
 
             node.sendUnpackedMessage = async (message, contactId, method) => {
