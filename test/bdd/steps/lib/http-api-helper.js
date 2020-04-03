@@ -52,7 +52,7 @@ async function apiFingerprint(nodeRpcUrl, datSetId) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/latest/fingerprint?data_set_id=${datSetId}`,
+                uri: `${nodeRpcUrl}/api/latest/fingerprint/${datSetId}`,
                 json: true,
             },
             (err, res, body) => {

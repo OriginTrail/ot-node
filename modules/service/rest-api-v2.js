@@ -313,14 +313,8 @@ class RestAPIServiceV2 {
         /** Get root hash for provided data query
          * @param Query params: data_set_id
          */
-        server.get(`/api/${this.version_id}/fingerprint`, (req, res) => {
-            this.logger.api('GET: Fingerprint request received.');
-
-            const queryObject = req.query;
-            emitter.emit('api-get_root_hash', {
-                query: queryObject,
-                response: res,
-            });
+        server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, (req, res) => {
+            this.dvController.handleGetFingerprint(req, res);
         });
 
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {

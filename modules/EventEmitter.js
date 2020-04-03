@@ -248,45 +248,6 @@ class EventEmitter {
             });
         });
 
-        this._on('api-get_root_hash', (data) => {
-            const dataSetId = data.query.data_set_id;
-            if (dataSetId == null) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'data_set_id parameter query is missing',
-                });
-                return;
-            }
-            logger.info(`Get root hash triggered with data set ${dataSetId}`);
-            blockchain.getRootHash(dataSetId).then((dataRootHash) => {
-                if (dataRootHash) {
-                    if (!Utilities.isZeroHash(dataRootHash)) {
-                        data.response.status(200);
-                        data.response.send({
-                            root_hash: dataRootHash,
-                        });
-                    } else {
-                        data.response.status(404);
-                        data.response.send({
-                            message: `Root hash not found for query ${JSON.stringify(data.query)}`,
-                        });
-                    }
-                } else {
-                    data.response.status(500);
-                    data.response.send({
-                        message: `Failed to get root hash for query ${JSON.stringify(data.query)}`,
-                    });
-                }
-            }).catch((err) => {
-                logger.error(`Failed to get root hash for query ${JSON.stringify(data.query)}`);
-                notifyError(err);
-                data.response.status(500);
-                data.response.send({
-                    message: `Failed to get root hash for query ${JSON.stringify(data.query)}`, // TODO rethink about status codes
-                });
-            });
-        });
-
         this._on('api-offer-status', async (data) => {
             const { replicationId } = data;
             logger.info(`Offer status for internal ID ${replicationId} triggered.`);
