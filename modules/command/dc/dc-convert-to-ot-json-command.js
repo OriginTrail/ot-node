@@ -25,7 +25,7 @@ class DcConvertToOtJsonCommand extends Command {
                 let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
                 if (!document.signature) {
-                    document = ImportUtilities.prepareDataset(document);
+                    document = ImportUtilities.prepareDataset(this.web3, this.config, document);
                 }
 
                 fs.writeFileSync(documentPath, JSON.stringify(document));

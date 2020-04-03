@@ -137,14 +137,14 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(document) {
+    static prepareDataset(web3, config, document) {
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(graph);
         const id = ImportUtilities.calculateGraphPublicHash(graph);
 
         const header = ImportUtilities.createDatasetHeader(
-            this.config, null,
+            config, null,
             datasetHeader.datasetTags,
             datasetHeader.datasetTitle,
             datasetHeader.datasetDescription,
@@ -160,7 +160,7 @@ class ImportUtilities {
         const rootHash = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
         dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
 
-        const signed = ImportUtilities.signDataset(dataset, this.config, this.web3);
+        const signed = ImportUtilities.signDataset(dataset, config, web3);
         return signed;
     }
 
