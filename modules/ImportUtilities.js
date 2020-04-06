@@ -1,7 +1,8 @@
 const bytes = require('utf8-length');
 const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
-const node_constants = require('./constants');
+
+const constants = require('./constants');
 const Utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
@@ -137,7 +138,7 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(web3, config, document) {
+    static prepareDataset(document, config, web3) {
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(graph);
@@ -219,8 +220,8 @@ class ImportUtilities {
         const sorted_data = Utilities.sortedStringify(permissioned_object.data, true);
         const data = Buffer.from(sorted_data);
 
-        const first_level_blocks = node_constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = node_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+        const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
         let block_size = Math.min(Math.round(data.length / first_level_blocks), default_block_size);
         block_size = block_size < 1 ? 1 : block_size;

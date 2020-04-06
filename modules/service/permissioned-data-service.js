@@ -1,6 +1,6 @@
 const Models = require('../../models');
 const Utilities = require('../Utilities');
-const node_constants = require('../constants');
+const constants = require('../constants');
 const MerkleTree = require('../Merkle');
 const crypto = require('crypto');
 const Encryption = require('../RSAEncryption');
@@ -40,11 +40,20 @@ class PermissionedDataService {
      */
     attachPermissionedDataToMap(permissionedDataMap, ot_objects) {
         if (Object.keys(permissionedDataMap).length > 0) {
-            ot_objects.forEach((ot_object, index) => {
-                const permissionedDataObject = ot_object.properties.permissioned_data;
-
-                const { ot_json_object_id } = permissionedDataMap[index];
-                permissionedDataMap[ot_json_object_id] = permissionedDataObject;
+            ot_objects.forEach((ot_object) => {
+                if (ot_object['@id'] in permissionedDataMap) {
+                    if (!ot_object.properties) {
+                        throw Error(`Permissioned object ${ot_object['@id']} does not have properties`);
+                    }
+                    if (!ot_object.properties.permissioned_data) {
+                        throw Error(`Permissioned attribute not found for object ${ot_object['@id']}`);
+                    }
+                    if (!ot_object.properties.permissioned_data.data) {
+                        throw Error(`Permissioned data not found for object ${ot_object['@id']}`);
+                    }
+                    permissionedDataMap[ot_object['@id']] =
+                        Utilities.copyObject(ot_object.properties.permissioned_data);
+                }
             });
         }
     }
@@ -197,8 +206,8 @@ class PermissionedDataService {
 
         // recreate original object
 
-        const first_level_blocks = node_constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
-        const default_block_size = node_constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
+        const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
+        const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
 
         let block_size = Math.min(Math
             .round(permissionedDataOriginalLength / first_level_blocks), default_block_size);

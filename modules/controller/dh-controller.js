@@ -57,6 +57,7 @@ class DHController {
             response.status(400);
             response.send({
                 message: 'Specified ot-object does not exist',
+                status: 'FAILED',
             });
             return;
         }
@@ -81,6 +82,7 @@ class DHController {
         response.send({
             message: `User ${Utilities.normalizeHex(viewer_erc_id)} has been ` +
                 `whitelisted for ot-object ${ot_object_id} from dataset_id ${dataset_id}!`,
+            status: 'SUCCESS',
         });
     }
 }
