@@ -326,7 +326,7 @@ class Kademlia {
                     let publicKey = await this.networkService.getNodePublicKey(contactId);
                     if (!publicKey) {
                         try {
-                            publicKey = await node.sendPublicKeyRequest(null, contact);
+                            publicKey = await node.sendPublicKeyRequest(null, contact[0]);
                             await this.networkService.setNodePublicKey(contactId, null, publicKey);
                         } catch (e) {
                             throw Error('Unable to get node public key for encryption');
