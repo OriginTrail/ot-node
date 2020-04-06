@@ -102,6 +102,11 @@ class DHDataReadRequestFreeCommand extends Command {
             await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
+                messageSignature: Utilities.generateRsvSignature(
+                    errorMessage,
+                    this.web3,
+                    this.config.node_private_key,
+                ),
             }, nodeId);
         }
 

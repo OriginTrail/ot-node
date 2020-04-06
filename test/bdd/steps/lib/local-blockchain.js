@@ -237,6 +237,11 @@ class LocalBlockchain {
             this.web3, this.hubContract, this.hubContractData,
             [], accounts[7],
         );
+
+        await this.hubInstance.methods.setContractAddress('Owner', accounts[7])
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
         this.logger.log('Deploying approvalContract');
         [this.approvalDeploymentReceipt, this.approvalInstance] = await this.deployContract(
             this.web3, this.approvalContract, this.approvalContractData,
