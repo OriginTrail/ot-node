@@ -122,6 +122,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
 
 Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
+    this.logger.log(`I setup ${nodeCount} nodes`);
 
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeConfiguration = {
@@ -871,6 +872,7 @@ Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, 
 });
 
 Given(/^DC waits for replication window to close$/, { timeout: 180000 }, function (done) {
+    this.logger.log('DC waits for replication window to close');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);

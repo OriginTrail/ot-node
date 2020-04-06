@@ -351,6 +351,32 @@ Given(/^([DC|DH|DV]+) calls consensus endpoint for sender: "(\S+)"$/, async func
     this.state.lastConsensusResponse = consensusResponse;
 });
 
+Given(
+    /^([DC|DH|DV]+) whitelists ([DC|DH|DV]+) for object id: "(\S+)" in the last imported dataset$/,
+    async function (dataOwner, viewer, objectId) {
+        this.logger.log(`${dataOwner} whitelists ${viewer} for object id ${objectId} in the last imported dataset.`);
+
+        expect(dataOwner, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+        expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+
+        const host = this.state[dataOwner.toLowerCase()].state.node_rpc_url;
+        const viewerState = this.state[viewer.toLowerCase()];
+        const viewerErc725 = JSON.parse(fs.readFileSync(`${viewerState.options.configDir}/${viewerState.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+
+        const requestBody = {
+            ot_object_id: objectId,
+            dataset_id: this.state.lastImport.data.dataset_id,
+            viewer_erc_id: viewerErc725.identity,
+        };
+
+        const whitelistResponse = await httpApiHelper.apiWhitelistViewer(host, requestBody);
+        expect(whitelistResponse, 'Should have keys called message and status').to.have.all.keys('message', 'status');
+        const { message, status } = whitelistResponse;
+        expect(message, 'Whitelist response message should not be undefined').to.not.be.undefined;
+        expect(status, 'Whitelist response status should be SUCCESS').to.be.equal('SUCCESS');
+    },
+);
+
 Given(/^default initial token amount should be deposited on (\d+)[st|nd|rd|th]+ node's profile$/, async function (nodeIndex) {
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
