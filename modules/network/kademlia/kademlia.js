@@ -326,9 +326,13 @@ class Kademlia {
                     let publicKey = await this.networkService.getNodePublicKey(contactId);
                     if (!publicKey) {
                         try {
-                            publicKey = await node.sendPublicKeyRequest(null, contact[0]);
-                            await this.networkService.setNodePublicKey(contactId, null, publicKey);
+                            const publicKeyData = await node.sendPublicKeyRequest(null, contact[0]);
+
+                            if (!(await this.networkService.setNodePublicKey(publicKeyData))) { throw new Error('Public key validation error'); }
+
+                            publicKey = publicKeyData.public_key;
                         } catch (e) {
+                            console.log(e);
                             throw Error('Unable to get node public key for encryption');
                         }
                     }
@@ -404,6 +408,7 @@ class Kademlia {
                             }
                             response.send(next());
                         } else {
+                            console.log(request.params.message);
                             const result = await new Promise(async (accept, reject) => {
                                 const { contact } = await this.node.getContact(destContact);
                                 this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);

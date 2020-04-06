@@ -12,9 +12,11 @@ class NetworkService {
 
     getPublicKeyData() {
         return {
+            nodeId: this.config.identity,
             public_key: this.config.publicKeyData.publicKey,
             nonce: this.config.publicKeyData.nonce,
             proof: this.config.publicKeyData.proof,
+            erc725Identity: this.config.erc725Identity,
         };
     }
 
@@ -70,9 +72,13 @@ class NetworkService {
      * @param public_key - The node's public key used for message encryption
      * @returns {Promise<string>}
      */
-    async setNodePublicKey(nodeId, nodeERC, public_key) {
+    async setNodePublicKey(publicKeyData) {
+        const { nodeId, erc725Identity, public_key, nonce, proof } = publicKeyData;
         const node_id = Utilities.denormalizeHex(nodeId);
-        const node_erc = Utilities.normalizeHex(nodeERC);
+        const node_erc = Utilities.normalizeHex(erc725Identity);
+
+        if(this.validatePublicKeyData({publicKey: public_key,nonce, proof }, node_id))
+            return false;
 
         const foundModel = await Models.public_keys.findOne({
             where: { node_id, node_erc },
@@ -91,6 +97,8 @@ class NetworkService {
         }
 
         this.logger.log(`Public key cache updated for contact ${node_id}`);
+
+        return true;
     }
 }
 
