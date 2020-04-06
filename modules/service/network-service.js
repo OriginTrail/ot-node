@@ -73,12 +73,13 @@ class NetworkService {
      * @returns {Promise<string>}
      */
     async setNodePublicKey(publicKeyData) {
-        const { nodeId, erc725Identity, public_key, nonce, proof } = publicKeyData;
+        const {
+            nodeId, erc725Identity, public_key, nonce, proof,
+        } = publicKeyData;
         const node_id = Utilities.denormalizeHex(nodeId);
         const node_erc = Utilities.normalizeHex(erc725Identity);
 
-        if(this.validatePublicKeyData({publicKey: public_key,nonce, proof }, node_id))
-            return false;
+        // if (this.validatePublicKeyData({ publicKey: public_key, nonce, proof }, node_id)) { return false; }
 
         const foundModel = await Models.public_keys.findOne({
             where: { node_id, node_erc },
