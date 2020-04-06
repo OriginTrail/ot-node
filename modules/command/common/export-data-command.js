@@ -40,7 +40,6 @@ class ExportDataCommand extends Command {
         });
 
         const data = JSON.parse(handler.data);
-        data.root_hash = dataInfo.root_hash;
         data.data_hash = dataInfo.data_hash;
         data.transaction_hash = await ImportUtilities
             .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);

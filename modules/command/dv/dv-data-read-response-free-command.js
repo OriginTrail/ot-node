@@ -147,6 +147,7 @@ class DVDataReadResponseFreeCommand extends Command {
             data.transaction_hash = transaction_hash;
             data.data_creator = document.datasetHeader.dataCreator;
             data.signature = document.signature;
+            data.root_hash = rootHash;
             handler.data = JSON.stringify(data);
 
             await Models.handler_ids.update(
