@@ -141,6 +141,21 @@ else
 	echo "Cert files do not exits, skipping..."
 fi
 
+migrationDir="${BACKUPDIR}/migrations"
+if [ -d ${migrationDir} ]
+then
+  sourcePath="${BACKUPDIR}/migrations"
+  destinationPath="otnode:${CONFIGDIR}/"
+
+  echo "cp -r ${sourcePath} ${temp_folder}/"
+  cp -r ${sourcePath} ${temp_folder}/
+
+  sourcePath=./${temp_folder}/migrations
+  echo "docker cp ${sourcePath} ${destinationPath}"
+  docker cp ${sourcePath} ${destinationPath}
+fi
+
+
 echo docker cp otnode:/ot-node/current/config/config.json ./
 docker cp otnode:/ot-node/current/config/config.json ./
 # cp ~/ot-node/config/config.json ./
@@ -172,8 +187,8 @@ rm -rf ${temp_folder}
 echo docker start otnode
 docker start otnode
 
-echo sleep 5
-sleep 5
+echo sleep 20
+sleep 20
 
 echo "docker exec otnode arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true"
 docker exec otnode arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true
