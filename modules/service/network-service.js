@@ -11,12 +11,19 @@ class NetworkService {
     }
 
     getPublicKeyData() {
+        console.log(JSON.stringify({
+            nodeId: this.config.identity.toString('hex'),
+            public_key: this.config.publicKeyData.publicKey.toString('hex'),
+            nonce: this.config.publicKeyData.nonce,
+            proof: Buffer.from(this.config.publicKeyData.proof, 'hex'),
+            erc725Identity: this.config.erc725Identity.toString('hex'),
+        }));
         return {
-            nodeId: this.config.identity,
+            nodeId: this.config.identity.toString('hex'),
             public_key: this.config.publicKeyData.publicKey,
             nonce: this.config.publicKeyData.nonce,
             proof: this.config.publicKeyData.proof,
-            erc725Identity: this.config.erc725Identity,
+            erc725Identity: this.config.erc725Identity.toString('hex'),
         };
     }
 
@@ -79,7 +86,7 @@ class NetworkService {
         const node_id = Utilities.denormalizeHex(nodeId);
         const node_erc = Utilities.normalizeHex(erc725Identity);
 
-        // if (this.validatePublicKeyData({ publicKey: public_key, nonce, proof }, node_id)) { return false; }
+        if (!this.validatePublicKeyData({ publicKey: Buffer.from(public_key, 'hex'), nonce, proof: Buffer.from(proof, 'hex') }, node_id)) { return false; }
 
         const foundModel = await Models.public_keys.findOne({
             where: { node_id, node_erc },
@@ -87,13 +94,13 @@ class NetworkService {
 
         if (foundModel) {
             foundModel.timestamp = Date.now();
-            foundModel.public_key = public_key;
+            foundModel.public_key = Buffer.from(public_key, 'hex').toString('hex');
             await foundModel.save({ fields: ['timestamp', 'public_key'] });
         } else {
             await Models.public_keys.create({
                 node_id,
                 node_erc,
-                public_key,
+                public_key: Buffer.from(public_key, 'hex').toString('hex'),
             });
         }
 

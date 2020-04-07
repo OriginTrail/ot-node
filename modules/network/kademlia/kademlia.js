@@ -320,24 +320,26 @@ class Kademlia {
     _registerRoutes() {
         this.node.plugin((node) => {
             node.packMessage = async (contactId, message) => {
-                const { contact, header } = await node.getContact(contactId);
+                // eslint-disable-next-line prefer-const
+                let { contact, header } = await node.getContact(contactId);
                 let body = message;
                 if (contact[0] !== contactId) {
                     let publicKey = await this.networkService.getNodePublicKey(contactId);
                     if (!publicKey) {
                         try {
                             const publicKeyData = await node.sendPublicKeyRequest(null, contact[0]);
-
-                            if (!(await this.networkService.setNodePublicKey(publicKeyData))) { throw new Error('Public key validation error'); }
-
-                            publicKey = publicKeyData.public_key;
+                            if (!(await this.networkService.setNodePublicKey(publicKeyData))) {
+                                throw new Error('Public key validation error');
+                            }
+                            publicKey = Buffer.from(publicKeyData.public_key, 'hex').toString('hex');
                         } catch (e) {
-                            console.log(e);
                             throw Error('Unable to get node public key for encryption');
                         }
                     }
                     body = await ECEncryption.encryptObject(message, publicKey);
-                    header.encrypted = true;
+                    const messageHeader = JSON.parse(header);
+                    messageHeader.encrypted = true;
+                    header = JSON.stringify(messageHeader);
                 }
 
                 return { contact, header, body };
@@ -346,8 +348,9 @@ class Kademlia {
             node.unpackMessage = async (request) => {
                 const header = JSON.parse(request.params.header);
                 if (header.encrypted) {
-                    request.params.message =
-                        ECEncryption.decrypt(request.params.message, this.node.privateKey);
+                    const message =
+                        await ECEncryption.decrypt(request.params.message, this.privateKey.toString('hex'));
+                    request.params.message = JSON.parse(message);
                 }
             };
             /**
@@ -404,11 +407,10 @@ class Kademlia {
                     if (header.ttl >= 0) {
                         if (destContact === this.config.identity) {
                             if (header.encrypted) {
-                                this.node.unpackMessage(request);
+                                await this.node.unpackMessage(request);
                             }
                             response.send(next());
                         } else {
-                            console.log(request.params.message);
                             const result = await new Promise(async (accept, reject) => {
                                 const { contact } = await this.node.getContact(destContact);
                                 this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
