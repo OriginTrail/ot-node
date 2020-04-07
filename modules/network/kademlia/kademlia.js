@@ -37,7 +37,7 @@ class Kademlia {
         this.notifyError = ctx.notifyError;
         this.config = ctx.config;
         this.approvalService = ctx.approvalService;
-        this.networkService = new NetworkService(ctx);
+        this.networkService = ctx.networkService;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
@@ -322,25 +322,33 @@ class Kademlia {
             node.packMessage = async (contactId, message) => {
                 // eslint-disable-next-line prefer-const
                 let { contact, header } = await node.getContact(contactId);
+                // eslint-disable-next-line prefer-const
                 let body = message;
-                if (contact[0] !== contactId) {
-                    let publicKey = await this.networkService.getNodePublicKey(contactId);
-                    if (!publicKey) {
-                        try {
-                            const publicKeyData = await node.sendPublicKeyRequest(null, contact[0]);
-                            if (!(await this.networkService.setNodePublicKey(publicKeyData))) {
-                                throw new Error('Public key validation error');
-                            }
-                            publicKey = Buffer.from(publicKeyData.public_key, 'hex').toString('hex');
-                        } catch (e) {
-                            throw Error('Unable to get node public key for encryption');
-                        }
-                    }
-                    body = await ECEncryption.encryptObject(message, publicKey);
-                    const messageHeader = JSON.parse(header);
-                    messageHeader.encrypted = true;
-                    header = JSON.stringify(messageHeader);
-                }
+                // if (contact[0] !== contactId) {
+                //     let publicKey = await this.networkService.getNodePublicKey(contactId);
+                //     if (!publicKey) {
+                //         try {
+                //             const publicKeyData = await node.sendPublicKeyRequest(
+                //             null,
+                //             contact[0]
+                //             );
+                //
+                //             if (await this.networkService.validatePublicKeyData(publicKeyData)) {
+                //                 await this.networkService.setNodePublicKey(publicKeyData);
+                //             } else {
+                //                 throw new Error('Public key validation error');
+                //             }
+                //             publicKey = Buffer.from(publicKeyData.public_key, 'hex')
+                //             .toString('hex');
+                //         } catch (e) {
+                //             throw Error('Unable to get node public key for encryption');
+                //         }
+                //     }
+                //     body = await ECEncryption.encryptObject(message, publicKey);
+                //     const messageHeader = JSON.parse(header);
+                //     messageHeader.encrypted = true;
+                //     header = JSON.stringify(messageHeader);
+                // }
 
                 return { contact, header, body };
             };
@@ -406,9 +414,7 @@ class Kademlia {
                     header.ttl -= 1;
                     if (header.ttl >= 0) {
                         if (destContact === this.config.identity) {
-                            if (header.encrypted) {
-                                await this.node.unpackMessage(request);
-                            }
+                            await this.node.unpackMessage(request);
                             response.send(next());
                         } else {
                             const result = await new Promise(async (accept, reject) => {

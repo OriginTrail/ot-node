@@ -11,27 +11,28 @@ class NetworkService {
     }
 
     getPublicKeyData() {
-        console.log(JSON.stringify({
-            nodeId: this.config.identity.toString('hex'),
-            public_key: this.config.publicKeyData.publicKey.toString('hex'),
-            nonce: this.config.publicKeyData.nonce,
-            proof: Buffer.from(this.config.publicKeyData.proof, 'hex'),
-            erc725Identity: this.config.erc725Identity.toString('hex'),
-        }));
         return {
-            nodeId: this.config.identity.toString('hex'),
+            nodeId: this.config.identity,
             public_key: this.config.publicKeyData.publicKey,
             nonce: this.config.publicKeyData.nonce,
             proof: this.config.publicKeyData.proof,
-            erc725Identity: this.config.erc725Identity.toString('hex'),
+            erc725Identity: this.config.erc725Identity,
         };
     }
 
-    async validatePublicKeyData(publicKeyData, nodeId) {
+    async validatePublicKeyData(publicKeyData) {
+        const {
+            nodeId, public_key, nonce, proof,
+        } = publicKeyData;
+
+        const node_id = Utilities.denormalizeHex(nodeId.toString('hex'));
+        const node_public_key = Buffer.from(public_key, 'hex');
+        const node_proof = Buffer.from(proof, 'hex');
+
         const identity = new kadence.eclipse.EclipseIdentity(
-            publicKeyData.publicKey,
-            publicKeyData.nonce,
-            publicKeyData.proof,
+            node_public_key,
+            nonce,
+            node_proof,
         );
 
         if (!identity.validate()) {
@@ -81,12 +82,11 @@ class NetworkService {
      */
     async setNodePublicKey(publicKeyData) {
         const {
-            nodeId, erc725Identity, public_key, nonce, proof,
+            nodeId, erc725Identity, public_key,
         } = publicKeyData;
-        const node_id = Utilities.denormalizeHex(nodeId);
-        const node_erc = Utilities.normalizeHex(erc725Identity);
-
-        if (!this.validatePublicKeyData({ publicKey: Buffer.from(public_key, 'hex'), nonce, proof: Buffer.from(proof, 'hex') }, node_id)) { return false; }
+        const node_id = Utilities.denormalizeHex(nodeId.toString('hex'));
+        const node_erc = Utilities.normalizeHex(erc725Identity.toString('hex'));
+        const node_public_key = Buffer.from(public_key, 'hex').toString('hex');
 
         const foundModel = await Models.public_keys.findOne({
             where: { node_id, node_erc },
@@ -94,13 +94,13 @@ class NetworkService {
 
         if (foundModel) {
             foundModel.timestamp = Date.now();
-            foundModel.public_key = Buffer.from(public_key, 'hex').toString('hex');
+            foundModel.public_key = node_public_key;
             await foundModel.save({ fields: ['timestamp', 'public_key'] });
         } else {
             await Models.public_keys.create({
                 node_id,
                 node_erc,
-                public_key: Buffer.from(public_key, 'hex').toString('hex'),
+                public_key: node_public_key,
             });
         }
 
