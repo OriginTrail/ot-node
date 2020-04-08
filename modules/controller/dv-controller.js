@@ -1,6 +1,8 @@
 const uuidv4 = require('uuid/v4');
 const Models = require('../../models');
-
+const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
+const constants = require('../constants');
 /**
  * Encapsulates DV related methods
  */
@@ -9,7 +11,14 @@ class DVController {
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.remoteControl = ctx.remoteControl;
+        this.blockchain = ctx.blockchain;
         this.emitter = ctx.emitter;
+
+        this.transport = ctx.transport;
+        this.config = ctx.config;
+        this.web3 = ctx.web3;
+        this.graphStorage = ctx.graphStorage;
+
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
         this.mapping_standards_for_event.set('GS1-EPCIS', 'gs1');
@@ -89,9 +98,10 @@ class DVController {
 
     /**
      * Handles data read request
-     * @param queryId
-     * @param dataSetId
-     * @param replyId
+     * @param data_set_id - Dataset to be read
+     * @param reply_id - Id of DH reply previously sent to user
+     * @param res - API result object
+     * @returns null
      */
     async handleDataReadRequest(data_set_id, reply_id, res) {
         this.logger.info(`Choose offer triggered with reply ID ${reply_id} and import ID ${data_set_id}`);
@@ -111,6 +121,7 @@ class DVController {
             const dataInfo = await Models.data_info.findOne({
                 where: { data_set_id },
             });
+
             if (dataInfo) {
                 const message = `I've already stored data for data set ID ${data_set_id}.`;
                 this.logger.trace(message);
@@ -126,13 +137,13 @@ class DVController {
                 status: 'PENDING',
                 data: JSON.stringify(handler_data),
             });
-
-            this.logger.info(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
-            this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
+            const handlerId = inserted_object.dataValues.handler_id;
+            this.logger.info(`Read offer for query ${offer.query_id} with handler id ${handlerId} initiated.`);
+            this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${handlerId} initiated.`);
 
             res.status(200);
             res.send({
-                handler_id: inserted_object.dataValues.handler_id,
+                handler_id: handlerId,
             });
 
             this.commandExecutor.add({
@@ -141,7 +152,8 @@ class DVController {
                 data: {
                     dataSetId: data_set_id,
                     replyId: reply_id,
-                    handlerId: inserted_object.dataValues.handler_id,
+                    handlerId,
+                    nodeId: offer.node_id,
                 },
                 transactional: false,
             });
@@ -151,6 +163,291 @@ class DVController {
             res.send({ message });
         }
     }
+
+    // /**
+    //  * Handles private data read request
+    //  * @param data_set_id - Dataset that holdsprivate data
+    //  * @param ot_object_id - Object id that holds private data
+    //  * @param seller_node_id - Node id that holds private data
+    //  * @param res - API result object
+    //  * @returns null
+    //  */
+    // async handlePermissionedDataReadRequest(data_set_id, ot_object_id,seller_node_id,response) {
+    //     const handler_data = {
+    //         data_set_id,
+    //         ot_object_id,
+    //         seller_node_id,
+    //     };
+    //     const inserted_object = await Models.handler_ids.create({
+    //         status: 'PENDING',
+    //         data: JSON.stringify(handler_data),
+    //     });
+    //     const handlerId = inserted_object.dataValues.handler_id;
+    //     this.logger.info(`Read private data with id
+    //     ${ot_object_id} with handler id ${handlerId} initiated.`);
+    //
+    //     response.status(200);
+    //     response.send({
+    //         handler_id: handlerId,
+    //     });
+    //
+    //     this.commandExecutor.add({
+    //         name: 'dvPermissionedDataReadRequestCommand',
+    //         delay: 0,
+    //         data: {
+    //             data_set_id,
+    //             ot_object_id,
+    //             seller_node_id,
+    //             handlerId,
+    //         },
+    //         transactional: false,
+    //     });
+    // }
+
+    // _validatePermissionedData(data) {
+    //     let validated = false;
+    //     constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
+    //         if (data[private_data_array] && Array.isArray(data[private_data_array])) {
+    //             data[private_data_array].forEach((private_object) => {
+    //                 if (private_object.isPrivate && private_object.data) {
+    //                     const calculatedPrivateHash = ImportUtilities
+    //                         .calculatePermissionedDataHash(private_object);
+    //                 validated = calculatedPrivateHash ===private_object.permissioned_data_hash;
+    //                 }
+    //             });
+    //         }
+    //     });
+    //     return validated;
+    // }
+    //
+    // async handlePermissionedDataReadResponse(message) {
+    //     const {
+    //         handler_id, ot_objects,
+    //     } = message;
+    //     const documentsToBeUpdated = [];
+    //     ot_objects.forEach((otObject) => {
+    //         otObject.relatedObjects.forEach((relatedObject) => {
+    //             if (relatedObject.vertex.vertexType === 'Data') {
+    //                 if (this._validatePermissionedData(relatedObject.vertex.data)) {
+    //                     documentsToBeUpdated.push(relatedObject.vertex);
+    //                 }
+    //             }
+    //         });
+    //     });
+    //     const promises = [];
+    //     documentsToBeUpdated.forEach((document) => {
+    //         promises.push(this.graphStorage.updateDocument('ot_vertices', document));
+    //     });
+    //     await Promise.all(promises);
+    //
+    //     const handlerData = await Models.handler_ids.findOne({
+    //         where: {
+    //             handler_id,
+    //         },
+    //     });
+    //
+    //     const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+    //
+    //     await Models.data_sellers.create({
+    //         data_set_id,
+    //         ot_json_object_id: ot_object_id,
+    //         seller_node_id: this.config.identity.toLowerCase(),
+    //         seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+    //         price: this.config.default_data_price,
+    //     });
+    //
+    //
+    //     await Models.handler_ids.update({
+    //         status: 'COMPLETED',
+    //     }, { where: { handler_id } });
+    // }
+
+    // async sendNetworkPurchase(dataSetId, erc725Identity, nodeId, otJsonObjectId, handlerId) {
+    //     const message = {
+    //         data_set_id: dataSetId,
+    //         dv_erc725_identity: erc725Identity,
+    //         handler_id: handlerId,
+    //         ot_json_object_id: otJsonObjectId,
+    //         wallet: this.config.node_wallet,
+    //     };
+    //     const dataPurchaseRequestObject = {
+    //         message,
+    //         messageSignature: Utilities.generateRsvSignature(
+    //             JSON.stringify(message),
+    //             this.web3,
+    //             this.config.node_private_key,
+    //         ),
+    //     };
+    //     await this.transport.sendDataPurchaseRequest(
+    //         dataPurchaseRequestObject,
+    //         nodeId,
+    //     );
+    // }
+
+    async sendNetworkPurchase(request, response) {
+        if (request.body == null
+            || request.body.data_set_id == null
+            || request.body.seller_node_id == null
+            || request.body.ot_object_id == null) {
+            response.status(400);
+            response.send({ message: 'Params data_set_id, seller_node_id and ot_object_id are required.' });
+            return;
+        }
+        const {
+            data_set_id, seller_node_id, ot_object_id,
+        } = request.body;
+        const inserted_object = await Models.handler_ids.create({
+            data: JSON.stringify({
+                data_set_id, seller_node_id, ot_object_id,
+            }),
+            status: 'REQUESTED',
+        });
+        const { handler_id } = inserted_object.dataValues;
+        response.status(200);
+        response.send({
+            handler_id,
+        });
+
+        const commandData = {
+            data_set_id,
+            handler_id,
+            ot_object_id,
+            seller_node_id,
+        };
+
+        await this.commandExecutor.add({
+            name: 'dvPurchaseRequestCommand',
+            data: commandData,
+        });
+    }
+
+    async sendPermissionedDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
+        const message = {
+            data_set_id: dataSetId,
+            handler_id: handlerId,
+            ot_json_object_id: otJsonObjectId,
+            wallet: this.config.node_wallet,
+        };
+        const dataPriceRequestObject = {
+            message,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(message),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        await this.transport.sendPermissionedDataPriceRequest(
+            dataPriceRequestObject,
+            nodeId,
+        );
+    }
+    // async handleNetworkPurchaseResponse(response) {
+    //     const {
+    //         handler_id, status, message, seller_node_id, seller_erc_id, price,
+    //     } = response;
+    //
+    //     const handlerData = await Models.handler_ids.findOne({
+    //         where: {
+    //             handler_id,
+    //         },
+    //     });
+    //
+    //     const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+    //
+    //     await Models.data_trades.create({
+    //         data_set_id,
+    //         ot_json_object_id: ot_object_id,
+    //         buyer_node_id: this.config.identity,
+    //         buyer_erc_id: this.config.erc725Identity.toLowerCase(),
+    //         seller_node_id,
+    //         seller_erc_id,
+    //         price,
+    //         purchase_id: '',
+    //         status,
+    //     });
+    //
+    //     await Models.handler_ids.update({
+    //         data: JSON.stringify({ message }),
+    //         status,
+    //     }, {
+    //         where: {
+    //             handler_id,
+    //         },
+    //     });
+    // }
+
+
+    async handleNetworkPurchaseResponse(response) {
+        const {
+            handler_id, status, message, encoded_data,
+            permissioned_data_root_hash, encoded_data_root_hash,
+            permissioned_data_array_length, permissioned_data_original_length,
+        } = response;
+
+        const commandData = {
+            handler_id,
+            status,
+            message,
+            encoded_data,
+            permissioned_data_root_hash,
+            encoded_data_root_hash,
+            permissioned_data_array_length,
+            permissioned_data_original_length,
+        };
+
+        await this.commandExecutor.add({
+            name: 'dvPurchaseInitiateCommand',
+            data: commandData,
+        });
+    }
+
+    async handlePermissionedDataPriceResponse(response) {
+        const {
+            handler_id, status, price_in_trac,
+        } = response;
+
+        const handler = await Models.handler_ids.findOne({
+            where: {
+                handler_id,
+            },
+        });
+
+        const {
+            data_set_id,
+            seller_node_id,
+            ot_object_id,
+        } = JSON.parse(handler.data);
+
+        if (status === 'COMPLETED') {
+            await Models.data_sellers.update({
+                price: price_in_trac,
+            }, {
+                where: {
+                    data_set_id,
+                    seller_node_id,
+                    ot_json_object_id: ot_object_id,
+                },
+            });
+        }
+
+        await Models.handler_ids.update({
+            data: JSON.stringify({
+                message: {
+                    data_set_id,
+                    seller_node_id,
+                    ot_object_id,
+                    price_in_trac,
+                },
+            }),
+            status,
+        }, {
+            where: {
+                handler_id,
+            },
+        });
+    }
+
 
     /**
      * Handles data read request
@@ -244,6 +541,7 @@ class DVController {
                         dataSetId: data_set_id,
                         replyId: reply_id,
                         handlerId: inserted_object.dataValues.handler_id,
+                        nodeId: offer.node_id,
                     },
                     transactional: false,
                 });
@@ -312,6 +610,44 @@ class DVController {
                 message,
             },
             transactional: false,
+        });
+    }
+
+    handleGetFingerprint(req, res) {
+        this.logger.api('GET: Fingerprint request received.');
+        const { dataset_id } = req.params;
+        if (dataset_id == null) {
+            res.status(400);
+            res.send({
+                message: 'data_set_id parameter is missing',
+            });
+            return;
+        }
+
+        this.blockchain.getRootHash(dataset_id).then((dataRootHash) => {
+            if (dataRootHash) {
+                if (!Utilities.isZeroHash(dataRootHash)) {
+                    res.status(200);
+                    res.send({
+                        root_hash: dataRootHash,
+                    });
+                } else {
+                    res.status(404);
+                    res.send({
+                        message: `Root hash not found for ${dataset_id}`,
+                    });
+                }
+            } else {
+                res.status(500);
+                res.send({
+                    message: `Failed to get root hash for ${dataset_id}`,
+                });
+            }
+        }).catch((err) => {
+            res.status(500);
+            res.send({
+                message: err,
+            });
         });
     }
 }

@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const rc = require('rc');
 const Graph = require('../../modules/Graph');
 const models = require('../../models');
-const Encryption = require('../../modules/Encryption');
+const Encryption = require('../../modules/RSAEncryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
 const Storage = require('../../modules/Storage');
 

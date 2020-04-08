@@ -2,7 +2,7 @@ const bytes = require('utf8-length');
 const fs = require('fs');
 const { sha3_256 } = require('js-sha3');
 const Command = require('../command');
-const Encryption = require('../../Encryption');
+const Encryption = require('../../RSAEncryption');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');
@@ -15,6 +15,7 @@ class DhReplicationImportCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
@@ -42,13 +43,16 @@ class DhReplicationImportCommand extends Command {
             distributionEpk,
             transactionHash,
             encColor,
+            dcIdentity,
         } = command.data;
-        const otJson = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+        const { otJson, permissionedData }
+            = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
         const { decryptedDataset, encryptedMap } =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
+
         const calculatedDataSetId =
-            await ImportUtilities.calculateGraphHash(decryptedDataset['@graph']);
+            await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
 
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
@@ -73,9 +77,15 @@ class DhReplicationImportCommand extends Command {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from document root hash ${originalRootHash}`);
         }
 
+
         // TODO: Verify EPK checksum
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id
+
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            decryptedDataset['@graph'],
+            permissionedData,
+        );
 
         const holdingData = await Models.holding_data.findOne({
             where: {
@@ -108,6 +118,13 @@ class DhReplicationImportCommand extends Command {
                 data_set_id: dataSetId,
             },
         });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            dcIdentity,
+            0,
+            dcNodeId,
+            decryptedDataset['@graph'],
+        );
 
         const importResult = await this.importService.importFile({
             document: decryptedDataset,

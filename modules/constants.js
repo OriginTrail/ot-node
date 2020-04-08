@@ -1,4 +1,9 @@
 /**
+ * @constant {number} DEFAULT_NUMBER_OF_HOLDERS - Number of data holders for a dataset
+ */
+exports.DEFAULT_NUMBER_OF_HOLDERS = 3;
+
+/**
  * @constant {number} DEFAULT_CHALLENGE_NUMBER_OF_TESTS - Number of challenges per DH
  */
 exports.DEFAULT_CHALLENGE_NUMBER_OF_TESTS = 2;
@@ -89,3 +94,15 @@ exports.BLOCKCHAIN_RETRY_DELAY_IN_MILLS = 20000;
  * @constant {number} ANSWER_LITIGATION_COMMAND_RETRIES - dhLitigationAnswerCommand retries
  */
 exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
+/**
+ *
+ * @constant {array} NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS -
+ *  Minimal number of blocks which are used for creating permissioned data merkle tree
+ */
+exports.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS = 256;
+/**
+ *
+ * @constant {integer} PUBLIC_KEY_VALIDITY_IN_MILLS -
+ *  Amount of time one node's public key hash is valid
+ */
+exports.PUBLIC_KEY_VALIDITY_IN_MILLS = 30 * 24 * 60 * 60 * 1000; // 30 days

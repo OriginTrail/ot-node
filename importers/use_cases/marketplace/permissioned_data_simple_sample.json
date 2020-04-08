@@ -1,0 +1,51 @@
+{
+  "@graph":[
+    {
+      "@id":"urn:ot:object:actor:id:company-red",
+      "@type":"otObject",
+      "identifiers":[
+        {
+          "@type":"id",
+          "@value":"urn:ot:object:actor:id:company-red"
+        }
+      ],
+      "properties":{
+        "___metadata":{
+          "_attributes":{
+            "id":"urn:ot:object:actor:id:company-red"
+          },
+          "attribute":[
+            {
+              "_attributes":{
+                "id":"urn:ot:object:actor:name"
+              }
+            },
+            {
+              "_attributes":{
+                "id":"urn:ot:object:actor:category"
+              }
+            }
+          ]
+        },
+        "objectType":"vocabularyElement",
+        "urn:ot:object:actor:category":"Company",
+        "urn:ot:object:actor:name":"company-red",
+        "vocabularyType":"urn:ot:object:actor",
+        "permissioned_data": {
+          "data": {
+            "id": "halal_certificate_56789",
+            "transaction_id": "bsi-nos-demotest-10",
+            "standard_title": "Halal standard",
+            "description": "This company can produce halal food",
+            "customer_name": "eyJpdiI6IlJKY2hLWVF0bVZPU0twYjRvTUUxZVE9PSIsInZhbHVlIjoiRHc3SmYwSkM0cFFwXC9JQ1FxN1FaMTNweGh2SXlySk9aZGNxQ2ZOVEg2c2htamFzZzRhbXRNaStoRG9rRDRBQzEiLCJtYWMiOiJiMGFiN2U5NDRhYTQ0ZTI4MDA4MzEzYjQyMTcwYjAyYmVhZWVmN2ZhOTlkMDEyOTkyOWIzNjM4MzcyYWU1ZjgzIn0=",
+            "create_date": "2009-09-13",
+            "material_id": "110000000131122120"
+          }
+        }
+      },
+      "relations":[
+
+      ]
+    }
+  ]
+}

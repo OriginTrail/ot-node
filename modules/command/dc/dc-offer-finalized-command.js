@@ -204,7 +204,7 @@ class DcOfferFinalizedCommand extends Command {
         this.remoteControl.offerUpdate({
             offer_id: offerId,
         });
-        Models.handler_ids.update({
+        await Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
         await this.replicationService.cleanup(offer.id);

@@ -309,6 +309,16 @@ class GraphStorage {
     }
 
     /**
+     * Update document in graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async updateDocument(collectionName, document) {
+        return this.db.updateDocument(collectionName, document);
+    }
+
+    /**
      * Updates document with the import ID
      * @param collectionName
      * @param document
@@ -363,7 +373,26 @@ class GraphStorage {
     /**
      * Returns vertices and edges with specific parameters
      * @param importId
-     * @param fromKey
+     * @param objectKey
+     * @returns {Promise<any>}
+     */
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findDocumentsByImportIdAndOtObjectKey(importId, objectKey)
+                    .then((result) => { resolve(result); }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param objectId
      * @returns {Promise<any>}
      */
     async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
@@ -411,6 +440,29 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findMetadataByImportId(datasetId).then((result) => {
+                    if (!result) {
+                        resolve(null);
+                    } else {
+                        resolve(result[0]);
+                    }
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Retrieves dataset metadata of multiple datasets by their ids
+     * @param datasetIds - Array of dataset ids
+     * @return {Promise<*>}
+     */
+    findMultipleMetadataByDatasetIds(datasetIds) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findMultipleMetadataByDatasetIds(datasetIds).then((result) => {
                     if (!result) {
                         resolve(null);
                     } else {

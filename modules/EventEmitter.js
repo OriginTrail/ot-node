@@ -248,45 +248,6 @@ class EventEmitter {
             });
         });
 
-        this._on('api-get_root_hash', (data) => {
-            const dataSetId = data.query.data_set_id;
-            if (dataSetId == null) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'data_set_id parameter query is missing',
-                });
-                return;
-            }
-            logger.info(`Get root hash triggered with data set ${dataSetId}`);
-            blockchain.getRootHash(dataSetId).then((dataRootHash) => {
-                if (dataRootHash) {
-                    if (!Utilities.isZeroHash(dataRootHash)) {
-                        data.response.status(200);
-                        data.response.send({
-                            root_hash: dataRootHash,
-                        });
-                    } else {
-                        data.response.status(404);
-                        data.response.send({
-                            message: `Root hash not found for query ${JSON.stringify(data.query)}`,
-                        });
-                    }
-                } else {
-                    data.response.status(500);
-                    data.response.send({
-                        message: `Failed to get root hash for query ${JSON.stringify(data.query)}`,
-                    });
-                }
-            }).catch((err) => {
-                logger.error(`Failed to get root hash for query ${JSON.stringify(data.query)}`);
-                notifyError(err);
-                data.response.status(500);
-                data.response.send({
-                    message: `Failed to get root hash for query ${JSON.stringify(data.query)}`, // TODO rethink about status codes
-                });
-            });
-        });
-
         this._on('api-offer-status', async (data) => {
             const { replicationId } = data;
             logger.info(`Offer status for internal ID ${replicationId} triggered.`);
@@ -480,7 +441,9 @@ class EventEmitter {
             dhService,
             dcService,
             dvController,
+            dcController,
             notifyError,
+            networkService,
         } = this.ctx;
 
         // sync
@@ -488,8 +451,8 @@ class EventEmitter {
             await transport.sendResponse(response, await transport.join());
         });
 
-        this._on('kad-data-location-request', async (query) => {
-            const { message, messageSignature } = query;
+        this._on('kad-data-location-request', async (request) => {
+            const { message, messageSignature } = request;
             if (ObjectValidator.validateSearchQueryObject(message.query)) {
                 return;
             }
@@ -517,10 +480,20 @@ class EventEmitter {
 
         // sync
         this._on('kad-replication-request', async (request, response) => {
-            const message = transport.extractMessage(request);
-            const { offerId, wallet, dhIdentity } = message;
-            const identity = transport.extractSenderID(request);
+            const kadReplicationRequest = transport.extractMessage(request);
+            var replicationMessage = kadReplicationRequest;
+            if (kadReplicationRequest.messageSignature) {
+                const { message, messageSignature } = kadReplicationRequest;
+                replicationMessage = message;
 
+                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                    return;
+                }
+            }
+
+            const { offerId, wallet, dhIdentity } = replicationMessage;
+            const identity = transport.extractSenderID(request);
             try {
                 await dcService.handleReplicationRequest(
                     offerId, wallet, identity, dhIdentity,
@@ -577,14 +550,31 @@ class EventEmitter {
             try {
                 const dhNodeId = transport.extractSenderID(request);
                 const replicationFinishedMessage = transport.extractMessage(request);
-                const {
-                    offerId, messageSignature, dhIdentity,
-                } = replicationFinishedMessage;
 
                 let dhWallet = replicationFinishedMessage.wallet;
                 if (!dhWallet) {
                     dhWallet = transport.extractSenderInfo(request).wallet;
                 }
+
+                if (replicationFinishedMessage.message) { // todo remove if for next update
+                    const {
+                        message, messageSignature,
+                    } = replicationFinishedMessage;
+                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                        logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                        return;
+                    }
+
+                    await dcService.verifyDHReplication(
+                        message.offerId, messageSignature,
+                        dhNodeId, message.dhIdentity, dhWallet, false,
+                    );
+                }
+
+                const {
+                    offerId, messageSignature, dhIdentity,
+                } = replicationFinishedMessage;
+
                 await dcService.verifyDHReplication(
                     offerId, messageSignature,
                     dhNodeId, dhIdentity, dhWallet, false,
@@ -617,10 +607,33 @@ class EventEmitter {
         // async
         this._on('kad-challenge-request', async (request) => {
             try {
-                const message = transport.extractMessage(request);
+                const challengeRequest = transport.extractMessage(request);
+                let message = challengeRequest;
+                if (challengeRequest.messageSignature) {
+                    // eslint-disable-next-line prefer-destructuring
+                    message = challengeRequest.message;
+                }
+
                 const error = ObjectValidator.validateChallengeRequest(message);
                 if (error) {
                     logger.trace(`Challenge request message is invalid. ${error.message}`);
+                    return;
+                }
+                if (challengeRequest.messageSignature) { // todo remove if for next update
+                    const { messageSignature } = challengeRequest;
+                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                        logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                        return;
+                    }
+
+                    await dhService.handleChallenge(
+                        message.data_set_id,
+                        message.offer_id,
+                        message.object_index,
+                        message.block_index,
+                        message.challenge_id,
+                        message.litigator_id,
+                    );
                     return;
                 }
                 await dhService.handleChallenge(
@@ -640,10 +653,29 @@ class EventEmitter {
         // async
         this._on('kad-challenge-response', async (request) => {
             try {
-                const message = transport.extractMessage(request);
+                const challengeResponse = transport.extractMessage(request);
+                let message = challengeResponse;
+                if (challengeResponse.messageSignature) {
+                    // eslint-disable-next-line prefer-destructuring
+                    message = challengeResponse.message;
+                }
                 const error = ObjectValidator.validateChallengeResponse(message);
                 if (error) {
                     logger.trace(`Challenge response message is invalid. ${error.message}`);
+                    return;
+                }
+
+                if (challengeResponse.messageSignature) { // todo remove if for next update
+                    const { messageSignature } = challengeResponse;
+                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                        logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                        return;
+                    }
+
+                    await dcService.handleChallengeResponse(
+                        message.data_set_id,
+                        message.answer,
+                    );
                     return;
                 }
 
@@ -701,7 +733,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-read-response', async (request) => {
-            logger.info('Encrypted data received');
+            logger.info('Received data read response');
 
             const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);
@@ -722,6 +754,144 @@ class EventEmitter {
                 await dvController.handleDataReadResponseFree(message);
             } catch (error) {
                 logger.warn(`Failed to process data read response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        this._on('kad-permissioned-data-read-request', async (request) => {
+            logger.info('Request for permissioned data read received');
+            const dataReadRequestObject = transport.extractMessage(request);
+            const { message, messageSignature } = dataReadRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+            try {
+                await dcController.handlePermissionedDataReadRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process permissioned data read request. ${error}.`);
+                // todo send error to dv
+            }
+        });
+
+        this._on('kad-permissioned-data-read-response', async (request) => {
+            logger.info('Response for permissioned data read received');
+
+            const dataReadRequestObject = transport.extractMessage(request);
+            const { message, messageSignature } = dataReadRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+            try {
+                await dvController.handlePermissionedDataReadResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process permissioned data read response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-data-purchase-request', async (request) => {
+            logger.info('Data purchase received');
+            const dvNodeId = transport.extractSenderID(request);
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-purchase-request. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                message.dv_node_id = dvNodeId;
+                await dcController.handleNetworkPurchaseRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process data purchase request. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-data-purchase-response', async (request) => {
+            logger.info('Received purchase response');
+
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-purchase-response. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                await dvController.handleNetworkPurchaseResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process data purchase response. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+
+        // async
+        this._on('kad-data-price-request', async (request) => {
+            logger.info('Data price request received');
+            const dvNodeId = transport.extractSenderID(request);
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-price-request. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                message.dv_node_id = dvNodeId;
+                await dcController.handleNetworkPriceRequest(message);
+            } catch (error) {
+                logger.warn(`Failed to process data price request. ${error}.`);
+                notifyError(error);
+            }
+        });
+
+        // async
+        this._on('kad-data-price-response', async (request) => {
+            logger.info('Received price response');
+
+            const reqStatus = transport.extractRequestStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-price-response. ${reqMessage}`);
+                return;
+            }
+            const { message, messageSignature } = reqMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                return;
+            }
+
+            try {
+                await dvController.handlePermissionedDataPriceResponse(message);
+            } catch (error) {
+                logger.warn(`Failed to process data price response. ${error}.`);
                 notifyError(error);
             }
         });
@@ -765,6 +935,24 @@ class EventEmitter {
                 logger.notify(`DV ${senderId} successfully processed the encrypted key`);
             } else {
                 logger.notify(`DV ${senderId} failed to process the encrypted key`);
+            }
+        });
+
+        // async
+        this._on('kad-public-key-request', async (request, response) => {
+            logger.info('Public key request received');
+
+            const publicKeyData = networkService.getPublicKeyData();
+            try {
+                await transport.sendResponse(response, publicKeyData);
+            } catch (error) {
+                const errorMessage = `Failed to send public key data. ${error}.`;
+                logger.warn(errorMessage);
+                notifyError(error);
+                await transport.sendResponse(response, {
+                    status: 'FAIL',
+                    message: error.message,
+                });
             }
         });
     }

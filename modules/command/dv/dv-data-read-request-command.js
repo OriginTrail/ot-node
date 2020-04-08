@@ -22,17 +22,11 @@ class DVDataReadRequestCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            dataSetId, replyId, handlerId,
+            dataSetId, replyId, handlerId, nodeId,
         } = command.data;
 
-        const offer = await Models.network_query_responses.findOne({
-            where: {
-                reply_id: replyId,
-            },
-        });
-
         const message = {
-            id: offer.reply_id,
+            id: replyId,
             data_set_id: dataSetId,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
@@ -46,11 +40,11 @@ class DVDataReadRequestCommand extends Command {
                 this.config.node_private_key,
             ),
         };
-
         await this.transport.dataReadRequest(
             dataReadRequestObject,
-            offer.node_id,
+            nodeId,
         );
+
         this.logger.info(`Data request sent for reply ID ${message.id}.`);
         return Command.empty();
     }
@@ -61,8 +55,21 @@ class DVDataReadRequestCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { replyId } = command.data;
+        const { replyId, handlerId } = command.data;
         this.logger.warn(`Data request failed for reply ID ${replyId}. ${err}.`);
+        await Models.handler_ids.update(
+            {
+                status: 'FAILED',
+                data: JSON.stringify({
+                    error: err.message,
+                }),
+            },
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
     }
 
     /**

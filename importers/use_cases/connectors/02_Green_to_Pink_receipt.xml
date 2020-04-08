@@ -115,12 +115,12 @@
 				</bizLocation>
 				<bizTransactionList>
 					<bizTransaction>
-						connectionId:0xfc41a6e359ee40996fe08f2d2e8728d2bc204442
+						connectionId:0x0dfa2ecdde11abb744e85aa7d7b57ee1b10548a4
 					</bizTransaction>
 				</bizTransactionList>
 				<extension>
 					<quantityList>
-						<quantityElement>			 
+						<quantityElement>
 							<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
 							<quantity>10</quantity>
 							<uom>KG</uom>
