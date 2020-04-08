@@ -23,6 +23,25 @@ const pjson = require('../../../package.json');
 
 const { NetworkRequestIgnoredError } = require('../../errors/index');
 
+const directMessageRequests = [
+    { methodName: 'replicationRequest', routeName: 'kad-replication-request' },
+    { methodName: 'replacementReplicationRequest', routeName: 'kad-replacement-replication-request' },
+    { methodName: 'replicationFinished', routeName: 'kad-replication-finished' },
+    { methodName: 'replacementReplicationFinished', routeName: 'kad-replacement-replication-finished' },
+    { methodName: 'challengeRequest', routeName: 'kad-challenge-request' },
+    { methodName: 'challengeResponse', routeName: 'kad-challenge-response' },
+    { methodName: 'sendDataLocationResponse', routeName: 'kad-data-location-response' },
+    { methodName: 'dataReadRequest', routeName: 'kad-data-read-request' },
+    { methodName: 'sendDataReadResponse', routeName: 'kad-data-read-response' },
+    { methodName: 'sendPermissionedDataReadRequest', routeName: 'kad-permissioned-data-read-request' },
+    { methodName: 'sendDataPurchaseRequest', routeName: 'kad-data-purchase-request' },
+    { methodName: 'sendDataPurchaseResponse', routeName: 'kad-data-purchase-response' },
+    { methodName: 'sendPermissionedDataPriceRequest', routeName: 'kad-data-price-request' },
+    { methodName: 'sendPermissionedDataPriceResponse', routeName: 'kad-data-price-response' },
+    { methodName: 'sendEncryptedKey', routeName: 'kad-send-encrypted-key' },
+    { methodName: 'sendEncryptedKeyProcessResult', routeName: 'kad-encrypted-key-process-result' },
+];
+
 /**
  * DHT module (Kademlia)
  */
@@ -654,56 +673,11 @@ class Kademlia {
                 });
             };
 
-            node.replicationRequest = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-replication-request');
 
-            node.replacementReplicationRequest = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-replacement-replication-request');
-
-            node.replicationFinished = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-replication-finished');
-
-            node.replacementReplicationFinished = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-replacement-replication-finished');
-
-            node.challengeRequest = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-challenge-request');
-
-            node.challengeResponse = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-challenge-response');
-
-            node.sendDataLocationResponse = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-data-location-response');
-
-            node.dataReadRequest = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-data-read-request');
-
-            node.sendDataReadResponse = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-data-read-response');
-
-            node.sendPermissionedDataReadRequest = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-permissioned-data-read-request');
-
-            node.sendPermissionedDataReadResponse = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-permissioned-data-read-response');
-
-            node.sendDataPurchaseRequest = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-data-purchase-request');
-
-            node.sendDataPurchaseResponse = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-data-purchase-response');
-
-            node.sendPermissionedDataPriceRequest = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-data-price-request');
-
-            node.sendPermissionedDataPriceResponse = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-data-price-response');
-
-            node.sendEncryptedKey = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-send-encrypted-key');
-
-            node.sendEncryptedKeyProcessResult = async (message, contactId) =>
-                node.sendDirectMessage(message, contactId, 'kad-encrypted-key-process-result');
+            directMessageRequests.forEach((element) => {
+                node[element.methodName] = async (message, contactId) =>
+                    node.sendDirectMessage(message, contactId, element.routeName);
+            });
 
             node.sendPublicKeyRequest = async (message, contactId) =>
                 node.sendUnpackedMessage(message, contactId, 'kad-public-key-request');
