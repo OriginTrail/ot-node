@@ -122,6 +122,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
 
 Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
+    this.logger.log(`I setup ${nodeCount} nodes`);
 
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeConfiguration = {
@@ -367,9 +368,9 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     if (lastExport.data.export_status) {
         expect(lastExport.data.export_status, 'response.data.export_status should be "COMPLETED"')
             .to.be.equal('COMPLETED');
-        keys = keys.concat(['export_status', 'import_status']);
+        keys = keys.concat(['export_status', 'import_status', 'root_hash']);
         if (lastExport.data.import_status === 'COMPLETED') {
-            keys = keys.concat(['offer_id', 'root_hash', 'data_hash']);
+            keys = keys.concat(['offer_id', 'data_hash']);
         }
     } else {
         keys = keys.concat(['root_hash', 'data_hash']);
@@ -871,6 +872,7 @@ Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, 
 });
 
 Given(/^DC waits for replication window to close$/, { timeout: 180000 }, function (done) {
+    this.logger.log('DC waits for replication window to close');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplicationHandler, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);

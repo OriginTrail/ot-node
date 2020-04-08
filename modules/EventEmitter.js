@@ -451,8 +451,8 @@ class EventEmitter {
             await transport.sendResponse(response, await transport.join());
         });
 
-        this._on('kad-data-location-request', async (query) => {
-            const { message, messageSignature } = query;
+        this._on('kad-data-location-request', async (request) => {
+            const { message, messageSignature } = request;
             if (ObjectValidator.validateSearchQueryObject(message.query)) {
                 return;
             }
@@ -480,10 +480,20 @@ class EventEmitter {
 
         // sync
         this._on('kad-replication-request', async (request, response) => {
-            const message = transport.extractMessage(request);
-            const { offerId, wallet, dhIdentity } = message;
-            const identity = transport.extractSenderID(request);
+            const kadReplicationRequest = transport.extractMessage(request);
+            var replicationMessage = kadReplicationRequest;
+            if (kadReplicationRequest.messageSignature) {
+                const { message, messageSignature } = kadReplicationRequest;
+                replicationMessage = message;
 
+                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                    return;
+                }
+            }
+
+            const { offerId, wallet, dhIdentity } = replicationMessage;
+            const identity = transport.extractSenderID(request);
             try {
                 await dcService.handleReplicationRequest(
                     offerId, wallet, identity, dhIdentity,
@@ -540,14 +550,31 @@ class EventEmitter {
             try {
                 const dhNodeId = transport.extractSenderID(request);
                 const replicationFinishedMessage = transport.extractMessage(request);
-                const {
-                    offerId, messageSignature, dhIdentity,
-                } = replicationFinishedMessage;
 
                 let dhWallet = replicationFinishedMessage.wallet;
                 if (!dhWallet) {
                     dhWallet = transport.extractSenderInfo(request).wallet;
                 }
+
+                if (replicationFinishedMessage.message) { // todo remove if for next update
+                    const {
+                        message, messageSignature,
+                    } = replicationFinishedMessage;
+                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                        logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                        return;
+                    }
+
+                    await dcService.verifyDHReplication(
+                        message.offerId, messageSignature,
+                        dhNodeId, message.dhIdentity, dhWallet, false,
+                    );
+                }
+
+                const {
+                    offerId, messageSignature, dhIdentity,
+                } = replicationFinishedMessage;
+
                 await dcService.verifyDHReplication(
                     offerId, messageSignature,
                     dhNodeId, dhIdentity, dhWallet, false,
@@ -580,10 +607,33 @@ class EventEmitter {
         // async
         this._on('kad-challenge-request', async (request) => {
             try {
-                const message = transport.extractMessage(request);
+                const challengeRequest = transport.extractMessage(request);
+                let message = challengeRequest;
+                if (challengeRequest.messageSignature) {
+                    // eslint-disable-next-line prefer-destructuring
+                    message = challengeRequest.message;
+                }
+
                 const error = ObjectValidator.validateChallengeRequest(message);
                 if (error) {
                     logger.trace(`Challenge request message is invalid. ${error.message}`);
+                    return;
+                }
+                if (challengeRequest.messageSignature) { // todo remove if for next update
+                    const { messageSignature } = challengeRequest;
+                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                        logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                        return;
+                    }
+
+                    await dhService.handleChallenge(
+                        message.data_set_id,
+                        message.offer_id,
+                        message.object_index,
+                        message.block_index,
+                        message.challenge_id,
+                        message.litigator_id,
+                    );
                     return;
                 }
                 await dhService.handleChallenge(
@@ -603,10 +653,29 @@ class EventEmitter {
         // async
         this._on('kad-challenge-response', async (request) => {
             try {
-                const message = transport.extractMessage(request);
+                const challengeResponse = transport.extractMessage(request);
+                let message = challengeResponse;
+                if (challengeResponse.messageSignature) {
+                    // eslint-disable-next-line prefer-destructuring
+                    message = challengeResponse.message;
+                }
                 const error = ObjectValidator.validateChallengeResponse(message);
                 if (error) {
                     logger.trace(`Challenge response message is invalid. ${error.message}`);
+                    return;
+                }
+
+                if (challengeResponse.messageSignature) { // todo remove if for next update
+                    const { messageSignature } = challengeResponse;
+                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                        logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                        return;
+                    }
+
+                    await dcService.handleChallengeResponse(
+                        message.data_set_id,
+                        message.answer,
+                    );
                     return;
                 }
 
