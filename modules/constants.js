@@ -100,3 +100,9 @@ exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
  *  Minimal number of blocks which are used for creating permissioned data merkle tree
  */
 exports.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS = 256;
+/**
+ *
+ * @constant {integer} PUBLIC_KEY_VALIDITY_IN_MILLS -
+ *  Amount of time one node's public key hash is valid
+ */
+exports.PUBLIC_KEY_VALIDITY_IN_MILLS = 30 * 24 * 60 * 60 * 1000; // 30 days
