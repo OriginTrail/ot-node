@@ -144,7 +144,7 @@ Feature: Data layer related features
     Given I create json query with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
     Then response should return same dataset_ids as second last import and last import
 
-  @second
+  @fourth
   Scenario: Data read and export successfully
     Given the replication difficulty is 0
     And I setup 4 nodes
