@@ -19,6 +19,7 @@
     "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:first": "cucumber-js --tags=@first --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:second": "cucumber-js --tags=@second --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd:dl2": "cucumber-js --tags=@dl2 --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:dryrun": "cucumber-js --dry-run test/bdd/ -r test/bdd/steps/",
     "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:verbose": "cucumber-js --fail-fast --format event-protocol --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",

@@ -246,6 +246,7 @@ function _isLeaf(object) {
  * Remove comments from raw json
  */
 function _removeCommentsAndTrimTexts(obj) {
+    if (obj == null) { return obj; }
     if (typeof obj === 'object' || Array.isArray((obj))) {
         if (_isLeaf(obj)) {
             obj._text = obj._text.trim();

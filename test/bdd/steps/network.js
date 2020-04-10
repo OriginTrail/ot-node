@@ -22,6 +22,8 @@ const Models = require('../../../models');
 const fs = require('fs');
 const xmljs = require('xml-js');
 
+const { sha3_256 } = require('js-sha3');
+
 // Identity difficulty 8.
 const bootstrapIdentity = {
     ff62cb1f692431d901833d55b93c7d991b4087f1: {
@@ -724,13 +726,12 @@ Then(/^response should contain only last imported data set id$/, function () {
 });
 
 Then(/^response hash should match last imported data set id$/, function () {
-    expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
-
-    // TODO not sure if we should check for edges and vertices in apiQueryLocalImportByDataSetIdResponse
-    // TODO check that lastImport.dataset_id and sha256 calculated hash are matching
-
-    const calculatedImportHash = ImportUtilities.calculateGraphHash(this.state.apiQueryLocalImportByDataSetIdResponse['@graph']);
-    expect(this.state.lastImport.data.dataset_id, 'Hashes should match').to.be.equal(calculatedImportHash);
+    const { lastExport, lastExportType } = this.state;
+    if (lastExportType === 'GRAPH' || lastExportType === 'OT-JSON') {
+        const graph = JSON.parse(lastExport.data.formatted_dataset)['@graph'];
+        const calculatedImportHash = sha3_256(JSON.stringify(graph), null, 0);
+        expect(this.state.lastImport.data.dataset_id, 'Hashes should match').to.be.equal(`0x${calculatedImportHash}`);
+    }
 });
 
 Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nodeCount, done) {

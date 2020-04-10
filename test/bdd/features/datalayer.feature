@@ -144,7 +144,7 @@ Feature: Data layer related features
     Given I create json query with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
     Then response should return same dataset_ids as second last import and last import
 
-  @fourth
+  @second
   Scenario: Data read and export successfully
     Given the replication difficulty is 0
     And I setup 4 nodes
@@ -162,6 +162,9 @@ Feature: Data layer related features
     Given the DV sends read and export for last import from DC as GS1-EPCIS
     And DV waits for export to finish
     Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
+    Given the DV sends read and export for last import from DC as GRAPH
+    And DV waits for export to finish
+    Then response hash should match last imported data set id
 
   @second
   Scenario: Data location with multiple identifiers
