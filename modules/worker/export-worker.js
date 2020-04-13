@@ -52,7 +52,7 @@ process.on('message', async (data) => {
         }
         case 'ot-json': {
             document['@graph'] = JSON.parse(ImportUtilities.sortGraphRecursively(document['@graph']));
-            dataset = JSON.stringify(document);
+            dataset = Utilities.sortedStringify(document);
             break;
         }
         default:
@@ -84,3 +84,4 @@ process.on('message', async (data) => {
         process.send({ error: `${error.message}\n${error.stack}` });
     }
 });
+

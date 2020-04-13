@@ -178,7 +178,8 @@ function verifySignature(otJson, wallet) {
     const strippedOtjson = Object.assign({}, otJson);
     delete strippedOtjson.signature;
 
-    const stringifiedOtJson = _sortDataset(strippedOtjson);
+    // const stringifiedOtJson = _sortDataset(strippedOtjson);
+    const stringifiedOtJson = JSON.stringify(strippedOtjson);
     return (wallet.toLowerCase() === accounts.recover(stringifiedOtJson, signature.value).toLowerCase());
 }
 

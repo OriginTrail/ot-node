@@ -630,7 +630,7 @@ class ImportUtilities {
     }
 
     static sortStringifyDataset(dataset) {
-        ImportUtilities.sortGraphRecursively(dataset['@graph']);
+        dataset['@graph'] = JSON.parse(ImportUtilities.sortGraphRecursively(dataset['@graph']));
         return Utilities.sortedStringify(dataset);
     }
 
