@@ -450,10 +450,10 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
-        const publicGraph = Utilities.copyObject(graph);
+        let publicGraph = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(publicGraph);
 
-        ImportUtilities.sortGraphRecursively(publicGraph);
+        publicGraph = JSON.parse(ImportUtilities.sortGraphRecursively(publicGraph));
 
         const merkle = ImportUtilities.createDistributionMerkleTree(
             publicGraph,
