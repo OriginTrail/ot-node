@@ -306,8 +306,20 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
 
     expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 
-    const calculatedRootHash = utilities.calculateRootHash(response.document);
+    // const calculatedRootHash = utilities.calculateRootHash(response.document);
     const calculateDatasetId = ImportUtilities.calculateGraphHash(response.document['@graph']);
+    const dataCreator = {
+        identifiers: [
+            {
+                identifierValue: ImportUtilities.getDataCreator(response.document.datasetHeader),
+                identifierType: 'ERC725',
+                validationSchema: '/schemas/erc725-main',
+            },
+        ],
+    };
+    const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document['@graph'], response.document['@id'], dataCreator);
+
+
     expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
     expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
 });
