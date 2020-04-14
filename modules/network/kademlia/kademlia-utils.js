@@ -9,7 +9,6 @@ class KademliaUtils {
     constructor(ctx) {
         this.solvers = [];
         this.log = ctx.logger;
-        this.notifyError = ctx.notifyError;
         this.config = ctx.config;
     }
 

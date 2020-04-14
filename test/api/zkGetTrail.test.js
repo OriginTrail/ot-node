@@ -73,7 +73,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
 
         const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
-        graphStorage = new GraphStorage(config.database, logger, () => {});
+        graphStorage = new GraphStorage(config.database, logger);
         container.register({
             logger: awilix.asValue(logger),
             gs1Utilities: awilix.asClass(GS1Utilities),
@@ -82,7 +82,6 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             product: awilix.asClass(Product),
             config: awilix.asValue(config),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
-            notifyError: awilix.asValue(() => {}),
             importService: awilix.asClass(ImportService).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),

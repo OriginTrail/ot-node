@@ -11,7 +11,6 @@ class ExportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
         this.config = ctx.config;
     }
@@ -89,9 +88,6 @@ class ExportCommand extends Command {
                 },
             },
         );
-        if (error.type !== 'ExporterError') {
-            this.notifyError(error);
-        }
     }
 
     /**

@@ -12,7 +12,6 @@ class ExportDataCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
         this.config = ctx.config;
     }
@@ -90,10 +89,6 @@ class ExportDataCommand extends Command {
                 },
             },
         );
-
-        if (error.type !== 'ExporterError') {
-            this.notifyError(error);
-        }
 
         const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
         const filePath = path.join(cacheDirectory, handlerId);

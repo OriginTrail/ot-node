@@ -16,7 +16,6 @@ class DVDataReadResponseFreeCommand extends Command {
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
-        this.notifyError = ctx.notifyError;
         this.commandExecutor = ctx.commandExecutor;
         this.permissionedDataService = ctx.permissionedDataService;
     }
@@ -201,7 +200,6 @@ class DVDataReadResponseFreeCommand extends Command {
             });
         } catch (error) {
             this.logger.warn(`Failed to import JSON. ${error}.`);
-            this.notifyError(error);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             return Command.empty();
@@ -245,10 +243,6 @@ class DVDataReadResponseFreeCommand extends Command {
                 },
             },
         );
-
-        if (error.type !== 'ExporterError') {
-            this.notifyError(error);
-        }
     }
 
     /**

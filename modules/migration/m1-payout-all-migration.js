@@ -8,12 +8,11 @@ const BATCH_SIZE = 15;
  */
 class M1PayoutAllMigration {
     constructor({
-        logger, blockchain, config, notifyError,
+        logger, blockchain, config,
     }) {
         this.logger = logger;
         this.config = config;
         this.blockchain = blockchain;
-        this.notifyError = notifyError;
     }
 
     /**
@@ -71,7 +70,6 @@ class M1PayoutAllMigration {
                 } catch (e) {
                     message = `Failed to set status COMPLETED for payout commands. Possible invalid future payout commands. Offers affected ${offerIds}`;
                     this.logger.warn(message);
-                    this.notifyError(new Error(message));
                 }
             } catch (e) {
                 message = `Failed to complete payout for offers [${offerIds}]. Please make sure that you have enough ETH. ${e.message}`;
