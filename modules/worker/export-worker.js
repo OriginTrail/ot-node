@@ -51,7 +51,7 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            dataset = JSON.stringify(ImportUtilities.sort(document));
+            dataset = JSON.stringify(ImportUtilities.sortDataset(document));
             break;
         }
         default:
