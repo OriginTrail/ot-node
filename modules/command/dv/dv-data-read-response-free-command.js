@@ -31,19 +31,6 @@ class DVDataReadResponseFreeCommand extends Command {
             message,
         } = command.data;
 
-
-        /*
-            message: {
-                id: REPLY_ID
-                wallet: DH_WALLET,
-                data_provider_wallet: DC_WALLET,
-                nodeId: KAD_ID
-                agreementStatus: CONFIRMED/REJECTED,
-                data: { … }
-                importId: IMPORT_ID,        // Temporal. Remove it.
-            },
-         */
-
         // Is it the chosen one?
         const replyId = message.id;
         const {
@@ -121,14 +108,13 @@ class DVDataReadResponseFreeCommand extends Command {
         } = JSON.parse(handler.data);
 
         if (readExport) {
-            const fileContent = ImportUtilities.sortStringifyDataset(document);
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
 
             try {
                 await Utilities.writeContentsToFile(
                     cacheDirectory,
                     handler_id,
-                    fileContent,
+                    JSON.stringify(document),
                 );
             } catch (e) {
                 const filePath = path.join(cacheDirectory, handler_id);

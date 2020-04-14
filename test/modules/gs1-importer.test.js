@@ -240,20 +240,18 @@ describe('GS1 Importer tests', () => {
                 async () => {
                     const xmlContents = await Utilities.fileContents(inputFile.args[0]);
                     const otJson = epcisOtJsonTranspiler.convertToOTJson(xmlContents);
+                    const copyOtJson = Utilities.copyObject(otJson);
 
+                    // todo this method changes order of otJson['@graph']
                     const {
                         data_set_id,
                     } = await importService.importFile({
-                        document: otJson,
+                        document: copyOtJson,
                     });
 
                     const otJsonFromDb = await importService.getImport(data_set_id);
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
-                    assert.deepEqual(otJson, otJsonFromDb);
-
-                    const sortedFirst = ImportUtilities.sortStringifyDataset(otJson);
-                    const sortedSecond = ImportUtilities.sortStringifyDataset(otJsonFromDb);
-                    assert.deepEqual(sortedFirst, sortedSecond, `Converted XML for ${path.basename(inputFile.args[0])} is not equal to the original one`);
+                    assert.deepEqual(otJson, otJsonFromDb, `Converted XML for ${path.basename(inputFile.args[0])} is not equal to the original one`);
                 },
             );
         });

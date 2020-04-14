@@ -1,5 +1,4 @@
 const constants = require('../constants');
-const importUtilities = require('../ImportUtilities');
 const Merkle = require('../Merkle');
 const utilities = require('../Utilities');
 
@@ -92,8 +91,6 @@ class ChallengeService {
      * @returns {Array} of blocks.
      */
     getBlocks(graphObjects, blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
-        importUtilities.sortGraphRecursively(graphObjects);
-
         const blocks = [];
 
         for (let objectIndex = 0; objectIndex < graphObjects.length; objectIndex += 1) {

@@ -51,8 +51,7 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            document['@graph'] = JSON.parse(ImportUtilities.sortGraphRecursively(document['@graph']));
-            dataset = Utilities.sortedStringify(document);
+            dataset = JSON.stringify(ImportUtilities.sort(document));
             break;
         }
         default:

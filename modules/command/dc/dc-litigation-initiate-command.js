@@ -76,8 +76,6 @@ class DCLitigationInitiateCommand extends Command {
             litigationPrivateKey,
         );
 
-        importUtilities.sortGraphRecursively(encryptedGraph['@graph']);
-
         const merkleProof = this.challengeService.createChallengeProof(
             encryptedGraph['@graph'],
             objectIndex,

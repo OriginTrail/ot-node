@@ -44,10 +44,10 @@ describe('Import utilities module ', () => {
     });
 
     it('Sorted dataset', () => {
-        const sortedOriginal = ImportUtilities.sortStringifyDataset(sample_data.graph);
-        const sortedShuffled = ImportUtilities.sortStringifyDataset(sample_data.shuffledGraph);
+        const sortedOriginal = ImportUtilities.sortDataset(sample_data.graph);
+        const sortedShuffled = ImportUtilities.sortDataset(sample_data.shuffledGraph);
 
-        assert.equal(sortedOriginal, sortedShuffled);
+        assert.equal(JSON.stringify(sortedOriginal), JSON.stringify(sortedShuffled));
     });
 
     it('Encrypt dataset', () => {
@@ -163,34 +163,37 @@ describe('Import utilities module ', () => {
     });
 
     it('Sign dataset', () => {
-        const testGraphCopy = Object.assign({}, sample_data.graph);
-        const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
-        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
+        let testGraphCopy = Object.assign({}, sample_data.graph);
+        let shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
+        testGraphCopy = ImportUtilities.sortDataset(testGraphCopy);
+        shuffledGraphCopy = ImportUtilities.sortDataset(shuffledGraphCopy);
+
+        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
 
         assert(signedOriginal.signature != null);
         assert(signedShuffled.signature != null);
 
         assert.equal(
-            ImportUtilities
-                .sortStringifyDataset(signedOriginal),
-            ImportUtilities
-                .sortStringifyDataset(signedShuffled),
+            JSON.stringify(signedOriginal),
+            JSON.stringify(signedShuffled),
         );
     });
 
     it('Verify dataset signature', async () => {
-        const testGraphCopy = Object.assign({}, sample_data.graph);
-        const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
+        let testGraphCopy = Object.assign({}, sample_data.graph);
+        let shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
+
+        testGraphCopy = ImportUtilities.sortDataset(testGraphCopy);
+        shuffledGraphCopy = ImportUtilities.sortDataset(shuffledGraphCopy);
 
         const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
 
         assert.equal(
-            ImportUtilities
-                .sortStringifyDataset(signedOriginal),
-            ImportUtilities.sortStringifyDataset(signedShuffled),
+            JSON.stringify(signedOriginal),
+            JSON.stringify(signedShuffled),
         );
 
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);

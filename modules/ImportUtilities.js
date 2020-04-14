@@ -139,6 +139,7 @@ class ImportUtilities {
     }
 
     static prepareDataset(document, config, web3) {
+        document = ImportUtilities.sortDataset(document);
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(graph);
@@ -158,7 +159,7 @@ class ImportUtilities {
             '@graph': graph,
         };
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
+        const rootHash = ImportUtilities.calculateDatasetRootHash(graph, id, header.dataCreator);
         dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
 
         const signed = ImportUtilities.signDataset(dataset, config, web3);
@@ -450,10 +451,8 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
-        let publicGraph = Utilities.copyObject(graph);
+        const publicGraph = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(publicGraph);
-
-        publicGraph = JSON.parse(ImportUtilities.sortGraphRecursively(publicGraph));
 
         const merkle = ImportUtilities.createDistributionMerkleTree(
             publicGraph,
@@ -468,7 +467,7 @@ class ImportUtilities {
      * Sort @graph data inline
      * @param graph
      */
-    static sortGraphRecursively(graph) {
+    static sortGraph(graph) {
         graph.forEach((el) => {
             if (el.relations) {
                 el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
@@ -481,7 +480,7 @@ class ImportUtilities {
             }
         });
         graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
-        return Utilities.sortedStringify(graph, true);
+        return JSON.parse(Utilities.sortedStringify(graph));
     }
 
     /**
@@ -587,8 +586,7 @@ class ImportUtilities {
      * @returns {string}
      */
     static calculateGraphHash(graph) {
-        const sorted = this.sortGraphRecursively(graph);
-        return `0x${sha3_256(sorted, null, 0)}`;
+        return `0x${sha3_256(graph, null, 0)}`;
     }
 
     /**
@@ -599,8 +597,7 @@ class ImportUtilities {
     static calculateGraphPublicHash(graph) {
         const public_data = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(public_data);
-        const sorted = ImportUtilities.sortGraphRecursively(public_data);
-        return `0x${sha3_256(sorted, null, 0)}`;
+        return `0x${sha3_256(JSON.stringify(public_data), null, 0)}`;
     }
 
     /**
@@ -629,9 +626,9 @@ class ImportUtilities {
         }
     }
 
-    static sortStringifyDataset(dataset) {
-        dataset['@graph'] = JSON.parse(ImportUtilities.sortGraphRecursively(dataset['@graph']));
-        return Utilities.sortedStringify(dataset);
+    static sortDataset(dataset) {
+        dataset['@graph'] = ImportUtilities.sortGraph(dataset['@graph']);
+        return JSON.parse(Utilities.sortedStringify(dataset));
     }
 
     /**
@@ -641,9 +638,8 @@ class ImportUtilities {
     static signDataset(otjson, config, web3) {
         const completeGraph = Utilities.copyObject(otjson['@graph']);
         ImportUtilities.removeGraphPermissionedData(otjson['@graph']);
-        const stringifiedOtjson = this.sortStringifyDataset(otjson);
         const { signature } = web3.eth.accounts.sign(
-            stringifiedOtjson,
+            JSON.stringify(otjson),
             Utilities.normalizeHex(config.node_private_key),
         );
         otjson.signature = {
@@ -652,6 +648,7 @@ class ImportUtilities {
         };
 
         otjson['@graph'] = completeGraph;
+
         return otjson;
     }
 
@@ -663,8 +660,7 @@ class ImportUtilities {
         const strippedOtjson = Object.assign({}, otjson);
         delete strippedOtjson.signature;
 
-        const stringifiedOtjson = this.sortStringifyDataset(strippedOtjson);
-        return web3.eth.accounts.recover(stringifiedOtjson, otjson.signature.value);
+        return web3.eth.accounts.recover(JSON.stringify(strippedOtjson), otjson.signature.value);
     }
 
 

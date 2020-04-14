@@ -5,11 +5,12 @@ const { expect } = require('chai');
 const ChallengeService = require('../../modules/service/challenge-service');
 
 const logger = require('../../modules/logger');
+const importUtilities = require('../../modules/ImportUtilities');
 
 const challengeService = new ChallengeService({ logger });
 
 // Global declarations.
-const vertexData = [
+let vertexData = [
     { '@id': 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' },
     { '@id': 'vertex1', data: ' ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation' },
     { '@id': 'vertex2', data: ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis' },
@@ -41,6 +42,8 @@ function checkChallenges(tests, startTime, endTime, expectedBlockSize) {
 }
 
 describe('Challenge service tests', () => {
+    vertexData = importUtilities.sortGraph(vertexData);
+
     describe('Challenge generation', () => {
         const startTime = new Date('May 1, 2018 03:24:00').getTime();
         const endTime = new Date('January 1, 2019 00:24:00').getTime();

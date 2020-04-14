@@ -47,7 +47,7 @@ class Utilities {
      * @param sortArrays - Sort array items
      * @return {string}
      */
-    static sortedStringify(obj, sortArrays = false) {
+    static sortedStringify(obj, sortArrays = true) {
         if (obj == null) {
             return 'null';
         }

@@ -114,8 +114,7 @@ class ImportService {
         document.signature = metadata.signature;
 
 
-        ImportUtilities.sortStringifyDataset(document);
-        return document;
+        return ImportUtilities.sortDataset(document);
     }
 
     /**
@@ -585,8 +584,6 @@ class ImportService {
     async getMerkleProofs(objectIdsArray, datasetId) {
         const otjson = await this.getImport(datasetId);
 
-        ImportUtilities.sortGraphRecursively(_graph(otjson));
-
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
             _graph(otjson),
             datasetId,
@@ -620,7 +617,6 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
-            ImportUtilities.sortGraphRecursively([reconstructedObjects[i]]);
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
@@ -640,7 +636,9 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
-        return otObject;
+        let graph = [otObject];
+        graph = ImportUtilities.sortGraph(graph);
+        return graph[0];
     }
 
     _constructOtObject(relatedObjects) {

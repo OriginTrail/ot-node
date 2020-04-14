@@ -23,7 +23,6 @@ class DcConvertToOtJsonCommand extends Command {
         try {
             if (standard_id === 'ot-json') {
                 let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
-
                 if (!document.signature) {
                     document = ImportUtilities.prepareDataset(document, this.config, this.web3);
                 }

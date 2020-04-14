@@ -48,8 +48,12 @@ class DhReplicationImportCommand extends Command {
         const { otJson, permissionedData }
             = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
-        const { decryptedDataset, encryptedMap } =
-            await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
+        const decryptedObject = await ImportUtilities
+            .decryptDataset(otJson, litigationPublicKey, offerId, encColor);
+        const { encryptedMap } = decryptedObject;
+        let { decryptedDataset } = decryptedObject;
+
+        decryptedDataset = ImportUtilities.sortDataset(decryptedDataset);
 
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
