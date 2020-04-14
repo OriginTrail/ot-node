@@ -80,6 +80,7 @@
   "homepage": "https://origintrail.io",
   "snyk": true,
   "dependencies": {
+    "@bugsnag/js": "^6.5.2",
     "@deadcanaries/kadence": "^6.1.9",
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^5.5.2",
@@ -96,7 +97,6 @@
     "boscar": "^2.0.0",
     "buffer": "^5.4.0",
     "buffer-xor": "^2.0.2",
-    "bugsnag": "^2.4.3",
     "bunyan": "^1.8.12",
     "camel-case": "^3.0.0",
     "check-dependencies": "^1.1.0",

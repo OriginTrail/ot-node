@@ -23,7 +23,6 @@ const WOTImporter = require('./modules/importer/wot-importer');
 const EpcisOtJsonTranspiler = require('./modules/transpiler/epcis/epcis-otjson-transpiler');
 const WotOtJsonTranspiler = require('./modules/transpiler/wot/wot-otjson-transpiler');
 const RemoteControl = require('./modules/RemoteControl');
-const bugsnag = require('bugsnag');
 const rc = require('rc');
 const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
@@ -31,6 +30,7 @@ const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
+const bugsnag = require('@bugsnag/js');
 
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
@@ -180,6 +180,8 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
+
+let bugsnagClient;
 function notifyBugsnag(error, metadata, subsystem) {
     if (process.env.NODE_ENV !== 'development') {
         const cleanConfig = Object.assign({}, config);
@@ -206,39 +208,19 @@ function notifyBugsnag(error, metadata, subsystem) {
             Object.assign(options, metadata);
         }
 
-        bugsnag.notify(error, options);
+        bugsnagClient.notify(error, options);
     }
 }
 
 function notifyEvent(message, metadata, subsystem) {
-    if (process.env.NODE_ENV !== 'development') {
-        const cleanConfig = Object.assign({}, config);
-        delete cleanConfig.node_private_key;
-        delete cleanConfig.houston_password;
-        delete cleanConfig.database;
-        delete cleanConfig.blockchain;
-
-        const options = {
-            user: {
-                id: config.node_wallet,
-                identity: config.node_kademlia_id,
-                config: cleanConfig,
-            },
-            severity: 'info',
-        };
-
-        if (subsystem) {
-            options.subsystem = {
-                name: subsystem,
-            };
-        }
-
-        if (metadata) {
-            Object.assign(options, metadata);
-        }
-
-        bugsnag.notify(message, options);
+    const options = {
+        severity: 'info',
+    };
+    if (metadata) {
+        Object.assign(options, metadata);
     }
+
+    notifyBugsnag(message, metadata, subsystem);
 }
 
 /**
@@ -250,9 +232,9 @@ class OTNode {
      */
     async bootstrap() {
         if (process.env.NODE_ENV !== 'development') {
-            bugsnag.register(
-                pjson.config.bugsnagkey,
-                {
+            bugsnagClient = bugsnag({
+                apiKey: pjson.config.bugsnagkey,
+                otherOptions: {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
@@ -264,7 +246,7 @@ class OTNode {
                     },
                     logLevel: 'error',
                 },
-            );
+            });
         }
 
         try {
@@ -277,7 +259,6 @@ class OTNode {
             log.info('ot-node folder structure check done');
         } catch (err) {
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -336,7 +317,6 @@ class OTNode {
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
                 console.log(err);
-                notifyBugsnag(err);
                 process.exit(1);
             }
         }
@@ -347,7 +327,6 @@ class OTNode {
             log.info('Storage database check done');
         } catch (err) {
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -385,7 +364,7 @@ class OTNode {
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
@@ -423,7 +402,6 @@ class OTNode {
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -455,7 +433,6 @@ class OTNode {
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
-            notifyBugsnag(e);
             process.exit(1);
         }
         await transport.start();
@@ -478,7 +455,6 @@ class OTNode {
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
         if (config.remote_control_enabled) {
@@ -508,7 +484,6 @@ class OTNode {
         } catch (e) {
             log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
             console.log(e);
-            notifyBugsnag(e);
             process.exit(1);
         }
     }
@@ -531,7 +506,6 @@ class OTNode {
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
-                notifyBugsnag(e);
                 process.exit(1);
             }
         }
@@ -562,7 +536,6 @@ class OTNode {
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
-                notifyBugsnag(e);
                 process.exit(1);
             }
         }
@@ -601,7 +574,7 @@ class OTNode {
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
@@ -632,7 +605,6 @@ class OTNode {
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
     }
