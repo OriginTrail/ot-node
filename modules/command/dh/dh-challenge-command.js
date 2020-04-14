@@ -1,6 +1,5 @@
 const Command = require('../command');
 const models = require('../../../models/index');
-const bugsnag = require('bugsnag');
 
 /**
  * Handles one data challenge
@@ -51,23 +50,6 @@ class DHChallengeCommand extends Command {
             color,
         );
         const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
-
-        if (this.config.send_challenges_log) {
-            const bugsnagMessage = 'DH challenge answer';
-            bugsnag.notify(bugsnagMessage, {
-                user: {
-                    dh_node_id: this.config.identity,
-                    dc_identity: litigatorNodeId,
-                    challenge_id: challengeId,
-                    data_set_id: datasetId,
-                    object_index: objectIndex,
-                    block_index: blockIndex,
-                    answer,
-                    otObject,
-                },
-                severity: 'info',
-            });
-        }
 
         this.logger.info(`Calculated answer for dataset ${datasetId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
         try {
