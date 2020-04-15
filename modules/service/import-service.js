@@ -637,7 +637,7 @@ class ImportService {
         }
 
         let graph = [otObject];
-        graph = ImportUtilities.sortGraph(graph);
+        ImportUtilities.sortGraph(graph);
         return graph[0];
     }
 

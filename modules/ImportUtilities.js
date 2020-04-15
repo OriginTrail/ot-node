@@ -453,6 +453,7 @@ class ImportUtilities {
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
         const publicGraph = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(publicGraph);
+        ImportUtilities.sortGraph(publicGraph);
 
         const merkle = ImportUtilities.createDistributionMerkleTree(
             publicGraph,
@@ -480,7 +481,7 @@ class ImportUtilities {
             }
         });
         graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
-        return JSON.parse(Utilities.sortedStringify(graph));
+        graph = JSON.parse(Utilities.sortedStringify(graph, false));
     }
 
     /**
@@ -597,6 +598,7 @@ class ImportUtilities {
     static calculateGraphPublicHash(graph) {
         const public_data = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(public_data);
+        ImportUtilities.sortGraph(public_data);
         return `0x${sha3_256(JSON.stringify(public_data), null, 0)}`;
     }
 
@@ -627,7 +629,7 @@ class ImportUtilities {
     }
 
     static sortDataset(dataset) {
-        dataset['@graph'] = ImportUtilities.sortGraph(dataset['@graph']);
+        ImportUtilities.sortGraph(dataset['@graph']);
         return JSON.parse(Utilities.sortedStringify(dataset));
     }
 
