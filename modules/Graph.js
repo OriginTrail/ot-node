@@ -1,4 +1,4 @@
-const Encryption = require('./Encryption');
+const Encryption = require('./RSAEncryption');
 
 /**
  * Graph class encapsulates every operation related to

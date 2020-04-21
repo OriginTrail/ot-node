@@ -1,6 +1,6 @@
 const Command = require('../command');
 const utilities = require('../../Utilities');
-const encryption = require('../../Encryption');
+const encryption = require('../../RSAEncryption');
 const models = require('../../../models/index');
 
 /**
