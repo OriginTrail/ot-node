@@ -11,6 +11,7 @@ class DCOfferPrepareCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -48,6 +49,10 @@ class DCOfferPrepareCommand extends Command {
         Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        // TODO Add error notification metadata
+        this.notifyError(err);
+
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

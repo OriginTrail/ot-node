@@ -183,33 +183,33 @@ process.on('SIGINT', () => {
 
 let bugsnagClient;
 function notifyBugsnag(error, metadata, subsystem) {
-    if (process.env.NODE_ENV !== 'development') {
-        const cleanConfig = Object.assign({}, config);
-        delete cleanConfig.node_private_key;
-        delete cleanConfig.houston_password;
-        delete cleanConfig.database;
-        delete cleanConfig.blockchain;
+    // if (process.env.NODE_ENV !== 'development') {
+    const cleanConfig = Object.assign({}, config);
+    delete cleanConfig.node_private_key;
+    delete cleanConfig.houston_password;
+    delete cleanConfig.database;
+    delete cleanConfig.blockchain;
 
-        const options = {
-            user: {
-                id: config.node_wallet,
-                identity: config.node_kademlia_id,
-                config: cleanConfig,
-            },
+    const options = {
+        user: {
+            id: config.node_wallet,
+            identity: config.node_kademlia_id,
+            config: cleanConfig,
+        },
+    };
+
+    if (subsystem) {
+        options.subsystem = {
+            name: subsystem,
         };
-
-        if (subsystem) {
-            options.subsystem = {
-                name: subsystem,
-            };
-        }
-
-        if (metadata) {
-            Object.assign(options, metadata);
-        }
-
-        bugsnagClient.notify(error, options);
     }
+
+    if (metadata) {
+        Object.assign(options, metadata);
+    }
+
+    bugsnagClient.notify(error, options);
+    // }
 }
 
 function notifyEvent(message, metadata, subsystem) {
@@ -231,23 +231,23 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
-        if (process.env.NODE_ENV !== 'development') {
-            bugsnagClient = bugsnag({
-                apiKey: pjson.config.bugsnagkey,
-                otherOptions: {
-                    appVersion: pjson.version,
-                    autoNotify: false,
-                    sendCode: true,
-                    releaseStage: config.bugSnag.releaseStage,
-                    logger: {
-                        info: log.info,
-                        warn: log.warn,
-                        error: log.error,
-                    },
-                    logLevel: 'error',
+        // if (process.env.NODE_ENV !== 'development') {
+        bugsnagClient = bugsnag({
+            apiKey: pjson.config.bugsnagkey,
+            otherOptions: {
+                appVersion: pjson.version,
+                autoNotify: false,
+                sendCode: true,
+                releaseStage: 'bugsnag-testing',
+                logger: {
+                    info: log.info,
+                    warn: log.warn,
+                    error: log.error,
                 },
-            });
-        }
+                logLevel: 'error',
+            },
+        });
+        // }
 
         try {
             // check if all dependencies are installed

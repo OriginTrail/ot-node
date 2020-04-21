@@ -13,6 +13,7 @@ class DcOfferTaskCommand extends Command {
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -90,11 +91,11 @@ class DcOfferTaskCommand extends Command {
      * @param command
      * @param err
      */
-    async recover(command) {
-        return this.invalidateOffer(command);
+    async recover(command, err) {
+        return this.invalidateOffer(command, err);
     }
 
-    async invalidateOffer(command) {
+    async invalidateOffer(command, err) {
         const { dataSetId, internalOfferId, handler_id } = command.data;
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
@@ -109,6 +110,10 @@ class DcOfferTaskCommand extends Command {
         Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+        if (err) {
+            // TODO Add error notification metadata
+            this.notifyError(err);
+        }
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

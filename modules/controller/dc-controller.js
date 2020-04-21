@@ -20,6 +20,9 @@ class DCController {
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
+
+        this.notifyError = ctx.notifyError;
+        this.notifyEvent = ctx.notifyEvent;
     }
 
     /**
@@ -75,6 +78,10 @@ class DCController {
                 });
             } catch (error) {
                 this.logger.error(`Failed to create offer. ${error}.`);
+
+                // TODO Add error notification metadata
+                this.notifyError(error);
+
                 if (handlerId) {
                     Models.handler_ids.update({
                         status: 'FAILED',

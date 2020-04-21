@@ -188,11 +188,11 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      * @param err
      */
-    async recover(command) {
-        return this.invalidateOffer(command);
+    async recover(command, err) {
+        return this.invalidateOffer(command, err);
     }
 
-    async invalidateOffer(command) {
+    async invalidateOffer(command, err) {
         const { offerId, handler_id } = command.data;
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
@@ -207,6 +207,12 @@ class DcOfferFinalizedCommand extends Command {
         await Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        if (err) {
+            // TODO Add error notification metadata
+            this.notifyError(err);
+        }
+
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

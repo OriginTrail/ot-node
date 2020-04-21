@@ -22,6 +22,7 @@ class DCOfferFinalizeCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
         this.profileService = ctx.profileService;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -86,6 +87,7 @@ class DCOfferFinalizeCommand extends Command {
         } catch (error) {
             if (error.message.includes('Gas price higher than maximum allowed price')) {
                 this.logger.info('Gas price too high, delaying call for 30 minutes');
+                // TODO Update status in handler in case of waiting
                 return Command.repeat();
             }
             throw error;
@@ -171,6 +173,9 @@ class DCOfferFinalizeCommand extends Command {
         Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        // TODO Add error notification metadata
+        this.notifyError(err);
 
         return Command.empty();
     }

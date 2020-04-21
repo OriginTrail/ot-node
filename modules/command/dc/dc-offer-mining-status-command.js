@@ -10,6 +10,7 @@ class DcOfferMiningStatusCommand extends Command {
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -97,6 +98,10 @@ class DcOfferMiningStatusCommand extends Command {
         Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        // TODO Add error notification metadata
+        this.notifyError(err);
+
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

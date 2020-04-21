@@ -14,6 +14,7 @@ class DcOfferMiningCompletedCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
         this.profileService = ctx.profileService;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -148,6 +149,9 @@ class DcOfferMiningCompletedCommand extends Command {
         models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        // TODO Add error notification metadata
+        this.notifyError(err);
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

@@ -12,6 +12,7 @@ class DCOfferCreateDbCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -74,6 +75,10 @@ class DCOfferCreateDbCommand extends Command {
         models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        // TODO Add error notification metadata
+        this.notifyError(err);
+
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
