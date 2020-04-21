@@ -97,6 +97,7 @@ class ImportWorkerController {
                 await this._sendErrorToFinalizeCommand(response.error, handler_id, documentPath);
             } else {
                 const otjson = JSON.parse(response);
+
                 const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
                 fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));
                 const commandData = {

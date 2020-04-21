@@ -4,7 +4,7 @@ const ethAbi = require('ethereumjs-abi');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
-const Encryption = require('./Encryption');
+const Encryption = require('./RSAEncryption');
 const bytes = require('utf8-length');
 
 /**

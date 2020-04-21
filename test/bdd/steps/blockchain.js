@@ -25,19 +25,20 @@ Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
     ).to.be.equal(true);
 
     let currentDifficulty =
-        await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
+        await this.state.localBlockchain.holdingStorageInstance.methods.difficultyOverride().call();
 
     if (currentDifficulty !== difficulty.toString()) {
         this.logger.log(`Changing difficulty modifier to ${difficulty}.`);
-        await this.state.localBlockchain.holdingInstance.methods
-            .setDifficulty(difficulty).send({
+        await this.state.localBlockchain.holdingStorageInstance.methods
+            .setDifficultyOverride(difficulty).send({
                 // TODO: Add access to original wallet.
                 from: (await this.state.localBlockchain.web3.eth.getAccounts())[7],
                 gas: 3000000,
             }).on('error', (error) => { throw error; });
 
-        currentDifficulty =
-            await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
+        currentDifficulty = await
+        this.state.localBlockchain.holdingStorageInstance.methods.difficultyOverride().call();
+
         expect(currentDifficulty).to.be.equal(difficulty.toString());
     }
 });

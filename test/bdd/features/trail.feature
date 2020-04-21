@@ -7,7 +7,8 @@ Feature: Trail features
 
 @second
 Scenario: Check that trail returns the expected objects
-  Given I setup 4 nodes
+  Given the replication difficulty is 1
+  And I setup 4 nodes
   And I start the 1st node
   And I start the 2nd node
   And I start the 3rd node

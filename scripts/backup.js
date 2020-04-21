@@ -4,17 +4,22 @@ const argv = require('minimist')(process.argv.slice(2));
 const { exec } = require('child_process');
 require('dotenv').config();
 
+let environment;
 if (!process.env.NODE_ENV) {
     // Environment not set. Use the production.
-    process.env.NODE_ENV = 'testnet';
-} else if (['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) < 0) {
+    environment = 'testnet';
+} else if (['development', 'testnet', 'mainnet', 'mariner'].indexOf(process.env.NODE_ENV) < 0) {
     console.error(`Unsupported environment '${process.env.NODE_ENV}'`);
     return 1;
+} else if (process.env.NODE_ENV === 'mariner') {
+    environment = 'mainnet';
+} else {
+    environment = process.env.NODE_ENV;
 }
 
 const configjson = require('../config/config.json');
 
-const defaultConfig = configjson[process.env.NODE_ENV];
+const defaultConfig = configjson[environment];
 
 const timestamp = new Date().toISOString();
 
@@ -75,6 +80,21 @@ for (const file of files) {
     }
 
     if (fs.existsSync(src)) {
+        console.log(`Backup: ${src} -> ${dest}`);
+        fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
+    }
+}
+
+const migrationFolderPath = `${configDirectory}/migrations`;
+if (fs.existsSync(migrationFolderPath)) {
+    const migrationFiles = fs.readdirSync(migrationFolderPath);
+
+    mkdirp.sync(`${backupPath}/${timestamp}/migrations`, (err) => { if (err) { console.error(err); return 1; } });
+
+    for (const migrationFile of migrationFiles) {
+        const src = `${migrationFolderPath}/${migrationFile}`;
+        const dest = `${backupPath}/${timestamp}/migrations/${migrationFile}`;
+
         console.log(`Backup: ${src} -> ${dest}`);
         fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
     }

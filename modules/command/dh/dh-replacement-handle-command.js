@@ -3,7 +3,7 @@ const bytes = require('utf8-length');
 
 const Command = require('../command');
 const MerkleTree = require('../../Merkle');
-const Encryption = require('../../Encryption');
+const Encryption = require('../../RSAEncryption');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');

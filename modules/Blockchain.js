@@ -383,16 +383,42 @@ class Blockchain {
         return this.blockchain.getEscrow(importId, dhWallet);
     }
 
-    async getPurchase(dhWallet, dvWallet, importId) {
-        return this.blockchain.getPurchase(dhWallet, dvWallet, importId);
+    async getPurchase(purchaseId) {
+        return this.blockchain.getPurchase(purchaseId);
     }
 
     async getPurchasedData(importId, wallet) {
         return this.blockchain.getPurchasedData(importId, wallet);
     }
 
-    async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
-        return this.blockchain.initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor);
+    async initiatePurchase(
+        sellerIdentity, buyerIdentity,
+        tokenAmount,
+        originalDataRootHash, encodedDataRootHash,
+    ) {
+        return this.blockchain.initiatePurchase(
+            sellerIdentity, buyerIdentity,
+            tokenAmount,
+            originalDataRootHash, encodedDataRootHash,
+        );
+    }
+
+    /**
+     * Decodes offer task event data from offer creation event
+     * @param result Blockchain transaction receipt
+     * @returns {Promise<any>}
+     */
+    decodePurchaseInitiatedEventFromTransaction(result) {
+        return this.blockchain.decodePurchaseInitiatedEventFromTransaction(result);
+    }
+
+
+    async depositKey(purchaseId, key) {
+        return this.blockchain.depositKey(purchaseId, key);
+    }
+
+    async takePayment(purchaseId) {
+        return this.blockchain.takePayment(purchaseId);
     }
 
     async sendCommitment(importId, dvWallet, commitment) {

@@ -1,10 +1,11 @@
 const BN = require('bn.js');
 const Utilities = require('../Utilities');
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 
 const models = require('../../models');
 
-const DEFAULT_NUMBER_OF_HOLDERS = 3;
+const constants = require('../constants');
+const ImportUtilities = require('../ImportUtilities');
 
 class DCService {
     constructor(ctx) {
@@ -17,6 +18,8 @@ class DCService {
         this.replicationService = ctx.replicationService;
         this.profileService = ctx.profileService;
         this.pricingService = ctx.pricingService;
+        this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -156,7 +159,7 @@ class DCService {
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
         const offerStake = new BN(tokenAmountPerHolder.toString(), 10)
-            .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
+            .mul(new BN(constants.DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
         if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
@@ -184,7 +187,7 @@ class DCService {
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
         const offerStake = new BN(tokenAmountPerHolder, 10)
-            .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
+            .mul(new BN(constants.DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
         if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
@@ -430,11 +433,29 @@ class DCService {
             Utilities.normalizeHex(this.config.node_private_key),
         );
 
+        const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+            offer.data_set_id,
+            identity,
+        );
+
+        const promises = [];
+        for (const ot_object_id in permissionedData) {
+            promises.push(this.importService.getOtObjectById(offer.data_set_id, ot_object_id));
+        }
+
+        const ot_objects = await Promise.all(promises);
+
+        await this.permissionedDataService.attachPermissionedDataToMap(
+            permissionedData,
+            ot_objects,
+        );
+
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
             otJson: replication.otJson,
+            permissionedData,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,
@@ -446,6 +467,7 @@ class DCService {
             transaction_hash: offer.transaction_hash,
             distributionSignature,
             color: colorNumber,
+            dcIdentity: this.config.erc725Identity,
         };
 
         // send replication to DH

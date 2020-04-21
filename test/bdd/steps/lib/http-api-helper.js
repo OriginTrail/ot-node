@@ -52,7 +52,7 @@ async function apiFingerprint(nodeRpcUrl, datSetId) {
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/latest/fingerprint?data_set_id=${datSetId}`,
+                uri: `${nodeRpcUrl}/api/latest/fingerprint/${datSetId}`,
                 json: true,
             },
             (err, res, body) => {
@@ -597,6 +597,43 @@ async function apiConsensus(nodeRpcUrl, senderId) {
 }
 
 /**
+ * @typedef {Object} WhitelistResponse
+ * @property {Object} .
+ */
+
+/**
+ * Post /api/apiWhitelistViewer
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * TODO Write documentation for this route
+ * @return {Promise.<WhitelistResponse>}
+ */
+async function apiWhitelistViewer(nodeRpcUrl, params) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                body: {
+                    dataset_id: params.dataset_id,
+                    ot_object_id: params.ot_object_id,
+                    viewer_erc_id: params.viewer_erc_id,
+                },
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/latest/permissioned_data/whitelist_viewer`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
  * @typedef {Object} TrailResponse
  * @property {Object} Graph that contains trails from a specified start batch.
  */
@@ -759,4 +796,5 @@ module.exports = {
     apiGetElementIssuerIdentity,
     apiGetDatasetInfo,
     apiQueryNetworkReadAndExport,
+    apiWhitelistViewer,
 };

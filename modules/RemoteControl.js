@@ -615,6 +615,9 @@ class RemoteControl {
         this.socket.emit('exportSucceeded', data);
     }
 
+    purchaseStatus(title, description, isError = false) {
+        this.socket.emit('purchaseStatus', { title, description, isError });
+    }
 
     /**
      * Emmit collected offers for ODN Search
