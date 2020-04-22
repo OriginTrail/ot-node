@@ -41,6 +41,7 @@ class DCController {
                 const dataset = await Models.data_info.findOne({
                     where: { data_set_id: req.body.dataset_id },
                 });
+                const test = dataset.nesto.nesto;
                 if (dataset == null) {
                     this.logger.info('Invalid request');
                     res.status(400);

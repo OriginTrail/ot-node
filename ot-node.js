@@ -193,7 +193,7 @@ function notifyBugsnag(error, metadata, subsystem) {
     const options = {
         user: {
             id: config.node_wallet,
-            identity: config.node_kademlia_id,
+            identity: config.identity,
             config: cleanConfig,
         },
     };
