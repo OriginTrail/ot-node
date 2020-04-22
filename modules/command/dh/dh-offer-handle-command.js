@@ -65,7 +65,10 @@ class DHOfferHandleCommand extends Command {
         await Utilities.writeContentsToFile(
             cacheDirectory,
             offerId,
-            JSON.stringify(response.otJson),
+            JSON.stringify({
+                otJson: response.otJson,
+                permissionedData: response.permissionedData,
+            }),
         );
 
         const packedResponse = DHOfferHandleCommand._stripResponse(response);
@@ -102,6 +105,7 @@ class DHOfferHandleCommand extends Command {
             distributionEpk: response.distribution_epk,
             transactionHash: response.transaction_hash,
             encColor: response.color,
+            dcIdentity: response.dcIdentity,
         };
     }
 

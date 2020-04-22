@@ -13,12 +13,12 @@ const lineReader = require('readline');
 const defaultConfiguration = require('../../../../config/config.json').development;
 
 
-const uuidRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
-const walletRegex = /\b0x[0-9A-F]{40}\b/gi;
-const identityRegex = /\b[0-9A-F]{40}\b/gi;
-const identityWithPrefixRegex = /\b0x[0-9a-f]{40}\b/gi;
-const offerIdRegex = /\b0x[0-9A-F]{64}\b/gi;
-const dataSetRegex = /\b0x[0-9A-F]{64}\b/gi;
+const uuidRegex = /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\b/gi;
+const walletRegex = /\b0x[0-9a-fA-F]{40}\b/gi;
+const identityRegex = /\b[0-9a-fA-F]{40}\b/gi;
+const identityWithPrefixRegex = /\b0x[0-9a-fA-F]{40}\b/gi;
+const offerIdRegex = /\b0x[0-9a-fA-F]{64}\b/gi;
+const dataSetRegex = /\b0x[0-9a-fA-F]{64}\b/gi;
 const walletAmountRegex = /\b\d+\b/g;
 
 /**

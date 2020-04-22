@@ -70,7 +70,7 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = importUtilities.calculateGraphHash(otjson['@graph']);
+        otjson['@id'] = importUtilities.calculateGraphPublicHash(otjson['@graph']);
         otjson['@type'] = 'Dataset';
 
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
@@ -445,7 +445,7 @@ class EpcisOtJsonTranspiler {
             linkedObject: {
                 '@id': id,
             },
-            properties: data,
+            properties: data || {},
         });
         if (compressed.epcList && compressed.epcList.epc) {
             for (const epc of compressed.epcList.epc) {

@@ -1,0 +1,315 @@
+[
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "hub",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "paymentStageInterval",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "hubAddress",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "sellerIdentity",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "buyerIdentity",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "originalDataRootHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "encodedDataRootHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "PurchaseInitiated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "key",
+        "type": "bytes32"
+      }
+    ],
+    "name": "KeyDeposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "sellerIdentity",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "buyerIdentity",
+        "type": "address"
+      }
+    ],
+    "name": "MisbehaviourProven",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newHubAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setHubAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "sellerIdentity",
+        "type": "address"
+      },
+      {
+        "name": "buyerIdentity",
+        "type": "address"
+      },
+      {
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "name": "originalDataRootHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "encodedDataRootHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "initiatePurchase",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "key",
+        "type": "bytes32"
+      }
+    ],
+    "name": "depositKey",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "takePayment",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "_originalDataRootEncoded",
+        "type": "bytes32"
+      },
+      {
+        "name": "_proofOfEncodedData",
+        "type": "bytes32[]"
+      },
+      {
+        "name": "_indexOfRootHash",
+        "type": "uint256"
+      }
+    ],
+    "name": "complainAboutRoot",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "purchaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "_indexOfEncodedOutput",
+        "type": "uint256"
+      },
+      {
+        "name": "_indexOfEncodedInputLeft",
+        "type": "uint256"
+      },
+      {
+        "name": "_encodedOutput",
+        "type": "bytes32"
+      },
+      {
+        "name": "_encodedInputLeft",
+        "type": "bytes32"
+      },
+      {
+        "name": "_proofOfEncodedOutput",
+        "type": "bytes32[]"
+      },
+      {
+        "name": "_proofOfEncodedInput",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "complainAboutNode",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_index",
+        "type": "uint256"
+      },
+      {
+        "name": "_ciphertext",
+        "type": "bytes32"
+      },
+      {
+        "name": "_key",
+        "type": "bytes32"
+      }
+    ],
+    "name": "decryptCiphertext",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_index",
+        "type": "uint256"
+      },
+      {
+        "name": "_value",
+        "type": "bytes32"
+      },
+      {
+        "name": "_proof",
+        "type": "bytes32[]"
+      },
+      {
+        "name": "_encodedDataRootHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "verifyMerkleTreeProof",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

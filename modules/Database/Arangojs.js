@@ -2,6 +2,7 @@ const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
 const { normalizeGraph } = require('./graph-converter');
+const constants = require('../constants');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -108,11 +109,15 @@ class ArangoJS {
      * @return {Promise}
      */
     async findImportIds(dataLocationQuery, encColor = null) {
-        const results = await this.dataLocationQuery(dataLocationQuery, encColor);
-        if (results.length > 0) {
-            return results[0].datasets;
-        }
-        return [];
+        const queryResult = await this.dataLocationQuery(dataLocationQuery, encColor);
+
+        let result = [];
+        queryResult.forEach((item) => {
+            const { datasets } = item;
+            result = result.concat(datasets.filter(x => result.indexOf(x) < 0));
+        });
+
+        return result;
     }
 
     async findTrail(queryObject) {
@@ -262,47 +267,76 @@ class ArangoJS {
             }
 
             const id_value = value;
-            let filter = `LET v_res${count} = (
-                                            FOR v${count} IN ot_vertices
-                                        LET objects = (
-                                            FOR e IN ot_edges
-                                        FILTER e._from == v${count}._id
-                                        AND e.edgeType=='IdentifierValue'
-                                        AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                        RETURN e._to)
-                             `;
-
+            let operator = '';
             switch (opcode) {
             case 'EQ':
-                filter += `FILTER v${count}.vertexType == "Identifier"
-                                     AND v${count}.identifierType == @id_type${count}
-                                     AND v${count}.identifierValue == @id_value${count}
-                                     AND v${count}.encrypted == ${encColor}
-                                     `;
-                params[`id_type${count}`] = id_type;
-                params[`id_value${count}`] = id_value;
+                operator = '==';
                 break;
             case 'IN':
-                filter += `FILTER v${count}.vertexType == "IDENTIFIER"
-                                     AND v${count}.identifierType == @id_type${count}
-                                     AND  @id_value${count} IN v${count}.identifierValue
-                                     AND v${count}.encrypted == ${encColor}
-                                     `;
-
-                params[`id_type${count}`] = id_type;
-                params[`id_value${count}`] = id_value;
+                operator = 'IN';
                 break;
             default:
-                throw new Error(`OPCODE ${opcode} is not defined`);
+                throw new Error(`OPCODE ${opcode} is not supported`);
             }
+            params[`id_type${count}`] = id_type;
+            params[`id_value${count}`] = id_value;
 
-            filter += `RETURN {"datasets": v${count}.datasets, "objects": objects})
-                `;
-
-            queryString += filter;
+            queryString += `
+                LET v_res${count} = (
+                            
+                LET identifiers = (
+                    FOR v${count} IN ot_vertices
+                    FILTER v${count}.vertexType == "Identifier"
+                    AND v${count}.identifierType == @id_type${count}
+                    AND v${count}.identifierValue ${operator} @id_value${count}
+                    AND v${count}.encrypted == ${encColor}
+                    RETURN v${count}
+                )
+                
+                LET identifier_datasets = identifiers[*].datasets[**]
+                
+                LET identified_objects = UNIQUE(
+                    FOR identifier IN identifiers
+                        FOR v, e IN 1..1 OUTBOUND identifier ot_edges
+                        FILTER e.edgeType == 'IdentifierRelation'
+                        RETURN v
+                )
+                
+                FOR entity IN identified_objects
+                    FOR dataVertex, e IN 1..1 OUTBOUND entity ot_edges
+                    FILTER e.relationType == "HAS_DATA"
+                    AND LENGTH(INTERSECTION(dataVertex.datasets, identifier_datasets)) > 0
+                
+                    LET permissioned_object = (
+                        LET properties = dataVertex['data']
+                        RETURN properties.permissioned_data == null? false : true
+                    )
+                    LET hasPermissionedData = POSITION(permissioned_object, true)
+    
+                    LET permissioned_data = (
+                        LET properties = dataVertex['data']
+                        RETURN properties.permissioned_data == null ? false :
+                            (properties.permissioned_data.data == null ? false : true)
+                    ) 
+                    LET permissionedDataAvailable = POSITION(permissioned_data, true)
+                                          
+                    RETURN {
+                        "id": entity.uid,
+                        "datasets": INTERSECTION(dataVertex.datasets, identifier_datasets),
+                        "data_element_key": dataVertex._key, 
+                        "hasPermissionedData": hasPermissionedData,
+                        "permissionedDataAvailable": permissionedDataAvailable
+                    }
+                )`;
 
             count += 1;
         }
+
+        let intersectionString = 'INTERSECTION(object1.datasets';
+        for (let i = 1; i < count; i += 1) {
+            intersectionString += `, object${i}.datasets`;
+        }
+        intersectionString += ')';
 
         for (let i = 1; i < count; i += 1) {
             queryString += `
@@ -310,19 +344,34 @@ class ArangoJS {
                     `;
         }
 
-
-        queryString += ' RETURN {datasets: INTERSECTION(v_res1[0].datasets';
-
+        queryString += `
+            LET data_object_keys = UNIQUE(INTERSECTION(v_res1[*].data_element_key[**]`;
         for (let i = 1; i < count; i += 1) {
-            queryString += `, v_res${i}[0].datasets`;
+            queryString += `, v_res${i}[*].data_element_key[**]`;
         }
+        queryString += '))';
 
-        queryString += '), objects: INTERSECTION(v_res1[0].objects';
-
+        queryString += `
+            LET returned_objects = (
+                FOR data_key in data_object_keys`;
         for (let i = 1; i < count; i += 1) {
-            queryString += `, v_res${i}[0].objects`;
+            queryString += `
+                LET position${i} = POSITION(v_res${i}[*].data_element_key, data_key, true)
+                LET object${i} = NTH(v_res${i}, position${i})
+            `;
         }
-        queryString += ')}';
+        queryString += `
+                FILTER LENGTH(${intersectionString}) > 0
+                RETURN {
+                    "id": object1.id,
+                    "datasets": ${intersectionString},
+                    "data_element_key": data_key,
+                    "hasPermissionedData": object1.hasPermissionedData,
+                    "permissionedDataAvailable": object1.permissionedDataAvailable
+                })`;
+
+        queryString += `
+            RETURN returned_objects[0]`;
 
         return this.runQuery(queryString, params);
     }
@@ -871,6 +920,16 @@ class ArangoJS {
     }
 
     /**
+     * Retrieves dataset metadata of multiple datasets by their ids
+     * @param datasetIds - Array of dataset ids
+     * @return {Promise<*>}
+     */
+    async findMultipleMetadataByDatasetIds(datasetIds) {
+        const queryString = 'RETURN DOCUMENT(\'ot_datasets\', @datasetIds)';
+        return this.runQuery(queryString, { datasetIds });
+    }
+
+    /**
      * Retrieves all elements of a dataset ID
      * @return {Promise<*>}
      * @param datasetId
@@ -929,7 +988,7 @@ class ArangoJS {
      * @param objectKey
      * @returns {Promise<any>}
      */
-    async findDocumentsByImportIdAndOtObjectId(importId, objectKey) {
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
         const queryString = `LET rootObject = (
                                 RETURN document('ot_vertices', @objectKey)
                             )
@@ -955,6 +1014,48 @@ class ArangoJS {
         const result = await this.runQuery(queryString, {
             importId,
             objectKey,
+        });
+
+        return result[0];
+    }
+
+    /**
+     * Returns vertices and edges with specific parameters
+     * @param importId
+     * @param objectId
+     * @returns {Promise<any>}
+     */
+    async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
+        const queryString = `LET rootObject = (
+                                FOR v IN ot_vertices
+                                
+                                FILTER v.uid == @objectId
+                                    AND v.datasets != null
+                                    AND POSITION(v.datasets, @importId, false) != false
+                                RETURN v
+                            )    
+                            
+                            LET relatedObjects = (
+                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                    AND e.datasets != null
+                                    AND v.datasets != null
+                                    AND POSITION(e.datasets, @importId, false) != false
+                                    AND POSITION(v.datasets, @importId, false) != false
+                                RETURN {
+                                    "vertex": v,
+                                    "edge": e
+                                }
+                            )
+                            
+                            RETURN {
+                                "rootObject": rootObject[0],
+                                "relatedObjects": relatedObjects
+                            }`;
+
+        const result = await this.runQuery(queryString, {
+            importId,
+            objectId,
         });
 
         return result[0];

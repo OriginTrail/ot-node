@@ -72,6 +72,42 @@ class HttpNetwork {
             return HttpNetwork.send(contact.hostname, data, this.config.identity);
         };
 
+        this.node.sendPermissionedDataReadRequest = async (message, contactId) => {
+            const data = {
+                type: 'kad-permissioned-data-read-request',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendPermissionedDataReadResponse = async (message, contactId) => {
+            const data = {
+                type: 'kad-permissioned-data-read-response',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendDataPurchaseRequest = async (message, contactId) => {
+            const data = {
+                type: 'kad-data-purchase-request',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendDataPurchaseResponse = async (message, contactId) => {
+            const data = {
+                type: 'kad-data-purchase-response',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
         this.node.sendEncryptedKey = async (message, contactId) => {
             const data = {
                 type: 'kad-send-encrypted-key',
@@ -84,6 +120,15 @@ class HttpNetwork {
         this.node.sendEncryptedKeyProcessResult = async (message, contactId) => {
             const data = {
                 type: 'kad-encrypted-key-process-result',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendPublicKeyRequest = async (message, contactId) => {
+            const data = {
+                type: 'kad-public-key-request',
                 message,
             };
             const contact = await this.node.getContact(contactId);
