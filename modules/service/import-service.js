@@ -1,5 +1,3 @@
-const path = require('path');
-const fs = require('fs');
 const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
@@ -233,13 +231,18 @@ class ImportService {
                 }
                 // Add data vertex.
                 if (otObject.properties != null) {
+                    const otObjectData = Utilities.copyObject(otObject.properties);
+                    const permissionedObject = otObject.properties.permissioned_data;
+                    if (permissionedObject) {
+                        delete permissionedObject.data;
+                    }
                     const dataVertex = {
                         _key: Utilities.keyFrom(
                             dataCreator,
                             Utilities.keyFrom(otObject.properties),
                         ),
                         vertexType: constants.vertexType.data,
-                        data: otObject.properties,
+                        data: otObjectData,
                         datasets: [datasetId],
                     };
                     if (encryptedMap && encryptedMap.objects &&
@@ -566,6 +569,15 @@ class ImportService {
     }
 
     /**
+     * Retrieves dataset metadata of multiple datasets by their ids
+     * @param datasetIds - Array of dataset ids
+     * @return {Promise<*>}
+     */
+    async getMultipleDatasetMetadata(datasetIds) {
+        const metadata = await this.db.findMultipleMetadataByDatasetIds(datasetIds);
+        return metadata;
+    }
+    /**
      * @param objectIdsArray id values of objects for which the proofs need to be generated
      * @param datasetId The dataset id to which the objects belong to
      * @returns {Promise<[]>}
@@ -679,14 +691,14 @@ class ImportService {
     async getImportedOtObject(datasetId, objectIndex, offerId = null, color = null) {
         // get metadata id using otObjectId
         const metadata = await this.db.findMetadataByImportId(datasetId);
-        const otObjectId = metadata.objectIds[objectIndex];
-        const result = await this.db.findDocumentsByImportIdAndOtObjectId(datasetId, otObjectId);
+        const otObjectKey = metadata.objectIds[objectIndex];
+        const result = await this.db.findDocumentsByImportIdAndOtObjectKey(datasetId, otObjectKey);
 
         if (!result || !result.rootObject) {
-            throw Error(`Unable to find object for objectId: ${otObjectId} and importId: ${datasetId}`);
+            throw Error(`Unable to find object for object key: ${otObjectKey} and dataset_id: ${datasetId}`);
         }
         if (!result.relatedObjects || result.relatedObjects.length === 0) {
-            throw Error(`Unable to find related objects for objectId: ${otObjectId} and importId: ${datasetId}`);
+            throw Error(`Unable to find related objects for object key: ${otObjectKey} and dataset_id: ${datasetId}`);
         }
 
         for (const object of result.relatedObjects) {
@@ -701,6 +713,26 @@ class ImportService {
                 && object.edge.properties != null) {
                 object.edge.properties = object.edge.encrypted[offerId][color];
             }
+        }
+
+        const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);
+
+        return otObject;
+    }
+
+    /**
+     * Retrieves one ot-object from a dataset, given the ot-object id
+     * @param datasetId
+     * @param otObjectId
+     */
+    async getOtObjectById(datasetId, otObjectId) {
+        const result = await this.db.findDocumentsByImportIdAndOtObjectId(datasetId, otObjectId);
+
+        if (!result || !result.rootObject) {
+            throw Error(`Unable to find object for object_id: ${otObjectId} and dataset_id: ${datasetId}`);
+        }
+        if (!result.relatedObjects || result.relatedObjects.length === 0) {
+            throw Error(`Unable to find related objects for object_id: ${otObjectId} and dataset_id: ${datasetId}`);
         }
 
         const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);
@@ -737,11 +769,7 @@ class ImportService {
             throw Error('[Validation Error] Wrong format of dataset ID');
         }
 
-        if (datasetId !== ImportUtilities.calculateGraphHash(document['@graph'])) {
-            throw Error('[Validation Error] Invalid dataset ID');
-        }
-
-        if (datasetId !== ImportUtilities.calculateGraphHash(document['@graph'])) {
+        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document['@graph'])) {
             throw Error('[Validation Error] Invalid dataset ID');
         }
 

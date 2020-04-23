@@ -5,6 +5,8 @@ const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Graph = require('../../Graph');
 
+const constants = require('../../constants');
+
 /**
  * Free read request command.
  */
@@ -18,6 +20,7 @@ class DHDataReadRequestFreeCommand extends Command {
         this.transport = ctx.transport;
         this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -59,6 +62,14 @@ class DHDataReadRequestFreeCommand extends Command {
 
             const document = await this.importService.getImport(importId);
 
+            const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+                document,
+                nodeId,
+            );
+
+
+            ImportUtilities.removeGraphPermissionedData(document['@graph']);
+
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
 
@@ -69,6 +80,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
                 document,
+                permissionedData,
                 data_set_id: importId,
                 transaction_hash: transactionHash,
                 handler_id,
@@ -90,6 +102,11 @@ class DHDataReadRequestFreeCommand extends Command {
             await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
+                messageSignature: Utilities.generateRsvSignature(
+                    errorMessage,
+                    this.web3,
+                    this.config.node_private_key,
+                ),
             }, nodeId);
         }
 
