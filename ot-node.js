@@ -30,7 +30,6 @@ const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
-const bugsnag = require('@bugsnag/js');
 
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
@@ -48,7 +47,6 @@ const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 
-const { execSync } = require('child_process');
 const semver = require('semver');
 
 const pjson = require('./package.json');
@@ -107,26 +105,6 @@ process.on('unhandledRejection', (reason, p) => {
         return;
     }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
-
-    if (process.env.NODE_ENV !== 'development') {
-        const cleanConfig = Object.assign({}, config);
-        delete cleanConfig.node_private_key;
-        delete cleanConfig.houston_password;
-        delete cleanConfig.database;
-        delete cleanConfig.blockchain;
-
-        bugsnag.notify(
-            reason,
-            {
-                user: {
-                    id: config.node_wallet,
-                    identity: config.identity,
-                    config: cleanConfig,
-                },
-                severity: 'error',
-            },
-        );
-    }
 });
 
 process.on('uncaughtException', (err) => {
@@ -135,24 +113,6 @@ process.on('uncaughtException', (err) => {
         process.exit(1);
     }
     log.error(`Caught exception: ${err}.\n ${err.stack}`);
-
-    const cleanConfig = Object.assign({}, config);
-    delete cleanConfig.node_private_key;
-    delete cleanConfig.houston_password;
-    delete cleanConfig.database;
-    delete cleanConfig.blockchain;
-
-    bugsnag.notify(
-        err,
-        {
-            user: {
-                id: config.node_wallet,
-                identity: config.identity,
-                config: cleanConfig,
-            },
-            severity: 'error',
-        },
-    );
 });
 
 process.on('warning', (warning) => {
@@ -180,49 +140,6 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-
-let bugsnagClient;
-function notifyBugsnag(error, metadata, subsystem) {
-    // if (process.env.NODE_ENV !== 'development') {
-    const cleanConfig = Object.assign({}, config);
-    delete cleanConfig.node_private_key;
-    delete cleanConfig.houston_password;
-    delete cleanConfig.database;
-    delete cleanConfig.blockchain;
-
-    const options = {
-        user: {
-            id: config.node_wallet,
-            identity: config.identity,
-            config: cleanConfig,
-        },
-    };
-
-    if (subsystem) {
-        options.subsystem = {
-            name: subsystem,
-        };
-    }
-
-    if (metadata) {
-        Object.assign(options, metadata);
-    }
-
-    bugsnagClient.notify(error, options);
-    // }
-}
-
-function notifyEvent(message, metadata, subsystem) {
-    const options = {
-        severity: 'info',
-    };
-    if (metadata) {
-        Object.assign(options, metadata);
-    }
-
-    notifyBugsnag(message, metadata, subsystem);
-}
-
 /**
  * Main node object
  */
@@ -231,24 +148,6 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
-        // if (process.env.NODE_ENV !== 'development') {
-        bugsnagClient = bugsnag({
-            apiKey: pjson.config.bugsnagkey,
-            otherOptions: {
-                appVersion: pjson.version,
-                autoNotify: false,
-                sendCode: true,
-                releaseStage: 'bugsnag-testing',
-                logger: {
-                    info: log.info,
-                    warn: log.warn,
-                    error: log.error,
-                },
-                logLevel: 'error',
-            },
-        });
-        // }
-
         try {
             // check if all dependencies are installed
             await Utilities.checkInstalledDependencies();
@@ -368,8 +267,6 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
-            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
-            notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
@@ -570,7 +467,6 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
-            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),

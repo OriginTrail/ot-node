@@ -11,7 +11,7 @@ class DCOfferPrepareCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
-        this.notifyError = ctx.notifyError;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -50,8 +50,18 @@ class DCOfferPrepareCommand extends Command {
             status: 'FAILED',
         }, { where: { handler_id } });
 
-        // TODO Add error notification metadata
-        this.notifyError(err);
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                offerId: offer.offer_id,
+                internalOfferId,
+                tokenAmountPerHolder: offer.token_amount_per_holder,
+                litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
+                datasetId: offer.data_set_id,
+                holdingTimeInMinutes: offer.holding_time_in_minutes,
+            },
+            'offer-handling',
+        );
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

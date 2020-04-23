@@ -208,10 +208,17 @@ class DcOfferFinalizedCommand extends Command {
             status: 'FAILED',
         }, { where: { handler_id } });
 
-        if (err) {
-            // TODO Add error notification metadata
-            this.notifyError(err);
-        }
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                offerId: offer.offer_id,
+                tokenAmountPerHolder: offer.token_amount_per_holder,
+                litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
+                datasetId: offer.data_set_id,
+                holdingTimeInMinutes: offer.holding_time_in_minutes,
+            },
+            'offer-handling',
+        );
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
