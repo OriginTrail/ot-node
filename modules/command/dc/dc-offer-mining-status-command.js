@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -108,7 +109,7 @@ class DcOfferMiningStatusCommand extends Command {
                 datasetId: offer.data_set_id,
                 holdingTimeInMinutes: offer.holding_time_in_minutes,
             },
-            'offer-handling',
+            constants.PROCESS_NAME.offerHandling,
         );
 
 

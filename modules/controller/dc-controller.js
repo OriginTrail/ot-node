@@ -1,8 +1,7 @@
 const utilities = require('../Utilities');
 const Models = require('../../models');
 const Utilities = require('../Utilities');
-const ImportUtilities = require('../ImportUtilities');
-const fs = require('fs');
+const constants = require('../constants');
 
 /**
  * DC related API controller
@@ -85,7 +84,7 @@ class DCController {
                         datasetId: req.body.dataset_id,
                         holdingTimeInMinutes: req.body.holding_time_in_minutes,
                     },
-                    'offer-handling',
+                    constants.PROCESS_NAME.offerHandling,
                 );
 
                 if (handlerId) {

@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Prepare offer parameters (litigation/distribution hashes, etc.)
@@ -60,7 +61,7 @@ class DCOfferPrepareCommand extends Command {
                 datasetId: offer.data_set_id,
                 holdingTimeInMinutes: offer.holding_time_in_minutes,
             },
-            'offer-handling',
+            constants.PROCESS_NAME.offerHandling,
         );
 
         await this.replicationService.cleanup(offer.id);

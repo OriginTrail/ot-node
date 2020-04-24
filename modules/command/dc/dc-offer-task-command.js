@@ -3,6 +3,7 @@ const BN = require('../../../node_modules/bn.js/lib/bn');
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -121,7 +122,7 @@ class DcOfferTaskCommand extends Command {
                 datasetId: offer.data_set_id,
                 holdingTimeInMinutes: offer.holding_time_in_minutes,
             },
-            'offer-handling',
+            constants.PROCESS_NAME.offerHandling,
         );
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

@@ -1,6 +1,7 @@
 const Command = require('../command');
 const models = require('../../../models/index');
 const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 const { Op } = models.Sequelize;
 
@@ -146,7 +147,7 @@ class DCOfferChooseCommand extends Command {
                 datasetId: offer.data_set_id,
                 holdingTimeInMinutes: offer.holding_time_in_minutes,
             },
-            'offer-handling',
+            constants.PROCESS_NAME.offerHandling,
         );
 
         await this.replicationService.cleanup(offer.id);

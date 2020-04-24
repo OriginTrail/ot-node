@@ -1,5 +1,6 @@
 const Bugsnag = require('@bugsnag/js');
 const pjson = require('../../package.json');
+const constants = require('../constants');
 
 class ErrorNotificationService {
     constructor(ctx) {
@@ -55,7 +56,7 @@ class ErrorNotificationService {
      * @param options - add aditional data for error
      * @param process - add process that error is connected to (litigation, import, export)
      */
-    notifyError(error, options = {}, process = 'other') {
+    notifyError(error, options = {}, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(error, (event) => {
             event.appType = process;
             event.addMetadata(process, options);
@@ -68,7 +69,7 @@ class ErrorNotificationService {
      * @param options - add aditional data for error
      * @param process - add process that error is connected to (litigation, import, export)
      */
-    notifyWarning(message, options = {}, process = 'other') {
+    notifyWarning(message, options = {}, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'warning';
             event.appType = process;
@@ -82,7 +83,7 @@ class ErrorNotificationService {
      * @param options - add aditional data for error
      * @param process - add process that error is connected to (litigation, import, export)
      */
-    notifyInfo(message, options = {}, process = 'other') {
+    notifyInfo(message, options = {}, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'info';
             event.appType = process;
