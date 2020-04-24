@@ -20,11 +20,7 @@ class ErrorNotificationService {
             severity: 'error',
             // bugsnag automatically reads release stage from process.env.NODE_ENV
             enabledReleaseStages: ['testnet', 'mainnet'],
-            logger: {
-                info: this.logger.info,
-                warn: this.logger.warn,
-                error: this.logger.error,
-            },
+            logger: this.logger,
             // uncaught exceptions and unhandeld rejections are automatically handled
             autoDetectErrors: true,
             /* user can have only id, name and email fields
