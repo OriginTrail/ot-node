@@ -114,4 +114,6 @@ exports.PUBLIC_KEY_VALIDITY_IN_MILLS = 30 * 24 * 60 * 60 * 1000; // 30 days
 exports.PROCESS_NAME = {
     other: 'other',
     offerHandling: 'offer-handling',
+    challengesHandling: 'challenges-handling',
+    litigationHandling: 'litigation-handling',
 };

@@ -56,10 +56,12 @@ class ErrorNotificationService {
      * @param options - add aditional data for error
      * @param process - add process that error is connected to (litigation, import, export)
      */
-    notifyError(error, options = {}, process = constants.PROCESS_NAME.other) {
+    notifyError(error, options = null, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(error, (event) => {
             event.appType = process;
-            event.addMetadata(process, options);
+            if (options) {
+                event.addMetadata(process, options);
+            }
         });
     }
 
@@ -69,11 +71,13 @@ class ErrorNotificationService {
      * @param options - add aditional data for error
      * @param process - add process that error is connected to (litigation, import, export)
      */
-    notifyWarning(message, options = {}, process = constants.PROCESS_NAME.other) {
+    notifyWarning(message, options = null, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'warning';
             event.appType = process;
-            event.addMetadata(process, options);
+            if (options) {
+                event.addMetadata(process, options);
+            }
         });
     }
 
@@ -83,11 +87,13 @@ class ErrorNotificationService {
      * @param options - add aditional data for error
      * @param process - add process that error is connected to (litigation, import, export)
      */
-    notifyInfo(message, options = {}, process = constants.PROCESS_NAME.other) {
+    notifyInfo(message, options = null, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'info';
             event.appType = process;
-            event.addMetadata(process, options);
+            if (options) {
+                event.addMetadata(process, options);
+            }
         });
     }
 }

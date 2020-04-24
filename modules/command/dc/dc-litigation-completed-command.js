@@ -1,12 +1,14 @@
 const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
+const constants = require('../../constants');
 
 class DCLitigationCompletedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -94,7 +96,32 @@ class DCLitigationCompletedCommand extends Command {
                 return Command.empty();
             }
         }
-        return Command.repeat();
+        return Command.retry();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            dhIdentity,
+        } = command.data;
+
+        this.logger.error(`Initiating completed command for holder ${dhIdentity} and offer ${offerId} FAILED!`);
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                dhIdentity,
+                offerId,
+            },
+            constants.PROCESS_NAME.litigationHandling,
+        );
+
+        return Command.retry();
     }
 
     /**

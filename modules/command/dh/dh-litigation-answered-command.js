@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether DH answered the litigation
@@ -9,6 +10,7 @@ class DHLitigationAnsweredCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -44,7 +46,34 @@ class DHLitigationAnsweredCommand extends Command {
                 return Command.empty();
             }
         }
-        return Command.repeat();
+        return Command.retry();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            objectIndex,
+            blockIndex,
+        } = command.data;
+
+        this.logger.error(`Failed to handle litigation answered command for offerId: ${offerId}`);
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                objectIndex,
+                blockIndex,
+                offerId,
+            },
+            constants.PROCESS_NAME.litigationHandling,
+        );
+
+        return Command.retry();
     }
 
     /**
