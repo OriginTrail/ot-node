@@ -12,7 +12,6 @@ class DHLitigationInitiatedCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
-        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
