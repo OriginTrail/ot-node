@@ -13,7 +13,7 @@ class ErrorNotificationService {
         delete cleanConfig.database;
         delete cleanConfig.blockchain;
 
-        this.bugsnag = Bugsnag({
+        Bugsnag.start({
             apiKey: pjson.config.bugsnagkey,
             appVersion: pjson.version,
             hostname: this.config.network.hostname,
@@ -53,7 +53,7 @@ class ErrorNotificationService {
      * @param process - add process that error is connected to (litigation, import, export)
      */
     notifyError(error, options = null, process = constants.PROCESS_NAME.other) {
-        this.bugsnag.notify(error, (event) => {
+        Bugsnag.notify(error, (event) => {
             event.appType = process;
             if (options) {
                 event.addMetadata(process, options);
@@ -68,7 +68,7 @@ class ErrorNotificationService {
      * @param process - add process that error is connected to (litigation, import, export)
      */
     notifyWarning(message, options = null, process = constants.PROCESS_NAME.other) {
-        this.bugsnag.notify(new Error(message), (event) => {
+        Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'warning';
             event.appType = process;
             if (options) {
@@ -84,7 +84,7 @@ class ErrorNotificationService {
      * @param process - add process that error is connected to (litigation, import, export)
      */
     notifyInfo(message, options = null, process = constants.PROCESS_NAME.other) {
-        this.bugsnag.notify(new Error(message), (event) => {
+        Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'info';
             event.appType = process;
             if (options) {
