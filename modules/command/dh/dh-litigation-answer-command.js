@@ -79,7 +79,6 @@ class DHLitigationAnswerCommand extends Command {
                                 dhIdentity,
                             },
                             period: 5000,
-                            retries: 5,
                             transactional: false,
                         },
                     ],

@@ -73,7 +73,6 @@ class DCLitigationCompleteCommand extends Command {
                         dhIdentity,
                     },
                     period: 5000,
-                    retries: 3,
                     deadline_at: Date.now() + (5 * 60 * 1000),
                 },
             ],

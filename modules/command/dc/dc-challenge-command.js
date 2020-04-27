@@ -104,7 +104,7 @@ class DCChallengeCommand extends Command {
         }
         const errorMessage = `Failed to send challenge for object ${challenge.object_index} and block ${challenge.block_index} to DH ${challenge.dh_id}.`;
         this.logger.info(errorMessage);
-        this.errorNotificationService.notifyWarning(
+        this.errorNotificationService.notifyError(
             errorMessage,
             {
                 objectIndex: challenge.object_index,

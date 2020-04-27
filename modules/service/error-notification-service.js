@@ -6,7 +6,9 @@ class ErrorNotificationService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+    }
 
+    initialize() {
         const cleanConfig = Object.assign({}, this.config);
         delete cleanConfig.node_private_key;
         delete cleanConfig.houston_password;
@@ -19,7 +21,7 @@ class ErrorNotificationService {
             hostname: this.config.network.hostname,
             severity: 'error',
             // bugsnag automatically reads release stage from process.env.NODE_ENV
-            enabledReleaseStages: ['testnet', 'mainnet'],
+            enabledReleaseStages: ['testnet', 'mainnet', 'mariner'],
             logger: this.logger,
             // uncaught exceptions and unhandeld rejections are automatically handled
             autoDetectErrors: true,

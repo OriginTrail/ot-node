@@ -96,7 +96,7 @@ class DCLitigationCompletedCommand extends Command {
                 return Command.empty();
             }
         }
-        return Command.retry();
+        return Command.repeat();
     }
 
     /**
@@ -110,7 +110,7 @@ class DCLitigationCompletedCommand extends Command {
             dhIdentity,
         } = command.data;
 
-        this.logger.error(`Initiating completed command for holder ${dhIdentity} and offer ${offerId} FAILED!`);
+        this.logger.error(`Litigation completed command for holder ${dhIdentity} and offer ${offerId} FAILED!`);
 
         this.errorNotificationService.notifyError(
             err,
@@ -121,7 +121,7 @@ class DCLitigationCompletedCommand extends Command {
             constants.PROCESS_NAME.litigationHandling,
         );
 
-        return Command.retry();
+        return Command.repeat();
     }
 
     /**

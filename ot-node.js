@@ -343,7 +343,9 @@ class OTNode {
                 Utilities.normalizeHex(config.identity.toLowerCase()),
             );
         }
-
+        // Initialize bugsnag notification service
+        const errorNotificationService = container.resolve('errorNotificationService');
+        await errorNotificationService.initialize();
         // Initialise API
         const restApiController = container.resolve('restApiController');
 

@@ -46,7 +46,7 @@ class DHLitigationAnsweredCommand extends Command {
                 return Command.empty();
             }
         }
-        return Command.retry();
+        return Command.repeat();
     }
 
     /**
@@ -73,7 +73,7 @@ class DHLitigationAnsweredCommand extends Command {
             constants.PROCESS_NAME.litigationHandling,
         );
 
-        return Command.retry();
+        return Command.repeat();
     }
 
     /**
