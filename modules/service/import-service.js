@@ -636,7 +636,7 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
-        let graph = [otObject];
+        const graph = [otObject];
         ImportUtilities.sortGraph(graph);
         return graph[0];
     }

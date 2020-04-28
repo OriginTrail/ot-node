@@ -453,7 +453,6 @@ class ImportUtilities {
     static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
         const publicGraph = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(publicGraph);
-        ImportUtilities.sortGraph(publicGraph);
 
         const merkle = ImportUtilities.createDistributionMerkleTree(
             publicGraph,
@@ -598,7 +597,7 @@ class ImportUtilities {
     static calculateGraphPublicHash(graph) {
         const public_data = Utilities.copyObject(graph);
         ImportUtilities.removeGraphPermissionedData(public_data);
-        ImportUtilities.sortGraph(public_data);
+
         return `0x${sha3_256(JSON.stringify(public_data), null, 0)}`;
     }
 
@@ -611,6 +610,7 @@ class ImportUtilities {
         graph.forEach((object) => {
             ImportUtilities.removeObjectPermissionedData(object);
         });
+        ImportUtilities.sortGraph(graph);
     }
 
     /**
