@@ -15,6 +15,8 @@ class ErrorNotificationService {
         delete cleanConfig.database;
         delete cleanConfig.blockchain;
 
+        const releaseStage = process.env.NODE_ENV === 'mariner' ? 'mainnet' : process.env.NODE_ENV;
+
         Bugsnag.start({
             apiKey: pjson.config.bugsnagkey,
             appVersion: pjson.version,
@@ -22,6 +24,7 @@ class ErrorNotificationService {
             severity: 'error',
             // bugsnag automatically reads release stage from process.env.NODE_ENV
             enabledReleaseStages: ['testnet', 'mainnet', 'mariner'],
+            releaseStage,
             logger: this.logger,
             // uncaught exceptions and unhandeld rejections are automatically handled
             autoDetectErrors: true,
@@ -56,7 +59,7 @@ class ErrorNotificationService {
      */
     notifyError(error, options = null, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(error, (event) => {
-            event.appType = process;
+            event.app.type = process;
             if (options) {
                 event.addMetadata(process, options);
             }
@@ -72,7 +75,7 @@ class ErrorNotificationService {
     notifyWarning(message, options = null, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'warning';
-            event.appType = process;
+            event.app.type = process;
             if (options) {
                 event.addMetadata(process, options);
             }
@@ -88,7 +91,7 @@ class ErrorNotificationService {
     notifyInfo(message, options = null, process = constants.PROCESS_NAME.other) {
         Bugsnag.notify(new Error(message), (event) => {
             event.severity = 'info';
-            event.appType = process;
+            event.app.type = process;
             if (options) {
                 event.addMetadata(process, options);
             }
