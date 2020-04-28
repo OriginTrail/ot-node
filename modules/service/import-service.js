@@ -113,8 +113,8 @@ class ImportService {
         document.datasetHeader = metadata.datasetHeader;
         document.signature = metadata.signature;
 
-
-        return ImportUtilities.sortDataset(document);
+        Utilities.sortObjectRecursively(document);
+        return document;
     }
 
     /**
@@ -636,9 +636,8 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
-        const graph = [otObject];
-        ImportUtilities.sortGraph(graph);
-        return graph[0];
+        Utilities.sortObjectRecursively(otObject);
+        return otObject;
     }
 
     _constructOtObject(relatedObjects) {

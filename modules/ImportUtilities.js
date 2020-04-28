@@ -139,7 +139,7 @@ class ImportUtilities {
     }
 
     static prepareDataset(document, config, web3) {
-        document = ImportUtilities.sortDataset(document);
+        Utilities.sortObjectRecursively(document);
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(graph);
@@ -478,7 +478,6 @@ class ImportUtilities {
                 el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
                     .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
             }
-
         });
 
         graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
@@ -612,7 +611,6 @@ class ImportUtilities {
         graph.forEach((object) => {
             ImportUtilities.removeObjectPermissionedData(object);
         });
-        ImportUtilities.sortGraph(graph);
     }
 
     /**

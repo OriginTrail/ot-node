@@ -42,7 +42,7 @@ function checkChallenges(tests, startTime, endTime, expectedBlockSize) {
 }
 
 describe('Challenge service tests', () => {
-    importUtilities.sortGraph(vertexData);
+    utilities.otObject(vertexData);
 
     describe('Challenge generation', () => {
         const startTime = new Date('May 1, 2018 03:24:00').getTime();
