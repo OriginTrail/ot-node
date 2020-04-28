@@ -163,11 +163,11 @@ describe('Import utilities module ', () => {
     });
 
     it('Sign dataset', () => {
-        const testGraphCopy = Object.assign({}, sample_data.graph);
-        const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
+        let testGraphCopy = Object.assign({}, sample_data.graph);
+        let shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
-        Utilities.sortObjectRecursively(testGraphCopy);
-        Utilities.sortObjectRecursively(shuffledGraphCopy);
+        testGraphCopy = Utilities.sortObjectRecursively(testGraphCopy);
+        shuffledGraphCopy = Utilities.sortObjectRecursively(shuffledGraphCopy);
 
         const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
@@ -182,11 +182,11 @@ describe('Import utilities module ', () => {
     });
 
     it('Verify dataset signature', async () => {
-        const testGraphCopy = Object.assign({}, sample_data.graph);
-        const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
+        let testGraphCopy = Object.assign({}, sample_data.graph);
+        let shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
-        Utilities.sortObjectRecursively(testGraphCopy);
-        Utilities.sortObjectRecursively(shuffledGraphCopy);
+        testGraphCopy = Utilities.sortObjectRecursively(testGraphCopy);
+        shuffledGraphCopy = Utilities.sortObjectRecursively(shuffledGraphCopy);
 
         const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
         const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);

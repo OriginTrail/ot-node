@@ -139,9 +139,9 @@ class ImportUtilities {
     }
 
     static prepareDataset(document, config, web3) {
-        Utilities.sortObjectRecursively(document);
-        const graph = document['@graph'];
-        const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
+        const sortedDocument = Utilities.sortObjectRecursively(document);
+        const graph = sortedDocument['@graph'];
+        const datasetHeader = sortedDocument.datasetHeader ? sortedDocument.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(graph);
         const id = ImportUtilities.calculateGraphPublicHash(graph);
 

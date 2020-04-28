@@ -54,6 +54,8 @@ class DhReplicationImportCommand extends Command {
         let { decryptedDataset } = decryptedObject;
         decryptedDataset = Utilities.sortObjectRecursively(decryptedDataset);
 
+        console.log(JSON.stringify(decryptedDataset['@graph']));
+
         const calculatedDataSetId =
             await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
 

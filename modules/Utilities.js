@@ -369,8 +369,7 @@ class Utilities {
             return object;
         }
 
-        object = JSON.parse(Utilities.sortedStringify(object));
-        return object;
+        return JSON.parse(Utilities.sortedStringify(object));
     }
 
     /**

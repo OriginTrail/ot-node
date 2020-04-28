@@ -57,8 +57,8 @@ class WotOtJsonTranspiler {
         otjson['@type'] = 'Dataset';
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        utilities.sortObjectRecursively(otjson);
-        let result = otjson;
+
+        let result = utilities.sortObjectRecursively(otjson);
         result['@id'] = importUtilities.calculateGraphPublicHash(result['@graph']);
         const merkleRoot = importUtilities.calculateDatasetRootHash(result['@graph'], result['@id'], result.datasetHeader.dataCreator);
         result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
