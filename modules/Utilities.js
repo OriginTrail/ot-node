@@ -52,18 +52,32 @@ class Utilities {
             const stringified = [];
             for (const key of Object.keys(obj)) {
                 if (Array.isArray(obj)) {
-                    stringified.push(this.sortedStringify(obj[key], sortArrays));
-                } else {
+                    if (obj[key] != null && typeof obj[key] === 'object') {
+                        stringified.push(this.sortedStringify(obj[key], sortArrays));
+                    } else {
+                        // Added for better performance by avoiding the last level of recursion
+                        // because the last level only returns JSON.stringify of the key
+                        stringified.push(JSON.stringify(obj[key]));
+                    }
+                } else if (obj[key] != null && typeof obj[key] === 'object') {
                     stringified.push(`"${key}":${this.sortedStringify(obj[key], sortArrays)}`);
+                } else {
+                    // Added for better performance by avoiding the last level of recursion
+                    // because the last level only returns JSON.stringify of the key
+                    stringified.push(`"${key}":${JSON.stringify(obj[key])}`);
                 }
             }
+
+            // Sort the object or sort the array if the sortArrays parameter is true
             if (!Array.isArray(obj) || sortArrays) {
                 stringified.sort();
             }
 
+            // Return result in the format of a stringified array
             if (Array.isArray(obj)) {
                 return `[${stringified.join(',')}]`;
             }
+            // Return result in the format of an object
             return `{${stringified.join(',')}}`;
         }
         return JSON.stringify(obj);
@@ -342,6 +356,20 @@ class Utilities {
         }
 
         return sortedObj;
+    }
+
+    /**
+     * Sorts an object recursively in place
+     *
+     * @param object
+     * @return null
+     */
+    static sortObjectRecursively(object) {
+        if (typeof object !== 'object' || object == null) {
+            return object;
+        }
+
+        return JSON.parse(Utilities.sortedStringify(object));
     }
 
     /**
