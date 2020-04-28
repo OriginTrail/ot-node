@@ -48,10 +48,7 @@ class Utilities {
      * @return {string}
      */
     static sortedStringify(obj, sortArrays = true) {
-        if (obj == null) {
-            return 'null';
-        }
-        if (typeof obj === 'object') {
+        if (obj != null && typeof obj === 'object') {
             const stringified = [];
             for (const key of Object.keys(obj)) {
                 if (Array.isArray(obj)) {
@@ -59,17 +56,17 @@ class Utilities {
                 } else {
                     stringified.push(`"${key}":${this.sortedStringify(obj[key], sortArrays)}`);
                 }
-                if (sortArrays) {
-                    stringified.sort();
-                }
             }
-            if (!Array.isArray(obj)) {
+            if (!Array.isArray(obj) || sortArrays) {
                 stringified.sort();
-                return `{${stringified.join(',')}}`;
             }
-            return `[${stringified.join(',')}]`;
+
+            if (Array.isArray(obj)) {
+                return `[${stringified.join(',')}]`;
+            }
+            return `{${stringified.join(',')}}`;
         }
-        return `${JSON.stringify(obj)}`;
+        return JSON.stringify(obj);
     }
 
     /**
