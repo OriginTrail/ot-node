@@ -53,7 +53,6 @@ class Kademlia {
         this.log = ctx.logger;
         this.emitter = ctx.emitter;
         this.kademliaUtilities = ctx.kademliaUtilities;
-        this.notifyError = ctx.notifyError;
         this.config = ctx.config;
         this.approvalService = ctx.approvalService;
         this.networkService = ctx.networkService;
@@ -252,7 +251,6 @@ class Kademlia {
                 }, done => this.joinNetwork(done), (err, entry) => {
                     if (err) {
                         this.log.error(`Failed to join network ${err}`);
-                        this.notifyError(err);
                         process.exit(1);
                     }
 

@@ -71,7 +71,7 @@ describe('EPCIS OT JSON transpiler tests', () => {
             }],
         );
 
-        graphStorage = new GraphStorage(selectedDatabase, logger, {});
+        graphStorage = new GraphStorage(selectedDatabase, logger);
         await graphStorage.connect();
 
         const web3 = new Web3();

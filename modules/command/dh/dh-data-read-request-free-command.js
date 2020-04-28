@@ -18,7 +18,6 @@ class DHDataReadRequestFreeCommand extends Command {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
-        this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
     }
@@ -98,7 +97,6 @@ class DHDataReadRequestFreeCommand extends Command {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.logger.warn(errorMessage);
-            this.notifyError(e);
             await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
