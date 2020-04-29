@@ -142,8 +142,8 @@ describe('Import utilities module ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalGraphHash = ImportUtilities.calculateGraphHash(sample_data.graph['@graph']);
-        const decryptedGraphHash = ImportUtilities.calculateGraphHash(decryptedGraph['@graph']);
+        const originalGraphHash = ImportUtilities.calculateGraphPublicHash(sample_data.graph['@graph']);
+        const decryptedGraphHash = ImportUtilities.calculateGraphPublicHash(decryptedGraph['@graph']);
 
         assert.equal(originalGraphHash, decryptedGraphHash);
     });

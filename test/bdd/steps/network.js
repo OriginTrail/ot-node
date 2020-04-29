@@ -308,8 +308,8 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 
     // const calculatedRootHash = utilities.calculateRootHash(response.document);
-    const sortedDataset = Utilities.sortObjectRecursively(response.document);
-    const calculateDatasetId = ImportUtilities.calculateGraphHash(sortedDataset['@graph']);
+    // const sortedDataset = Utilities.sortObjectRecursively(response.document);
+    const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(sortedDataset['@graph']);
     const dataCreator = {
         identifiers: [
             {
@@ -442,7 +442,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
     // vertices and edges are already sorted from the response
 
-    const calculatedDataSetId = ImportUtilities.calculateGraphHash(importInfo.document['@graph']);
+    const calculatedDataSetId = ImportUtilities.calculateGraphPublicHash(importInfo.document['@graph']);
     const calculatedRootHash = utilities.calculateRootHash(importInfo.document);
 
     expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')

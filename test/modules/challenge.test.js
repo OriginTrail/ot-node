@@ -6,6 +6,7 @@ const ChallengeService = require('../../modules/service/challenge-service');
 
 const logger = require('../../modules/logger');
 const importUtilities = require('../../modules/ImportUtilities');
+const utilities = require('../../modules/Utilities');
 
 const challengeService = new ChallengeService({ logger });
 
@@ -42,7 +43,7 @@ function checkChallenges(tests, startTime, endTime, expectedBlockSize) {
 }
 
 describe('Challenge service tests', () => {
-    utilities.otObject(vertexData);
+    vertexData = utilities.sortObjectRecursively(vertexData);
 
     describe('Challenge generation', () => {
         const startTime = new Date('May 1, 2018 03:24:00').getTime();
