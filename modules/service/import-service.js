@@ -607,8 +607,9 @@ class ImportService {
         const promises = [];
         for (const object of data) {
             const { rootObject, relatedObjects } = object;
-
-            promises.push(this._createObjectGraph(rootObject, relatedObjects));
+            if (rootObject.uid) {
+                promises.push(this._createObjectGraph(rootObject, relatedObjects));
+            }
         }
 
         const reconstructedObjects = await Promise.all(promises);

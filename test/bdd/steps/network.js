@@ -442,7 +442,19 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     // vertices and edges are already sorted from the response
 
     const calculatedDataSetId = ImportUtilities.calculateGraphPublicHash(importInfo.document['@graph']);
-    const calculatedRootHash = utilities.calculateRootHash(importInfo.document);
+    // const calculatedRootHash = utilities.calculateRootHash(importInfo.document);
+
+    const dataCreator = {
+        identifiers: [
+            {
+                identifierValue: ImportUtilities.getDataCreator(importInfo.document.datasetHeader),
+                identifierType: 'ERC725',
+                validationSchema: '/schemas/erc725-main',
+            },
+        ],
+    };
+    const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(importInfo.document['@graph'], importInfo.document['@id'], dataCreator);
+
 
     expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
         .to.be.equal(calculatedRootHash);
