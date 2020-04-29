@@ -36,44 +36,6 @@ function _sortedStringify(obj, sortArrays = false) {
     return JSON.stringify(obj);
 }
 
-/**
- *
- * @param graph
- * @return {string|*|undefined}
- * @private
- */
-function _sortGraphRecursively(graph) {
-    graph.forEach((el) => {
-        if (el.relations) {
-            el.relations.sort((r1, r2) =>
-                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-
-        if (el.identifiers) {
-            el.identifiers.sort((r1, r2) =>
-                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-    });
-    graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
-    return _sortedStringify(graph);
-}
-
-function _sortDataset(dataset) {
-    dataset['@graph'].forEach((el) => {
-        if (el.relations) {
-            el.relations.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-
-        if (el.identifiers) {
-            el.identifiers.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-    });
-    dataset['@graph'].sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-    return _sortedStringify(dataset);
-}
-
 function _generateDatasetSummary(dataset) {
     return {
         datasetId: dataset['@id'],
@@ -101,16 +63,6 @@ function base64Encode(file) {
     const bitmap = fs.readFileSync(file);
     // convert binary data to base64 encoded string
     return Buffer.from(bitmap).toString('base64');
-}
-
-/**
- * Calculate dataset ID from a given graph.
- * @param graph
- * @return {string}
- */
-function calculateImportHash(graph) {
-    const sorted = _sortGraphRecursively(graph);
-    return `0x${sha3_256(sorted, null, 0)}`;
 }
 
 /**
@@ -273,7 +225,6 @@ function stringifyWithoutComments(obj) {
 }
 
 module.exports = {
-    calculateImportHash,
     normalizeHex,
     denormalizeHex,
     findVertexIdValue,

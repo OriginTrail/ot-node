@@ -464,27 +464,6 @@ class ImportUtilities {
     }
 
     /**
-     * Sort @graph data inline
-     * @param graph
-     */
-    static sortGraph(graph) {
-        graph.forEach((el) => {
-            if (el.relations) {
-                el.relations.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
-            }
-
-            if (el.identifiers) {
-                el.identifiers.sort((r1, r2) => sha3_256(Utilities.sortedStringify(r1))
-                    .localeCompare(sha3_256(Utilities.sortedStringify(r2))));
-            }
-        });
-
-        graph.sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-        graph = JSON.parse(Utilities.sortedStringify(graph, false));
-    }
-
-    /**
      * Calculates more or less accurate size of the import
      * @param vertices   Collection of vertices
      * @returns {number} Size in bytes
@@ -626,11 +605,6 @@ class ImportUtilities {
         if (permissionedDataObject) {
             delete permissionedDataObject.data;
         }
-    }
-
-    static sortDataset(dataset) {
-        ImportUtilities.sortGraph(dataset['@graph']);
-        return JSON.parse(Utilities.sortedStringify(dataset));
     }
 
     /**
