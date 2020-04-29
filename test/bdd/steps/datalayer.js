@@ -92,7 +92,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         const myFingerprint = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
         expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-        const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
+        const dataset = Utilities.sortObjectRecursively(await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId));
 
         const calculatedImportHash = ImportUtilities.calculateGraphHash(dataset['@graph']);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);

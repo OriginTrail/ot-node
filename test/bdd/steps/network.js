@@ -14,6 +14,7 @@ const path = require('path');
 
 const OtNode = require('./lib/otnode');
 const ImportUtilities = require('../../../modules/ImportUtilities');
+const Utilities = require('../../../modules/Utilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
@@ -307,17 +308,18 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 
     // const calculatedRootHash = utilities.calculateRootHash(response.document);
-    const calculateDatasetId = ImportUtilities.calculateGraphHash(response.document['@graph']);
+    const sortedDataset = Utilities.sortObjectRecursively(response.document);
+    const calculateDatasetId = ImportUtilities.calculateGraphHash(sortedDataset['@graph']);
     const dataCreator = {
         identifiers: [
             {
-                identifierValue: ImportUtilities.getDataCreator(response.document.datasetHeader),
+                identifierValue: ImportUtilities.getDataCreator(sortedDataset.datasetHeader),
                 identifierType: 'ERC725',
                 validationSchema: '/schemas/erc725-main',
             },
         ],
     };
-    const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document['@graph'], response.document['@id'], dataCreator);
+    const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(sortedDataset['@graph'], sortedDataset['@id'], dataCreator);
 
 
     expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
