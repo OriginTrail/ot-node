@@ -620,6 +620,7 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
+            // TODO Use sortObjectRecursively here
             ImportUtilities.sortGraphRecursively([reconstructedObjects[i]]);
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
