@@ -829,14 +829,7 @@ class EpcisOtJsonTranspiler {
      */
     _extractMetadata(object) {
         if (this._isLeaf(object)) {
-            const result = {};
-            if (object._attributes) {
-                result._attributes = object._attributes;
-            }
-            if (Object.keys(result).length === 0) {
-                return null;
-            }
-            return result;
+            return object;
         }
         if (Array.isArray(object)) {
             const clone = [];
