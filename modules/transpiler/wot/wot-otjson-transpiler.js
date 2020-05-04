@@ -57,9 +57,9 @@ class WotOtJsonTranspiler {
         otjson['@type'] = 'Dataset';
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        let result = otjson; //sortService
-        result['@id'] = importUtilities.calculateGraphPublicHash(result['@graph']);
-        const merkleRoot = importUtilities.calculateDatasetRootHash(result['@graph'], result['@id'], result.datasetHeader.dataCreator);
+        let result = otjson; // sortService
+        result['@id'] = importUtilities.calculateGraphPublicHash(result);
+        const merkleRoot = importUtilities.calculateDatasetRootHash(result);
         result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
         // Until we update all routes to work with commands, keep this web3 implementation

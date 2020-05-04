@@ -114,7 +114,7 @@ class ImportService {
         document.signature = metadata.signature;
 
 
-        ImportUtilities.sortStringifyDataset(document); //sortService
+        ImportUtilities.sortStringifyDataset(document); // sortService
         return document;
     }
 
@@ -641,7 +641,7 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
-        //sortService
+        // sortService
         return otObject;
     }
 
@@ -771,7 +771,7 @@ class ImportService {
             throw Error('[Validation Error] Wrong format of dataset ID');
         }
 
-        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document['@graph'])) {
+        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document)) {
             throw Error('[Validation Error] Invalid dataset ID');
         }
 

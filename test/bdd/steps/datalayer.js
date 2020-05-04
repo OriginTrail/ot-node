@@ -106,7 +106,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
                 },
             ],
         };
-        const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], dataset['@id'], dataCreator);
+        const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset);
 
         expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
     }

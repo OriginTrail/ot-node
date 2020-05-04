@@ -9,6 +9,7 @@ const Graph = require('./Graph');
 const Encryption = require('./RSAEncryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
+const OtJsonService = require('./service/ot-json-service');
 
 const data_constants = {
     vertexType: {
@@ -139,11 +140,11 @@ class ImportUtilities {
     }
 
     static prepareDataset(originalDocument, config, web3) {
-        const document = originalDocument; //sortService
+        const document = originalDocument; // sortService
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
-        ImportUtilities.calculateGraphPermissionedDataHashes(graph);
-        const id = ImportUtilities.calculateGraphPublicHash(graph);
+        ImportUtilities.calculateGraphPermissionedDataHashes(document['@graph']);
+        const id = ImportUtilities.calculateGraphPublicHash(document);
 
         const header = ImportUtilities.createDatasetHeader(
             config, null,
@@ -159,7 +160,7 @@ class ImportUtilities {
             '@graph': graph,
         };
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], id, header.dataCreator);
+        const rootHash = ImportUtilities.calculateDatasetRootHash(dataset);
         dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
 
         const signed = ImportUtilities.signDataset(dataset, config, web3);
@@ -450,14 +451,14 @@ class ImportUtilities {
         );
     }
 
-    static calculateDatasetRootHash(graph, datasetId, datasetCreator) {
-        const publicGraph = Utilities.copyObject(graph);
-        ImportUtilities.removeGraphPermissionedData(publicGraph);
-
-        ImportUtilities.sortGraphRecursively(publicGraph);
+    static calculateDatasetRootHash(dataset) {
+        const sortedDataset = OtJsonService.prepareDatasetForGeneratingRootHash(dataset);
+        const datasetId = sortedDataset['@id'];
+        const datasetCreator = sortedDataset.datasetHeader.dataCreator;
+        ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
 
         const merkle = ImportUtilities.createDistributionMerkleTree(
-            publicGraph,
+            sortedDataset['@graph'],
             datasetId,
             datasetCreator,
         );
@@ -594,14 +595,13 @@ class ImportUtilities {
 
     /**
      * Create SHA256 Hash of public part of one graph
-     * @param graph
+     * @param dataset
      * @returns {string}
      */
-    static calculateGraphPublicHash(graph) {
-        const public_data = Utilities.copyObject(graph);
-        ImportUtilities.removeGraphPermissionedData(public_data);
-        const sorted = ImportUtilities.sortGraphRecursively(public_data);
-        return `0x${sha3_256(sorted, null, 0)}`;
+    static calculateGraphPublicHash(dataset) {
+        const sortedDataset = OtJsonService.prepareDatasetForGeneratingGraphHash(dataset);
+        ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
+        return `0x${sha3_256(sortedDataset['@graph'], null, 0)}`;
     }
 
     /**
@@ -640,11 +640,10 @@ class ImportUtilities {
      * @static
      */
     static signDataset(otjson, config, web3) {
-        const completeGraph = Utilities.copyObject(otjson['@graph']);
-        ImportUtilities.removeGraphPermissionedData(otjson['@graph']);
-        const stringifiedOtjson = this.sortStringifyDataset(otjson);
+        const sortedOTJson = OtJsonService.prepareDatasetForGeneratingSignature(otjson);
+        ImportUtilities.removeGraphPermissionedData(sortedOTJson['@graph']);
         const { signature } = web3.eth.accounts.sign(
-            stringifiedOtjson,
+            JSON.stringify(sortedOTJson),
             Utilities.normalizeHex(config.node_private_key),
         );
         otjson.signature = {
@@ -652,7 +651,6 @@ class ImportUtilities {
             type: 'ethereum-signature',
         };
 
-        otjson['@graph'] = completeGraph;
         return otjson;
     }
 

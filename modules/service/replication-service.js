@@ -69,7 +69,7 @@ class ReplicationService {
             let encryptedDataset =
                 ImportUtilities.encryptDataset(otJson, distributionKeyPair.privateKey);
 
-            const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
+            const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset);
 
             encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 

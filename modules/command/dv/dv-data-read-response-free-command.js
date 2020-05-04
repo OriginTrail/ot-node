@@ -84,7 +84,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
 
         if (fingerprint !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
