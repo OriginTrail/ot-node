@@ -140,6 +140,12 @@ try {
             (error, stdout, stderr) => {
                 console.log(`${stdout}`);
                 if (error !== null) {
+                    console.log('***********************************************');
+                    console.log('*****                                     *****');
+                    console.log('***        Backup process FAILED!           ***');
+                    console.log('*****                                     *****');
+                    console.log('***********************************************');
+
                     console.log('Database backup process failed, aborting!');
                     console.error(`${error}`);
 
@@ -151,7 +157,11 @@ try {
 
                     return 1;
                 }
-                console.log('Backup finished.');
+                console.log('***********************************************');
+                console.log('*****                                     *****');
+                console.log('***        Backup process complete!         ***');
+                console.log('*****                                     *****');
+                console.log('***********************************************');
             },
         );
         break;
@@ -161,7 +171,12 @@ try {
 
     return 0;
 } catch (error) {
-    console.log('Backup process failed!');
+    console.log('***********************************************');
+    console.log('*****                                     *****');
+    console.log('***        Backup process FAILED!           ***');
+    console.log('*****                                     *****');
+    console.log('***********************************************');
+
     console.log(error.message);
     console.log('Please contact support for alternative instructions on backing up your node');
 
