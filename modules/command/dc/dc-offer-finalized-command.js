@@ -2,6 +2,7 @@ const { forEach } = require('p-iteration');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
+const ImportUtilities = require('../../ImportUtilities');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
 
@@ -153,6 +154,8 @@ class DcOfferFinalizedCommand extends Command {
 
             const encryptedGraph =
                 (await this.replicationService.loadReplication(offer.id, encryptionColor)).otJson['@graph'];
+
+            ImportUtilities.sortGraphRecursively(encryptedGraph);
             const challenges = this.challengeService.generateChallenges(
                 encryptedGraph, startTime,
                 endTime, this.config.numberOfChallenges,
