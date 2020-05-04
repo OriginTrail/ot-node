@@ -114,7 +114,7 @@ class ImportService {
         document.signature = metadata.signature;
 
 
-        ImportUtilities.sortStringifyDataset(document);
+        ImportUtilities.sortStringifyDataset(document); //sortService
         return document;
     }
 
@@ -640,6 +640,7 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
+        //sortService
         return otObject;
     }
 

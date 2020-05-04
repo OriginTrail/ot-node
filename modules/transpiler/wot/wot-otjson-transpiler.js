@@ -53,21 +53,20 @@ class WotOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = importUtilities.calculateGraphHash(otjson['@graph']);
+        otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        const merkleRoot = importUtilities.calculateDatasetRootHash(otjson['@graph'], otjson['@id'], otjson.datasetHeader.dataCreator);
-
-        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
+        let result = otjson; //sortService
+        result['@id'] = importUtilities.calculateGraphPublicHash(result['@graph']);
+        const merkleRoot = importUtilities.calculateDatasetRootHash(result['@graph'], result['@id'], result.datasetHeader.dataCreator);
+        result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
         // Until we update all routes to work with commands, keep this web3 implementation
-        let result;
         if (this.web3) {
-            result = importUtilities.signDataset(otjson, this.config, this.web3);
+            result = importUtilities.signDataset(result, this.config, this.web3);
         } else {
-            result = importUtilities.sortStringifyDataset(otjson);
+            result = importUtilities.sortStringifyDataset(result);
         }
         return result;
     }

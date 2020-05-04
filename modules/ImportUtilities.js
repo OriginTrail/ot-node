@@ -138,7 +138,8 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(document, config, web3) {
+    static prepareDataset(originalDocument, config, web3) {
+        const document = originalDocument; //sortService
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(graph);
