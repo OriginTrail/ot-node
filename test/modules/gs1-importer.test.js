@@ -25,6 +25,8 @@ const Web3 = require('web3');
 const awilix = require('awilix');
 const logger = require('../../modules/logger');
 const ImportService = require('../../modules/service/import-service');
+const OtJsonService = require('../../modules/service/ot-json-service');
+
 const PermissionedDataService = require('../../modules/service/permissioned-data-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 const SchemaValidator = require('../../modules/validator/schema-validator');
@@ -108,6 +110,7 @@ describe('GS1 Importer tests', () => {
             graphStorage: awilix.asValue(graphStorage),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
+            otJsonService: awilix.asClass(OtJsonService).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             remoteControl: awilix.asValue({
                 importRequestData: () => {

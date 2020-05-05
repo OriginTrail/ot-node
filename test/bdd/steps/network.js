@@ -427,7 +427,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     // vertices and edges are already sorted from the response
 
     const calculatedDataSetId = ImportUtilities.calculateGraphPublicHash(importInfo.document);
-    const calculatedRootHash =  ImportUtilities.calculateDatasetRootHash(importInfo.document);
+    const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(importInfo.document);
 
     expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
         .to.be.equal(calculatedRootHash);
