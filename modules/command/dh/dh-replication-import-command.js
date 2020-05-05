@@ -23,6 +23,7 @@ class DhReplicationImportCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.blockchain = ctx.blockchain;
         this.challengeService = ctx.challengeService;
+        this.otJsonService = ctx.otJsonService;
     }
 
     /**
@@ -52,13 +53,13 @@ class DhReplicationImportCommand extends Command {
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
 
         const calculatedDataSetId =
-            await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
+            await ImportUtilities.calculateGraphPublicHash(decryptedDataset);
 
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }
 
-        const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset['@graph'], decryptedDataset['@id'], decryptedDataset.datasetHeader.dataCreator);
+        const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
         const blockchainRootHash = await this.blockchain.getRootHash(dataSetId);
 
         if (decryptedGraphRootHash !== blockchainRootHash) {
@@ -66,7 +67,8 @@ class DhReplicationImportCommand extends Command {
         }
 
         // Verify litigation root hash
-        const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(otJson['@graph']);
+        const sortedDataset = this.otJsonService.prepareDatasetForGeneratingChallenges(otJson);
+        const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
         if (encryptedGraphRootHash !== litigationRootHash) {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);

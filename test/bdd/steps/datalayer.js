@@ -94,7 +94,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
         const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
-        const calculatedImportHash = ImportUtilities.calculateGraphHash(dataset['@graph']);
+        const calculatedImportHash = ImportUtilities.calculateGraphPublicHash(dataset);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         const dataCreator = {
@@ -106,7 +106,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
                 },
             ],
         };
-        const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], dataset['@id'], dataCreator);
+        const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset);
 
         expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
     }

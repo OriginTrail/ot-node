@@ -76,6 +76,7 @@ class ImportService {
         this.web3 = ctx.web3;
         this.log = ctx.logger;
         this.config = ctx.config;
+        this.otJsonService = ctx.otJsonService;
     }
 
     async getImportDbData(datasetId, encColor = null) {
@@ -114,7 +115,7 @@ class ImportService {
         document.signature = metadata.signature;
 
 
-        ImportUtilities.sortStringifyDataset(document);
+        ImportUtilities.sortStringifyDataset(document); // todo add otJsonService
         return document;
     }
 
@@ -583,12 +584,12 @@ class ImportService {
      * @returns {Promise<[]>}
      */
     async getMerkleProofs(objectIdsArray, datasetId) {
-        const otjson = await this.getImport(datasetId);
+        let otjson = await this.getImport(datasetId);
 
-        ImportUtilities.sortGraphRecursively(_graph(otjson));
+        otjson = this.otJsonService.prepareDatasetForGeneratingMerkleProofs(otjson);
 
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
-            _graph(otjson),
+            otjson['@graph'],
             datasetId,
             otjson.datasetHeader.dataCreator,
         );
@@ -620,7 +621,9 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
-            ImportUtilities.sortGraphRecursively([reconstructedObjects[i]]);
+            // TODO Use sortObjectRecursively here
+            reconstructedObjects[i] =
+                JSON.parse(Utilities.sortedStringify(reconstructedObjects[i], true));
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
@@ -640,6 +643,7 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
+        // todo add otJsonService
         return otObject;
     }
 
@@ -769,7 +773,7 @@ class ImportService {
             throw Error('[Validation Error] Wrong format of dataset ID');
         }
 
-        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document['@graph'])) {
+        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document)) {
             throw Error('[Validation Error] Invalid dataset ID');
         }
 

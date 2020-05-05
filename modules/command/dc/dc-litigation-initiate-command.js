@@ -17,6 +17,7 @@ class DCLitigationInitiateCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.remoteControl = ctx.remoteControl;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.otJsonService = ctx.otJsonService;
     }
 
     /**
@@ -70,15 +71,15 @@ class DCLitigationInitiateCommand extends Command {
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const otJson = await this.importService.getImport(offer.data_set_id);
 
-        const encryptedGraph = importUtilities.encryptDataset(
+        let encryptedDataset = importUtilities.encryptDataset(
             otJson,
             litigationPrivateKey,
         );
 
-        importUtilities.sortGraphRecursively(encryptedGraph['@graph']);
-
+        encryptedDataset = this.otJsonService
+            .prepareDatasetForGeneratingLitigationProof(encryptedDataset);
         const merkleProof = this.challengeService.createChallengeProof(
-            encryptedGraph['@graph'],
+            encryptedDataset['@graph'],
             objectIndex,
             blockIndex,
         );

@@ -142,8 +142,8 @@ describe('Import utilities module ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalGraphHash = ImportUtilities.calculateGraphHash(sample_data.graph['@graph']);
-        const decryptedGraphHash = ImportUtilities.calculateGraphHash(decryptedGraph['@graph']);
+        const originalGraphHash = ImportUtilities.calculateGraphPublicHash(sample_data.graph);
+        const decryptedGraphHash = ImportUtilities.calculateGraphPublicHash(decryptedGraph);
 
         assert.equal(originalGraphHash, decryptedGraphHash);
     });
@@ -156,8 +156,8 @@ describe('Import utilities module ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalRootHash = ImportUtilities.calculateDatasetRootHash(sample_data.graph['@graph'], sample_data.graph['@id'], sample_data.graph.datasetHeader.dataCreator);
-        const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph['@graph'], decryptedGraph['@id'], decryptedGraph.datasetHeader.dataCreator);
+        const originalRootHash = ImportUtilities.calculateDatasetRootHash(sample_data.graph);
+        const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph);
 
         assert.equal(originalRootHash, decryptedRootHash);
     });
