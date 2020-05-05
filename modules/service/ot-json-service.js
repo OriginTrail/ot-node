@@ -1,21 +1,14 @@
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 
-
-const supported_otjson_standards = ['1.0'];
-
 class OtJsonService {
-    constructor(ctx) {
-        this.logger = ctx.logger;
-        this.web3 = ctx.web3;
-    }
-
     /**
      * Used for OT-JSON version 1.0
      *
      * Function for sorting a graph by the @id parameter and every graph element's identifier and
      * relation arrays by the hash value of the array element
      * @param graph
+     * @returns undefined
      */
     static sortGraphRelationsAndIdentifiers(graph) {
         graph.forEach((el) => {
@@ -35,8 +28,9 @@ class OtJsonService {
     /**
      * Function for extracting the OT-JSON version of the dataset
      * Throws an error if the field (or a parent field) could not be found
+     *
      * @param dataset - Dataset in OT-JSON format, containing the OTJSONVersion in the datasetHeader
-     * @returns {string} - Version of OT-JSON
+     * @returns String - Version of the OT-JSON dataset
      * @private
      */
     static _getDatasetVersion(dataset) {
@@ -50,10 +44,10 @@ class OtJsonService {
     /**
      * Formats the dataset graph hash so that the graph hash can be calculated properly for that
      * OT-JSON version
+     *
      * @param dataset
-     * @returns {any} - Returns a sorted copy of the dataset
-     * with the graph organized for proper graph hash, or null
-     * generation
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
      */
     static prepareDatasetForGeneratingGraphHash(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
@@ -72,6 +66,14 @@ class OtJsonService {
         return datasetCopy;
     }
 
+    /**
+     * Formats the dataset graph hash so that the graph Merkle root hash can be calculated properly
+     * for that OT-JSON version
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
     static prepareDatasetForGeneratingRootHash(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
 
@@ -87,6 +89,13 @@ class OtJsonService {
         }
     }
 
+    /**
+     * Formats the dataset so that the signature can be generated properly
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
     static prepareDatasetForGeneratingSignature(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
 
@@ -102,6 +111,13 @@ class OtJsonService {
         }
     }
 
+    /**
+     * Formats the dataset for proper generating of the litigation proof
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the
+     *                              dataset it already formatted
+     */
     static prepareDatasetForGeneratingLitigationProof(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
 
@@ -117,6 +133,12 @@ class OtJsonService {
         }
     }
 
+    /**
+     * Formats the dataset for proper generating of offer challenges
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the
+     *                              dataset it already formatted
+     */
     static prepareDatasetForGeneratingChallenges(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
 
@@ -132,6 +154,12 @@ class OtJsonService {
         }
     }
 
+    /**
+     * Formats the dataset for proper generating of Merkle proofs for ot-objects
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the
+     *                              dataset it already formatted
+     */
     static prepareDatasetForGeneratingMerkleProofs(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
 
