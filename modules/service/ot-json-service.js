@@ -173,6 +173,72 @@ class OtJsonService {
             throw new Error('Unsupported ot-json version!');
         }
     }
+
+    /**
+     * Formats the dataset so that the dataset can be read and imported by a Data Viewer
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
+    static prepareDatasetForDataRead(dataset) {
+        const version = OtJsonService._getDatasetVersion(dataset);
+
+        let datasetCopy;
+
+        switch (version) {
+        case '1.0':
+            datasetCopy = Utilities.copyObject(dataset);
+            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
+    }
+
+    /**
+     * Formats the dataset so that the dataset can be imported to the graph database
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
+    static prepareDatasetForImport(dataset) {
+        const version = OtJsonService._getDatasetVersion(dataset);
+
+        let datasetCopy;
+
+        switch (version) {
+        case '1.0':
+            datasetCopy = Utilities.copyObject(dataset);
+            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
+    }
+
+    /**
+     * Formats the dataset so that the dataset can be exported and validated in OT-JSON format
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
+    static prepareDatasetForExport(dataset) {
+        const version = OtJsonService._getDatasetVersion(dataset);
+
+        let datasetCopy;
+
+        switch (version) {
+        case '1.0':
+            datasetCopy = Utilities.copyObject(dataset);
+            datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
+            return datasetCopy;
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
+    }
 }
 
 module.exports = OtJsonService;
