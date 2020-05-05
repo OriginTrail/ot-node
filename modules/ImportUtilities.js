@@ -649,11 +649,10 @@ class ImportUtilities {
      * @static
      */
     static extractDatasetSigner(otjson, web3) {
-        const strippedOtjson = Object.assign({}, otjson);
+        const strippedOtjson =
+            OtJsonService.prepareDatasetForGeneratingSignature(otjson);
         delete strippedOtjson.signature;
-
-        const stringifiedOtjson = this.sortStringifyDataset(strippedOtjson);
-        return web3.eth.accounts.recover(stringifiedOtjson, otjson.signature.value);
+        return web3.eth.accounts.recover(strippedOtjson, otjson.signature.value);
     }
 
 
