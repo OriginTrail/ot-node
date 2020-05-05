@@ -2,6 +2,7 @@ const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
+const otJsonService = require('../service/ot-json-service');
 
 /**
  * Returns value of '@id' property.
@@ -76,7 +77,6 @@ class ImportService {
         this.web3 = ctx.web3;
         this.log = ctx.logger;
         this.config = ctx.config;
-        this.otJsonService = ctx.otJsonService;
     }
 
     async getImportDbData(datasetId, encColor = null) {
@@ -586,7 +586,7 @@ class ImportService {
     async getMerkleProofs(objectIdsArray, datasetId) {
         let otjson = await this.getImport(datasetId);
 
-        otjson = this.otJsonService.prepareDatasetForGeneratingMerkleProofs(otjson);
+        otjson = otJsonService.prepareDatasetForGeneratingMerkleProofs(otjson);
 
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
             otjson['@graph'],

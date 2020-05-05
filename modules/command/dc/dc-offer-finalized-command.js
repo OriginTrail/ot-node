@@ -5,6 +5,7 @@ const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
+const otJsonService = require('../../service/ot-json-service');
 
 const { Op } = Models.Sequelize;
 
@@ -20,7 +21,6 @@ class DcOfferFinalizedCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
-        this.otJsonService = ctx.otJsonService;
     }
 
     /**
@@ -156,8 +156,8 @@ class DcOfferFinalizedCommand extends Command {
             let encryptedDataset =
                 (await this.replicationService.loadReplication(offer.id, encryptionColor)).otJson;
 
-            encryptedDataset = this.otJsonService
-                .prepareDatasetForGeneratingChallenges(encryptedDataset);
+            encryptedDataset =
+                otJsonService.prepareDatasetForGeneratingChallenges(encryptedDataset);
             const challenges = this.challengeService.generateChallenges(
                 encryptedDataset['@graph'], startTime,
                 endTime, this.config.numberOfChallenges,
