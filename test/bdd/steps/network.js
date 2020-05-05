@@ -305,7 +305,7 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
 
     const calculatedRootHash = utilities.calculateRootHash(response.document);
-    const calculateDatasetId = ImportUtilities.calculateGraphHash(response.document['@graph']);
+    const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(response.document);
     expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
     expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
 });
@@ -426,7 +426,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
     // vertices and edges are already sorted from the response
 
-    const calculatedDataSetId = ImportUtilities.calculateGraphHash(importInfo.document['@graph']);
+    const calculatedDataSetId = ImportUtilities.calculateGraphPublicHash(importInfo.document);
     const calculatedRootHash = utilities.calculateRootHash(importInfo.document);
 
     expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
@@ -729,7 +729,7 @@ Then(/^response hash should match last imported data set id$/, function () {
     // TODO not sure if we should check for edges and vertices in apiQueryLocalImportByDataSetIdResponse
     // TODO check that lastImport.dataset_id and sha256 calculated hash are matching
 
-    const calculatedImportHash = ImportUtilities.calculateGraphHash(this.state.apiQueryLocalImportByDataSetIdResponse['@graph']);
+    const calculatedImportHash = ImportUtilities.calculateGraphPublicHash(this.state.apiQueryLocalImportByDataSetIdResponse);
     expect(this.state.lastImport.data.dataset_id, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
 

@@ -23,6 +23,7 @@ class DhReplicationImportCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.blockchain = ctx.blockchain;
         this.challengeService = ctx.challengeService;
+        this.otJsonService = ctx.otJsonService;
     }
 
     /**
@@ -66,7 +67,8 @@ class DhReplicationImportCommand extends Command {
         }
 
         // Verify litigation root hash
-        const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(otJson['@graph']);
+        const sortedDataset = this.otJsonService.prepareDatasetForGeneratingChallenges(otJson);
+        const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
         if (encryptedGraphRootHash !== litigationRootHash) {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);

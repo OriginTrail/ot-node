@@ -1,6 +1,5 @@
-const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
-
+const Utilities = require('../Utilities');
 
 const supported_otjson_standards = ['1.0'];
 
@@ -51,11 +50,11 @@ class OtJsonService {
     static prepareDatasetForGeneratingRootHash(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
 
-        const datasetCopy = Utilities.copyObject(dataset);
+        let datasetCopy = Utilities.copyObject(dataset);
 
         switch (version) {
         case '1.0':
-            ImportUtilities.sortGraphRecursively(datasetCopy);
+            datasetCopy = JSON.parse(ImportUtilities.sortStringifyDataset(datasetCopy));
             break;
         default:
             throw new Error('Unsupported ot-json version!');

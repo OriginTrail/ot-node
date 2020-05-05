@@ -140,7 +140,7 @@ class ImportUtilities {
     }
 
     static prepareDataset(originalDocument, config, web3) {
-        const document = originalDocument; // sortService
+        const document = originalDocument; // todo add otJsonService
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(document['@graph']);
@@ -581,16 +581,6 @@ class ImportUtilities {
             throw new Error(`Failed to find transaction hash for ${dataSetId} and origin ${origin}. Origin not valid.`);
         }
         return transactionHash;
-    }
-
-    /**
-     * Create SHA256 Hash of graph
-     * @param graph
-     * @returns {string}
-     */
-    static calculateGraphHash(graph) {
-        const sorted = this.sortGraphRecursively(graph);
-        return `0x${sha3_256(sorted, null, 0)}`;
     }
 
     /**

@@ -33,7 +33,7 @@ process.on('message', async (data) => {
             document.datasetHeader = metadata.datasetHeader;
             document.signature = metadata.signature;
 
-            // sortService
+            // todo add otJsonService
         }
 
         const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));

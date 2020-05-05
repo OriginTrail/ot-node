@@ -25,6 +25,7 @@ class ReplicationService {
         this.challengeService = ctx.challengeService;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.otJsonService = ctx.otJsonService;
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
 
         if (!fs.existsSync(replicationPath)) {
@@ -73,7 +74,9 @@ class ReplicationService {
 
             encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
-            const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
+            const sortedDataset = this.otJsonService
+                .prepareDatasetForGeneratingChallenges(encryptedDataset);
+            const litRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
             const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
             // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
