@@ -6,6 +6,7 @@ const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
+const otJsonService = require('../service/ot-json-service');
 
 /**
  * Supported versions of the same data set
@@ -25,7 +26,6 @@ class ReplicationService {
         this.challengeService = ctx.challengeService;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
-        this.otJsonService = ctx.otJsonService;
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
 
         if (!fs.existsSync(replicationPath)) {
@@ -74,8 +74,8 @@ class ReplicationService {
 
             encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
-            const sortedDataset = this.otJsonService
-                .prepareDatasetForGeneratingChallenges(encryptedDataset);
+            const sortedDataset =
+                otJsonService.prepareDatasetForGeneratingChallenges(encryptedDataset);
             const litRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
             const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
