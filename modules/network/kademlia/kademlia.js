@@ -113,9 +113,9 @@ class Kademlia {
             );
         }
         this.config.publicKeyData = {
-            publicKey,
+            publicKey: publicKey.toString('hex'),
             nonce: this.nonce,
-            proof: this.proof,
+            proof: this.identity.proof.toString('hex'),
         };
 
         this.config.identity = this.identity.fingerprint.toString('hex').toLowerCase();
@@ -347,7 +347,7 @@ class Kademlia {
                         try {
                             const publicKeyData = await node.sendPublicKeyRequest(
                                 null,
-                                contact[0],
+                                contactId,
                             );
 
                             if (await this.networkService.validatePublicKeyData(publicKeyData)) {
