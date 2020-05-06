@@ -621,8 +621,8 @@ class ImportService {
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
             // TODO Use sortObjectRecursively here
-            reconstructedObjects[i] =
-                JSON.parse(Utilities.sortedStringify(reconstructedObjects[i], true));
+            // eslint-disable-next-line prefer-destructuring
+            reconstructedObjects[i] = (otJsonService.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] }))['@graph'][0];
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],

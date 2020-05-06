@@ -36,7 +36,8 @@ class OtJsonService {
     static _getDatasetVersion(dataset) {
         if (!dataset || !dataset.datasetHeader ||
             !dataset.datasetHeader.OTJSONVersion) {
-            throw new Error('Could not determine dataset ot-json version!');
+            return '1.0';
+            // throw new Error('Could not determine dataset ot-json version!');
         }
         return dataset.datasetHeader.OTJSONVersion;
     }
@@ -163,11 +164,12 @@ class OtJsonService {
     static prepareDatasetForGeneratingMerkleProofs(dataset) {
         const version = OtJsonService._getDatasetVersion(dataset);
 
-        const datasetCopy = Utilities.copyObject(dataset);
+        let datasetCopy;
 
         switch (version) {
         case '1.0':
-            datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
+            datasetCopy = Utilities.copyObject(dataset);
+            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         default:
             throw new Error('Unsupported ot-json version!');
