@@ -650,10 +650,8 @@ class ImportUtilities {
      * @static
      */
     static extractDatasetSigner(otjson, web3) {
-        const strippedOtjson =
-            OtJsonService.prepareDatasetForGeneratingSignature(otjson);
+        const strippedOtjson = OtJsonService.prepareDatasetForGeneratingSignature(otjson);
         delete strippedOtjson.signature;
-        otjson['@graph'] = strippedOtjson['@graph'];
         return web3.eth.accounts.recover(JSON.stringify(strippedOtjson), otjson.signature.value);
     }
 

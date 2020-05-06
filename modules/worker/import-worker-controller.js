@@ -2,6 +2,7 @@ const fs = require('fs');
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
 const bytes = require('utf8-length');
+const otJsonService = require('../service/ot-json-service');
 
 class ImportWorkerController {
     constructor(ctx) {
@@ -34,6 +35,8 @@ class ImportWorkerController {
         const otjson_size_in_bytes = bytes(document);
         document = JSON.parse(document);
         // Extract wallet from signature.
+
+        document = otJsonService.prepareDatasetForGeneratingRootHash(document);
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
             this.web3,

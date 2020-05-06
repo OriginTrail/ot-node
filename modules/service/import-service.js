@@ -546,10 +546,10 @@ class ImportService {
         });
 
         await this.db.addDatasetMetadata(metadata);
-
+        const sortedDocument = otJsonService.prepareDatasetForGeneratingRootHash(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
-            document,
+            sortedDocument,
             this.web3,
         );
 
@@ -559,8 +559,8 @@ class ImportService {
         // await this.db.commit();
 
         return {
-            total_documents: document['@graph'].length,
-            root_hash: document.datasetHeader.dataIntegrity.proofs[0].proofValue,
+            total_documents: sortedDocument['@graph'].length,
+            root_hash: sortedDocument.datasetHeader.dataIntegrity.proofs[0].proofValue,
             vertices: deduplicateVertices,
             edges: deduplicateEdges,
             data_set_id: datasetId,

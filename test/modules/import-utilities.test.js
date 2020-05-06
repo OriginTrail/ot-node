@@ -4,6 +4,7 @@ const ImportUtilities = require('../../modules/ImportUtilities');
 const sample_data = require('./test_data/otjson-graph');
 const Encryption = require('../../modules/RSAEncryption');
 const Utilities = require('./../../modules/Utilities');
+const otJsonService = require('../../modules/service/ot-json-service');
 const Web3 = require('web3');
 const { sha3_256 } = require('js-sha3');
 
@@ -184,8 +185,8 @@ describe('Import utilities module ', () => {
         const testGraphCopy = Object.assign({}, sample_data.graph);
         const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
-        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
-        const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
+        let signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
+        let signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
 
         assert.equal(
             ImportUtilities
@@ -193,7 +194,9 @@ describe('Import utilities module ', () => {
             ImportUtilities.sortStringifyDataset(signedShuffled),
         );
 
+        signedOriginal = otJsonService.prepareDatasetForGeneratingRootHash(signedOriginal);
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
+        signedShuffled = otJsonService.prepareDatasetForGeneratingRootHash(signedShuffled);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
 
         assert.equal(signerOfOriginal, signerOfShuffled);
