@@ -57,7 +57,7 @@ class OtJsonService {
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph']));
+            datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
             break;
         default:
             throw new Error('Unsupported ot-json version!');
@@ -233,7 +233,7 @@ class OtJsonService {
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
+            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         default:
             throw new Error('Unsupported ot-json version!');

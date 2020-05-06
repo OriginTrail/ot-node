@@ -591,7 +591,7 @@ class ImportUtilities {
     static calculateGraphPublicHash(dataset) {
         const sortedDataset = OtJsonService.prepareDatasetForGeneratingGraphHash(dataset);
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
-        return `0x${sha3_256(sortedDataset['@graph'], null, 0)}`;
+        return `0x${sha3_256(JSON.stringify(sortedDataset['@graph']), null, 0)}`;
     }
 
     /**

@@ -55,7 +55,7 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            dataset = otJsonService.prepareDatasetForExport(document);
+            dataset = JSON.stringify(otJsonService.prepareDatasetForExport(document));
             break;
         }
         default:
