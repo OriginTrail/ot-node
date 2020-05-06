@@ -115,7 +115,7 @@ class ImportService {
         document.signature = metadata.signature;
 
         // todo add otJsonService
-        return otJsonService.prepareDatasetForDataRead(document);
+        return otJsonService.prepareDatasetForGeneratingRootHash(document);
     }
 
     /**

@@ -641,6 +641,7 @@ class ImportUtilities {
             type: 'ethereum-signature',
         };
 
+        otjson['@graph'] = sortedOTJson['@graph'];
         return otjson;
     }
 
@@ -652,7 +653,8 @@ class ImportUtilities {
         const strippedOtjson =
             OtJsonService.prepareDatasetForGeneratingSignature(otjson);
         delete strippedOtjson.signature;
-        return web3.eth.accounts.recover(strippedOtjson, otjson.signature.value);
+        otjson['@graph'] = strippedOtjson['@graph'];
+        return web3.eth.accounts.recover(JSON.stringify(strippedOtjson), otjson.signature.value);
     }
 
 
