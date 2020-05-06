@@ -3,6 +3,7 @@ const uuidv4 = require('uuid/v4');
 const xsd = require('libxml-xsd');
 const utilities = require('../../Utilities');
 const importUtilities = require('../../ImportUtilities');
+const otJsonService = require('../../service/ot-json-service');
 const fs = require('fs');
 
 const deepExtend = require('deep-extend');
@@ -83,7 +84,7 @@ class EpcisOtJsonTranspiler {
         if (this.web3) {
             result = importUtilities.signDataset(result, this.config, this.web3);
         } else {
-            result = importUtilities.sortStringifyDataset(result);
+            result = otJsonService.prepareDatasetForImport(result);
         }
         return result;
     }

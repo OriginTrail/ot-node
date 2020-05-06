@@ -114,9 +114,8 @@ class ImportService {
         document.datasetHeader = metadata.datasetHeader;
         document.signature = metadata.signature;
 
-
-        ImportUtilities.sortStringifyDataset(document); // todo add otJsonService
-        return document;
+        // todo add otJsonService
+        return otJsonService.prepareDatasetForDataRead(document);
     }
 
     /**

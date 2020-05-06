@@ -3,6 +3,7 @@ const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler')
 const path = require('path');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
+const otJsonService = require('../service/ot-json-service');
 const fs = require('fs');
 const Web3 = require('web3');
 
@@ -53,8 +54,7 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            ImportUtilities.sortGraphRecursively(document['@graph']);
-            dataset = JSON.stringify(document);
+            dataset = otJsonService.prepareDatasetForExport(document);
             break;
         }
         default:

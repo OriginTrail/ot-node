@@ -5,6 +5,7 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
 const Utilities = require('../../Utilities');
+const otJsonService = require('../../service/ot-json-service');
 
 /**
  * Handles data read response for free.
@@ -120,14 +121,14 @@ class DVDataReadResponseFreeCommand extends Command {
         } = JSON.parse(handler.data);
 
         if (readExport) {
-            const fileContent = ImportUtilities.sortStringifyDataset(document);
+            const fileContent = otJsonService.prepareDatasetForDataRead(document);
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
 
             try {
                 await Utilities.writeContentsToFile(
                     cacheDirectory,
                     handler_id,
-                    fileContent,
+                    JSON.stringify(fileContent),
                 );
             } catch (e) {
                 const filePath = path.join(cacheDirectory, handler_id);

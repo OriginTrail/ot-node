@@ -1,5 +1,6 @@
 const utilities = require('../../Utilities');
 const importUtilities = require('../../ImportUtilities');
+const otJsonService = require('../../service/ot-json-service');
 const fs = require('fs');
 const Ajv = require('ajv');
 const { sha3_256 } = require('js-sha3');
@@ -66,7 +67,7 @@ class WotOtJsonTranspiler {
         if (this.web3) {
             result = importUtilities.signDataset(result, this.config, this.web3);
         } else {
-            result = importUtilities.sortStringifyDataset(result);
+            result = otJsonService.prepareDatasetForImport(result);
         }
         return result;
     }
