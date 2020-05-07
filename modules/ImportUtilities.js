@@ -452,10 +452,11 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(dataset) {
-        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingRootHash(dataset);
+        const datasetClone = Utilities.copyObject(dataset);
+        ImportUtilities.removeGraphPermissionedData(datasetClone['@graph']);
+        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingRootHash(datasetClone);
         const datasetId = sortedDataset['@id'];
         const datasetCreator = sortedDataset.datasetHeader.dataCreator;
-        ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
 
         const merkle = ImportUtilities.createDistributionMerkleTree(
             sortedDataset['@graph'],
