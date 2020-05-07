@@ -46,7 +46,7 @@ const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-ident
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
-const OtJsonService = require('./modules/OtJsonUtilities');
+const OtJsonUtilities = require('./modules/OtJsonUtilities');
 
 const semver = require('semver');
 

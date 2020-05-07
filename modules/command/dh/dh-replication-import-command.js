@@ -6,7 +6,7 @@ const Encryption = require('../../RSAEncryption');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');
-const otJsonService = require('../../OtJsonUtilities');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 
 /**
  * Imports data for replication
@@ -67,7 +67,7 @@ class DhReplicationImportCommand extends Command {
         }
 
         // Verify litigation root hash
-        const sortedDataset = otJsonService.prepareDatasetForGeneratingChallenges(otJson);
+        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingChallenges(otJson);
         const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
         if (encryptedGraphRootHash !== litigationRootHash) {

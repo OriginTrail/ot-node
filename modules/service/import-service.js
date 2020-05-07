@@ -2,7 +2,7 @@ const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
-const otJsonService = require('../OtJsonUtilities');
+const OtJsonUtilities = require('../OtJsonUtilities');
 
 /**
  * Returns value of '@id' property.
@@ -115,7 +115,7 @@ class ImportService {
         document.signature = metadata.signature;
 
         // todo add otJsonService
-        return otJsonService.prepareDatasetForGeneratingRootHash(document);
+        return OtJsonUtilities.prepareDatasetForGeneratingRootHash(document);
     }
 
     /**
@@ -546,7 +546,7 @@ class ImportService {
         });
 
         await this.db.addDatasetMetadata(metadata);
-        otJsonService.prepareDatasetForExtractSigner(document);
+        OtJsonUtilities.prepareDatasetForExtractSigner(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
@@ -585,7 +585,7 @@ class ImportService {
     async getMerkleProofs(objectIdsArray, datasetId) {
         let otjson = await this.getImport(datasetId);
 
-        otjson = otJsonService.prepareDatasetForGeneratingMerkleProofs(otjson);
+        otjson = OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs(otjson);
 
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
             otjson['@graph'],
@@ -622,7 +622,7 @@ class ImportService {
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
             // TODO Use sortObjectRecursively here
             // eslint-disable-next-line prefer-destructuring
-            reconstructedObjects[i] = (otJsonService.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] }))['@graph'][0];
+            reconstructedObjects[i] = (OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] }))['@graph'][0];
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],

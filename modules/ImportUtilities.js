@@ -9,7 +9,7 @@ const Graph = require('./Graph');
 const Encryption = require('./RSAEncryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
-const OtJsonService = require('./OtJsonUtilities');
+const OtJsonUtilities = require('./OtJsonUtilities');
 
 const data_constants = {
     vertexType: {
@@ -452,7 +452,7 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(dataset) {
-        const sortedDataset = OtJsonService.prepareDatasetForGeneratingRootHash(dataset);
+        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingRootHash(dataset);
         const datasetId = sortedDataset['@id'];
         const datasetCreator = sortedDataset.datasetHeader.dataCreator;
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
@@ -589,7 +589,7 @@ class ImportUtilities {
      * @returns {string}
      */
     static calculateGraphPublicHash(dataset) {
-        const sortedDataset = OtJsonService.prepareDatasetForGeneratingGraphHash(dataset);
+        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingGraphHash(dataset);
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
         return `0x${sha3_256(JSON.stringify(sortedDataset['@graph']), null, 0)}`;
     }
@@ -630,7 +630,7 @@ class ImportUtilities {
      * @static
      */
     static signDataset(otjson, config, web3) {
-        const sortedOTJson = OtJsonService.prepareDatasetForGeneratingSignature(otjson);
+        const sortedOTJson = OtJsonUtilities.prepareDatasetForGeneratingSignature(otjson);
         ImportUtilities.removeGraphPermissionedData(sortedOTJson['@graph']);
         const { signature } = web3.eth.accounts.sign(
             JSON.stringify(sortedOTJson),
@@ -649,7 +649,7 @@ class ImportUtilities {
      * @static
      */
     static extractDatasetSigner(otjson, web3) {
-        const strippedOtjson = OtJsonService.prepareDatasetForGeneratingSignature(otjson);
+        const strippedOtjson = OtJsonUtilities.prepareDatasetForGeneratingSignature(otjson);
         delete strippedOtjson.signature;
         return web3.eth.accounts.recover(JSON.stringify(strippedOtjson), otjson.signature.value);
     }

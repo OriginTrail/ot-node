@@ -3,7 +3,7 @@ const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 const importUtilities = require('../../ImportUtilities');
 const constants = require('../../constants');
-const otJsonService = require('../../OtJsonUtilities');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 /**
  * Initiates litigation from the DC side
  */
@@ -77,7 +77,7 @@ class DCLitigationInitiateCommand extends Command {
         );
 
         encryptedDataset =
-            otJsonService.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
+            OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
         const merkleProof = this.challengeService.createChallengeProof(
             encryptedDataset['@graph'],
             objectIndex,

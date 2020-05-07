@@ -90,6 +90,12 @@ class OtJsonUtilities {
         }
     }
 
+    /**
+     * Formats the dataset IN PLACE so that the signature can be generated properly
+     *
+     * @param dataset
+     * @returns {any}|undefined
+     */
     static prepareDatasetForExtractSigner(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 

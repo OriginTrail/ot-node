@@ -25,7 +25,7 @@ const Web3 = require('web3');
 const awilix = require('awilix');
 const logger = require('../../modules/logger');
 const ImportService = require('../../modules/service/import-service');
-const OtJsonService = require('../../modules/OtJsonUtilities');
+const OtJsonUtilities = require('../../modules/OtJsonUtilities');
 
 const PermissionedDataService = require('../../modules/service/permissioned-data-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');

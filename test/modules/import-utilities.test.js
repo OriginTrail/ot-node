@@ -4,7 +4,7 @@ const ImportUtilities = require('../../modules/ImportUtilities');
 const sample_data = require('./test_data/otjson-graph');
 const Encryption = require('../../modules/RSAEncryption');
 const Utilities = require('./../../modules/Utilities');
-const otJsonService = require('../../modules/OtJsonUtilities');
+const OtJsonUtilities = require('../../modules/OtJsonUtilities');
 const Web3 = require('web3');
 const { sha3_256 } = require('js-sha3');
 
@@ -194,9 +194,9 @@ describe('Import utilities module ', () => {
             ImportUtilities.sortStringifyDataset(signedShuffled),
         );
 
-        otJsonService.prepareDatasetForExtractSigner(signedOriginal);
+        OtJsonUtilities.prepareDatasetForExtractSigner(signedOriginal);
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
-        otJsonService.prepareDatasetForExtractSigner(signedShuffled);
+        OtJsonUtilities.prepareDatasetForExtractSigner(signedShuffled);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
 
         assert.equal(signerOfOriginal, signerOfShuffled);

@@ -2,7 +2,7 @@ const fs = require('fs');
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
 const bytes = require('utf8-length');
-const otJsonService = require('../OtJsonUtilities');
+const OtJsonUtilities = require('../OtJsonUtilities');
 
 class ImportWorkerController {
     constructor(ctx) {
@@ -36,7 +36,7 @@ class ImportWorkerController {
         document = JSON.parse(document);
         // Extract wallet from signature.
 
-        otJsonService.prepareDatasetForExtractSigner(document);
+        OtJsonUtilities.prepareDatasetForExtractSigner(document);
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
             this.web3,
