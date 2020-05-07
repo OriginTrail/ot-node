@@ -185,8 +185,8 @@ describe('Import utilities module ', () => {
         const testGraphCopy = Object.assign({}, sample_data.graph);
         const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
-        let signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
-        let signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
+        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
+        const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
 
         assert.equal(
             ImportUtilities
@@ -194,9 +194,9 @@ describe('Import utilities module ', () => {
             ImportUtilities.sortStringifyDataset(signedShuffled),
         );
 
-        signedOriginal = otJsonService.prepareDatasetForGeneratingRootHash(signedOriginal);
+        otJsonService.prepareDatasetForExtractSigner(signedOriginal);
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
-        signedShuffled = otJsonService.prepareDatasetForGeneratingRootHash(signedShuffled);
+        otJsonService.prepareDatasetForExtractSigner(signedShuffled);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
 
         assert.equal(signerOfOriginal, signerOfShuffled);

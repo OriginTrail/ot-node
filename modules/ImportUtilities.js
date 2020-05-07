@@ -641,7 +641,6 @@ class ImportUtilities {
             type: 'ethereum-signature',
         };
 
-        otjson['@graph'] = sortedOTJson['@graph'];
         return otjson;
     }
 

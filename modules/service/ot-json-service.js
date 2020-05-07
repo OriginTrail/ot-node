@@ -90,6 +90,18 @@ class OtJsonService {
         }
     }
 
+    static prepareDatasetForExtractSigner(dataset) {
+        const version = OtJsonService._getDatasetVersion(dataset);
+
+        switch (version) {
+        case '1.0':
+            OtJsonService.sortGraphRelationsAndIdentifiers(dataset['@graph']);
+            break;
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
+    }
+
     /**
      * Formats the dataset so that the signature can be generated properly
      *

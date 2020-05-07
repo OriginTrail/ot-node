@@ -38,7 +38,7 @@ process.on('message', async (data) => {
         }
 
         const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
-        document = otJsonService.prepareDatasetForGeneratingRootHash(document);
+        otJsonService.prepareDatasetForExtractSigner(document);
         const dc_node_wallet = ImportUtilities.extractDatasetSigner(document, web3);
         const data_creator = document.datasetHeader.dataCreator;
 
