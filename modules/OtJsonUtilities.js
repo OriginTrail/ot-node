@@ -1,7 +1,7 @@
-const Utilities = require('../Utilities');
+const Utilities = require('./Utilities');
 const { sha3_256 } = require('js-sha3');
 
-class OtJsonService {
+class OtJsonUtilities {
     /**
      * Used for OT-JSON version 1.0
      *
@@ -51,7 +51,7 @@ class OtJsonService {
      *                              already formatted
      */
     static prepareDatasetForGeneratingGraphHash(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
@@ -76,14 +76,14 @@ class OtJsonService {
      *                              already formatted
      */
     static prepareDatasetForGeneratingRootHash(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         default:
             throw new Error('Unsupported ot-json version!');
@@ -91,11 +91,11 @@ class OtJsonService {
     }
 
     static prepareDatasetForExtractSigner(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         switch (version) {
         case '1.0':
-            OtJsonService.sortGraphRelationsAndIdentifiers(dataset['@graph']);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(dataset['@graph']);
             break;
         default:
             throw new Error('Unsupported ot-json version!');
@@ -110,14 +110,14 @@ class OtJsonService {
      *                              already formatted
      */
     static prepareDatasetForGeneratingSignature(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
         default:
             throw new Error('Unsupported ot-json version!');
@@ -132,7 +132,7 @@ class OtJsonService {
      *                              dataset it already formatted
      */
     static prepareDatasetForGeneratingLitigationProof(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
@@ -153,7 +153,7 @@ class OtJsonService {
      *                              dataset it already formatted
      */
     static prepareDatasetForGeneratingChallenges(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
@@ -174,14 +174,14 @@ class OtJsonService {
      *                              dataset it already formatted
      */
     static prepareDatasetForGeneratingMerkleProofs(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         default:
             throw new Error('Unsupported ot-json version!');
@@ -196,14 +196,14 @@ class OtJsonService {
      *                              already formatted
      */
     static prepareDatasetForDataRead(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
         default:
             throw new Error('Unsupported ot-json version!');
@@ -218,14 +218,14 @@ class OtJsonService {
      *                              already formatted
      */
     static prepareDatasetForImport(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
         default:
             throw new Error('Unsupported ot-json version!');
@@ -240,14 +240,14 @@ class OtJsonService {
      *                              already formatted
      */
     static prepareDatasetForExport(dataset) {
-        const version = OtJsonService._getDatasetVersion(dataset);
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
         switch (version) {
         case '1.0':
             datasetCopy = Utilities.copyObject(dataset);
-            OtJsonService.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         default:
             throw new Error('Unsupported ot-json version!');
@@ -255,4 +255,4 @@ class OtJsonService {
     }
 }
 
-module.exports = OtJsonService;
+module.exports = OtJsonUtilities;

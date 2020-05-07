@@ -5,7 +5,7 @@ const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
-const otJsonService = require('../../service/ot-json-service');
+const otJsonService = require('../../OtJsonUtilities');
 
 const { Op } = Models.Sequelize;
 

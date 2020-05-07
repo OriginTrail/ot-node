@@ -6,7 +6,7 @@ const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
-const otJsonService = require('../service/ot-json-service');
+const otJsonService = require('../OtJsonUtilities');
 
 /**
  * Supported versions of the same data set

@@ -6,7 +6,7 @@ const Encryption = require('../../RSAEncryption');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');
-const otJsonService = require('../../service/ot-json-service');
+const otJsonService = require('../../OtJsonUtilities');
 
 /**
  * Imports data for replication

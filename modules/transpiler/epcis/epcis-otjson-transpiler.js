@@ -3,7 +3,7 @@ const uuidv4 = require('uuid/v4');
 const xsd = require('libxml-xsd');
 const utilities = require('../../Utilities');
 const importUtilities = require('../../ImportUtilities');
-const otJsonService = require('../../service/ot-json-service');
+const otJsonService = require('../../OtJsonUtilities');
 const fs = require('fs');
 
 const deepExtend = require('deep-extend');

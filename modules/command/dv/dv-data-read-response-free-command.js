@@ -5,7 +5,7 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
 const Utilities = require('../../Utilities');
-const otJsonService = require('../../service/ot-json-service');
+const otJsonService = require('../../OtJsonUtilities');
 
 /**
  * Handles data read response for free.

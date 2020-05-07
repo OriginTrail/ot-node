@@ -148,8 +148,6 @@ Given(/^response should return same dataset_ids as second last import and last i
     this.state.apiQueryLocalResponse = response;
     const importIds = [this.state.secondLastImport.data.dataset_id, this.state.lastImport.data.dataset_id];
     // TODO fix message
-    console.log(JSON.stringify(response));
-    console.log(JSON.stringify(importIds));
     expect(response.filter(val => importIds.includes(val) !== false).length, 'Response not good.').to.be.equal(2);
 });
 

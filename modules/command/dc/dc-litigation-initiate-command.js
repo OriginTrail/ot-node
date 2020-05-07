@@ -3,7 +3,7 @@ const utilities = require('../../Utilities');
 const models = require('../../../models/index');
 const importUtilities = require('../../ImportUtilities');
 const constants = require('../../constants');
-const otJsonService = require('../../service/ot-json-service');
+const otJsonService = require('../../OtJsonUtilities');
 /**
  * Initiates litigation from the DC side
  */

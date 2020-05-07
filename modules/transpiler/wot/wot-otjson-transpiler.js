@@ -1,6 +1,6 @@
 const utilities = require('../../Utilities');
 const importUtilities = require('../../ImportUtilities');
-const otJsonService = require('../../service/ot-json-service');
+const otJsonService = require('../../OtJsonUtilities');
 const fs = require('fs');
 const Ajv = require('ajv');
 const { sha3_256 } = require('js-sha3');

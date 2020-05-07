@@ -2,7 +2,7 @@ const fs = require('fs');
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
 const bytes = require('utf8-length');
-const otJsonService = require('../service/ot-json-service');
+const otJsonService = require('../OtJsonUtilities');
 
 class ImportWorkerController {
     constructor(ctx) {

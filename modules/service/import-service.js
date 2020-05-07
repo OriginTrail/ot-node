@@ -2,7 +2,7 @@ const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
-const otJsonService = require('../service/ot-json-service');
+const otJsonService = require('../OtJsonUtilities');
 
 /**
  * Returns value of '@id' property.

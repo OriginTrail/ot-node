@@ -4,7 +4,7 @@ const ImportUtilities = require('../../modules/ImportUtilities');
 const sample_data = require('./test_data/otjson-graph');
 const Encryption = require('../../modules/RSAEncryption');
 const Utilities = require('./../../modules/Utilities');
-const otJsonService = require('../../modules/service/ot-json-service');
+const otJsonService = require('../../modules/OtJsonUtilities');
 const Web3 = require('web3');
 const { sha3_256 } = require('js-sha3');
 

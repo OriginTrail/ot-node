@@ -3,7 +3,7 @@ const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler')
 const path = require('path');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
-const otJsonService = require('../service/ot-json-service');
+const otJsonService = require('../OtJsonUtilities');
 const fs = require('fs');
 const Web3 = require('web3');
 

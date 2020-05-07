@@ -9,7 +9,7 @@ const Graph = require('./Graph');
 const Encryption = require('./RSAEncryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
-const OtJsonService = require('./service/ot-json-service');
+const OtJsonService = require('./OtJsonUtilities');
 
 const data_constants = {
     vertexType: {

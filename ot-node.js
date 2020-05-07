@@ -46,7 +46,7 @@ const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-ident
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
-const OtJsonService = require('./modules/service/ot-json-service');
+const OtJsonService = require('./modules/OtJsonUtilities');
 
 const semver = require('semver');
 
@@ -276,7 +276,6 @@ class OTNode {
             challengeService: awilix.asClass(ChallengeService).singleton(),
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
-            otJsonService: awilix.asClass(OtJsonService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
