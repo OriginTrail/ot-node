@@ -361,9 +361,9 @@ class Kademlia {
                             throw Error('Unable to get node public key for encryption');
                         }
                     }
-                    body = await ECEncryption.encryptObject(message, publicKey);
+                    // body = await ECEncryption.encryptObject(message, publicKey);
                     const messageHeader = JSON.parse(header);
-                    messageHeader.encrypted = true;
+                    // messageHeader.encrypted = true;
                     header = JSON.stringify(messageHeader);
                 }
 
