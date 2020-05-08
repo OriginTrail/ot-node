@@ -1,6 +1,7 @@
 const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether DH has answered the litigation
@@ -9,6 +10,7 @@ class DCLitigationAnsweredCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -112,6 +114,35 @@ class DCLitigationAnsweredCommand extends Command {
                 },
             ],
         };
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            dhIdentity,
+            objectIndex,
+            blockIndex,
+        } = command.data;
+
+        this.logger.error(`Initiating answered command for holder ${dhIdentity} and offer ${offerId} FAILED!`);
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                objectIndex,
+                blockIndex,
+                dhIdentity,
+                offerId,
+            },
+            constants.PROCESS_NAME.litigationHandling,
+        );
+
+        return Command.retry();
     }
 
     /**

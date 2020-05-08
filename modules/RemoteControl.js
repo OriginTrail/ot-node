@@ -45,7 +45,6 @@ class RemoteControl {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.socket = new SocketDecorator(ctx.logger);
-        this.notifyError = ctx.notifyError;
         this.profileService = ctx.profileService;
 
         const serverOptions = {};
@@ -74,7 +73,7 @@ class RemoteControl {
                     this.log.warn('Houston password not set.');
                 }
             } catch (e) {
-                this.notifyError(e);
+                this.log.error(e);
             }
         });
     }
@@ -476,7 +475,6 @@ class RemoteControl {
             .then((rows) => {
                 this.socket.emit('localDataResponse', rows);
             }).catch((e) => {
-                this.notifyError(e);
             });
     }
 
@@ -562,7 +560,6 @@ class RemoteControl {
                     this.socket.emit('networkQueryResponses', rows);
                 }
             }).catch((e) => {
-                this.notifyError(e);
             });
     }
 
@@ -583,7 +580,6 @@ class RemoteControl {
             .then((rows) => {
                 this.socket.emit('localDataResponses', rows);
             }).catch((e) => {
-                this.notifyError(e);
             });
     }
 

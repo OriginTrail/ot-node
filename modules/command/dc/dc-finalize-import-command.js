@@ -9,7 +9,6 @@ class DcFinalizeImport extends Command {
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
-        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -51,7 +50,6 @@ class DcFinalizeImport extends Command {
                 data_hash,
             }).catch(async (error) => {
                 this.logger.error(error);
-                this.notifyError(error);
                 const handler = await Models.handler_ids.findOne({
                     where: { handler_id },
                 });
@@ -137,7 +135,6 @@ class DcFinalizeImport extends Command {
             this.remoteControl.importSucceeded();
         } catch (error) {
             this.logger.error(`Failed to register import. Error ${error}.`);
-            this.notifyError(error);
             const handler = await Models.handler_ids.findOne({
                 where: { handler_id },
             });
@@ -209,10 +206,6 @@ class DcFinalizeImport extends Command {
             },
         );
         this.remoteControl.importFailed(error);
-
-        if (error.type !== 'ImporterError') {
-            this.notifyError(error);
-        }
     }
 }
 

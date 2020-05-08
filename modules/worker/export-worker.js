@@ -3,6 +3,7 @@ const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler')
 const path = require('path');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
+const OtJsonUtilities = require('../OtJsonUtilities');
 const fs = require('fs');
 const Web3 = require('web3');
 
@@ -32,9 +33,12 @@ process.on('message', async (data) => {
 
             document.datasetHeader = metadata.datasetHeader;
             document.signature = metadata.signature;
+
+            // todo add otJsonService
         }
 
         const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
+        OtJsonUtilities.prepareDatasetForExtractSigner(document);
         const dc_node_wallet = ImportUtilities.extractDatasetSigner(document, web3);
         const data_creator = document.datasetHeader.dataCreator;
 
@@ -51,8 +55,7 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            ImportUtilities.sortGraphRecursively(document['@graph']);
-            dataset = JSON.stringify(document);
+            dataset = JSON.stringify(OtJsonUtilities.prepareDatasetForExport(document));
             break;
         }
         default:

@@ -17,6 +17,7 @@ class DHLitigationAnswerCommand extends Command {
         this.importService = ctx.importService;
         this.replicationService = ctx.replicationService;
         this.challengeService = ctx.challengeService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -105,6 +106,33 @@ class DHLitigationAnswerCommand extends Command {
             command.delay = constants.BLOCKCHAIN_RETRY_DELAY_IN_MILLS;
             return Command.retry();
         }
+
+        return Command.empty();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            objectIndex,
+            blockIndex,
+        } = command.data;
+
+        this.logger.error(`Failed to answer to litigation for offerId: ${offerId}`);
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                objectIndex,
+                blockIndex,
+                offerId,
+            },
+            constants.PROCESS_NAME.litigationHandling,
+        );
 
         return Command.empty();
     }

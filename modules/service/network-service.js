@@ -39,7 +39,7 @@ class NetworkService {
             this.logger.info('identity proof not yet solved, this can take a while');
             await identity.solve();
         }
-        return identity.fingerprint.toString('hex').toLowerCase() === nodeId;
+        return identity.fingerprint.toString('hex').toLowerCase() === node_id;
     }
 
     /**

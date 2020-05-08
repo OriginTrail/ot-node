@@ -25,6 +25,8 @@ const Web3 = require('web3');
 const awilix = require('awilix');
 const logger = require('../../modules/logger');
 const ImportService = require('../../modules/service/import-service');
+const OtJsonUtilities = require('../../modules/OtJsonUtilities');
+
 const PermissionedDataService = require('../../modules/service/permissioned-data-service');
 const EpcisOtJsonTranspiler = require('../../modules/transpiler/epcis/epcis-otjson-transpiler');
 const SchemaValidator = require('../../modules/validator/schema-validator');
@@ -101,7 +103,7 @@ describe('GS1 Importer tests', () => {
 
         const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
-        graphStorage = new GraphStorage(config.database, logger, (error) => { throw error; });
+        graphStorage = new GraphStorage(config.database, logger);
         container.register({
             logger: awilix.asValue(logger),
             gs1Utilities: awilix.asClass(GS1Utilities),
@@ -120,7 +122,6 @@ describe('GS1 Importer tests', () => {
             web3: awilix.asValue(web3),
             config: awilix.asValue(config),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
-            notifyError: awilix.asFunction(() => {}),
         });
         await graphStorage.connect();
         importService = container.resolve('importService');

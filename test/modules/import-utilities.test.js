@@ -4,6 +4,7 @@ const ImportUtilities = require('../../modules/ImportUtilities');
 const sample_data = require('./test_data/otjson-graph');
 const Encryption = require('../../modules/RSAEncryption');
 const Utilities = require('./../../modules/Utilities');
+const OtJsonUtilities = require('../../modules/OtJsonUtilities');
 const Web3 = require('web3');
 const { sha3_256 } = require('js-sha3');
 
@@ -142,8 +143,8 @@ describe('Import utilities module ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalGraphHash = ImportUtilities.calculateGraphHash(sample_data.graph['@graph']);
-        const decryptedGraphHash = ImportUtilities.calculateGraphHash(decryptedGraph['@graph']);
+        const originalGraphHash = ImportUtilities.calculateGraphPublicHash(sample_data.graph);
+        const decryptedGraphHash = ImportUtilities.calculateGraphPublicHash(decryptedGraph);
 
         assert.equal(originalGraphHash, decryptedGraphHash);
     });
@@ -156,8 +157,8 @@ describe('Import utilities module ', () => {
             keyPair.publicKey,
         ).decryptedDataset;
 
-        const originalRootHash = ImportUtilities.calculateDatasetRootHash(sample_data.graph['@graph'], sample_data.graph['@id'], sample_data.graph.datasetHeader.dataCreator);
-        const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph['@graph'], decryptedGraph['@id'], decryptedGraph.datasetHeader.dataCreator);
+        const originalRootHash = ImportUtilities.calculateDatasetRootHash(sample_data.graph);
+        const decryptedRootHash = ImportUtilities.calculateDatasetRootHash(decryptedGraph);
 
         assert.equal(originalRootHash, decryptedRootHash);
     });
@@ -193,7 +194,9 @@ describe('Import utilities module ', () => {
             ImportUtilities.sortStringifyDataset(signedShuffled),
         );
 
+        OtJsonUtilities.prepareDatasetForExtractSigner(signedOriginal);
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
+        OtJsonUtilities.prepareDatasetForExtractSigner(signedShuffled);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
 
         assert.equal(signerOfOriginal, signerOfShuffled);

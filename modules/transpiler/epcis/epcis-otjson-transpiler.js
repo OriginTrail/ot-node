@@ -3,6 +3,7 @@ const uuidv4 = require('uuid/v4');
 const xsd = require('libxml-xsd');
 const utilities = require('../../Utilities');
 const importUtilities = require('../../ImportUtilities');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 const fs = require('fs');
 
 const deepExtend = require('deep-extend');
@@ -70,21 +71,20 @@ class EpcisOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = importUtilities.calculateGraphPublicHash(otjson['@graph']);
+        otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        const merkleRoot = importUtilities.calculateDatasetRootHash(otjson['@graph'], otjson['@id'], otjson.datasetHeader.dataCreator);
-
-        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
+        let result = otjson; // todo add otJsonService
+        result['@id'] = importUtilities.calculateGraphPublicHash(result);
+        const merkleRoot = importUtilities.calculateDatasetRootHash(result);
+        result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
         // Until we update all routes to work with commands, keep this web3 implementation
-        let result;
         if (this.web3) {
-            result = importUtilities.signDataset(otjson, this.config, this.web3);
+            result = importUtilities.signDataset(result, this.config, this.web3);
         } else {
-            result = importUtilities.sortStringifyDataset(otjson);
+            result = OtJsonUtilities.prepareDatasetForImport(result);
         }
         return result;
     }
@@ -829,14 +829,7 @@ class EpcisOtJsonTranspiler {
      */
     _extractMetadata(object) {
         if (this._isLeaf(object)) {
-            const result = {};
-            if (object._attributes) {
-                result._attributes = object._attributes;
-            }
-            if (Object.keys(result).length === 0) {
-                return null;
-            }
-            return result;
+            return object;
         }
         if (Array.isArray(object)) {
             const clone = [];

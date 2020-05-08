@@ -448,7 +448,6 @@ describe.skip('Protocol tests', () => {
                 commandExecutor: awilix.asClass(CommandExecutor).singleton(),
                 commandResolver: awilix.asClass(CommandResolver).singleton(),
                 dcService: awilix.asClass(DCService).singleton(),
-                notifyError: awilix.asFunction(() => (error) => { throw error; }),
             });
 
             testNode.blockchain = container.resolve('blockchain');
