@@ -13,6 +13,7 @@ const Utilities = require('../.././../../modules/Utilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
 const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-db-command');
+const ErrorNotificationService = require('../.././../../modules/service/error-notification-service');
 
 const defaultConfig = require('../../../../config/config.json').development;
 const pjson = require('../../../../package.json');
@@ -79,6 +80,10 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             },
         };
 
+        const mockErrorNotificationService = {
+            notifyError: () => {},
+        };
+
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
@@ -86,7 +91,7 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             remoteControl: awilix.asValue(mockRemoteControl),
             commandResolver: awilix.asClass(CommandResolver),
             dcOfferCreateDatabaseCommand: awilix.asClass(DCOfferCreateDatabaseCommand),
-
+            errorNotificationService: awilix.asValue(mockErrorNotificationService),
         });
         myGraphStorage = await graphStorage.connect();
         myConfig = await container.resolve('config');

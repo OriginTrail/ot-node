@@ -46,7 +46,7 @@ describe('Permission data service test', () => {
     //
     //     const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
     //
-    //     graphStorage = new GraphStorage(config.database, logger, (error) => { throw error; });
+    //     graphStorage = new GraphStorage(config.database, logger);
     //     container.register({
     //         logger: awilix.asValue(logger),
     //         gs1Utilities: awilix.asClass(GS1Utilities),
@@ -65,7 +65,6 @@ describe('Permission data service test', () => {
     //         web3: awilix.asValue(web3),
     //         config: awilix.asValue(config),
     //         permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
-    //         notifyError: awilix.asFunction(() => {}),
     //     });
     //     await graphStorage.connect();
     //     importService = container.resolve('importService');

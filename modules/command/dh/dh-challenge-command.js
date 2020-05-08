@@ -1,6 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models/index');
-const bugsnag = require('bugsnag');
+const constants = require('../../constants');
 
 /**
  * Handles one data challenge
@@ -15,6 +15,7 @@ class DHChallengeCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.importService = ctx.importService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -53,9 +54,9 @@ class DHChallengeCommand extends Command {
         const answer = this.challengeService.answerChallengeQuestion(blockIndex, otObject);
 
         if (this.config.send_challenges_log) {
-            const bugsnagMessage = 'DH challenge answer';
-            bugsnag.notify(bugsnagMessage, {
-                user: {
+            const notificationMessage = 'DH challenge answer';
+            this.errorNotificationService.notifyInfo(
+                notificationMessage, {
                     dh_node_id: this.config.identity,
                     dc_identity: litigatorNodeId,
                     challenge_id: challengeId,
@@ -65,8 +66,8 @@ class DHChallengeCommand extends Command {
                     answer,
                     otObject,
                 },
-                severity: 'info',
-            });
+                constants.PROCESS_NAME.challengesHandling,
+            );
         }
 
         this.logger.info(`Calculated answer for dataset ${datasetId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
@@ -84,6 +85,34 @@ class DHChallengeCommand extends Command {
 
         this.logger.info(`Challenge answer ${answer} sent to ${litigatorNodeId}.`);
         return Command.empty();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            objectIndex,
+            blockIndex,
+            datasetId,
+            offerId,
+            litigatorNodeId,
+        } = command.data;
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                objectIndex,
+                blockIndex,
+                litigatorNodeId,
+                offerId,
+                datasetId,
+            },
+            constants.PROCESS_NAME.challengesHandling,
+        );
+        return Command.retry();
     }
 
     /**

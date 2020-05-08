@@ -99,7 +99,6 @@ class EventEmitter {
             profileService,
             dcService,
             dvController,
-            notifyError,
             commandExecutor,
         } = this.ctx;
 
@@ -114,7 +113,6 @@ class EventEmitter {
                 data.response.send(res);
             }).catch((error) => {
                 logger.error(`Failed to get trail for query ${JSON.stringify(data.query)}`);
-                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
@@ -140,7 +138,6 @@ class EventEmitter {
                     data.response.send(res);
                 }).catch((error) => {
                     logger.error(`Failed to get trail for query ${JSON.stringify(data.query)}`);
-                    notifyError(error);
                     data.response.status(500);
                     data.response.send({
                         message: error,
@@ -197,7 +194,6 @@ class EventEmitter {
                 }
             } catch (error) {
                 logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
-                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
@@ -240,7 +236,6 @@ class EventEmitter {
                 data.response.send(res);
             }).catch((error) => {
                 logger.error(`Failed to get vertices for query ${JSON.stringify(data.query)}`);
-                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: `Failed to get vertices for query ${JSON.stringify(data.query)}`,
@@ -332,7 +327,6 @@ class EventEmitter {
                 }
             } catch (error) {
                 logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
-                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error.toString(),
@@ -357,7 +351,6 @@ class EventEmitter {
                 // (`Successfully withdrawn ${trac_amount} TRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
-                notifyError(error);
                 data.response.status(400);
                 data.response.send({
                     message: `Failed to withdraw tokens. ${error}.`,
@@ -442,7 +435,6 @@ class EventEmitter {
             dcService,
             dvController,
             dcController,
-            notifyError,
             networkService,
         } = this.ctx;
 
@@ -474,7 +466,6 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
                 logger.warn(errorMessage);
-                notifyError(error);
             }
         });
 
@@ -502,7 +493,6 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to handle replication request. ${error}.`;
                 logger.warn(errorMessage);
-                notifyError(error);
 
                 try {
                     await transport.sendResponse(response, {
@@ -533,7 +523,6 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to handle replacement replication request. ${error}.`;
                 logger.warn(errorMessage);
-                notifyError(error);
 
                 try {
                     await transport.sendResponse(response, {
@@ -582,7 +571,6 @@ class EventEmitter {
             } catch (e) {
                 const errorMessage = `Failed to handle replication finished request. ${e}.`;
                 logger.warn(errorMessage);
-                notifyError(e);
             }
         });
 
@@ -600,7 +588,6 @@ class EventEmitter {
             } catch (e) {
                 const errorMessage = `Failed to handle replacement replication finished request. ${e}.`;
                 logger.warn(errorMessage);
-                notifyError(e);
             }
         });
 
@@ -646,7 +633,6 @@ class EventEmitter {
                 );
             } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -685,7 +671,6 @@ class EventEmitter {
                 );
             } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -705,7 +690,6 @@ class EventEmitter {
                 await dvController.handleDataLocationResponse(message);
             } catch (error) {
                 logger.error(`Failed to process location response. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -754,7 +738,6 @@ class EventEmitter {
                 await dvController.handleDataReadResponseFree(message);
             } catch (error) {
                 logger.warn(`Failed to process data read response. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -789,7 +772,6 @@ class EventEmitter {
                 await dvController.handlePermissionedDataReadResponse(message);
             } catch (error) {
                 logger.warn(`Failed to process permissioned data read response. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -815,7 +797,6 @@ class EventEmitter {
                 await dcController.handleNetworkPurchaseRequest(message);
             } catch (error) {
                 logger.warn(`Failed to process data purchase request. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -840,7 +821,6 @@ class EventEmitter {
                 await dvController.handleNetworkPurchaseResponse(message);
             } catch (error) {
                 logger.warn(`Failed to process data purchase response. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -867,7 +847,6 @@ class EventEmitter {
                 await dcController.handleNetworkPriceRequest(message);
             } catch (error) {
                 logger.warn(`Failed to process data price request. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -892,7 +871,6 @@ class EventEmitter {
                 await dvController.handlePermissionedDataPriceResponse(message);
             } catch (error) {
                 logger.warn(`Failed to process data price response. ${error}.`);
-                notifyError(error);
             }
         });
 
@@ -918,7 +896,6 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
-                notifyError(error);
                 await transport.sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,
@@ -948,7 +925,6 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to send public key data. ${error}.`;
                 logger.warn(errorMessage);
-                notifyError(error);
                 await transport.sendResponse(response, {
                     status: 'FAIL',
                     message: error.message,
