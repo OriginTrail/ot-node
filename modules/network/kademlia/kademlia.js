@@ -113,9 +113,9 @@ class Kademlia {
             );
         }
         this.config.publicKeyData = {
-            publicKey,
+            publicKey: publicKey.toString('hex'),
             nonce: this.nonce,
-            proof: this.proof,
+            proof: this.identity.proof.toString('hex'),
         };
 
         this.config.identity = this.identity.fingerprint.toString('hex').toLowerCase();
@@ -346,8 +346,8 @@ class Kademlia {
                 //     if (!publicKey) {
                 //         try {
                 //             const publicKeyData = await node.sendPublicKeyRequest(
-                //             null,
-                //             contact[0]
+                //                 null,
+                //                 contactId,
                 //             );
                 //
                 //             if (await this.networkService.validatePublicKeyData(publicKeyData)) {
@@ -356,7 +356,7 @@ class Kademlia {
                 //                 throw new Error('Public key validation error');
                 //             }
                 //             publicKey = Buffer.from(publicKeyData.public_key, 'hex')
-                //             .toString('hex');
+                //                 .toString('hex');
                 //         } catch (e) {
                 //             throw Error('Unable to get node public key for encryption');
                 //         }
