@@ -5,6 +5,7 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
 const Utilities = require('../../Utilities');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 
 /**
  * Handles data read response for free.
@@ -84,7 +85,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
 
         if (fingerprint !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
@@ -120,14 +121,14 @@ class DVDataReadResponseFreeCommand extends Command {
         } = JSON.parse(handler.data);
 
         if (readExport) {
-            const fileContent = ImportUtilities.sortStringifyDataset(document);
+            const fileContent = OtJsonUtilities.prepareDatasetForDataRead(document);
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
 
             try {
                 await Utilities.writeContentsToFile(
                     cacheDirectory,
                     handler_id,
-                    fileContent,
+                    JSON.stringify(fileContent),
                 );
             } catch (e) {
                 const filePath = path.join(cacheDirectory, handler_id);

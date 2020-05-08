@@ -6,6 +6,7 @@ const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
 const Models = require('../../models/index');
 const Utilities = require('../Utilities');
+const OtJsonUtilities = require('../OtJsonUtilities');
 
 /**
  * Supported versions of the same data set
@@ -69,11 +70,13 @@ class ReplicationService {
             let encryptedDataset =
                 ImportUtilities.encryptDataset(otJson, distributionKeyPair.privateKey);
 
-            const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset['@graph'], encryptedDataset['@id'], encryptedDataset.datasetHeader.dataCreator);
+            const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset);
 
             encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
-            const litRootHash = this.challengeService.getLitigationRootHash(encryptedDataset['@graph']);
+            const sortedDataset =
+                OtJsonUtilities.prepareDatasetForGeneratingChallenges(encryptedDataset);
+            const litRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
             const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
             // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);

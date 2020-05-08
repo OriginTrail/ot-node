@@ -2,6 +2,7 @@ const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
+const OtJsonUtilities = require('../OtJsonUtilities');
 
 /**
  * Returns value of '@id' property.
@@ -113,9 +114,8 @@ class ImportService {
         document.datasetHeader = metadata.datasetHeader;
         document.signature = metadata.signature;
 
-
-        ImportUtilities.sortStringifyDataset(document);
-        return document;
+        // todo add otJsonService
+        return OtJsonUtilities.prepareDatasetForGeneratingRootHash(document);
     }
 
     /**
@@ -546,7 +546,7 @@ class ImportService {
         });
 
         await this.db.addDatasetMetadata(metadata);
-
+        OtJsonUtilities.prepareDatasetForExtractSigner(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
@@ -583,12 +583,12 @@ class ImportService {
      * @returns {Promise<[]>}
      */
     async getMerkleProofs(objectIdsArray, datasetId) {
-        const otjson = await this.getImport(datasetId);
+        let otjson = await this.getImport(datasetId);
 
-        ImportUtilities.sortGraphRecursively(_graph(otjson));
+        otjson = OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs(otjson);
 
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
-            _graph(otjson),
+            otjson['@graph'],
             datasetId,
             otjson.datasetHeader.dataCreator,
         );
@@ -620,7 +620,9 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
-            ImportUtilities.sortGraphRecursively([reconstructedObjects[i]]);
+            // TODO Use sortObjectRecursively here
+            // eslint-disable-next-line prefer-destructuring
+            reconstructedObjects[i] = (OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] }))['@graph'][0];
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
@@ -640,6 +642,7 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
+        // todo add otJsonService
         return otObject;
     }
 
@@ -769,7 +772,7 @@ class ImportService {
             throw Error('[Validation Error] Wrong format of dataset ID');
         }
 
-        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document['@graph'])) {
+        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document)) {
             throw Error('[Validation Error] Invalid dataset ID');
         }
 
