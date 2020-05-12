@@ -194,9 +194,9 @@ describe('Import utilities module ', () => {
             ImportUtilities.sortStringifyDataset(signedShuffled),
         );
 
-        OtJsonUtilities.prepareDatasetForExtractSigner(signedOriginal);
+        // OtJsonUtilities.prepareDatasetForExtractSigner(signedOriginal);
         const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
-        OtJsonUtilities.prepareDatasetForExtractSigner(signedShuffled);
+        // OtJsonUtilities.prepareDatasetForExtractSigner(signedShuffled);
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
 
         assert.equal(signerOfOriginal, signerOfShuffled);
