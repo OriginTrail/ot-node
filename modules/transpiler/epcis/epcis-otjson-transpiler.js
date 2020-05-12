@@ -75,7 +75,7 @@ class EpcisOtJsonTranspiler {
         otjson['@type'] = 'Dataset';
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        let result = otjson; // todo add otJsonService
+        let result = OtJsonUtilities.sortObjectRecursively(otjson);
         result['@id'] = importUtilities.calculateGraphPublicHash(result);
         const merkleRoot = importUtilities.calculateDatasetRootHash(result);
         result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;

@@ -53,18 +53,17 @@ class OtJsonUtilities {
     static prepareDatasetForGeneratingGraphHash(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 
-        let datasetCopy;
+        const datasetCopy = Utilities.copyObject(dataset);
 
         switch (version) {
         case '1.0':
-            datasetCopy = Utilities.copyObject(dataset);
             datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
             break;
+        case '1.1':
+            return datasetCopy;
         default:
             throw new Error('Unsupported ot-json version!');
         }
-
-        return datasetCopy;
     }
 
     /**
@@ -85,24 +84,8 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
-        default:
-            throw new Error('Unsupported ot-json version!');
-        }
-    }
-
-    /**
-     * Formats the dataset IN PLACE so that the signature can be generated properly
-     *
-     * @param dataset
-     * @returns {any}|undefined
-     */
-    static prepareDatasetForExtractSigner(dataset) {
-        const version = OtJsonUtilities._getDatasetVersion(dataset);
-
-        switch (version) {
-        case '1.0':
-            OtJsonUtilities.sortGraphRelationsAndIdentifiers(dataset['@graph']);
-            break;
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -125,6 +108,8 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -147,6 +132,8 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
             return datasetCopy;
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -168,6 +155,8 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
             return datasetCopy;
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -189,6 +178,8 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -211,6 +202,8 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -233,6 +226,8 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -255,17 +250,27 @@ class OtJsonUtilities {
             datasetCopy = Utilities.copyObject(dataset);
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
+        case '1.1':
+            return dataset;
         default:
             throw new Error('Unsupported ot-json version!');
         }
     }
 
-    static sortObjectRecursively(object) {
-        if (typeof object !== 'object' || object == null) {
-            return object;
-        }
+    static sortObjectRecursively(dataset) {
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
 
-        return JSON.parse(Utilities.sortObjectRecursively(object));
+        let datasetCopy;
+
+        switch (version) {
+        case '1.0':
+            return dataset;
+        case '1.1':
+            datasetCopy = Utilities.copyObject(dataset);
+            return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
     }
 }
 

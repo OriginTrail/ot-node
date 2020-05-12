@@ -105,7 +105,7 @@ class ImportService {
             metadata,
         } = await this.getImportDbData(datasetId, encColor);
 
-        const document = {
+        let document = {
             '@id': datasetId,
             '@type': 'Dataset',
             '@graph': await ImportUtilities.createDocumentGraph(vertices, edges),
@@ -114,7 +114,7 @@ class ImportService {
         document.datasetHeader = metadata.datasetHeader;
         document.signature = metadata.signature;
 
-        // todo add otJsonService
+        document = OtJsonUtilities.sortObjectRecursively(document);
         return OtJsonUtilities.prepareDatasetForGeneratingRootHash(document);
     }
 
@@ -634,7 +634,7 @@ class ImportService {
     }
 
     async _createObjectGraph(graphObject, relatedObjects) {
-        const otObject = this._constructOtObject(relatedObjects);
+        let otObject = this._constructOtObject(relatedObjects);
         otObject['@id'] = graphObject.uid;
         if (graphObject.vertexType === constants.vertexType.entityObject) {
             otObject['@type'] = constants.objectType.otObject;
@@ -642,7 +642,7 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
-        // todo add otJsonService
+        otObject = OtJsonUtilities.sortObjectRecursively(otObject);
         return otObject;
     }
 

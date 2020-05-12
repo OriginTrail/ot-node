@@ -140,7 +140,7 @@ class ImportUtilities {
     }
 
     static prepareDataset(originalDocument, config, web3) {
-        const document = originalDocument; // todo add otJsonService
+        const document = OtJsonUtilities.sortObjectRecursively(originalDocument);
         const graph = document['@graph'];
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(document['@graph']);
