@@ -259,6 +259,14 @@ class OtJsonUtilities {
             throw new Error('Unsupported ot-json version!');
         }
     }
+
+    static sortObjectRecursively(object) {
+        if (typeof object !== 'object' || object == null) {
+            return object;
+        }
+
+        return JSON.parse(Utilities.sortObjectRecursively(object));
+    }
 }
 
 module.exports = OtJsonUtilities;
