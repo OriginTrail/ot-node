@@ -248,8 +248,6 @@ describe('GS1 Importer tests', () => {
                         document: otJson,
                     });
 
-
-
                     const otJsonFromDb = await importService.getImport(data_set_id);
                     assert.isNotNull(otJsonFromDb, 'DB result is null');
 

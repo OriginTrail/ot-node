@@ -51,7 +51,7 @@ describe('OtJson Utilities module', () => {
                                 3,
                                 2,
                                 {
-                                    a: null,
+                                    a: undefined,
                                     b: [
                                         3,
                                         2,
@@ -67,7 +67,7 @@ describe('OtJson Utilities module', () => {
                         b: 'abc',
                         c: 1,
                     },
-                    x: null,
+                    x: undefined,
                 },
                 {
                     f: 2,

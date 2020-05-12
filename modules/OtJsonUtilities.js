@@ -58,7 +58,7 @@ class OtJsonUtilities {
         switch (version) {
         case '1.0':
             datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
-            break;
+            return datasetCopy;
         case '1.1':
             return datasetCopy;
         default:
