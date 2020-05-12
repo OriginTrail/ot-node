@@ -2,6 +2,7 @@ const fs = require('fs');
 const { fork } = require('child_process');
 const ImportUtilities = require('../ImportUtilities');
 const bytes = require('utf8-length');
+const OtJsonUtilities = require('../OtJsonUtilities');
 
 class ImportWorkerController {
     constructor(ctx) {
@@ -34,6 +35,8 @@ class ImportWorkerController {
         const otjson_size_in_bytes = bytes(document);
         document = JSON.parse(document);
         // Extract wallet from signature.
+
+        OtJsonUtilities.prepareDatasetForExtractSigner(document);
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
             this.web3,
@@ -96,7 +99,7 @@ class ImportWorkerController {
             if (response.error) {
                 await this._sendErrorToFinalizeCommand(response.error, handler_id, documentPath);
             } else {
-                const otjson = JSON.parse(response);
+                const otjson = response;
 
                 const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
                 fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));

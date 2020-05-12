@@ -1,8 +1,7 @@
 const utilities = require('../Utilities');
 const Models = require('../../models');
 const Utilities = require('../Utilities');
-const ImportUtilities = require('../ImportUtilities');
-const fs = require('fs');
+const constants = require('../constants');
 
 /**
  * DC related API controller
@@ -34,6 +33,7 @@ class DCController {
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&
             utilities.validateNumberParameter(req.body.litigation_interval_in_minutes)) {
             var handlerId = null;
+            var offerId = '';
             try {
                 const dataset = await Models.data_info.findOne({
                     where: { data_set_id: req.body.dataset_id },
@@ -52,7 +52,7 @@ class DCController {
 
                 });
                 handlerId = inserted_object.dataValues.handler_id;
-                const offerId = await this.dcService.createOffer(
+                offerId = await this.dcService.createOffer(
                     req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
                     req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
                     req.body.litigation_interval_in_minutes, handlerId,
@@ -75,6 +75,18 @@ class DCController {
                 });
             } catch (error) {
                 this.logger.error(`Failed to create offer. ${error}.`);
+
+                this.errorNotificationService.notifyError(
+                    error,
+                    {
+                        offerId,
+                        tokenAmountPerHolder: req.body.token_amount_per_holder,
+                        datasetId: req.body.dataset_id,
+                        holdingTimeInMinutes: req.body.holding_time_in_minutes,
+                    },
+                    constants.PROCESS_NAME.offerHandling,
+                );
+
                 if (handlerId) {
                     Models.handler_ids.update({
                         status: 'FAILED',

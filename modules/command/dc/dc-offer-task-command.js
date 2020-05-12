@@ -3,6 +3,7 @@ const BN = require('../../../node_modules/bn.js/lib/bn');
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -13,6 +14,7 @@ class DcOfferTaskCommand extends Command {
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -90,11 +92,11 @@ class DcOfferTaskCommand extends Command {
      * @param command
      * @param err
      */
-    async recover(command) {
-        return this.invalidateOffer(command);
+    async recover(command, err) {
+        return this.invalidateOffer(command, err);
     }
 
-    async invalidateOffer(command) {
+    async invalidateOffer(command, err) {
         const { dataSetId, internalOfferId, handler_id } = command.data;
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
@@ -109,6 +111,19 @@ class DcOfferTaskCommand extends Command {
         Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                offerId: offer.offer_id,
+                internalOfferId,
+                tokenAmountPerHolder: offer.token_amount_per_holder,
+                litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
+                datasetId: offer.data_set_id,
+                holdingTimeInMinutes: offer.holding_time_in_minutes,
+            },
+            constants.PROCESS_NAME.offerHandling,
+        );
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

@@ -33,7 +33,6 @@ class CommandExecutor {
         this.ctx = ctx;
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
-        this.notifyError = ctx.notifyError;
         this.started = false;
 
         this.parallelism = QUEUE_PARALLELISM;
@@ -53,7 +52,6 @@ class CommandExecutor {
                 await this._execute(command);
             } catch (e) {
                 this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
-                this.notifyError(e);
                 process.exit(1);
             }
 
@@ -113,7 +111,6 @@ class CommandExecutor {
                 }
             } catch (e) {
                 this.logger.warn(`Failed to handle expired callback for command ${command.name} and ID ${command.id}`);
-                this.notifyError(e);
             }
             return;
         }
@@ -176,7 +173,6 @@ class CommandExecutor {
                 result.children.forEach(async e => this.add(e, e.delay, false));
             }
         } catch (e) {
-            this.notifyError(e);
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
             try {
                 const result = await this._handleError(command, handler, e);
@@ -185,7 +181,6 @@ class CommandExecutor {
                 }
             } catch (e) {
                 this.logger.warn(`Failed to handle error callback for command ${command.name} and ID ${command.id}`);
-                this.notifyError(e, { data: command.data });
             }
         }
     }
@@ -290,7 +285,6 @@ class CommandExecutor {
                 return await handler.recover(command, err);
             } catch (e) {
                 this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
-                this.notifyError(e);
             }
         }
     }

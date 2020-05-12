@@ -23,7 +23,6 @@ class DHService {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
-        this.notifyError = ctx.notifyError;
         this.pricingService = ctx.pricingService;
 
         const that = this;
@@ -536,7 +535,6 @@ class DHService {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.logger.warn(errorMessage);
-            this.notifyError(e);
             await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
@@ -716,7 +714,6 @@ class DHService {
                 .then(() => this.logger.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
                 .catch((error) => {
                     this.logger.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`);
-                    this.notifyError(error);
                 });
         }, 5 * 60 * 1000);
     }

@@ -1,6 +1,7 @@
 const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Completes litigation from the DC side
@@ -13,6 +14,7 @@ class DCLitigationCompleteCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -75,6 +77,35 @@ class DCLitigationCompleteCommand extends Command {
                 },
             ],
         };
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            dhIdentity,
+            objectIndex,
+            blockIndex,
+        } = command.data;
+
+        this.logger.error(`Initiating complete command for holder ${dhIdentity} and offer ${offerId} FAILED!`);
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                objectIndex,
+                blockIndex,
+                dhIdentity,
+                offerId,
+            },
+            constants.PROCESS_NAME.litigationHandling,
+        );
+
+        return Command.retry();
     }
 
     /**

@@ -10,7 +10,6 @@ class ExportWorkerCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.notifyError = ctx.notifyError;
         this.config = ctx.config;
     }
 
@@ -133,10 +132,6 @@ class ExportWorkerCommand extends Command {
                     },
                 },
             );
-        }
-
-        if (error.type !== 'ExporterError') {
-            this.notifyError(error);
         }
     }
 

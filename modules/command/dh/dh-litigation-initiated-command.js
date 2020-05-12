@@ -58,6 +58,11 @@ class DHLitigationInitiatedCommand extends Command {
             }
         } catch (e) {
             this.logger.error(`Failed to process dhLitigationInitiatedCommand. ${e}`);
+            this.errorNotificationService.notifyError(
+                e,
+                null,
+                constants.PROCESS_NAME.litigationHandling,
+            );
         }
 
         return Command.repeat();
