@@ -27,7 +27,6 @@ class AutoupdaterCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.notifyEvent = ctx.notifyEvent;
         this.process = options.process;
         this.updateFilepath = options.updateFilepath;
         this.destinationBasedir = options.destinationBasedir;
@@ -74,7 +73,6 @@ class AutoupdaterCommand extends Command {
                     if (result.status !== 'completed') {
                         // Something went wrong.
                         this.logger.warn(`Failed to prepare update. Status: ${result.status}.`);
-                        this.notifyEvent(Error(`Failed to prepare update. Status: ${result.status}.`));
                         accept();
                         return;
                     }
@@ -95,7 +93,6 @@ class AutoupdaterCommand extends Command {
                     accept(); // Needed for tests.
                 }).on('error', (error) => {
                     this.logger.error(`Failed to check prepare update. ${error}`);
-                    this.notifyEvent(error);
                     accept();
                 });
             });

@@ -8,12 +8,11 @@ class GraphStorage {
      * @param logger
      * @param selectedDatabase Selected graph database
      */
-    constructor(selectedDatabase, logger, notifyError) {
+    constructor(selectedDatabase, logger) {
         this.logger = logger;
         this.selectedDatabase = selectedDatabase;
         this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
             'Transformation', 'Observation', 'Ownership'];
-        this.notifyError = notifyError;
     }
 
     /**

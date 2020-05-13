@@ -106,3 +106,14 @@ exports.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS = 256;
  *  Amount of time one node's public key hash is valid
  */
 exports.PUBLIC_KEY_VALIDITY_IN_MILLS = 30 * 24 * 60 * 60 * 1000; // 30 days
+/**
+ *
+ * @constant {integer} PROCESS_NAME -
+ *  Name of the process for grouping events for bugsnag
+ */
+exports.PROCESS_NAME = {
+    other: 'other',
+    offerHandling: 'offer-handling',
+    challengesHandling: 'challenges-handling',
+    litigationHandling: 'litigation-handling',
+};

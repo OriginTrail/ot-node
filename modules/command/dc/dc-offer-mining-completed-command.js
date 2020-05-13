@@ -1,5 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Handles miner results
@@ -14,6 +15,7 @@ class DcOfferMiningCompletedCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
         this.profileService = ctx.profileService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -148,6 +150,18 @@ class DcOfferMiningCompletedCommand extends Command {
         models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                offerId: offer.offer_id,
+                tokenAmountPerHolder: offer.token_amount_per_holder,
+                litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
+                datasetId: offer.data_set_id,
+                holdingTimeInMinutes: offer.holding_time_in_minutes,
+            },
+            constants.PROCESS_NAME.offerHandling,
+        );
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
