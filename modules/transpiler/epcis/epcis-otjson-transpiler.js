@@ -75,7 +75,10 @@ class EpcisOtJsonTranspiler {
         otjson['@type'] = 'Dataset';
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        let result = OtJsonUtilities.sortObjectRecursively(otjson);
+        let result = OtJsonUtilities.prepareDatasetForNewImport(otjson);
+        if (!result) {
+            result = otjson;
+        }
         result['@id'] = importUtilities.calculateGraphPublicHash(result);
         const merkleRoot = importUtilities.calculateDatasetRootHash(result);
         result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
@@ -84,7 +87,10 @@ class EpcisOtJsonTranspiler {
         if (this.web3) {
             result = importUtilities.signDataset(result, this.config, this.web3);
         } else {
-            result = OtJsonUtilities.prepareDatasetForImport(result);
+            const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
+            if (sortedDataset) {
+                result = sortedDataset;
+            }
         }
         return result;
     }

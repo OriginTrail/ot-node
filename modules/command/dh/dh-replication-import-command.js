@@ -66,8 +66,11 @@ class DhReplicationImportCommand extends Command {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from Blockchain root hash ${blockchainRootHash}`);
         }
 
-        // Verify litigation root hash
-        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingChallenges(otJson);
+        let sortedDataset =
+            OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(otJson);
+        if (!sortedDataset) {
+            sortedDataset = otJson;
+        }
         const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
         if (encryptedGraphRootHash !== litigationRootHash) {

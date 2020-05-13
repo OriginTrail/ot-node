@@ -153,13 +153,17 @@ class DcOfferFinalizedCommand extends Command {
 
             const encryptionColor = this.replicationService.castNumberToColor(replicatedData.color);
 
-            let encryptedDataset =
+            const encryptedDataset =
                 (await this.replicationService.loadReplication(offer.id, encryptionColor)).otJson;
 
-            encryptedDataset =
-                OtJsonUtilities.prepareDatasetForGeneratingChallenges(encryptedDataset);
+
+            let sortedDataset =
+                OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
+            if (!sortedDataset) {
+                sortedDataset = encryptedDataset;
+            }
             const challenges = this.challengeService.generateChallenges(
-                encryptedDataset['@graph'], startTime,
+                sortedDataset['@graph'], startTime,
                 endTime, this.config.numberOfChallenges,
             );
 

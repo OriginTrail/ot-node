@@ -51,7 +51,7 @@ describe('OtJson Utilities module', () => {
                                 3,
                                 2,
                                 {
-                                    a: undefined,
+                                    a: null,
                                     b: [
                                         3,
                                         2,
@@ -67,7 +67,7 @@ describe('OtJson Utilities module', () => {
                         b: 'abc',
                         c: 1,
                     },
-                    x: undefined,
+                    x: null,
                 },
                 {
                     f: 2,
@@ -76,6 +76,6 @@ describe('OtJson Utilities module', () => {
                 ],
             },
         };
-        assert.deepEqual(sortedObject, OtJsonUtilities.sortObjectRecursively(object));
+        assert.deepEqual(sortedObject, JSON.parse(Utilities.sortObjectRecursively(object)));
     });
 });

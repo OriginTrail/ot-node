@@ -140,8 +140,10 @@ class ImportUtilities {
     }
 
     static prepareDataset(originalDocument, config, web3) {
-        const document = OtJsonUtilities.sortObjectRecursively(originalDocument);
-        const graph = document['@graph'];
+        let document = OtJsonUtilities.prepareDatasetForNewImport(originalDocument);
+        if (!document) {
+            document = originalDocument;
+        }
         const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(document['@graph']);
         const id = ImportUtilities.calculateGraphPublicHash(document);
@@ -157,7 +159,7 @@ class ImportUtilities {
             '@id': id,
             '@type': 'Dataset',
             datasetHeader: header,
-            '@graph': graph,
+            '@graph': document['@graph'],
         };
 
         const rootHash = ImportUtilities.calculateDatasetRootHash(dataset);
@@ -452,9 +454,11 @@ class ImportUtilities {
     }
 
     static calculateDatasetRootHash(dataset) {
-        const datasetClone = Utilities.copyObject(dataset);
-        ImportUtilities.removeGraphPermissionedData(datasetClone['@graph']);
-        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingRootHash(datasetClone);
+        let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingRootHash(dataset);
+        if (!sortedDataset) {
+            sortedDataset = Utilities.copyObject(dataset);
+        }
+        ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
         const datasetId = sortedDataset['@id'];
         const datasetCreator = sortedDataset.datasetHeader.dataCreator;
 
@@ -590,7 +594,10 @@ class ImportUtilities {
      * @returns {string}
      */
     static calculateGraphPublicHash(dataset) {
-        const sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingGraphHash(dataset);
+        let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingGraphHash(dataset);
+        if (!sortedDataset) {
+            sortedDataset = Utilities.copyObject(dataset);
+        }
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
         return `0x${sha3_256(JSON.stringify(sortedDataset['@graph']), null, 0)}`;
     }
@@ -627,32 +634,38 @@ class ImportUtilities {
     }
 
     /**
-     * Sign OT-JSON
+     * Sign dataset
      * @static
      */
-    static signDataset(otjson, config, web3) {
-        const sortedOTJson = OtJsonUtilities.prepareDatasetForGeneratingSignature(otjson);
-        ImportUtilities.removeGraphPermissionedData(sortedOTJson['@graph']);
+    static signDataset(dataset, config, web3) {
+        let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingSignature(dataset);
+        if (!sortedDataset) {
+            sortedDataset = Utilities.copyObject(dataset);
+        }
+        ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
         const { signature } = web3.eth.accounts.sign(
-            JSON.stringify(sortedOTJson),
+            JSON.stringify(sortedDataset),
             Utilities.normalizeHex(config.node_private_key),
         );
-        otjson.signature = {
+        dataset.signature = {
             value: signature,
             type: 'ethereum-signature',
         };
 
-        return otjson;
+        return dataset;
     }
 
     /**
      * Extract Signer from OT-JSON signature
      * @static
      */
-    static extractDatasetSigner(otjson, web3) {
-        const strippedOtjson = OtJsonUtilities.prepareDatasetForGeneratingSignature(otjson);
-        delete strippedOtjson.signature;
-        return web3.eth.accounts.recover(JSON.stringify(strippedOtjson), otjson.signature.value);
+    static extractDatasetSigner(dataset, web3) {
+        let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingSignature(dataset);
+        if (!sortedDataset) {
+            sortedDataset = Utilities.copyObject(dataset);
+        }
+        delete sortedDataset.signature;
+        return web3.eth.accounts.recover(JSON.stringify(sortedDataset), dataset.signature.value);
     }
 
 

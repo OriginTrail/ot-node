@@ -53,14 +53,15 @@ class OtJsonUtilities {
     static prepareDatasetForGeneratingGraphHash(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 
-        const datasetCopy = Utilities.copyObject(dataset);
+        let datasetCopy;
 
         switch (version) {
         case '1.0':
+            datasetCopy = Utilities.copyObject(dataset);
             datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
             return datasetCopy;
         case '1.1':
-            return datasetCopy;
+            return undefined;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -85,7 +86,25 @@ class OtJsonUtilities {
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         case '1.1':
-            return dataset;
+            return undefined;
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
+    }
+
+    static prepareDatasetForDatabaseRead(dataset) {
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
+
+        let datasetCopy;
+
+        switch (version) {
+        case '1.0':
+            datasetCopy = Utilities.copyObject(dataset);
+            OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
+            return datasetCopy;
+        case '1.1':
+            datasetCopy = Utilities.copyObject(dataset);
+            return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -109,7 +128,7 @@ class OtJsonUtilities {
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
         case '1.1':
-            return dataset;
+            return undefined;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -133,30 +152,7 @@ class OtJsonUtilities {
             datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
             return datasetCopy;
         case '1.1':
-            return dataset;
-        default:
-            throw new Error('Unsupported ot-json version!');
-        }
-    }
-
-    /**
-     * Formats the dataset for proper generating of offer challenges
-     * @param dataset
-     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the
-     *                              dataset it already formatted
-     */
-    static prepareDatasetForGeneratingChallenges(dataset) {
-        const version = OtJsonUtilities._getDatasetVersion(dataset);
-
-        let datasetCopy;
-
-        switch (version) {
-        case '1.0':
-            datasetCopy = Utilities.copyObject(dataset);
-            datasetCopy['@graph'] = JSON.parse(Utilities.sortedStringify(datasetCopy['@graph'], true));
-            return datasetCopy;
-        case '1.1':
-            return dataset;
+            return undefined;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -179,7 +175,7 @@ class OtJsonUtilities {
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         case '1.1':
-            return dataset;
+            return undefined;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -203,7 +199,7 @@ class OtJsonUtilities {
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
         case '1.1':
-            return dataset;
+            return undefined;
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -216,7 +212,7 @@ class OtJsonUtilities {
      * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
      *                              already formatted
      */
-    static prepareDatasetForImport(dataset) {
+    static prepareDatasetForOldImport(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
@@ -227,7 +223,30 @@ class OtJsonUtilities {
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return JSON.parse(Utilities.sortedStringify(datasetCopy, false));
         case '1.1':
-            return dataset;
+            return undefined;
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
+    }
+
+    /**
+     * Formats the dataset so that the dataset can be imported to the graph database
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
+    static prepareDatasetForNewImport(dataset) {
+        const version = OtJsonUtilities._getDatasetVersion(dataset);
+
+        let datasetCopy;
+
+        switch (version) {
+        case '1.0':
+            return undefined;
+        case '1.1':
+            datasetCopy = Utilities.copyObject(dataset);
+            return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -240,7 +259,7 @@ class OtJsonUtilities {
      * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
      *                              already formatted
      */
-    static prepareDatasetForExport(dataset) {
+    static prepareDatasetForOldExport(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
@@ -251,23 +270,46 @@ class OtJsonUtilities {
             OtJsonUtilities.sortGraphRelationsAndIdentifiers(datasetCopy['@graph']);
             return datasetCopy;
         case '1.1':
-            return dataset;
+            return undefined;
         default:
             throw new Error('Unsupported ot-json version!');
         }
     }
 
-    static sortObjectRecursively(dataset) {
+    /**
+     * Formats the dataset so that the dataset can be exported and validated in OT-JSON format
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
+    static prepareDatasetForNewExport(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 
         let datasetCopy;
 
         switch (version) {
         case '1.0':
-            return dataset;
+            return undefined;
         case '1.1':
             datasetCopy = Utilities.copyObject(dataset);
             return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+        default:
+            throw new Error('Unsupported ot-json version!');
+        }
+    }
+
+    static prepareDatasetForCreatingObjectGraph(object) {
+        const version = OtJsonUtilities._getDatasetVersion(object);
+
+        let objectCopy;
+
+        switch (version) {
+        case '1.0':
+            return undefined;
+        case '1.1':
+            objectCopy = Utilities.copyObject(object);
+            return JSON.parse(Utilities.sortObjectRecursively(objectCopy));
         default:
             throw new Error('Unsupported ot-json version!');
         }

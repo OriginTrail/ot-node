@@ -105,7 +105,7 @@ class ImportService {
             metadata,
         } = await this.getImportDbData(datasetId, encColor);
 
-        let document = {
+        const document = {
             '@id': datasetId,
             '@type': 'Dataset',
             '@graph': await ImportUtilities.createDocumentGraph(vertices, edges),
@@ -114,8 +114,7 @@ class ImportService {
         document.datasetHeader = metadata.datasetHeader;
         document.signature = metadata.signature;
 
-        document = OtJsonUtilities.sortObjectRecursively(document);
-        return OtJsonUtilities.prepareDatasetForGeneratingRootHash(document);
+        return OtJsonUtilities.prepareDatasetForDatabaseRead(document);
     }
 
     /**
@@ -583,21 +582,25 @@ class ImportService {
      * @returns {Promise<[]>}
      */
     async getMerkleProofs(objectIdsArray, datasetId) {
-        let otjson = await this.getImport(datasetId);
+        const dataset = await this.getImport(datasetId);
 
-        otjson = OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs(otjson);
+        let sortedDataset =
+            OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs(dataset);
+        if (!sortedDataset) {
+            sortedDataset = dataset;
+        }
 
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
-            otjson['@graph'],
+            sortedDataset['@graph'],
             datasetId,
-            otjson.datasetHeader.dataCreator,
+            sortedDataset.datasetHeader.dataCreator,
         );
 
         const proofs = [];
 
         for (const objectId of objectIdsArray) {
             const objectIndex =
-                _graph(otjson).findIndex(graphObject => _id(graphObject) === objectId);
+                _graph(sortedDataset).findIndex(graphObject => _id(graphObject) === objectId);
 
             const proof = merkleTree.createProof(objectIndex + 1);
 
@@ -620,9 +623,11 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
-            // TODO Use sortObjectRecursively here
-            // eslint-disable-next-line prefer-destructuring
-            reconstructedObjects[i] = (OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] }))['@graph'][0];
+            const sortedObject = OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] });
+            if (sortedObject) {
+                // eslint-disable-next-line prefer-destructuring
+                reconstructedObjects[i] = sortedObject['@graph'][0];
+            }
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
@@ -634,7 +639,7 @@ class ImportService {
     }
 
     async _createObjectGraph(graphObject, relatedObjects) {
-        let otObject = this._constructOtObject(relatedObjects);
+        const otObject = this._constructOtObject(relatedObjects);
         otObject['@id'] = graphObject.uid;
         if (graphObject.vertexType === constants.vertexType.entityObject) {
             otObject['@type'] = constants.objectType.otObject;
@@ -642,8 +647,11 @@ class ImportService {
             otObject['@type'] = constants.objectType.otConnector;
         }
 
-        otObject = OtJsonUtilities.sortObjectRecursively(otObject);
-        return otObject;
+        let sortedObject = OtJsonUtilities.prepareDatasetForCreatingObjectGraph(otObject);
+        if (!sortedObject) {
+            sortedObject = otObject;
+        }
+        return sortedObject;
     }
 
     _constructOtObject(relatedObjects) {

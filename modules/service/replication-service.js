@@ -74,8 +74,11 @@ class ReplicationService {
 
             encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
 
-            const sortedDataset =
-                OtJsonUtilities.prepareDatasetForGeneratingChallenges(encryptedDataset);
+            let sortedDataset =
+                OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
+            if (!sortedDataset) {
+                sortedDataset = encryptedDataset;
+            }
             const litRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
             const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);

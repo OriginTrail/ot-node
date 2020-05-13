@@ -34,7 +34,10 @@ process.on('message', async (data) => {
             document.datasetHeader = metadata.datasetHeader;
             document.signature = metadata.signature;
 
-            document = OtJsonUtilities.sortObjectRecursively(document);
+            const sortedDataset = OtJsonUtilities.prepareDatasetForNewExport(document);
+            if (sortedDataset) {
+                document = sortedDataset;
+            }
         }
 
         const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
@@ -55,7 +58,11 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            dataset = JSON.stringify(OtJsonUtilities.prepareDatasetForExport(document));
+            let sortedDataset = OtJsonUtilities.prepareDatasetForOldExport(document);
+            if (!sortedDataset) {
+                sortedDataset = document;
+            }
+            dataset = JSON.stringify(sortedDataset);
             break;
         }
         default:

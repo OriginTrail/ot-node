@@ -71,15 +71,18 @@ class DCLitigationInitiateCommand extends Command {
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const otJson = await this.importService.getImport(offer.data_set_id);
 
-        let encryptedDataset = importUtilities.encryptDataset(
+        const encryptedDataset = importUtilities.encryptDataset(
             otJson,
             litigationPrivateKey,
         );
 
-        encryptedDataset =
+        let sortedDataset =
             OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
+        if (!sortedDataset) {
+            sortedDataset = encryptedDataset;
+        }
         const merkleProof = this.challengeService.createChallengeProof(
-            encryptedDataset['@graph'],
+            sortedDataset['@graph'],
             objectIndex,
             blockIndex,
         );
