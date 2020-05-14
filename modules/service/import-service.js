@@ -602,9 +602,14 @@ class ImportService {
             const objectIndex =
                 _graph(sortedDataset).findIndex(graphObject => _id(graphObject) === objectId);
 
+            const object =
+                _graph(sortedDataset).find(graphObject => _id(graphObject) === objectId);
+
             const proof = merkleTree.createProof(objectIndex + 1);
 
-            proofs.push({ object_id: objectId, object_index: objectIndex + 1, proof });
+            proofs.push({
+                object_id: objectId, otObject: object, object_index: objectIndex + 1, proof,
+            });
         }
 
         return proofs;
@@ -623,11 +628,6 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
-            const sortedObject = OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] });
-            if (sortedObject) {
-                // eslint-disable-next-line prefer-destructuring
-                reconstructedObjects[i] = sortedObject['@graph'][0];
-            }
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
@@ -646,12 +646,7 @@ class ImportService {
         } else if (graphObject.vertexType === constants.vertexType.connector) {
             otObject['@type'] = constants.objectType.otConnector;
         }
-
-        let sortedObject = OtJsonUtilities.prepareDatasetForCreatingObjectGraph(otObject);
-        if (!sortedObject) {
-            sortedObject = otObject;
-        }
-        return sortedObject;
+        return otObject;
     }
 
     _constructOtObject(relatedObjects) {

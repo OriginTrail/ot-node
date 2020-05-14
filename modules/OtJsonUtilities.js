@@ -298,22 +298,6 @@ class OtJsonUtilities {
             throw new Error('Unsupported ot-json version!');
         }
     }
-
-    static prepareDatasetForCreatingObjectGraph(object) {
-        const version = OtJsonUtilities._getDatasetVersion(object);
-
-        let objectCopy;
-
-        switch (version) {
-        case '1.0':
-            return undefined;
-        case '1.1':
-            objectCopy = Utilities.copyObject(object);
-            return JSON.parse(Utilities.sortObjectRecursively(objectCopy));
-        default:
-            throw new Error('Unsupported ot-json version!');
-        }
-    }
 }
 
 module.exports = OtJsonUtilities;
