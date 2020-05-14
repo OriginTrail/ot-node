@@ -22,6 +22,9 @@ const Models = require('../../../models');
 const fs = require('fs');
 const xmljs = require('xml-js');
 
+const Web3 = require('web3');
+
+
 // Identity difficulty 8.
 const bootstrapIdentity = {
     ff62cb1f692431d901833d55b93c7d991b4087f1: {
@@ -331,7 +334,7 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    expect(utilities.verifySignature(lastExport.data.formatted_dataset, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigner(lastExport.data.formatted_dataset, new Web3()).toLowerCase() === myNode.options.nodeConfiguration.node_wallet.toLowerCase(), 'Signature not valid!').to.be.true;
 });
 
 Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {

@@ -8,6 +8,7 @@ const fs = require('fs');
 
 // TODO: use 3rd party.
 const MerkleTree = require('../../../../modules/Merkle');
+const Impor = require('../../../../modules/Merkle');
 
 // Private functions.
 
@@ -178,7 +179,10 @@ function verifySignature(otJson, wallet) {
     const strippedOtjson = Object.assign({}, otJson);
     delete strippedOtjson.signature;
 
-    const stringifiedOtJson = _sortDataset(strippedOtjson);
+    let stringifiedOtJson = OtJsonUtilities.prepareDatasetForGeneratingSignature(otJson);
+    if (!stringifiedOtJson) {
+        stringifiedOtJson = Utilities.sortObjectRecursively(otJson);
+    }
     return (wallet.toLowerCase() === accounts.recover(stringifiedOtJson, signature.value).toLowerCase());
 }
 
