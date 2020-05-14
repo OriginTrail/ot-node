@@ -545,7 +545,6 @@ class ImportService {
         });
 
         await this.db.addDatasetMetadata(metadata);
-        // OtJsonUtilities.prepareDatasetForExtractSigner(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
             document,

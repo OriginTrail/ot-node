@@ -35,8 +35,6 @@ class ImportWorkerController {
         const otjson_size_in_bytes = bytes(document);
         document = JSON.parse(document);
         // Extract wallet from signature.
-
-        // OtJsonUtilities.prepareDatasetForExtractSigner(document);
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
             this.web3,

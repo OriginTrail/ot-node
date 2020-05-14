@@ -328,7 +328,6 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
         });
 
         for (const proofData of proofResponse) {
-
             const { proof, object_index, otObject } = proofData;
             const objectText = JSON.stringify(otObject);
 
