@@ -305,7 +305,8 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(response.document, 'response.document should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    expect(utilities.verifySignature(response.document, myNode.options.nodeConfiguration.node_wallet), 'Signature not valid!').to.be.true;
+
+    expect(ImportUtilities.extractDatasetSigner(response.document, new Web3()).toLowerCase() === myNode.options.nodeConfiguration.node_wallet, 'Signature not valid!').to.be.true;
 
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document);
     const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(response.document);
