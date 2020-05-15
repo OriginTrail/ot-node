@@ -673,7 +673,7 @@ class ImportUtilities {
      * Fill in dataset header
      * @private
      */
-    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '', OTJSONVersion = '1.1') {
+    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '', OTJSONVersion = '1.0') {
         const header = {
             OTJSONVersion,
             datasetCreationTimestamp: new Date().toISOString(),

@@ -36,7 +36,7 @@ class OtJsonUtilities {
     static _getDatasetVersion(dataset) {
         if (!dataset || !dataset.datasetHeader ||
             !dataset.datasetHeader.OTJSONVersion) {
-            return '1.1';
+            return '1.0';
             // throw new Error('Could not determine dataset ot-json version!');
         }
         return dataset.datasetHeader.OTJSONVersion;
@@ -92,6 +92,13 @@ class OtJsonUtilities {
         }
     }
 
+    /**
+     * Formats the dataset for export
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
     static prepareDatasetForDatabaseRead(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 
@@ -206,7 +213,7 @@ class OtJsonUtilities {
     }
 
     /**
-     * Formats the dataset so that the dataset can be imported to the graph database
+     * Formats the dataset so that the dataset can be imported to the graph database as old otJson
      *
      * @param dataset
      * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
@@ -230,7 +237,7 @@ class OtJsonUtilities {
     }
 
     /**
-     * Formats the dataset so that the dataset can be imported to the graph database
+     * Formats the dataset so that the dataset can be imported to the graph database as new otJson
      *
      * @param dataset
      * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
@@ -253,7 +260,7 @@ class OtJsonUtilities {
     }
 
     /**
-     * Formats the dataset so that the dataset can be exported and validated in OT-JSON format
+     * Formats the dataset so that the dataset can be exported and validated in old OT-JSON format
      *
      * @param dataset
      * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
@@ -277,7 +284,7 @@ class OtJsonUtilities {
     }
 
     /**
-     * Formats the dataset so that the dataset can be exported and validated in OT-JSON format
+     * Formats the dataset so that the dataset can be exported and validated in new OT-JSON format
      *
      * @param dataset
      * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
@@ -299,6 +306,13 @@ class OtJsonUtilities {
         }
     }
 
+    /**
+     * Formats the dataset for replication import
+     *
+     * @param dataset
+     * @returns {any}|undefined -   A formatted copy of the dataset, or undefined if the dataset is
+     *                              already formatted
+     */
     static prepareDatasetForNewReplication(dataset) {
         const version = OtJsonUtilities._getDatasetVersion(dataset);
 

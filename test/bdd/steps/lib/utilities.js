@@ -1,13 +1,7 @@
 /* eslint-disable max-len */
-const sortedStringify = require('sorted-json-stringify');
-const { sha3_256 } = require('js-sha3');
 const _ = require('lodash');
 const BN = require('bn.js');
-const Web3 = require('web3');
 const fs = require('fs');
-
-// TODO: use 3rd party.
-const MerkleTree = require('../../../../modules/Merkle');
 
 // Private functions.
 
@@ -34,58 +28,6 @@ function _sortedStringify(obj, sortArrays = false) {
         return `[${stringified.join(',')}]`;
     }
     return JSON.stringify(obj);
-}
-
-/**
- *
- * @param graph
- * @return {string|*|undefined}
- * @private
- */
-function _sortGraphRecursively(graph) {
-    graph.forEach((el) => {
-        if (el.relations) {
-            el.relations.sort((r1, r2) =>
-                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-
-        if (el.identifiers) {
-            el.identifiers.sort((r1, r2) =>
-                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-    });
-    graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
-    return _sortedStringify(graph);
-}
-
-function _sortDataset(dataset) {
-    dataset['@graph'].forEach((el) => {
-        if (el.relations) {
-            el.relations.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-
-        if (el.identifiers) {
-            el.identifiers.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-    });
-    dataset['@graph'].sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-    return _sortedStringify(dataset);
-}
-
-function _generateDatasetSummary(dataset) {
-    return {
-        datasetId: dataset['@id'],
-        datasetCreator: dataset.datasetHeader.dataCreator,
-        objects: dataset['@graph'].map(vertex => ({
-            '@id': vertex['@id'],
-            identifiers: vertex.identifiers != null ? vertex.identifiers : [],
-        })),
-        numRelations: dataset['@graph']
-            .filter(vertex => vertex.relations != null)
-            .reduce((acc, value) => acc + value.relations.length, 0),
-    };
 }
 
 // Public functions.
