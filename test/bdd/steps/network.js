@@ -793,8 +793,6 @@ Given(/^I start additional node[s]*$/, { timeout: 5 * 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-
-
 Then(/^Answer for the last network query by ([DV|DV2]+) should be empty$/, { timeout: 90000 }, function (whichDV) {
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
