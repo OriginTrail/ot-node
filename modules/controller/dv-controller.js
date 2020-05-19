@@ -571,24 +571,24 @@ class DVController {
         }
 
         if (networkQuery.status !== 'OPEN') {
-            throw Error('Too late. Query closed.');
+            this.logger.info('Too late. Query closed.');
+        } else {
+            await this.commandExecutor.add({
+                name: 'dvDataLocationResponseCommand',
+                delay: 0,
+                data: {
+                    queryId,
+                    wallet: message.wallet,
+                    nodeId: message.nodeId,
+                    imports: message.imports,
+                    dataPrice: message.dataPrice,
+                    dataSize: message.dataSize,
+                    stakeFactor: message.stakeFactor,
+                    replyId: message.replyId,
+                },
+                transactional: false,
+            });
         }
-
-        await this.commandExecutor.add({
-            name: 'dvDataLocationResponseCommand',
-            delay: 0,
-            data: {
-                queryId,
-                wallet: message.wallet,
-                nodeId: message.nodeId,
-                imports: message.imports,
-                dataPrice: message.dataPrice,
-                dataSize: message.dataSize,
-                stakeFactor: message.stakeFactor,
-                replyId: message.replyId,
-            },
-            transactional: false,
-        });
     }
 
     async handleDataReadResponseFree(message) {
