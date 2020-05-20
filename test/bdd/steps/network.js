@@ -793,6 +793,14 @@ Given(/^I start additional node[s]*$/, { timeout: 5 * 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
+Then(/^Answer for the last network query by ([DV|DV2]+) should be empty$/, { timeout: 90000 }, function (whichDV) {
+    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+
+    const queryId = this.state.lastQueryNetworkId;
+    expect(!this.state.dataLocationQueriesConfirmations);
+});
+
+
 Then(/^all nodes with (last import|second last import) should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichImport, whichDV) {
     expect(whichImport, 'last import or second last import are allowed values').to.be.oneOf(['last import', 'second last import']);
     whichImport = (whichImport === 'last import') ? 'lastImport' : 'secondLastImport';
@@ -808,7 +816,7 @@ Then(/^all nodes with (last import|second last import) should answer to last net
     this.state.nodes.forEach((node) => {
         promises.push(new Promise(async (accept) => {
             const body = await httpApiHelper.apiGetDatasetInfo(node.state.node_rpc_url, this.state[whichImport].data.dataset_id);
-            if (body.dataset_id === this.state[whichImport].data.dataset_id) {
+            if (body.dataset_id === this.state[whichImport].data.dataset_id && dv.state.identity !== node.state.identity) {
                 nodeCandidates.push(node.state.identity);
             }
             accept();
