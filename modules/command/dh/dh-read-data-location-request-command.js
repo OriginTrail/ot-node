@@ -66,9 +66,7 @@ class DHReadDataLocationRequestCommand extends Command {
                 const offer = await Models.offers.findOne({
                     attributes: ['offer_id'],
                     where: {
-                        data_set_id: {
-                            [Op.eq]: imports[i].data_set_id,
-                        },
+                        data_set_id: imports[i].data_set_id,
                     },
                 });
 
