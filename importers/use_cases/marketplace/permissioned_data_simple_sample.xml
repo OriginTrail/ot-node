@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+    <EPCISHeader>
+        <p:StandardBusinessDocumentHeader>
+            <p:HeaderVersion>1.2</p:HeaderVersion>
+            <p:Sender>
+                <p:Identifier>p:Identifier</p:Identifier>
+            </p:Sender>
+            <p:Receiver>
+                <p:Identifier>p:Identifier</p:Identifier>
+            </p:Receiver>
+            <p:DocumentIdentification>
+                <p:Standard>EPCglobal</p:Standard>
+                <p:TypeVersion>1.2</p:TypeVersion>
+                <p:InstanceIdentifier>p:InstanceIdentifier</p:InstanceIdentifier>
+                <p:Type>MasterData</p:Type>
+                <p:MultipleType>true</p:MultipleType>
+                <p:CreationDateAndTime>2018-01-01T00:31:52Z</p:CreationDateAndTime>
+            </p:DocumentIdentification>
+        </p:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="urn:ot:object:actor">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_Green">
+                                <attribute id="urn:ot:object:actor:name" visibility="permissioned.show_attribute">Green</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                                <attribute id="urn:ot:object:actor:category" visibility="permissioned.hide_attribute">Company producer</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                </VocabularyList>
+            </EPCISMasterData>
+        </extension>
+    </EPCISHeader>
+    <EPCISBody>
+        <EventList/>
+    </EPCISBody>
+</epcis:EPCISDocument>

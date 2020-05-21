@@ -328,13 +328,8 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
         });
 
         for (const proofData of proofResponse) {
-            const { otObject } = lastTrail.find((element) => {
-                const { object_id } = proofData;
-                return element.otObject['@id'] === object_id;
-            });
-
-            const { proof, object_index } = proofData;
-            const objectText = Utilities.sortedStringify(otObject);
+            const { proof, object_index, otObject } = proofData;
+            const objectText = JSON.stringify(otObject);
 
             const merkleTree = new MerkleTree(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1'], 'distribution', 'sha3');
             const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);

@@ -220,3 +220,20 @@ Feature: Data layer related features
     Then DC should send a challenge request
     Then DH should send the challenge response
     Then DC should verify the response
+
+
+  @second
+  Scenario: Node should not respond to network query if he did't replicate it itself
+    Given the replication difficulty is 0
+    And I setup 4 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    And I use 2nd node as DV
+    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
+    Then Answer for the last network query by DV should be empty
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
+    Then all nodes with last import should answer to last network query by DV
