@@ -44,7 +44,7 @@ class DHReadDataLocationRequestCommand extends Command {
 
         // Filter imports not stored in local DB.
         let imports = await Models.data_info.findAll({
-            attributes: ['data_set_id'],
+            attributes: ['data_set_id', 'data_provider_wallet'],
             where: {
                 data_set_id: {
                     [Op.in]: graphImports,
@@ -58,8 +58,26 @@ class DHReadDataLocationRequestCommand extends Command {
             return Command.empty();
         }
 
+        const validImports = [];
+        for (let i = 0; i < imports.length; i += 1) {
+            if (imports[i].data_provider_wallet.toLowerCase()
+                === this.config.node_wallet.toLowerCase()) {
+                // eslint-disable-next-line no-await-in-loop
+                const offer = await Models.offers.findOne({
+                    attributes: ['offer_id'],
+                    where: {
+                        data_set_id: imports[i].data_set_id,
+                    },
+                });
+
+                if (offer) { validImports.push(imports[i].data_set_id); }
+            } else {
+                validImports.push(imports[i].data_set_id);
+            }
+        }
+
         // Convert to string array.
-        imports = imports.map(i => i.data_set_id);
+        imports = validImports;
 
         // Check if the import came from network. In more details I can only
         // distribute data gotten from someone else.
