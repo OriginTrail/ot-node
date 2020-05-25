@@ -184,7 +184,6 @@ class OTNode {
         config.identity = '';
         config.erc725Identity = '';
         config.publicKeyData = {};
-        Object.seal(config);
 
         const web3 =
             new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
@@ -194,6 +193,20 @@ class OTNode {
             await this.startBootstrapNode({ appState }, web3);
             return;
         }
+
+        // get password for database
+        const databasePasswordFilePath = path
+            .join(config.appDataPath, config.database.password_file_name);
+        if (fs.existsSync(databasePasswordFilePath)) {
+            log.info('Using existing graph database password.');
+            config.database.password = fs.readFileSync(databasePasswordFilePath).toString();
+        } else {
+            log.notify('================================================================');
+            log.notify('          Using default database password for access            ');
+            log.notify('================================================================');
+        }
+
+        Object.seal(config);
 
         // check if ArangoDB service is running at all
         if (config.database.provider === 'arangodb') {
