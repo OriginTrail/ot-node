@@ -1,13 +1,7 @@
 /* eslint-disable max-len */
-const sortedStringify = require('sorted-json-stringify');
-const { sha3_256 } = require('js-sha3');
 const _ = require('lodash');
 const BN = require('bn.js');
-const Web3 = require('web3');
 const fs = require('fs');
-
-// TODO: use 3rd party.
-const MerkleTree = require('../../../../modules/Merkle');
 
 // Private functions.
 
@@ -36,58 +30,6 @@ function _sortedStringify(obj, sortArrays = false) {
     return JSON.stringify(obj);
 }
 
-/**
- *
- * @param graph
- * @return {string|*|undefined}
- * @private
- */
-function _sortGraphRecursively(graph) {
-    graph.forEach((el) => {
-        if (el.relations) {
-            el.relations.sort((r1, r2) =>
-                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-
-        if (el.identifiers) {
-            el.identifiers.sort((r1, r2) =>
-                sha3_256(_sortedStringify(r1)).localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-    });
-    graph.sort((e1, e2) => (Object.keys(e1['@id']).length > 0 ? e1['@id'].localeCompare(e2['@id']) : 0));
-    return _sortedStringify(graph);
-}
-
-function _sortDataset(dataset) {
-    dataset['@graph'].forEach((el) => {
-        if (el.relations) {
-            el.relations.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-
-        if (el.identifiers) {
-            el.identifiers.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-    });
-    dataset['@graph'].sort((e1, e2) => e1['@id'].localeCompare(e2['@id']));
-    return _sortedStringify(dataset);
-}
-
-function _generateDatasetSummary(dataset) {
-    return {
-        datasetId: dataset['@id'],
-        datasetCreator: dataset.datasetHeader.dataCreator,
-        objects: dataset['@graph'].map(vertex => ({
-            '@id': vertex['@id'],
-            identifiers: vertex.identifiers != null ? vertex.identifiers : [],
-        })),
-        numRelations: dataset['@graph']
-            .filter(vertex => vertex.relations != null)
-            .reduce((acc, value) => acc + value.relations.length, 0),
-    };
-}
-
 // Public functions.
 
 /**
@@ -103,15 +45,6 @@ function base64Encode(file) {
     return Buffer.from(bitmap).toString('base64');
 }
 
-/**
- * Calculate dataset ID from a given graph.
- * @param graph
- * @return {string}
- */
-function calculateImportHash(graph) {
-    const sorted = _sortGraphRecursively(graph);
-    return `0x${sha3_256(sorted, null, 0)}`;
-}
 
 /**
  * Normalizes hex number
@@ -172,65 +105,6 @@ function isZeroHash(hash) {
     return num.eqn(0);
 }
 
-function verifySignature(otJson, wallet) {
-    const { signature } = otJson;
-    const { accounts } = new Web3().eth;
-    const strippedOtjson = Object.assign({}, otJson);
-    delete strippedOtjson.signature;
-
-    const stringifiedOtJson = _sortDataset(strippedOtjson);
-    return (wallet.toLowerCase() === accounts.recover(stringifiedOtJson, signature.value).toLowerCase());
-}
-
-/**
- * Calculate root-hash of OT-JSON document
- * @return {string}
- * @param otJson
- */
-function calculateRootHash(otJson) {
-    if (otJson == null) {
-        throw Error('Invalid OT JSON');
-    }
-
-    const { datasetHeader } = otJson;
-    if (datasetHeader == null) {
-        throw Error('Invalid OT JSON');
-    }
-
-    const graph = otJson['@graph'];
-
-    if (!Array.isArray(graph)) {
-        throw Error('Invalid graph');
-    }
-    if (graph.filter(v => v['@id'] == null).length > 0) {
-        throw Error('Invalid graph');
-    }
-
-    const datasetSummary = _generateDatasetSummary(otJson);
-
-    graph.forEach((el) => {
-        if (el.relations) {
-            el.relations.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-
-        if (el.identifiers) {
-            el.identifiers.sort((r1, r2) => sha3_256(_sortedStringify(r1))
-                .localeCompare(sha3_256(_sortedStringify(r2))));
-        }
-    });
-
-    const stringifiedGraph = [];
-    graph.forEach(obj => stringifiedGraph.push(_sortedStringify(obj)));
-
-    const merkle = new MerkleTree(
-        [_sortedStringify(datasetSummary), ...stringifiedGraph],
-        'distribution',
-        'sha3',
-    );
-
-    return merkle.getRoot();
-}
 
 /**
  * Is leaf node in the original JSON document
@@ -272,14 +146,11 @@ function stringifyWithoutComments(obj) {
 }
 
 module.exports = {
-    calculateImportHash,
     normalizeHex,
     denormalizeHex,
     findVertexIdValue,
     findVertexUid,
     isZeroHash,
-    verifySignature,
-    calculateRootHash,
     base64_encode: base64Encode,
     stringifyWithoutComments,
 };

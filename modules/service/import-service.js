@@ -114,8 +114,7 @@ class ImportService {
         document.datasetHeader = metadata.datasetHeader;
         document.signature = metadata.signature;
 
-        // todo add otJsonService
-        return OtJsonUtilities.prepareDatasetForGeneratingRootHash(document);
+        return OtJsonUtilities.prepareDatasetForDatabaseRead(document);
     }
 
     /**
@@ -546,7 +545,6 @@ class ImportService {
         });
 
         await this.db.addDatasetMetadata(metadata);
-        OtJsonUtilities.prepareDatasetForExtractSigner(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
@@ -583,25 +581,34 @@ class ImportService {
      * @returns {Promise<[]>}
      */
     async getMerkleProofs(objectIdsArray, datasetId) {
-        let otjson = await this.getImport(datasetId);
+        const dataset = await this.getImport(datasetId);
 
-        otjson = OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs(otjson);
+        let sortedDataset =
+            OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs(dataset);
+        if (!sortedDataset) {
+            sortedDataset = dataset;
+        }
 
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
-            otjson['@graph'],
+            sortedDataset['@graph'],
             datasetId,
-            otjson.datasetHeader.dataCreator,
+            sortedDataset.datasetHeader.dataCreator,
         );
 
         const proofs = [];
 
         for (const objectId of objectIdsArray) {
             const objectIndex =
-                _graph(otjson).findIndex(graphObject => _id(graphObject) === objectId);
+                _graph(sortedDataset).findIndex(graphObject => _id(graphObject) === objectId);
+
+            const object =
+                _graph(sortedDataset).find(graphObject => _id(graphObject) === objectId);
 
             const proof = merkleTree.createProof(objectIndex + 1);
 
-            proofs.push({ object_id: objectId, object_index: objectIndex + 1, proof });
+            proofs.push({
+                object_id: objectId, otObject: object, object_index: objectIndex + 1, proof,
+            });
         }
 
         return proofs;
@@ -620,9 +627,6 @@ class ImportService {
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
-            // TODO Use sortObjectRecursively here
-            // eslint-disable-next-line prefer-destructuring
-            reconstructedObjects[i] = (OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs({ '@graph': [reconstructedObjects[i]] }))['@graph'][0];
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
@@ -641,8 +645,6 @@ class ImportService {
         } else if (graphObject.vertexType === constants.vertexType.connector) {
             otObject['@type'] = constants.objectType.otConnector;
         }
-
-        // todo add otJsonService
         return otObject;
     }
 
@@ -786,7 +788,7 @@ class ImportService {
 
         // TODO: Prepare support for multiple versions
         const { OTJSONVersion } = datasetHeader;
-        if (OTJSONVersion !== '1.0') {
+        if (!['1.0', '1.1'].includes(OTJSONVersion)) {
             throw Error('[Validation Error] Unsupported OT-JSON version.');
         }
 

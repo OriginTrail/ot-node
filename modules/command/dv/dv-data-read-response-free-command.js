@@ -121,14 +121,17 @@ class DVDataReadResponseFreeCommand extends Command {
         } = JSON.parse(handler.data);
 
         if (readExport) {
-            const fileContent = OtJsonUtilities.prepareDatasetForDataRead(document);
+            let sortedDataset = OtJsonUtilities.prepareDatasetForDataRead(document);
+            if (!sortedDataset) {
+                sortedDataset = document;
+            }
             const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
 
             try {
                 await Utilities.writeContentsToFile(
                     cacheDirectory,
                     handler_id,
-                    JSON.stringify(fileContent),
+                    JSON.stringify(sortedDataset),
                 );
             } catch (e) {
                 const filePath = path.join(cacheDirectory, handler_id);
