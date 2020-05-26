@@ -339,33 +339,32 @@ class Kademlia {
             node.packMessage = async (contactId, message) => {
                 // eslint-disable-next-line prefer-const
                 let { contact, header } = await node.getContact(contactId);
-                // eslint-disable-next-line prefer-const
                 let body = message;
-                // if (contact[0] !== contactId) {
-                //     let publicKey = await this.networkService.getNodePublicKey(contactId);
-                //     if (!publicKey) {
-                //         try {
-                //             const publicKeyData = await node.sendPublicKeyRequest(
-                //                 null,
-                //                 contactId,
-                //             );
-                //
-                //             if (await this.networkService.validatePublicKeyData(publicKeyData)) {
-                //                 await this.networkService.setNodePublicKey(publicKeyData);
-                //             } else {
-                //                 throw new Error('Public key validation error');
-                //             }
-                //             publicKey = Buffer.from(publicKeyData.public_key, 'hex')
-                //                 .toString('hex');
-                //         } catch (e) {
-                //             throw Error('Unable to get node public key for encryption');
-                //         }
-                //     }
-                //     body = await ECEncryption.encryptObject(message, publicKey);
-                //     const messageHeader = JSON.parse(header);
-                //     messageHeader.encrypted = true;
-                //     header = JSON.stringify(messageHeader);
-                // }
+                if (contact[0] !== contactId) {
+                    let publicKey = await this.networkService.getNodePublicKey(contactId);
+                    if (!publicKey) {
+                        try {
+                            const publicKeyData = await node.sendPublicKeyRequest(
+                                null,
+                                contactId,
+                            );
+
+                            if (await this.networkService.validatePublicKeyData(publicKeyData)) {
+                                await this.networkService.setNodePublicKey(publicKeyData);
+                            } else {
+                                throw new Error('Public key validation error');
+                            }
+                            publicKey = Buffer.from(publicKeyData.public_key, 'hex')
+                                .toString('hex');
+                        } catch (e) {
+                            throw Error('Unable to get node public key for encryption');
+                        }
+                    }
+                    body = await ECEncryption.encryptObject(message, publicKey);
+                    const messageHeader = JSON.parse(header);
+                    messageHeader.encrypted = true;
+                    header = JSON.stringify(messageHeader);
+                }
 
                 return { contact, header, body };
             };
