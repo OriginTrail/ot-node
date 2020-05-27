@@ -44,6 +44,7 @@ const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migratio
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
+const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
@@ -194,23 +195,23 @@ class OTNode {
             return;
         }
 
-        // get password for database
-        const databasePasswordFilePath = path
-            .join(config.appDataPath, config.database.password_file_name);
-        if (fs.existsSync(databasePasswordFilePath)) {
-            log.info('Using existing graph database password.');
-            config.database.password = fs.readFileSync(databasePasswordFilePath).toString();
-        } else {
-            log.notify('================================================================');
-            log.notify('          Using default database password for access            ');
-            log.notify('================================================================');
-        }
-
-        Object.seal(config);
-
         // check if ArangoDB service is running at all
         if (config.database.provider === 'arangodb') {
             try {
+                await this._runArangoPasswordMigration(config);
+
+                // get password for database
+                const databasePasswordFilePath = path
+                    .join(config.appDataPath, config.database.password_file_name);
+                if (fs.existsSync(databasePasswordFilePath)) {
+                    log.info('Using existing graph database password.');
+                    config.database.password = fs.readFileSync(databasePasswordFilePath).toString();
+                } else {
+                    log.notify('================================================================');
+                    log.notify('          Using default database password for access            ');
+                    log.notify('================================================================');
+                }
+
                 const { version } = await Utilities.getArangoDbVersion(config);
 
                 log.info(`Arango server version ${version} is up and running`);
@@ -233,6 +234,8 @@ class OTNode {
                 process.exit(1);
             }
         }
+
+        Object.seal(config);
 
         // Checking if selected graph database exists
         try {
@@ -416,6 +419,28 @@ class OTNode {
                 log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
                 await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    async _runArangoPasswordMigration(config) {
+        const migrationsStartedMills = Date.now();
+
+        const m5ArangoPasswordMigrationFilename = '5_m5ArangoPasswordMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m5ArangoPasswordMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M5ArangoPasswordMigration({ logger: log, config });
+            try {
+                log.info('Initializing Arango password migration...');
+                await migration.run();
+                log.warn(`One-time password migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m5ArangoPasswordMigrationFilename, 'PROCESSED');
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
