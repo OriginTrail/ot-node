@@ -117,3 +117,17 @@ exports.PROCESS_NAME = {
     challengesHandling: 'challenges-handling',
     litigationHandling: 'litigation-handling',
 };
+
+/**
+ *
+ * @constant {string} PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE -
+ * visibility option for storing only attribute value to permissioned data
+ */
+exports.PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE = 'permissioned.show_attribute';
+
+/**
+ *
+ * @constant {string} PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE -
+ * visibility option for storing attribute to permissioned data
+ */
+exports.PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE = 'permissioned.hide_attribute';

@@ -34,11 +34,14 @@ process.on('message', async (data) => {
             document.datasetHeader = metadata.datasetHeader;
             document.signature = metadata.signature;
 
-            // todo add otJsonService
+            const sortedDataset = OtJsonUtilities.prepareDatasetForNewExport(document);
+            if (sortedDataset) {
+                document = sortedDataset;
+            }
         }
 
         const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
-        OtJsonUtilities.prepareDatasetForExtractSigner(document);
+
         const dc_node_wallet = ImportUtilities.extractDatasetSigner(document, web3);
         const data_creator = document.datasetHeader.dataCreator;
 
@@ -55,7 +58,11 @@ process.on('message', async (data) => {
             break;
         }
         case 'ot-json': {
-            dataset = JSON.stringify(OtJsonUtilities.prepareDatasetForExport(document));
+            let sortedDataset = OtJsonUtilities.prepareDatasetForOldExport(document);
+            if (!sortedDataset) {
+                sortedDataset = document;
+            }
+            dataset = JSON.stringify(sortedDataset);
             break;
         }
         default:
