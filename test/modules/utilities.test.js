@@ -32,7 +32,7 @@ describe('Utilities module', () => {
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
-                config.database, ['provider', 'username', 'password', 'database', 'port', 'host', 'max_path_length'],
+                config.database, ['provider', 'username', 'password', 'password_file_name', 'database', 'port', 'host', 'max_path_length'],
                 `Some config items are missing in config.database for environment '${environment}'`,
             );
             assert.hasAllKeys(
