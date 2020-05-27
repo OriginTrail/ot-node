@@ -198,7 +198,9 @@ class OTNode {
         // check if ArangoDB service is running at all
         if (config.database.provider === 'arangodb') {
             try {
-                await this._runArangoPasswordMigration(config);
+                if (process.env.OT_NODE_DISTRIBUTION === 'docker') {
+                    await this._runArangoPasswordMigration(config);
+                }
 
                 // get password for database
                 const databasePasswordFilePath = path
