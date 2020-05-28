@@ -155,7 +155,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.database, ['provider', 'username', 'password',
-                'host', 'port', 'database', 'max_path_length']);
+                'host', 'port','password_file_name', 'database', 'max_path_length']);
             assert.equal(config.database.provider, 'arangodb');
         });
     });

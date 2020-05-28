@@ -39,7 +39,7 @@ describe('GraphStorage module', () => {
         selectedDatabase.database = myDatabaseName;
         Storage.models = deasync(models.sequelize.sync()).models;
         assert.hasAllKeys(selectedDatabase, ['provider', 'username', 'password',
-            'host', 'port', 'max_path_length', 'database']);
+            'password_file_name', 'host', 'port', 'max_path_length', 'database']);
         selectedDatabase.database = myDatabaseName;
 
         if (selectedDatabase.provider === 'arangodb') {
