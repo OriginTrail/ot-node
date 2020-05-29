@@ -60,8 +60,6 @@ if (argv.configDir) {
     // Add arango DBs.
     arangoDbs.push(configjson.development.database);
     arangoDbs.push(configjson.testnet.database);
-    // Same database name for testnet and mainnet
-    // arangoDbs.push(configjson.mainnet.database);
 } else {
     configDirs.push(path.join(
         homedir,
