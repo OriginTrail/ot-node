@@ -111,8 +111,7 @@ async function resetArangoDb(database) {
     console.info(`Setting up graph database '${database.database}'...`);
     const systemDb = new Database();
     //
-    const databasePasswordFilePath = path.join(homedir,
-        `.${pjson.name}rc`, database.password_file_name);
+    const databasePasswordFilePath = path.join(homedir, `.${pjson.name}rc`, database.password_file_name);
     if (fs.existsSync(databasePasswordFilePath)) {
         console.info('Using existing graph database password.');
         database.password = fs.readFileSync(databasePasswordFilePath).toString();
