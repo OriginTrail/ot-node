@@ -198,7 +198,9 @@ class OTNode {
         // check if ArangoDB service is running at all
         if (config.database.provider === 'arangodb') {
             try {
-                if (process.env.OT_NODE_DISTRIBUTION === 'docker') {
+                if (process.env.OT_NODE_DISTRIBUTION === 'docker'
+                    && (''.localeCompare(config.database.password) === 0
+                    || 'root'.localeCompare(config.database.password) === 0)) {
                     await this._runArangoPasswordMigration(config);
                 }
 

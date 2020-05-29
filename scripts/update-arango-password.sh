@@ -23,6 +23,8 @@ supervisorctl stop arango
 sed -i 's/authentication = true/authentication = false/g' /etc/arangodb3/arangod.conf
 supervisorctl start arango
 
+sleep 10s
+
 /usr/bin/arangosh --server.password "" --javascript.execute arango-password-script.js ${new_arango_password}
 
 supervisorctl stop arango
