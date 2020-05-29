@@ -29,7 +29,6 @@ echo Updating arango server password
 supervisorctl stop arango
 sed -i 's/authentication = true/authentication = false/g' /etc/arangodb3/arangod.conf
 supervisorctl start arango
-
 sleep 10s
 
 status=$(/usr/bin/arangosh --server.password "" --javascript.execute arango-password-script.js ${new_arango_password})
@@ -37,6 +36,7 @@ status=$(/usr/bin/arangosh --server.password "" --javascript.execute arango-pass
 supervisorctl stop arango
 sed -i 's/authentication = false/authentication = true/g' /etc/arangodb3/arangod.conf
 supervisorctl start arango
+sleep 10
 
 rm arango-password-script.js
 
@@ -45,20 +45,6 @@ then
     echo "Password update failed"
     echo $status
     mv ${FOLDERDIR}/arango.txt ${FOLDERDIR}/arango_failed.txt
-    exit 1
-fi
-
-n=0
-timeout=60 # timeout value for startup
-while [[ (-z `curl -H 'Authorization: Basic cm9vdDo=' -s 'http://'"$2"':'"$3"'/_api/version' `) && (n -lt timeout) ]] ; do
-  echo -n "."
-  sleep 1s
-  n=$[$n+1]
-done
-
-if [[ n -eq timeout ]];
-then
-    echo "Could not start ArangoDB. Timeout reached."
     exit 1
 fi
 
