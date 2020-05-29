@@ -9,19 +9,27 @@ const path = require('path');
  */
 class M5ArangoPasswordMigration {
     constructor({
-        config,
+        config, log,
     }) {
         this.config = config;
+        this.log = log;
     }
 
     /**
      * Run migration
      */
     async run() {
-        execSync('cp ./scripts/update-arango-password.sh ./');
-        execSync('chmod +x update-arango-password.sh');
-        execSync(`./update-arango-password.sh ${this.config.appDataPath} ${this.config.database.host} ${this.config.database.port}`, { stdio: 'inherit' });
-        execSync('rm ./update-arango-password.sh');
+        try {
+            execSync('cp ./scripts/update-arango-password.sh ./');
+            execSync('chmod +x update-arango-password.sh');
+            execSync(`./update-arango-password.sh ${this.config.appDataPath} ${this.config.database.host} ${this.config.database.port}`, { stdio: 'inherit' });
+            execSync('rm ./update-arango-password.sh');
+            return 0;
+        } catch (error) {
+            this.log.error('Arango password update migration failed!');
+            this.log.error(error);
+            return -1;
+        }
     }
 }
 

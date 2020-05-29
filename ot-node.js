@@ -438,13 +438,16 @@ class OTNode {
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m5ArangoPasswordMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M5ArangoPasswordMigration({ logger: log, config });
+            const migration = new M5ArangoPasswordMigration({ log, config });
             try {
                 log.info('Initializing Arango password migration...');
-                await migration.run();
-                log.warn(`One-time password migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
-
-                await Utilities.writeContentsToFile(migrationDir, m5ArangoPasswordMigrationFilename, 'PROCESSED');
+                const result = await migration.run();
+                if (result === 0) {
+                    log.notice(`One-time password migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                    await Utilities.writeContentsToFile(migrationDir, m5ArangoPasswordMigrationFilename, 'PROCESSED');
+                } else {
+                    log.error('One-time password migration failed. Defaulting to previous implementation');
+                }
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
