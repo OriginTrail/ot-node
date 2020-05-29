@@ -17,12 +17,12 @@ echo New arango password stored in ${FOLDERDIR}/arango.txt file
 touch arango-password-script.js
 
 echo 'try {'                                                        > arango-password-script.js
-echo '    require("@arangodb/users").replace("root", ARGUMENTS[0]);'> arango-password-script.js
-echo '    print("SUCCESS");'                                        > arango-password-script.js
-echo '} catch (error) {'                                            > arango-password-script.js
-echo '    print("FAILURE");'                                        > arango-password-script.js
-echo '    print(error);'                                            > arango-password-script.js
-echo '}'                                                            > arango-password-script.js
+echo '    require("@arangodb/users").replace("root", ARGUMENTS[0]);'>> arango-password-script.js
+echo '    print("SUCCESS");'                                        >> arango-password-script.js
+echo '} catch (error) {'                                            >> arango-password-script.js
+echo '    print("FAILURE");'                                        >> arango-password-script.js
+echo '    print(error);'                                            >> arango-password-script.js
+echo '}'                                                            >> arango-password-script.js
 
 echo Updating arango server password
 
@@ -38,13 +38,15 @@ supervisorctl stop arango
 sed -i 's/authentication = false/authentication = true/g' /etc/arangodb3/arangod.conf
 supervisorctl start arango
 
+rm arango-password-script.js
+
 if [[ $status != "SUCCESS" ]];
 then
+    echo "Password update failed"
+    echo $status
     mv ${FOLDERDIR}/arango.txt ${FOLDERDIR}/arango_failed.txt
     exit 1
 fi
-
-rm arango-password-script.js
 
 n=0
 timeout=60 # timeout value for startup

@@ -443,7 +443,7 @@ class OTNode {
                 log.info('Initializing Arango password migration...');
                 const result = await migration.run();
                 if (result === 0) {
-                    log.notice(`One-time password migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                    log.notify(`One-time password migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
                     await Utilities.writeContentsToFile(migrationDir, m5ArangoPasswordMigrationFilename, 'PROCESSED');
                 } else {
                     log.error('One-time password migration failed. Defaulting to previous implementation');
