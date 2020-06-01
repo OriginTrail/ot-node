@@ -6,6 +6,8 @@ const {
 const BN = require('bn.js');
 const { expect } = require('chai');
 const fs = require('fs');
+const path = require('path');
+const simpleGit = require('simple-git');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
@@ -407,4 +409,10 @@ Then(/^DC should be the issuer for the selected element$/, { timeout: 120000 }, 
     const { dc } = this.state;
     const erc725 = JSON.parse(fs.readFileSync(`${dc.options.configDir}/${dc.options.nodeConfiguration.erc725_identity_filepath}`).toString());
     expect(this.state.elementIssuer[0].identifiers[0].identifierValue.toUpperCase()).to.be.equal(erc725.identity.toUpperCase());
+});
+
+
+Given(/^I change the git branch to (.+)$/, (branch) => {
+    console.log(branch);
+    simpleGit(path.join(__dirname, '../../../')).checkout(branch, () => { console.log('DONE'); });
 });
