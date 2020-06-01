@@ -7,7 +7,7 @@ const BN = require('bn.js');
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
-const simpleGit = require('simple-git');
+const { exec } = require('child_process');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
@@ -413,6 +413,15 @@ Then(/^DC should be the issuer for the selected element$/, { timeout: 120000 }, 
 
 
 Given(/^I change the git branch to (.+)$/, (branch) => {
-    console.log(branch);
-    simpleGit(path.join(__dirname, '../../../')).checkout(branch, () => { console.log('DONE'); });
+    exec(`cd ${path.join(__dirname, '../../../')} && git checkout ${branch}`, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+    });
 });

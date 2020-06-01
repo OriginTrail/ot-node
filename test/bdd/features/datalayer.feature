@@ -244,6 +244,7 @@ Feature: Data layer related features
   Scenario: Backwards compatibility
     Given the replication difficulty is 0
     And I change the git branch to release/mainnet
+    And I change the git branch to develop
 #    And I setup 2 nodes
 #    And I start the nodes
 #    And I use 1st node as DC
