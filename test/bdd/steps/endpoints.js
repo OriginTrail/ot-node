@@ -8,6 +8,7 @@ const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const sleep = require('sleep-async')().Promise;
 
 const httpApiHelper = require('./lib/http-api-helper');
 
@@ -424,4 +425,22 @@ Given(/^I change the git branch to (.+)$/, (branch) => {
         }
         console.log(`stdout: ${stdout}`);
     });
+});
+
+
+
+Given(/^I start the network via script$/,{ timeout: 240000 }, async () => {
+    exec(`cd ${path.join(__dirname, '../../../../utilities/NodeGenerator/')} && ./setup-environment.sh`, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+    });
+
+    await sleep.sleep(80000);
 });

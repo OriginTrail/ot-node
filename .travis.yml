@@ -9,6 +9,7 @@ env:
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=fourth
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=fifth
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=docker
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=backwards_compatibility
 
 cache:
   npm: false
@@ -38,6 +39,9 @@ script:
     fi
   - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "third" ) ]]; then
     travis_wait 50 npm run test:bdd -- --tags=@third --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+    fi
+  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "backwards_compatibility" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "backwards_compatibility" ) ]]; then
+    travis_wait 50 npm run test:bdd -- --tags=@backwards_compatibility --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "fourth" ) ]]; then
     travis_wait 50 npm run test:bdd -- --tags=@fourth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';

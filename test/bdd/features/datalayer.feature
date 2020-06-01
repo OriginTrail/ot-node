@@ -239,24 +239,3 @@ Feature: Data layer related features
     Then all nodes with last import should answer to last network query by DV
 
 
-
-  @dl2
-  Scenario: Backwards compatibility
-    Given the replication difficulty is 0
-    And I change the git branch to release/mainnet
-    And I change the git branch to develop
-#    And I setup 2 nodes
-#    And I start the nodes
-#    And I use 1st node as DC
-#    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
-#    And DC waits for import to finish
-#    And I change the git branch to release/mainnet
-#
-#
-#    And I use 2nd node as DV
-#    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-#    Then Answer for the last network query by DV should be empty
-#    Given DC initiates the replication for last imported dataset
-#    And I wait for replications to finish
-#    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-#    Then all nodes with last import should answer to last network query by DV

@@ -164,6 +164,25 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     done();
 });
 
+
+Given(/^I manually add nodes$/, function () {
+    this.logger.log('I setup N nodes');
+    this.state.bootstraps.push(null);
+    for (let i = 1; i < 3; i += 1) {
+        const nodeConfiguration = JSON.parse(fs.readFileSync(path.join(__dirname, `../../../../config-files/DHG${i}.json`)));
+
+        const newNode = new OtNode({
+            nodeConfiguration,
+            appDataBaseDir: this.parameters.appDataBaseDir,
+        });
+        this.state.nodes.push(newNode);
+        this.logger.log(`Node set up at ${newNode.options.configDir}`);
+    }
+    this.state.dc = this.state.nodes[0];
+    this.state.dc.state = {};
+    this.state.dc.state.node_rpc_url = `http://${this.state.nodes[0].options.nodeConfiguration.node_rpc_ip}:${this.state.nodes[0].options.nodeConfiguration.node_rpc_port}`;
+});
+
 Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
