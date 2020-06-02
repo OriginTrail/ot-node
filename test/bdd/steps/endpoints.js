@@ -430,7 +430,7 @@ Given(/^I change the git branch to (.+)$/, (branch) => {
 
 
 Given(/^I start the network via script$/,{ timeout: 240000 }, async () => {
-    exec(`cd ${path.join(__dirname, '../../../../utilities/NodeGenerator/')} && ./setup-environment.sh`, (error, stdout, stderr) => {
+    exec(`cd ${path.join(__dirname, '../../../scripts/network/NodeGenerator/')} && ./setup-environment.sh`, (error, stdout, stderr) => {
         if (error) {
             console.log(`error: ${error.message}`);
             return;
