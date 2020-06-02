@@ -224,7 +224,7 @@
     "dc_choose_time": 300000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false,
     "reputationWindowInMinutes": 129600
   },
   "mainnet": {
