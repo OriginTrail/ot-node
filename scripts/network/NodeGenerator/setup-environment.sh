@@ -3,13 +3,15 @@ echo ==============================
 echo ====== Starting ganache ======
 echo ==============================
 
-osascript -e 'tell app "Terminal"
-    do script "ganache-cli -i 5777 -a 100 -p 7545 -l 10000000 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\" "
-end tell'
+#osascript -e 'tell app "Terminal"
+#    do script "ganache-cli -i 5777 -a 100 -p 7545 -l 10000000 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\" "
+#end tell'
 
 echo ===============================
 echo ===== Deploying contracts =====
 echo ===============================
+
+screen -d -m -S ganache bash -c 'ganache-cli -i 5777 -a 1000 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief"'
 
 cd ../../../modules/Blockchain/Ethereum
 ../../../node_modules/.bin/truffle migrate --network ganache
