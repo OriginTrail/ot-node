@@ -25,18 +25,18 @@ echo ================================
 echo ======== Starting nodes ========
 echo ================================
 
-osascript -e 'tell app "Terminal"
-    do script "cd ot-node && npm start -- --configDir=../config-files/DCG-config --config=../config-files/DCG.json"
-end tell'
-
-sleep 20
-
-for i in {1..3}
-do
-osascript -e 'tell app "Terminal"
-    do script "cd ot-node && npm start -- --configDir=../config-files/DHG'"$i"'-config --config=../config-files/DHG'"$i"'.json"
-end tell'
-done
+#osascript -e 'tell app "Terminal"
+#    do script "cd ot-node && npm start -- --configDir=../config-files/DCG-config --config=../config-files/DCG.json"
+#end tell'
+#
+#sleep 20
+#
+#for i in {1..3}
+#do
+#osascript -e 'tell app "Terminal"
+#    do script "cd ot-node && npm start -- --configDir=../config-files/DHG'"$i"'-config --config=../config-files/DHG'"$i"'.json"
+#end tell'
+#done
 
 #  osascript -e 'tell app "Terminal"
 #     do script "cd ot-node && npm start -- --configDir=../config-files/DHG'+i+'-config --config=../config-files/DHG'+i+'.json"
