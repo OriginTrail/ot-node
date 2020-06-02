@@ -1,7 +1,7 @@
 Feature: Backwards compatibility
 
 
-  @dl2
+  @backwards_compatibility
   Scenario: Backwards compatibility
     And I start the network via script
     And I manually add nodes

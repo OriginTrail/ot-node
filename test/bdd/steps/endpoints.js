@@ -442,5 +442,5 @@ Given(/^I start the network via script$/,{ timeout: 240000 }, async () => {
         console.log(`stdout: ${stdout}`);
     });
 
-    await sleep.sleep(80000);
+    await sleep.sleep(120000);
 });
