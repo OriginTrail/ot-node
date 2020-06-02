@@ -176,7 +176,7 @@
     "underscore": "^1.9.0",
     "utf8": "^3.0.0",
     "utf8-length": "latest",
-    "uuid": "^3.3.2",
+    "uuid": "^3.4.0",
     "validator": "^9.4.1",
     "web3": "^1.0.0-beta.35",
     "winston": "^2.4.3",

@@ -46,7 +46,7 @@ for (let i = 1; i <= n; i += 1) {
     configDir = `../config-files/${nodeType}-config`;
     filename = `../config-files/${nodeType}.json`;
 
-    // execSync(`cd ../../../../ot-node && npm run setup:hard -- --configDir=${configDir} --config=${filename}`);
+    execSync(`cd ../../../../ot-node && npm run setup:hard -- --configDir=${configDir} --config=${filename}`);
     if (nodeType === 'DCG') {
         configDir = `../../../../config-files/${nodeType}-config`;
 

@@ -1,5 +1,7 @@
 Feature: Backwards compatibility
-
+  Background: Setup local blockchain and bootstraps
+    Given the blockchain is set up
+    And 1 bootstrap is running
 
   @backwards_compatibility
   Scenario: Backwards compatibility
