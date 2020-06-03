@@ -429,7 +429,7 @@ Given(/^I change the git branch to (.+)$/, (branch) => {
 
 
 
-Given(/^I start the network via script$/,{ timeout: 12000000 }, async () => {
+Given(/^I start the network via script$/,{ timeout: 1200000 }, async () => {
     exec(`cd ${path.join(__dirname, '../../../scripts/')} && ./network.sh`, (error, stdout, stderr) => {
         if (error) {
             console.log(`error: ${error.message}`);
@@ -442,5 +442,5 @@ Given(/^I start the network via script$/,{ timeout: 12000000 }, async () => {
         console.log(`stdout: ${stdout}`);
     });
 
-    await sleep.sleep(6000000);
+    await sleep.sleep(600000);
 });
