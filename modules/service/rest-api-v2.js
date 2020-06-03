@@ -22,6 +22,7 @@ class RestAPIServiceV2 {
         this.dcController = ctx.dcController;
         this.dhController = ctx.dhController;
         this.dvController = ctx.dvController;
+        this.infoController = ctx.infoController;
 
         this.exportController = ctx.exportController;
         this.remoteControl = ctx.remoteControl;
@@ -53,14 +54,10 @@ class RestAPIServiceV2 {
             transport, emitter, blockchain, web3, config,
         } = this.ctx;
 
-        this._registerNodeInfoRoute(server, false);
+        server.get(`/api/${this.version_id}/info`, async (req, res) => {
+            await this.infoController.getNodeInfo(req, res);
+        });
 
-        /**
-         * Data import route
-         * @param file - file or text data
-         * @param standard_id - ID of file standard
-         *        (supported standards are listed in this.standards array)
-         */
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
             await this._importDataset(req, res);
         });
@@ -387,49 +384,6 @@ class RestAPIServiceV2 {
             res.send({
                 message,
             });
-        });
-    }
-
-    /**
-     * Register common info route
-     * @param server - Server instance
-     * @param isBootstrap - Is this a bootstrap node?
-     * @private
-     */
-    _registerNodeInfoRoute(server, isBootstrap) {
-        const {
-            transport,
-            config,
-        } = this.ctx;
-
-        server.get(`/api/${this.version_id}/info`, async (req, res) => {
-            this.logger.api('GET: Node information request received.');
-
-            try {
-                const network = await transport.getNetworkInfo();
-                const basicConfig = {
-                    version: pjson.version,
-                    blockchain: config.blockchain.blockchain_title,
-                    network,
-                    is_bootstrap: isBootstrap,
-                };
-
-                if (!isBootstrap) {
-                    Object.assign(basicConfig, {
-                        node_wallet: config.node_wallet,
-                        erc_725_identity: config.erc725Identity,
-                    });
-                }
-
-                res.status(200);
-                res.send(basicConfig);
-            } catch (error) {
-                this.logger.error(`Failed to process /api/info route. ${error}`);
-                res.status(500);
-                res.send({
-                    message: error,
-                });
-            }
         });
     }
 
