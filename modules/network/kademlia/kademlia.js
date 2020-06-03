@@ -405,17 +405,14 @@ class Kademlia {
                         if (err) {
                             reject(Error(`Failed to find contact ${contactId}. ${err}`));
                         }
-                        if (result && Array.isArray(result)) {
-                            const contact = result[0];
-                            if (contact && Array.isArray(contact) && contact.length === 2
+                        const contact = this._getContactFromInterativeFindNodeResult(result);
+                        if (contact && Array.isArray(contact) && contact.length === 2
                                 && contact[1].hostname && contact[1].port
                                 && contact[0] === contact[1].identity) {
-                                this.log.debug(`Found proxy contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
-                                accept({ contact, header });
-                            }
-                            reject(Error(`Unknown contact ${contactId}.`));
+                            this.log.debug(`Found proxy contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
+                            accept({ contact, header });
                         }
-                        reject(Error(`Failed to find contact ${contactId}. Not array: ${result}`));
+                        reject(Error(`Unknown contact ${contactId}.`));
                     });
                 });
             };
@@ -844,6 +841,17 @@ class Kademlia {
             nonce,
             proof,
         }));
+    }
+
+    _getContactFromInterativeFindNodeResult(result) {
+        if (result && Array.isArray(result)) {
+            result.forEach((contact) => {
+                if (contact[0] !== this.config.identity) {
+                    return contact;
+                }
+            });
+        }
+        return null;
     }
 }
 
