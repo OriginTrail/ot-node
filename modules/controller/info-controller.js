@@ -14,24 +14,23 @@ class InfoController {
         try {
             const network = await this.transport.getNetworkInfo();
 
-            const numberOfVertices = await this.graphStorage.getDocumentsCount('ot_vertices');
-            const numberOfEdges = await this.graphStorage.getDocumentsCount('ot_edges');
-
             const basicConfig = {
                 version: pjson.version,
                 blockchain: this.config.blockchain.blockchain_title,
                 network,
                 is_bootstrap: this.config.is_bootstrap_node,
-                graph_size: {
-                    number_of_vertices: numberOfVertices,
-                    number_of_edges: numberOfEdges,
-                },
             };
 
             if (!this.config.is_bootstrap_node) {
+                const numberOfVertices = await this.graphStorage.getDocumentsCount('ot_vertices');
+                const numberOfEdges = await this.graphStorage.getDocumentsCount('ot_edges');
                 Object.assign(basicConfig, {
                     node_wallet: this.config.node_wallet,
                     erc_725_identity: this.config.erc725Identity,
+                    graph_size: {
+                        number_of_vertices: numberOfVertices,
+                        number_of_edges: numberOfEdges,
+                    },
                 });
             }
 
