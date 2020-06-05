@@ -123,6 +123,10 @@ describe('EPCIS OT JSON transpiler tests', () => {
             // eslint-disable-next-line no-loop-func
             async () => {
                 const xmlContents = inputPermissionedDataFile.toString();
+                const expectedJson = xml2js.xml2js(xmlContents, {
+                    compact: true,
+                    spaces: 4,
+                });
                 const otJson = transpiler.convertToOTJson(xmlContents);
 
                 const attributes = otJson['@graph'][0].properties.___metadata.attribute;
@@ -134,8 +138,11 @@ describe('EPCIS OT JSON transpiler tests', () => {
                 assert.equal(permissionedDataAttributes[1]._text, 'Green');
 
                 const exportedXml = transpiler.convertFromOTJson(otJson);
-
-                assert.equal(xmlContents.trim(), exportedXml.trim());
+                const returnedJson = xml2js.xml2js(exportedXml, {
+                    compact: true,
+                    spaces: 4,
+                });
+                assert.equal(Utilities.sortObjectRecursively(expectedJson), Utilities.sortObjectRecursively(returnedJson));
             },
         );
     });
