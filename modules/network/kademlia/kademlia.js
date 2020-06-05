@@ -844,12 +844,10 @@ class Kademlia {
     }
 
     _getContactFromInterativeFindNodeResult(result) {
-        if (result && Array.isArray(result)) {
-            result.forEach((contact) => {
-                if (contact[0] !== this.config.identity) {
-                    return contact;
-                }
-            });
+        for (const contact of result) {
+            if (contact[0] !== this.config.identity) {
+                return contact;
+            }
         }
         return null;
     }
