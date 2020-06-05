@@ -41,6 +41,7 @@
       "provider": "arangodb",
       "username": "root",
       "password": "root",
+      "password_file_name": "arango.txt",
       "port": 8529,
       "database": "origintrail-develop",
       "host": "localhost",
@@ -152,6 +153,7 @@
       "provider": "arangodb",
       "username": "root",
       "password": "root",
+      "password_file_name": "arango.txt",
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",
@@ -222,7 +224,7 @@
     "dc_choose_time": 300000,
     "requireApproval": false,
     "litigationEnabled": true,
-    "commandExecutorVerboseLoggingEnabled": true,
+    "commandExecutorVerboseLoggingEnabled": false,
     "reputationWindowInMinutes": 129600
   },
   "mainnet": {
@@ -267,6 +269,7 @@
       "provider": "arangodb",
       "username": "root",
       "password": "root",
+      "password_file_name": "arango.txt",
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",

@@ -49,7 +49,7 @@ const backupPath = argv.backup_directory.replace(/\/$/, '');
 
 console.log('Setup path variables...');
 
-const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db', 'erc725_identity.json', configName];
+const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'arango.txt', 'houston.txt', 'system.db', 'erc725_identity.json', configName];
 const certs = ['fullchain.pem', 'privkey.pem'];
 
 let configFile;
