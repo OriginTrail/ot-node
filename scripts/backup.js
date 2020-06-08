@@ -86,7 +86,7 @@ try {
             console.log(`Backup: ${src} -> ${dest}`);
             fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
         } else if (file === 'arango.txt') {
-            console.log(`Could not find unnecessary backup file ${src}.`);
+            console.log(`Could not find backup file ${src}.`);
         } else {
             throw Error(`Could not find necessary backup file ${src}, aborting!`);
         }
