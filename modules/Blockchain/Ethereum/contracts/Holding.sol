@@ -79,7 +79,6 @@ contract Holding is Ownable {
         HoldingStorage(hub.getContractAddress("HoldingStorage")).setOfferParameters(
             offerId,
             identity,
-            bytes32(dataSetId),
             holdingTimeInMinutes,
             tokenAmountPerHolder,
             litigationIntervalInMinutes,

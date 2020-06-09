@@ -143,7 +143,6 @@ contract HoldingStorage {
     function setOfferParameters (
         bytes32 offerId,
         address creator,
-        bytes32 dataSetId,
         uint256 holdingTimeInMinutes,
         uint256 tokenAmountPerHolder,
         uint256 litigationIntervalInMinutes,
@@ -151,7 +150,6 @@ contract HoldingStorage {
         uint256 difficulty)
     public onlyContracts {
         offer[offerId].creator = creator;
-        offer[offerId].dataSetId = dataSetId;
         offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
         offer[offerId].litigationIntervalInMinutes = litigationIntervalInMinutes;
