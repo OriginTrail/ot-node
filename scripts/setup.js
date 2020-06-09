@@ -60,7 +60,6 @@ if (argv.configDir) {
     // Add arango DBs.
     arangoDbs.push(configjson.development.database);
     arangoDbs.push(configjson.testnet.database);
-    arangoDbs.push(configjson.mainnet.database);
 } else {
     configDirs.push(path.join(
         homedir,
@@ -111,17 +110,31 @@ configDirs.forEach((configPath) => {
 async function resetArangoDb(database) {
     console.info(`Setting up graph database '${database.database}'...`);
     const systemDb = new Database();
-    systemDb.useBasicAuth(database.username, database.password);
-
-    // Drop test database if exist.
-    const listOfDatabases = await systemDb.listDatabases();
-    if (listOfDatabases.includes(database.database)) {
-        await
-        systemDb.dropDatabase(database.database);
+    //
+    const databasePasswordFilePath = path.join(homedir, `.${pjson.name}rc`, database.password_file_name);
+    if (fs.existsSync(databasePasswordFilePath)) {
+        console.info('Using existing graph database password.');
+        database.password = fs.readFileSync(databasePasswordFilePath).toString();
+    } else {
+        console.info('================================================================');
+        console.info('          Using default database password for access            ');
+        console.info('================================================================');
     }
 
-    await
-    systemDb.createDatabase(
+    systemDb.useBasicAuth(database.username, database.password);
+
+    let listOfDatabases;
+    try {
+        listOfDatabases = await systemDb.listDatabases();
+    } catch (e) {
+        systemDb.useBasicAuth(database.username, '');
+        listOfDatabases = await systemDb.listDatabases();
+    }
+    if (listOfDatabases.includes(database.database)) {
+        await systemDb.dropDatabase(database.database);
+    }
+
+    await systemDb.createDatabase(
         database.database,
         [{ username: database.username, passwd: database.password, active: true }],
     );

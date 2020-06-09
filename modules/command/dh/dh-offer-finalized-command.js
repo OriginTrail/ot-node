@@ -53,7 +53,7 @@ class DhOfferFinalizedCommand extends Command {
                     await bid.save({ fields: ['status'] });
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
 
-                    await this.remoteControl.onCompletedBids();
+                    // await this.remoteControl.onCompletedBids();
 
                     if (this.config.disableAutoPayouts !== true) {
                         const scheduledTime =
@@ -79,7 +79,7 @@ class DhOfferFinalizedCommand extends Command {
                 bid.status = 'NOT_CHOSEN';
                 await bid.save({ fields: ['status'] });
                 this.logger.important(`I haven't been chosen for offer ${offerId}.`);
-                await this.remoteControl.onCompletedBids();
+                // await this.remoteControl.onCompletedBids();
                 return Command.empty();
             }
         }
@@ -97,7 +97,7 @@ class DhOfferFinalizedCommand extends Command {
         const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
         bid.status = 'NOT_CHOSEN';
         await bid.save({ fields: ['status'] });
-        await this.remoteControl.onCompletedBids();
+        // await this.remoteControl.onCompletedBids();
         return Command.empty();
     }
 
