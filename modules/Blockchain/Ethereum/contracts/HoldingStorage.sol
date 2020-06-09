@@ -182,7 +182,6 @@ contract HoldingStorage {
         address[] identities,
         uint8[] litigationEncryptionTypes)
     public onlyContracts {
-        offer[offerId].startTime = block.timestamp;
 
         holder[offerId][identities[0]].stakedAmount = offer[offerId].tokenAmountPerHolder;
         if(holder[offerId][identities[0]].litigationEncryptionType != litigationEncryptionTypes[0])

@@ -296,6 +296,8 @@ contract('Litigation testing', async (accounts) => {
         const initialDhStateTest = await profileStorage.profile.call(DH_identity);
         const initialDcState = await profileStorage.profile.call(DC_identity);
 
+        const initialBlockTimestamp = await util.getBlockTimestamp.call();
+
         assert(
             initialLitigationState.status.isZero(),
             'Initial litigation status differs from expected! ' +
@@ -316,16 +318,17 @@ contract('Litigation testing', async (accounts) => {
             'Initial litigation status differs from expected! ' +
             `Got ${initialDhState.paidAmount.toString()} but expected 0!`,
         );
-        assert(
-            initialDhState.paymentTimestamp.eq(initialOfferState.startTime),
+        assert.closeTo(
+            initialDhState.paymentTimestamp.toNumber(),
+            initialBlockTimestamp.toNumber(),
+            10,
             'Initial payment timestamp differs from expected! ' +
-            `Got ${initialDhState.paymentTimestamp.toString()} but expected ${initialOfferState.startTime.toString()}!`,
+            `Got ${initialDhState.paymentTimestamp.toString()} but expected ${initialBlockTimestamp.toString()}!`,
         );
 
         // Move offer half way through
-        let timestamp = initialOfferState.startTime;
+        let timestamp = initialDhState.paymentTimestamp;
         timestamp = timestamp.sub(holdingTimeInMinutes.muln(60).divn(2));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         // Initiate litigation for data number 5
@@ -345,9 +348,8 @@ contract('Litigation testing', async (accounts) => {
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
         await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
         // Move the offer time as well
-        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = await holdingStorage.getHolderPaymentTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         // Complete litigation
@@ -408,9 +410,8 @@ contract('Litigation testing', async (accounts) => {
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
         // Move offer half way through
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        let timestamp = await holdingStorage.getHolderPaymentTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(holdingTimeInMinutes.muln(60).divn(2));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         // Initiate litigation
@@ -429,9 +430,8 @@ contract('Litigation testing', async (accounts) => {
         timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
         await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
-        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = await holdingStorage.getHolderPaymentTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         // Complete litigation
@@ -470,11 +470,10 @@ contract('Litigation testing', async (accounts) => {
             { from: DC_wallet },
         );
 
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        let timestamp = await holdingStorage.getHolderPaymentTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(new BN(80));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        await holdingStorage.setHolderPaymentTimestamp.call(offerId, DH_identity, timestamp);
 
-        // answerLitigation(bytes32 offerId, address holderIdentity, bytes32 requestedData)
         await litigation.answerLitigation(offerId, identities[0], hashes[0]);
 
         res = await litigationStorage.litigation.call(offerId, identities[0]);
@@ -484,9 +483,8 @@ contract('Litigation testing', async (accounts) => {
         timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
         await litigationStorage.setLitigationTimestamp(offerId, DH_identity, timestamp);
-        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = await holdingStorage.getHolderPaymentTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
 
         let failed = false;

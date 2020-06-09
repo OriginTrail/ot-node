@@ -53,10 +53,7 @@ contract Litigation {
         require(litigationStatus != LitigationStorage.LitigationStatus.replaced,
             "The selected holder is already replaced, cannot initiate litigation!");
 
-        require(HoldingStorage(hub.getContractAddress("HoldingStorage")).getOfferStartTime(offerId)
-            + HoldingStorage(hub.getContractAddress("HoldingStorage")).getOfferHoldingTimeInMinutes(offerId).mul(60)
-            > block.timestamp
-            ,"Cannot initate litigation for a completed offer!");
+        require(offerIsActive(offerId, holderIdentity),"Cannot initiate litigation for a completed offer!");
 
         if(litigationStatus == LitigationStorage.LitigationStatus.initiated) {
             require(parameters[0] + parameters[1].mul(3) < block.timestamp,
@@ -231,6 +228,27 @@ contract Litigation {
         litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
         emit LitigationCompleted(offerId, holderIdentity, true);
+    }
+
+    function offerIsActive(bytes32 offerId, address holderIdentity)
+    internal view returns (bool offerIsActive) {
+        HoldingStorage holdingStorage = HoldingStorage(hub.getContractAddress("HoldingStorage"));
+        LitigationStorage litigationStorage = LitigationStorage(hub.getContractAddress("LitigationStorage"));
+
+        // Pay the previous holder
+        uint256 amountToTransfer = holdingStorage.getOfferTokenAmountPerHolder(offerId);
+        // Multiply the tokenAmountPerHolder by the time the the holder held the data
+        amountToTransfer = amountToTransfer.mul((block.timestamp).sub(holdingStorage.getHolderPaymentTimestamp(offerId, holderIdentity)));
+        // Divide the tokenAmountPerHolder by the total time
+        amountToTransfer = amountToTransfer.div(holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60));
+
+        if (amountToTransfer.add(holdingStorage.getHolderPaidAmount(bytes32(offerId), holderIdentity))
+            >= holdingStorage.getHolderStakedAmount(bytes32(offerId), holderIdentity)) {
+            return false;
+        } else {
+            return true;
+        }
+
     }
 
     function calculateMerkleTrees(bytes32 offerId, address holderIdentity, bytes32 proofData, bytes32 litigationRootHash, uint256 leafIndex)
