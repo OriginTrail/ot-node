@@ -1166,7 +1166,7 @@ class EpcisOtJsonTranspiler {
         return {
             transpilationInfo: {
                 transpilerType: 'GS1-EPCIS',
-                transpilerVersion: '1.0',
+                transpilerVersion: '1.1',
                 sourceMetadata: {
                     created: created.toISOString(),
                     modified: created.toISOString(),
