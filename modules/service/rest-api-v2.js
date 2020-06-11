@@ -95,7 +95,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/get_dataset_info/:dataset_id`, async (req, res) => {
-            await this._getDatasetInfo(req, res);
+            await this.infoController.getDatasetInfo(req, res);
         });
 
         server.post(`/api/${this.version_id}/trail`, async (req, res) => {
@@ -853,63 +853,6 @@ class RestAPIServiceV2 {
                 message: 'Unable to find requested data',
             });
         }
-    }
-
-    async _getDatasetInfo(request, response) {
-        const datasetId = request.params.dataset_id;
-        if (!datasetId) {
-            response.status(400);
-            response.send({
-                message: 'Param dataset_id is required.',
-            });
-            return;
-        }
-        const dataInfo =
-            await Models.data_info.findOne({ where: { data_set_id: datasetId } });
-
-        if (!dataInfo) {
-            this.logger.info(`Import data for data set ID ${datasetId} does not exist.`);
-            response.status(404);
-            response.send({
-                message: `Import data for data set ID ${datasetId} does not exist`,
-            });
-            return;
-        }
-
-        const identity = await this.graphStorage.findIssuerIdentityForDatasetId(datasetId);
-
-        if (!identity && identity.length > 0) {
-            this.logger.info(`Issuer identity for data set ID ${datasetId} does not exist.`);
-            response.status(404);
-            response.send({
-                message: `Import data for data set ID ${datasetId} does not exist`,
-            });
-            return;
-        }
-
-        const transactionHash = await ImportUtilities
-            .getTransactionHash(datasetId, dataInfo.origin);
-
-        const result = {
-            dataset_id: datasetId,
-            import_time: dataInfo.import_timestamp,
-            dataset_size_in_bytes: dataInfo.data_size,
-            otjson_size_in_bytes: dataInfo.otjson_size_in_bytes,
-            root_hash: dataInfo.root_hash,
-            data_hash: dataInfo.data_hash,
-            total_graph_entities: dataInfo.total_documents,
-            transaction_hash: transactionHash,
-            blockchain_network: this.config.network.id,
-            data_provider_wallet: dataInfo.data_provider_wallet,
-            data_creator: {
-                identifier_type: identity[0].identifierType,
-                identifier_value: identity[0].identifierValue,
-                validation_schema: identity[0].validationSchema,
-            },
-
-        };
-        response.status(200);
-        response.send(result);
     }
 
 
