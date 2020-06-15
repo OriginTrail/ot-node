@@ -45,6 +45,7 @@ const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-
 const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
+const M6LuksEncryptionMigration = require('./modules/migration/m6-luks-encryption-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
@@ -193,6 +194,10 @@ class OTNode {
         if (config.is_bootstrap_node) {
             await this.startBootstrapNode({ appState }, web3);
             return;
+        }
+
+        if (config.encryption) {
+            await this._runLUKSEncryptionMigration(config);
         }
 
         // check if ArangoDB service is running at all
@@ -399,6 +404,25 @@ class OTNode {
         const migrationsStartedMills = Date.now();
 
         const migration = new M3NetowrkIdentityMigration({ logger: log, config });
+        try {
+            await migration.run();
+        } catch (e) {
+            log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+            console.log(e);
+            process.exit(1);
+        }
+    }
+
+    /**
+     * Create virtual loop device and encrypt it using LUKS device
+     * @param config
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _runLUKSEncryptionMigration(config) {
+        const migrationsStartedMills = Date.now();
+
+        const migration = new M6LuksEncryptionMigration({ logger: log, config });
         try {
             await migration.run();
         } catch (e) {
