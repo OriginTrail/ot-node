@@ -13,6 +13,8 @@ class M6LuksEncryptionMigration {
     }) {
         this.config = config;
         this.log = log;
+        this.device = 'encryptedfs.img';
+        this.mount = 'ot-node-encrypted';
     }
 
     /**
@@ -20,84 +22,55 @@ class M6LuksEncryptionMigration {
      */
     async run() {
         try {
-            // execSync('cp ./scripts/update-arango-password.sh ./');
-            // execSync('chmod +x update-arango-password.sh');
-            // execSync(`./update-arango-password.sh ${this.config.appDataPath} ${this.config.database.host} ${this.config.database.port}`, { stdio: 'inherit' });
-            // execSync('rm ./update-arango-password.sh');
-            // return 0;
+            const loop = execSync('losetup -f').toString();
+            // todo what if there is no available loop devices
+            execSync(`dd if=/dev/zero of=${this.device} bs=1M count=1024`);
+            execSync(`cat <<EOF | fdisk ${this.device}
+            g
+            n
+            
+            
+            w
+            EOF`);
+            execSync(`mkfs.ext4 ${this.device}`);
+            execSync(`losetup /dev/${loop} ./${this.device}`);
+            execSync('apt-get install cryptsetup');
 
-        //    #!/bin/bash
-            //
-            // DEVICE=encryptedfs.img
-            // LOOP=loop4
-            // MOUNT=ot-node-encrypted
-            //
-            // dd if=/dev/zero of=${DEVICE} bs=1M count=1024
-            // cat <<EOF | fdisk ${DEVICE}
-            // g
-            // n
-            //
-            //
-            // w
-            // EOF
-            //
-            // mkfs.ext4 ${DEVICE}
-            //
-            // losetup /dev/${LOOP} ./${DEVICE}
-            // #losetup -Pf --show ${DEVICE}
-            //
-            // apt-get install cryptsetup
-            //
-            // echo -n "otnode" | cryptsetup luksFormat /dev/${LOOP} -
-            //
-            // cat <<EOF | cryptsetup luksOpen /dev/${LOOP} ${MOUNT}
-            // otnode
-            // EOF
-            //
-            // dd if=/dev/zero of=/dev/mapper/${MOUNT}
-            //
-            // mkfs.ext4 /dev/mapper/${MOUNT}
-            //
-            // mkdir /${MOUNT}
-            //
-            // mount /dev/mapper/${MOUNT} /${MOUNT}
-            //
-            // df -H
-            //
-            //
-            // ----
-            //
-            // docker run -ti --name test fedora:25 /bin/bash
-            // echo 512 > /proc/sys/net/core/somaxconn   # in docker
-            // bash: /proc/sys/net/core/somaxconn: Read-only file system
-            // exit # exit docker, back to host
-            // systemctl stop docker # or stop it with whatever servicemanager you're using
-            //
-            // cd /var/lib/docker/containers/b48fcbce0ab29749160e5677e3e9fe07cc704b47e84f7978fa74584f6d9d3c40/
-            // cp hostconfig.json{,.bak}
-            // cat hostconfig.json.bak | jq '.Privileged=true' | jq '.SecurityOpt=["label=disable"]' > hostconfig.json
-            //
-            // systemctl start docker
-            // docker start test
-            // test
-            // docker exec -ti test /bin/bash
-            // echo 512 > /proc/sys/net/core/somaxconn   # in docker, now works
-            //
-            //
-            // ----
-            //
-            // 1. start in privileged mode
-            // 2. run luks script
-            // 3. run migration
-            // 	a. move data/
-            // 	b. change supervisord data path
-            // 	c. move arangodb
-            // 		i. nano /etc/arangodb3/arangod.conf
-            // 		ii. /var/lib/arangodb3
-            // 		iii. chmod 700
-            //
-            // ** script should check if luks device is mounted
-            // ** when luks password expires and when it should be changed
+            execSync(`cat <<EOF | cryptsetup luksOpen /dev/${loop} ${this.mount}
+                      otnode
+                      EOF`);
+            execSync(`dd if=/dev/zero of=/dev/mapper/${this.mount}`);
+            execSync(`mkfs.ext4 /dev/mapper/${this.mount}`);
+            execSync(`mkdir /${this.mount}`);
+            execSync(`mount /dev/mapper/${this.mount} /${this.mount}`);
+            // todo check if the device is encrypted
+            execSync(`umount /dev/mapper/${this.mount}`);
+            execSync(`cryptsetup luksClose ${this.mount}`);
+            return 0;
+        } catch (error) {
+            this.log.error('LUKS encryption migration failed!');
+            this.log.error(error);
+            return -1;
+        }
+    }
+
+    /**
+     * Run migration
+     */
+    async mountDevice() {
+        try {
+            let loop = execSync('losetup | grep \'encryptedfs.img\' | grep -o \'loop[0-9]\'').toString();
+            if (!loop) {
+                loop = execSync('losetup -f').toString();
+                // todo what if there is no available loop devices
+                // todo what if there is no virtual devices
+                execSync(`losetup /dev/${loop} ./${this.device}`);
+                execSync(`mount /dev/mapper/${this.mount} /${this.mount}`);
+                execSync(`cat <<EOF | cryptsetup luksOpen /dev/${loop} ${this.mount}
+                      otnode
+                      EOF`);
+            }
+            return 0;
         } catch (error) {
             this.log.error('LUKS encryption migration failed!');
             this.log.error(error);
@@ -107,3 +80,8 @@ class M6LuksEncryptionMigration {
 }
 
 module.exports = M6LuksEncryptionMigration;
+
+
+
+const m = new M6LuksEncryptionMigration({config: null, log: null});
+m.mountDevice();

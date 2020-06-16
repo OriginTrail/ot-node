@@ -37,6 +37,7 @@
     "latest_api_version" : "v2.0",
     "default_data_price": "100000000000000000000",
     "send_challenges_log" : true,
+    "luks_encryption" : false,
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -149,6 +150,7 @@
     "latest_api_version" : "v2.0",
     "default_data_price": "100000000000000000000",
     "send_challenges_log" : true,
+    "luks_encryption" : false,
     "database": {
       "provider": "arangodb",
       "username": "root",
@@ -265,6 +267,7 @@
     "latest_api_version" : "v2.0",
     "default_data_price": "100000000000000000000",
     "send_challenges_log" : true,
+    "luks_encryption" : false,
     "database": {
       "provider": "arangodb",
       "username": "root",

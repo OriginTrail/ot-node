@@ -196,7 +196,7 @@ class OTNode {
             return;
         }
 
-        if (config.encryption) {
+        if (config.luks_encryption) {
             await this._runLUKSEncryptionMigration(config);
         }
 
@@ -422,14 +422,21 @@ class OTNode {
     async _runLUKSEncryptionMigration(config) {
         const migrationsStartedMills = Date.now();
 
-        const migration = new M6LuksEncryptionMigration({ logger: log, config });
-        try {
-            await migration.run();
-        } catch (e) {
-            log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
-            console.log(e);
-            process.exit(1);
+        const m6LuksEncryptionMigrationFilename = '6_m6LUKSEncryptionMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m6LuksEncryptionMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M6LuksEncryptionMigration({ logger: log, config });
+            try {
+                log.info('Initializing LUKS encryption migration...');
+                await migration.run();
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                process.exit(1);
+            }
         }
+        await migration.mountDevice();
     }
 
     async _runArangoMigration(config) {
