@@ -664,6 +664,7 @@ class ImportUtilities {
         if (!sortedDataset) {
             sortedDataset = Utilities.copyObject(dataset);
         }
+        ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
         delete sortedDataset.signature;
         return web3.eth.accounts.recover(JSON.stringify(sortedDataset), dataset.signature.value);
     }
