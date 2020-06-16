@@ -42,6 +42,16 @@ class OtJsonUtilities {
         return dataset.datasetHeader.OTJSONVersion;
     }
 
+    static _repackDataset(dataset) {
+        return {
+            '@id': dataset['@id'],
+            '@type': dataset['@type'],
+            datasetHeader: dataset.datasetHeader,
+            '@graph': JSON.parse(Utilities.sortObjectRecursively(dataset['@graph'])),
+            signature: dataset.signature,
+        };
+    }
+
     /**
      * Formats the dataset graph hash so that the graph hash can be calculated properly for that
      * OT-JSON version
@@ -114,14 +124,7 @@ class OtJsonUtilities {
             if (datasetCopy.datasetHeader.transpilationInfo) {
                 return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
             }
-
-            return {
-                '@id': dataset['@id'],
-                '@type': dataset['@type'],
-                datasetHeader: dataset.datasetHeader,
-                '@graph': JSON.parse(Utilities.sortObjectRecursively(dataset['@graph'])),
-                signature: dataset.signature,
-            };
+            return this._repackDataset(datasetCopy);
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -313,13 +316,7 @@ class OtJsonUtilities {
             if (datasetCopy.datasetHeader.transpilationInfo) {
                 return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
             }
-            return {
-                '@id': dataset['@id'],
-                '@type': dataset['@type'],
-                datasetHeader: dataset.datasetHeader,
-                '@graph': JSON.parse(Utilities.sortObjectRecursively(dataset['@graph'])),
-                signature: dataset.signature,
-            };
+            return this._repackDataset(datasetCopy);
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -345,13 +342,7 @@ class OtJsonUtilities {
             if (datasetCopy.datasetHeader.transpilationInfo) {
                 return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
             }
-            return {
-                '@id': dataset['@id'],
-                '@type': dataset['@type'],
-                datasetHeader: dataset.datasetHeader,
-                '@graph': JSON.parse(Utilities.sortObjectRecursively(dataset['@graph'])),
-                signature: dataset.signature,
-            };
+            return this._repackDataset(datasetCopy);
         default:
             throw new Error('Unsupported ot-json version!');
         }
