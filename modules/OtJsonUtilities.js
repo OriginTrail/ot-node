@@ -42,6 +42,16 @@ class OtJsonUtilities {
         return dataset.datasetHeader.OTJSONVersion;
     }
 
+    static _repackDataset(dataset) {
+        return {
+            '@id': dataset['@id'],
+            '@type': dataset['@type'],
+            datasetHeader: dataset.datasetHeader,
+            '@graph': JSON.parse(Utilities.sortObjectRecursively(dataset['@graph'])),
+            signature: dataset.signature,
+        };
+    }
+
     /**
      * Formats the dataset graph hash so that the graph hash can be calculated properly for that
      * OT-JSON version
@@ -111,7 +121,10 @@ class OtJsonUtilities {
             return datasetCopy;
         case '1.1':
             datasetCopy = Utilities.copyObject(dataset);
-            return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+            if (datasetCopy.datasetHeader.transpilationInfo) {
+                return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+            }
+            return this._repackDataset(datasetCopy);
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -300,7 +313,10 @@ class OtJsonUtilities {
             return undefined;
         case '1.1':
             datasetCopy = Utilities.copyObject(dataset);
-            return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+            if (datasetCopy.datasetHeader.transpilationInfo) {
+                return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+            }
+            return this._repackDataset(datasetCopy);
         default:
             throw new Error('Unsupported ot-json version!');
         }
@@ -323,7 +339,10 @@ class OtJsonUtilities {
             return undefined;
         case '1.1':
             datasetCopy = Utilities.copyObject(dataset);
-            return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+            if (datasetCopy.datasetHeader.transpilationInfo) {
+                return JSON.parse(Utilities.sortObjectRecursively(datasetCopy));
+            }
+            return this._repackDataset(datasetCopy);
         default:
             throw new Error('Unsupported ot-json version!');
         }
