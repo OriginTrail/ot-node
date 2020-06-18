@@ -41,17 +41,6 @@ class Blockchain {
     }
 
     /**
-     * Checks if the node would rank in the top n + 1 network bids.
-     * @param importId Offer import id
-     * @param wallet DH wallet
-     * @param dhNodeId KADemplia ID of the DH node that wants to add bid
-     * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
-     */
-    getDistanceParameters(importId) {
-        return this.blockchain.getDistanceParameters(importId);
-    }
-
-    /**
      * Gets profile by wallet
      * @param identity
      */
@@ -117,15 +106,6 @@ class Blockchain {
     }
 
     /**
-     * Increase token approval for bidding contract
-     * @param {number} tokenAmountIncrease
-     * @returns {Promise}
-     */
-    increaseBiddingApproval(tokenAmountIncrease) {
-        return this.blockchain.increaseBiddingApproval(tokenAmountIncrease);
-    }
-
-    /**
      * Initiate litigation for the particular DH
      * @param offerId - Offer ID
      * @param holderIdentity - DH identity
@@ -179,17 +159,6 @@ class Blockchain {
      */
     answerLitigation(offerId, holderIdentity, answer, urgent) {
         return this.blockchain.answerLitigation(offerId, holderIdentity, answer, urgent);
-    }
-
-    /**
-     * Prooves litigation for particular DH
-     * @param importId
-     * @param dhWallet
-     * @param proofData
-     * @return {Promise<any>}
-     */
-    proveLitigation(importId, dhWallet, proofData) {
-        return this.blockchain.proveLitigation(importId, dhWallet, proofData);
     }
 
     /**
@@ -333,22 +302,8 @@ class Blockchain {
         return this.blockchain.getPurchaseIncome(importId, dvWallet);
     }
 
-    async getTotalStakedAmount() {
-        return this.blockchain.getTotalStakedAmount();
-    }
-
     async getTotalPayouts(identity) {
         return this.blockchain.getTotalPayouts(identity);
-    }
-
-    /**
-     * Adds bid to the offer on Ethereum blockchain
-     * @param importId Import ID
-     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
-     * @returns {Promise<any>} Index of the bid.
-     */
-    addBid(importId, dhNodeId) {
-        return this.blockchain.addBid(importId, dhNodeId);
     }
 
     /**
@@ -377,10 +332,6 @@ class Blockchain {
      */
     async getRootHash(dataSetId) {
         return this.blockchain.getRootHash(dataSetId);
-    }
-
-    async getEscrow(importId, dhWallet) {
-        return this.blockchain.getEscrow(importId, dhWallet);
     }
 
     async getPurchase(purchaseId) {
@@ -519,8 +470,8 @@ class Blockchain {
 
     /**
      * Returns purposes of the wallet.
-     * @param {string} - erc725Identity
-     * @param {string} - wallet
+     * @param erc725Identity {string}
+     * @param wallet - {string}
      * @return {Promise<[]>}
      */
     getWalletPurposes(erc725Identity, wallet) {
@@ -529,8 +480,8 @@ class Blockchain {
 
     /**
      * Transfers identity to new address.
-     * @param {string} - erc725identity
-     * @param {string} - managementWallet
+     * @param erc725identity - {string}
+     * @param managementWallet - {string}
      */
     transferProfile(erc725identity, managementWallet) {
         return this.blockchain.transferProfile(erc725identity, managementWallet);
@@ -538,7 +489,7 @@ class Blockchain {
 
     /**
      * Returns true if ERC725 contract is older version.
-     * @param {string} - address of ERC 725 identity.
+     * @param address - {string} - address of ERC 725 identity.
      * @return {Promise<boolean>}
      */
     async isErc725IdentityOld(address) {
