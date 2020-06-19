@@ -4,7 +4,7 @@ import './Hub.sol';
 
 contract HoldingStorage {
     Hub public hub;
-    
+
     constructor(address hubAddress) public{
         hub = Hub(hubAddress);
     }
@@ -51,19 +51,19 @@ contract HoldingStorage {
     }
     mapping(bytes32 => OfferDefinition) public offer; // offer[offerId];
 
-    function getOfferCreator (bytes32 offerId) 
+    function getOfferCreator (bytes32 offerId)
     public view returns(address creator){
         return offer[offerId].creator;
     }
-    function getOfferDataSetId (bytes32 offerId) 
+    function getOfferDataSetId (bytes32 offerId)
     public view returns(bytes32 dataSetId){
         return offer[offerId].dataSetId;
     }
-    function getOfferHoldingTimeInMinutes (bytes32 offerId) 
+    function getOfferHoldingTimeInMinutes (bytes32 offerId)
     public view returns(uint256 holdingTimeInMinutes){
         return offer[offerId].holdingTimeInMinutes;
     }
-    function getOfferTokenAmountPerHolder (bytes32 offerId) 
+    function getOfferTokenAmountPerHolder (bytes32 offerId)
     public view returns(uint256 tokenAmountPerHolder){
         return offer[offerId].tokenAmountPerHolder;
     }
@@ -71,23 +71,23 @@ contract HoldingStorage {
     public view returns(uint256 litigationIntervalInMinutes){
         return offer[offerId].litigationIntervalInMinutes;
     }
-    function getOfferTask (bytes32 offerId) 
+    function getOfferTask (bytes32 offerId)
     public view returns(bytes32 task){
         return offer[offerId].task;
     }
-    function getOfferDifficulty (bytes32 offerId) 
+    function getOfferDifficulty (bytes32 offerId)
     public view returns(uint256 difficulty){
         return offer[offerId].difficulty;
     }
-    function getOfferRedLitigationHash (bytes32 offerId) 
+    function getOfferRedLitigationHash (bytes32 offerId)
     public view returns(bytes32 redLitigationHash){
         return offer[offerId].redLitigationHash;
     }
-    function getOfferGreenLitigationHash (bytes32 offerId) 
+    function getOfferGreenLitigationHash (bytes32 offerId)
     public view returns(bytes32 greenLitigationHash){
         return offer[offerId].greenLitigationHash;
     }
-    function getOfferBlueLitigationHash (bytes32 offerId) 
+    function getOfferBlueLitigationHash (bytes32 offerId)
     public view returns(bytes32 blueLitigationHash){
         return offer[offerId].blueLitigationHash;
     }
@@ -143,7 +143,6 @@ contract HoldingStorage {
     function setOfferParameters (
         bytes32 offerId,
         address creator,
-        bytes32 dataSetId,
         uint256 holdingTimeInMinutes,
         uint256 tokenAmountPerHolder,
         uint256 litigationIntervalInMinutes,
@@ -151,7 +150,6 @@ contract HoldingStorage {
         uint256 difficulty)
     public onlyContracts {
         offer[offerId].creator = creator;
-        offer[offerId].dataSetId = dataSetId;
         offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
         offer[offerId].litigationIntervalInMinutes = litigationIntervalInMinutes;
@@ -184,7 +182,6 @@ contract HoldingStorage {
         address[] identities,
         uint8[] litigationEncryptionTypes)
     public onlyContracts {
-        offer[offerId].startTime = block.timestamp;
 
         holder[offerId][identities[0]].stakedAmount = offer[offerId].tokenAmountPerHolder;
         if(holder[offerId][identities[0]].litigationEncryptionType != litigationEncryptionTypes[0])

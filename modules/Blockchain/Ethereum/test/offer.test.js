@@ -243,7 +243,6 @@ contract('Offer testing', async (accounts) => {
 
         res = await holdingStorage.offer.call(offerId);
 
-        assert.equal(res.dataSetId, dataSetId, 'Data set ID not matching!');
         assert(holdingTimeInMinutes.eq(res.holdingTimeInMinutes), 'Holding time not matching!');
         assert(tokenAmountPerHolder.eq(res.tokenAmountPerHolder), 'Token amount not matching!');
         assert(litigationIntervalInMinutes.eq(res.litigationIntervalInMinutes), 'Litigation interval not matching!');
@@ -273,13 +272,11 @@ contract('Offer testing', async (accounts) => {
             { from: DC_wallet },
         );
         const firstOfferGasUsage = res.receipt.gasUsed;
-        console.log(`Gas used for creating offer: ${firstOfferGasUsage}`);
 
         // eslint-disable-next-line prefer-destructuring
         offerId = res.logs[0].args.offerId;
 
         const task = await holdingStorage.getOfferTask.call(offerId);
-        console.log(`Task created: ${task}`);
 
         const hash1 = await util.keccakAddressBytes(identities[0], task);
         const hash2 = await util.keccakAddressBytes(identities[1], task);
@@ -350,8 +347,6 @@ contract('Offer testing', async (accounts) => {
             emptyAddress,
             { from: DC_wallet },
         );
-        const finalizeOfferGasUsage = res.receipt.gasUsed;
-        console.log(`Gas used for finishing offer: ${finalizeOfferGasUsage}`);
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
@@ -392,11 +387,6 @@ contract('Offer testing', async (accounts) => {
             litigationIntervalInMinutes,
             { from: DC_wallet },
         );
-        const secondOfferGasUsage = res.receipt.gasUsed;
-        console.log(`Gas used for creating a second offer: ${secondOfferGasUsage}`);
-
-        console.log(`Total gas used for creating the first offer: ${firstOfferGasUsage + finalizeOfferGasUsage}`);
-        console.log(`Total gas used for creating a second offer: ${secondOfferGasUsage + finalizeOfferGasUsage}`);
 
         await holdingStorage.setDifficultyOverride(new BN(0));
     });

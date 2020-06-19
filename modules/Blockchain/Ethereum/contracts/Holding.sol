@@ -15,7 +15,7 @@ contract Holding is Ownable {
 
     Hub public hub;
     uint256 public difficultyOverride;
-    
+
     constructor(address hubAddress) public{
         require(hubAddress!=address(0));
         hub = Hub(hubAddress);
@@ -74,12 +74,11 @@ contract Holding is Ownable {
                 difficulty = 4 + (((logs2(ProfileStorage(hub.getContractAddress("ProfileStorage")).activeNodes()) - 4) * 10000) / 13219);
             }
         }
-        
+
         // Writing variables into storage
         HoldingStorage(hub.getContractAddress("HoldingStorage")).setOfferParameters(
             offerId,
             identity,
-            bytes32(dataSetId),
             holdingTimeInMinutes,
             tokenAmountPerHolder,
             litigationIntervalInMinutes,
@@ -255,7 +254,7 @@ contract Holding is Ownable {
 
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, hash));
-  
+
         // The signature format is a compact form of:
         //   {bytes32 r}{bytes32 s}{uint8 v}
         // Compact means, uint8 is not padded to 32 bytes.
