@@ -13,7 +13,7 @@ contract Profile {
 
     uint256 public version = 101;
 
-    uint256 public minimalStake = 10**21;
+    uint256 public minimalStake = 3*10**21;
     uint256 public withdrawalTime = 5 minutes;
 
     constructor(address hubAddress) public {
