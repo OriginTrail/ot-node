@@ -502,22 +502,6 @@ class Ethereum {
     }
 
     /**
-     * Increase token approval for Bidding contract on Ethereum blockchain
-     * @param {number} tokenAmountIncrease
-     * @returns {Promise}
-     */
-    async increaseBiddingApproval(tokenAmountIncrease) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.tokenContractAddress,
-        };
-        this.log.notify('Increasing bidding approval');
-        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.biddingContractAddress, tokenAmountIncrease], options);
-    }
-
-    /**
      * Answers litigation from DH side
      * @param offerId - Offer ID
      * @param holderIdentity - DH identity
@@ -540,33 +524,6 @@ class Ethereum {
                 offerId,
                 holderIdentity,
                 answer,
-            ],
-            options,
-        );
-    }
-
-    /**
-     * Prooves litigation for particular DH
-     * @param importId
-     * @param dhWallet
-     * @param proofData
-     * @return {Promise<any>}
-     */
-    async proveLitigation(importId, dhWallet, proofData) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.escrowContractAddress,
-        };
-        this.log.important(`Prove litigation for import ${importId} and DH ${dhWallet}`);
-        return this.transactions.queueTransaction(
-            this.escrowContractAbi,
-            'proveLitigaiton',
-            [
-                importId,
-                dhWallet,
-                proofData,
             ],
             options,
         );
@@ -969,47 +926,6 @@ class Ethereum {
     }
 
     /**
-     * Checks if the node would rank in the top n + 1 network bids.
-     * @param importId Offer import id
-     * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
-     */
-    getDistanceParameters(importId) {
-        return new Promise((resolve, reject) => {
-            this.log.trace('Check if close enough ... ');
-            this.biddingContract.methods.getDistanceParameters(importId).call({
-                from: this.config.wallet_address,
-            }).then((res) => {
-                resolve(res);
-            }).catch((e) => {
-                reject(e);
-            });
-        });
-    }
-
-
-    /**
-     * Adds bid to the offer on Ethereum blockchain
-     * @param importId Hash of the offer
-     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
-     * @returns {Promise<any>} Index of the bid.
-     */
-    async addBid(importId, dhNodeId) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.biddingContractAddress,
-        };
-
-        this.log.notify(`Adding bid for import ID ${importId}.`);
-        this.log.trace(`addBid(${importId}, ${dhNodeId})`);
-        return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'addBid',
-            [importId, Utilities.normalizeHex(dhNodeId)], options,
-        );
-    }
-
-    /**
      * Deposit tokens to profile
      * @param blockchainIdentity
      * @param amount
@@ -1028,17 +944,6 @@ class Ethereum {
             this.profileContractAbi, 'depositTokens',
             [blockchainIdentity, amount], options,
         );
-    }
-
-    /**
-     * Gets Escrow
-     * @param dhWallet
-     * @param importId
-     * @return {Promise<any>}
-     */
-    async getEscrow(importId, dhWallet) {
-        this.log.trace(`Asking escrow for import ${importId} and dh ${dhWallet}.`);
-        return this.escrowContract.methods.escrow(importId, dhWallet).call();
     }
 
     async getPurchase(purchaseId) {
