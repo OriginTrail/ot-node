@@ -686,8 +686,9 @@ class Utilities {
     }
 
     static generateRsvSignature(message, web3, privateKey) {
+        const sortedMessage = JSON.stringify(Utilities.sortObject(message));
         const signature = web3.eth.accounts.sign(
-            message,
+            sortedMessage,
             privateKey.toLowerCase().startsWith('0x') ?
                 privateKey : `0x${privateKey}`,
         );
@@ -703,7 +704,18 @@ class Utilities {
             signature.s,
         );
 
-        return Utilities.compareHexStrings(signedAddress, message.wallet);
+        // todo remove this patch in the next release
+        if (!Utilities.compareHexStrings(signedAddress, message.wallet)) {
+            const sortedMessage = Utilities.sortObject(message);
+            const signedAddress = web3.eth.accounts.recover(
+                JSON.stringify(sortedMessage),
+                signature.v,
+                signature.r,
+                signature.s,
+            );
+            return Utilities.compareHexStrings(signedAddress, message.wallet);
+        }
+        return true;
     }
 
     /**

@@ -42,7 +42,7 @@ class DVQueryNetworkCommand extends Command {
 
         dataLocationRequestObject.messageSignature =
             Utilities.generateRsvSignature(
-                JSON.stringify(dataLocationRequestObject.message),
+                dataLocationRequestObject.message,
                 this.web3,
                 this.config.node_private_key,
             );
