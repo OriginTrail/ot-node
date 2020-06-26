@@ -686,7 +686,12 @@ class Utilities {
     }
 
     static generateRsvSignature(message, web3, privateKey) {
-        const sortedMessage = JSON.stringify(Utilities.sortObject(message));
+        let sortedMessage;
+        if (typeof message === 'string' || message instanceof String) {
+            sortedMessage = message;
+        } else {
+            sortedMessage = JSON.stringify(Utilities.sortObject(message));
+        }
         const signature = web3.eth.accounts.sign(
             sortedMessage,
             privateKey.toLowerCase().startsWith('0x') ?
@@ -697,8 +702,14 @@ class Utilities {
     }
 
     static isMessageSigned(web3, message, signature) {
+        let sortedMessage;
+        if (typeof message === 'string' || message instanceof String) {
+            sortedMessage = message;
+        } else {
+            sortedMessage = JSON.stringify(message);
+        }
         const signedAddress = web3.eth.accounts.recover(
-            JSON.stringify(message),
+            sortedMessage,
             signature.v,
             signature.r,
             signature.s,
