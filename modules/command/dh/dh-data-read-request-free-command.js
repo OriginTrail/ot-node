@@ -87,7 +87,7 @@ class DHDataReadRequestFreeCommand extends Command {
             const dataReadResponseObject = {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
-                    JSON.stringify(replyMessage),
+                    replyMessage,
                     this.web3,
                     this.config.node_private_key,
                 ),

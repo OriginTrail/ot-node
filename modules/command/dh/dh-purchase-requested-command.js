@@ -122,7 +122,7 @@ class DhPurchaseRequestedCommand extends Command {
         const dataPurchaseResponseObject = {
             message: response,
             messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(response),
+                response,
                 this.web3,
                 this.config.node_private_key,
             ),

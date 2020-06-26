@@ -521,7 +521,7 @@ class DHService {
             const dataReadResponseObject = {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
-                    JSON.stringify(replyMessage),
+                    replyMessage,
                     this.web3,
                     this.config.node_private_key,
                 ),
@@ -663,7 +663,7 @@ class DHService {
             },
         };
         encryptedPaddedKeyObject.messageSignature = Utilities.generateRsvSignature(
-            JSON.stringify(encryptedPaddedKeyObject.message),
+            encryptedPaddedKeyObject.message,
             this.web3,
             this.config.node_private_key,
         );
