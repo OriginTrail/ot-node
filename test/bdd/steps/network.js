@@ -14,6 +14,7 @@ const path = require('path');
 
 const OtNode = require('./lib/otnode');
 const ImportUtilities = require('../../../modules/ImportUtilities');
+const Utilities = require('../../../modules/Utilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
@@ -439,6 +440,79 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
         .to.be.equal(calculatedRootHash);
     expect(this.state.lastImport.data.dataset_id, 'Dataset ID and manually calculated ID should match')
         .to.be.equal(calculatedDataSetId);
+});
+
+Then(/^the last two exported datasets ([should|should not]+) have the same hashes$/, async function (condition) {
+    this.logger.log('The last root hash should be the same as one manually calculated$');
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.secondLastExport, 'Second last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.secondLastImport, 'Second last import didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const dataset1 = JSON.parse(this.state.secondLastExport.data.formatted_dataset);
+    const dataset2 = JSON.parse(this.state.lastExport.data.formatted_dataset);
+    const dc1 = this.state.nodes[0];
+    let dc2;
+    if (condition.includes('not')) {
+        dc2 = this.state.nodes[1];
+    } else {
+        dc2 = this.state.nodes[0];
+    }
+
+    // check dataset_id
+    const calculatedDatasetId1 = ImportUtilities.calculateGraphPublicHash(dataset1);
+    expect(this.state.secondLastImport.data.dataset_id, 'Dataset from API endpoint and manually calculated should match')
+        .to.be.equal(calculatedDatasetId1);
+
+    // check signature
+    const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigner(dataset1, new Web3());
+    expect(Utilities.normalizeHex(calcuatedDatasetSignature1), 'Dataset from API endpoint and manually calculated should match')
+        .to.be.equal(Utilities.normalizeHex(dc1.options.nodeConfiguration.node_wallet));
+
+    // check root_hash
+    const calculatedDatasetRootHash1 = ImportUtilities.calculateDatasetRootHash(dataset1);
+    expect(calculatedDatasetRootHash1, 'Dataset from API endpoint and manually calculated should match')
+        .to.be.equal(this.state.secondLastExport.data.root_hash);
+
+    // check dataset_id
+    const calculatedDatasetId2 = ImportUtilities.calculateGraphPublicHash(dataset2);
+    expect(this.state.lastImport.data.dataset_id, 'Dataset from API endpoint and manually calculated should match')
+        .to.be.equal(calculatedDatasetId2);
+
+    // check signature
+    const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigner(dataset2, new Web3());
+    expect(Utilities.normalizeHex(calcuatedDatasetSignature2), 'Dataset from API endpoint and manually calculated should match')
+        .to.be.equal(Utilities.normalizeHex(dc2.options.nodeConfiguration.node_wallet));
+
+    // check root_hash
+    const calculatedDatasetRootHash2 = ImportUtilities.calculateDatasetRootHash(dataset2);
+    expect(calculatedDatasetRootHash2, 'Dataset from API endpoint and manually calculated should match')
+        .to.be.equal(this.state.lastExport.data.root_hash);
+
+    if (condition.includes('not')) {
+        expect(calculatedDatasetId1).to.be.not.equal(calculatedDatasetId2);
+        expect(calcuatedDatasetSignature1).to.be.not.equal(calcuatedDatasetSignature2);
+        expect(calculatedDatasetRootHash1).to.be.not.equal(calculatedDatasetRootHash2);
+    } else {
+        expect(calculatedDatasetId1).to.be.equal(calculatedDatasetId2);
+        expect(calcuatedDatasetSignature1).to.be.equal(calcuatedDatasetSignature2);
+        expect(calculatedDatasetRootHash1).to.be.equal(calculatedDatasetRootHash2);
+    }
+});
+
+Then(/^the last two datasets should have the same hashes$/, async function () {
+    this.logger.log('The last root hash should be the same as one manually calculated$');
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.secondLastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    expect(this.state.lastImport.data.dataset_id, 'Fingerprint from API endpoint and manually calculated should match')
+        .to.be.equal(this.state.secondLastImport.data.dataset_id);
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {

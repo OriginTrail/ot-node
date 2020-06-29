@@ -108,3 +108,44 @@ Feature: Test basic importer features
     And DC gets issuer id for element "1234567890000000015"
     And I use 1st node as DC
     Then DC should be the issuer for the selected element
+
+  @second
+  Scenario: Check that two OT-JSON 1.1 datasets with different order have different hashes
+    Given the replication difficulty is 0
+    And I setup 4 node
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/otjson_1.1/sort1.json" as GRAPH
+    And DC waits for import to finish
+    And DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And I use 3rd node as DV
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
+    And I use 2st node as DC
+    And DC imports "importers/use_cases/otjson_1.1/sort2.json" as GRAPH
+    And DC waits for import to finish
+    And DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
+    Then the last two exported datasets should not have the same hashes
+
+  @third
+  Scenario: Check that two OT-JSON 1.2 datasets with different order have the same hashes
+    Given the replication difficulty is 0
+    And I setup 4 node
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/otjson_1.2/sort1.json" as GRAPH
+    And DC waits for import to finish
+    And DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    And I use 1st node as DV
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
+    And DC imports "importers/use_cases/otjson_1.2/sort2.json" as GRAPH
+    And DC waits for import to finish
+    When DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
+    Then the last two exported datasets should have the same hashes
