@@ -32,6 +32,7 @@ class DCOfferCreateBcCommand extends Command {
             tokenAmountPerHolder,
             dataSizeInBytes,
             litigationIntervalInMinutes,
+            handler_id,
             urgent,
         } = command.data;
 
@@ -54,7 +55,21 @@ class DCOfferCreateBcCommand extends Command {
             );
         } catch (error) {
             if (error.message.includes('Gas price higher than maximum allowed price')) {
-                this.logger.info('Gas price too high, delaying call for 30 minutes');
+                const delay = constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS / 60 / 1000;
+                this.logger.info(`Gas price too high, delaying call for ${delay} minutes`);
+
+                const handler = await Models.handler_ids.findOne({
+                    where: { handler_id },
+                });
+                const handler_data = JSON.parse(handler.data);
+                handler_data.status = 'DELAYED';
+                handler.timestamp = Date.now();
+                handler.data = JSON.stringify(handler_data);
+                await handler.save({ fields: ['data', 'timestamp'] });
+
+                const message = `Offer creation has been delayed on ${(new Date(Date.now())).toUTCString()} due to high gas price`;
+                await Models.offers.update({ message }, { where: { id: internalOfferId } });
+
                 return Command.repeat();
             }
             throw error;

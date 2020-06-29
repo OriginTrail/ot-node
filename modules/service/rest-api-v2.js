@@ -590,7 +590,14 @@ class RestAPIServiceV2 {
         };
         const offer = await Models.offers.findOne({
             where: {
-                offer_id: handlerData.offer_id,
+                $or: [
+                    {
+                        offer_id: { $eq: handlerData.offer_id },
+                    },
+                    {
+                        id: { $eq: handlerData.offer_id },
+                    },
+                ],
             },
         });
         if (offer) {
