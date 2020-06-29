@@ -30,6 +30,8 @@ class DCService {
      * @param tokenAmountPerHolder
      * @param dataSizeInBytes
      * @param litigationIntervalInMinutes
+     * @param handler_id
+     * @param urgent
      * @returns {Promise<*>}
      */
     async createOffer(
@@ -293,6 +295,7 @@ class DCService {
             const message = `Replication request for offer external ${offerId} that is not in STARTED state.`;
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
+            return;
         }
 
         const dhReputation = await this.getReputationForDh(dhIdentity);
@@ -301,9 +304,10 @@ class DCService {
             const message = `Replication request from holder identity ${dhIdentity} declined! Unacceptable reputation: ${dhReputation.toString()}.`;
             this.logger.info(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
-        } else {
-            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+            return;
         }
+
+        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
     }
 
     /**

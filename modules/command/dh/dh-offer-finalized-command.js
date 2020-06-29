@@ -93,7 +93,7 @@ class DhOfferFinalizedCommand extends Command {
     async expired(command) {
         const { offerId } = command.data;
 
-        this.logger.important(`I haven't been chosen for offer ${offerId}. Offer has not been finalized.`);
+        this.logger.important(`Offer ${offerId} has not been finalized.`);
         const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
         bid.status = 'NOT_CHOSEN';
         await bid.save({ fields: ['status'] });
