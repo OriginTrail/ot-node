@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -111,7 +112,7 @@ class DhOfferFinalizedCommand extends Command {
             name: 'dhOfferFinalizedCommand',
             delay: 0,
             period: 10 * 1000,
-            deadline_at: Date.now() + (60 * 60 * 1000), // On hour.
+            deadline_at: Date.now() + (6 * constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS),
             transactional: false,
         };
         Object.assign(command, map);
