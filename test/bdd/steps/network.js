@@ -457,8 +457,10 @@ Then(/^the last two exported datasets ([should|should not]+) have the same hashe
     const dc1 = this.state.nodes[0];
     let dc2;
     if (condition.includes('not')) {
+        // eslint-disable-next-line prefer-destructuring
         dc2 = this.state.nodes[1];
     } else {
+        // eslint-disable-next-line prefer-destructuring
         dc2 = this.state.nodes[0];
     }
 
