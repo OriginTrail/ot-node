@@ -84,19 +84,22 @@ class Utilities {
             for (const key of Object.keys(obj)) {
                 if (Array.isArray(obj)) {
                     if (obj[key] != null && typeof obj[key] === 'object') {
-                        stringified.push(this.sortedStringify(obj[key], inProperties));
+                        stringified.push(this.sortObjectRecursively(obj[key], inProperties));
                     } else {
                         // Added for better performance by avoiding the last level of recursion
                         // because the last level only returns JSON.stringify of the key
-                        stringified.push(JSON.stringify(obj[key]));
+                        stringified.push(JSON.stringify(
+                            obj[key],
+                            (k, v) => (v === undefined ? null : v),
+                        ));
                     }
                 } else if (obj[key] != null && typeof obj[key] === 'object') {
                     if (key === 'properties') { inProperties = true; }
-                    stringified.push(`"${key}":${this.sortedStringify(obj[key], inProperties)}`);
+                    stringified.push(`"${key}":${this.sortObjectRecursively(obj[key], inProperties)}`);
                 } else {
                     // Added for better performance by avoiding the last level of recursion
                     // because the last level only returns JSON.stringify of the key
-                    stringified.push(`"${key}":${JSON.stringify(obj[key])}`);
+                    stringified.push(`"${key}":${JSON.stringify(obj[key], (k, v) => (v === undefined ? null : v))}`);
                 }
             }
 
@@ -112,7 +115,7 @@ class Utilities {
             // Return result in the format of an object
             return `{${stringified.join(',')}}`;
         }
-        return JSON.stringify(obj);
+        return JSON.stringify(obj, (k, v) => (v === undefined ? null : v));
     }
 
     /**
