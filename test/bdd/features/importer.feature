@@ -109,7 +109,7 @@ Feature: Test basic importer features
     And I use 1st node as DC
     Then DC should be the issuer for the selected element
 
-  @second
+  @first
   Scenario: Check that two OT-JSON 1.1 datasets with different order have different hashes
     Given the replication difficulty is 0
     And I setup 4 node
