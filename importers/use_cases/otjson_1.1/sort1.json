@@ -1,0 +1,118 @@
+{
+  "@graph": [
+    {      
+      "identifiers": [
+        {
+          "@type": "kind",
+          "@value": "test_object"
+        },
+        {
+          "@type": "id",
+          "@value": "test_object_02"
+        }
+      ],
+      "properties": {
+        "purpose": "Testing object number 2",
+        "array": [
+          "second_element", "first_element"
+        ]
+      },
+      "@id": "test_object_02",
+      "@type": "otObject",
+      "relations": [
+        {
+            "@type": "otRelation",
+            "direction": "direct",
+            "linkedObject": {
+                "@id": "test_object_01"
+            },
+            "relationType": "IS_SIBLING"
+        },
+        {
+            "@type": "otRelation",
+            "direction": "direct",
+            "linkedObject": {
+                "@id": "master_object_01"
+            },
+            "relationType": "IS_PARENT"
+        }
+      ]
+    },
+    {
+      "identifiers": [
+        {
+          "@type": "kind",
+          "@value": "test_object"
+        },
+        {
+          "@type": "id",
+          "@value": "test_object_01"
+        }
+      ],
+      "properties": {
+        "purpose": "Testing object number 1",
+        "array": [
+          "second_element", "first_element"
+        ]
+      },
+      "@id": "test_object_01",
+      "@type": "otObject",
+      "relations": [
+        {
+            "@type": "otRelation",
+            "direction": "direct",
+            "linkedObject": {
+                "@id": "test_object_02"
+            },
+            "relationType": "IS_SIBLING"
+        },
+        {
+            "@type": "otRelation",
+            "direction": "direct",
+            "linkedObject": {
+                "@id": "master_object_01"
+            },
+            "relationType": "IS_PARENT"
+        }
+      ]
+    },
+    {
+      "@id": "master_object_01",
+      "@type": "otObject",
+      "identifiers": [
+        {
+          "@type": "kind",
+          "@value": "master_object"
+        },
+        {
+          "@type": "id",
+          "@value": "master_object_01"
+        }
+      ],
+      "properties": {
+        "purpose": "Master object number 1",
+        "array": [
+          "second_element", "first_element"
+        ]
+      },
+      "relations": [
+        {
+            "@type": "otRelation",
+            "direction": "direct",
+            "linkedObject": {
+                "@id": "test_object_02"
+            },
+            "relationType": "IS_CHILD"
+        },
+        {
+            "@type": "otRelation",
+            "direction": "direct",
+            "linkedObject": {
+                "@id": "test_object_01"
+            },
+            "relationType": "IS_CHILD"
+        }
+      ]
+    }
+  ]
+}
