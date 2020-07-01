@@ -505,18 +505,6 @@ Then(/^the last two exported datasets ([should|should not]+) have the same hashe
     }
 });
 
-Then(/^the last two datasets should have the same hashes$/, async function () {
-    this.logger.log('The last root hash should be the same as one manually calculated$');
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
-    expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.secondLastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
-
-    expect(this.state.lastImport.data.dataset_id, 'Fingerprint from API endpoint and manually calculated should match')
-        .to.be.equal(this.state.secondLastImport.data.dataset_id);
-});
-
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
     this.logger.log('I wait for replication to finish');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
