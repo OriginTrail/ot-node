@@ -170,7 +170,7 @@ class DHService {
             transactional: false,
         });
 
-        await this.remoteControl.getPendingBids();
+        // await this.remoteControl.getPendingBids();
     }
 
     /**

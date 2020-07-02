@@ -122,7 +122,7 @@ Feature: Test basic importer features
     And I use 3rd node as DV
     When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
-    And I use 2st node as DC
+    And I use 2nd node as DC
     And DC imports "importers/use_cases/otjson_1.1/sort2.json" as GRAPH
     And DC waits for import to finish
     And DC initiates the replication for last imported dataset
