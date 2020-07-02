@@ -40,163 +40,118 @@
   },
   "@graph": [
     {
-      "@id": "c77571a4eb41dd5b2a794b49a1c2d965083d6567de05cb2fb8893d8e9e5eb732",
-      "@type": "otObject",
       "identifiers": [
         {
-          "@type": "id",
-          "@value": "c77571a4eb41dd5b2a794b49a1c2d965083d6567de05cb2fb8893d8e9e5eb732"
+          "@type": "kind",
+          "@value": "test_object"
         },
         {
           "@type": "id",
-          "@value": "did:ethr:0xf463132Fb992B086BF1C862b5cbC643DD5AF5F2A#c77571a4eb41dd5b2a794b49a1c2d965083d6567de05cb2fb8893d8e9e5eb732"
+          "@value": "test_object_02"
         }
       ],
       "properties": {
-        "issuer": "did:ethr:0xf463132Fb992B086BF1C862b5cbC643DD5AF5F2A",
-        "objectType": "vocabularyElement",
-        "permissioned_data": {
-          "data": {
-            "audits_data": [
-              {
-                "version": 3,
-                "factory_name": "DONG CITY TESTING NEW AUDITT",
-                "scanid": "CN563H8A91DO",
-                "linkedscanmembers": "[{\"name\": \"Ana\"}, {\"name\": \"SCAN1002\"}, {\"name\": \"SCAN1004\"}, {\"name\": \"SCAN 1111\"}, {\"name\": \"SCAN 123345\"}, {\"name\": \"SCAN 123144\"}, {\"name\": null}]",
-                "country": "Austria",
-                "city": "Vienna",
-                "lat": "22.9",
-                "lon": "113.67",
-                "commodity_types": null,
-                "years_in_business": 23,
-                "number_of_employees": 120,
-                "importer_of_record_number": null,
-                "mutual_certificates": "Yes",
-                "audit_name": "2020 SCAN Testing Audit",
-                "audit_date": "2020-03-12 09:27:53",
-                "audit_status": "Audit Reviewed",
-                "audit_guid": "Final_test_scan",
-                "audit_name_guid": "testingAna123",
-                "compliance_score_overall": "10.00",
-                "compliance_score_categories": "[{\"score\": \"45\", \"category\": \"Procedural Security\", \"category_guid\": \"3D7F4BD2-D66B-480D-8559-712F054325063\"}, {\"score\": \"66\", \"category\": \"Physical Security\", \"category_guid\": \"7FAD0954-4BE2-4A6D-9DF6-AF5D895723FB4\"}, {\"score\": \"54\", \"category\": \"Security Training & Threat Awareness\", \"category_guid\": \"9517FEE6-F5EB-4BFF-A524-DBBD6BCD7E345\"}, {\"score\": \"78\", \"category\": \"Conveyances and Instruments of International Traffic\", \"category_guid\": \"5B97E7CF-D0A1-42D4-8596-8935770089BA9\"}, {\"score\": \"90\", \"category\": \"Seal Security\", \"category_guid\": \"5B97E7CF-D0A1-42D4-8596-8935770089BA11\"}]",
-                "risk_index": "High",
-                "auditor_company": "OriginTrail",
-                "auditor_training_certificate": null,
-                "geographic_risk_overview": "[]",
-                "CTPAT_participation": null,
-                "report_number": "EA-2020-03-0036",
-                "is_revoked": null
-              },
-              {
-                "audit_status": "Audit Reviewed",
-                "version": 3,
-                "audit_status_update_time": "2020-06-15 09:10:36"
-              },
-              {
-                "audit_status": "Audit Reviewed",
-                "version": 3,
-                "audit_status_update_time": "2020-06-15 09:10:36"
-              }
-            ]
-          },
-          "permissioned_data_hash": "0xea03dacd76a109fd9a6d7fdb709c3d46afed7f9bcf839875db9bb40faf3af261"
-        }
+        "purpose": "Testing object number 2",
+        "array": [
+          "second_element", "first_element"
+        ]
       },
-      "relations": []
+      "@id": "test_object_02",
+      "@type": "otObject",
+      "relations": [
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_01"
+          },
+          "relationType": "IS_SIBLING"
+        },
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "master_object_01"
+          },
+          "relationType": "IS_PARENT"
+        }
+      ]
     },
     {
-      "@id": "6a61c1fdb54678049933c5ec756a17e38e0b735052f9727619c7d9c51f3a4d62",
-      "@type": "otObject",
       "identifiers": [
         {
-          "@type": "id",
-          "@value": "6a61c1fdb54678049933c5ec756a17e38e0b735052f9727619c7d9c51f3a4d62"
+          "@type": "kind",
+          "@value": "test_object"
         },
         {
           "@type": "id",
-          "@value": "did:ethr:0xf463132Fb992B086BF1C862b5cbC643DD5AF5F2A#6a61c1fdb54678049933c5ec756a17e38e0b735052f9727619c7d9c51f3a4d62"
+          "@value": "test_object_01"
         }
       ],
       "properties": {
-        "issuer": "did:ethr:0xf463132Fb992B086BF1C862b5cbC643DD5AF5F2A",
-        "objectType": "vocabularyElement",
-        "permissioned_data": {
-          "data": {
-            "audits_data": [
-              {
-                "version": 1,
-                "factory_name": "TESTING 123",
-                "scanid": "CN563H8A91DO",
-                "linkedscanmembers": "[{\"name\": \"Ana\"}, {\"name\": \"SCAN1002\"}, {\"name\": \"SCAN1004\"}]",
-                "country": "Austria",
-                "city": "Vienna",
-                "lat": "22.9",
-                "lon": "113.67",
-                "commodity_types": null,
-                "years_in_business": 23,
-                "number_of_employees": 120,
-                "importer_of_record_number": null,
-                "mutual_certificates": "Yes",
-                "audit_name": "2020 SCAN Testing Audit",
-                "audit_date": "2020-03-12 09:27:53",
-                "audit_status": "Audit Pendind Review",
-                "audit_guid": "testing_123",
-                "audit_name_guid": "testingAna123",
-                "compliance_score_overall": "110.00",
-                "compliance_score_categories": "[{\"score\": \"45\", \"category\": \"Procedural Security\", \"category_guid\": \"3D7F4BD2-D66B-480D-8559-712F054325063\"}, {\"score\": \"66\", \"category\": \"Physical Security\", \"category_guid\": \"7FAD0954-4BE2-4A6D-9DF6-AF5D895723FB4\"}, {\"score\": \"54\", \"category\": \"Security Training & Threat Awareness\", \"category_guid\": \"9517FEE6-F5EB-4BFF-A524-DBBD6BCD7E345\"}, {\"score\": \"78\", \"category\": \"Conveyances and Instruments of International Traffic\", \"category_guid\": \"5B97E7CF-D0A1-42D4-8596-8935770089BA9\"}, {\"score\": \"90\", \"category\": \"Seal Security\", \"category_guid\": \"5B97E7CF-D0A1-42D4-8596-8935770089BA11\"}]",
-                "risk_index": "High",
-                "auditor_company": "OriginTrail",
-                "auditor_training_certificate": null,
-                "geographic_risk_overview": "[]",
-                "CTPAT_participation": null,
-                "report_number": "EA-2020-03-0036",
-                "is_revoked": null
-              },
-              {
-                "version": 2,
-                "factory_name": "TESTING 123",
-                "scanid": "CN563H8A91DO",
-                "linkedscanmembers": "[{\"name\": \"Ana\"}, {\"name\": \"SCAN1002\"}, {\"name\": \"SCAN1004\"}]",
-                "country": "Austria",
-                "city": "Vienna",
-                "lat": "22.9",
-                "lon": "113.67",
-                "commodity_types": null,
-                "years_in_business": 23,
-                "number_of_employees": 120,
-                "importer_of_record_number": null,
-                "mutual_certificates": "Yes",
-                "audit_name": "2020 SCAN Testing Audit",
-                "audit_date": "2020-03-12 09:27:53",
-                "audit_status": "Audit Pending Review",
-                "audit_guid": "testing_123",
-                "audit_name_guid": "testingAna123",
-                "compliance_score_overall": "110.00",
-                "compliance_score_categories": "[{\"score\": \"45\", \"category\": \"Procedural Security\", \"category_guid\": \"3D7F4BD2-D66B-480D-8559-712F054325063\"}, {\"score\": \"66\", \"category\": \"Physical Security\", \"category_guid\": \"7FAD0954-4BE2-4A6D-9DF6-AF5D895723FB4\"}, {\"score\": \"54\", \"category\": \"Security Training & Threat Awareness\", \"category_guid\": \"9517FEE6-F5EB-4BFF-A524-DBBD6BCD7E345\"}, {\"score\": \"78\", \"category\": \"Conveyances and Instruments of International Traffic\", \"category_guid\": \"5B97E7CF-D0A1-42D4-8596-8935770089BA9\"}, {\"score\": \"90\", \"category\": \"Seal Security\", \"category_guid\": \"5B97E7CF-D0A1-42D4-8596-8935770089BA11\"}]",
-                "risk_index": "High",
-                "auditor_company": "OriginTrail",
-                "auditor_training_certificate": null,
-                "geographic_risk_overview": "[]",
-                "CTPAT_participation": null,
-                "report_number": "EA-2020-03-0036",
-                "is_revoked": null
-              },
-              {
-                "audit_status": "Audit Pendind Review",
-                "version": 1,
-                "audit_status_update_time": "2020-06-15 10:28:08"
-              },
-              {
-                "audit_status": "Audit Pending Review",
-                "version": 2,
-                "audit_status_update_time": "2020-06-15 10:32:37"
-              }
-            ]
-          },
-          "permissioned_data_hash": "0xebbfc4be47497e0a401bc2b69cdba178f94b16f1d2e94ce52e0b63a4470bee3d"
-        }
+        "purpose": "Testing object number 1",
+        "array": [
+          "second_element", "first_element"
+        ]
       },
-      "relations": []
+      "@id": "test_object_01",
+      "@type": "otObject",
+      "relations": [
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_02"
+          },
+          "relationType": "IS_SIBLING"
+        },
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "master_object_01"
+          },
+          "relationType": "IS_PARENT"
+        }
+      ]
+    },
+    {
+      "@id": "master_object_01",
+      "@type": "otObject",
+      "identifiers": [
+        {
+          "@type": "kind",
+          "@value": "master_object"
+        },
+        {
+          "@type": "id",
+          "@value": "master_object_01"
+        }
+      ],
+      "properties": {
+        "purpose": "Master object number 1",
+        "array": [
+          "second_element", "first_element"
+        ]
+      },
+      "relations": [
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_02"
+          },
+          "relationType": "IS_CHILD"
+        },
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_01"
+          },
+          "relationType": "IS_CHILD"
+        }
+      ]
     }
   ]
 }

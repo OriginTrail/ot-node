@@ -94,8 +94,11 @@ class Utilities {
                         ));
                     }
                 } else if (obj[key] != null && typeof obj[key] === 'object') {
-                    if (key === 'properties') { inProperties = true; }
-                    stringified.push(`"${key}":${this.sortObjectRecursively(obj[key], inProperties)}`);
+                    if (key === 'properties') {
+                        stringified.push(`"${key}":${this.sortObjectRecursively(obj[key], true)}`);
+                    } else {
+                        stringified.push(`"${key}":${this.sortObjectRecursively(obj[key], inProperties)}`);
+                    }
                 } else {
                     // Added for better performance by avoiding the last level of recursion
                     // because the last level only returns JSON.stringify of the key

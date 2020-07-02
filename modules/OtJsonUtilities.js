@@ -43,11 +43,30 @@ class OtJsonUtilities {
     }
 
     static _repackDataset(dataset) {
+        const config = {};
+        config.blockchain = {};
+        config.blockchain.network_id = dataset.datasetHeader.validationSchemas.merkleRoot.networkId;
+        config.blockchain.hub_contract_address =
+            dataset.datasetHeader.validationSchemas.merkleRoot.hubContractAddress;
+        config.erc725Identity = dataset.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        // eslint-disable-next-line global-require
+        const header = require('./ImportUtilities').createDatasetHeader(
+            config, null,
+            dataset.datasetHeader.datasetTags,
+            dataset.datasetHeader.datasetTitle,
+            dataset.datasetHeader.datasetDescription,
+            dataset.datasetHeader.OTJSONVersion,
+        );
+        header.datasetCreationTimestamp = dataset.datasetHeader.datasetCreationTimestamp;
+        header.dataIntegrity.proofs[0].proofValue =
+            dataset.datasetHeader.dataIntegrity.proofs[0].proofValue;
+
+        const graph = JSON.parse(Utilities.sortedStringify(dataset['@graph'], false));
         return {
             '@id': dataset['@id'],
             '@type': dataset['@type'],
-            datasetHeader: dataset.datasetHeader,
-            '@graph': JSON.parse(Utilities.sortedStringify(dataset['@graph'], false)),
+            datasetHeader: header,
+            '@graph': graph,
             signature: dataset.signature,
         };
     }
