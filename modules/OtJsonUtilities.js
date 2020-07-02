@@ -61,12 +61,12 @@ class OtJsonUtilities {
         header.dataIntegrity.proofs[0].proofValue =
             dataset.datasetHeader.dataIntegrity.proofs[0].proofValue;
 
-        const graphObj = JSON.parse(Utilities.sortObjectRecursively({ '@graph': dataset['@graph'] }));
+        const graph = JSON.parse(Utilities.sortedStringify(dataset['@graph'], false));
         return {
             '@id': dataset['@id'],
             '@type': dataset['@type'],
             datasetHeader: header,
-            '@graph': graphObj['@graph'],
+            '@graph': graph,
             signature: dataset.signature,
         };
     }
