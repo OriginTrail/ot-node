@@ -109,7 +109,7 @@ Feature: Test basic importer features
     And I use 1st node as DC
     Then DC should be the issuer for the selected element
 
-  @second
+  @third
   Scenario: Check that two OT-JSON 1.1 datasets with different order have different hashes
     Given the replication difficulty is 0
     And I setup 4 node
@@ -129,9 +129,9 @@ Feature: Test basic importer features
     And I wait for replications to finish
     When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
-    Then the last two exported datasets should not have the same hashes
+    Then the last two exported datasets from 1st and 2nd node should not have the same hashes
 
-  @third
+  @fourth
   Scenario: Check that two OT-JSON 1.2 datasets with different order have the same hashes
     Given the replication difficulty is 0
     And I setup 4 node
@@ -148,4 +148,4 @@ Feature: Test basic importer features
     And DC waits for import to finish
     When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
-    Then the last two exported datasets should have the same hashes
+    Then the last two exported datasets from 1st and 1st node should have the same hashes
