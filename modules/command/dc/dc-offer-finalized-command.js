@@ -119,6 +119,8 @@ class DcOfferFinalizedCommand extends Command {
                 };
             }
         }
+
+        await Models.handler_ids.update({ timestamp: Date.now() }, { where: { handler_id } });
         return Command.repeat();
     }
 
