@@ -590,12 +590,12 @@ class RestAPIServiceV2 {
         };
         const offer = await Models.offers.findOne({
             where: {
-                $or: [
+                [Models.Sequelize.Op.or]: [
                     {
-                        offer_id: { $eq: handlerData.offer_id },
+                        offer_id: handlerData.offer_id,
                     },
                     {
-                        id: { $eq: handlerData.offer_id },
+                        id: handlerData.offer_id,
                     },
                 ],
             },
