@@ -1,0 +1,157 @@
+{
+  "@id": "",
+  "@type": "Dataset",
+  "datasetHeader": {
+    "OTJSONVersion": "1.2",
+    "datasetCreationTimestamp": "2020-06-29T11:01:09.035Z",
+    "datasetTitle": "",
+    "datasetDescription": "",
+    "datasetTags": [],
+    "relatedDatasets": [],
+    "validationSchemas": {
+      "erc725-main": {
+        "schemaType": "ethereum-725",
+        "networkId": "ganache"
+      },
+      "merkleRoot": {
+        "schemaType": "merkle-root",
+        "networkId": "ganache",
+        "hubContractAddress": "0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a"
+      }
+    },
+    "dataIntegrity": {
+      "proofs": [
+        {
+          "proofValue": "",
+          "proofType": "merkleRootHash",
+          "validationSchema": "/schemas/merkleRoot"
+        }
+      ]
+    },
+    "dataCreator": {
+      "identifiers": [
+        {
+          "identifierValue": "0x2Fa6d32E314AAB43a58999D6f5532A15418Da153",
+          "identifierType": "ERC725",
+          "validationSchema": "/schemas/erc725-main"
+        }
+      ]
+    }
+  },
+  "@graph": [
+    {
+      "identifiers": [
+        {
+          "@type": "kind",
+          "@value": "test_object"
+        },
+        {
+          "@type": "id",
+          "@value": "test_object_02"
+        }
+      ],
+      "properties": {
+        "purpose": "Testing object number 2",
+        "array": [
+          "second_element", "first_element"
+        ]
+      },
+      "@id": "test_object_02",
+      "@type": "otObject",
+      "relations": [
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_01"
+          },
+          "relationType": "IS_SIBLING"
+        },
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "master_object_01"
+          },
+          "relationType": "IS_PARENT"
+        }
+      ]
+    },
+    {
+      "@id": "master_object_01",
+      "@type": "otObject",
+      "identifiers": [
+        {
+          "@type": "kind",
+          "@value": "master_object"
+        },
+        {
+          "@type": "id",
+          "@value": "master_object_01"
+        }
+      ],
+      "properties": {
+        "purpose": "Master object number 1",
+        "array": [
+          "second_element", "first_element"
+        ]
+      },
+      "relations": [
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_02"
+          },
+          "relationType": "IS_CHILD"
+        },
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_01"
+          },
+          "relationType": "IS_CHILD"
+        }
+      ]
+    },
+    {
+      "identifiers": [
+        {
+          "@type": "kind",
+          "@value": "test_object"
+        },
+        {
+          "@type": "id",
+          "@value": "test_object_01"
+        }
+      ],
+      "properties": {
+        "purpose": "Testing object number 1",
+        "array": [
+          "second_element", "first_element"
+        ]
+      },
+      "@id": "test_object_01",
+      "@type": "otObject",
+      "relations": [
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "test_object_02"
+          },
+          "relationType": "IS_SIBLING"
+        },
+        {
+          "@type": "otRelation",
+          "direction": "direct",
+          "linkedObject": {
+            "@id": "master_object_01"
+          },
+          "relationType": "IS_PARENT"
+        }
+      ]
+    }
+  ]
+} 
