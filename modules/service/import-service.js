@@ -788,7 +788,7 @@ class ImportService {
 
         // TODO: Prepare support for multiple versions
         const { OTJSONVersion } = datasetHeader;
-        if (!['1.0', '1.1'].includes(OTJSONVersion)) {
+        if (!['1.0', '1.1', '1.2'].includes(OTJSONVersion)) {
             throw Error('[Validation Error] Unsupported OT-JSON version.');
         }
 
