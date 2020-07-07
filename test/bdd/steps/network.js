@@ -456,14 +456,6 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
     const dataset2 = JSON.parse(this.state.lastExport.data.formatted_dataset);
     const dc1 = this.state.nodes[nodeIndex1 - 1];
     const dc2 = this.state.nodes[nodeIndex2 - 1];
-    // let dc2;
-    // if (condition.includes('not')) {
-    //     // eslint-disable-next-line prefer-destructuring
-    //     dc2 = this.state.nodes[1];
-    // } else {
-    //     // eslint-disable-next-line prefer-destructuring
-    //     dc2 = this.state.nodes[0];
-    // }
 
     // check dataset_id
     const calculatedDatasetId1 = ImportUtilities.calculateGraphPublicHash(dataset1);
