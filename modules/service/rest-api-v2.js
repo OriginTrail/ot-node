@@ -590,7 +590,14 @@ class RestAPIServiceV2 {
         };
         const offer = await Models.offers.findOne({
             where: {
-                offer_id: handlerData.offer_id,
+                [Models.Sequelize.Op.or]: [
+                    {
+                        offer_id: handlerData.offer_id,
+                    },
+                    {
+                        id: handlerData.offer_id,
+                    },
+                ],
             },
         });
         if (offer) {

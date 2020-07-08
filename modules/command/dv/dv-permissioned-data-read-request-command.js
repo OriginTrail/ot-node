@@ -39,7 +39,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
         const dataReadRequestObject = {
             message,
             messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(message),
+                message,
                 this.web3,
                 this.config.node_private_key,
             ),
