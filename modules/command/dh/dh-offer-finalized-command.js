@@ -64,6 +64,7 @@ class DhOfferFinalizedCommand extends Command {
                                 {
                                     name: 'dhPayOutCommand',
                                     delay: scheduledTime,
+                                    period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
                                     retries: 3,
                                     transactional: false,
                                     data: {
