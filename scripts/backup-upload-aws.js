@@ -5,6 +5,7 @@ const path = require('path');
 const argv = require('minimist')(process.argv.slice(2));
 const { lstatSync, readdirSync } = require('fs');
 const { join } = require('path');
+const rimraf = require('rimraf');
 
 
 if (!argv.config) {
@@ -15,44 +16,46 @@ if (!argv.configDir) {
     argv.configDir = '../data/';
 }
 
-if (!argv.certs) {
-    argv.certs = '../certs/';
+if (!argv.backupDirectory) {
+    argv.backupDirectory = '../backup/';
 }
 
-if (!argv.backup_directory) {
-    argv.backup_directory = '../backup/';
-}
-
-if (!argv.certs) {
-    argv.certs = '../certs/';
-}
-
-if (!argv.aws_access_key_id) {
+if (!argv.AWSAccessKeyId) {
     throw Error('Please provide AWS access key id.');
 }
 
-if (!argv.aws_secret_access_key) {
+if (!argv.AWSSecretAccessKey) {
     throw Error('Please provide AWS secret key.');
 }
 
-if (!argv.aws_bucket_name) {
+if (!argv.AWSBucketName) {
     throw Error('Please provide AWS bucket name.');
 }
 
 try {
     const s3 = new AWS.S3({
-        accessKeyId: argv.aws_access_key_id,
-        secretAccessKey: argv.aws_secret_access_key,
+        accessKeyId: argv.AWSAccessKeyId,
+        secretAccessKey: argv.AWSSecretAccessKey,
     });
 
-    execSync(`node backup.js --config=${argv.config} --configDir=${argv.configDir} --backup_directory=${argv.backup_directory}`, { stdio: 'inherit' });
+    execSync(`node backup.js --config=${argv.config} --configDir=${argv.configDir} --backup_directory=${argv.backupDirectory}`, { stdio: 'inherit' });
 
     const isDirectory = source => lstatSync(source).isDirectory();
     const getDirectories = source =>
         readdirSync(source).map(name => join(source, name)).filter(isDirectory);
-    const latest_backup = getDirectories(argv.backup_directory).sort().reverse()[0];
-    fs.unlinkSync(`${latest_backup}/identity.json`);
+    const backupTimestamp = getDirectories(argv.backupDirectory).sort()[0];
+    console.log(`Backup directory is ${backupTimestamp}`);
+    console.log('Removing private key from config file...');
+    const configFile = JSON.parse(fs.readFileSync(`${backupTimestamp}/.origintrail_noderc`));
+    let { hostname } = `otnode_${configFile.network}`;
+    if (!hostname) { hostname = 'otnode_localhost'; }
+    delete configFile.node_private_key;
+    fs.writeFileSync(`${backupTimestamp}/.origintrail_noderc`, JSON.stringify(configFile));
 
+    if (!fs.existsSync(`${argv.backupDirectory}/${hostname}`)) { fs.mkdirSync(`${argv.backupDirectory}/${hostname}`); }
+    fs.renameSync(`${argv.backupDirectory}/${path.basename(backupTimestamp)}`, `${argv.backupDirectory}/${hostname}/${path.basename(backupTimestamp)}`);
+
+    console.log('Backup files are ready for upload.');
     const uploadDir = (s3Path, bucketName) => {
         function walkSync(currentDirPath, callback) {
             fs.readdirSync(currentDirPath).forEach((name) => {
@@ -78,6 +81,8 @@ try {
                             } else {
                                 console.log(`Successfully uploaded ${bucketPath} to ${bucketName}`);
                             }
+
+                            rimraf(`${argv.backupDirectory}/${bucketPath}`, () => { console.log(`Successfully removed ${argv.backupDirectory}/${bucketPath}`); });
                         });
                     } else {
                         throw err;
@@ -86,8 +91,8 @@ try {
         });
     };
 
-    uploadDir(argv.backup_directory, argv.aws_bucket_name);
+    console.log('Connecting to AWS S3 bucket...');
+    uploadDir(argv.backupDirectory, argv.AWSBucketName);
 } catch (e) {
     console.error(e);
 }
-
