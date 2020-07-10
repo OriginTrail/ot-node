@@ -41,24 +41,23 @@ const s3 = new AWS.S3({
 function uploadMultipart(absoluteFilePath, fileName, uploadCb) {
     s3.createMultipartUpload({ Bucket: argv.AWSBucketName, Key: fileName }, (mpErr, multipart) => {
         if (!mpErr) {
-            var stats = fs.statSync(absoluteFilePath);
-            var fileSizeInBytes = stats.size;
-            var partSize = 1024 * 1024 * 100;
-            var parts = Math.ceil(fileSizeInBytes / partSize);
-            var partNum = 1;
+            const stats = fs.statSync(absoluteFilePath);
+            const fileSizeInBytes = stats.size;
+            const partSize = 1024 * 1024 * 100;
+            const parts = Math.ceil(fileSizeInBytes / partSize);
             async.timesSeries(parts, (partNum, next) => {
-                var rangeStart = partNum * partSize;
-                var end = Math.min(rangeStart + partSize, fileSizeInBytes);
+                const rangeStart = partNum * partSize;
+                const end = Math.min(rangeStart + partSize, fileSizeInBytes);
 
-                console.log('uploading ', fileName, ' % ', (partNum / parts).toFixed(2));
+                console.log('Uploading ', fileName, ' % ', (partNum / parts).toFixed(2));
 
                 partNum += 1;
                 async.retry((retryCb) => {
-                    var buffer = Buffer.alloc(end - rangeStart);
-                    var fd = fs.openSync(absoluteFilePath, 'r');
+                    const buffer = Buffer.alloc(end - rangeStart);
+                    const fd = fs.openSync(absoluteFilePath, 'r');
                     const bytes = fs.readSync(fd, buffer, 0, end - rangeStart, rangeStart);
                     s3.uploadPart({
-                        Body: buffer, // fileData.slice(rangeStart, end),
+                        Body: buffer,
                         Bucket: argv.AWSBucketName,
                         Key: fileName,
                         PartNumber: partNum,
@@ -83,7 +82,8 @@ function uploadMultipart(absoluteFilePath, fileName, uploadCb) {
                         console.log('An error occurred while completing the multipart upload');
                         console.log(err);
                     } else {
-                        console.log('done');
+                        console.log(`Successfully uploaded ${fileName}`);
+                        execSync(`rm ${absoluteFilePath}`);
                     }
                 });
             });
@@ -110,6 +110,7 @@ function uploadFile(absoluteFilePath, bucketPath, uploadCb) {
                         console.log(err);
                     } else {
                         console.log(`Successfully uploaded ${bucketPath} to ${argv.AWSBucketName}`);
+                        execSync(`rm ${absoluteFilePath}`);
                     }
                 });
             } else {
@@ -167,7 +168,6 @@ try {
         const bucketPath = `${node_wallet}/${path.basename(backupTimestamp)}${filePath.split(path.basename(backupTimestamp))[1]}`;
         uploadFile(filePath, bucketPath, () => {
             console.log(`Successfully uploaded ${filePath}`);
-            // execSync(`rm ${filePath}`);
         });
     });
 } catch (e) {
