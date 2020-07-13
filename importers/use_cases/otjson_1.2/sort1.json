@@ -2,7 +2,7 @@
   "@id": "",
   "@type": "Dataset",
   "datasetHeader": {
-    "OTJSONVersion": "1.1",
+    "OTJSONVersion": "1.2",
     "datasetCreationTimestamp": "2020-06-29T11:01:09.035Z",
     "datasetTitle": "",
     "datasetDescription": "",
@@ -38,7 +38,7 @@
       ]
     }
   },
-  "@graph": [
+  "@graph":  [
     {
       "identifiers": [
         {

@@ -22,6 +22,7 @@ class HandlerIdsCleanerCommand extends Command {
         await Models.handler_ids.destroy({
             where: {
                 timestamp: { [Models.Sequelize.Op.lt]: timeToBeDeleted },
+                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'FAILED'] },
             },
         });
         return Command.repeat();

@@ -76,6 +76,8 @@ class DcOfferTaskCommand extends Command {
             this.logger.trace(`Offer successfully started for data set ${dataSetIdNorm}. Offer ID ${eventOfferId}. Internal offer ID ${internalOfferId}.`);
             return this.continueSequence(this.pack(command.data), command.sequence);
         }
+
+        await Models.handler_ids.update({ timestamp: Date.now() }, { where: { handler_id } });
         return Command.repeat();
     }
 
@@ -84,7 +86,10 @@ class DcOfferTaskCommand extends Command {
      * @param command
      */
     async expired(command) {
-        return this.invalidateOffer(command);
+        return this.invalidateOffer(
+            command,
+            Error('The offer task event is too late.'),
+        );
     }
 
     /**

@@ -84,19 +84,25 @@ class Utilities {
             for (const key of Object.keys(obj)) {
                 if (Array.isArray(obj)) {
                     if (obj[key] != null && typeof obj[key] === 'object') {
-                        stringified.push(this.sortedStringify(obj[key], inProperties));
+                        stringified.push(this.sortObjectRecursively(obj[key], inProperties));
                     } else {
                         // Added for better performance by avoiding the last level of recursion
                         // because the last level only returns JSON.stringify of the key
-                        stringified.push(JSON.stringify(obj[key]));
+                        stringified.push(JSON.stringify(
+                            obj[key],
+                            (k, v) => (v === undefined ? null : v),
+                        ));
                     }
                 } else if (obj[key] != null && typeof obj[key] === 'object') {
-                    if (key === 'properties') { inProperties = true; }
-                    stringified.push(`"${key}":${this.sortedStringify(obj[key], inProperties)}`);
+                    if (key === 'properties') {
+                        stringified.push(`"${key}":${this.sortObjectRecursively(obj[key], true)}`);
+                    } else {
+                        stringified.push(`"${key}":${this.sortObjectRecursively(obj[key], inProperties)}`);
+                    }
                 } else {
                     // Added for better performance by avoiding the last level of recursion
                     // because the last level only returns JSON.stringify of the key
-                    stringified.push(`"${key}":${JSON.stringify(obj[key])}`);
+                    stringified.push(`"${key}":${JSON.stringify(obj[key], (k, v) => (v === undefined ? null : v))}`);
                 }
             }
 
@@ -112,7 +118,7 @@ class Utilities {
             // Return result in the format of an object
             return `{${stringified.join(',')}}`;
         }
-        return JSON.stringify(obj);
+        return JSON.stringify(obj, (k, v) => (v === undefined ? null : v));
     }
 
     /**
@@ -686,8 +692,14 @@ class Utilities {
     }
 
     static generateRsvSignature(message, web3, privateKey) {
+        let sortedMessage;
+        if (typeof message === 'string' || message instanceof String) {
+            sortedMessage = message;
+        } else {
+            sortedMessage = JSON.stringify(Utilities.sortObject(message));
+        }
         const signature = web3.eth.accounts.sign(
-            message,
+            sortedMessage,
             privateKey.toLowerCase().startsWith('0x') ?
                 privateKey : `0x${privateKey}`,
         );
@@ -696,14 +708,31 @@ class Utilities {
     }
 
     static isMessageSigned(web3, message, signature) {
+        let sortedMessage;
+        if (typeof message === 'string' || message instanceof String) {
+            sortedMessage = message;
+        } else {
+            sortedMessage = JSON.stringify(message);
+        }
         const signedAddress = web3.eth.accounts.recover(
-            JSON.stringify(message),
+            sortedMessage,
             signature.v,
             signature.r,
             signature.s,
         );
 
-        return Utilities.compareHexStrings(signedAddress, message.wallet);
+        // todo remove this patch in the next release
+        if (!Utilities.compareHexStrings(signedAddress, message.wallet)) {
+            const sortedMessage = Utilities.sortObject(message);
+            const signedAddress = web3.eth.accounts.recover(
+                JSON.stringify(sortedMessage),
+                signature.v,
+                signature.r,
+                signature.s,
+            );
+            return Utilities.compareHexStrings(signedAddress, message.wallet);
+        }
+        return true;
     }
 
     /**

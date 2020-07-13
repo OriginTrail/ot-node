@@ -140,13 +140,8 @@ class ImportUtilities {
     }
 
     static prepareDataset(originalDocument, config, web3) {
-        let document = OtJsonUtilities.prepareDatasetForNewImport(originalDocument);
-        if (!document) {
-            document = originalDocument;
-        }
-        const datasetHeader = document.datasetHeader ? document.datasetHeader : {};
-        ImportUtilities.calculateGraphPermissionedDataHashes(document['@graph']);
-        const id = ImportUtilities.calculateGraphPublicHash(document);
+        const datasetHeader = originalDocument.datasetHeader ? originalDocument.datasetHeader : {};
+        ImportUtilities.calculateGraphPermissionedDataHashes(originalDocument['@graph']);
 
         const header = ImportUtilities.createDatasetHeader(
             config, null,
@@ -154,18 +149,25 @@ class ImportUtilities {
             datasetHeader.datasetTitle,
             datasetHeader.datasetDescription,
             datasetHeader.OTJSONVersion,
+            datasetHeader.datasetCreationTimestamp,
         );
         const dataset = {
-            '@id': id,
+            '@id': '',
             '@type': 'Dataset',
             datasetHeader: header,
-            '@graph': document['@graph'],
+            '@graph': originalDocument['@graph'],
         };
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(dataset);
-        dataset.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+        let document = OtJsonUtilities.prepareDatasetForNewImport(dataset);
+        if (!document) {
+            document = dataset;
+        }
+        document['@id'] = ImportUtilities.calculateGraphPublicHash(document);
 
-        const signed = ImportUtilities.signDataset(dataset, config, web3);
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
+        document.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+
+        const signed = ImportUtilities.signDataset(document, config, web3);
         return signed;
     }
 
@@ -674,10 +676,10 @@ class ImportUtilities {
      * Fill in dataset header
      * @private
      */
-    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '', OTJSONVersion = '1.1') {
+    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '', OTJSONVersion = '1.1', datasetCreationTimestamp = new Date().toISOString()) {
         const header = {
             OTJSONVersion,
-            datasetCreationTimestamp: new Date().toISOString(),
+            datasetCreationTimestamp,
             datasetTitle,
             datasetDescription,
             datasetTags,
