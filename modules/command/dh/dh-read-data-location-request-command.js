@@ -180,7 +180,7 @@ class DHReadDataLocationRequestCommand extends Command {
 
         const messageResponseSignature =
             Utilities.generateRsvSignature(
-                JSON.stringify(messageResponse),
+                messageResponse,
                 this.web3,
                 this.config.node_private_key,
             );
