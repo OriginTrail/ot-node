@@ -80,6 +80,28 @@ class GraphStorage {
     }
 
     /**
+     * Finds objects based on ids and datasets which contain them
+     *
+     * @param {Array} ids - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param {object} datasets - Object which maps which datasets contain the requested object,
+     *                              in the following format { id: [datasets] }
+     * @return {Promise}
+     */
+    findTrailExtension(ids, datasets) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.findTrailExtension(ids, datasets).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Finds imports IDs based on data location query
      *
      * DataLocationQuery structure: [[path, value, opcode]*]

@@ -138,9 +138,9 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
 });
 
 Given(
-    /^I call traversal from "(\S+)" "(\S+)" with connection types "(\S+)"/,
+    /^I call (extended\s|narrow\s|)traversal from "(\S+)" "(\S+)" with connection types "(\S+)"/,
     { timeout: 120000 },
-    async function (id_type, id_value, connectionTypes) {
+    async function (reach, id_type, id_value, connectionTypes) {
         expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
         const { dc } = this.state;
 
@@ -152,8 +152,17 @@ Given(
             depth: 50,
         };
 
+        if (reach.includes('narrow')) {
+            trailParams.reach = 'narrow';
+        } else if (reach.includes('extended')) {
+            trailParams.reach = 'extended';
+        }
+
         const trail = await httpApiHelper.apiTrail(host, trailParams);
 
+        if (this.state.lastTrail) {
+            this.state.secondLastTrail = this.state.lastTrail;
+        }
         this.state.lastTrail = trail;
     },
 );
