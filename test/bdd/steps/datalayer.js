@@ -12,6 +12,7 @@ const Utilities = require('../../../modules/Utilities');
 const ZK = require('../../../modules/ZK');
 const logger = require('../../../modules/logger');
 const MerkleTree = require('../../../modules/Merkle');
+const constants = require('../../../modules/constants');
 const fs = require('fs');
 
 
@@ -152,10 +153,10 @@ Given(
             depth: 50,
         };
 
-        if (reach.includes('narrow')) {
-            trailParams.reach = 'narrow';
-        } else if (reach.includes('extended')) {
-            trailParams.reach = 'extended';
+        if (reach.includes(constants.TRAIL_REACH_PARAMETERS.narrow)) {
+            trailParams.reach = constants.TRAIL_REACH_PARAMETERS.narrow;
+        } else if (reach.includes(constants.TRAIL_REACH_PARAMETERS.extended)) {
+            trailParams.reach = constants.TRAIL_REACH_PARAMETERS.extended;
         }
 
         const trail = await httpApiHelper.apiTrail(host, trailParams);

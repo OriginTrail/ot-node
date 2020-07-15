@@ -1,5 +1,6 @@
 const Utilities = require('../Utilities');
 const Models = require('../../models');
+const constants = require('../constants');
 
 /**
  * Encapsulates DH related methods
@@ -115,11 +116,8 @@ class DHController {
             this.graphStorage.getDatabaseInfo().max_path_length :
             parseInt(req.body.depth, 10);
 
-        const reach = req.body.reach === undefined ? 'narrow' : req.body.reach.toLowerCase();
-
-        console.log(`Reach: ${reach}`);
-        console.log(JSON.stringify(req.body, null, 4));
-
+        const reach = req.body.reach === undefined ?
+            constants.TRAIL_REACH_PARAMETERS.narrow : req.body.reach.toLowerCase();
 
         const { connection_types } = req.body;
 
@@ -142,7 +140,7 @@ class DHController {
 
             let response = this.importService.packTrailData(trail);
 
-            if (reach === 'extended') {
+            if (reach === constants.TRAIL_REACH_PARAMETERS.extended) {
                 response = await this._extendResponse(response);
             }
 
@@ -173,8 +171,6 @@ class DHController {
                 }
             }
         }
-
-        console.log(`missing ${Object.keys(missingObjects).length} objects`);
 
         if (Object.keys(missingObjects).length > 0) {
             /*
