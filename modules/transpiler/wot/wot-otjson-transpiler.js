@@ -282,7 +282,7 @@ class WotOtJsonTranspiler {
             throw new Error('OT-JSON document cannot be empty');
         }
         if (!otjson.datasetHeader.transpilationInfo
-            || otjson.datasetHeader.transpilationInfo.transpilerType !== 'WOT') {
+            || otjson.datasetHeader.transpilationInfo.transpilationInfo.transpilerType !== 'WOT') {
             throw new Error('Unable to convert to requested standard. Original dataset was not imported in WOT format.');
         }
         const json = utilities.copyObject(otjson.datasetHeader.transpilationInfo.diff);

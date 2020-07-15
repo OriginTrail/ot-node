@@ -164,7 +164,7 @@ class EpcisOtJsonTranspiler {
         }
 
         if (!otjson.datasetHeader.transpilationInfo
-            || otjson.datasetHeader.transpilationInfo.transpilerType !== 'GS1-EPCIS') {
+            || otjson.datasetHeader.transpilationInfo.transpilationInfo.transpilerType !== 'GS1-EPCIS') {
             throw new Error('Unable to convert to requested standard. Original dataset was not imported in GS1-EPCIS format.');
         }
         const json = utilities.copyObject(otjson.datasetHeader.transpilationInfo.diff);
