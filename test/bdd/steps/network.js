@@ -169,13 +169,13 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Prom
     setTimeout(accept, waitTime * 1000);
 }));
 
-Given(/^DC waits for holding time*$/, { timeout: 120000 }, async function () {
+Given(/^DC waits for holding time*$/, { timeout: 180000 }, async function () {
     this.logger.log('DC waits for holding time');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
     const waitTime = Number(dc.options.nodeConfiguration.dc_holding_time_in_minutes) * 60 * 1000;
-    expect(waitTime, 'waiting time in BDD tests should be less then step timeout').to.be.lessThan(120000);
+    expect(waitTime, 'waiting time in BDD tests should be less then step timeout').to.be.lessThan(180000);
     await sleep.sleep(waitTime);
 });
 
@@ -441,7 +441,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
         .to.be.equal(calculatedDataSetId);
 });
 
-Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
+Given(/^I wait for replication[s] to finish$/, { timeout: 1800000 }, function () {
     this.logger.log('I wait for replication to finish');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);

@@ -77,3 +77,23 @@ Given(/^the (\d+)[st|nd|rd|th]+ node's spend all the (Ethers|Tokens)$/, async fu
         expect(await this.state.localBlockchain.tokenInstance.methods.balanceOf(nodeWallet).call()).to.equal('0');
     }
 });
+
+
+Given(/^I set the (.+) contract as (.+)$/, async function (contractName, newName) {
+    this.logger.log(`I set the ${contractName} contract as ${newName}`);
+    try {
+        await this.state.localBlockchain.moveContract(contractName, newName);
+    } catch (error) {
+        expect(false, error.message);
+    }
+});
+
+
+Given(/^I deploy a new (.+) contract$/, async function (contractName) {
+    this.logger.log(`I deploy a new  ${contractName} contract`);
+    try {
+        await this.state.localBlockchain.deployContract(contractName);
+    } catch (error) {
+        expect(false, error.message);
+    }
+});
