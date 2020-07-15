@@ -48,6 +48,8 @@ class Ethereum {
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
         this.logger.info('Selected blockchain: Ethereum');
+
+        this.initalized = false;
     }
 
     /**
@@ -182,6 +184,7 @@ class Ethereum {
         this.erc725IdentityContractAbi = JSON.parse(erc725IdentityAbiFile);
 
         this.contractsByName = {
+            HUB_CONTRACT: this.hubContract,
             HOLDING_CONTRACT: this.holdingContract,
             OLD_HOLDING_CONTRACT: this.oldHoldingContract, // TODO remove after successful migration
             PROFILE_CONTRACT: this.profileContract,
@@ -190,6 +193,18 @@ class Ethereum {
             MARKETPLACE_CONTRACT: this.marketplaceContract,
             REPLACEMENT_CONTRACT: this.replacementContract,
         };
+
+        this.logger.info('Smart contract instances initialized.');
+
+        if (!this.initalized) {
+            this.initalized = true;
+            this.subscribeToEventPermanentWithCallback([
+                'ContractsChanged',
+            ], async (eventData) => {
+                this.logger.notify('Contracts changed, refreshing information.');
+                await this.initialize();
+            });
+        }
     }
 
     /**
