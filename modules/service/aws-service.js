@@ -95,7 +95,7 @@ class AWSService {
      * @param stat
      * @param sizeLimit
      */
-    uploadFile(bucketName, absoluteFilePath, bucketPath, stat, sizeLimit = 1024 * 1024 * 0.1) {
+    uploadFile(bucketName, absoluteFilePath, bucketPath, stat, sizeLimit = 1024 * 1024 * 100) {
         return new Promise((resolve, reject) => {
             try {
                 const fileSizeInBytes = stat.size;
