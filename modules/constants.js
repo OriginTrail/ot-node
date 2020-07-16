@@ -124,7 +124,7 @@ exports.PROCESS_NAME = {
  *  Name of the process for grouping events for bugsnag
  */
 exports.TRAIL_REACH_PARAMETERS = {
-    extended: 'other',
+    extended: 'extended',
     narrow: 'narrow',
 };
 
