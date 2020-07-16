@@ -48,8 +48,8 @@ if (!argv.AWSBucketName) {
 }
 
 try {
-    if (fs.existsSync(argv.backupDirectory) && !isEmpty(argv.backupDirectory)) {
-        console.log('Backup directory is not empty. Removing the content...');
+    if (fs.existsSync(argv.backupDirectory)) {
+        console.log('Removing backup directory...');
         execSync(`rm -rf ${argv.backupDirectory}`);
     }
 
@@ -98,7 +98,7 @@ try {
             console.log('*****                                     *****');
             console.log('***********************************************');
 
-            if (fs.existsSync(argv.backupDirectory) && !isEmpty(argv.backupDirectory)) {
+            if (fs.existsSync(argv.backupDirectory)) {
                 execSync(`rm -rf ${argv.backupDirectory}`);
             }
         }).catch(async (err) => {
@@ -112,7 +112,7 @@ try {
             console.log('Please contact support for alternative instructions on uploading the backup of your node');
 
             await aws.emptyDirectory(argv.AWSBucketName, `${backupName}/${path.basename(backupTimestamp)}/`);
-            if (fs.existsSync(argv.backupDirectory) && !isEmpty(argv.backupDirectory)) {
+            if (fs.existsSync(argv.backupDirectory)) {
                 execSync(`rm -rf ${argv.backupDirectory}`);
             }
         });
