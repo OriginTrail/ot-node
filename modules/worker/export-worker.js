@@ -91,6 +91,6 @@ process.on('message', async (data) => {
         if (fs.existsSync(filePath)) {
             await Utilities.deleteDirectory(filePath);
         }
-        process.send({ error: `${error.message}\n${error.stack}` });
+        process.send({ error: `${error.message}` });
     }
 });
