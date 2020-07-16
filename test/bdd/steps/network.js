@@ -667,7 +667,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
-        await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
+        await this.state.localBlockchain.contracts.Holding.instance.methods.difficultyOverride().call();
 
     // TODO: Check how many actually was chosen.
     let chosenCount = 0;
