@@ -531,7 +531,7 @@ class LocalBlockchain {
 
     async createIdentity(wallet, walletKey, managementWallet) {
         const [, identityInstance] = await this._deployContract(
-            this.web3, this.contracts.Identity.artifact, this.contracts.Identity.artifact.data,
+            this.web3, this.contracts.Identity.artifact, this.contracts.Identity.data,
             [wallet, managementWallet], wallet,
         );
         return identityInstance;
