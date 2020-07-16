@@ -61,7 +61,7 @@ Scenario: Check that trail returns the expected objects
   And the last traversal should contain 6 objects with type "otObject.properties.objectType" and value "ObjectEvent"
   And the last traversal should contain 16 objects in total
 
-  @first
+  @trail
   Scenario: Check that extended trail returns the more objects than a narrow and a default trail
     Given the replication difficulty is 1
     And I setup 4 nodes

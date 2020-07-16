@@ -8,6 +8,7 @@ env:
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=third
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=fourth
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=fifth
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=trail
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber BDD_SECTION=docker
 
 cache:
@@ -41,6 +42,9 @@ script:
     fi
   - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "fourth" ) ]]; then
     travis_wait 50 npm run test:bdd -- --tags=@fourth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+    fi
+  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "trail" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "trail" ) ]]; then
+    travis_wait 50 npm run test:bdd -- --tags=@trail --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fifth" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
       npm test 2> $ARTIFACTS_DIR/mocha-logs.log;
