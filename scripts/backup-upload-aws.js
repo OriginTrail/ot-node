@@ -3,9 +3,6 @@ const AWSService = require('../modules/service/aws-service');
 const { execSync } = require('child_process');
 const path = require('path');
 const argv = require('minimist')(process.argv.slice(2));
-const { lstatSync, readdirSync } = require('fs');
-const { join } = require('path');
-
 
 function walkSync(currentDirPath, callback) {
     fs.readdirSync(currentDirPath).forEach((name) => {
@@ -17,10 +14,6 @@ function walkSync(currentDirPath, callback) {
             walkSync(filePath, callback);
         }
     });
-}
-
-function isEmpty(path) {
-    return fs.readdirSync(path).length === 0;
 }
 
 if (!argv.config) {
@@ -48,21 +41,12 @@ if (!argv.AWSBucketName) {
 }
 
 try {
-    if (fs.existsSync(argv.backupDirectory)) {
-        console.log('Removing backup directory...');
-        execSync(`rm -rf ${argv.backupDirectory}`);
-    }
-
     console.log('Starting backup process. This might take several minutes.');
     const output = execSync(`node ${__dirname}/backup.js --config=${argv.config} --configDir=${argv.configDir} --backup_directory=${argv.backupDirectory}`).toString();
     console.log(output);
     if (output.includes('Backup process complete')) {
-        const isDirectory = source => lstatSync(source).isDirectory();
-        const getDirectories = source =>
-            readdirSync(source).map(name => join(source, name)).filter(isDirectory);
-        const backupTimestamp = getDirectories(argv.backupDirectory).sort()[0];
+        const backupTimestamp = `${argv.backupDirectory}/${path.basename(/Creating (.*) directories.../g.exec(output)[1])}`;
         console.log(`Backup directory is ${path.basename(backupTimestamp)}`);
-
         const configFile = JSON.parse(fs.readFileSync(`${backupTimestamp}/.origintrail_noderc`));
         console.log('Removing private key from the config file...');
         delete configFile.node_private_key;
@@ -75,9 +59,10 @@ try {
         }
         fs.writeFileSync(`${backupTimestamp}/.origintrail_noderc`, JSON.stringify(configFile));
 
-        if (!fs.existsSync(`${argv.backupDirectory}/${backupName}`)) {
-            fs.mkdirSync(`${argv.backupDirectory}/${backupName}`);
+        if (fs.existsSync(`${argv.backupDirectory}/${backupName}`)) {
+            execSync(`rm -rf ${argv.backupDirectory}/${backupName}`);
         }
+        fs.mkdirSync(`${argv.backupDirectory}/${backupName}`);
         fs.renameSync(`${argv.backupDirectory}/${path.basename(backupTimestamp)}`, `${argv.backupDirectory}/${backupName}/${path.basename(backupTimestamp)}`);
         console.log('Files are ready for upload.');
 
@@ -98,8 +83,8 @@ try {
             console.log('*****                                     *****');
             console.log('***********************************************');
 
-            if (fs.existsSync(argv.backupDirectory)) {
-                execSync(`rm -rf ${argv.backupDirectory}`);
+            if (fs.existsSync(`${argv.backupDirectory}/${backupName}/${path.basename(backupTimestamp)}`)) {
+                execSync(`rm -rf ${argv.backupDirectory}/${backupName}/${path.basename(backupTimestamp)}`);
             }
         }).catch(async (err) => {
             console.log('***********************************************');
@@ -112,8 +97,8 @@ try {
             console.log('Please contact support for alternative instructions on uploading the backup of your node');
 
             await aws.emptyDirectory(argv.AWSBucketName, `${backupName}/${path.basename(backupTimestamp)}/`);
-            if (fs.existsSync(argv.backupDirectory)) {
-                execSync(`rm -rf ${argv.backupDirectory}`);
+            if (fs.existsSync(`${argv.backupDirectory}/${backupName}/${path.basename(backupTimestamp)}`)) {
+                execSync(`rm -rf ${argv.backupDirectory}/${backupName}/${path.basename(backupTimestamp)}`);
             }
         });
     }
