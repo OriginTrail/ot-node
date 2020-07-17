@@ -8,6 +8,7 @@ const EthWallet = require('ethereumjs-wallet');
 const assert = require('assert');
 
 const utilities = require('./utilities');
+const Utilities = require('../../../../modules/Utilities');
 
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
@@ -155,10 +156,13 @@ class LocalBlockchain {
         const litigationStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/LitigationStorage.sol'), 'utf8');
         const replacementSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Replacement.sol'), 'utf8');
 
+        this.contracts = {};
+
         let compileResult = solc.compile({ sources: { 'Hub.sol': hubSource } }, 1);
-        this.hubContractData = `0x${compileResult.contracts['Hub.sol:Hub'].bytecode}`;
-        this.hubContractAbi = JSON.parse(compileResult.contracts['Hub.sol:Hub'].interface);
-        this.hubContract = new this.web3.eth.Contract(this.hubContractAbi);
+        this.contracts.Hub = {};
+        this.contracts.Hub.data = `0x${compileResult.contracts['Hub.sol:Hub'].bytecode}`;
+        this.contracts.Hub.abi = JSON.parse(compileResult.contracts['Hub.sol:Hub'].interface);
+        this.contracts.Hub.artifact = new this.web3.eth.Contract(this.contracts.Hub.abi);
 
         compileResult = solc.compile({
             sources: {
@@ -181,174 +185,188 @@ class LocalBlockchain {
             },
         }, 1);
 
-        this.approvalContractData = `0x${compileResult.contracts['Approval.sol:Approval'].bytecode}`;
-        this.approvalContractAbi = JSON.parse(compileResult.contracts['Approval.sol:Approval'].interface);
-        this.approvalContract = new this.web3.eth.Contract(this.approvalContractAbi);
+        this.contracts.Approval = {};
+        this.contracts.Approval.data = `0x${compileResult.contracts['Approval.sol:Approval'].bytecode}`;
+        this.contracts.Approval.abi = JSON.parse(compileResult.contracts['Approval.sol:Approval'].interface);
+        this.contracts.Approval.artifact = new this.web3.eth.Contract(this.contracts.Approval.abi);
 
-        this.profileStorageContractData = `0x${compileResult.contracts['ProfileStorage.sol:ProfileStorage'].bytecode}`;
-        this.profileStorageContractAbi = JSON.parse(compileResult.contracts['ProfileStorage.sol:ProfileStorage'].interface);
-        this.profileStorageContract = new this.web3.eth.Contract(this.profileStorageContractAbi);
+        this.contracts.ProfileStorage = {};
+        this.contracts.ProfileStorage.data = `0x${compileResult.contracts['ProfileStorage.sol:ProfileStorage'].bytecode}`;
+        this.contracts.ProfileStorage.abi = JSON.parse(compileResult.contracts['ProfileStorage.sol:ProfileStorage'].interface);
+        this.contracts.ProfileStorage.artifact = new this.web3.eth.Contract(this.contracts.ProfileStorage.abi);
 
-        this.holdingStorageContractData = `0x${compileResult.contracts['HoldingStorage.sol:HoldingStorage'].bytecode}`;
-        this.holdingStorageContractAbi = JSON.parse(compileResult.contracts['HoldingStorage.sol:HoldingStorage'].interface);
-        this.holdingStorageContract = new this.web3.eth.Contract(this.holdingStorageContractAbi);
+        this.contracts.HoldingStorage = {};
+        this.contracts.HoldingStorage.data = `0x${compileResult.contracts['HoldingStorage.sol:HoldingStorage'].bytecode}`;
+        this.contracts.HoldingStorage.abi = JSON.parse(compileResult.contracts['HoldingStorage.sol:HoldingStorage'].interface);
+        this.contracts.HoldingStorage.artifact = new this.web3.eth.Contract(this.contracts.HoldingStorage.abi);
 
-        this.tokenContractData = `0x${compileResult.contracts['TracToken.sol:TracToken'].bytecode}`;
-        this.tokenContractAbi = JSON.parse(compileResult.contracts['TracToken.sol:TracToken'].interface);
-        this.tokenContract = new this.web3.eth.Contract(this.tokenContractAbi);
+        this.contracts.Token = {};
+        this.contracts.Token.data = `0x${compileResult.contracts['TracToken.sol:TracToken'].bytecode}`;
+        this.contracts.Token.abi = JSON.parse(compileResult.contracts['TracToken.sol:TracToken'].interface);
+        this.contracts.Token.artifact = new this.web3.eth.Contract(this.contracts.Token.abi);
 
-        this.readingContractData = `0x${compileResult.contracts['Reading.sol:Reading'].bytecode}`;
-        this.readingContractAbi = JSON.parse(compileResult.contracts['Reading.sol:Reading'].interface);
-        this.readingContract = new this.web3.eth.Contract(this.readingContractAbi);
+        this.contracts.Profile = {};
+        this.contracts.Profile.data = `0x${compileResult.contracts['Profile.sol:Profile'].bytecode}`;
+        this.contracts.Profile.abi = JSON.parse(compileResult.contracts['Profile.sol:Profile'].interface);
+        this.contracts.Profile.artifact = new this.web3.eth.Contract(this.contracts.Profile.abi);
 
-        this.profileContractData = `0x${compileResult.contracts['Profile.sol:Profile'].bytecode}`;
-        this.profileContractAbi = JSON.parse(compileResult.contracts['Profile.sol:Profile'].interface);
-        this.profileContract = new this.web3.eth.Contract(this.profileContractAbi);
+        this.contracts.Holding = {};
+        this.contracts.Holding.data = `0x${compileResult.contracts['Holding.sol:Holding'].bytecode}`;
+        this.contracts.Holding.abi = JSON.parse(compileResult.contracts['Holding.sol:Holding'].interface);
+        this.contracts.Holding.artifact = new this.web3.eth.Contract(this.contracts.Holding.abi);
 
-        this.holdingContractData = `0x${compileResult.contracts['Holding.sol:Holding'].bytecode}`;
-        this.holdingContractAbi = JSON.parse(compileResult.contracts['Holding.sol:Holding'].interface);
-        this.holdingContract = new this.web3.eth.Contract(this.holdingContractAbi);
+        this.contracts.CreditorHandler = {};
+        this.contracts.CreditorHandler.data = `0x${compileResult.contracts['CreditorHandler.sol:CreditorHandler'].bytecode}`;
+        this.contracts.CreditorHandler.abi = JSON.parse(compileResult.contracts['CreditorHandler.sol:CreditorHandler'].interface);
+        this.contracts.CreditorHandler.artifact = new this.web3.eth.Contract(this.contracts.CreditorHandler.abi);
 
-        this.creditorHandlerContractData = `0x${compileResult.contracts['CreditorHandler.sol:CreditorHandler'].bytecode}`;
-        this.creditorHandlerContractAbi = JSON.parse(compileResult.contracts['CreditorHandler.sol:CreditorHandler'].interface);
-        this.creditorHandlerContract = new this.web3.eth.Contract(this.creditorHandlerContractAbi);
+        this.contracts.Reading = {};
+        this.contracts.Reading.data = `0x${compileResult.contracts['Reading.sol:Reading'].bytecode}`;
+        this.contracts.Reading.abi = JSON.parse(compileResult.contracts['Reading.sol:Reading'].interface);
+        this.contracts.Reading.artifact = new this.web3.eth.Contract(this.contracts.Reading.abi);
 
-        this.identityContractData = `0x${compileResult.contracts['Identity.sol:Identity'].bytecode}`;
-        this.identityContractAbi = JSON.parse(compileResult.contracts['Identity.sol:Identity'].interface);
-        this.identityContract = new this.web3.eth.Contract(this.identityContractAbi);
+        this.contracts.LitigationStorage = {};
+        this.contracts.LitigationStorage.data = `0x${compileResult.contracts['LitigationStorage.sol:LitigationStorage'].bytecode}`;
+        this.contracts.LitigationStorage.abi = JSON.parse(compileResult.contracts['LitigationStorage.sol:LitigationStorage'].interface);
+        this.contracts.LitigationStorage.artifact = new this.web3.eth.Contract(this.contracts.LitigationStorage.abi);
 
-        this.litigationStorageContractData = `0x${compileResult.contracts['LitigationStorage.sol:LitigationStorage'].bytecode}`;
-        this.litigationStorageContractAbi = JSON.parse(compileResult.contracts['LitigationStorage.sol:LitigationStorage'].interface);
-        this.litigationStorageContract = new this.web3.eth.Contract(this.litigationStorageContractAbi);
+        this.contracts.Litigation = {};
+        this.contracts.Litigation.data = `0x${compileResult.contracts['Litigation.sol:Litigation'].bytecode}`;
+        this.contracts.Litigation.abi = JSON.parse(compileResult.contracts['Litigation.sol:Litigation'].interface);
+        this.contracts.Litigation.artifact = new this.web3.eth.Contract(this.contracts.Litigation.abi);
 
-        this.litigationContractData = `0x${compileResult.contracts['Litigation.sol:Litigation'].bytecode}`;
-        this.litigationContractAbi = JSON.parse(compileResult.contracts['Litigation.sol:Litigation'].interface);
-        this.litigationContract = new this.web3.eth.Contract(this.litigationContractAbi);
+        this.contracts.Replacement = {};
+        this.contracts.Replacement.data = `0x${compileResult.contracts['Replacement.sol:Replacement'].bytecode}`;
+        this.contracts.Replacement.abi = JSON.parse(compileResult.contracts['Replacement.sol:Replacement'].interface);
+        this.contracts.Replacement.artifact = new this.web3.eth.Contract(this.contracts.Replacement.abi);
 
-        this.replacementContractData = `0x${compileResult.contracts['Replacement.sol:Replacement'].bytecode}`;
-        this.replacementContractAbi = JSON.parse(compileResult.contracts['Replacement.sol:Replacement'].interface);
-        this.replacementContract = new this.web3.eth.Contract(this.replacementContractAbi);
+        this.contracts.Identity = {};
+        this.contracts.Identity.data = `0x${compileResult.contracts['Identity.sol:Identity'].bytecode}`;
+        this.contracts.Identity.abi = JSON.parse(compileResult.contracts['Identity.sol:Identity'].interface);
+        this.contracts.Identity.artifact = new this.web3.eth.Contract(this.contracts.Identity.abi);
     }
 
     async deployContracts() {
         const accounts = await this.web3.eth.getAccounts();
         this.logger.log('Deploying hubContract');
-        [this.hubDeploymentReceipt, this.hubInstance] = await this.deployContract(
-            this.web3, this.hubContract, this.hubContractData,
+        [this.contracts.Hub.deploymentReceipt, this.contracts.Hub.instance] = await this._deployContract(
+            this.web3, this.contracts.Hub.artifact, this.contracts.Hub.data,
             [], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Owner', accounts[7])
+        await this.contracts.Hub.instance.methods.setContractAddress('Owner', accounts[7])
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
         this.logger.log('Deploying approvalContract');
-        [this.approvalDeploymentReceipt, this.approvalInstance] = await this.deployContract(
-            this.web3, this.approvalContract, this.approvalContractData,
+        [this.contracts.Approval.deploymentReceipt, this.contracts.Approval.instance] = await this._deployContract(
+            this.web3, this.contracts.Approval.artifact, this.contracts.Approval.data,
             [], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Approval', this.approvalInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('Approval', this.contracts.Approval.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
         this.logger.log('Deploying profileStorageContract');
-        [this.profileStorageDeploymentReceipt, this.profileStorageInstance] = await this.deployContract(
-            this.web3, this.profileStorageContract, this.profileStorageContractData,
-            [this.hubInstance._address], accounts[7],
+        [this.contracts.ProfileStorage.deploymentReceipt, this.contracts.ProfileStorage.instance] = await this._deployContract(
+            this.web3, this.contracts.ProfileStorage.artifact, this.contracts.ProfileStorage.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('ProfileStorage', this.profileStorageInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('ProfileStorage', this.contracts.ProfileStorage.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
+
 
         this.logger.log('Deploying holdingStorageContract');
-        [this.holdingStorageDeploymentReceipt, this.holdingStorageInstance] = await this.deployContract(
-            this.web3, this.holdingStorageContract, this.holdingStorageContractData,
-            [this.hubInstance._address], accounts[7],
+        [this.contracts.HoldingStorage.deploymentReceipt, this.contracts.HoldingStorage.instance] = await this._deployContract(
+            this.web3, this.contracts.HoldingStorage.artifact, this.contracts.HoldingStorage.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('HoldingStorage', this.holdingStorageInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('HoldingStorage', this.contracts.HoldingStorage.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying tokenContract');
-        [this.tokenDeploymentReceipt, this.tokenInstance] = await this.deployContract(
-            this.web3, this.tokenContract, this.tokenContractData,
+        this.logger.log('Deploying Token contract');
+        [this.contracts.Token.deploymentReceipt, this.contracts.Token.instance] = await this._deployContract(
+            this.web3, this.contracts.Token.artifact, this.contracts.Token.data,
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Token', this.tokenInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('Token', this.contracts.Token.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying profileContract');
-        [this.profileDeploymentReceipt, this.profileInstance] = await this.deployContract(
-            this.web3, this.profileContract, this.profileContractData,
-            [this.hubInstance._address], accounts[7],
+        this.logger.log('Deploying Profile contract');
+        [this.contracts.Profile.deploymentReceipt, this.contracts.Profile.instance] = await this._deployContract(
+            this.web3, this.contracts.Profile.artifact, this.contracts.Profile.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Profile', this.profileInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('Profile', this.contracts.Profile.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying holdingContract');
-        [this.holdingDeploymentReceipt, this.holdingInstance] = await this.deployContract(
-            this.web3, this.holdingContract, this.holdingContractData,
-            [this.hubInstance._address], accounts[7],
+        this.logger.log('Deploying Holding contract');
+        [this.contracts.Holding.deploymentReceipt, this.contracts.Holding.instance] = await this._deployContract(
+            this.web3, this.contracts.Holding.artifact, this.contracts.Holding.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Holding', this.holdingInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('Holding', this.contracts.Holding.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying creditorHandlerContract');
-        [this.creditorHandlerDeploymentReceipt, this.creditorHandlerInstance] = await this.deployContract(
-            this.web3, this.creditorHandlerContract, this.creditorHandlerContractData,
-            [this.hubInstance._address], accounts[7],
+        this.logger.log('Deploying CreditorHandler contract');
+        [this.contracts.CreditorHandler.deploymentReceipt, this.contracts.CreditorHandler.instance] = await this._deployContract(
+            this.web3, this.contracts.CreditorHandler.artifact, this.contracts.CreditorHandler.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('CreditorHandler', this.creditorHandlerInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('CreditorHandler', this.contracts.CreditorHandler.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying readingContract');
-        [this.readingDeploymentReceipt, this.readingInstance] = await this.deployContract(
-            this.web3, this.readingContract, this.readingContractData,
-            [this.hubInstance._address], accounts[7],
+
+        this.logger.log('Deploying Reading contract');
+        [this.contracts.Reading.deploymentReceipt, this.contracts.Reading.instance] = await this._deployContract(
+            this.web3, this.contracts.Reading.artifact, this.contracts.Reading.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Reading', this.readingInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('Reading', this.contracts.Reading.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying litigationStorageContract');
-        [this.litigationStorageDeploymentReceipt, this.litigationStorageInstance] = await this.deployContract(
-            this.web3, this.litigationStorageContract, this.litigationStorageContractData,
-            [this.hubInstance._address], accounts[7],
+        this.logger.log('Deploying LitigationStorage contract');
+        [this.contracts.LitigationStorage.deploymentReceipt, this.contracts.LitigationStorage.instance] = await this._deployContract(
+            this.web3, this.contracts.LitigationStorage.artifact, this.contracts.LitigationStorage.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('LitigationStorage', this.litigationStorageInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('LitigationStorage', this.contracts.LitigationStorage.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying litigationContract');
-        [this.litigationDeploymentReceipt, this.litigationInstance] = await this.deployContract(
-            this.web3, this.litigationContract, this.litigationContractData,
-            [this.hubInstance._address], accounts[7],
+        this.logger.log('Deploying Litigation contract');
+        [this.contracts.Litigation.deploymentReceipt, this.contracts.Litigation.instance] = await this._deployContract(
+            this.web3, this.contracts.Litigation.artifact, this.contracts.Litigation.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Litigation', this.litigationInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('Litigation', this.contracts.Litigation.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        this.logger.log('Deploying replacementContract');
-        [this.replacementDeploymentReceipt, this.replacementInstance] = await this.deployContract(
-            this.web3, this.replacementContract, this.replacementContractData,
-            [this.hubInstance._address], accounts[7],
+        this.logger.log('Deploying Replacement contract');
+        [this.contracts.Replacement.deploymentReceipt, this.contracts.Replacement.instance] = await this._deployContract(
+            this.web3, this.contracts.Replacement.artifact, this.contracts.Replacement.data,
+            [this.contracts.Hub.instance._address], accounts[7],
         );
 
-        await this.hubInstance.methods.setContractAddress('Replacement', this.replacementInstance._address)
+        await this.contracts.Hub.instance.methods.setContractAddress('Replacement', this.contracts.Replacement.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -360,18 +378,18 @@ class LocalBlockchain {
             amounts.push(amountToMint);
             recipients.push(accounts[i]);
         }
-        await this.tokenInstance.methods.mintMany(recipients, amounts)
+        await this.contracts.Token.instance.methods.mintMany(recipients, amounts)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
-        await this.tokenInstance.methods.finishMinting()
+        await this.contracts.Token.instance.methods.finishMinting()
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
         this.initialized = true;
     }
 
-    async deployContract(
+    async _deployContract(
         web3,
         contract,
         contractData,
@@ -401,40 +419,102 @@ class LocalBlockchain {
         });
     }
 
+    async _getConstructorArguments(contractName) {
+        const accounts = await this.web3.eth.getAccounts();
+
+        switch (contractName) {
+        case 'Hub':
+        case 'Approval':
+            return [];
+        case 'Token':
+            return [accounts[7], accounts[8], accounts[9]];
+        default:
+            return [this.contracts.Hub.instance._address];
+        }
+    }
+
+
+    async deployContract(contractName) {
+        const contract = this.contracts[contractName.toLowerCase()];
+        if (!contract) {
+            throw new Error(`Required artifacts not found for the ${contractName} contract`);
+        }
+
+        const accounts = await this.web3.eth.getAccounts();
+
+        this.logger.log(`Deploying new ${contractName} contract`);
+        const [deploymentReceipt, instance] = await this._deployContract(
+            this.web3,
+            contract.artifact,
+            contract.data,
+            await this._getConstructorArguments(contractName.toLowerCase()),
+            accounts[7],
+        );
+
+        await this.contracts.Hub.instance.methods.setContractAddress(
+            contractName,
+            instance._address,
+        )
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        contract.deploymentReceipt = deploymentReceipt;
+        contract.instance = instance;
+    }
+
+
+    async moveContract(contractName, newName) {
+        const contract = this.contracts[contractName];
+        if (!contract) {
+            throw new Error(`Required artifacts not found for the ${contractName} contract.`);
+        }
+
+        const accounts = await this.web3.eth.getAccounts();
+
+        await this.contracts.Hub.instance.methods.setContractAddress(
+            newName,
+            contract.instance._address,
+        )
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        this.contracts[newName] = Utilities.copyObject(contract);
+    }
+
     get hubContractAddress() {
-        return this.hubInstance._address;
+        return this.contracts.Hub.instance._address;
     }
 
     get approvalContractAddress() {
-        return this.approvalInstance._address;
+        return this.contracts.Approval.instance._address;
     }
 
     get profileStorageContractAddress() {
-        return this.profileStorageInstance._address;
+        return this.contracts.ProfileStorage.instance._address;
     }
 
     get holdingStorageContractAddress() {
-        return this.holdingStorageInstance._address;
+        return this.contracts.HoldingStorage.instance._address;
     }
 
     get tokenContractAddress() {
-        return this.tokenInstance._address;
+        return this.contracts.Token.instance._address;
     }
 
     get profileContractAddress() {
-        return this.profileInstance._address;
+        return this.contracts.Profile.instance._address;
     }
 
     get holdingContractAddress() {
-        return this.holdingInstance._address;
+        return this.contracts.Holding.instance._address;
     }
 
     get readingContractAddress() {
-        return this.readingInstance._address;
+        return this.contracts.Reading.instance._address;
     }
 
     get litigationContractAddress() {
-        return this.litigationInstance._address;
+        return this.contracts.Litigation.instance._address;
     }
 
     get isInitialized() {
@@ -450,8 +530,8 @@ class LocalBlockchain {
     }
 
     async createIdentity(wallet, walletKey, managementWallet) {
-        const [, identityInstance] = await this.deployContract(
-            this.web3, this.identityContract, this.identityContractData,
+        const [, identityInstance] = await this._deployContract(
+            this.web3, this.contracts.Identity.artifact, this.contracts.Identity.data,
             [wallet, managementWallet], wallet,
         );
         return identityInstance;

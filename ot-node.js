@@ -536,12 +536,6 @@ class OTNode {
         await approvalService.initialize();
 
         this.listenBlockchainEvents(blockchain);
-        blockchain.subscribeToEventPermanentWithCallback([
-            'NodeApproved',
-            'NodeRemoved',
-        ], (eventData) => {
-            approvalService.handleApprovalEvent(eventData);
-        });
 
         const restApiController = container.resolve('restApiController');
         try {
@@ -566,6 +560,7 @@ class OTNode {
         setInterval(async () => {
             if (!working && Date.now() > deadline) {
                 working = true;
+                await blockchain.getAllPastEvents('HUB_CONTRACT');
                 await blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 await blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 await blockchain.getAllPastEvents('APPROVAL_CONTRACT');
