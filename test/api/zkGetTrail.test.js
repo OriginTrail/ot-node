@@ -132,7 +132,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
                     connectionTypes: null,
                 });
 
-            const myTrail = await importService.packTrailData(trail);
+            const myTrail = importService.packTrailData(trail);
 
             switch (path.basename(xmlFile.args[0])) {
             // eslint-disable-next-line no-case-declarations

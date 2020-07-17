@@ -1,5 +1,6 @@
 const Utilities = require('../Utilities');
 const Models = require('../../models');
+const constants = require('../constants');
 
 /**
  * Encapsulates DH related methods
@@ -9,6 +10,8 @@ class DHController {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
+        this.graphStorage = ctx.graphStorage;
+        this.importService = ctx.importService;
     }
 
     isParameterProvided(request, response, parameter_name) {
@@ -84,6 +87,110 @@ class DHController {
                 `whitelisted for ot-object ${ot_object_id} from dataset_id ${dataset_id}!`,
             status: 'SUCCESS',
         });
+    }
+
+    async getTrail(req, res) {
+        if (req.body === undefined ||
+            req.body.identifier_types === undefined ||
+            req.body.identifier_values === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        this.logger.notify(`Trail request body ${JSON.stringify(req.body, null, 4)}`);
+
+        const { identifier_types, identifier_values } = req.body;
+
+        if (Utilities.arrayze(identifier_types).length !==
+            Utilities.arrayze(identifier_values).length) {
+            res.status(400);
+            res.send({
+                message: 'Identifier array length mismatch',
+            });
+            return;
+        }
+
+        const depth = req.body.depth === undefined ?
+            this.graphStorage.getDatabaseInfo().max_path_length :
+            parseInt(req.body.depth, 10);
+
+        const reach = req.body.reach === undefined ?
+            constants.TRAIL_REACH_PARAMETERS.narrow : req.body.reach.toLowerCase();
+
+        const { connection_types } = req.body;
+
+        const keys = [];
+
+        const typesArray = Utilities.arrayze(identifier_types);
+        const valuesArray = Utilities.arrayze(identifier_values);
+
+        for (let i = 0; i < typesArray.length; i += 1) {
+            keys.push(Utilities.keyFrom(typesArray[i], valuesArray[i]));
+        }
+
+        try {
+            const trail =
+                await this.graphStorage.findTrail({
+                    identifierKeys: keys,
+                    depth,
+                    connectionTypes: connection_types,
+                });
+
+            let response = this.importService.packTrailData(trail);
+
+            if (reach === constants.TRAIL_REACH_PARAMETERS.extended) {
+                response = await this._extendResponse(response);
+            }
+
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            res.status(400);
+            res.send(e);
+        }
+    }
+
+    async _extendResponse(response) {
+        const missingObjects = {};
+        for (const trailElement of response) {
+            const object = trailElement.otObject;
+
+            const elementIsMissing =
+                (array, element) => !array.find(e => e.otObject['@id'] === element['@id']);
+
+            for (const relation of object.relations) {
+                if (elementIsMissing(response, relation.linkedObject)) {
+                    if (!missingObjects[relation.linkedObject['@id']]) {
+                        missingObjects[relation.linkedObject['@id']] = trailElement.datasets;
+                    } else {
+                        missingObjects[relation.linkedObject['@id']] =
+                            [...new Set(missingObjects[relation.linkedObject['@id']], trailElement.datasets)];
+                    }
+                }
+            }
+        }
+
+        if (Object.keys(missingObjects).length > 0) {
+            /*
+              missingObjects: {
+                id1: [  dataset 1,  dataset 2, ... ],
+                id2: [  dataset 2,  dataset x, ... ],
+                ...
+              }
+             */
+
+            const missingIds = Object.keys(missingObjects);
+            const missingElements =
+                await this.graphStorage.findTrailExtension(missingIds, missingObjects);
+
+            const trailExtension = this.importService.packTrailData(missingElements);
+
+            return response.concat(trailExtension);
+        }
     }
 }
 
