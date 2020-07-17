@@ -510,7 +510,7 @@ Then(/^the last two datasets should have the same hashes$/, async function () {
         .to.be.equal(this.state.secondLastImport.data.dataset_id);
 });
 
-Given(/^(DC|DV|DV2) waits for public key request$/, { timeout: 1200000 }, async function (targetNode) {
+Given(/^(DC|DV|DV2) waits for public key request$/, { timeout: 60000 }, async function (targetNode) {
     this.logger.log(`${targetNode} waits for public key request.`);
     expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
