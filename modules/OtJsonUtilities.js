@@ -36,7 +36,7 @@ class OtJsonUtilities {
     static _getDatasetVersion(dataset) {
         if (!dataset || !dataset.datasetHeader ||
             !dataset.datasetHeader.OTJSONVersion) {
-            return '1.1';
+            return '1.2';
             // throw new Error('Could not determine dataset ot-json version!');
         }
         return dataset.datasetHeader.OTJSONVersion;
