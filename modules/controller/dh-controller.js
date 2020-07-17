@@ -101,8 +101,6 @@ class DHController {
             return;
         }
 
-        this.logger.notify(`Trail request body ${JSON.stringify(req.body, null, 4)}`);
-
         const { identifier_types, identifier_values } = req.body;
 
         if (Utilities.arrayze(identifier_types).length !==
