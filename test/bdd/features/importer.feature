@@ -61,7 +61,7 @@ Feature: Test basic importer features
     Given DC node makes local query with previous json query
     Then the last two queries should return the same object
 
-  @second
+  @first
   Scenario: Check that simple trail returns objects from two datasets which are connected via connectors
     Given I setup 1 node
     And I start the nodes
