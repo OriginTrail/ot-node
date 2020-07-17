@@ -510,6 +510,23 @@ Then(/^the last two datasets should have the same hashes$/, async function () {
         .to.be.equal(this.state.secondLastImport.data.dataset_id);
 });
 
+Given(/^(DC|DV|DV2) waits for public key request$/, { timeout: 1200000 }, async function (targetNode) {
+    this.logger.log(`${targetNode} waits for public key request.`);
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const target = this.state[targetNode.toLowerCase()];
+
+    const promise = new Promise((acc) => {
+        target.once('public-key-request', async () => {
+            acc();
+        });
+    });
+
+    return promise;
+});
+
 Given(/^I wait for replication[s] to finish$/, { timeout: 1800000 }, function () {
     this.logger.log('I wait for replication to finish');
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
@@ -1032,6 +1049,15 @@ Given(/^API calls will not be authorized/, { timeout: 180000 }, function (done) 
     Promise.all(promises).then(() => done());
 });
 
+Given(/^I override configuration for (\d+)[st|nd|rd|th]+ node*$/, { timeout: 120000 }, function (nodeIndex, configuration, done) {
+    const configurationOverride = unpackRawTable(configuration);
+    const node = this.state.nodes[nodeIndex - 1];
+    node.overrideConfiguration(configurationOverride);
+    this.logger.log(`Configuration updated for node ${node.id}`);
+    done();
+});
+
+
 Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function (configuration, done) {
     const configurationOverride = unpackRawTable(configuration);
 
@@ -1039,6 +1065,13 @@ Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function
         node.overrideConfiguration(configurationOverride);
         this.logger.log(`Configuration updated for node ${node.id}`);
     }
+    done();
+});
+
+
+Given(/^I setup (\d+)[st|nd|rd|th]+ node kademlia identity*$/, { timeout: 120000 }, function (nodeIndex, configuration, done) {
+    configuration = unpackRawTable(configuration);
+    fs.writeFileSync(`${this.state.nodes[nodeIndex-1].options.configDir}/identity.json`, JSON.stringify(configuration));
     done();
 });
 
