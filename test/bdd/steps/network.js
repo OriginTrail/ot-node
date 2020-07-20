@@ -1071,7 +1071,7 @@ Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function
 
 Given(/^I setup (\d+)[st|nd|rd|th]+ node kademlia identity*$/, { timeout: 120000 }, function (nodeIndex, configuration, done) {
     configuration = unpackRawTable(configuration);
-    fs.writeFileSync(`${this.state.nodes[nodeIndex-1].options.configDir}/identity.json`, JSON.stringify(configuration));
+    fs.writeFileSync(`${this.state.nodes[nodeIndex - 1].options.configDir}/identity.json`, JSON.stringify(configuration));
     done();
 });
 
