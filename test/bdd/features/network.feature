@@ -17,7 +17,7 @@ Feature: Test basic network features
     Then the last root hash should be the same as one manually calculated
     Then the last import should be the same on all nodes that replicated data
 
-  @second
+  @first
   Scenario: Test failing replication DC -> DH
     Given the replication difficulty is 0
     And I setup 2 nodes
