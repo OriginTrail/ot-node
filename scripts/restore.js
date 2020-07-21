@@ -2,6 +2,7 @@ const mkdirp = require('mkdirp');
 const fs = require('fs');
 const argv = require('minimist')(process.argv.slice(2));
 const { exec } = require('child_process');
+const path = require('path');
 require('dotenv').config();
 
 if (!process.env.NODE_ENV) {
@@ -109,8 +110,18 @@ if (!configFile.database.provider) {
 if (!configFile.database.username) {
     configFile.database.username = defaultConfig.database.username;
 }
-if (configFile.database.password === undefined) {
-    configFile.database.password = defaultConfig.database.password;
+
+if (configFile.database.password_file_name) {
+// eslint-disable-next-line max-len
+    const databasePasswordFilePath = path.join(configDirectory, configFile.database.password_file_name);
+    if (fs.existsSync(databasePasswordFilePath)) {
+        console.log('Using existing graph database password.');
+        configFile.database.password = fs.readFileSync(databasePasswordFilePath).toString();
+    } else {
+        console.log('================================================================');
+        console.log('          Using default database password for access            ');
+        console.log('================================================================');
+    }
 }
 
 switch (configFile.database.provider) {
