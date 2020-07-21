@@ -198,6 +198,48 @@ class ArangoJS {
         return result;
     }
 
+    /**
+     * Finds objects based on ids and datasets which contain them
+     *
+     * @param {Array} ids - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param {object} datasets - Object which maps which datasets contain the requested object,
+     *                              in the following format { id: [datasets] }
+     * @return {Promise}
+     */
+    async findTrailExtension(ids, datasets) {
+        const queryParams = {
+            ids,
+            datasets,
+        };
+        const queryString = `LET trailEntities = (
+                                FOR entity IN ot_vertices
+                                    FILTER entity.uid IN @ids
+                                    AND LENGTH(INTERSECTION(entity.datasets, @datasets[entity.uid])) > 0
+                                    RETURN entity
+                            )
+                            
+                            FOR trailObject in trailEntities
+                                FILTER trailObject != null
+                                LET objectsRelated = (
+                                    FOR v, e in 1..1 OUTBOUND trailObject ot_edges
+                                        FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                        AND e.datasets != null
+                                        AND v.datasets != null
+                                        AND LENGTH(INTERSECTION(e.datasets, v.datasets, trailObject.datasets)) > 0
+                                        RETURN  {
+                                        "vertex": v,
+                                        "edge": e
+                                        }
+                                    )
+                                RETURN {
+                                    "rootObject": trailObject,
+                                    "relatedObjects": objectsRelated
+                                }`;
+
+        const result = await this.runQuery(queryString, queryParams);
+        return result;
+    }
+
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices

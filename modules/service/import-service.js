@@ -614,15 +614,13 @@ class ImportService {
         return proofs;
     }
 
-    async packTrailData(data) {
-        const promises = [];
+    packTrailData(data) {
+        const reconstructedObjects = [];
         for (const object of data) {
             const { rootObject, relatedObjects } = object;
 
-            promises.push(this._createObjectGraph(rootObject, relatedObjects));
+            reconstructedObjects.push(this._createObjectGraph(rootObject, relatedObjects));
         }
-
-        const reconstructedObjects = await Promise.all(promises);
 
         const otObjects = [];
 
@@ -637,7 +635,7 @@ class ImportService {
         return otObjects;
     }
 
-    async _createObjectGraph(graphObject, relatedObjects) {
+    _createObjectGraph(graphObject, relatedObjects) {
         const otObject = this._constructOtObject(relatedObjects);
         otObject['@id'] = graphObject.uid;
         if (graphObject.vertexType === constants.vertexType.entityObject) {
@@ -720,7 +718,7 @@ class ImportService {
             }
         }
 
-        const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);
+        const otObject = this._createObjectGraph(result.rootObject, result.relatedObjects);
 
         return otObject;
     }
@@ -740,7 +738,7 @@ class ImportService {
             throw Error(`Unable to find related objects for object_id: ${otObjectId} and dataset_id: ${datasetId}`);
         }
 
-        const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);
+        const otObject = this._createObjectGraph(result.rootObject, result.relatedObjects);
 
         return otObject;
     }

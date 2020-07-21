@@ -25,11 +25,12 @@ Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
     ).to.be.equal(true);
 
     let currentDifficulty =
-        await this.state.localBlockchain.holdingStorageInstance.methods.difficultyOverride().call();
+        await this.state.localBlockchain.contracts.HoldingStorage.instance.methods
+            .difficultyOverride().call();
 
     if (currentDifficulty !== difficulty.toString()) {
         this.logger.log(`Changing difficulty modifier to ${difficulty}.`);
-        await this.state.localBlockchain.holdingStorageInstance.methods
+        await this.state.localBlockchain.contracts.HoldingStorage.instance.methods
             .setDifficultyOverride(difficulty).send({
                 // TODO: Add access to original wallet.
                 from: (await this.state.localBlockchain.web3.eth.getAccounts())[7],
@@ -37,7 +38,8 @@ Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
             }).on('error', (error) => { throw error; });
 
         currentDifficulty = await
-        this.state.localBlockchain.holdingStorageInstance.methods.difficultyOverride().call();
+        this.state.localBlockchain.contracts.HoldingStorage.instance.methods
+            .difficultyOverride().call();
 
         expect(currentDifficulty).to.be.equal(difficulty.toString());
     }
@@ -69,11 +71,33 @@ Given(/^the (\d+)[st|nd|rd|th]+ node's spend all the (Ethers|Tokens)$/, async fu
         expect(await this.state.localBlockchain.getBalanceInEthers(nodeWallet)).to.equal('0');
     } else if (currencyType === 'Tokens') {
         const balance =
-            await this.state.localBlockchain.tokenInstance.methods.balanceOf(nodeWallet).call();
+            await this.state.localBlockchain.contracts.Token.instance.methods
+                .balanceOf(nodeWallet).call();
 
-        await this.state.localBlockchain.tokenInstance.methods
+        await this.state.localBlockchain.contracts.Token.instance.methods
             .transfer(targetWallet.address, balance)
             .send({ from: nodeWallet, gas: 3000000 });
-        expect(await this.state.localBlockchain.tokenInstance.methods.balanceOf(nodeWallet).call()).to.equal('0');
+        expect(await this.state.localBlockchain.contracts.Token.instance.methods
+            .balanceOf(nodeWallet).call()).to.equal('0');
+    }
+});
+
+
+Given(/^I set the (.+) contract as (.+)$/, async function (contractName, newName) {
+    this.logger.log(`I set the ${contractName} contract as ${newName}`);
+    try {
+        await this.state.localBlockchain.moveContract(contractName, newName);
+    } catch (error) {
+        expect(false, error.message);
+    }
+});
+
+
+Given(/^I deploy a new (.+) contract$/, async function (contractName) {
+    this.logger.log(`I deploy a new  ${contractName} contract`);
+    try {
+        await this.state.localBlockchain.deployContract(contractName);
+    } catch (error) {
+        expect(false, error.message);
     }
 });

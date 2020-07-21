@@ -120,6 +120,16 @@ exports.PROCESS_NAME = {
 
 /**
  *
+ * @constant {integer} PROCESS_NAME -
+ *  Name of the process for grouping events for bugsnag
+ */
+exports.TRAIL_REACH_PARAMETERS = {
+    extended: 'extended',
+    narrow: 'narrow',
+};
+
+/**
+ *
  * @constant {string} PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE -
  * visibility option for storing only attribute value to permissioned data
  */
