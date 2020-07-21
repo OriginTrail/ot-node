@@ -8,12 +8,11 @@ class GraphStorage {
      * @param logger
      * @param selectedDatabase Selected graph database
      */
-    constructor(selectedDatabase, logger, notifyError) {
+    constructor(selectedDatabase, logger) {
         this.logger = logger;
         this.selectedDatabase = selectedDatabase;
         this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
             'Transformation', 'Observation', 'Ownership'];
-        this.notifyError = notifyError;
     }
 
     /**
@@ -72,6 +71,28 @@ class GraphStorage {
                 reject(Error('Not connected to graph database.'));
             } else {
                 this.db.findTrail(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Finds objects based on ids and datasets which contain them
+     *
+     * @param {Array} ids - Encrypted color (0=RED,1=GREEN,2=BLUE)
+     * @param {object} datasets - Object which maps which datasets contain the requested object,
+     *                              in the following format { id: [datasets] }
+     * @return {Promise}
+     */
+    findTrailExtension(ids, datasets) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.findTrailExtension(ids, datasets).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

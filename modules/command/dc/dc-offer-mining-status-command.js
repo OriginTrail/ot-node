@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -10,6 +11,7 @@ class DcOfferMiningStatusCommand extends Command {
         this.logger = ctx.logger;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -97,6 +99,19 @@ class DcOfferMiningStatusCommand extends Command {
         Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                offerId: offer.offer_id,
+                tokenAmountPerHolder: offer.token_amount_per_holder,
+                litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
+                datasetId: offer.data_set_id,
+                holdingTimeInMinutes: offer.holding_time_in_minutes,
+            },
+            constants.PROCESS_NAME.offerHandling,
+        );
+
 
         await this.replicationService.cleanup(offer.id);
         return Command.empty();

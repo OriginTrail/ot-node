@@ -3,12 +3,6 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @third
-  Scenario: Start network with 5 nodes and check do they see each other
-    Given I setup 5 nodes
-    And I start the nodes
-    Then all nodes should be aware of each other
-
   @fourth
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
@@ -24,6 +18,22 @@ Feature: Test basic network features
     Then the last import should be the same on all nodes that replicated data
 
   @first
+  Scenario: Test failing replication DC -> DH
+    Given the replication difficulty is 0
+    And I setup 2 nodes
+    And I override configuration for all nodes
+      | dc_choose_time | 60000 |
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Then DC's last import's hash should be the same as one manually calculated
+    Given DC initiates the replication for last imported dataset
+    And I wait for DC to fail to finalize last offer
+    Given I wait for 5 seconds
+    Then Last replication should fail
+
+  @skip
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -48,7 +58,7 @@ Feature: Test basic network features
     And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
 
-  @second
+  @skip
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
     And I setup 3 node
@@ -72,7 +82,7 @@ Feature: Test basic network features
     And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
 
-  @third
+  @skip
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
     And I setup 3 node

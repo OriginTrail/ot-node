@@ -9,7 +9,6 @@ class DcFinalizeImport extends Command {
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
-        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -51,7 +50,112 @@ class DcFinalizeImport extends Command {
                 data_hash,
             }).catch(async (error) => {
                 this.logger.error(error);
-                this.notifyError(error);
+                const handler = await Models.handler_ids.findOne({
+                    where: { handler_id },
+                });
+                const data = JSON.parse(handler.data);
+                if (data && data.readExport) {
+                    data.import_status = 'FAILED';
+                    handler.status = data.export_status === 'PENDING' ? 'PENDING' : 'FAILED';
+                    handler.data = JSON.stringify(data);
+
+                    await Models.handler_ids.update(
+                        {
+                            data: handler.data,
+                            status: handler.status,
+                        },
+                        {
+                            where: {
+                                handler_id,
+                            },
+                        },
+                    );
+                } else {
+                    await Models.handler_ids.update(
+                        {
+                            status: 'FAILED',
+                            data: JSON.stringify({
+                                error,
+                            }),
+                        },
+                        {
+                            where: {
+                                handler_id,
+                            },
+                        },
+                    );
+                }
+                this.remoteControl.importFailed(error);
+            });
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+            const data = JSON.parse(handler.data);
+            if (data && data.readExport) {
+                data.import_status = 'COMPLETED';
+                data.root_hash = root_hash;
+                data.data_hash = data_hash;
+                handler.status = data.export_status;
+                handler.data = JSON.stringify(data);
+
+                await Models.handler_ids.update(
+                    {
+                        data: handler.data,
+                        status: handler.status,
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+            } else {
+                await Models.handler_ids.update(
+                    {
+                        status: 'COMPLETED',
+                        data: JSON.stringify({
+                            dataset_id: data_set_id,
+                            import_time: import_timestamp.valueOf(),
+                            otjson_size_in_bytes,
+                            root_hash,
+                            data_hash,
+                        }),
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+            }
+
+            this.logger.info('Import complete');
+            this.logger.info(`Root hash: ${root_hash}`);
+            this.logger.info(`Data set ID: ${data_set_id}`);
+            this.remoteControl.importSucceeded();
+        } catch (error) {
+            this.logger.error(`Failed to register import. Error ${error}.`);
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+            const data = JSON.parse(handler.data);
+            if (data && data.readExport) {
+                data.import_status = 'FAILED';
+                handler.status = data.export_status === 'PENDING' ? 'PENDING' : 'FAILED';
+                handler.data = JSON.stringify(data);
+
+                await Models.handler_ids.update(
+                    {
+                        data: handler.data,
+                        status: handler.status,
+                    },
+                    {
+                        where: {
+                            handler_id,
+                        },
+                    },
+                );
+            } else {
                 await Models.handler_ids.update(
                     {
                         status: 'FAILED',
@@ -65,47 +169,7 @@ class DcFinalizeImport extends Command {
                         },
                     },
                 );
-                this.remoteControl.importFailed(error);
-            });
-
-            await Models.handler_ids.update(
-                {
-                    status: 'COMPLETED',
-                    data: JSON.stringify({
-                        dataset_id: data_set_id,
-                        import_time: import_timestamp.valueOf(),
-                        otjson_size_in_bytes,
-                        root_hash,
-                        data_hash,
-                    }),
-                },
-                {
-                    where: {
-                        handler_id,
-                    },
-                },
-            );
-
-            this.logger.info('Import complete');
-            this.logger.info(`Root hash: ${root_hash}`);
-            this.logger.info(`Data set ID: ${data_set_id}`);
-            this.remoteControl.importSucceeded();
-        } catch (error) {
-            this.logger.error(`Failed to register import. Error ${error}.`);
-            this.notifyError(error);
-            await Models.handler_ids.update(
-                {
-                    status: 'FAILED',
-                    data: JSON.stringify({
-                        error,
-                    }),
-                },
-                {
-                    where: {
-                        handler_id,
-                    },
-                },
-            );
+            }
             this.remoteControl.importFailed(error);
         }
         return Command.empty();
@@ -142,10 +206,6 @@ class DcFinalizeImport extends Command {
             },
         );
         this.remoteControl.importFailed(error);
-
-        if (error.type !== 'ImporterError') {
-            this.notifyError(error);
-        }
     }
 }
 

@@ -12,6 +12,7 @@ const Utilities = require('../../../modules/Utilities');
 const ZK = require('../../../modules/ZK');
 const logger = require('../../../modules/logger');
 const MerkleTree = require('../../../modules/Merkle');
+const constants = require('../../../modules/constants');
 const fs = require('fs');
 
 
@@ -94,7 +95,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
         const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
-        const calculatedImportHash = ImportUtilities.calculateGraphHash(dataset['@graph']);
+        const calculatedImportHash = ImportUtilities.calculateGraphPublicHash(dataset);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         const dataCreator = {
@@ -106,7 +107,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
                 },
             ],
         };
-        const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset['@graph'], dataset['@id'], dataCreator);
+        const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset);
 
         expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
     }
@@ -138,9 +139,9 @@ Then(/^([DC|DV]+)'s local query response should contain hashed private attribute
 });
 
 Given(
-    /^I call traversal from "(\S+)" "(\S+)" with connection types "(\S+)"/,
+    /^I call (extended\s|narrow\s|)traversal from "(\S+)" "(\S+)" with connection types "(\S+)"/,
     { timeout: 120000 },
-    async function (id_type, id_value, connectionTypes) {
+    async function (reach, id_type, id_value, connectionTypes) {
         expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
         const { dc } = this.state;
 
@@ -152,8 +153,17 @@ Given(
             depth: 50,
         };
 
+        if (reach.includes(constants.TRAIL_REACH_PARAMETERS.narrow)) {
+            trailParams.reach = constants.TRAIL_REACH_PARAMETERS.narrow;
+        } else if (reach.includes(constants.TRAIL_REACH_PARAMETERS.extended)) {
+            trailParams.reach = constants.TRAIL_REACH_PARAMETERS.extended;
+        }
+
         const trail = await httpApiHelper.apiTrail(host, trailParams);
 
+        if (this.state.lastTrail) {
+            this.state.secondLastTrail = this.state.lastTrail;
+        }
         this.state.lastTrail = trail;
     },
 );
@@ -328,13 +338,8 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
         });
 
         for (const proofData of proofResponse) {
-            const { otObject } = lastTrail.find((element) => {
-                const { object_id } = proofData;
-                return element.otObject['@id'] === object_id;
-            });
-
-            const { proof, object_index } = proofData;
-            const objectText = Utilities.sortedStringify(otObject);
+            const { proof, object_index, otObject } = proofData;
+            const objectText = JSON.stringify(otObject);
 
             const merkleTree = new MerkleTree(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1'], 'distribution', 'sha3');
             const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);

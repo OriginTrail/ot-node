@@ -11,6 +11,7 @@ class DcConvertToOtJsonCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
         this.web3 = ctx.web3;
+        this.importService = ctx.importService;
     }
 
     /**

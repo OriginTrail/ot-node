@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Repeatable command that checks whether litigation is successfully initiated
@@ -9,6 +10,7 @@ class DcLitigationInitiatedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -81,6 +83,7 @@ class DcLitigationInitiatedCommand extends Command {
                             },
                             name: 'dcLitigationAnsweredCommand',
                             period: 5000,
+                            retries: 3,
                             deadline_at: Date.now() +
                                             (offer.litigation_interval_in_minutes * 60 * 1000),
                         },
@@ -89,6 +92,35 @@ class DcLitigationInitiatedCommand extends Command {
             }
         }
         return Command.repeat();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            dhIdentity,
+            objectIndex,
+            blockIndex,
+        } = command.data;
+
+        this.logger.error(`Initiated litigation for holder ${dhIdentity} and offer ${offerId} FAILED!`);
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                objectIndex,
+                blockIndex,
+                dhIdentity,
+                offerId,
+            },
+            constants.PROCESS_NAME.litigationHandling,
+        );
+
+        return Command.retry();
     }
 
     /**

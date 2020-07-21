@@ -24,7 +24,7 @@ class Ethereum {
         this.appState = appState;
         this.emitter = emitter;
         this.web3 = web3;
-        this.log = logger;
+        this.logger = logger;
         this.pricingService = pricingService;
 
         this.config = {
@@ -47,7 +47,9 @@ class Ethereum {
         this.hubContractAbi = JSON.parse(hubAbiFile);
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
-        this.log.info('Selected blockchain: Ethereum');
+        this.logger.info('Selected blockchain: Ethereum');
+
+        this.initalized = false;
     }
 
     /**
@@ -182,6 +184,7 @@ class Ethereum {
         this.erc725IdentityContractAbi = JSON.parse(erc725IdentityAbiFile);
 
         this.contractsByName = {
+            HUB_CONTRACT: this.hubContract,
             HOLDING_CONTRACT: this.holdingContract,
             OLD_HOLDING_CONTRACT: this.oldHoldingContract, // TODO remove after successful migration
             PROFILE_CONTRACT: this.profileContract,
@@ -190,6 +193,18 @@ class Ethereum {
             MARKETPLACE_CONTRACT: this.marketplaceContract,
             REPLACEMENT_CONTRACT: this.replacementContract,
         };
+
+        this.logger.info('Smart contract instances initialized.');
+
+        if (!this.initalized) {
+            this.initalized = true;
+            this.subscribeToEventPermanentWithCallback([
+                'ContractsChanged',
+            ], async (eventData) => {
+                this.logger.notify('Contracts changed, refreshing information.');
+                await this.initialize();
+            });
+        }
     }
 
     /**
@@ -198,11 +213,11 @@ class Ethereum {
      * @private
      */
     async _getHoldingContractAddress() {
-        this.log.trace('Asking Hub for Holding contract address...');
+        this.logger.trace('Asking Hub for Holding contract address...');
         const address = await this.hubContract.methods.getContractAddress('Holding').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Holding contract address is ${address}`);
+        this.logger.trace(`Holding contract address is ${address}`);
         return address;
     }
 
@@ -212,11 +227,11 @@ class Ethereum {
      * @private
      */
     async _getOldHoldingContractAddress() {
-        this.log.trace('Asking Hub for old Holding contract address...');
+        this.logger.trace('Asking Hub for old Holding contract address...');
         const address = await this.hubContract.methods.getContractAddress('OldHolding').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Old Holding contract address is ${address}`);
+        this.logger.trace(`Old Holding contract address is ${address}`);
         return address;
     }
 
@@ -226,11 +241,11 @@ class Ethereum {
      * @private
      */
     async _getTokenContractAddress() {
-        this.log.trace('Asking Hub for Token contract address...');
+        this.logger.trace('Asking Hub for Token contract address...');
         const address = await this.hubContract.methods.getContractAddress('Token').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Token contract address is ${address}`);
+        this.logger.trace(`Token contract address is ${address}`);
         return address;
     }
 
@@ -240,11 +255,11 @@ class Ethereum {
      * @private
      */
     async _getReadingContractAddress() {
-        this.log.trace('Asking Hub for Reading contract address...');
+        this.logger.trace('Asking Hub for Reading contract address...');
         const address = await this.hubContract.methods.getContractAddress('Reading').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Reading contract address is ${address}`);
+        this.logger.trace(`Reading contract address is ${address}`);
         return address;
     }
 
@@ -254,11 +269,11 @@ class Ethereum {
      * @private
      */
     async _getProfileContractAddress() {
-        this.log.trace('Asking Hub for Profile contract address...');
+        this.logger.trace('Asking Hub for Profile contract address...');
         const address = await this.hubContract.methods.getContractAddress('Profile').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Profile contract address is ${address}`);
+        this.logger.trace(`Profile contract address is ${address}`);
         return address;
     }
 
@@ -268,11 +283,11 @@ class Ethereum {
      * @private
      */
     async _getApprovalContractAddress() {
-        this.log.trace('Asking Hub for Approval contract address...');
+        this.logger.trace('Asking Hub for Approval contract address...');
         const address = await this.hubContract.methods.getContractAddress('Approval').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Approval contract address is ${address}`);
+        this.logger.trace(`Approval contract address is ${address}`);
         return address;
     }
 
@@ -282,11 +297,11 @@ class Ethereum {
      * @private
      */
     async _getProfileStorageContractAddress() {
-        this.log.trace('Asking Hub for ProfileStorage contract address...');
+        this.logger.trace('Asking Hub for ProfileStorage contract address...');
         const address = await this.hubContract.methods.getContractAddress('ProfileStorage').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`ProfileStorage contract address is ${address}`);
+        this.logger.trace(`ProfileStorage contract address is ${address}`);
         return address;
     }
 
@@ -296,11 +311,11 @@ class Ethereum {
      * @private
      */
     async _getHoldingStorageContractAddress() {
-        this.log.trace('Asking Hub for HoldingStorage contract address...');
+        this.logger.trace('Asking Hub for HoldingStorage contract address...');
         const address = await this.hubContract.methods.getContractAddress('HoldingStorage').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`HoldingStorage contract address is ${address}`);
+        this.logger.trace(`HoldingStorage contract address is ${address}`);
         return address;
     }
 
@@ -310,11 +325,11 @@ class Ethereum {
      * @private
      */
     async _getOldHoldingStorageContractAddress() {
-        this.log.trace('Asking Hub for old HoldingStorage contract address...');
+        this.logger.trace('Asking Hub for old HoldingStorage contract address...');
         const address = await this.hubContract.methods.getContractAddress('OldHoldingStorage').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Old HoldingStorage contract address is ${address}`);
+        this.logger.trace(`Old HoldingStorage contract address is ${address}`);
         return address;
     }
 
@@ -324,11 +339,25 @@ class Ethereum {
      * @private
      */
     async _getLitigationContractAddress() {
-        this.log.trace('Asking Hub for Litigation contract address...');
+        this.logger.trace('Asking Hub for Litigation contract address...');
         const address = await this.hubContract.methods.getContractAddress('Litigation').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Litigation contract address is ${address}`);
+        this.logger.trace(`Litigation contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Marketplace contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getMarketplaceContractAddress() {
+        this.logger.trace('Asking Hub for Marketplace contract address...');
+        const address = await this.hubContract.methods.getContractAddress('Marketplace').call({
+            from: this.config.wallet_address,
+        });
+        this.logger.trace(`Marketplace contract address is ${address}`);
         return address;
     }
 
@@ -352,11 +381,11 @@ class Ethereum {
      * @private
      */
     async _getReplacementContractAddress() {
-        this.log.trace('Asking Hub for Replacement contract address...');
+        this.logger.trace('Asking Hub for Replacement contract address...');
         const address = await this.hubContract.methods.getContractAddress('Replacement').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`Replacement contract address is ${address}`);
+        this.logger.trace(`Replacement contract address is ${address}`);
         return address;
     }
 
@@ -366,11 +395,25 @@ class Ethereum {
      * @private
      */
     async _getLitigationStorageContractAddress() {
-        this.log.trace('Asking Hub for LitigationStorage contract address...');
+        this.logger.trace('Asking Hub for LitigationStorage contract address...');
         const address = await this.hubContract.methods.getContractAddress('LitigationStorage').call({
             from: this.config.wallet_address,
         });
-        this.log.trace(`LitigationStorage contract address is ${address}`);
+        this.logger.trace(`LitigationStorage contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Marketplace storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getMarketplaceStorageContractAddress() {
+        this.logger.trace('Asking Hub for MarketplaceStorage contract address...');
+        const address = await this.hubContract.methods.getContractAddress('MarketplaceStorage').call({
+            from: this.config.wallet_address,
+        });
+        this.logger.trace(`MarketplaceStorage contract address is ${address}`);
         return address;
     }
 
@@ -394,7 +437,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getRootHash(dataSetId) {
-        this.log.trace(`Fetching root hash for data set ${dataSetId}`);
+        this.logger.trace(`Fetching root hash for data set ${dataSetId}`);
         const rootHash = await this.holdingStorageContract.methods.fingerprint(dataSetId).call();
         if (Utilities.isZeroHash(rootHash)) {
             return this.oldHoldingStorageContract.methods.fingerprint(dataSetId).call();
@@ -409,7 +452,7 @@ class Ethereum {
      */
     getProfileBalance(wallet) {
         return new Promise((resolve, reject) => {
-            this.log.trace(`Getting profile balance by wallet ${wallet}`);
+            this.logger.trace(`Getting profile balance by wallet ${wallet}`);
             this.tokenContract.methods.balanceOf(wallet).call()
                 .then((res) => {
                     resolve(res);
@@ -441,7 +484,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
-        this.log.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
+        this.logger.trace(`CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'createProfile',
             [
@@ -464,7 +507,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.tokenContractAddress,
         };
-        this.log.trace(`increaseProfileApproval(amount=${tokenAmountIncrease})`);
+        this.logger.trace(`increaseProfileApproval(amount=${tokenAmountIncrease})`);
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.profileContractAddress, tokenAmountIncrease], options);
     }
 
@@ -481,7 +524,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
-        this.log.trace(`startTokenWithdrawal(blockchainIdentity=${blockchainIdentity}, amount=${amount}`);
+        this.logger.trace(`startTokenWithdrawal(blockchainIdentity=${blockchainIdentity}, amount=${amount}`);
         return this.transactions.queueTransaction(this.profileContractAbi, 'startTokenWithdrawal', [blockchainIdentity, amount], options);
     }
 
@@ -497,24 +540,8 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.profileContractAddress,
         };
-        this.log.trace(`withdrawTokens(blockchainIdentity=${blockchainIdentity}`);
+        this.logger.trace(`withdrawTokens(blockchainIdentity=${blockchainIdentity}`);
         return this.transactions.queueTransaction(this.profileContractAbi, 'withdrawTokens', [blockchainIdentity], options);
-    }
-
-    /**
-     * Increase token approval for Bidding contract on Ethereum blockchain
-     * @param {number} tokenAmountIncrease
-     * @returns {Promise}
-     */
-    async increaseBiddingApproval(tokenAmountIncrease) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.tokenContractAddress,
-        };
-        this.log.notify('Increasing bidding approval');
-        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.biddingContractAddress, tokenAmountIncrease], options);
     }
 
     /**
@@ -532,7 +559,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.litigationContractAddress,
         };
-        this.log.trace(`answerLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, answer=${answer})`);
+        this.logger.trace(`answerLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, answer=${answer})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi,
             'answerLitigation',
@@ -540,33 +567,6 @@ class Ethereum {
                 offerId,
                 holderIdentity,
                 answer,
-            ],
-            options,
-        );
-    }
-
-    /**
-     * Prooves litigation for particular DH
-     * @param importId
-     * @param dhWallet
-     * @param proofData
-     * @return {Promise<any>}
-     */
-    async proveLitigation(importId, dhWallet, proofData) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.escrowContractAddress,
-        };
-        this.log.important(`Prove litigation for import ${importId} and DH ${dhWallet}`);
-        return this.transactions.queueTransaction(
-            this.escrowContractAbi,
-            'proveLitigaiton',
-            [
-                importId,
-                dhWallet,
-                proofData,
             ],
             options,
         );
@@ -592,7 +592,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: contractAddress,
         };
-        this.log.trace(`payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
+        this.logger.trace(`payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
         return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', [blockchainIdentity, offerId], options);
     }
 
@@ -611,7 +611,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.oldHoldingContractAddress,
         };
-        this.log.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
+        this.logger.trace(`payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
         return this.transactions.queueTransaction(
             this.oldHoldingContractAbi, 'payOutMultiple',
             [
@@ -646,7 +646,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.holdingContractAddress,
         };
-        this.log.trace(`createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
+        this.logger.trace(`createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'createOffer',
             [
@@ -695,7 +695,7 @@ class Ethereum {
             to: contractAddress,
         };
 
-        this.log.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders}), ${parentIdentity}`);
+        this.logger.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders}), ${parentIdentity}`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'finalizeOffer',
             [
@@ -734,7 +734,7 @@ class Ethereum {
             to: this.replacementContractAddress,
         };
 
-        this.log.trace(`replaceHolder (${offerId}, ${holderIdentity}, ${litigatorIdentity}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${holders})`);
+        this.logger.trace(`replaceHolder (${offerId}, ${holderIdentity}, ${litigatorIdentity}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${holders})`);
         return this.transactions.queueTransaction(
             this.replacementContractAbi, 'replaceHolder',
             [
@@ -831,9 +831,9 @@ class Ethereum {
             });
         } catch (error) {
             if (error.msg && error.msg.includes('Invalid JSON RPC response')) {
-                this.log.warn('Node failed to communicate with blockchain provider. Check internet connection');
+                this.logger.warn('Node failed to communicate with blockchain provider. Check internet connection');
             } else {
-                this.log.trace(`Failed to get all passed events. ${error}.`);
+                this.logger.trace(`Failed to get all passed events. ${error}.`);
             }
         }
     }
@@ -878,7 +878,7 @@ class Ethereum {
                             clearInterval(token);
                             resolve(parsedData);
                         }).catch((err) => {
-                            this.log.error(`Failed to update event ${event}. ${err}`);
+                            this.logger.error(`Failed to update event ${event}. ${err}`);
                             reject(err);
                         });
                         break;
@@ -935,7 +935,7 @@ class Ethereum {
      * emitted globally using globalEmitter.
      * Callback function will be executed when the event is emitted.
      * @param event Event to listen to
-     * @param callback function to be executed
+     * @param emitCallback function to be executed
      * @returns {number | Object} Event handle
      */
     async subscribeToEventPermanentWithCallback(event, emitCallback) {
@@ -959,54 +959,13 @@ class Ethereum {
                         data.finished = true;
                         await data.save();
                     } catch (error) {
-                        this.log.error(error);
+                        this.logger.error(error);
                     }
                 });
             }
         }, 2000);
 
         return handle;
-    }
-
-    /**
-     * Checks if the node would rank in the top n + 1 network bids.
-     * @param importId Offer import id
-     * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
-     */
-    getDistanceParameters(importId) {
-        return new Promise((resolve, reject) => {
-            this.log.trace('Check if close enough ... ');
-            this.biddingContract.methods.getDistanceParameters(importId).call({
-                from: this.config.wallet_address,
-            }).then((res) => {
-                resolve(res);
-            }).catch((e) => {
-                reject(e);
-            });
-        });
-    }
-
-
-    /**
-     * Adds bid to the offer on Ethereum blockchain
-     * @param importId Hash of the offer
-     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
-     * @returns {Promise<any>} Index of the bid.
-     */
-    async addBid(importId, dhNodeId) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.biddingContractAddress,
-        };
-
-        this.log.notify(`Adding bid for import ID ${importId}.`);
-        this.log.trace(`addBid(${importId}, ${dhNodeId})`);
-        return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'addBid',
-            [importId, Utilities.normalizeHex(dhNodeId)], options,
-        );
     }
 
     /**
@@ -1023,31 +982,20 @@ class Ethereum {
             to: this.profileContractAddress,
         };
 
-        this.log.trace(`Calling - depositToken(${amount.toString()})`);
+        this.logger.trace(`Calling - depositToken(${amount.toString()})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'depositTokens',
             [blockchainIdentity, amount], options,
         );
     }
 
-    /**
-     * Gets Escrow
-     * @param dhWallet
-     * @param importId
-     * @return {Promise<any>}
-     */
-    async getEscrow(importId, dhWallet) {
-        this.log.trace(`Asking escrow for import ${importId} and dh ${dhWallet}.`);
-        return this.escrowContract.methods.escrow(importId, dhWallet).call();
-    }
-
     async getPurchase(purchaseId) {
-        this.log.trace(`Asking for purchase with id [${purchaseId}].`);
+        this.logger.trace(`Asking for purchase with id [${purchaseId}].`);
         return this.marketplaceStorageContract.methods.purchase(purchaseId).call();
     }
 
     async getPurchasedData(importId, wallet) {
-        this.log.trace(`Asking purchased data for import ${importId} and wallet ${wallet}.`);
+        this.logger.trace(`Asking purchased data for import ${importId} and wallet ${wallet}.`);
         return this.readingContract.methods.purchased_data(importId, wallet).call();
     }
 
@@ -1063,7 +1011,7 @@ class Ethereum {
             to: this.marketplaceContractAddress,
         };
 
-        this.log.trace(`initiatePurchase (${sellerIdentity}, ${buyerIdentity}, ${tokenAmount}, ${originalDataRootHash}, ${encodedDataRootHash})`);
+        this.logger.trace(`initiatePurchase (${sellerIdentity}, ${buyerIdentity}, ${tokenAmount}, ${originalDataRootHash}, ${encodedDataRootHash})`);
         return this.transactions.queueTransaction(
             this.marketplaceContractAbi, 'initiatePurchase',
             [
@@ -1105,7 +1053,7 @@ class Ethereum {
             to: this.marketplaceContractAddress,
         };
 
-        this.log.trace(`depositKey(${purchaseId}, ${key})`);
+        this.logger.trace(`depositKey(${purchaseId}, ${key})`);
         return this.transactions.queueTransaction(
             this.marketplaceContractAbi, 'depositKey',
             [purchaseId, key], options,
@@ -1120,7 +1068,7 @@ class Ethereum {
             to: this.marketplaceContractAddress,
         };
 
-        this.log.trace(`takePayment(${purchaseId})`);
+        this.logger.trace(`takePayment(${purchaseId})`);
         return this.transactions.queueTransaction(
             this.marketplaceContractAbi, 'takePayment',
             [purchaseId], options,
@@ -1135,7 +1083,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace(`sendCommitment (${importId}, ${dvWallet}, ${commitment})`);
+        this.logger.trace(`sendCommitment (${importId}, ${dvWallet}, ${commitment})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'sendCommitment',
             [importId, dvWallet, commitment], options,
@@ -1150,7 +1098,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace(`initiateDispute (${importId}, ${dhWallet})`);
+        this.logger.trace(`initiateDispute (${importId}, ${dhWallet})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'initiateDispute',
             [importId, dhWallet], options,
@@ -1165,7 +1113,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace(`confirmPurchase (${importId}, ${dhWallet})`);
+        this.logger.trace(`confirmPurchase (${importId}, ${dhWallet})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'confirmPurchase',
             [importId, dhWallet], options,
@@ -1180,7 +1128,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace(`confirmPurchase (${importId}, ${correspondentWallet}, ${senderIsDh})`);
+        this.logger.trace(`confirmPurchase (${importId}, ${correspondentWallet}, ${senderIsDh})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'confirmPurchase',
             [importId, correspondentWallet, senderIsDh], options,
@@ -1198,7 +1146,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace(`sendProofData (${importId} ${dvWallet} ${checksumLeft} ${checksumRight} ${checksumHash}, ${randomNumber1}, ${randomNumber2} ${decryptionKey} ${blockIndex})`);
+        this.logger.trace(`sendProofData (${importId} ${dvWallet} ${checksumLeft} ${checksumRight} ${checksumHash}, ${randomNumber1}, ${randomNumber2} ${decryptionKey} ${blockIndex})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'sendProofData',
             [
@@ -1216,7 +1164,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace(`sendEncryptedBlock (${importId}, ${dvWallet}, ${encryptedBlock})`);
+        this.logger.trace(`sendEncryptedBlock (${importId}, ${dvWallet}, ${encryptedBlock})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'sendEncryptedBlock',
             [importId, dvWallet, encryptedBlock], options,
@@ -1231,7 +1179,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace(`payOutForReading (${importId}, ${dvWallet})`);
+        this.logger.trace(`payOutForReading (${importId}, ${dvWallet})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'payOut',
             [importId, dvWallet], options,
@@ -1242,7 +1190,7 @@ class Ethereum {
      * Get Profile minimum stake
      */
     async getProfileMinimumStake() {
-        this.log.trace('Get minimum stake from blockchain');
+        this.logger.trace('Get minimum stake from blockchain');
         return this.profileContract.methods.minimalStake().call({
             from: this.config.wallet_address,
         });
@@ -1253,7 +1201,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getProfileWithdrawalTime() {
-        this.log.trace('Get withdrawal time from blockchain');
+        this.logger.trace('Get withdrawal time from blockchain');
         return this.profileContract.methods.withdrawalTime().call({
             from: this.config.wallet_address,
         });
@@ -1264,7 +1212,7 @@ class Ethereum {
      * @param identity
      */
     async getProfile(identity) {
-        this.log.trace(`Get profile by identity ${identity}`);
+        this.logger.trace(`Get profile by identity ${identity}`);
         return this.profileStorageContract.methods.profile(identity).call({
             from: this.config.wallet_address,
         });
@@ -1283,7 +1231,7 @@ class Ethereum {
             to: this.profileContractAddress,
         };
 
-        this.log.trace(`Calling - setNodeId(${identity}, ${nodeId})`);
+        this.logger.trace(`Calling - setNodeId(${identity}, ${nodeId})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'setNodeId',
             [identity, nodeId], options,
@@ -1294,7 +1242,7 @@ class Ethereum {
      * Get difficulty for the particular offer
      */
     async getOfferDifficulty(offerId) {
-        this.log.trace(`getOfferDifficulty(offer=${offerId})`);
+        this.logger.trace(`getOfferDifficulty(offer=${offerId})`);
         return this.holdingStorageContract.methods.getOfferDifficulty(offerId).call({
             from: this.config.wallet_address,
         });
@@ -1304,7 +1252,7 @@ class Ethereum {
      * Get all nodes which were added in the approval array
      */
     async getAddedNodes() {
-        this.log.trace('getAllNodes()');
+        this.logger.trace('getAllNodes()');
         return this.approvalContract.methods.getAllNodes().call();
     }
 
@@ -1312,7 +1260,7 @@ class Ethereum {
      * Get the statuses of all nodes which were added in the approval array
      */
     async getNodeStatuses() {
-        this.log.trace('getNodeStatuses()');
+        this.logger.trace('getNodeStatuses()');
         return this.approvalContract.methods.getNodeStatuses().call();
     }
 
@@ -1322,7 +1270,7 @@ class Ethereum {
      */
     async nodeHasApproval(nodeId) {
         nodeId = Utilities.normalizeHex(nodeId);
-        this.log.trace(`nodeHasApproval(${nodeId})`);
+        this.logger.trace(`nodeHasApproval(${nodeId})`);
         return this.approvalContract.methods.nodeHasApproval(nodeId).call();
     }
 
@@ -1363,7 +1311,7 @@ class Ethereum {
             to: this.profileContractAddress,
         };
 
-        this.log.trace(`transferProfile (${erc725identity}, ${managementWallet})`);
+        this.logger.trace(`transferProfile (${erc725identity}, ${managementWallet})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'transferProfile',
             [erc725identity, managementWallet], options,
@@ -1398,7 +1346,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getOffer(offerId) {
-        this.log.trace(`getOffer(offerId=${offerId})`);
+        this.logger.trace(`getOffer(offerId=${offerId})`);
         return this.holdingStorageContract.methods.offer(offerId).call({
             from: this.config.wallet_address,
         });
@@ -1411,7 +1359,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getHolder(offerId, holderIdentity) {
-        this.log.trace(`getHolder(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getHolder(offerId=${offerId}, holderIdentity=${holderIdentity})`);
         return this.holdingStorageContract.methods.holder(offerId, holderIdentity).call({
             from: this.config.wallet_address,
         });
@@ -1438,7 +1386,7 @@ class Ethereum {
             to: this.litigationContractAddress,
         };
 
-        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedObjectIndex=${requestedObjectIndex}, requestedBlockIndex=${requestedBlockIndex}, hashArray=${hashArray})`);
+        this.logger.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedObjectIndex=${requestedObjectIndex}, requestedBlockIndex=${requestedBlockIndex}, hashArray=${hashArray})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi, 'initiateLitigation',
             [
@@ -1477,7 +1425,7 @@ class Ethereum {
             to: this.litigationContractAddress,
         };
 
-        this.log.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData}, leafIndex=${leafIndex})`);
+        this.logger.trace(`completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData}, leafIndex=${leafIndex})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi, 'completeLitigation',
             [offerId, holderIdentity, challengerIdentity, proofData, leafIndex], options,
@@ -1491,7 +1439,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getLitigation(offerId, holderIdentity) {
-        this.log.trace(`getLitigation(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getLitigation(offerId=${offerId}, holderIdentity=${holderIdentity})`);
         return this.litigationStorageContract
             .methods.litigation(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
@@ -1505,7 +1453,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getLitigationTimestamp(offerId, holderIdentity) {
-        this.log.trace(`getLitigationTimestamp(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getLitigationTimestamp(offerId=${offerId}, holderIdentity=${holderIdentity})`);
         return this.litigationStorageContract
             .methods.getLitigationTimestamp(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
@@ -1519,7 +1467,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getLitigationDifficulty(offerId, holderIdentity) {
-        this.log.trace(`getLitigationDifficulty(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getLitigationDifficulty(offerId=${offerId}, holderIdentity=${holderIdentity})`);
         return this.litigationStorageContract
             .methods.getLitigationReplacementDifficulty(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
@@ -1533,7 +1481,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getLitigationReplacementTask(offerId, holderIdentity) {
-        this.log.trace(`getLitigationReplacementTask(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getLitigationReplacementTask(offerId=${offerId}, holderIdentity=${holderIdentity})`);
         return this.litigationStorageContract
             .methods.getLitigationReplacementTask(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
@@ -1544,7 +1492,7 @@ class Ethereum {
      * Get staked amount for the holder
      */
     async getHolderStakedAmount(offerId, holderIdentity) {
-        this.log.trace(`getHolderStakedAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getHolderStakedAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
         return this.holdingStorageContract.methods
             .getHolderStakedAmount(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
@@ -1555,7 +1503,7 @@ class Ethereum {
      * Get paid amount for the holder
      */
     async getHolderPaidAmount(offerId, holderIdentity) {
-        this.log.trace(`getHolderPaidAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getHolderPaidAmount(offer=${offerId}, holderIdentity=${holderIdentity})`);
         return this.holdingStorageContract.methods
             .getHolderPaidAmount(offerId, holderIdentity).call({
                 from: this.config.wallet_address,
@@ -1578,7 +1526,7 @@ class Ethereum {
 
         key = Utilities.normalizeHex(key);
 
-        this.log.trace(`identity=${identity} keyHasPurpose(key=${key}, purpose=${purpose.toString()})`);
+        this.logger.trace(`identity=${identity} keyHasPurpose(key=${key}, purpose=${purpose.toString()})`);
 
         return identityContract.methods.keyHasPurpose(key, purpose).call({
             from: this.config.wallet_address,
@@ -1589,7 +1537,7 @@ class Ethereum {
      * Get litigation encryption type
      */
     async getHolderLitigationEncryptionType(offerId, holderIdentity) {
-        this.log.trace(`getHolderLitigationEncryptionType(offer=${offerId}, holderIdentity=${holderIdentity})`);
+        this.logger.trace(`getHolderLitigationEncryptionType(offer=${offerId}, holderIdentity=${holderIdentity})`);
         return this.holdingStorageContract.methods
             .getHolderLitigationEncryptionType(offerId, holderIdentity).call({
                 from: this.config.wallet_address,

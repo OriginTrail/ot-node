@@ -9,7 +9,7 @@ const Models = require('../../models');
 const Utilities = require('../Utilities');
 
 const Graph = require('../Graph');
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
 const ObjectValidator = require('../validator/object-validator');
 
@@ -23,7 +23,6 @@ class DHService {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
-        this.notifyError = ctx.notifyError;
         this.pricingService = ctx.pricingService;
 
         const that = this;
@@ -171,7 +170,7 @@ class DHService {
             transactional: false,
         });
 
-        await this.remoteControl.getPendingBids();
+        // await this.remoteControl.getPendingBids();
     }
 
     /**
@@ -522,7 +521,7 @@ class DHService {
             const dataReadResponseObject = {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
-                    JSON.stringify(replyMessage),
+                    replyMessage,
                     this.web3,
                     this.config.node_private_key,
                 ),
@@ -536,7 +535,6 @@ class DHService {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.logger.warn(errorMessage);
-            this.notifyError(e);
             await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
@@ -665,7 +663,7 @@ class DHService {
             },
         };
         encryptedPaddedKeyObject.messageSignature = Utilities.generateRsvSignature(
-            JSON.stringify(encryptedPaddedKeyObject.message),
+            encryptedPaddedKeyObject.message,
             this.web3,
             this.config.node_private_key,
         );
@@ -716,7 +714,6 @@ class DHService {
                 .then(() => this.logger.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
                 .catch((error) => {
                     this.logger.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`);
-                    this.notifyError(error);
                 });
         }, 5 * 60 * 1000);
     }

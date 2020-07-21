@@ -1,14 +1,11 @@
-const bytes = require('utf8-length');
 const fs = require('fs');
 const path = require('path');
 
 const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
-const Graph = require('../../Graph');
 const Utilities = require('../../Utilities');
-
-const uuidv4 = require('uuid/v4');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 
 /**
  * Handles data read response for free.
@@ -18,11 +15,10 @@ class DVDataReadResponseFreeCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
-        this.notifyError = ctx.notifyError;
         this.commandExecutor = ctx.commandExecutor;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -77,7 +73,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw Error('Read not confirmed');
         }
 
-        const { document, privateData } = message;
+        const { document, permissionedData } = message;
         // Calculate root hash and check is it the same on the SC.
         const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
@@ -89,7 +85,7 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
 
         if (fingerprint !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
@@ -99,34 +95,83 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
-        if (privateData && Object.keys(privateData).length > 0) {
-            for (const otObject of document['@graph']) {
-                if (otObject['@id'] in privateData) {
-                    const otObjectId = otObject['@id'];
-                    for (const privateDataElement in privateData[otObjectId]) {
-                        if (!otObject.properties) {
-                            otObject.properties = {};
-                        }
-                        otObject.properties[privateDataElement] =
-                            privateData[otObjectId][privateDataElement];
-                    }
-                }
-            }
-        }
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            document['@graph'],
+            permissionedData,
+        );
 
         const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
         const profile = await this.blockchain.getProfile(erc725Identity);
 
-        const replicatedPrivateData = ImportUtilities.getGraphPrivateData(document['@graph']);
-        replicatedPrivateData.forEach(async (otObjectId) => {
-            await Models.data_sellers.create({
-                data_set_id: dataSetId,
-                ot_json_object_id: otObjectId,
-                seller_node_id: profile.nodeId.toLowerCase().slice(0, 42),
-                seller_erc_id: Utilities.normalizeHex(erc725Identity),
-                price: 0,
-            });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            erc725Identity,
+            0,
+            profile.nodeId.toLowerCase().slice(0, 42),
+            document['@graph'],
+        );
+
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id },
         });
+        const {
+            data_set_id,
+            standard_id,
+            readExport,
+        } = JSON.parse(handler.data);
+
+        if (readExport) {
+            let sortedDataset = OtJsonUtilities.prepareDatasetForDataRead(document);
+            if (!sortedDataset) {
+                sortedDataset = document;
+            }
+            const cacheDirectory = path.join(this.config.appDataPath, 'export_cache');
+
+            try {
+                await Utilities.writeContentsToFile(
+                    cacheDirectory,
+                    handler_id,
+                    JSON.stringify(sortedDataset),
+                );
+            } catch (e) {
+                const filePath = path.join(cacheDirectory, handler_id);
+
+                if (fs.existsSync(filePath)) {
+                    await Utilities.deleteDirectory(filePath);
+                }
+                this.handleError(handler_id, `Error when creating export cache file for handler_id ${handler_id}. ${e.message}`);
+            }
+
+            const handler = await Models.handler_ids.findOne({
+                where: { handler_id },
+            });
+
+            const data = JSON.parse(handler.data);
+            data.transaction_hash = transaction_hash;
+            data.data_creator = document.datasetHeader.dataCreator;
+            data.signature = document.signature;
+            data.root_hash = rootHash;
+            handler.data = JSON.stringify(data);
+
+            await Models.handler_ids.update(
+                { data: handler.data },
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+
+            await this.commandExecutor.add({
+                name: 'exportWorkerCommand',
+                transactional: false,
+                data: {
+                    handlerId: handler.handler_id,
+                    datasetId: data_set_id,
+                    standardId: standard_id,
+                },
+            });
+        }
 
         try {
             const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
@@ -159,7 +204,6 @@ class DVDataReadResponseFreeCommand extends Command {
             });
         } catch (error) {
             this.logger.warn(`Failed to import JSON. ${error}.`);
-            this.notifyError(error);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             return Command.empty();
@@ -183,8 +227,30 @@ class DVDataReadResponseFreeCommand extends Command {
         return Command.empty();
     }
 
+    async handleError(handlerId, error) {
+        this.logger.error(`Export failed for export handler_id: ${handlerId}, error: ${error}`);
+
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id: handlerId },
+        });
+
+        const data = JSON.parse(handler.data);
+        data.export_status = 'FAILED';
+        handler.status = data.import_status === 'PENDING' ? 'PENDING' : 'FAILED';
+        handler.data = JSON.stringify(data);
+
+        await Models.handler_ids.update(
+            handler,
+            {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+    }
+
     /**
-     * Builds default DVDataReadRequestCommand
+     * Builds default DVDataReadResponseFreeCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

@@ -13,6 +13,8 @@ const leveldown = require('leveldown');
 const ip = require('ip');
 const uuidv4 = require('uuid/v4');
 const secp256k1 = require('secp256k1');
+const ECEncryption = require('../../ECEncryption');
+const NetworkService = require('../../service/network-service');
 
 const KadenceUtils = require('@deadcanaries/kadence/lib/utils.js');
 const { IncomingMessage, OutgoingMessage } = require('./logger');
@@ -20,6 +22,25 @@ const { IncomingMessage, OutgoingMessage } = require('./logger');
 const pjson = require('../../../package.json');
 
 const { NetworkRequestIgnoredError } = require('../../errors/index');
+
+const directMessageRequests = [
+    { methodName: 'replicationRequest', routeName: 'kad-replication-request' },
+    { methodName: 'replacementReplicationRequest', routeName: 'kad-replacement-replication-request' },
+    { methodName: 'replicationFinished', routeName: 'kad-replication-finished' },
+    { methodName: 'replacementReplicationFinished', routeName: 'kad-replacement-replication-finished' },
+    { methodName: 'challengeRequest', routeName: 'kad-challenge-request' },
+    { methodName: 'challengeResponse', routeName: 'kad-challenge-response' },
+    { methodName: 'sendDataLocationResponse', routeName: 'kad-data-location-response' },
+    { methodName: 'dataReadRequest', routeName: 'kad-data-read-request' },
+    { methodName: 'sendDataReadResponse', routeName: 'kad-data-read-response' },
+    { methodName: 'sendPermissionedDataReadRequest', routeName: 'kad-permissioned-data-read-request' },
+    { methodName: 'sendDataPurchaseRequest', routeName: 'kad-data-purchase-request' },
+    { methodName: 'sendDataPurchaseResponse', routeName: 'kad-data-purchase-response' },
+    { methodName: 'sendPermissionedDataPriceRequest', routeName: 'kad-data-price-request' },
+    { methodName: 'sendPermissionedDataPriceResponse', routeName: 'kad-data-price-response' },
+    { methodName: 'sendEncryptedKey', routeName: 'kad-send-encrypted-key' },
+    { methodName: 'sendEncryptedKeyProcessResult', routeName: 'kad-encrypted-key-process-result' },
+];
 
 /**
  * DHT module (Kademlia)
@@ -32,9 +53,9 @@ class Kademlia {
         this.log = ctx.logger;
         this.emitter = ctx.emitter;
         this.kademliaUtilities = ctx.kademliaUtilities;
-        this.notifyError = ctx.notifyError;
         this.config = ctx.config;
         this.approvalService = ctx.approvalService;
+        this.networkService = ctx.networkService;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
@@ -91,6 +112,11 @@ class Kademlia {
                 this.identity.proof.toString('hex'),
             );
         }
+        this.config.publicKeyData = {
+            publicKey: publicKey.toString('hex'),
+            nonce: this.nonce,
+            proof: this.identity.proof.toString('hex'),
+        };
 
         this.config.identity = this.identity.fingerprint.toString('hex').toLowerCase();
 
@@ -146,9 +172,10 @@ class Kademlia {
                     'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-data-purchase-request', 'kad-data-purchase-response',
                     'kad-data-price-request', 'kad-data-price-response',
-                    'kad-private-data-read-response', 'kad-private-data-read-request',
+                    'kad-permissioned-data-read-response', 'kad-permissioned-data-read-request',
                     'kad-send-encrypted-key', 'kad-encrypted-key-process-result',
                     'kad-replication-request', 'kad-replacement-replication-request', 'kad-replacement-replication-finished',
+                    'kad-public-key-request',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
@@ -224,7 +251,6 @@ class Kademlia {
                 }, done => this.joinNetwork(done), (err, entry) => {
                     if (err) {
                         this.log.error(`Failed to join network ${err}`);
-                        this.notifyError(err);
                         process.exit(1);
                     }
 
@@ -309,9 +335,129 @@ class Kademlia {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
-        if (this.config.is_bootstrap_node) {
-            // TODO: add here custom methods for bootstrap.
+        this.node.plugin((node) => {
+            node.packMessage = async (contactId, message) => {
+                // eslint-disable-next-line prefer-const
+                let { contact, header } = await node.getContact(contactId);
+                let body = message;
+                if (contact[0] !== contactId) {
+                    let publicKey = await this.networkService.getNodePublicKey(contactId);
+                    if (!publicKey) {
+                        try {
+                            const publicKeyData = await node.sendPublicKeyRequest(
+                                null,
+                                contactId,
+                            );
 
+                            if (await this.networkService.validatePublicKeyData(publicKeyData)) {
+                                await this.networkService.setNodePublicKey(publicKeyData);
+                            } else {
+                                throw new Error('Public key validation error');
+                            }
+                            publicKey = Buffer.from(publicKeyData.public_key, 'hex')
+                                .toString('hex');
+                        } catch (e) {
+                            throw Error('Unable to get node public key for encryption');
+                        }
+                    }
+                    body = await ECEncryption.encryptObject(message, publicKey);
+                    const messageHeader = JSON.parse(header);
+                    messageHeader.encrypted = true;
+                    header = JSON.stringify(messageHeader);
+                }
+
+                return { contact, header, body };
+            };
+
+            node.unpackMessage = async (request) => {
+                const header = JSON.parse(request.params.header);
+                if (header.encrypted) {
+                    const message =
+                        await ECEncryption.decrypt(request.params.message, this.privateKey.toString('hex'));
+                    request.params.message = JSON.parse(message);
+                }
+            };
+            /**
+             * Get contact by Node ID
+             * @param contactId
+             * @returns Promise{ contact: [contactId, contact], header }
+             */
+            node.getContact = async (contactId) => {
+                contactId = contactId.toLowerCase();
+                const header = JSON.stringify({
+                    from: this.config.identity,
+                    to: contactId,
+                    ttl: kadence.constants.MAX_RELAY_HOPS,
+                    encrypted: false,
+                });
+
+                return new Promise((accept, reject) => {
+                    // find contact in routing table
+                    const contact = node.router.getContactByNodeId(contactId);
+                    if (contact && contactId === contact.identity &&
+                        contact.hostname && contact.port) {
+                        this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
+                        accept({ contact: [contactId, contact], header });
+                    }
+
+                    // iterative find node
+                    this.node.iterativeFindNode(contactId, (err, result) => {
+                        if (err) {
+                            reject(Error(`Failed to find contact ${contactId}. ${err}`));
+                        }
+                        const contact = this._getContactFromInterativeFindNodeResult(result);
+                        if (contact && Array.isArray(contact) && contact.length === 2
+                                && contact[1].hostname && contact[1].port
+                                && contact[0] === contact[1].identity) {
+                            this.log.debug(`Found proxy contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
+                            accept({ contact, header });
+                        }
+                        reject(Error(`Unknown contact ${contactId}.`));
+                    });
+                });
+            };
+        });
+
+        this.node.use('*', async (request, response, next) => {
+            if (request.params.header) {
+                const header = JSON.parse(request.params.header);
+                if (header.ttl && header.from && header.to) {
+                    const srcContact = header.from;
+                    const destContact = header.to;
+                    header.ttl -= 1;
+                    if (header.ttl >= 0) {
+                        if (destContact === this.config.identity) {
+                            await this.node.unpackMessage(request);
+                            response.send(next());
+                        } else {
+                            const result = await new Promise(async (accept, reject) => {
+                                const { contact } = await this.node.getContact(destContact);
+                                this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
+                                // should await?
+                                this.node.send(
+                                    request.method,
+                                    {
+                                        message: request.params.message,
+                                        header: request.params.header,
+                                    },
+                                    contact,
+                                    (err, res) => {
+                                        if (err) {
+                                            reject(err);
+                                        } else {
+                                            accept(res);
+                                        }
+                                    },
+                                );
+                            });
+                            response.send(result);
+                        }
+                    } else response.send('Message includes invalid TTL.');
+                } else response.send('Message includes invalid header.');
+            } else next();
+        });
+
+        if (this.config.is_bootstrap_node) {
             return;
         }
 
@@ -364,6 +510,48 @@ class Kademlia {
         this.node.use('kad-data-read-response', (request, response, next) => {
             this.log.debug('kad-data-read-response received');
             this.emitter.emit('kad-data-read-response', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-permissioned-data-read-request', (request, response, next) => {
+            this.log.debug('kad-permissioned-data-read-request received');
+            this.emitter.emit('kad-permissioned-data-read-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-permissioned-data-read-response', (request, response, next) => {
+            this.log.debug('kad-permissioned-data-read-response received');
+            this.emitter.emit('kad-permissioned-data-read-response', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-purchase-request', (request, response, next) => {
+            this.log.debug('kad-data-purchase-request received');
+            this.emitter.emit('kad-data-purchase-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-purchase-response', (request, response, next) => {
+            this.log.debug('kad-data-purchase-response received');
+            this.emitter.emit('kad-data-purchase-response', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-price-request', (request, response, next) => {
+            this.log.debug('kad-data-price-request received');
+            this.emitter.emit('kad-data-price-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-price-response', (request, response, next) => {
+            this.log.debug('kad-data-price-response received');
+            this.emitter.emit('kad-data-price-response', request);
             response.send([]);
         });
 
@@ -422,6 +610,13 @@ class Kademlia {
         });
 
         // async
+        this.node.use('kad-public-key-request', (request, response, next) => {
+            this.log.debug('kad-public-key-request received');
+            this.emitter.emit('kad-public-key-request', request, response);
+            response.send([]);
+        });
+
+        // async
         this.node.use('kad-challenge-request', (request, response, next) => {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
@@ -459,46 +654,40 @@ class Kademlia {
             }
         });
 
-        this.node.use('*', async (request, response, next) => {
-            if (request.params.header) {
-                const header = JSON.parse(request.params.header);
-                if (header.ttl && header.from && header.to) {
-                    const srcContact = header.from;
-                    const destContact = header.to;
-                    header.ttl -= 1;
-                    if (header.ttl >= 0) {
-                        if (destContact === this.config.identity) {
-                            response.send(next());
-                        } else {
-                            const result = await new Promise(async (accept, reject) => {
-                                const { contact } = await this.node.getContact(destContact);
-                                this.log.debug(`Request received from ${srcContact} for ${destContact}. Forwarding to: ${contact[0]}`);
-                                // should await?
-                                this.node.send(
-                                    request.method,
-                                    {
-                                        message: request.params.message,
-                                        header: request.params.header,
-                                    },
-                                    contact,
-                                    (err, res) => {
-                                        if (err) {
-                                            reject(err);
-                                        } else {
-                                            accept(res);
-                                        }
-                                    },
-                                );
-                            });
-                            response.send(result);
-                        }
-                    } else response.send('Message includes invalid TTL.');
-                } else response.send('Message includes invalid header.');
-            } else next();
-        });
-
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
+            node.sendDirectMessage = async (message, contactId, method) => {
+                try {
+                    const { contact, header, body } = await node.packMessage(contactId, message);
+                    return new Promise((resolve, reject) => {
+                        node.send(method, { message: body, header }, contact, (err, res) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(res);
+                            }
+                        });
+                    });
+                } catch (error) {
+                    return new Promise((resolve, reject) => {
+                        reject(error);
+                    });
+                }
+            };
+
+            node.sendUnpackedMessage = async (message, contactId, method) => {
+                const { contact, header } = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send(method, { message, header }, contact, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
             /**
              * Helper method for getting nearest contact (used for testing purposes only)
              * @returns {*}
@@ -506,156 +695,11 @@ class Kademlia {
             node.getNearestNeighbour = () =>
                 [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
 
-            /**
-             * Get contact by Node ID
-             * @param contactId
-             * @returns Promise{ contact: [contactId, contact], header }
-             */
-            node.getContact = async (contactId) => {
-                contactId = contactId.toLowerCase();
-                const header = JSON.stringify({
-                    from: this.config.identity,
-                    to: contactId,
-                    ttl: kadence.constants.MAX_RELAY_HOPS,
-                });
 
-                return new Promise((accept, reject) => {
-                    // find contact in routing table
-                    const contact = node.router.getContactByNodeId(contactId);
-                    if (contact && contactId === contact.identity &&
-                        contact.hostname && contact.port) {
-                        this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
-                        accept({ contact: [contactId, contact], header });
-                    }
-
-                    // iterative find node
-                    this.node.iterativeFindNode(contactId, (err, result) => {
-                        if (err) {
-                            reject(Error(`Failed to find contact ${contactId}. ${err}`));
-                        }
-                        if (result && Array.isArray(result)) {
-                            const contact = result[0];
-                            if (contact && Array.isArray(contact) && contact.length === 2
-                                && contact[1].hostname && contact[1].port
-                                && contact[0] === contact[1].identity) {
-                                this.log.debug(`Found contact in routing table. ${contact[0]} - ${contact[1].hostname}:${contact[1].port}`);
-                                accept({ contact, header });
-                            }
-                            reject(Error(`Unknown contact ${contactId}.`));
-                        }
-                        reject(Error(`Failed to find contact ${contactId}. Not array: ${result}`));
-                    });
-                });
-            };
-
-            node.replicationRequest = async (message, contactId) => {
+            node.sendUnpackedMessage = async (message, contactId, method) => {
                 const { contact, header } = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-replication-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.replacementReplicationRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replacement-replication-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.replicationFinished = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replication-finished', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.replacementReplicationFinished = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replacement-replication-finished', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.challengeRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.challengeResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-challenge-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.sendDataLocationResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-location-response', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.dataReadRequest = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-read-request', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.sendDataReadResponse = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-data-read-response', { message, header }, contact, (err, res) => {
+                    node.send(method, { message, header }, contact, (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -743,31 +787,14 @@ class Kademlia {
                 });
             };
 
-            node.sendEncryptedKey = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-send-encrypted-key', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
 
-            node.sendEncryptedKeyProcessResult = async (message, contactId) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-encrypted-key-process-result', { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
+            directMessageRequests.forEach((element) => {
+                node[element.methodName] = async (message, contactId) =>
+                    node.sendDirectMessage(message, contactId, element.routeName);
+            });
+
+            node.sendPublicKeyRequest = async (message, contactId) =>
+                node.sendUnpackedMessage(message, contactId, 'kad-public-key-request');
 
             node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
                 node.quasar.quasarPublish(
@@ -934,6 +961,15 @@ class Kademlia {
             nonce,
             proof,
         }));
+    }
+
+    _getContactFromInterativeFindNodeResult(result) {
+        for (const contact of result) {
+            if (contact[0] !== this.config.identity) {
+                return contact;
+            }
+        }
+        return null;
     }
 }
 

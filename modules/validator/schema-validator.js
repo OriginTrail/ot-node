@@ -23,7 +23,7 @@ class SchemaValidator {
     }
 
     _getSignerAddress(document) {
-        const merkleRoot = importUtilities.calculateDatasetRootHash(document['@graph'], document['@id'], document.datasetHeader.dataCreator);
+        const merkleRoot = importUtilities.calculateDatasetRootHash(document);
         const { signature } = document;
 
         const { value } = signature;

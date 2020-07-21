@@ -38,7 +38,9 @@ describe('EPCIS OT JSON transpiler tests', () => {
     let selectedDatabase;
 
     const directoryPath = path.join(__dirname, '../../importers/epcis_12_examples/');
+    const permissionedDataDirectoryPath = path.join(__dirname, '../../importers/use_cases/marketplace/');
     const inputXmlFiles = fs.readdirSync(directoryPath).map(file => path.join(__dirname, `../../importers/epcis_12_examples/${file}`));
+    const inputPermissionedDataFile = fs.readFileSync(`${permissionedDataDirectoryPath}permissioned_data_simple_sample.xml`);
 
     before('Init EPCIS transpiler', async () => {
         const config = rc(pjson.name, defaultConfig);
@@ -71,7 +73,7 @@ describe('EPCIS OT JSON transpiler tests', () => {
             }],
         );
 
-        graphStorage = new GraphStorage(selectedDatabase, logger, {});
+        graphStorage = new GraphStorage(selectedDatabase, logger);
         await graphStorage.connect();
 
         const web3 = new Web3();
@@ -113,6 +115,36 @@ describe('EPCIS OT JSON transpiler tests', () => {
                 },
             );
         });
+    });
+
+    describe('Convert XML with permissioned data into OT-JSON and back', () => {
+        it(
+            'should correctly transpile permissioned data xml into OT-JSON and back',
+            // eslint-disable-next-line no-loop-func
+            async () => {
+                const xmlContents = inputPermissionedDataFile.toString();
+                const expectedJson = xml2js.xml2js(xmlContents, {
+                    compact: true,
+                    spaces: 4,
+                });
+                const otJson = transpiler.convertToOTJson(xmlContents);
+
+                const attributes = otJson['@graph'][0].properties.___metadata.attribute;
+                assert.equal(attributes[0]._text, '');
+                assert.equal(attributes.length, 2);
+                const permissionedDataAttributes = otJson['@graph'][0].properties.permissioned_data.data.attribute;
+                assert.equal(permissionedDataAttributes[0]._text, 'Company producer');
+                assert.equal(permissionedDataAttributes[1]._attributes.id, 'urn:ot:object:actor:name');
+                assert.equal(permissionedDataAttributes[1]._text, 'Green');
+
+                const exportedXml = transpiler.convertFromOTJson(otJson);
+                const returnedJson = xml2js.xml2js(exportedXml, {
+                    compact: true,
+                    spaces: 4,
+                });
+                assert.equal(Utilities.sortObjectRecursively(expectedJson), Utilities.sortObjectRecursively(returnedJson));
+            },
+        );
     });
 
     describe('Convert empty XML into OT-JSON', () => {

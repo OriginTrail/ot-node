@@ -2,8 +2,10 @@ const { forEach } = require('p-iteration');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
-const importUtilitites = require('../../ImportUtilities');
+const ImportUtilities = require('../../ImportUtilities');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 
 const { Op } = Models.Sequelize;
 
@@ -117,6 +119,8 @@ class DcOfferFinalizedCommand extends Command {
                 };
             }
         }
+
+        await Models.handler_ids.update({ timestamp: Date.now() }, { where: { handler_id } });
         return Command.repeat();
     }
 
@@ -151,10 +155,17 @@ class DcOfferFinalizedCommand extends Command {
 
             const encryptionColor = this.replicationService.castNumberToColor(replicatedData.color);
 
-            const encryptedGraph =
-                (await this.replicationService.loadReplication(offer.id, encryptionColor)).otJson['@graph'];
+            const encryptedDataset =
+                (await this.replicationService.loadReplication(offer.id, encryptionColor)).otJson;
+
+
+            let sortedDataset =
+                OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
+            if (!sortedDataset) {
+                sortedDataset = encryptedDataset;
+            }
             const challenges = this.challengeService.generateChallenges(
-                encryptedGraph, startTime,
+                sortedDataset['@graph'], startTime,
                 endTime, this.config.numberOfChallenges,
             );
 
@@ -188,11 +199,11 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      * @param err
      */
-    async recover(command) {
-        return this.invalidateOffer(command);
+    async recover(command, err) {
+        return this.invalidateOffer(command, err);
     }
 
-    async invalidateOffer(command) {
+    async invalidateOffer(command, err) {
         const { offerId, handler_id } = command.data;
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
@@ -207,6 +218,19 @@ class DcOfferFinalizedCommand extends Command {
         await Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                offerId: offer.offer_id,
+                tokenAmountPerHolder: offer.token_amount_per_holder,
+                litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
+                datasetId: offer.data_set_id,
+                holdingTimeInMinutes: offer.holding_time_in_minutes,
+            },
+            constants.PROCESS_NAME.offerHandling,
+        );
+
         await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }

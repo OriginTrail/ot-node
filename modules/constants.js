@@ -17,7 +17,7 @@ exports.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES = 31;
 /**
  * @constant {number} DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS - Challenge response time
  */
-exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 60000;
+exports.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS = 300000;
 
 /**
  * @constant {number} DEFAULT_REPUTATION_UPDATE_PERIOD_MILLS - Period for updating reputation table
@@ -30,11 +30,25 @@ exports.DEFAULT_REPUTATION_UPDATE_PERIOD_MILLS = 24 * 60 * 60 * 1000;
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
 /**
+ * @constant {number} EXPORT_COMMAND_CLEANUP_TIME_MILLS -
+ * Export command cleanup interval time 1h
+ */
+exports.EXPORT_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
+
+/**
+ * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
+ * Export command cleanup interval time 1h
+ */
+exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
+
+/**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
-    'reputationUpdateCommand', 'autoupdaterCommand'];
+    'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
+    'handlerIdsCleanerCommand',
+];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
@@ -82,11 +96,48 @@ exports.BLOCKCHAIN_RETRY_DELAY_IN_MILLS = 20000;
 exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
 /**
  *
- * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
+ * @constant {array} NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS -
+ *  Minimal number of blocks which are used for creating permissioned data merkle tree
  */
-exports.PRIVATE_DATA_OBJECT_NAMES = ['private_data', 'claim'];
+exports.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS = 256;
 /**
  *
- * @constant {array} PRIVATE_DATA_OBJECT_NAMES - Names of properties which are used for private data
+ * @constant {integer} PUBLIC_KEY_VALIDITY_IN_MILLS -
+ *  Amount of time one node's public key hash is valid
  */
-exports.NUMBER_OF_PRIVATE_DATA_FIRST_LEVEL_BLOCKS = 256;
+exports.PUBLIC_KEY_VALIDITY_IN_MILLS = 30 * 24 * 60 * 60 * 1000; // 30 days
+/**
+ *
+ * @constant {integer} PROCESS_NAME -
+ *  Name of the process for grouping events for bugsnag
+ */
+exports.PROCESS_NAME = {
+    other: 'other',
+    offerHandling: 'offer-handling',
+    challengesHandling: 'challenges-handling',
+    litigationHandling: 'litigation-handling',
+};
+
+/**
+ *
+ * @constant {integer} PROCESS_NAME -
+ *  Name of the process for grouping events for bugsnag
+ */
+exports.TRAIL_REACH_PARAMETERS = {
+    extended: 'extended',
+    narrow: 'narrow',
+};
+
+/**
+ *
+ * @constant {string} PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE -
+ * visibility option for storing only attribute value to permissioned data
+ */
+exports.PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE = 'permissioned.show_attribute';
+
+/**
+ *
+ * @constant {string} PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE -
+ * visibility option for storing attribute to permissioned data
+ */
+exports.PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE = 'permissioned.hide_attribute';

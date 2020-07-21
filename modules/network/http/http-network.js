@@ -72,18 +72,18 @@ class HttpNetwork {
             return HttpNetwork.send(contact.hostname, data, this.config.identity);
         };
 
-        this.node.sendPrivateDataReadRequest = async (message, contactId) => {
+        this.node.sendPermissionedDataReadRequest = async (message, contactId) => {
             const data = {
-                type: 'kad-private-data-read-request',
+                type: 'kad-permissioned-data-read-request',
                 message,
             };
             const contact = await this.node.getContact(contactId);
             return HttpNetwork.send(contact.hostname, data, this.config.identity);
         };
 
-        this.node.sendPrivateDataReadResponse = async (message, contactId) => {
+        this.node.sendPermissionedDataReadResponse = async (message, contactId) => {
             const data = {
-                type: 'kad-private-data-read-response',
+                type: 'kad-permissioned-data-read-response',
                 message,
             };
             const contact = await this.node.getContact(contactId);
@@ -120,6 +120,15 @@ class HttpNetwork {
         this.node.sendEncryptedKeyProcessResult = async (message, contactId) => {
             const data = {
                 type: 'kad-encrypted-key-process-result',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
+        this.node.sendPublicKeyRequest = async (message, contactId) => {
+            const data = {
+                type: 'kad-public-key-request',
                 message,
             };
             const contact = await this.node.getContact(contactId);

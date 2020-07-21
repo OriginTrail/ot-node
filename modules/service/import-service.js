@@ -1,9 +1,8 @@
-const path = require('path');
-const fs = require('fs');
 const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
+const OtJsonUtilities = require('../OtJsonUtilities');
 
 const Constants = require('../constants');
 /**
@@ -81,32 +80,42 @@ class ImportService {
         this.config = ctx.config;
     }
 
-    async getImport(datasetId, encColor = null) {
+    async getImportDbData(datasetId, encColor = null) {
         if (![null, 'red', 'green', 'blue'].includes(encColor)) {
             throw Error('Invalid encryption color.');
         }
-        const vertices = await this.db.findVerticesByImportId(datasetId);
-        const edges = await this.db.findEdgesByImportId(datasetId);
-        const metadata = await this.db.findMetadataByImportId(datasetId);
+
+        const {
+            metadata,
+            vertices,
+            edges,
+        } = await this.db.getDatasetWithVerticesAndEdges(datasetId);
 
         // TODO: Check if date with specified encryption exists
         if (encColor != null) {
             vertices.filter(v => v.encrypted != null)
                 .forEach(v => v.data = v.encrypted[encColor.charAt(0)]);
         }
+        return { vertices, edges, metadata };
+    }
+
+    async getImport(datasetId, encColor = null) {
+        const {
+            vertices,
+            edges,
+            metadata,
+        } = await this.getImportDbData(datasetId, encColor);
 
         const document = {
             '@id': datasetId,
             '@type': 'Dataset',
-            '@graph': await this._createDocumentGraph(vertices, edges),
+            '@graph': await ImportUtilities.createDocumentGraph(vertices, edges),
         };
 
         document.datasetHeader = metadata.datasetHeader;
         document.signature = metadata.signature;
 
-
-        ImportUtilities.sortStringifyDataset(document);
-        return document;
+        return OtJsonUtilities.prepareDatasetForDatabaseRead(document);
     }
 
     /**
@@ -223,13 +232,10 @@ class ImportService {
                 // Add data vertex.
                 if (otObject.properties != null) {
                     const otObjectData = Utilities.copyObject(otObject.properties);
-                    Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                        const privateObject = otObject.properties[private_data_array];
-                        if (privateObject) {
-                            delete privateObject.isPrivate;
-                            delete privateObject.data;
-                        }
-                    });
+                    const permissionedObject = otObject.properties.permissioned_data;
+                    if (permissionedObject) {
+                        delete permissionedObject.data;
+                    }
                     const dataVertex = {
                         _key: Utilities.keyFrom(
                             dataCreator,
@@ -540,7 +546,6 @@ class ImportService {
         });
 
         await this.db.addDatasetMetadata(metadata);
-
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(
             document,
@@ -577,44 +582,50 @@ class ImportService {
      * @returns {Promise<[]>}
      */
     async getMerkleProofs(objectIdsArray, datasetId) {
-        const otjson = await this.getImport(datasetId);
+        const dataset = await this.getImport(datasetId);
 
-        ImportUtilities.sortGraphRecursively(_graph(otjson));
+        let sortedDataset =
+            OtJsonUtilities.prepareDatasetForGeneratingMerkleProofs(dataset);
+        if (!sortedDataset) {
+            sortedDataset = dataset;
+        }
 
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
-            _graph(otjson),
+            sortedDataset['@graph'],
             datasetId,
-            otjson.datasetHeader.dataCreator,
+            sortedDataset.datasetHeader.dataCreator,
         );
 
         const proofs = [];
 
         for (const objectId of objectIdsArray) {
             const objectIndex =
-                _graph(otjson).findIndex(graphObject => _id(graphObject) === objectId);
+                _graph(sortedDataset).findIndex(graphObject => _id(graphObject) === objectId);
+
+            const object =
+                _graph(sortedDataset).find(graphObject => _id(graphObject) === objectId);
 
             const proof = merkleTree.createProof(objectIndex + 1);
 
-            proofs.push({ object_id: objectId, object_index: objectIndex + 1, proof });
+            proofs.push({
+                object_id: objectId, otObject: object, object_index: objectIndex + 1, proof,
+            });
         }
 
         return proofs;
     }
 
-    async packTrailData(data) {
-        const promises = [];
+    packTrailData(data) {
+        const reconstructedObjects = [];
         for (const object of data) {
             const { rootObject, relatedObjects } = object;
 
-            promises.push(this._createObjectGraph(rootObject, relatedObjects));
+            reconstructedObjects.push(this._createObjectGraph(rootObject, relatedObjects));
         }
-
-        const reconstructedObjects = await Promise.all(promises);
 
         const otObjects = [];
 
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
-            ImportUtilities.sortGraphRecursively([reconstructedObjects[i]]);
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
@@ -625,7 +636,7 @@ class ImportService {
         return otObjects;
     }
 
-    async _createObjectGraph(graphObject, relatedObjects) {
+    _createObjectGraph(graphObject, relatedObjects) {
         const otObject = this._constructOtObject(relatedObjects);
         otObject['@id'] = graphObject.uid;
         if (graphObject.vertexType === constants.vertexType.entityObject) {
@@ -633,7 +644,6 @@ class ImportService {
         } else if (graphObject.vertexType === constants.vertexType.connector) {
             otObject['@type'] = constants.objectType.otConnector;
         }
-
         return otObject;
     }
 
@@ -682,144 +692,6 @@ class ImportService {
         return otObject;
     }
 
-    async _createDocumentGraph(vertices, edges) {
-        const documentGraph = [];
-        vertices.filter(vertex => (vertex.vertexType === constants.vertexType.entityObject))
-            .forEach((entityVertex) => {
-                const otObject = {
-                    '@type': constants.objectType.otObject,
-                    '@id': entityVertex.uid,
-                    identifiers: [],
-                    relations: [],
-                };
-
-                // Check for identifiers.
-                // Relation 'IDENTIFIES' goes form identifierVertex to entityVertex.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.identifierRelation &&
-                    edge._to === entityVertex._key))
-                    .forEach((edge) => {
-                        vertices.filter(vertices => vertices._key === edge._from)
-                            .forEach((identityVertex) => {
-                                if (otObject.identifiers == null) {
-                                    otObject.identifiers = [];
-                                }
-
-                                if (edge.autogenerated != null) {
-                                    otObject.identifiers.push({
-                                        '@type': identityVertex.identifierType,
-                                        '@value': identityVertex.identifierValue,
-                                        autogenerated: edge.autogenerated,
-                                    });
-                                } else {
-                                    otObject.identifiers.push({
-                                        '@type': identityVertex.identifierType,
-                                        '@value': identityVertex.identifierValue,
-                                    });
-                                }
-                            });
-                    });
-                // Check for properties.
-                // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.dataRelation
-                    && edge._from === entityVertex._key))
-                    .forEach((edge) => {
-                        vertices.filter(vertices => vertices._key === edge._to)
-                            .forEach((dataVertex) => {
-                                otObject.properties = Utilities.copyObject(dataVertex.data);
-                            });
-                    });
-                // Check for relations.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.otRelation
-                    && edge._from === entityVertex._key))
-                    .forEach((edge) => {
-                        if (otObject.relations == null) {
-                            otObject.relations = [];
-                        }
-
-                        // Find original vertex to get the @id.
-                        const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
-
-                        otObject.relations.push({
-                            '@type': constants.edgeType.otRelation,
-                            direction: 'direct', // TODO: check this.
-                            relationType: edge.relationType,
-                            linkedObject: {
-                                '@id': id,
-                            },
-                            properties: edge.properties,
-                        });
-                    });
-                documentGraph.push(otObject);
-            });
-
-        vertices.filter(vertex => vertex.vertexType === constants.vertexType.connector)
-            .forEach((connectorVertex) => {
-                const otConnector = {
-                    '@type': constants.objectType.otConnector,
-                    '@id': connectorVertex.uid,
-                };
-
-                edges.filter(edge => (edge.edgeType === constants.edgeType.identifierRelation &&
-                    edge._to === connectorVertex._key))
-                    .forEach((edge) => {
-                        vertices.filter(vertices => vertices._key === edge._from)
-                            .forEach((identityVertex) => {
-                                if (otConnector.identifiers == null) {
-                                    otConnector.identifiers = [];
-                                }
-
-                                if (edge.autogenerated != null) {
-                                    otConnector.identifiers.push({
-                                        '@type': identityVertex.identifierType,
-                                        '@value': identityVertex.identifierValue,
-                                        autogenerated: edge.autogenerated,
-                                    });
-                                } else {
-                                    otConnector.identifiers.push({
-                                        '@type': identityVertex.identifierType,
-                                        '@value': identityVertex.identifierValue,
-                                    });
-                                }
-                            });
-                    });
-                // Check for properties.
-                // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.dataRelation
-                    && edge._from === connectorVertex._key))
-                    .forEach((edge) => {
-                        vertices.filter(vertices => vertices._key === edge._to)
-                            .forEach((dataVertex) => {
-                                otConnector.properties = Utilities.copyObject(dataVertex.data);
-                            });
-                    });
-                // Check for relations.
-                edges.filter(edge => (edge.edgeType === constants.edgeType.otRelation
-                    && edge._from === connectorVertex._key))
-                    .forEach((edge) => {
-                        if (otConnector.relations == null) {
-                            otConnector.relations = [];
-                        }
-
-                        // Find original vertex to get the @id.
-                        const id = (vertices.filter(vertex => vertex._key === edge._to)[0]).uid;
-
-                        otConnector.relations.push({
-                            '@type': constants.edgeType.otRelation,
-                            direction: 'direct', // TODO: check this.
-                            relationType: edge.relationType,
-                            linkedObject: {
-                                '@id': id,
-                            },
-                            properties: edge.properties,
-                        });
-                    });
-
-                documentGraph.push(otConnector);
-            });
-
-        return documentGraph;
-    }
-
     async getImportedOtObject(datasetId, objectIndex, offerId = null, color = null) {
         // get metadata id using otObjectId
         const metadata = await this.db.findMetadataByImportId(datasetId);
@@ -847,7 +719,7 @@ class ImportService {
             }
         }
 
-        const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);
+        const otObject = this._createObjectGraph(result.rootObject, result.relatedObjects);
 
         return otObject;
     }
@@ -867,7 +739,7 @@ class ImportService {
             throw Error(`Unable to find related objects for object_id: ${otObjectId} and dataset_id: ${datasetId}`);
         }
 
-        const otObject = await this._createObjectGraph(result.rootObject, result.relatedObjects);
+        const otObject = this._createObjectGraph(result.rootObject, result.relatedObjects);
 
         return otObject;
     }
@@ -901,7 +773,7 @@ class ImportService {
             throw Error('[Validation Error] Wrong format of dataset ID');
         }
 
-        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document['@graph'])) {
+        if (datasetId !== ImportUtilities.calculateGraphPublicHash(document)) {
             throw Error('[Validation Error] Invalid dataset ID');
         }
 
@@ -915,7 +787,7 @@ class ImportService {
 
         // TODO: Prepare support for multiple versions
         const { OTJSONVersion } = datasetHeader;
-        if (OTJSONVersion !== '1.0') {
+        if (!['1.0', '1.1', '1.2'].includes(OTJSONVersion)) {
             throw Error('[Validation Error] Unsupported OT-JSON version.');
         }
 

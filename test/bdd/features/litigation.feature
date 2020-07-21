@@ -3,9 +3,9 @@ Feature: Test various litigation scenarios
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @second
+  @first
   Scenario: Test litigation for one holder which has failed to answer challenge but succeeded to answer litigation (wrongly)
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 nodes
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 5 |
@@ -33,7 +33,7 @@ Feature: Test various litigation scenarios
 
   @third
   Scenario: Test litigation for one holder which has failed to answer challenge but succeeded to answer litigation (correctly)
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 node
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 5 |
@@ -60,7 +60,7 @@ Feature: Test various litigation scenarios
 
   @skip #to be done when we finish replacement
   Scenario: Test litigation case where same new nodes will apply for same offer
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 nodes
     When I override configuration for all nodes
       | dc_holding_time_in_minutes | 7 |
@@ -88,7 +88,7 @@ Feature: Test various litigation scenarios
 
   @first
   Scenario: DC should discriminate DH which has reputation lower than threshold
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 5 nodes
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 10 |
@@ -99,7 +99,6 @@ Feature: Test various litigation scenarios
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
     And DC waits for last offer to get written to blockchain
     And I wait for replications to finish

@@ -22,7 +22,7 @@
                     <id>urn:epc:id:sgln:0000000.55555.0</id>
                 </bizLocation>
                 <bizTransactionList>
-                    <bizTransaction>sampleFarmAtDate14102019:0x75bd15b2f5a5f2ead02717973e1fdf1d4c8f914a</bizTransaction>
+                    <bizTransaction>sampleFarmAtDate14102019:0xa452e4a445a2fd8a1aa5371122a7251286fd5dc4</bizTransaction>
                 </bizTransactionList>
             </ObjectEvent>
         </EventList>

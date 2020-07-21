@@ -20,7 +20,7 @@ describe('Utilities module', () => {
                     'ssl_certificate_path', 'identity_filepath', 'cpus',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled',
-                    'ssl_authority_paths', 'node_rpc_port',
+                    'ssl_authority_paths', 'node_rpc_port', 'default_data_price',
                     'remote_control_enabled', 'dc_challenge_retry_delay_in_millis', 'dh_challenge_retry_delay_in_millis',
                     'read_stake_factor', 'send_logs_to_origintrail',
                     'dh_min_reputation', 'dh_min_stake_amount', 'houston_password_file_name',
@@ -28,11 +28,11 @@ describe('Utilities module', () => {
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
                     'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes',
                     'erc725_identity_filepath', 'requireApproval', 'dh_maximum_dataset_filesize_in_mb', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled',
-                    'reputationWindowInMinutes', 'send_challenges_log'],
+                    'reputationWindowInMinutes', 'send_challenges_log', 'node_rpc_use_ssl', 'node_rpc_ssl_key_path', 'node_rpc_ssl_cert_path'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
-                config.database, ['provider', 'username', 'password', 'database', 'port', 'host', 'max_path_length'],
+                config.database, ['provider', 'username', 'password', 'password_file_name', 'database', 'port', 'host', 'max_path_length'],
                 `Some config items are missing in config.database for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -155,7 +155,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.database, ['provider', 'username', 'password',
-                'host', 'port', 'database', 'max_path_length']);
+                'host', 'port', 'password_file_name', 'database', 'max_path_length']);
             assert.equal(config.database.provider, 'arangodb');
         });
     });
@@ -216,7 +216,7 @@ describe('Utilities module', () => {
     it('executeCallback() callback not defined scenario', async () => {
         // helper function
         function first(timeInterval) {
-            setTimeout(() => function () {
+            setTimeout(() => {
                 console.log('Helper function log');
             }, 1000);
         }

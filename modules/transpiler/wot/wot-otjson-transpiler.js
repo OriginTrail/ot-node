@@ -1,5 +1,6 @@
 const utilities = require('../../Utilities');
 const importUtilities = require('../../ImportUtilities');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 const fs = require('fs');
 const Ajv = require('ajv');
 const { sha3_256 } = require('js-sha3');
@@ -53,21 +54,26 @@ class WotOtJsonTranspiler {
         const transpilationInfo = this._getTranspilationInfo();
         transpilationInfo.diff = json;
 
-        otjson['@id'] = importUtilities.calculateGraphHash(otjson['@graph']);
+        otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-
         otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
 
-        const merkleRoot = importUtilities.calculateDatasetRootHash(otjson['@graph'], otjson['@id'], otjson.datasetHeader.dataCreator);
-
-        otjson.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
+        let result = OtJsonUtilities.prepareDatasetForNewImport(otjson);
+        if (!result) {
+            result = otjson;
+        }
+        result['@id'] = importUtilities.calculateGraphPublicHash(result);
+        const merkleRoot = importUtilities.calculateDatasetRootHash(result);
+        result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
         // Until we update all routes to work with commands, keep this web3 implementation
-        let result;
         if (this.web3) {
-            result = importUtilities.signDataset(otjson, this.config, this.web3);
+            result = importUtilities.signDataset(result, this.config, this.web3);
         } else {
-            result = importUtilities.sortStringifyDataset(otjson);
+            const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
+            if (sortedDataset) {
+                result = sortedDataset;
+            }
         }
         return result;
     }
@@ -274,6 +280,10 @@ class WotOtJsonTranspiler {
     convertFromOTJson(otjson) {
         if (otjson == null) {
             throw new Error('OT-JSON document cannot be empty');
+        }
+        if (!otjson.datasetHeader.transpilationInfo
+            || otjson.datasetHeader.transpilationInfo.transpilationInfo.transpilerType !== 'WOT') {
+            throw new Error('Unable to convert to requested standard. Original dataset was not imported in WOT format.');
         }
         const json = utilities.copyObject(otjson.datasetHeader.transpilationInfo.diff);
 

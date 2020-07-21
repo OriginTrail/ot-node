@@ -2,10 +2,11 @@ const bytes = require('utf8-length');
 const fs = require('fs');
 const { sha3_256 } = require('js-sha3');
 const Command = require('../command');
-const Encryption = require('../../Encryption');
+const Encryption = require('../../RSAEncryption');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 
 /**
  * Imports data for replication
@@ -15,6 +16,7 @@ class DhReplicationImportCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
@@ -44,27 +46,39 @@ class DhReplicationImportCommand extends Command {
             encColor,
             dcIdentity,
         } = command.data;
-        const { otJson, privateData }
+        const { otJson, permissionedData }
             = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
-        const { decryptedDataset, encryptedMap } =
+        const replication =
             await ImportUtilities.decryptDataset(otJson, litigationPublicKey, offerId, encColor);
+
+        let { decryptedDataset } = replication;
+        const { encryptedMap } = replication;
+
+        const tempSortedDataset = OtJsonUtilities.prepareDatasetForNewReplication(decryptedDataset);
+        if (tempSortedDataset) {
+            decryptedDataset = tempSortedDataset;
+        }
         const calculatedDataSetId =
-            await ImportUtilities.calculateGraphPublicHash(decryptedDataset['@graph']);
+            await ImportUtilities.calculateGraphPublicHash(decryptedDataset);
 
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
         }
 
-        const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset['@graph'], decryptedDataset['@id'], decryptedDataset.datasetHeader.dataCreator);
+        const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
         const blockchainRootHash = await this.blockchain.getRootHash(dataSetId);
 
         if (decryptedGraphRootHash !== blockchainRootHash) {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from Blockchain root hash ${blockchainRootHash}`);
         }
 
-        // Verify litigation root hash
-        const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(otJson['@graph']);
+        let sortedDataset =
+            OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(otJson);
+        if (!sortedDataset) {
+            sortedDataset = otJson;
+        }
+        const encryptedGraphRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
 
         if (encryptedGraphRootHash !== litigationRootHash) {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);
@@ -80,20 +94,10 @@ class DhReplicationImportCommand extends Command {
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id
 
-        if (privateData && Object.keys(privateData).length > 0) {
-            for (const otObject of decryptedDataset['@graph']) {
-                if (otObject['@id'] in privateData) {
-                    const otObjectId = otObject['@id'];
-                    for (const privateDataElement in privateData[otObjectId]) {
-                        if (!otObject.properties) {
-                            otObject.properties = {};
-                        }
-                        otObject.properties[privateDataElement] =
-                            privateData[otObjectId][privateDataElement];
-                    }
-                }
-            }
-        }
+        this.permissionedDataService.attachPermissionedDataToGraph(
+            decryptedDataset['@graph'],
+            permissionedData,
+        );
 
         const holdingData = await Models.holding_data.findOne({
             where: {
@@ -126,6 +130,13 @@ class DhReplicationImportCommand extends Command {
                 data_set_id: dataSetId,
             },
         });
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            dataSetId,
+            dcIdentity,
+            0,
+            dcNodeId,
+            decryptedDataset['@graph'],
+        );
 
         const replicatedPrivateData = ImportUtilities.getGraphPrivateData(decryptedDataset['@graph']);
         replicatedPrivateData.forEach(async (otObjectId) => {

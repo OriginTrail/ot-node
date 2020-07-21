@@ -13,6 +13,7 @@ class DCChallengeCommand extends Command {
         this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -56,7 +57,10 @@ class DCChallengeCommand extends Command {
             throw new Error(`Peer with ID ${challenge.dh_id} could not be reached on challenge attempt ${5 - command.retries}`);
         }
 
-        const checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        let checkCommandDelay = constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS;
+        if (this.config.challengeResponseTimeMills) {
+            checkCommandDelay = this.config.challengeResponseTimeMills;
+        }
 
         return {
             commands: [
@@ -71,6 +75,7 @@ class DCChallengeCommand extends Command {
                         litigationPrivateKey,
                         challengeId: challenge.id,
                     },
+                    retries: 3,
                     transactional: false,
                 },
             ],
@@ -97,8 +102,19 @@ class DCChallengeCommand extends Command {
         if (challenge == null) {
             throw new Error(`Failed to find challenge ${challenge_id}`);
         }
-
-        this.logger.info(`Failed to send challenge for object ${challenge.object_index} and block ${challenge.block_index} to DH ${challenge.dh_id}.`);
+        const errorMessage = `Failed to send challenge for object ${challenge.object_index} and block ${challenge.block_index} to DH ${challenge.dh_id}.`;
+        this.logger.info(errorMessage);
+        this.errorNotificationService.notifyError(
+            errorMessage,
+            {
+                objectIndex: challenge.object_index,
+                blockIndex: challenge.block_index,
+                dhIdentity: challenge.dh_identity,
+                offerId: challenge.offer_id,
+                datasetId: challenge.data_set_id,
+            },
+            constants.PROCESS_NAME.challengesHandling,
+        );
         return {
             commands: [
                 {

@@ -1,10 +1,9 @@
 const Command = require('../command');
 const utilities = require('../../Utilities');
 const models = require('../../../models/index');
-const MerkleTree = require('../../Merkle');
 const importUtilities = require('../../ImportUtilities');
-const importService = require('../../service/import-service');
-
+const constants = require('../../constants');
+const OtJsonUtilities = require('../../OtJsonUtilities');
 /**
  * Initiates litigation from the DC side
  */
@@ -18,6 +17,7 @@ class DCLitigationInitiateCommand extends Command {
         this.importService = ctx.importService;
         this.challengeService = ctx.challengeService;
         this.remoteControl = ctx.remoteControl;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -71,15 +71,18 @@ class DCLitigationInitiateCommand extends Command {
         const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
         const otJson = await this.importService.getImport(offer.data_set_id);
 
-        const encryptedGraph = importUtilities.encryptDataset(
+        const encryptedDataset = importUtilities.encryptDataset(
             otJson,
             litigationPrivateKey,
         );
 
-        importUtilities.sortGraphRecursively(encryptedGraph['@graph']);
-
+        let sortedDataset =
+            OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
+        if (!sortedDataset) {
+            sortedDataset = encryptedDataset;
+        }
         const merkleProof = this.challengeService.createChallengeProof(
-            encryptedGraph['@graph'],
+            sortedDataset['@graph'],
             objectIndex,
             blockIndex,
         );
@@ -98,10 +101,40 @@ class DCLitigationInitiateCommand extends Command {
                     dhIdentity,
                 },
                 period: 5000,
+                retries: 3,
                 deadline_at: Date.now() + (5 * 60 * 1000),
                 transactional: false,
             }],
         };
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+            dhIdentity,
+            objectIndex,
+            blockIndex,
+        } = command.data;
+
+        this.logger.error(`Initiating litigation for holder ${dhIdentity} and offer ${offerId} FAILED!`);
+
+        this.errorNotificationService.notifyError(
+            err,
+            {
+                objectIndex,
+                blockIndex,
+                dhIdentity,
+                offerId,
+            },
+            constants.PROCESS_NAME.litigationHandling,
+        );
+
+        return Command.empty;
     }
 
     /**

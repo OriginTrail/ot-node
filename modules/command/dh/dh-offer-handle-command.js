@@ -67,7 +67,7 @@ class DHOfferHandleCommand extends Command {
             offerId,
             JSON.stringify({
                 otJson: response.otJson,
-                privateData: response.privateData,
+                permissionedData: response.permissionedData,
             }),
         );
 

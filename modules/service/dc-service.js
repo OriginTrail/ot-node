@@ -1,6 +1,6 @@
 const BN = require('bn.js');
 const Utilities = require('../Utilities');
-const Encryption = require('../Encryption');
+const Encryption = require('../RSAEncryption');
 
 const models = require('../../models');
 
@@ -19,6 +19,7 @@ class DCService {
         this.profileService = ctx.profileService;
         this.pricingService = ctx.pricingService;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -29,6 +30,8 @@ class DCService {
      * @param tokenAmountPerHolder
      * @param dataSizeInBytes
      * @param litigationIntervalInMinutes
+     * @param handler_id
+     * @param urgent
      * @returns {Promise<*>}
      */
     async createOffer(
@@ -292,6 +295,7 @@ class DCService {
             const message = `Replication request for offer external ${offerId} that is not in STARTED state.`;
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
+            return;
         }
 
         const dhReputation = await this.getReputationForDh(dhIdentity);
@@ -300,9 +304,10 @@ class DCService {
             const message = `Replication request from holder identity ${dhIdentity} declined! Unacceptable reputation: ${dhReputation.toString()}.`;
             this.logger.info(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
-        } else {
-            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+            return;
         }
+
+        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
     }
 
     /**
@@ -432,39 +437,29 @@ class DCService {
             Utilities.normalizeHex(this.config.node_private_key),
         );
 
-        const allowedPrivateDataElements = await models.data_trades.findAll({
-            where: {
-                data_set_id: offer.data_set_id,
-                buyer_node_id: identity,
-                status: 'COMPLETED',
-            },
-        });
-
-        const privateData = {};
+        const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+            offer.data_set_id,
+            identity,
+        );
 
         const promises = [];
-        allowedPrivateDataElements.forEach((element) => {
-            const ot_object_id = element.ot_json_object_id;
+        for (const ot_object_id in permissionedData) {
             promises.push(this.importService.getOtObjectById(offer.data_set_id, ot_object_id));
-        });
+        }
 
         const ot_objects = await Promise.all(promises);
 
-        ot_objects.forEach((ot_object, index) => {
-            const privateDataObject = {};
-            constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
-                privateDataObject[privateDataArray] = ot_object.properties[privateDataArray];
-            });
-            const { ot_json_object_id } = allowedPrivateDataElements[index];
-            privateData[ot_json_object_id] = privateDataObject;
-        });
+        await this.permissionedDataService.attachPermissionedDataToMap(
+            permissionedData,
+            ot_objects,
+        );
 
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
             dc_wallet: this.config.node_wallet,
             otJson: replication.otJson,
-            privateData,
+            permissionedData,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,

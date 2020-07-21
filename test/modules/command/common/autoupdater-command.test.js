@@ -40,7 +40,6 @@ describe('Checks AutoupdaterCommand logic', () => {
         context = {
             logger,
             config,
-            notifyEvent: () => {},
         };
 
         nodeProcess.env.OT_NODE_DISTRIBUTION = 'docker';

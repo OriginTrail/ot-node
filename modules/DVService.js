@@ -4,7 +4,7 @@ const ethAbi = require('ethereumjs-abi');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
-const Encryption = require('./Encryption');
+const Encryption = require('./RSAEncryption');
 const bytes = require('utf8-length');
 
 /**
@@ -17,7 +17,6 @@ class DVService {
      */
     constructor({
         blockchain, web3, config, graphStorage, logger, remoteControl,
-        notifyError,
     }) {
         this.blockchain = blockchain;
         this.web3 = web3;
@@ -25,7 +24,6 @@ class DVService {
         this.graphStorage = graphStorage;
         this.log = logger;
         this.remoteControl = remoteControl;
-        this.notifyError = notifyError;
     }
 
     async handleEncryptedPaddedKey(message) {
@@ -149,7 +147,6 @@ class DVService {
                 await networkQuery.save({ fields: ['status'] });
             } catch (err) {
                 this.log.warn(`Invalid purchase decryption key, Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
-                this.notifyError(err);
                 if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
                     networkQuery.status = 'FINISHED';
                     await networkQuery.save({ fields: ['status'] });

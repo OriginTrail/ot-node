@@ -18,9 +18,13 @@ class RestAPIServiceV2 {
         this.commandExecutor = ctx.commandExecutor;
         this.epcisOtJsonTranspiler = ctx.epcisOtJsonTranspiler;
         this.wotOtJsonTranspiler = ctx.wotOtJsonTranspiler;
-        this.dcController = ctx.dcController;
 
+        this.dcController = ctx.dcController;
+        this.dhController = ctx.dhController;
         this.dvController = ctx.dvController;
+        this.infoController = ctx.infoController;
+
+        this.exportController = ctx.exportController;
         this.remoteControl = ctx.remoteControl;
 
         this.graphStorage = ctx.graphStorage;
@@ -50,14 +54,10 @@ class RestAPIServiceV2 {
             transport, emitter, blockchain, web3, config,
         } = this.ctx;
 
-        this._registerNodeInfoRoute(server, false);
+        server.get(`/api/${this.version_id}/info`, async (req, res) => {
+            await this.infoController.getNodeInfo(req, res);
+        });
 
-        /**
-         * Data import route
-         * @param file - file or text data
-         * @param standard_id - ID of file standard
-         *        (supported standards are listed in this.standards array)
-         */
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
             await this._importDataset(req, res);
         });
@@ -75,11 +75,11 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/export`, async (req, res) => {
-            await this._exportDataset(req, res);
+            await this.exportController.exportDataset(req, res);
         });
 
         server.get(`/api/${this.version_id}/export/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
+            await this.exportController.checkForHandlerStatus(req, res);
         });
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
@@ -95,7 +95,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/get_dataset_info/:dataset_id`, async (req, res) => {
-            await this._getDatasetInfo(req, res);
+            await this.infoController.getDatasetInfo(req, res);
         });
 
         server.post(`/api/${this.version_id}/trail`, async (req, res) => {
@@ -126,51 +126,69 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
         //
-        // server.post(`/api/${this.version_id}/network/private_data/read`, async (req, res) => {
+        // server.post(`/api/${this.version_id}/network/permissioned_data/read`,async(req, res) => {
         //     await this._privateDataReadNetwork(req, res);
         // });
 
-        // server.get(`/api/${this.version_id}/network/private_data/read/resu
+        // server.get(`/api/${this.version_id}/network/permissioned_data/read/resu
         // lt/:handler_id`, async (req, res) => {
         //     await this._checkForHandlerStatus(req, res);
         // });
 
-        server.post(`/api/${this.version_id}/network/private_data/purchase`, async (req, res) => {
-            await this.dvController.sendNetworkPurchase(req, res);
+        // server.post(`/api/${this.version_id}/network/
+        // permissioned_data/purchase`, async (req, res) => {
+        //     await this.dvController.sendNetworkPurchase(req, res);
+        // });
+
+        // server.get(`/api/${this.version_id}/network/
+        // permissioned_data/purchase/result/:handler_id`, async (req, res) => {
+        //     await this._checkForHandlerStatus(req, res);
+        // });
+
+        server.post(`/api/${this.version_id}/permissioned_data/whitelist_viewer`, async (req, res) => {
+            await this.dhController.whitelistViewer(req, res);
         });
 
-        server.get(`/api/${this.version_id}/network/private_data/purchase/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
+        server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
+            await this.dvController.handleDataReadExportRequest(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/read_export/result/:handler_id`, async (req, res) => {
+            await this.exportController.checkForHandlerStatus(req, res);
         });
 
         server.post(`/api/${this.version_id}/challenges`, async (req, res) => {
             await this._getChallenges(req, res);
         });
 
-        server.get(`/api/${this.version_id}/private_data/available`, async (req, res) => {
-            await this._getPrivateDataAvailable(req, res);
-        });
-
-
-        server.get(`/api/${this.version_id}/private_data/owned`, async (req, res) => {
-            await this._getPrivateDataOwned(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/network/private_data/get_price`, async (req, res) => {
-            await this._getPrivateDataPrice(req, res);
-        });
-
-        server.post(`/api/${this.version_id}/private_data/update_price`, async (req, res) => {
-            await this._updatePrivateDataPrice(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/network/private_data/get_price/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
-        });
-
-        server.get(`/api/${this.version_id}/private_data/trading_info/:type`, async (req, res) => {
-            await this._getTradingData(req, res);
-        });
+        // server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
+        //     await this._getPermissionedDataAvailable(req, res);
+        // });
+        //
+        //
+        // server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
+        //     await this._getPermissionedDataOwned(req, res);
+        // });
+        //
+        // server.post(`/api/${this.version_id}/network/
+        // permissioned_data/get_price`, async (req, res) => {
+        //     await this._getPermissionedDataPrice(req, res);
+        // });
+        //
+        // server.post(`/api/${this.version_id}/
+        // permissioned_data/update_price`, async (req, res) => {
+        //     await this._updatePermissionedDataPrice(req, res);
+        // });
+        //
+        // server.get(`/api/${this.version_id}/network/
+        // permissioned_data/get_price/result/:handler_id`, async (req, res) => {
+        //     await this._checkForHandlerStatus(req, res);
+        // });
+        //
+        // server.get(`/api/${this.version_id}/
+        // permissioned_data/trading_info/:type`, async (req, res) => {
+        //     await this._getTradingData(req, res);
+        // });
 
 
         /** Network related routes */
@@ -292,14 +310,8 @@ class RestAPIServiceV2 {
         /** Get root hash for provided data query
          * @param Query params: data_set_id
          */
-        server.get(`/api/${this.version_id}/fingerprint`, (req, res) => {
-            this.logger.api('GET: Fingerprint request received.');
-
-            const queryObject = req.query;
-            emitter.emit('api-get_root_hash', {
-                query: queryObject,
-                response: res,
-            });
+        server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, (req, res) => {
+            this.dvController.handleGetFingerprint(req, res);
         });
 
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
@@ -375,107 +387,10 @@ class RestAPIServiceV2 {
         });
     }
 
-    /**
-     * Register common info route
-     * @param server - Server instance
-     * @param isBootstrap - Is this a bootstrap node?
-     * @private
-     */
-    _registerNodeInfoRoute(server, isBootstrap) {
-        const {
-            transport,
-            config,
-        } = this.ctx;
-
-        server.get(`/api/${this.version_id}/info`, async (req, res) => {
-            this.logger.api('GET: Node information request received.');
-
-            try {
-                const network = await transport.getNetworkInfo();
-                const basicConfig = {
-                    version: pjson.version,
-                    blockchain: config.blockchain.blockchain_title,
-                    network,
-                    is_bootstrap: isBootstrap,
-                };
-
-                if (!isBootstrap) {
-                    Object.assign(basicConfig, {
-                        node_wallet: config.node_wallet,
-                        erc_725_identity: config.erc725Identity,
-                    });
-                }
-
-                res.status(200);
-                res.send(basicConfig);
-            } catch (error) {
-                this.logger.error(`Failed to process /api/info route. ${error}`);
-                res.status(500);
-                res.send({
-                    message: error,
-                });
-            }
-        });
-    }
-
     async _getTrail(req, res) {
         this.logger.api('POST: Trail request received.');
 
-        if (req.body === undefined ||
-            req.body.identifier_types === undefined ||
-            req.body.identifier_values === undefined
-        ) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        const { identifier_types, identifier_values } = req.body;
-
-        if (Utilities.arrayze(identifier_types).length !==
-            Utilities.arrayze(identifier_values).length) {
-            res.status(400);
-            res.send({
-                message: 'Identifier array length mismatch',
-            });
-            return;
-        }
-
-        const depth = req.body.depth === undefined ?
-            this.graphStorage.getDatabaseInfo().max_path_length :
-            parseInt(req.body.depth, 10);
-
-        const { connection_types } = req.body;
-
-        const keys = [];
-
-        const typesArray = Utilities.arrayze(identifier_types);
-        const valuesArray = Utilities.arrayze(identifier_values);
-
-        const { length } = typesArray;
-
-        for (let i = 0; i < length; i += 1) {
-            keys.push(Utilities.keyFrom(typesArray[i], valuesArray[i]));
-        }
-
-        try {
-            const trail =
-                await this.graphStorage.findTrail({
-                    identifierKeys: keys,
-                    depth,
-                    connectionTypes: connection_types,
-                });
-
-            const response = await this.importService.packTrailData(trail);
-
-            res.status(200);
-            res.send(response);
-        } catch (e) {
-            res.status(400);
-            res.send(e);
-        }
+        await this.dhController.getTrail(req, res);
     }
 
     async _getMerkleProofs(req, res) {
@@ -595,7 +510,7 @@ class RestAPIServiceV2 {
     //     }
     //     const { data_set_id, ot_object_id, seller_node_id } = req.body;
     //     await this.dvController
-    //         .handlePrivateDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
+    //         .handlePermissionedDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
     // }
 
     async _checkForReplicationHandlerStatus(req, res) {
@@ -621,7 +536,14 @@ class RestAPIServiceV2 {
         };
         const offer = await Models.offers.findOne({
             where: {
-                offer_id: handlerData.offer_id,
+                [Models.Sequelize.Op.or]: [
+                    {
+                        offer_id: handlerData.offer_id,
+                    },
+                    {
+                        id: handlerData.offer_id,
+                    },
+                ],
             },
         });
         if (offer) {
@@ -827,84 +749,6 @@ class RestAPIServiceV2 {
     }
 
     /**
-     * Still not implemented in another layers
-     * @param req
-     * @param res
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _exportDataset(req, res) {
-        this.logger.api('POST: Export of data request received.');
-
-        if (req.body === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        let standard_id;
-        // Check if import type is valid
-        if (req.body.standard_id === undefined ||
-            this.stanards.indexOf(req.body.standard_id) === -1) {
-            standard_id = 'GRAPH'.toLowerCase();
-        } else {
-            // eslint-disable-next-line prefer-destructuring
-            standard_id = req.body.standard_id.toLowerCase();
-        }
-
-        if (!this.mapping_standards_for_event.get(standard_id)) {
-            res.status(400);
-            res.send({
-                message: 'Standard ID not supported',
-            });
-        }
-
-
-        if (req.body.dataset_id === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Dataset_id is not provided',
-            });
-        }
-
-        const requested_dataset = await Models.data_info.findOne({
-            where: {
-                data_set_id: req.body.dataset_id,
-            },
-        });
-
-        if (requested_dataset === null) {
-            res.status(400);
-            res.send({
-                message: 'Data set does not exist',
-            });
-            return;
-        }
-
-        const dataset_id = requested_dataset.dataValues.data_set_id;
-
-        const object_to_export =
-            {
-                dataset_id,
-            };
-
-        const inserted_object = await Models.handler_ids.create({
-            data: JSON.stringify(object_to_export),
-            status: 'PENDING',
-        });
-
-        const { handler_id } = inserted_object.dataValues;
-        res.status(200);
-        res.send({
-            handler_id,
-        });
-
-        this.emitter.emit('api-export-request', { dataset_id, handler_id, standard: this.mapping_standards_for_event.get(standard_id) });
-    }
-
-    /**
      * Get all supported standards
      * @param req
      * @param res
@@ -964,61 +808,359 @@ class RestAPIServiceV2 {
         }
     }
 
-    async _getDatasetInfo(request, response) {
-        const datasetId = request.params.dataset_id;
-        if (!datasetId) {
-            response.status(400);
-            response.send({
-                message: 'Param dataset_id is required.',
-            });
-            return;
-        }
-        const dataInfo =
-            await Models.data_info.findOne({ where: { data_set_id: datasetId } });
 
-        if (!dataInfo) {
-            this.logger.info(`Import data for data set ID ${datasetId} does not exist.`);
-            response.status(404);
-            response.send({
-                message: `Import data for data set ID ${datasetId} does not exist`,
-            });
-            return;
-        }
+    // async _networkPurchase(req, res) {
+    //     this.logger.api('POST: Network purchase request received.');
+    //
+    //     if (req.body == null
+    //         || req.body.data_set_id == null
+    //         || req.body.seller_node_id == null
+    //         || req.body.ot_object_id == null) {
+    //         res.status(400);
+    //         res.send({ message: '
+    //         Params data_set_id, seller_node_id and ot_object_id are required.' });
+    //         return;
+    //     }
+    //     const {
+    //         data_set_id, seller_node_id, ot_object_id,
+    //     } = req.body;
+    //     const inserted_object = await Models.handler_ids.create({
+    //         data: JSON.stringify({
+    //             data_set_id, seller_node_id, ot_object_id,
+    //         }),
+    //         status: 'PENDING',
+    //     });
+    //     const handlerId = inserted_object.dataValues.handler_id;
+    //     res.status(200);
+    //     res.send({
+    //         handler_id: handlerId,
+    //     });
+    //
+    //     await this.dvController.sendNetworkPurchase(
+    //         data_set_id,
+    //         this.config.erc725Identity,
+    //         seller_node_id,
+    //         ot_object_id,
+    //         handlerId,
+    //     );
+    // }
 
-        const identity = await this.graphStorage.findIssuerIdentityForDatasetId(datasetId);
+    async _getPermissionedDataAvailable(req, res) {
+        this.logger.api('GET: Permissioned data Available for purchase.');
 
-        if (!identity && identity.length > 0) {
-            this.logger.info(`Issuer identity for data set ID ${datasetId} does not exist.`);
-            response.status(404);
-            response.send({
-                message: `Import data for data set ID ${datasetId} does not exist`,
-            });
-            return;
-        }
-
-        const transactionHash = await ImportUtilities
-            .getTransactionHash(datasetId, dataInfo.origin);
-
-        const result = {
-            dataset_id: datasetId,
-            import_time: dataInfo.import_timestamp,
-            dataset_size_in_bytes: dataInfo.data_size,
-            otjson_size_in_bytes: dataInfo.otjson_size_in_bytes,
-            root_hash: dataInfo.root_hash,
-            data_hash: dataInfo.data_hash,
-            total_graph_entities: dataInfo.total_documents,
-            transaction_hash: transactionHash,
-            blockchain_network: this.config.network.id,
-            data_provider_wallet: dataInfo.data_provider_wallet,
-            data_creator: {
-                identifier_type: identity[0].identifierType,
-                identifier_value: identity[0].identifierValue,
-                validation_schema: identity[0].validationSchema,
+        const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
+        const data = await Models.sequelize.query(
+            query,
+            {
+                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                type: QueryTypes.SELECT,
             },
+        );
 
-        };
-        response.status(200);
-        response.send(result);
+        const result = [];
+
+        if (data.length > 0) {
+            const not_owned_objects = {};
+            const allDatasets = [];
+            /*
+               Creating a map of the following structure
+               not_owned_objects: {
+                    dataset_0x456: {
+                        seller_0x123: [ot_object_0x789, ...]
+                        ...,
+                    },
+                    ...
+               }
+             */
+            data.forEach((obj) => {
+                if (not_owned_objects[obj.data_set_id]) {
+                    if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                            .push(obj.ot_json_object_id);
+                    } else {
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                            = [obj.ot_json_object_id];
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
+                            = obj.seller_erc_id;
+                    }
+                } else {
+                    allDatasets.push(obj.data_set_id);
+                    not_owned_objects[obj.data_set_id] = {};
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                        = [obj.ot_json_object_id];
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
+                        = obj.seller_erc_id;
+                }
+            });
+
+            const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
+            const dataInfos = await Models.data_info.findAll({
+                where: {
+                    data_set_id: {
+                        [Models.sequelize.Op.in]: allDatasets,
+                    },
+                },
+            });
+
+            allDatasets.forEach((datasetId) => {
+                const { datasetHeader } = allMetadata.find(metadata => metadata._key === datasetId);
+                const dataInfo = dataInfos.find(info => info.data_set_id === datasetId);
+                not_owned_objects[datasetId].metadata = {
+                    datasetTitle: datasetHeader.datasetTitle,
+                    datasetTags: datasetHeader.datasetTags,
+                    datasetDescription: datasetHeader.datasetDescription,
+                    timestamp: dataInfo.import_timestamp,
+                };
+            });
+
+            for (const dataset in not_owned_objects) {
+                for (const data_seller in not_owned_objects[dataset]) {
+                    if (data_seller !== 'metadata') {
+                        result.push({
+                            seller_node_id: data_seller,
+                            timestamp: (new Date(not_owned_objects[dataset].metadata.timestamp))
+                                .getTime(),
+                            dataset: {
+                                id: dataset,
+                                name: not_owned_objects[dataset].metadata.datasetTitle,
+                                description: not_owned_objects[dataset].metadata.datasetDescription,
+                                tags: not_owned_objects[dataset].metadata.datasetTags,
+                            },
+                            ot_objects: not_owned_objects[dataset][data_seller].ot_json_object_id,
+                            seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,
+                        });
+                    }
+                }
+            }
+        }
+
+        res.status(200);
+        res.send(result);
+    }
+
+    async _getPermissionedDataOwned(req, res) {
+        this.logger.api('GET: Permissioned Data Owned.');
+
+        const query = 'SELECT ds.data_set_id, ds.ot_json_object_id, ds.price, ( SELECT Count(*) FROM data_trades dt Where dt.seller_erc_id = ds.seller_erc_id and ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id ) as sales FROM  data_sellers ds where ds.seller_erc_id = :seller_erc ';
+        const data = await Models.sequelize.query(
+            query,
+            {
+                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const result = [];
+
+        if (data.length > 0) {
+            const owned_objects = {};
+            const allDatasets = [];
+            /*
+               Creating a map of the following structure
+               owned_objects: {
+                    dataset_0x456: {
+                        ot_objects: [ot_object_0x789, ...]
+                        ...,
+                    },
+                    ...
+               }
+             */
+            data.forEach((obj) => {
+                if (owned_objects[obj.data_set_id]) {
+                    owned_objects[obj.data_set_id].ot_objects.push({
+                        id: obj.ot_json_object_id,
+                        price: obj.price,
+                        sales: obj.sales,
+                    });
+                    owned_objects[obj.data_set_id].total_sales.iadd(new BN(obj.sales, 10));
+                    owned_objects[obj.data_set_id].total_price.iadd(new BN(obj.price, 10));
+                } else {
+                    allDatasets.push(obj.data_set_id);
+                    owned_objects[obj.data_set_id] = {};
+                    owned_objects[obj.data_set_id].ot_objects = [{
+                        id: obj.ot_json_object_id,
+                        price: obj.price,
+                        sales: obj.sales,
+                    }];
+                    owned_objects[obj.data_set_id].total_sales = new BN(obj.sales, 10);
+                    owned_objects[obj.data_set_id].total_price = new BN(obj.price, 10);
+                }
+            });
+
+            const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
+            const dataInfos = await Models.data_info.findAll({
+                where: {
+                    data_set_id: {
+                        [Models.sequelize.Op.in]: allDatasets,
+                    },
+                },
+            });
+
+            allDatasets.forEach((datasetId) => {
+                const { datasetHeader } = allMetadata.find(metadata => metadata._key === datasetId);
+                const dataInfo = dataInfos.find(info => info.data_set_id === datasetId);
+                owned_objects[datasetId].metadata = {
+                    datasetTitle: datasetHeader.datasetTitle,
+                    datasetTags: datasetHeader.datasetTags,
+                    datasetDescription: datasetHeader.datasetDescription,
+                    timestamp: dataInfo.import_timestamp,
+                };
+            });
+
+            for (const dataset in owned_objects) {
+                result.push({
+                    timestamp: (new Date(owned_objects[dataset].metadata.timestamp)).getTime(),
+                    dataset: {
+                        id: dataset,
+                        name: owned_objects[dataset].metadata.datasetTitle,
+                        description: owned_objects[dataset].metadata.datasetDescription || 'No description given',
+                        tags: owned_objects[dataset].metadata.datasetTags,
+                    },
+                    ot_objects: owned_objects[dataset].ot_objects,
+                    total_sales: owned_objects[dataset].total_sales.toString(),
+                    total_price: owned_objects[dataset].total_price.toString(),
+                });
+            }
+        }
+
+        res.status(200);
+        res.send(result);
+    }
+
+    async _getPermissionedDataPrice(req, res) {
+        this.logger.api('POST: Get permissioned data price.');
+        if (req.body == null
+            || req.body.data_set_id == null
+            || req.body.seller_node_id == null
+            || req.body.ot_object_id == null) {
+            res.status(400);
+            res.send({ message: 'Params data_set_id, seller_node_id and ot_json_object_id are required.' });
+        }
+
+        const {
+            data_set_id, seller_node_id, ot_object_id,
+        } = req.body;
+        const inserted_object = await Models.handler_ids.create({
+            data: JSON.stringify({
+                data_set_id, seller_node_id, ot_object_id,
+            }),
+            status: 'PENDING',
+        });
+
+        const handlerId = inserted_object.dataValues.handler_id;
+
+        await this.dvController.sendPermissionedDataPriceRequest(
+            data_set_id,
+            seller_node_id,
+            ot_object_id,
+            handlerId,
+        );
+
+        res.status(200);
+        res.send({
+            handler_id: handlerId,
+        });
+    }
+
+    async _updatePermissionedDataPrice(req, res) {
+        this.logger.api('POST: Set permissioned data price.');
+        if (req.body == null
+            || req.body.data_set_id == null
+            || req.body.ot_object_ids == null) {
+            res.status(400);
+            res.send({ message: 'Params data_set_id and ot_object_ids are required.' });
+            return;
+        }
+
+        const promises = [];
+        req.body.ot_object_ids.forEach((ot_object) => {
+            promises.push(new Promise(async (accept, reject) => {
+                const condition = {
+                    seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                    data_set_id: req.body.data_set_id.toLowerCase(),
+                    ot_json_object_id: ot_object.id,
+                };
+
+                const data = await Models.data_sellers.findOne({
+                    where: condition,
+                });
+
+                if (data) {
+                    await Models.data_sellers.update(
+                        { price: ot_object.price_in_trac },
+                        { where: { id: data.id } },
+                    );
+                    accept();
+                } else {
+                    reject();
+                }
+            }));
+        });
+        await Promise.all(promises).then(() => {
+            res.status(200);
+            res.send({ status: 'COMPLETED' });
+        });
+    }
+
+    async _getTradingData(req, res) {
+        this.logger.api('GET: Get trading data.');
+        const requestedType = req.params.type;
+        if (!requestedType || !this.trading_types.includes(requestedType)) {
+            res.status(400);
+            res.send({
+                message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
+            });
+        }
+        const normalizedIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        const whereCondition = {};
+        if (requestedType === this.trading_type_purchased) {
+            whereCondition.buyer_erc_id = normalizedIdentity;
+        } else if (requestedType === this.trading_type_sold) {
+            whereCondition.seller_erc_id = normalizedIdentity;
+        }
+
+        const tradingData = await Models.data_trades.findAll({
+            where: whereCondition,
+            order: [
+                ['timestamp', 'DESC'],
+            ],
+        });
+
+        const allDatasets = tradingData.map(element => element.data_set_id)
+            .filter((value, index, self) => self.indexOf(value) === index);
+
+        const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
+        const returnArray = [];
+        tradingData.forEach((element) => {
+            const { datasetHeader } =
+                allMetadata.find(metadata => metadata._key === element.data_set_id);
+            const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
+            returnArray.push({
+                data_set: {
+                    id: element.data_set_id,
+                    name: datasetHeader.datasetTitle,
+                    description: datasetHeader.datasetDescription,
+                    tags: datasetHeader.datasetTags,
+                },
+                ot_json_object_id: element.ot_json_object_id,
+                buyer_erc_id: element.buyer_erc_id,
+                buyer_node_id: element.buyer_node_id,
+                seller_erc_id: element.seller_erc_id,
+                seller_node_id: element.seller_node_id,
+                price_in_trac: element.price_in_trac,
+                purchase_id: element.purchase_id,
+                timestamp: element.timestamp,
+                type,
+                status: element.status,
+            });
+        });
+
+        res.status(200);
+        res.send(returnArray);
     }
 
 

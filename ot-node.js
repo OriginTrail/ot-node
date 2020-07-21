@@ -23,7 +23,6 @@ const WOTImporter = require('./modules/importer/wot-importer');
 const EpcisOtJsonTranspiler = require('./modules/transpiler/epcis/epcis-otjson-transpiler');
 const WotOtJsonTranspiler = require('./modules/transpiler/wot/wot-otjson-transpiler');
 const RemoteControl = require('./modules/RemoteControl');
-const bugsnag = require('bugsnag');
 const rc = require('rc');
 const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
@@ -45,10 +44,11 @@ const M1PayoutAllMigration = require('./modules/migration/m1-payout-all-migratio
 const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-migration');
 const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
+const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
+const OtJsonUtilities = require('./modules/OtJsonUtilities');
 
-const { execSync } = require('child_process');
 const semver = require('semver');
 
 const pjson = require('./package.json');
@@ -107,26 +107,6 @@ process.on('unhandledRejection', (reason, p) => {
         return;
     }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
-
-    if (process.env.NODE_ENV !== 'development') {
-        const cleanConfig = Object.assign({}, config);
-        delete cleanConfig.node_private_key;
-        delete cleanConfig.houston_password;
-        delete cleanConfig.database;
-        delete cleanConfig.blockchain;
-
-        bugsnag.notify(
-            reason,
-            {
-                user: {
-                    id: config.node_wallet,
-                    identity: config.identity,
-                    config: cleanConfig,
-                },
-                severity: 'error',
-            },
-        );
-    }
 });
 
 process.on('uncaughtException', (err) => {
@@ -135,24 +115,6 @@ process.on('uncaughtException', (err) => {
         process.exit(1);
     }
     log.error(`Caught exception: ${err}.\n ${err.stack}`);
-
-    const cleanConfig = Object.assign({}, config);
-    delete cleanConfig.node_private_key;
-    delete cleanConfig.houston_password;
-    delete cleanConfig.database;
-    delete cleanConfig.blockchain;
-
-    bugsnag.notify(
-        err,
-        {
-            user: {
-                id: config.node_wallet,
-                identity: config.identity,
-                config: cleanConfig,
-            },
-            severity: 'error',
-        },
-    );
 });
 
 process.on('warning', (warning) => {
@@ -180,67 +142,6 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-function notifyBugsnag(error, metadata, subsystem) {
-    if (process.env.NODE_ENV !== 'development') {
-        const cleanConfig = Object.assign({}, config);
-        delete cleanConfig.node_private_key;
-        delete cleanConfig.houston_password;
-        delete cleanConfig.database;
-        delete cleanConfig.blockchain;
-
-        const options = {
-            user: {
-                id: config.node_wallet,
-                identity: config.node_kademlia_id,
-                config: cleanConfig,
-            },
-        };
-
-        if (subsystem) {
-            options.subsystem = {
-                name: subsystem,
-            };
-        }
-
-        if (metadata) {
-            Object.assign(options, metadata);
-        }
-
-        bugsnag.notify(error, options);
-    }
-}
-
-function notifyEvent(message, metadata, subsystem) {
-    if (process.env.NODE_ENV !== 'development') {
-        const cleanConfig = Object.assign({}, config);
-        delete cleanConfig.node_private_key;
-        delete cleanConfig.houston_password;
-        delete cleanConfig.database;
-        delete cleanConfig.blockchain;
-
-        const options = {
-            user: {
-                id: config.node_wallet,
-                identity: config.node_kademlia_id,
-                config: cleanConfig,
-            },
-            severity: 'info',
-        };
-
-        if (subsystem) {
-            options.subsystem = {
-                name: subsystem,
-            };
-        }
-
-        if (metadata) {
-            Object.assign(options, metadata);
-        }
-
-        bugsnag.notify(message, options);
-    }
-}
-
 /**
  * Main node object
  */
@@ -249,24 +150,6 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
-        if (process.env.NODE_ENV !== 'development') {
-            bugsnag.register(
-                pjson.config.bugsnagkey,
-                {
-                    appVersion: pjson.version,
-                    autoNotify: false,
-                    sendCode: true,
-                    releaseStage: config.bugSnag.releaseStage,
-                    logger: {
-                        info: log.info,
-                        warn: log.warn,
-                        error: log.error,
-                    },
-                    logLevel: 'error',
-                },
-            );
-        }
-
         try {
             // check if all dependencies are installed
             await Utilities.checkInstalledDependencies();
@@ -277,7 +160,6 @@ class OTNode {
             log.info('ot-node folder structure check done');
         } catch (err) {
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -302,7 +184,7 @@ class OTNode {
         // Allow identity to be added. Continuity.
         config.identity = '';
         config.erc725Identity = '';
-        Object.seal(config);
+        config.publicKeyData = {};
 
         const web3 =
             new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
@@ -316,6 +198,24 @@ class OTNode {
         // check if ArangoDB service is running at all
         if (config.database.provider === 'arangodb') {
             try {
+                if (process.env.OT_NODE_DISTRIBUTION === 'docker'
+                    && (''.localeCompare(config.database.password) === 0
+                    || 'root'.localeCompare(config.database.password) === 0)) {
+                    await this._runArangoPasswordMigration(config);
+                }
+
+                // get password for database
+                const databasePasswordFilePath = path
+                    .join(config.appDataPath, config.database.password_file_name);
+                if (fs.existsSync(databasePasswordFilePath)) {
+                    log.info('Using existing graph database password.');
+                    config.database.password = fs.readFileSync(databasePasswordFilePath).toString();
+                } else {
+                    log.notify('================================================================');
+                    log.notify('          Using default database password for access            ');
+                    log.notify('================================================================');
+                }
+
                 const { version } = await Utilities.getArangoDbVersion(config);
 
                 log.info(`Arango server version ${version} is up and running`);
@@ -335,10 +235,11 @@ class OTNode {
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
                 console.log(err);
-                notifyBugsnag(err);
                 process.exit(1);
             }
         }
+
+        Object.seal(config);
 
         // Checking if selected graph database exists
         try {
@@ -346,7 +247,6 @@ class OTNode {
             log.info('Storage database check done');
         } catch (err) {
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -384,12 +284,10 @@ class OTNode {
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
-            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
-            notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
@@ -422,7 +320,6 @@ class OTNode {
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -454,7 +351,6 @@ class OTNode {
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
-            notifyBugsnag(e);
             process.exit(1);
         }
         await transport.start();
@@ -468,7 +364,9 @@ class OTNode {
                 Utilities.normalizeHex(config.identity.toLowerCase()),
             );
         }
-
+        // Initialize bugsnag notification service
+        const errorNotificationService = container.resolve('errorNotificationService');
+        await errorNotificationService.initialize();
         // Initialise API
         const restApiController = container.resolve('restApiController');
 
@@ -477,7 +375,6 @@ class OTNode {
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
         if (config.remote_control_enabled) {
@@ -507,7 +404,6 @@ class OTNode {
         } catch (e) {
             log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
             console.log(e);
-            notifyBugsnag(e);
             process.exit(1);
         }
     }
@@ -530,7 +426,31 @@ class OTNode {
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
-                notifyBugsnag(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    async _runArangoPasswordMigration(config) {
+        const migrationsStartedMills = Date.now();
+
+        const m5ArangoPasswordMigrationFilename = '5_m5ArangoPasswordMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m5ArangoPasswordMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M5ArangoPasswordMigration({ log, config });
+            try {
+                log.info('Initializing Arango password migration...');
+                const result = await migration.run();
+                if (result === 0) {
+                    log.notify(`One-time password migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                    await Utilities.writeContentsToFile(migrationDir, m5ArangoPasswordMigrationFilename, 'PROCESSED');
+                } else {
+                    log.error('One-time password migration failed. Defaulting to previous implementation');
+                }
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
                 process.exit(1);
             }
         }
@@ -561,7 +481,6 @@ class OTNode {
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
-                notifyBugsnag(e);
                 process.exit(1);
             }
         }
@@ -596,11 +515,10 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
-            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(config.database, log, notifyBugsnag)),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
@@ -618,12 +536,6 @@ class OTNode {
         await approvalService.initialize();
 
         this.listenBlockchainEvents(blockchain);
-        blockchain.subscribeToEventPermanentWithCallback([
-            'NodeApproved',
-            'NodeRemoved',
-        ], (eventData) => {
-            approvalService.handleApprovalEvent(eventData);
-        });
 
         const restApiController = container.resolve('restApiController');
         try {
@@ -631,7 +543,6 @@ class OTNode {
         } catch (err) {
             log.error('Failed to start RPC server');
             console.log(err);
-            notifyBugsnag(err);
             process.exit(1);
         }
     }
@@ -649,6 +560,7 @@ class OTNode {
         setInterval(async () => {
             if (!working && Date.now() > deadline) {
                 working = true;
+                await blockchain.getAllPastEvents('HUB_CONTRACT');
                 await blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 await blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 await blockchain.getAllPastEvents('APPROVAL_CONTRACT');

@@ -18,8 +18,8 @@ class DHDataReadRequestFreeCommand extends Command {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
-        this.notifyError = ctx.notifyError;
         this.importService = ctx.importService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -74,20 +74,13 @@ class DHDataReadRequestFreeCommand extends Command {
 
             const document = await this.importService.getImport(importId);
 
-            for (const ot_object of document['@graph']) {
-                if (ot_object['@id'] in privateData) {
-                    const privateDataObject = {};
-                    constants.PRIVATE_DATA_OBJECT_NAMES.forEach((privateDataArray) => {
-                        const privateObject = ot_object.properties[privateDataArray];
-                        if (privateObject) {
-                            privateDataObject[privateDataArray] = privateObject;
-                        }
-                    });
-                    privateData[ot_object['@id']] = Utilities.copyObject(privateDataObject);
-                }
-            }
+            const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+                document,
+                nodeId,
+            );
 
-            ImportUtilities.hideGraphPrivateData(document['@graph']);
+
+            ImportUtilities.removeGraphPermissionedData(document['@graph']);
 
             const transactionHash = await ImportUtilities
                 .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
@@ -99,7 +92,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
                 document,
-                privateData,
+                permissionedData,
                 data_set_id: importId,
                 transaction_hash: transactionHash,
                 handler_id,
@@ -107,7 +100,7 @@ class DHDataReadRequestFreeCommand extends Command {
             const dataReadResponseObject = {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
-                    JSON.stringify(replyMessage),
+                    replyMessage,
                     this.web3,
                     this.config.node_private_key,
                 ),
@@ -117,10 +110,14 @@ class DHDataReadRequestFreeCommand extends Command {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.logger.warn(errorMessage);
-            this.notifyError(e);
             await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
+                messageSignature: Utilities.generateRsvSignature(
+                    errorMessage,
+                    this.web3,
+                    this.config.node_private_key,
+                ),
             }, nodeId);
         }
 
