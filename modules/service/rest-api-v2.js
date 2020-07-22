@@ -125,25 +125,22 @@ class RestAPIServiceV2 {
         server.get(`/api/${this.version_id}/network/read/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
         });
-        //
-        // server.post(`/api/${this.version_id}/network/permissioned_data/read`,async(req, res) => {
-        //     await this._privateDataReadNetwork(req, res);
-        // });
 
-        // server.get(`/api/${this.version_id}/network/permissioned_data/read/resu
-        // lt/:handler_id`, async (req, res) => {
-        //     await this._checkForHandlerStatus(req, res);
-        // });
+        server.post(`/api/${this.version_id}/network/permissioned_data/read`,async(req, res) => {
+            await this._privateDataReadNetwork(req, res);
+        });
 
-        // server.post(`/api/${this.version_id}/network/
-        // permissioned_data/purchase`, async (req, res) => {
-        //     await this.dvController.sendNetworkPurchase(req, res);
-        // });
+        server.get(`/api/${this.version_id}/network/permissioned_data/read/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
 
-        // server.get(`/api/${this.version_id}/network/
-        // permissioned_data/purchase/result/:handler_id`, async (req, res) => {
-        //     await this._checkForHandlerStatus(req, res);
-        // });
+        server.post(`/api/${this.version_id}/network/permissioned_data/purchase`, async (req, res) => {
+            await this.dvController.sendNetworkPurchase(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/permissioned_data/purchase/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
 
         server.post(`/api/${this.version_id}/permissioned_data/whitelist_viewer`, async (req, res) => {
             await this.dhController.whitelistViewer(req, res);
@@ -161,34 +158,30 @@ class RestAPIServiceV2 {
             await this._getChallenges(req, res);
         });
 
-        // server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
-        //     await this._getPermissionedDataAvailable(req, res);
-        // });
-        //
-        //
-        // server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
-        //     await this._getPermissionedDataOwned(req, res);
-        // });
-        //
-        // server.post(`/api/${this.version_id}/network/
-        // permissioned_data/get_price`, async (req, res) => {
-        //     await this._getPermissionedDataPrice(req, res);
-        // });
-        //
-        // server.post(`/api/${this.version_id}/
-        // permissioned_data/update_price`, async (req, res) => {
-        //     await this._updatePermissionedDataPrice(req, res);
-        // });
-        //
-        // server.get(`/api/${this.version_id}/network/
-        // permissioned_data/get_price/result/:handler_id`, async (req, res) => {
-        //     await this._checkForHandlerStatus(req, res);
-        // });
-        //
-        // server.get(`/api/${this.version_id}/
-        // permissioned_data/trading_info/:type`, async (req, res) => {
-        //     await this._getTradingData(req, res);
-        // });
+        server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
+            await this._getPermissionedDataAvailable(req, res);
+        });
+
+
+        server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
+            await this._getPermissionedDataOwned(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/network/permissioned_data/get_price`, async (req, res) => {
+            await this._getPermissionedDataPrice(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/permissioned_data/update_price`, async (req, res) => {
+            await this._updatePermissionedDataPrice(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/network/permissioned_data/get_price/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/permissioned_data/trading_info/:type`, async (req, res) => {
+            await this._getTradingData(req, res);
+        });
 
 
         /** Network related routes */
@@ -1458,64 +1451,6 @@ class RestAPIServiceV2 {
             res.status(200);
             res.send({ status: 'COMPLETED' });
         });
-    }
-
-    async _getTradingData(req, res) {
-        this.logger.api('GET: Get trading data.');
-        const requestedType = req.params.type;
-        if (!requestedType || !this.trading_types.includes(requestedType)) {
-            res.status(400);
-            res.send({
-                message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
-            });
-        }
-        const normalizedIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-        const whereCondition = {};
-        if (requestedType === this.trading_type_purchased) {
-            whereCondition.buyer_erc_id = normalizedIdentity;
-        } else if (requestedType === this.trading_type_sold) {
-            whereCondition.seller_erc_id = normalizedIdentity;
-        }
-
-        const tradingData = await Models.data_trades.findAll({
-            where: whereCondition,
-            order: [
-                ['timestamp', 'DESC'],
-            ],
-        });
-
-        const allDatasets = tradingData.map(element => element.data_set_id)
-            .filter((value, index, self) => self.indexOf(value) === index);
-
-        const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
-
-        const returnArray = [];
-        tradingData.forEach((element) => {
-            const { datasetHeader } =
-                allMetadata.find(metadata => metadata._key === element.data_set_id);
-            const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
-            returnArray.push({
-                data_set: {
-                    id: element.data_set_id,
-                    name: datasetHeader.datasetTitle,
-                    description: datasetHeader.datasetDescription,
-                    tags: datasetHeader.datasetTags,
-                },
-                ot_json_object_id: element.ot_json_object_id,
-                buyer_erc_id: element.buyer_erc_id,
-                buyer_node_id: element.buyer_node_id,
-                seller_erc_id: element.seller_erc_id,
-                seller_node_id: element.seller_node_id,
-                price_in_trac: element.price_in_trac,
-                purchase_id: element.purchase_id,
-                timestamp: element.timestamp,
-                type,
-                status: element.status,
-            });
-        });
-
-        res.status(200);
-        res.send(returnArray);
     }
 }
 

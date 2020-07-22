@@ -362,20 +362,6 @@ class Ethereum {
     }
 
     /**
-     * Gets Marketplace contract address from Hub
-     * @returns {Promise<any>}
-     * @private
-     */
-    async _getMarketplaceContractAddress() {
-        this.log.trace('Asking Hub for Marketplace contract address...');
-        const address = await this.hubContract.methods.getContractAddress('Marketplace').call({
-            from: this.config.wallet_address,
-        });
-        this.log.trace(`Marketplace contract address is ${address}`);
-        return address;
-    }
-
-    /**
      * Gets Replacement contract address from Hub
      * @returns {Promise<any>}
      * @private
@@ -414,20 +400,6 @@ class Ethereum {
             from: this.config.wallet_address,
         });
         this.logger.trace(`MarketplaceStorage contract address is ${address}`);
-        return address;
-    }
-
-    /**
-     * Gets Marketplace storage contract address from Hub
-     * @returns {Promise<any>}
-     * @private
-     */
-    async _getMarketplaceStorageContractAddress() {
-        this.log.trace('Asking Hub for MarketplaceStorage contract address...');
-        const address = await this.hubContract.methods.getContractAddress('MarketplaceStorage').call({
-            from: this.config.wallet_address,
-        });
-        this.log.trace(`MarketplaceStorage contract address is ${address}`);
         return address;
     }
 

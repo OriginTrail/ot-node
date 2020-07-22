@@ -141,7 +141,7 @@ class PermissionedDataService {
 
     encodePermissionedData(permissionedObject) {
         const merkleTree = ImportUtilities
-            .calculatePermissionedDataMerkleTree(permissionedObject, 'purchase');
+            .calculatePermissionedDataMerkleTree(permissionedObject.properties.permissioned_data, 'purchase');
         const rawKey = crypto.randomBytes(32);
         const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
         const encodedArray = [];
@@ -159,7 +159,10 @@ class PermissionedDataService {
         });
         const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
-        const sorted_data = Utilities.sortedStringify(permissionedObject.data, true);
+        const sorted_data = Utilities.sortedStringify(
+            permissionedObject.properties.permissioned_data.data,
+            true,
+        );
         const data = Buffer.from(sorted_data);
         return {
             permissioned_data_original_length: data.length,
@@ -167,12 +170,13 @@ class PermissionedDataService {
             key,
             encoded_data: encodedArray,
             permissioned_data_root_hash:
-                Utilities.normalizeHex(permissionedObject.permissioned_data_hash),
+                Utilities.normalizeHex(permissionedObject.properties
+                    .permissioned_data.permissioned_data_hash),
             encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
         };
     }
 
-    static validateAndDecodePermissionedData(
+    validateAndDecodePermissionedData(
         permissionedDataArray, key,
         permissionedDataArrayLength,
         permissionedDataOriginalLength,
@@ -232,8 +236,8 @@ class PermissionedDataService {
             otObjectId,
         );
         const documentsToBeUpdated = [];
-        const calculatedPermissionedDataHash = this
-            .calculatePermissionedDataHash({ data: permissionedData });
+        const calculatedPermissionedDataHash =
+            ImportUtilities.calculatePermissionedDataHash({ data: permissionedData });
         otObject.relatedObjects.forEach((relatedObject) => {
             if (relatedObject.vertex.vertexType === 'Data') {
                 const vertexData = relatedObject.vertex.data;

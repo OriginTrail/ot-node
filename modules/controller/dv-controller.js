@@ -678,43 +678,6 @@ class DVController {
     //     );
     // }
 
-    async sendNetworkPurchase(request, response) {
-        if (request.body == null
-            || request.body.data_set_id == null
-            || request.body.seller_node_id == null
-            || request.body.ot_object_id == null) {
-            response.status(400);
-            response.send({ message: 'Params data_set_id, seller_node_id and ot_object_id are required.' });
-            return;
-        }
-        const {
-            data_set_id, seller_node_id, ot_object_id,
-        } = request.body;
-        const inserted_object = await Models.handler_ids.create({
-            data: JSON.stringify({
-                data_set_id, seller_node_id, ot_object_id,
-            }),
-            status: 'REQUESTED',
-        });
-        const { handler_id } = inserted_object.dataValues;
-        response.status(200);
-        response.send({
-            handler_id,
-        });
-
-        const commandData = {
-            data_set_id,
-            handler_id,
-            ot_object_id,
-            seller_node_id,
-        };
-
-        await this.commandExecutor.add({
-            name: 'dvPurchaseRequestCommand',
-            data: commandData,
-        });
-    }
-
     async sendPrivateDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
         const message = {
             data_set_id: dataSetId,
@@ -770,31 +733,6 @@ class DVController {
     //         },
     //     });
     // }
-
-
-    async handleNetworkPurchaseResponse(response) {
-        const {
-            handler_id, status, message, encoded_data,
-            private_data_root_hash, encoded_data_root_hash,
-            private_data_array_length, private_data_original_length,
-        } = response;
-
-        const commandData = {
-            handler_id,
-            status,
-            message,
-            encoded_data,
-            private_data_root_hash,
-            encoded_data_root_hash,
-            private_data_array_length,
-            private_data_original_length,
-        };
-
-        await this.commandExecutor.add({
-            name: 'dvPurchaseInitiateCommand',
-            data: commandData,
-        });
-    }
 
     async handlePrivateDataPriceResponse(response) {
         const {

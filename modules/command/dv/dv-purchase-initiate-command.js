@@ -45,7 +45,8 @@ class DvPurchaseInitiateCommand extends Command {
             ot_object_id,
         );
 
-        if (permissioned_data_root_hash !== permissionedObject.permissioned_data_hash) {
+        if (permissioned_data_root_hash !==
+            permissionedObject.properties.permissioned_data.permissioned_data_hash) {
             this._handleError(handler_id, 'Unable to initiate purchase. Permissioned data root hash validation failed');
             return Command.empty();
         }

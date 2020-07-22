@@ -10,6 +10,8 @@ const Encryption = require('./RSAEncryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const OtJsonUtilities = require('./OtJsonUtilities');
+const crypto = require('crypto');
+const abi = require('ethereumjs-abi');
 
 const data_constants = {
     vertexType: {
@@ -628,41 +630,6 @@ class ImportUtilities {
         if (permissionedDataObject) {
             delete permissionedDataObject.data;
         }
-    }
-
-    /**
-     * Create SHA256 Hash of public part of one graph
-     * @param graph
-     * @returns {string}
-     */
-    static calculateGraphPublicHash(graph) {
-        const public_data = Utilities.copyObject(graph);
-        ImportUtilities.removeGraphPrivateData(public_data);
-        const sorted = ImportUtilities.sortGraphRecursively(public_data);
-        return `0x${sha3_256(sorted, null, 0)}`;
-    }
-
-
-    /**
-     * returns ot objects with private data
-     * @param graph
-     * @returns {Array}
-     */
-    static getGraphPrivateData(graph) {
-        const result = [];
-        graph.forEach((ot_object) => {
-            if (ot_object && ot_object.properties) {
-                constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-                    const privateObject = ot_object.properties[private_data_array];
-                    if (privateObject) {
-                        if (privateObject.isPrivate && !result.includes(ot_object['@id'])) {
-                            result.push(ot_object['@id']);
-                        }
-                    }
-                });
-            }
-        });
-        return result;
     }
 
     /**
