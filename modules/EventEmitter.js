@@ -874,40 +874,6 @@ class EventEmitter {
             }
         });
 
-        this._on('kad-private-data-read-request', async (request) => {
-            logger.info('Request for private data read received');
-            const dataReadRequestObject = transport.extractMessage(request);
-            const { message, messageSignature } = dataReadRequestObject;
-
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
-                return;
-            }
-            try {
-                await dcController.handlePrivateDataReadRequest(message);
-            } catch (error) {
-                logger.warn(`Failed to process private data read request. ${error}.`);
-                // todo send error to dv
-            }
-        });
-
-        this._on('kad-private-data-read-response', async (request) => {
-            logger.info('Response for private data read received');
-
-            const dataReadRequestObject = transport.extractMessage(request);
-            const { message, messageSignature } = dataReadRequestObject;
-
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
-                return;
-            }
-            try {
-                await dvController.handlePrivateDataReadResponse(message);
-            } catch (error) {
-                logger.warn(`Failed to process private data read response. ${error}.`);
-            }
-        });
-
         // async
         this._on('kad-send-encrypted-key', async (request, response) => {
             await transport.sendResponse(response, []);

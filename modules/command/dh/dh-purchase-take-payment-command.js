@@ -39,7 +39,7 @@ class DhPurchaseTakePaymentCommand extends Command {
                     price: dataTrade.price,
                 });
             } catch (error) {
-                if (error.message.contains('Complaint window has not yet expired!')) {
+                if (error.message.includes('Complaint window has not yet expired!')) {
                     if (command.retries !== 0) {
                         return Command.retry();
                     }

@@ -126,8 +126,8 @@ class RestAPIServiceV2 {
             await this._checkForHandlerStatus(req, res);
         });
 
-        server.post(`/api/${this.version_id}/network/permissioned_data/read`,async(req, res) => {
-            await this._privateDataReadNetwork(req, res);
+        server.post(`/api/${this.version_id}/network/permissioned_data/read`, async (req, res) => {
+            await this._permissionedDataReadNetwork(req, res);
         });
 
         server.get(`/api/${this.version_id}/network/permissioned_data/read/result/:handler_id`, async (req, res) => {
@@ -491,20 +491,19 @@ class RestAPIServiceV2 {
         await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
     }
 
-    // async _privateDataReadNetwork(req, res) {
-    //     this.logger.api('Private data network read request received.');
-    //
-    //     if (!req.body || !req.body.seller_node_id
-    //     || !req.body.data_set_id
-    //     || !req.body.ot_object_id) {
-    //         res.status(400);
-    //         res.send({ message: 'Params data_set_id,
-    //         ot_object_id and seller_node_id are required.' });
-    //     }
-    //     const { data_set_id, ot_object_id, seller_node_id } = req.body;
-    //     await this.dvController
-    //         .handlePermissionedDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
-    // }
+    async _permissionedDataReadNetwork(req, res) {
+        this.logger.api('Private data network read request received.');
+
+        if (!req.body || !req.body.seller_node_id
+        || !req.body.data_set_id
+        || !req.body.ot_object_id) {
+            res.status(400);
+            res.send({ message: 'Params data_set_id,ot_object_id and seller_node_id are required.' });
+        }
+        const { data_set_id, ot_object_id, seller_node_id } = req.body;
+        await this.dvController
+            .handlePermissionedDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
+    }
 
     async _checkForReplicationHandlerStatus(req, res) {
         const handler_object = await Models.handler_ids.findOne({
