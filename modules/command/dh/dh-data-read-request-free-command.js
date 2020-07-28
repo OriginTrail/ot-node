@@ -59,7 +59,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
-            const allowedPrivateDataElements = await Models.data_trades.findAll({
+            const allowedPermissionedDataElements = await Models.data_trades.findAll({
                 where: {
                     data_set_id: importId,
                     buyer_node_id: nodeId,
@@ -69,7 +69,7 @@ class DHDataReadRequestFreeCommand extends Command {
 
             const privateData = {};
 
-            allowedPrivateDataElements.forEach(element =>
+            allowedPermissionedDataElements.forEach(element =>
                 privateData[element.ot_json_object_id] = {});
 
             const document = await this.importService.getImport(importId);

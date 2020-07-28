@@ -4,7 +4,6 @@ const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
 const OtJsonUtilities = require('../OtJsonUtilities');
 
-const Constants = require('../constants');
 /**
  * Returns value of '@id' property.
  * @param jsonLdObject JSON-LD object.
@@ -851,28 +850,6 @@ class ImportService {
                 throw Error('[Validation Error] OT-JSON relations not valid');
             }
         });
-    }
-
-    async getPrivateDataObject(data_set_id, ot_json_object_id) {
-        const privateDataObject = await this.getOtObjectById(
-            data_set_id,
-            ot_json_object_id,
-        );
-
-        const privateObjectArray = [];
-        Constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-            const privateObject = privateDataObject.properties[private_data_array];
-            if (privateObject && privateObject.isPrivate) {
-                privateObjectArray.push(privateObject);
-            }
-        });
-
-        if (privateObjectArray.length > 1) {
-            this.log.trace(`Found multiple private data in object with id: ${ot_json_object_id}, using first one`);
-        } else if (privateObjectArray.length === 0) {
-            return null;
-        }
-        return privateObjectArray[0];
     }
 }
 

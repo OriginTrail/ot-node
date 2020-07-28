@@ -1,16 +1,16 @@
 const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const Web3 = require('web3');
+// const ImportUtilities = require('../../modules/ImportUtilities');
 const Storage = require('../../../modules/Storage');
 const models = require('../../../models');
 
 
 describe('Permission data service test', () => {
+    before('Setup models', async () => {
+        Storage.models = (await models.sequelize.sync()).models;
+    });
 
-    // before('Setup models', async () => {
-    //     Storage.models = (await models.sequelize.sync()).models;
-    // });
-    //
     // beforeEach('Setup ctx', async function setupCtx() {
     //     this.timeout(5000);
     //
@@ -72,16 +72,16 @@ describe('Permission data service test', () => {
     // });
     //
     // it('Calculate the public root hash of one graph', () => {
-    //     const originalGraph = Utilities.
-    //     copyObject(sample_data.permissioned_data_graph['@graph']);
+    //     const originalGraph = Utilities
+    //         .copyObject(sample_data.permissioned_data_graph['@graph']);
     //     ImportUtilities.calculateGraphPermissionedDataHashes(originalGraph);
     //
-    //     const shuffledGraph = Utilities.
-    //     copyObject(sample_data.permissioned_data_graph_shuffled['@graph']);
+    //     const shuffledGraph = Utilities
+    //         .copyObject(sample_data.permissioned_data_graph_shuffled['@graph']);
     //     ImportUtilities.calculateGraphPermissionedDataHashes(shuffledGraph);
     //
-    //     const differentGraph = Utilities.
-    //     copyObject(sample_data.permissioned_data_graph_2['@graph']);
+    //     const differentGraph = Utilities
+    //         .copyObject(sample_data.permissioned_data_graph_2['@graph']);
     //     ImportUtilities.calculateGraphPermissionedDataHashes(differentGraph);
     //
     //     const originalGraphRootHash = ImportUtilities.calculateGraphPublicHash(originalGraph);
@@ -147,8 +147,8 @@ describe('Permission data service test', () => {
     //
     // it('Calculate the root hash on one permissioned data object', () => {
     //     const originalObject = Utilities.copyObject(sample_data.permissioned_data_object);
-    //     const shuffledObject = Utilities.
-    //     copyObject(sample_data.permissioned_data_object_shuffled);
+    //     const shuffledObject = Utilities
+    //         .copyObject(sample_data.permissioned_data_object_shuffled);
     //     const differentObject = Utilities.copyObject(sample_data.permissioned_data_object_2);
     //
     //     const originalRootHash = ImportUtilities.calculatePermissionedDataHash(originalObject);
@@ -180,8 +180,8 @@ describe('Permission data service test', () => {
     //         'Permisssioned data root hash for different objects is the same!',
     //     );
     // });
-    // it('Calculating the root hash of an empty permissioned
-    // data object should throw an error', () => {
+    // eslint-disable-next-line max-len
+    // it('Calculating the root hash of an empty permissioned data object should throw an error', () => {
     //     const testObject = {};
     //
     //     let errorHappened = false;
