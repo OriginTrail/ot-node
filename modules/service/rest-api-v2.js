@@ -390,61 +390,7 @@ class RestAPIServiceV2 {
     async _getTrail(req, res) {
         this.logger.api('POST: Trail request received.');
 
-        if (req.body === undefined ||
-            req.body.identifier_types === undefined ||
-            req.body.identifier_values === undefined
-        ) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        const { identifier_types, identifier_values } = req.body;
-
-        if (Utilities.arrayze(identifier_types).length !==
-            Utilities.arrayze(identifier_values).length) {
-            res.status(400);
-            res.send({
-                message: 'Identifier array length mismatch',
-            });
-            return;
-        }
-
-        const depth = req.body.depth === undefined ?
-            this.graphStorage.getDatabaseInfo().max_path_length :
-            parseInt(req.body.depth, 10);
-
-        const { connection_types } = req.body;
-
-        const keys = [];
-
-        const typesArray = Utilities.arrayze(identifier_types);
-        const valuesArray = Utilities.arrayze(identifier_values);
-
-        const { length } = typesArray;
-
-        for (let i = 0; i < length; i += 1) {
-            keys.push(Utilities.keyFrom(typesArray[i], valuesArray[i]));
-        }
-
-        try {
-            const trail =
-                await this.graphStorage.findTrail({
-                    identifierKeys: keys,
-                    depth,
-                    connectionTypes: connection_types,
-                });
-
-            const response = await this.importService.packTrailData(trail);
-
-            res.status(200);
-            res.send(response);
-        } catch (e) {
-            res.status(400);
-            res.send(e);
-        }
+        await this.dhController.getTrail(req, res);
     }
 
     async _getMerkleProofs(req, res) {
