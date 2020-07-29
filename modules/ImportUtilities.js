@@ -10,8 +10,6 @@ const Encryption = require('./RSAEncryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const OtJsonUtilities = require('./OtJsonUtilities');
-const crypto = require('crypto');
-const abi = require('ethereumjs-abi');
 
 const data_constants = {
     vertexType: {
