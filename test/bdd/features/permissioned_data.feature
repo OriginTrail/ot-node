@@ -25,7 +25,7 @@ Feature: Permissioned data features
   And DC waits for export to finish
   When DV exports the last imported dataset as OT-JSON
   And DV waits for export to finish
-  Then the last export should be the same on DC and DV nodes
+  Then the last import should be the same on DC and DV nodes
 
 
   @first
@@ -48,4 +48,4 @@ Feature: Permissioned data features
     And DC waits for export to finish
     When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
-    Then the last export should be the same on DC and DV nodes
+    Then the last import should be the same on DC and DV nodes

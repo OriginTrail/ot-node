@@ -741,7 +741,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     return Promise.all(promises);
 });
 
-Then(/^the last export should be the same on DC and ([DV|DV2]+) nodes$/, async function (whichDV) {
+Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async function (whichDV) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
