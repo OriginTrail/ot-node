@@ -425,9 +425,6 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Payment has been taken for purchase .+/gi)) {
             this.emit('purchase-payment-taken');
         }
-
-
-
     }
 
     /**

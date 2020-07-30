@@ -904,5 +904,5 @@ module.exports = {
     apiPermissionedDataAvailable,
     apiPermissionedDataGetPrice,
     apiPermissionedDataGetPriceResult,
-    apiPermissionedDataPurchase
+    apiPermissionedDataPurchase,
 };
