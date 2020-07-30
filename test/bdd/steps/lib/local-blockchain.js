@@ -155,6 +155,8 @@ class LocalBlockchain {
         const litigationSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Litigation.sol'), 'utf8');
         const litigationStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/LitigationStorage.sol'), 'utf8');
         const replacementSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Replacement.sol'), 'utf8');
+        const marketplaceStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/MarketplaceStorage.sol'), 'utf8');
+        const marketplaceSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Marketplace.sol'), 'utf8');
 
         this.contracts = {};
 
@@ -182,6 +184,8 @@ class LocalBlockchain {
                 'Litigation.sol': litigationSource,
                 'LitigationStorage.sol': litigationStorageSource,
                 'Replacement.sol': replacementSource,
+                'MarketplaceStorage.sol': marketplaceStorageSource,
+                'Marketplace.sol': marketplaceSource,
             },
         }, 1);
 
@@ -244,6 +248,17 @@ class LocalBlockchain {
         this.contracts.Identity.data = `0x${compileResult.contracts['Identity.sol:Identity'].bytecode}`;
         this.contracts.Identity.abi = JSON.parse(compileResult.contracts['Identity.sol:Identity'].interface);
         this.contracts.Identity.artifact = new this.web3.eth.Contract(this.contracts.Identity.abi);
+
+
+        this.contracts.MarketplaceStorage = {};
+        this.contracts.MarketplaceStorage.data = `0x${compileResult.contracts['MarketplaceStorage.sol:MarketplaceStorage'].bytecode}`;
+        this.contracts.MarketplaceStorage.abi = JSON.parse(compileResult.contracts['MarketplaceStorage.sol:MarketplaceStorage'].interface);
+        this.contracts.MarketplaceStorage.artifact = new this.web3.eth.Contract(this.contracts.MarketplaceStorage.abi);
+
+        this.contracts.Marketplace = {};
+        this.contracts.Marketplace.data = `0x${compileResult.contracts['Marketplace.sol:Marketplace'].bytecode}`;
+        this.contracts.Marketplace.abi = JSON.parse(compileResult.contracts['Marketplace.sol:Marketplace'].interface);
+        this.contracts.Marketplace.artifact = new this.web3.eth.Contract(this.contracts.Marketplace.abi);
     }
 
     async deployContracts() {
@@ -367,6 +382,27 @@ class LocalBlockchain {
         );
 
         await this.contracts.Hub.instance.methods.setContractAddress('Replacement', this.contracts.Replacement.instance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        this.logger.log('Deploying MarketplaceStorage contract');
+        [this.contracts.MarketplaceStorage.deploymentReceipt, this.contracts.MarketplaceStorage.instance] = await this._deployContract(
+            this.web3, this.contracts.MarketplaceStorage.artifact, this.contracts.MarketplaceStorage.data,
+            [this.contracts.Hub.instance._address], accounts[7],
+        );
+
+        await this.contracts.Hub.instance.methods.setContractAddress('MarketplaceStorage', this.contracts.MarketplaceStorage.instance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+
+        this.logger.log('Deploying Marketplace contract');
+        [this.contracts.Marketplace.deploymentReceipt, this.contracts.Marketplace.instance] = await this._deployContract(
+            this.web3, this.contracts.Marketplace.artifact, this.contracts.Marketplace.data,
+            [this.contracts.Hub.instance._address], accounts[7],
+        );
+
+        await this.contracts.Hub.instance.methods.setContractAddress('Marketplace', this.contracts.Marketplace.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
