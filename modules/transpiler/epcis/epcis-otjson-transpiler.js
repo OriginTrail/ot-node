@@ -162,6 +162,11 @@ class EpcisOtJsonTranspiler {
         if (otjson == null) {
             throw new Error('OT-JSON document cannot be empty');
         }
+
+        if (!otjson.datasetHeader.transpilationInfo
+            || otjson.datasetHeader.transpilationInfo.transpilationInfo.transpilerType !== 'GS1-EPCIS') {
+            throw new Error('Unable to convert to requested standard. Original dataset was not imported in GS1-EPCIS format.');
+        }
         const json = utilities.copyObject(otjson.datasetHeader.transpilationInfo.diff);
 
         const graph = utilities.copyObject(otjson['@graph']);

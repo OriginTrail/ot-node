@@ -88,7 +88,7 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid profile$/, async functio
 
     const erc725ProfileAddress = erc725Profile.identity;
     const result =
-        await this.state.localBlockchain.profileStorageInstance
+        await this.state.localBlockchain.contracts.ProfileStorage.instance
             .methods.profile(erc725ProfileAddress).call();
 
     expect(result.nodeId, `Got ${JSON.stringify(result)}`).to.equal(`0x${nodeId}000000000000000000000000`);

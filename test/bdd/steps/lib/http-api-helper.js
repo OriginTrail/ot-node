@@ -650,12 +650,7 @@ async function apiTrail(nodeRpcUrl, params) {
         request(
             {
                 method: 'POST',
-                body: {
-                    identifier_types: params.identifier_types,
-                    identifier_values: params.identifier_values,
-                    depth: params.depth,
-                    connection_types: params.connection_types,
-                },
+                body: params,
                 headers: { 'Content-Type': 'application/json' },
                 uri: `${nodeRpcUrl}/api/latest/trail`,
                 json: true,
