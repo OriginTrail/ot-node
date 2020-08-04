@@ -437,7 +437,7 @@ Given(/^([DC|DH|DV]+) initiates purchase for the last imported dataset and waits
     return promise;
 });
 
-Given(/^(DC|DV|DV2) waits for purchase to finish$/, { timeout: 1200000 }, async function (targetNode) {
+Given(/^(DC|DV|DV2) waits for purchase to finish$/, { timeout: 300000 }, async function (targetNode) {
     this.logger.log(`${targetNode} waits for purchase to finish.`);
     expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -456,7 +456,7 @@ Given(/^(DC|DV|DV2) waits for purchase to finish$/, { timeout: 1200000 }, async 
 });
 
 
-Given(/^(DC|DV|DV2) waits to take a payment$/, { timeout: 1200000 }, async function (targetNode) {
+Given(/^(DC|DV|DV2) waits to take a payment$/, { timeout: 300000 }, async function (targetNode) {
     this.logger.log(`${targetNode} waits to take a payment.`);
     expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);

@@ -138,8 +138,9 @@ class DhReplicationImportCommand extends Command {
             decryptedDataset['@graph'],
         );
 
-        decryptedDataset['@graph'].forEach(async (otObject) => {
-            if (otObject.properties && otObject.properties.permissined_data) {
+        for (const otObject of decryptedDataset['@graph']) {
+            if (otObject.properties && otObject.properties.permissioned_data) {
+                // eslint-disable-next-line no-await-in-loop
                 await Models.data_sellers.create({
                     data_set_id: dataSetId,
                     ot_json_object_id: otObject['@id'],
@@ -148,7 +149,7 @@ class DhReplicationImportCommand extends Command {
                     price: 0,
                 });
             }
-        });
+        }
 
         const importResult = await this.importService.importFile({
             document: decryptedDataset,

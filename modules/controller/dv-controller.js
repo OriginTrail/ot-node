@@ -211,11 +211,10 @@ class DVController {
         ot_objects.forEach((otObject) => {
             otObject.relatedObjects.forEach((relatedObject) => {
                 if (relatedObject.vertex.vertexType === 'Data') {
-                    if (ImportUtilities.calculatePermissionedDataHash(relatedObject.vertex
-                        .data.permissioned_data) === relatedObject.vertex.data.permissioned_data
-                        .permissioned_data_hash) {
-                        documentsToBeUpdated.push(relatedObject.vertex);
-                    }
+                    const permissionedDataHash = ImportUtilities
+                        .calculatePermissionedDataHash(relatedObject.vertex.data.permissioned_data);
+                    if (permissionedDataHash !== relatedObject.vertex.data.permissioned_data.permissioned_data_hash) { throw new Error(`Calculated permissioned data hash ${permissionedDataHash} differs from DC permissioned data hash ${relatedObject.vertex.data.permissioned_data.permissioned_data_hash}`); }
+                    documentsToBeUpdated.push(relatedObject.vertex);
                 }
             });
         });

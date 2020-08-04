@@ -58,7 +58,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     await this._handleError(
                         handler_id,
                         purchase_id,
-                        'Couldn\'t verify data with hiven key.',
+                        'Couldn\'t verify data with given key.',
                     );
 
                     const commandData = {
