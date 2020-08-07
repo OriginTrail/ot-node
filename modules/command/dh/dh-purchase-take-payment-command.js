@@ -38,8 +38,9 @@ class DhPurchaseTakePaymentCommand extends Command {
                     seller_erc_id: dataTrade.seller_erc_id,
                     price: dataTrade.price,
                 });
+                this.logger.info(`Payment has been taken for purchase ${purchase_id}`);
             } catch (error) {
-                if (error.message.contains('Complaint window has not yet expired!')) {
+                if (error.message.includes('Complaint window has not yet expired!')) {
                     if (command.retries !== 0) {
                         return Command.retry();
                     }

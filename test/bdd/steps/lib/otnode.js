@@ -416,6 +416,14 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Replication request from holder identity .+ declined! Unacceptable reputation: .+./gi)) {
             const dhIdentity = line.match(identityWithPrefixRegex)[0];
             this.state.declinedDhIdentity = dhIdentity;
+        } else if (line.match(/Purchase confirmed for ot_object .+ received from .+\. Sending purchase response\./gi)) {
+            const ot_object_id = line.match(new RegExp('ot_object (.*) received'))[1];
+            const dv_identity = line.match(new RegExp('from (.*)\\. Sending purchase response\\.'))[1];
+            this.emit('purchase-confirmed', { ot_object_id, dv_identity });
+        } else if (line.match(/Purchase .+ completed\. Data stored successfully/gi)) {
+            this.emit('purchase-completed');
+        } else if (line.match(/Payment has been taken for purchase .+/gi)) {
+            this.emit('purchase-payment-taken');
         }
     }
 

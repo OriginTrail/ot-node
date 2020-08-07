@@ -31,7 +31,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         if (status !== 'SUCCESSFUL') {
             this.logger.trace(`Unable to initiate purchase, seller returned status: ${status} with message: ${message}`);
-            this._handleError(handler_id, status);
+            await this._handleError(handler_id, status);
             return Command.empty();
         }
         const {
@@ -45,8 +45,9 @@ class DvPurchaseInitiateCommand extends Command {
             ot_object_id,
         );
 
-        if (permissioned_data_root_hash !== permissionedObject.permissioned_data_hash) {
-            this._handleError(handler_id, 'Unable to initiate purchase. Permissioned data root hash validation failed');
+        if (permissioned_data_root_hash !==
+            permissionedObject.properties.permissioned_data.permissioned_data_hash) {
+            await this._handleError(handler_id, 'Unable to initiate purchase. Permissioned data root hash validation failed');
             return Command.empty();
         }
 
@@ -70,7 +71,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         if (!purchaseId) {
             this.remoteControl.purchaseStatus('Purchase failed', 'Unabled to initiate purchase to Blockchain.', true);
-            this._handleError(handler_id, 'Unable to initiate purchase to bc');
+            await this._handleError(handler_id, 'Unable to initiate purchase to bc');
             return Command.empty();
         }
 

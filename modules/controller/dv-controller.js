@@ -3,6 +3,7 @@ const Models = require('../../models');
 const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 const constants = require('../constants');
+const { QueryTypes } = require('sequelize');
 /**
  * Encapsulates DV related methods
  */
@@ -18,6 +19,7 @@ class DVController {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
+        this.importService = ctx.importService;
 
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
@@ -96,6 +98,64 @@ class DVController {
         response.send(responses);
     }
 
+    async getTradingData(req, res) {
+        this.logger.api('GET: Get trading data.');
+        const requestedType = req.params.type;
+        if (!requestedType || !this.trading_types.includes(requestedType)) {
+            res.status(400);
+            res.send({
+                message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
+            });
+        }
+        const normalizedIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        const whereCondition = {};
+        if (requestedType === this.trading_type_purchased) {
+            whereCondition.buyer_erc_id = normalizedIdentity;
+        } else if (requestedType === this.trading_type_sold) {
+            whereCondition.seller_erc_id = normalizedIdentity;
+        }
+
+        const tradingData = await Models.data_trades.findAll({
+            where: whereCondition,
+            order: [
+                ['timestamp', 'DESC'],
+            ],
+        });
+
+        const allDatasets = tradingData.map(element => element.data_set_id)
+            .filter((value, index, self) => self.indexOf(value) === index);
+
+        const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
+        const returnArray = [];
+        tradingData.forEach((element) => {
+            const { datasetHeader } =
+                allMetadata.find(metadata => metadata._key === element.data_set_id);
+            const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
+            returnArray.push({
+                data_set: {
+                    id: element.data_set_id,
+                    name: datasetHeader.datasetTitle,
+                    description: datasetHeader.datasetDescription,
+                    tags: datasetHeader.datasetTags,
+                },
+                ot_json_object_id: element.ot_json_object_id,
+                buyer_erc_id: element.buyer_erc_id,
+                buyer_node_id: element.buyer_node_id,
+                seller_erc_id: element.seller_erc_id,
+                seller_node_id: element.seller_node_id,
+                price_in_trac: element.price_in_trac,
+                purchase_id: element.purchase_id,
+                timestamp: element.timestamp,
+                type,
+                status: element.status,
+            });
+        });
+
+        res.status(200);
+        res.send(returnArray);
+    }
+
     /**
      * Handles data read request
      * @param data_set_id - Dataset to be read
@@ -164,125 +224,225 @@ class DVController {
         }
     }
 
-    // /**
-    //  * Handles private data read request
-    //  * @param data_set_id - Dataset that holdsprivate data
-    //  * @param ot_object_id - Object id that holds private data
-    //  * @param seller_node_id - Node id that holds private data
-    //  * @param res - API result object
-    //  * @returns null
-    //  */
-    // async handlePermissionedDataReadRequest(data_set_id, ot_object_id,seller_node_id,response) {
-    //     const handler_data = {
-    //         data_set_id,
-    //         ot_object_id,
-    //         seller_node_id,
-    //     };
-    //     const inserted_object = await Models.handler_ids.create({
-    //         status: 'PENDING',
-    //         data: JSON.stringify(handler_data),
-    //     });
-    //     const handlerId = inserted_object.dataValues.handler_id;
-    //     this.logger.info(`Read private data with id
-    //     ${ot_object_id} with handler id ${handlerId} initiated.`);
-    //
-    //     response.status(200);
-    //     response.send({
-    //         handler_id: handlerId,
-    //     });
-    //
-    //     this.commandExecutor.add({
-    //         name: 'dvPermissionedDataReadRequestCommand',
-    //         delay: 0,
-    //         data: {
-    //             data_set_id,
-    //             ot_object_id,
-    //             seller_node_id,
-    //             handlerId,
-    //         },
-    //         transactional: false,
-    //     });
-    // }
+    /**
+     * Handles permissioned data read request
+     * @param request
+     * @param response
+     * @returns null
+     */
+    async handlePermissionedDataReadRequest(request, response) {
+        this.logger.api('Private data network read request received.');
 
-    // _validatePermissionedData(data) {
-    //     let validated = false;
-    //     constants.PRIVATE_DATA_OBJECT_NAMES.forEach((private_data_array) => {
-    //         if (data[private_data_array] && Array.isArray(data[private_data_array])) {
-    //             data[private_data_array].forEach((private_object) => {
-    //                 if (private_object.isPrivate && private_object.data) {
-    //                     const calculatedPrivateHash = ImportUtilities
-    //                         .calculatePermissionedDataHash(private_object);
-    //                 validated = calculatedPrivateHash ===private_object.permissioned_data_hash;
-    //                 }
-    //             });
-    //         }
-    //     });
-    //     return validated;
-    // }
-    //
-    // async handlePermissionedDataReadResponse(message) {
-    //     const {
-    //         handler_id, ot_objects,
-    //     } = message;
-    //     const documentsToBeUpdated = [];
-    //     ot_objects.forEach((otObject) => {
-    //         otObject.relatedObjects.forEach((relatedObject) => {
-    //             if (relatedObject.vertex.vertexType === 'Data') {
-    //                 if (this._validatePermissionedData(relatedObject.vertex.data)) {
-    //                     documentsToBeUpdated.push(relatedObject.vertex);
-    //                 }
-    //             }
-    //         });
-    //     });
-    //     const promises = [];
-    //     documentsToBeUpdated.forEach((document) => {
-    //         promises.push(this.graphStorage.updateDocument('ot_vertices', document));
-    //     });
-    //     await Promise.all(promises);
-    //
-    //     const handlerData = await Models.handler_ids.findOne({
-    //         where: {
-    //             handler_id,
-    //         },
-    //     });
-    //
-    //     const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
-    //
-    //     await Models.data_sellers.create({
-    //         data_set_id,
-    //         ot_json_object_id: ot_object_id,
-    //         seller_node_id: this.config.identity.toLowerCase(),
-    //         seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
-    //         price: this.config.default_data_price,
-    //     });
-    //
-    //
-    //     await Models.handler_ids.update({
-    //         status: 'COMPLETED',
-    //     }, { where: { handler_id } });
-    // }
+        if (!request.body || !request.body.seller_node_id
+            || !request.body.data_set_id
+            || !request.body.ot_object_id) {
+            request.status(400);
+            request.send({ message: 'Params data_set_id,ot_object_id and seller_node_id are required.' });
+        }
+        const { data_set_id, ot_object_id, seller_node_id } = request.body;
+        const handler_data = {
+            data_set_id,
+            ot_object_id,
+            seller_node_id,
+        };
+        const inserted_object = await Models.handler_ids.create({
+            status: 'PENDING',
+            data: JSON.stringify(handler_data),
+        });
+        const { handler_id } = inserted_object.dataValues;
+        this.logger.info(`Read private data with id ${ot_object_id} with handler id ${handler_id} initiated.`);
 
-    // async sendNetworkPurchase(dataSetId, erc725Identity, nodeId, otJsonObjectId, handlerId) {
-    //     const message = {
-    //         data_set_id: dataSetId,
-    //         dv_erc725_identity: erc725Identity,
-    //         handler_id: handlerId,
-    //         ot_json_object_id: otJsonObjectId,
-    //         wallet: this.config.node_wallet,
-    //     };
-    //     const dataPurchaseRequestObject = {
-    //         message,
-    //         messageSignature: Utilities.generateRsvSignature(
-    //             JSON.stringify(message),
-    //             this.web3,
-    //             this.config.node_private_key,
-    //         ),
-    //     };
-    //     await this.transport.sendDataPurchaseRequest(
-    //         dataPurchaseRequestObject,
-    //         nodeId,
-    //     );
-    // }
+        response.status(200);
+        response.send({
+            handler_id,
+        });
+
+        this.commandExecutor.add({
+            name: 'dvPermissionedDataReadRequestCommand',
+            delay: 0,
+            data: {
+                data_set_id,
+                ot_object_id,
+                seller_node_id,
+                handler_id,
+            },
+            transactional: false,
+        });
+    }
+
+    async handlePermissionedDataReadResponse(message) {
+        const {
+            handler_id, ot_objects,
+        } = message;
+        const documentsToBeUpdated = [];
+        ot_objects.forEach((otObject) => {
+            otObject.relatedObjects.forEach((relatedObject) => {
+                if (relatedObject.vertex.vertexType === 'Data') {
+                    const permissionedDataHash = ImportUtilities
+                        .calculatePermissionedDataHash(relatedObject.vertex.data.permissioned_data);
+                    if (permissionedDataHash !== relatedObject.vertex.data.permissioned_data.permissioned_data_hash) { throw new Error(`Calculated permissioned data hash ${permissionedDataHash} differs from DC permissioned data hash ${relatedObject.vertex.data.permissioned_data.permissioned_data_hash}`); }
+                    documentsToBeUpdated.push(relatedObject.vertex);
+                }
+            });
+        });
+        const promises = [];
+        documentsToBeUpdated.forEach((document) => {
+            promises.push(this.graphStorage.updateDocument('ot_vertices', document));
+        });
+        await Promise.all(promises);
+
+        const handlerData = await Models.handler_ids.findOne({
+            where: {
+                handler_id,
+            },
+        });
+
+        const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+
+        await Models.data_sellers.create({
+            data_set_id,
+            ot_json_object_id: ot_object_id,
+            seller_node_id: this.config.identity.toLowerCase(),
+            seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+            price: this.config.default_data_price,
+        });
+
+
+        await Models.handler_ids.update({
+            status: 'COMPLETED',
+        }, { where: { handler_id } });
+    }
+
+
+    async getPermissionedDataAvailable(req, res) {
+        this.logger.api('GET: Permissioned data Available for purchase.');
+
+        const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
+        const data = await Models.sequelize.query(
+            query,
+            {
+                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const result = [];
+
+        if (data.length > 0) {
+            const not_owned_objects = {};
+            const allDatasets = [];
+            /*
+               Creating a map of the following structure
+               not_owned_objects: {
+                    dataset_0x456: {
+                        seller_0x123: [ot_object_0x789, ...]
+                        ...,
+                    },
+                    ...
+               }
+             */
+            data.forEach((obj) => {
+                if (not_owned_objects[obj.data_set_id]) {
+                    if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                            .push(obj.ot_json_object_id);
+                    } else {
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                            = [obj.ot_json_object_id];
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
+                            = obj.seller_erc_id;
+                    }
+                } else {
+                    allDatasets.push(obj.data_set_id);
+                    not_owned_objects[obj.data_set_id] = {};
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
+                        = [obj.ot_json_object_id];
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
+                        = obj.seller_erc_id;
+                }
+            });
+
+            const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
+
+            const dataInfos = await Models.data_info.findAll({
+                where: {
+                    data_set_id: {
+                        [Models.sequelize.Op.in]: allDatasets,
+                    },
+                },
+            });
+
+            allDatasets.forEach((datasetId) => {
+                const { datasetHeader } = allMetadata.find(metadata => metadata._key === datasetId);
+                const dataInfo = dataInfos.find(info => info.data_set_id === datasetId);
+                not_owned_objects[datasetId].metadata = {
+                    datasetTitle: datasetHeader.datasetTitle,
+                    datasetTags: datasetHeader.datasetTags,
+                    datasetDescription: datasetHeader.datasetDescription,
+                    timestamp: dataInfo.import_timestamp,
+                };
+            });
+
+            for (const dataset in not_owned_objects) {
+                for (const data_seller in not_owned_objects[dataset]) {
+                    if (data_seller !== 'metadata') {
+                        result.push({
+                            seller_node_id: data_seller,
+                            timestamp: (new Date(not_owned_objects[dataset].metadata.timestamp))
+                                .getTime(),
+                            dataset: {
+                                id: dataset,
+                                name: not_owned_objects[dataset].metadata.datasetTitle,
+                                description: not_owned_objects[dataset].metadata.datasetDescription,
+                                tags: not_owned_objects[dataset].metadata.datasetTags,
+                            },
+                            ot_objects: not_owned_objects[dataset][data_seller].ot_json_object_id,
+                            seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,
+                        });
+                    }
+                }
+            }
+        }
+
+        res.status(200);
+        res.send(result);
+    }
+
+    async getPermissionedDataPrice(req, res) {
+        this.logger.api('POST: Get permissioned data price.');
+        if (req.body == null
+            || req.body.data_set_id == null
+            || req.body.seller_node_id == null
+            || req.body.ot_object_id == null) {
+            res.status(400);
+            res.send({ message: 'Params data_set_id, seller_node_id and ot_json_object_id are required.' });
+        }
+
+        const {
+            data_set_id, seller_node_id, ot_object_id,
+        } = req.body;
+        const inserted_object = await Models.handler_ids.create({
+            data: JSON.stringify({
+                data_set_id, seller_node_id, ot_object_id,
+            }),
+            status: 'PENDING',
+        });
+
+        const handlerId = inserted_object.dataValues.handler_id;
+
+        await this.sendPermissionedDataPriceRequest(
+            data_set_id,
+            seller_node_id,
+            ot_object_id,
+            handlerId,
+        );
+
+        res.status(200);
+        res.send({
+            handler_id: handlerId,
+        });
+    }
 
     async sendNetworkPurchase(request, response) {
         if (request.body == null
@@ -342,41 +502,6 @@ class DVController {
             nodeId,
         );
     }
-    // async handleNetworkPurchaseResponse(response) {
-    //     const {
-    //         handler_id, status, message, seller_node_id, seller_erc_id, price,
-    //     } = response;
-    //
-    //     const handlerData = await Models.handler_ids.findOne({
-    //         where: {
-    //             handler_id,
-    //         },
-    //     });
-    //
-    //     const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
-    //
-    //     await Models.data_trades.create({
-    //         data_set_id,
-    //         ot_json_object_id: ot_object_id,
-    //         buyer_node_id: this.config.identity,
-    //         buyer_erc_id: this.config.erc725Identity.toLowerCase(),
-    //         seller_node_id,
-    //         seller_erc_id,
-    //         price,
-    //         purchase_id: '',
-    //         status,
-    //     });
-    //
-    //     await Models.handler_ids.update({
-    //         data: JSON.stringify({ message }),
-    //         status,
-    //     }, {
-    //         where: {
-    //             handler_id,
-    //         },
-    //     });
-    // }
-
 
     async handleNetworkPurchaseResponse(response) {
         const {

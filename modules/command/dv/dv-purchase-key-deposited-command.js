@@ -55,6 +55,12 @@ class DvPurchaseKeyDepositedCommand extends Command {
                         permissioned_data_original_length,
                     );
                 if (decodedPermissionedData.errorStatus) {
+                    await this._handleError(
+                        handler_id,
+                        purchase_id,
+                        'Couldn\'t verify data with given key.',
+                    );
+
                     const commandData = {
                         encoded_data,
                     };

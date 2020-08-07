@@ -138,6 +138,19 @@ class DhReplicationImportCommand extends Command {
             decryptedDataset['@graph'],
         );
 
+        for (const otObject of decryptedDataset['@graph']) {
+            if (otObject.properties && otObject.properties.permissioned_data) {
+                // eslint-disable-next-line no-await-in-loop
+                await Models.data_sellers.create({
+                    data_set_id: dataSetId,
+                    ot_json_object_id: otObject['@id'],
+                    seller_node_id: dcNodeId.toLowerCase(),
+                    seller_erc_id: Utilities.normalizeHex(dcIdentity),
+                    price: 0,
+                });
+            }
+        }
+
         const importResult = await this.importService.importFile({
             document: decryptedDataset,
             encryptedMap,

@@ -175,7 +175,7 @@ Feature: Data layer related features
     Given DC node makes local query with previous json query
     Then response should contain only last imported data set id
 
-  @third
+  @second
   Scenario: Graph level data encryption
     Given the replication difficulty is 0
     And I setup 4 nodes

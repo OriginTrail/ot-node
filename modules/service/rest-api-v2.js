@@ -1,10 +1,7 @@
 const path = require('path');
-const { QueryTypes } = require('sequelize');
 const fs = require('fs');
-const BN = require('bn.js');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
-const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const Models = require('../../models');
 
@@ -125,25 +122,14 @@ class RestAPIServiceV2 {
         server.get(`/api/${this.version_id}/network/read/result/:handler_id`, async (req, res) => {
             await this._checkForHandlerStatus(req, res);
         });
-        //
-        // server.post(`/api/${this.version_id}/network/permissioned_data/read`,async(req, res) => {
-        //     await this._privateDataReadNetwork(req, res);
-        // });
 
-        // server.get(`/api/${this.version_id}/network/permissioned_data/read/resu
-        // lt/:handler_id`, async (req, res) => {
-        //     await this._checkForHandlerStatus(req, res);
-        // });
+        server.post(`/api/${this.version_id}/network/permissioned_data/read`, async (req, res) => {
+            await this.dvController.handlePermissionedDataReadRequest(req, res);
+        });
 
-        // server.post(`/api/${this.version_id}/network/
-        // permissioned_data/purchase`, async (req, res) => {
-        //     await this.dvController.sendNetworkPurchase(req, res);
-        // });
-
-        // server.get(`/api/${this.version_id}/network/
-        // permissioned_data/purchase/result/:handler_id`, async (req, res) => {
-        //     await this._checkForHandlerStatus(req, res);
-        // });
+        server.get(`/api/${this.version_id}/network/permissioned_data/read/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
+        });
 
         server.post(`/api/${this.version_id}/permissioned_data/whitelist_viewer`, async (req, res) => {
             await this.dhController.whitelistViewer(req, res);
@@ -161,35 +147,39 @@ class RestAPIServiceV2 {
             await this._getChallenges(req, res);
         });
 
-        // server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
-        //     await this._getPermissionedDataAvailable(req, res);
-        // });
-        //
-        //
-        // server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
-        //     await this._getPermissionedDataOwned(req, res);
-        // });
-        //
-        // server.post(`/api/${this.version_id}/network/
-        // permissioned_data/get_price`, async (req, res) => {
-        //     await this._getPermissionedDataPrice(req, res);
-        // });
-        //
-        // server.post(`/api/${this.version_id}/
-        // permissioned_data/update_price`, async (req, res) => {
-        //     await this._updatePermissionedDataPrice(req, res);
-        // });
-        //
-        // server.get(`/api/${this.version_id}/network/
-        // permissioned_data/get_price/result/:handler_id`, async (req, res) => {
-        //     await this._checkForHandlerStatus(req, res);
-        // });
-        //
-        // server.get(`/api/${this.version_id}/
-        // permissioned_data/trading_info/:type`, async (req, res) => {
-        //     await this._getTradingData(req, res);
-        // });
+        if (process.env.NODE_ENV !== 'mainnet') {
+            server.post(`/api/${this.version_id}/network/permissioned_data/purchase`, async (req, res) => {
+                await this.dvController.sendNetworkPurchase(req, res);
+            });
 
+            server.get(`/api/${this.version_id}/network/permissioned_data/purchase/result/:handler_id`, async (req, res) => {
+                await this._checkForHandlerStatus(req, res);
+            });
+            server.get(`/api/${this.version_id}/permissioned_data/available`, async (req, res) => {
+                await this.dvController.getPermissionedDataAvailable(req, res);
+            });
+
+
+            server.get(`/api/${this.version_id}/permissioned_data/owned`, async (req, res) => {
+                await this.dcController.getPermissionedDataOwned(req, res);
+            });
+
+            server.post(`/api/${this.version_id}/network/permissioned_data/get_price`, async (req, res) => {
+                await this.dvController.getPermissionedDataPrice(req, res);
+            });
+
+            server.post(`/api/${this.version_id}/permissioned_data/update_price`, async (req, res) => {
+                await this.dcController.updatePermissionedDataPrice(req, res);
+            });
+
+            server.get(`/api/${this.version_id}/network/permissioned_data/get_price/result/:handler_id`, async (req, res) => {
+                await this._checkForHandlerStatus(req, res);
+            });
+
+            server.get(`/api/${this.version_id}/permissioned_data/trading_info/:type`, async (req, res) => {
+                await this.dvController.getTradingData(req, res);
+            });
+        }
 
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
@@ -498,21 +488,6 @@ class RestAPIServiceV2 {
         await this.dvController.handleDataReadRequest(data_set_id, reply_id, res);
     }
 
-    // async _privateDataReadNetwork(req, res) {
-    //     this.logger.api('Private data network read request received.');
-    //
-    //     if (!req.body || !req.body.seller_node_id
-    //     || !req.body.data_set_id
-    //     || !req.body.ot_object_id) {
-    //         res.status(400);
-    //         res.send({ message: 'Params data_set_id,
-    //         ot_object_id and seller_node_id are required.' });
-    //     }
-    //     const { data_set_id, ot_object_id, seller_node_id } = req.body;
-    //     await this.dvController
-    //         .handlePermissionedDataReadRequest(data_set_id, ot_object_id, seller_node_id, res);
-    // }
-
     async _checkForReplicationHandlerStatus(req, res) {
         const handler_object = await Models.handler_ids.findOne({
             where: {
@@ -806,361 +781,6 @@ class RestAPIServiceV2 {
                 message: 'Unable to find requested data',
             });
         }
-    }
-
-
-    // async _networkPurchase(req, res) {
-    //     this.logger.api('POST: Network purchase request received.');
-    //
-    //     if (req.body == null
-    //         || req.body.data_set_id == null
-    //         || req.body.seller_node_id == null
-    //         || req.body.ot_object_id == null) {
-    //         res.status(400);
-    //         res.send({ message: '
-    //         Params data_set_id, seller_node_id and ot_object_id are required.' });
-    //         return;
-    //     }
-    //     const {
-    //         data_set_id, seller_node_id, ot_object_id,
-    //     } = req.body;
-    //     const inserted_object = await Models.handler_ids.create({
-    //         data: JSON.stringify({
-    //             data_set_id, seller_node_id, ot_object_id,
-    //         }),
-    //         status: 'PENDING',
-    //     });
-    //     const handlerId = inserted_object.dataValues.handler_id;
-    //     res.status(200);
-    //     res.send({
-    //         handler_id: handlerId,
-    //     });
-    //
-    //     await this.dvController.sendNetworkPurchase(
-    //         data_set_id,
-    //         this.config.erc725Identity,
-    //         seller_node_id,
-    //         ot_object_id,
-    //         handlerId,
-    //     );
-    // }
-
-    async _getPermissionedDataAvailable(req, res) {
-        this.logger.api('GET: Permissioned data Available for purchase.');
-
-        const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
-        const data = await Models.sequelize.query(
-            query,
-            {
-                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
-                type: QueryTypes.SELECT,
-            },
-        );
-
-        const result = [];
-
-        if (data.length > 0) {
-            const not_owned_objects = {};
-            const allDatasets = [];
-            /*
-               Creating a map of the following structure
-               not_owned_objects: {
-                    dataset_0x456: {
-                        seller_0x123: [ot_object_0x789, ...]
-                        ...,
-                    },
-                    ...
-               }
-             */
-            data.forEach((obj) => {
-                if (not_owned_objects[obj.data_set_id]) {
-                    if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
-                            .push(obj.ot_json_object_id);
-                    } else {
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
-                            = [obj.ot_json_object_id];
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
-                            = obj.seller_erc_id;
-                    }
-                } else {
-                    allDatasets.push(obj.data_set_id);
-                    not_owned_objects[obj.data_set_id] = {};
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
-                        = [obj.ot_json_object_id];
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
-                        = obj.seller_erc_id;
-                }
-            });
-
-            const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
-
-            const dataInfos = await Models.data_info.findAll({
-                where: {
-                    data_set_id: {
-                        [Models.sequelize.Op.in]: allDatasets,
-                    },
-                },
-            });
-
-            allDatasets.forEach((datasetId) => {
-                const { datasetHeader } = allMetadata.find(metadata => metadata._key === datasetId);
-                const dataInfo = dataInfos.find(info => info.data_set_id === datasetId);
-                not_owned_objects[datasetId].metadata = {
-                    datasetTitle: datasetHeader.datasetTitle,
-                    datasetTags: datasetHeader.datasetTags,
-                    datasetDescription: datasetHeader.datasetDescription,
-                    timestamp: dataInfo.import_timestamp,
-                };
-            });
-
-            for (const dataset in not_owned_objects) {
-                for (const data_seller in not_owned_objects[dataset]) {
-                    if (data_seller !== 'metadata') {
-                        result.push({
-                            seller_node_id: data_seller,
-                            timestamp: (new Date(not_owned_objects[dataset].metadata.timestamp))
-                                .getTime(),
-                            dataset: {
-                                id: dataset,
-                                name: not_owned_objects[dataset].metadata.datasetTitle,
-                                description: not_owned_objects[dataset].metadata.datasetDescription,
-                                tags: not_owned_objects[dataset].metadata.datasetTags,
-                            },
-                            ot_objects: not_owned_objects[dataset][data_seller].ot_json_object_id,
-                            seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,
-                        });
-                    }
-                }
-            }
-        }
-
-        res.status(200);
-        res.send(result);
-    }
-
-    async _getPermissionedDataOwned(req, res) {
-        this.logger.api('GET: Permissioned Data Owned.');
-
-        const query = 'SELECT ds.data_set_id, ds.ot_json_object_id, ds.price, ( SELECT Count(*) FROM data_trades dt Where dt.seller_erc_id = ds.seller_erc_id and ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id ) as sales FROM  data_sellers ds where ds.seller_erc_id = :seller_erc ';
-        const data = await Models.sequelize.query(
-            query,
-            {
-                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
-                type: QueryTypes.SELECT,
-            },
-        );
-
-        const result = [];
-
-        if (data.length > 0) {
-            const owned_objects = {};
-            const allDatasets = [];
-            /*
-               Creating a map of the following structure
-               owned_objects: {
-                    dataset_0x456: {
-                        ot_objects: [ot_object_0x789, ...]
-                        ...,
-                    },
-                    ...
-               }
-             */
-            data.forEach((obj) => {
-                if (owned_objects[obj.data_set_id]) {
-                    owned_objects[obj.data_set_id].ot_objects.push({
-                        id: obj.ot_json_object_id,
-                        price: obj.price,
-                        sales: obj.sales,
-                    });
-                    owned_objects[obj.data_set_id].total_sales.iadd(new BN(obj.sales, 10));
-                    owned_objects[obj.data_set_id].total_price.iadd(new BN(obj.price, 10));
-                } else {
-                    allDatasets.push(obj.data_set_id);
-                    owned_objects[obj.data_set_id] = {};
-                    owned_objects[obj.data_set_id].ot_objects = [{
-                        id: obj.ot_json_object_id,
-                        price: obj.price,
-                        sales: obj.sales,
-                    }];
-                    owned_objects[obj.data_set_id].total_sales = new BN(obj.sales, 10);
-                    owned_objects[obj.data_set_id].total_price = new BN(obj.price, 10);
-                }
-            });
-
-            const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
-
-            const dataInfos = await Models.data_info.findAll({
-                where: {
-                    data_set_id: {
-                        [Models.sequelize.Op.in]: allDatasets,
-                    },
-                },
-            });
-
-            allDatasets.forEach((datasetId) => {
-                const { datasetHeader } = allMetadata.find(metadata => metadata._key === datasetId);
-                const dataInfo = dataInfos.find(info => info.data_set_id === datasetId);
-                owned_objects[datasetId].metadata = {
-                    datasetTitle: datasetHeader.datasetTitle,
-                    datasetTags: datasetHeader.datasetTags,
-                    datasetDescription: datasetHeader.datasetDescription,
-                    timestamp: dataInfo.import_timestamp,
-                };
-            });
-
-            for (const dataset in owned_objects) {
-                result.push({
-                    timestamp: (new Date(owned_objects[dataset].metadata.timestamp)).getTime(),
-                    dataset: {
-                        id: dataset,
-                        name: owned_objects[dataset].metadata.datasetTitle,
-                        description: owned_objects[dataset].metadata.datasetDescription || 'No description given',
-                        tags: owned_objects[dataset].metadata.datasetTags,
-                    },
-                    ot_objects: owned_objects[dataset].ot_objects,
-                    total_sales: owned_objects[dataset].total_sales.toString(),
-                    total_price: owned_objects[dataset].total_price.toString(),
-                });
-            }
-        }
-
-        res.status(200);
-        res.send(result);
-    }
-
-    async _getPermissionedDataPrice(req, res) {
-        this.logger.api('POST: Get permissioned data price.');
-        if (req.body == null
-            || req.body.data_set_id == null
-            || req.body.seller_node_id == null
-            || req.body.ot_object_id == null) {
-            res.status(400);
-            res.send({ message: 'Params data_set_id, seller_node_id and ot_json_object_id are required.' });
-        }
-
-        const {
-            data_set_id, seller_node_id, ot_object_id,
-        } = req.body;
-        const inserted_object = await Models.handler_ids.create({
-            data: JSON.stringify({
-                data_set_id, seller_node_id, ot_object_id,
-            }),
-            status: 'PENDING',
-        });
-
-        const handlerId = inserted_object.dataValues.handler_id;
-
-        await this.dvController.sendPermissionedDataPriceRequest(
-            data_set_id,
-            seller_node_id,
-            ot_object_id,
-            handlerId,
-        );
-
-        res.status(200);
-        res.send({
-            handler_id: handlerId,
-        });
-    }
-
-    async _updatePermissionedDataPrice(req, res) {
-        this.logger.api('POST: Set permissioned data price.');
-        if (req.body == null
-            || req.body.data_set_id == null
-            || req.body.ot_object_ids == null) {
-            res.status(400);
-            res.send({ message: 'Params data_set_id and ot_object_ids are required.' });
-            return;
-        }
-
-        const promises = [];
-        req.body.ot_object_ids.forEach((ot_object) => {
-            promises.push(new Promise(async (accept, reject) => {
-                const condition = {
-                    seller_erc_id: this.config.erc725Identity.toLowerCase(),
-                    data_set_id: req.body.data_set_id.toLowerCase(),
-                    ot_json_object_id: ot_object.id,
-                };
-
-                const data = await Models.data_sellers.findOne({
-                    where: condition,
-                });
-
-                if (data) {
-                    await Models.data_sellers.update(
-                        { price: ot_object.price_in_trac },
-                        { where: { id: data.id } },
-                    );
-                    accept();
-                } else {
-                    reject();
-                }
-            }));
-        });
-        await Promise.all(promises).then(() => {
-            res.status(200);
-            res.send({ status: 'COMPLETED' });
-        });
-    }
-
-    async _getTradingData(req, res) {
-        this.logger.api('GET: Get trading data.');
-        const requestedType = req.params.type;
-        if (!requestedType || !this.trading_types.includes(requestedType)) {
-            res.status(400);
-            res.send({
-                message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
-            });
-        }
-        const normalizedIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-        const whereCondition = {};
-        if (requestedType === this.trading_type_purchased) {
-            whereCondition.buyer_erc_id = normalizedIdentity;
-        } else if (requestedType === this.trading_type_sold) {
-            whereCondition.seller_erc_id = normalizedIdentity;
-        }
-
-        const tradingData = await Models.data_trades.findAll({
-            where: whereCondition,
-            order: [
-                ['timestamp', 'DESC'],
-            ],
-        });
-
-        const allDatasets = tradingData.map(element => element.data_set_id)
-            .filter((value, index, self) => self.indexOf(value) === index);
-
-        const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
-
-        const returnArray = [];
-        tradingData.forEach((element) => {
-            const { datasetHeader } =
-                allMetadata.find(metadata => metadata._key === element.data_set_id);
-            const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
-            returnArray.push({
-                data_set: {
-                    id: element.data_set_id,
-                    name: datasetHeader.datasetTitle,
-                    description: datasetHeader.datasetDescription,
-                    tags: datasetHeader.datasetTags,
-                },
-                ot_json_object_id: element.ot_json_object_id,
-                buyer_erc_id: element.buyer_erc_id,
-                buyer_node_id: element.buyer_node_id,
-                seller_erc_id: element.seller_erc_id,
-                seller_node_id: element.seller_node_id,
-                price_in_trac: element.price_in_trac,
-                purchase_id: element.purchase_id,
-                timestamp: element.timestamp,
-                type,
-                status: element.status,
-            });
-        });
-
-        res.status(200);
-        res.send(returnArray);
     }
 }
 
