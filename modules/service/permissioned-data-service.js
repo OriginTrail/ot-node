@@ -145,7 +145,11 @@ class PermissionedDataService {
         const rawKey = crypto.randomBytes(32);
         const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
         const encodedArray = [];
+
+        const randomLevel = Math.floor(Math.random() * merkleTree.levels.length);
+        const randomLeaf = Math.floor(Math.random() * merkleTree.levels[randomLevel].length);
         let index = 0;
+        let levelIndex = 0;
         merkleTree.levels.forEach((level) => {
             for (let i = 0; i < level.length; i += 1) {
                 const leaf = level[i];
@@ -153,9 +157,24 @@ class PermissionedDataService {
                     ['bytes32', 'uint256'],
                     [key, index],
                 ).toString('hex');
-                encodedArray.push(Encryption.xor(leaf, keyHash));
+                if (i === randomLeaf && levelIndex === randomLevel) {
+                    const inputLeft = merkleTree.levels[levelIndex - 1][randomLeaf * 2];
+                    const inputRight = merkleTree.levels[levelIndex - 1][(randomLeaf * 2) + 1];
+                    const output = leaf;
+                    const actualOutput = Encryption.xor(leaf, keyHash);
+                    this.logger.notify(`Expected: ${inputLeft} ===+=== ${inputRight}`);
+                    this.logger.notify(`Expected: ====== ${output}`);
+                    this.logger.notify(`Actual: ====== ${output}`);
+                    this.logger.notify(`OutputIndex: ${index}`);
+                    this.logger.notify(`CurrentLevel Length: ${merkleTree.levels[levelIndex].length}`);
+                    this.logger.notify(`CurrentLevel Length: ${merkleTree.levels[levelIndex + 1].length}`);
+                    encodedArray.push(leaf);
+                } else {
+                    encodedArray.push(Encryption.xor(leaf, keyHash));
+                }
                 index += 1;
             }
+            levelIndex += 1;
         });
         const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
@@ -163,6 +182,7 @@ class PermissionedDataService {
             permissionedObject.properties.permissioned_data.data,
             true,
         );
+
         const data = Buffer.from(sorted_data);
         return {
             permissioned_data_original_length: data.length,
@@ -176,11 +196,13 @@ class PermissionedDataService {
         };
     }
 
-    validateAndDecodePermissionedData(
-        permissionedDataArray, key,
-        permissionedDataArrayLength,
-        permissionedDataOriginalLength,
-    ) {
+    /**
+     * Decodes the array of data with the given key
+     * @param permissionedDataArray - Array of elements encoded
+     * @param key - String key in hex form
+     * @returns {[]} - Decoded data
+     */
+    decodePermissionedData(permissionedDataArray, key) {
         const decodedDataArray = [];
         permissionedDataArray.forEach((element, index) => {
             const keyHash = abi.soliditySHA3(
@@ -190,25 +212,46 @@ class PermissionedDataService {
             decodedDataArray.push(Encryption.xor(element, keyHash));
         });
 
-        const originalDataArray = decodedDataArray.slice(0, permissionedDataArrayLength);
+        return decodedDataArray;
+    }
 
-        // todo add validation
-        // const originalDataMarkleTree = new MerkleTree(originalDataArray, 'purchase', 'sha3');
-        // var index = 0;
-        // originalDataMarkleTree.levels.forEach((level) => {
-        //     level.forEach((leaf) => {
-        //         if (leaf !== decodedDataArray[index]){
-        //             //found non matching index
-        //             return {
-        //                 : {},
-        //                 errorStatus: 'VALIDATION_FAILED',
-        //             };
-        //         }
-        //         index += 1;
-        //     });
-        // });
+    validatePermissionedDataTree(decodedMerkleTreeArray, firstLevelLength) {
+        const baseLevel = decodedMerkleTreeArray.slice(0, firstLevelLength);
+        const calculatedMerkleTree = new MerkleTree(baseLevel, 'purchase', 'sha3');
 
-        // recreate original object
+        let decodedIndex = firstLevelLength;
+        let previousLevelStart = 0;
+
+        for (const [levelIndex, level] of calculatedMerkleTree.levels.entries()) {
+            if (levelIndex !== 0) {
+                for (const [elementIndex, element] of level.entries()) {
+                    if (element !== decodedMerkleTreeArray[decodedIndex]) {
+                        return {
+                            error: true,
+                            inputIndexLeft: (elementIndex * 2) + previousLevelStart,
+                            outputIndex: decodedIndex,
+                        };
+                    }
+                    decodedIndex += 1;
+                }
+                previousLevelStart += level.length;
+            }
+        }
+
+        return {};
+    }
+
+    validatePermissionedDataRoot(decodedMerkleTreeArray, permissionedDataRootHash) {
+        return Utilities.normalizeHex(permissionedDataRootHash) ===
+            Utilities.normalizeHex(decodedMerkleTreeArray[decodedMerkleTreeArray.length - 1]);
+    }
+
+    reconstructPermissionedData(
+        decodedMerkleTreeArray,
+        firstLevelLength,
+        permissionedDataOriginalLength,
+    ) {
+        const originalDataArray = decodedMerkleTreeArray.slice(0, firstLevelLength);
 
         const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
         const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
@@ -224,8 +267,38 @@ class PermissionedDataService {
             originalDataString += block.toString();
         }
 
+        return JSON.parse(originalDataString);
+    }
+
+    prepareNodeDisputeData(encodedData, inputIndexLeft, outputIndex) {
+        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'sha3');
+
+        const encodedInputLeft = encodedData[inputIndexLeft];
+        const encodedOutput = encodedData[outputIndex];
+
+        const proofOfEncodedInputLeft = encodedMerkleTree.createProof(inputIndexLeft);
+        const proofOfEncodedOutput = encodedMerkleTree.createProof(outputIndex);
+
         return {
-            permissionedData: JSON.parse(originalDataString),
+            encodedInputLeft,
+            encodedOutput,
+            proofOfEncodedInputLeft,
+            proofOfEncodedOutput,
+        };
+    }
+
+    prepareRootDisputeData(encodedData) {
+        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'sha3');
+
+        const rootHashIndex = encodedMerkleTree.levels[0].length - 1;
+        const encodedRootHash = encodedData[rootHashIndex];
+
+        const proofOfEncodedRootHash = encodedMerkleTree.createProof(rootHashIndex);
+
+        return {
+            rootHashIndex,
+            encodedRootHash,
+            proofOfEncodedRootHash,
         };
     }
 

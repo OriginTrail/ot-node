@@ -16,6 +16,22 @@ const awilix = require('awilix');
 const PermissionedDataService = require('../../../modules/service/permissioned-data-service');
 
 
+const samplePermissionedObject = {
+    properties: {
+        permissioned_data: {
+            data: {
+                'urn:ot:object:product:batch:humidity': '19.7',
+                'urn:ot:object:product:batch:power_feeding': '85',
+                'urn:ot:object:product:batch:productId': 'urn:ot:object:actor:id:KakaxiSN687',
+                'urn:ot:object:product:batch:rainfall': '0.0',
+                'urn:ot:object:product:batch:solar_radiation': '0.0',
+                'urn:ot:object:product:batch:temperature': '22.0',
+                vocabularyType: 'urn:ot:object:batch',
+            },
+        },
+    },
+};
+
 let config;
 let permissionedDataService;
 
@@ -87,39 +103,101 @@ describe('Permission data service test', () => {
         );
     });
 
-    it('Encoding verification', () => {
-        const permissionedObject = {
-            properties: {
-                permissioned_data: {
-                    data: {
-                        'urn:ot:object:product:batch:humidity': '19.7',
-                        'urn:ot:object:product:batch:power_feeding': '85',
-                        'urn:ot:object:product:batch:productId': 'urn:ot:object:actor:id:KakaxiSN687',
-                        'urn:ot:object:product:batch:rainfall': '0.0',
-                        'urn:ot:object:product:batch:solar_radiation': '0.0',
-                        'urn:ot:object:product:batch:temperature': '22.0',
-                        vocabularyType: 'urn:ot:object:batch',
-                    },
-                },
-            },
-        };
-
+    it('Should correctly reconstruct encoded object', () => {
         const {
             permissioned_data_original_length, permissioned_data_array_length, key,
             encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
-        } = permissionedDataService.encodePermissionedData(permissionedObject);
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
 
-        const result = permissionedDataService.validateAndDecodePermissionedData(
+        const decoded_data = permissionedDataService.decodePermissionedData(
             encoded_data,
             key,
+        );
+
+        const result = permissionedDataService.reconstructPermissionedData(
+            decoded_data,
             permissioned_data_array_length,
             permissioned_data_original_length,
         );
 
         assert.equal(
-            Utilities.sortedStringify(permissionedObject.properties.permissioned_data.data),
-            Utilities.sortedStringify(result.permissionedData),
+            Utilities.sortedStringify(samplePermissionedObject.properties.permissioned_data.data),
+            Utilities.sortedStringify(result),
+            'Reconstructed object is not the same as the original object',
         );
+    });
+
+    it('Should validate correct permissioned data tree with validatePermissionedDataTree', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        const validationResult = permissionedDataService.validatePermissionedDataTree(
+            decodedPermissionedData,
+            permissioned_data_array_length,
+        );
+
+        assert(!validationResult.error, 'Correctly encoded data returned an error.');
+    });
+
+    it('Should report error for incorrect permissioned data tree with validatePermissionedDataTree', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        decodedPermissionedData[Math.round(decodedPermissionedData.length / 2)] =
+            '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+        const validationResult = permissionedDataService.validatePermissionedDataTree(
+            decodedPermissionedData,
+            permissioned_data_array_length,
+        );
+
+        assert(validationResult.error, 'Corrupted decoded data passed validation.');
+    });
+
+    it('Should validate correct permissioned data decoded root hash', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const permissionedDataRootHash = ImportUtilities
+            .calculatePermissionedDataHash(samplePermissionedObject.properties.permissioned_data);
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        const rootHashMatches = permissionedDataService
+            .validatePermissionedDataRoot(decodedPermissionedData, permissionedDataRootHash);
+
+        assert(rootHashMatches, 'Correct permissioned data root hash failed validation.');
+    });
+
+    it('Should report error for incorrect permissioned data decoded root hash', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const permissionedDataRootHash =
+            '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        const rootHashMatches = permissionedDataService
+            .validatePermissionedDataRoot(decodedPermissionedData, permissionedDataRootHash);
+
+        assert(!rootHashMatches, 'Correct permissioned data root hash failed validation.');
     });
 
     it('Calculate the root hash on one permissioned data object', () => {

@@ -1047,6 +1047,41 @@ class Ethereum {
         );
     }
 
+    async complainAboutNode(
+        purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+        proofOfEncodedOutput, proofOfEncodedInputLeft,
+    ) {
+        const gasPrice = await this.getGasPrice();
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.marketplaceContractAddress,
+        };
+
+        this.logger.trace(`complainAboutNode(${purchaseId},${outputIndex},${inputIndexLeft},` +
+        `${encodedOutput},${encodedInputLeft},${proofOfEncodedOutput},${proofOfEncodedInputLeft})`);
+        return this.transactions.queueTransaction(
+            this.marketplaceContractAbi, 'complainAboutNode',
+            [purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+                proofOfEncodedOutput, proofOfEncodedInputLeft], options,
+        );
+    }
+
+    async complainAboutRoot(purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex) {
+        const gasPrice = await this.getGasPrice();
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.marketplaceContractAddress,
+        };
+
+        this.logger.trace(`complainAboutRoot(${purchaseId},${encodedRootHash},${proofOfEncodedRootHash},${rootHashIndex})`);
+        return this.transactions.queueTransaction(
+            this.marketplaceContractAbi, 'complainAboutRoot',
+            [purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex], options,
+        );
+    }
+
     async sendCommitment(importId, dvWallet, commitment) {
         const gasPrice = await this.getGasPrice();
         const options = {

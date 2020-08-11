@@ -372,6 +372,20 @@ class Blockchain {
         return this.blockchain.takePayment(purchaseId);
     }
 
+    async complainAboutNode(
+        purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+        proofOfEncodedOutput, proofOfEncodedInputLeft,
+    ) {
+        return this.blockchain.complainAboutNode(
+            purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+            proofOfEncodedOutput, proofOfEncodedInputLeft,
+        );
+    }
+
+    async complainAboutRoot(purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex) {
+        return this.blockchain.complainAboutRoot();
+    }
+
     async sendCommitment(importId, dvWallet, commitment) {
         return this.blockchain.sendCommitment(importId, dvWallet, commitment);
     }

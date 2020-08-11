@@ -1,5 +1,7 @@
 const Command = require('../command');
 const Models = require('../../../models');
+const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 /**
  * Handles data location response.
@@ -7,8 +9,13 @@ const Models = require('../../../models');
 class DvPurchaseDisputeCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.web3 = ctx.web3;
+        this.blockchain = ctx.blockchain;
+        this.config = ctx.config;
+
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -18,8 +25,82 @@ class DvPurchaseDisputeCommand extends Command {
      */
     async execute(command, transaction) {
         // send dispute purchase to bc
+        const {
+            handler_id,
+            encoded_data,
+            key,
+            purchase_id,
+            permissioned_data_array_length,
+            permissioned_data_original_length,
+            error_type,
+        } = command.data;
 
         this.remoteControl.purchaseStatus('Purchase not confirmed', 'Sending dispute purchase to Blockchain.', true);
+
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+
+        await this._printBalances(blockchainIdentity);
+
+        if (error_type === constants.PURCHASE_ERROR_TYPE.node_error) {
+            const {
+                input_index_left,
+                output_index,
+            } = command.data;
+
+            const {
+                encodedInputLeft,
+                encodedOutput,
+                proofOfEncodedInputLeft,
+                proofOfEncodedOutput,
+            } = this.permissionedDataService.prepareNodeDisputeData(
+                encoded_data,
+                input_index_left,
+                output_index,
+            );
+
+            await this.blockchain.complainAboutNode(
+                Utilities.normalizeHex(purchase_id),
+                output_index,
+                input_index_left,
+                Utilities.normalizeHex(encodedOutput),
+                Utilities.normalizeHex(encodedInputLeft),
+                proofOfEncodedOutput,
+                proofOfEncodedInputLeft,
+            );
+        } else if (error_type === constants.PURCHASE_ERROR_TYPE.root_error) {
+            const {
+                rootHashIndex,
+                encodedRootHash,
+                proofOfEncodedRootHash,
+            } = this.permissionedDataService.prepareRootDisputeData(encoded_data);
+
+            await this.blockchain.complainAboutRoot(
+                Utilities.normalizeHex(purchase_id),
+                Utilities.normalizeHex(encodedRootHash),
+                proofOfEncodedRootHash,
+                rootHashIndex,
+            );
+        }
+
+        this.logger.info(`Completed purchase complaint for purchaseId ${purchase_id}`);
+        await this._printBalances(blockchainIdentity);
+    }
+
+    /**
+     * Print balances
+     * @param blockchainIdentity
+     * @return {Promise<void>}
+     * @private
+     */
+    async _printBalances(blockchainIdentity) {
+        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
+        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
+        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
+
+        const profile = await this.blockchain.getProfile(blockchainIdentity);
+        const profileBalance = profile.stake;
+        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
     /**
