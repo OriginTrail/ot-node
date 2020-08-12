@@ -139,9 +139,7 @@ class PermissionedDataService {
         await Promise.all(promises);
     }
 
-    encodePermissionedData(permissionedObject) {
-        const merkleTree = ImportUtilities
-            .calculatePermissionedDataMerkleTree(permissionedObject.properties.permissioned_data, 'purchase');
+    _encodePermissionedDataMerkleTree(merkleTree) {
         const rawKey = crypto.randomBytes(32);
         const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
         const encodedArray = [];
@@ -170,22 +168,30 @@ class PermissionedDataService {
         }
         const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'soliditySha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
+        return {
+            permissioned_data_array_length: merkleTree.levels[0].length,
+            key,
+            encoded_data: encodedArray,
+            permissioned_data_root_hash: Utilities.normalizeHex(merkleTree.getRoot()),
+            encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
+        };
+    }
+
+    encodePermissionedData(permissionedObject) {
+        const merkleTree = ImportUtilities
+            .calculatePermissionedDataMerkleTree(permissionedObject.properties.permissioned_data, 'purchase');
+
+        const result = this._encodePermissionedDataMerkleTree(merkleTree);
+
         const sorted_data = Utilities.sortedStringify(
             permissionedObject.properties.permissioned_data.data,
             true,
         );
 
         const data = Buffer.from(sorted_data);
-        return {
-            permissioned_data_original_length: data.length,
-            permissioned_data_array_length: merkleTree.levels[0].length,
-            key,
-            encoded_data: encodedArray,
-            permissioned_data_root_hash:
-                Utilities.normalizeHex(permissionedObject.properties
-                    .permissioned_data.permissioned_data_hash),
-            encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
-        };
+        result.permissioned_data_original_length = data.length;
+
+        return result;
     }
 
     /**
