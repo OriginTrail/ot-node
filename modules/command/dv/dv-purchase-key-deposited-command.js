@@ -48,7 +48,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
-                this.logger.important(`Purchase ${purchase_id} verified. Decoding data from given key`);
+                this.logger.important(`Purchase ${purchase_id} confirmed by seller. Decoding data from submitted key.`);
                 this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');
                 const { key } = JSON.parse(event.data);
 
@@ -75,9 +75,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                         command.data.output_index = validationResult.outputIndex;
                         command.data.error_type = constants.PURCHASE_ERROR_TYPE.node_error;
                         errorMessage = 'Detected error in permissioned data merkle tree.';
-                    }
-
-                    if (!rootIsValid) {
+                    } else if (!rootIsValid) {
                         command.data.error_type = constants.PURCHASE_ERROR_TYPE.root_error;
                         errorMessage = 'Detected error in permissioned data decoded root hash.';
                     }
