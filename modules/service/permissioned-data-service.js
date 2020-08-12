@@ -225,14 +225,18 @@ class PermissionedDataService {
                         outputIndex: decodedIndex,
                     };
                 }
-
-                if (leafIndex === level.length - 1 && level.length % 2 === 1) {
-                    decodedIndex += 1;
-                }
             }
 
-            if (levelIndex !== 1) {
-                previousLevelStart += calculatedMerkleTree.levels[levelIndex - 1].length;
+            if (level.length % 2 === 1) {
+                decodedIndex += 1;
+            }
+
+            if (levelIndex > 1) {
+                const previousLevel = calculatedMerkleTree.levels[levelIndex - 1];
+                previousLevelStart += previousLevel.length;
+                if (previousLevel.length % 2 === 1) {
+                    previousLevelStart += 1;
+                }
             }
         }
 
