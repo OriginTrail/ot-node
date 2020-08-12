@@ -9,10 +9,7 @@ const constants = require('../../constants');
 class DvPurchaseDisputeCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
-        this.config = ctx.config;
-
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.permissionedDataService = ctx.permissionedDataService;
@@ -37,9 +34,7 @@ class DvPurchaseDisputeCommand extends Command {
 
         this.remoteControl.purchaseStatus('Purchase not confirmed', 'Sending dispute purchase to Blockchain.', true);
 
-        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-
-        await this._printBalances(blockchainIdentity);
+        this.logger.important(`Initiating complaint for purchaseId ${purchase_id}`);
 
         if (error_type === constants.PURCHASE_ERROR_TYPE.node_error) {
             const {
@@ -82,25 +77,8 @@ class DvPurchaseDisputeCommand extends Command {
             );
         }
 
-        this.logger.info(`Completed purchase complaint for purchaseId ${purchase_id}`);
-        await this._printBalances(blockchainIdentity);
-    }
-
-    /**
-     * Print balances
-     * @param blockchainIdentity
-     * @return {Promise<void>}
-     * @private
-     */
-    async _printBalances(blockchainIdentity) {
-        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
-        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
-
-        const profile = await this.blockchain.getProfile(blockchainIdentity);
-        const profileBalance = profile.stake;
-        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
-        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
+        this.logger.important(`Completed purchase complaint for purchaseId ${purchase_id}`);
+        return Command.empty();
     }
 
     /**
