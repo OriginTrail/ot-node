@@ -14,6 +14,10 @@ const pjson = require('../../../package.json');
 const logger = require('../../../modules/logger');
 const awilix = require('awilix');
 const PermissionedDataService = require('../../../modules/service/permissioned-data-service');
+const MerkleTree = require('../../../modules/Merkle');
+const crypto = require('crypto');
+const abi = require('ethereumjs-abi');
+const Encryption = require('../../../modules/RSAEncryption');
 
 
 const samplePermissionedObject = {
@@ -153,7 +157,34 @@ describe('Permission data service test', () => {
         const decodedPermissionedData = permissionedDataService
             .decodePermissionedData(encoded_data, key);
 
-        decodedPermissionedData[Math.round(decodedPermissionedData.length / 2)] =
+        const decodedDataMerkleTree = ImportUtilities
+            .calculatePermissionedDataMerkleTree(samplePermissionedObject.properties.permissioned_data, 'purchase');
+        const randomLevel = 2 +
+            Math.floor(Math.random() * (decodedDataMerkleTree.levels.length - 2));
+        const randomLeaf =
+            Math.floor(Math.random() * decodedDataMerkleTree.levels[randomLevel].length);
+
+        let corruptedIndex = randomLeaf;
+        let inputIndex = randomLeaf * 2;
+        for (let levelIndex = 1; levelIndex < randomLevel; levelIndex += 1) {
+            const level = decodedDataMerkleTree.levels[levelIndex];
+            if (level.length % 2 === 1) {
+                corruptedIndex += level.length + 1;
+            } else {
+                corruptedIndex += level.length;
+            }
+
+            if (levelIndex > 1) {
+                const previousLevel = decodedDataMerkleTree.levels[levelIndex - 1];
+                if (previousLevel.length % 2 === 1) {
+                    inputIndex += previousLevel.length + 1;
+                } else {
+                    inputIndex += previousLevel.length;
+                }
+            }
+        }
+
+        decodedPermissionedData[corruptedIndex] =
             '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
         const validationResult = permissionedDataService.validatePermissionedDataTree(
@@ -162,6 +193,8 @@ describe('Permission data service test', () => {
         );
 
         assert(validationResult.error, 'Corrupted decoded data passed validation.');
+        assert.equal(validationResult.outputIndex, corruptedIndex, 'Reported output index is incorrect');
+        assert.equal(validationResult.inputIndexLeft, inputIndex, 'Reported input index is incorrect');
     });
 
     it('Should validate correct permissioned data decoded root hash', () => {
@@ -198,6 +231,111 @@ describe('Permission data service test', () => {
             .validatePermissionedDataRoot(decodedPermissionedData, permissionedDataRootHash);
 
         assert(!rootHashMatches, 'Correct permissioned data root hash failed validation.');
+    });
+
+    it('Should generate a valid proof for incorrect data', () => {
+        const blocks = [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'F',
+        ];
+
+        for (let i = 0; i < blocks.length; i += 1) {
+            blocks[i] = Buffer.from(blocks[i]).toString('hex').padStart(64, '0');
+        }
+
+        const originalMerkleTree = new MerkleTree(blocks, 'purchase', 'soliditySha3');
+
+        const {
+            key,
+            encoded_data,
+            permissioned_data_root_hash,
+            encoded_data_root_hash,
+        } = permissionedDataService._encodePermissionedDataMerkleTree(originalMerkleTree);
+
+        encoded_data[11] = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+        // 0 A \
+        // 1 B - AB \
+        // 2 C \     >- ABCD
+        // 3 D - CD /        \
+        // 4 E \              > - ABCDEFEF
+        // 5 F - EF >- EFEF /
+        // 6 AB
+        // 7 CD
+        // 8 EF
+        // 9 (EF)
+        // 10 ABCD
+        // 11 EFEF
+        // 12 ABCDEF
+
+        const encodedMerkleTree = new MerkleTree(encoded_data, 'purchase', 'soliditySha3');
+
+        const permissioned_data_array_length = 6;
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+
+        const validationResult = permissionedDataService.validatePermissionedDataTree(
+            decodedPermissionedData,
+            permissioned_data_array_length,
+        );
+
+        assert(validationResult.error, 'Corrupted decoded data passed validation.');
+        assert.equal(validationResult.inputIndexLeft, 8);
+        assert.equal(validationResult.outputIndex, 11);
+
+        const {
+            encodedInputLeft,
+            encodedOutput,
+            proofOfEncodedInputLeft,
+            proofOfEncodedOutput,
+        } = permissionedDataService.prepareNodeDisputeData(
+            encoded_data,
+            validationResult.inputIndexLeft,
+            validationResult.outputIndex,
+        );
+
+        const outputProofResult = encodedMerkleTree.calculateProofResult(
+            proofOfEncodedOutput,
+            encodedOutput,
+            validationResult.outputIndex,
+        );
+        assert.equal(
+            Utilities.normalizeHex(outputProofResult),
+            Utilities.normalizeHex(encodedMerkleTree.getRoot()),
+            'Invalid Merkle proof for output element.',
+        );
+
+        const inputProofResult = encodedMerkleTree.calculateProofResult(
+            proofOfEncodedInputLeft,
+            encodedInputLeft,
+            validationResult.inputIndexLeft,
+        );
+        assert.equal(
+            Utilities.normalizeHex(inputProofResult),
+            Utilities.normalizeHex(encodedMerkleTree.getRoot()),
+            'Invalid Merkle proof for input element.',
+        );
+
+        const keyHash = abi.soliditySHA3(['bytes32', 'uint256'], [key, 8]);
+        const calculatedInput = Encryption.xor(encodedInputLeft, keyHash);
+        const decodedInput = decodedPermissionedData[validationResult.inputIndexLeft + 1];
+
+        assert.equal(calculatedInput, decodedInput, 'Decoded and manually decoded hashes do not match.');
+        assert.equal(decodedInput, originalMerkleTree.levels[2][2], 'Decoded and originally submitted hashes do not match.');
+
+        const expectedHash =
+            originalMerkleTree._generateInternalHash(calculatedInput, decodedInput);
+
+        assert.equal(expectedHash, originalMerkleTree.levels[3][1], 'Calculated and originally submitted output hashes do not match');
+
+        const actualHash = decodedPermissionedData[validationResult.outputIndex];
+        assert.notEqual(actualHash, originalMerkleTree.levels[3][1], 'Original and corrupted output hashes match');
     });
 
     it('Calculate the root hash on one permissioned data object', () => {
