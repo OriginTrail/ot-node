@@ -55,7 +55,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         // Verify data integrity
         // Recreate merkle tree
-        const encodedMerkleTree = new MerkleTree(encoded_data, 'purchase', 'sha3');
+        const encodedMerkleTree = new MerkleTree(encoded_data, 'purchase', 'soliditySha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
 
         if (encoded_data_root_hash !== encodedDataRootHash) {
@@ -63,6 +63,7 @@ class DvPurchaseInitiateCommand extends Command {
             return Command.empty();
         }
 
+        this.logger.info('Purchase response verified. Initiating purchase on the blockchain...');
 
         const dataTrade = await Models.data_trades.findOne({
             where: {
@@ -74,12 +75,10 @@ class DvPurchaseInitiateCommand extends Command {
         });
         const result = await this.blockchain.initiatePurchase(
             dataTrade.seller_erc_id, dataTrade.buyer_erc_id,
-            dataTrade.price,
-            permissioned_data_root_hash, encoded_data_root_hash,
+            dataTrade.price, permissioned_data_root_hash, encoded_data_root_hash,
         );
 
-        const { purchaseId } = this.blockchain
-            .decodePurchaseInitiatedEventFromTransaction(result);
+        const { purchaseId } = this.blockchain.decodePurchaseInitiatedEventFromTransaction(result);
         this.logger.important(`Purchase ${purchaseId} initiated. Waiting for key from seller...`);
 
         if (!purchaseId) {
@@ -103,7 +102,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         await this.commandExecutor.add({
             name: 'dvPurchaseKeyDepositedCommand',
-            delay: 2 * 60 * 1000, // todo check why isn't it reading the default value
+            delay: 2 * 60 * 1000,
             retries: 3,
             data: commandData,
         });
@@ -137,6 +136,7 @@ class DvPurchaseInitiateCommand extends Command {
     }
 
     async _handleError(handler_id, errorMessage) {
+        this.logger.error(`Failed to initiate purchase: ${errorMessage}`);
         const handlerData = await this._getHandlerData(handler_id);
 
         await Models.data_trades.update({
