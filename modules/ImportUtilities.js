@@ -238,7 +238,7 @@ class ImportUtilities {
             blocks.push(block.padStart(64, '0'));
         }
 
-        const merkleTree = new MerkleTree(blocks, 'purchase', 'sha3');
+        const merkleTree = new MerkleTree(blocks, 'purchase', 'soliditySha3');
         return merkleTree;
     }
 
