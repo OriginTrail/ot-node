@@ -146,37 +146,29 @@ class PermissionedDataService {
         const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
         const encodedArray = [];
 
-        const randomLevel = Math.floor(Math.random() * merkleTree.levels.length);
-        const randomLeaf = Math.floor(Math.random() * merkleTree.levels[randomLevel].length);
         let index = 0;
-        let levelIndex = 0;
-        merkleTree.levels.forEach((level) => {
-            for (let i = 0; i < level.length; i += 1) {
-                const leaf = level[i];
-                const keyHash = abi.soliditySHA3(
+        for (let levelIndex = 1; levelIndex < merkleTree.levels.length; levelIndex += 1) {
+            const level = merkleTree.levels[levelIndex];
+            for (let leafIndex = 0; leafIndex < level.length; leafIndex += 1, index += 1) {
+                const leaf = level[leafIndex];
+                let keyHash = abi.soliditySHA3(
                     ['bytes32', 'uint256'],
                     [key, index],
                 ).toString('hex');
-                if (i === randomLeaf && levelIndex === randomLevel) {
-                    const inputLeft = merkleTree.levels[levelIndex - 1][randomLeaf * 2];
-                    const inputRight = merkleTree.levels[levelIndex - 1][(randomLeaf * 2) + 1];
-                    const output = leaf;
-                    const actualOutput = Encryption.xor(leaf, keyHash);
-                    this.logger.notify(`Expected: ${inputLeft} ===+=== ${inputRight}`);
-                    this.logger.notify(`Expected: ====== ${output}`);
-                    this.logger.notify(`Actual: ====== ${output}`);
-                    this.logger.notify(`OutputIndex: ${index}`);
-                    this.logger.notify(`CurrentLevel Length: ${merkleTree.levels[levelIndex].length}`);
-                    this.logger.notify(`CurrentLevel Length: ${merkleTree.levels[levelIndex + 1].length}`);
-                    encodedArray.push(leaf);
-                } else {
+
+                encodedArray.push(Encryption.xor(leaf, keyHash));
+
+                if (leafIndex === level.length - 1 && level.length % 2 === 1) {
+                    index += 1;
+                    keyHash = abi.soliditySHA3(
+                        ['bytes32', 'uint256'],
+                        [key, index],
+                    ).toString('hex');
                     encodedArray.push(Encryption.xor(leaf, keyHash));
                 }
-                index += 1;
             }
-            levelIndex += 1;
-        });
-        const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
+        }
+        const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'soliditySha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
         const sorted_data = Utilities.sortedStringify(
             permissionedObject.properties.permissioned_data.data,
@@ -217,24 +209,30 @@ class PermissionedDataService {
 
     validatePermissionedDataTree(decodedMerkleTreeArray, firstLevelLength) {
         const baseLevel = decodedMerkleTreeArray.slice(0, firstLevelLength);
-        const calculatedMerkleTree = new MerkleTree(baseLevel, 'purchase', 'sha3');
+        const calculatedMerkleTree = new MerkleTree(baseLevel, 'purchase', 'soliditySha3');
 
-        let decodedIndex = firstLevelLength;
+        let decodedIndex = 0;
         let previousLevelStart = 0;
 
-        for (const [levelIndex, level] of calculatedMerkleTree.levels.entries()) {
-            if (levelIndex !== 0) {
-                for (const [elementIndex, element] of level.entries()) {
-                    if (element !== decodedMerkleTreeArray[decodedIndex]) {
-                        return {
-                            error: true,
-                            inputIndexLeft: (elementIndex * 2) + previousLevelStart,
-                            outputIndex: decodedIndex,
-                        };
-                    }
+        for (let levelIndex = 1; levelIndex < calculatedMerkleTree.levels.length; levelIndex += 1) {
+            const level = calculatedMerkleTree.levels[levelIndex];
+
+            for (let leafIndex = 0; leafIndex < level.length; leafIndex += 1, decodedIndex += 1) {
+                if (level[leafIndex] !== decodedMerkleTreeArray[decodedIndex]) {
+                    return {
+                        error: true,
+                        inputIndexLeft: (leafIndex * 2) + previousLevelStart,
+                        outputIndex: decodedIndex,
+                    };
+                }
+
+                if (leafIndex === level.length - 1 && level.length % 2 === 1) {
                     decodedIndex += 1;
                 }
-                previousLevelStart += level.length;
+            }
+
+            if (levelIndex !== 1) {
+                previousLevelStart += calculatedMerkleTree.levels[levelIndex - 1].length;
             }
         }
 
@@ -271,7 +269,7 @@ class PermissionedDataService {
     }
 
     prepareNodeDisputeData(encodedData, inputIndexLeft, outputIndex) {
-        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'sha3');
+        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'soliditySha3');
 
         const encodedInputLeft = encodedData[inputIndexLeft];
         const encodedOutput = encodedData[outputIndex];
@@ -288,7 +286,7 @@ class PermissionedDataService {
     }
 
     prepareRootDisputeData(encodedData) {
-        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'sha3');
+        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'soliditySha3');
 
         const rootHashIndex = encodedMerkleTree.levels[0].length - 1;
         const encodedRootHash = encodedData[rootHashIndex];
