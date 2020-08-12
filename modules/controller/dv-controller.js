@@ -247,6 +247,7 @@ class DVController {
     }
 
     async sendNetworkPurchase(request, response) {
+        this.logger.api('POST: Permissioned data purchase request.');
         if (request.body == null
             || request.body.data_set_id == null
             || request.body.seller_node_id == null
