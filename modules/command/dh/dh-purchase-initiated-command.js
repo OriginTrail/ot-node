@@ -72,6 +72,8 @@ class DhPurchaseInitiatedCommand extends Command {
                     purchase_id: purchaseId,
                 };
 
+                this.logger.info(`Key deposited for purchaseID ${purchaseId}.`
+                    + ' Waiting for complaint window to expire before taking payment.');
                 await this.commandExecutor.add({
                     name: 'dhPurchaseTakePaymentCommand',
                     data: commandData,
