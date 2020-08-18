@@ -338,8 +338,16 @@ class Blockchain {
         return this.blockchain.getPurchase(purchaseId);
     }
 
+    async getPurchaseStatus(purchaseId) {
+        return this.blockchain.getPurchaseStatus(purchaseId);
+    }
+
     async getPurchasedData(importId, wallet) {
         return this.blockchain.getPurchasedData(importId, wallet);
+    }
+
+    async getPaymentStageInterval() {
+        return this.blockchain.getPaymentStageInterval();
     }
 
     async initiatePurchase(
@@ -625,6 +633,10 @@ class Blockchain {
      */
     async keyHasPurpose(identity, key, purpose) {
         return this.blockchain.keyHasPurpose(identity, key, purpose);
+    }
+
+    numberOfEventsEmmitted(receipt) {
+        return this.blockchain.numberOfEventsEmmitted(receipt);
     }
 }
 

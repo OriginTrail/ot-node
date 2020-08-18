@@ -966,10 +966,21 @@ class Ethereum {
         return this.marketplaceStorageContract.methods.purchase(purchaseId).call();
     }
 
+    async getPurchaseStatus(purchaseId) {
+        this.logger.trace(`Asking for purchase with id [${purchaseId}].`);
+        return this.marketplaceStorageContract.methods.getStage(purchaseId).call();
+    }
+
     async getPurchasedData(importId, wallet) {
         this.logger.trace(`Asking purchased data for import ${importId} and wallet ${wallet}.`);
         return this.readingContract.methods.purchased_data(importId, wallet).call();
     }
+
+    async getPaymentStageInterval() {
+        this.logger.trace('Reading payment stage interval from blockchain.');
+        return this.marketplaceContract.methods.paymentStageInterval().call();
+    }
+
 
     async initiatePurchase(
         sellerIdentity, buyerIdentity,
@@ -1581,6 +1592,13 @@ class Ethereum {
         } else {
             return gasPrice;
         }
+    }
+
+    numberOfEventsEmmitted(receipt) {
+        if (!receipt || !receipt.logs || !Array.isArray(receipt.logs)) {
+            return undefined;
+        }
+        return receipt.logs.length;
     }
 }
 
