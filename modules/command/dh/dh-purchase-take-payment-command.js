@@ -60,7 +60,7 @@ class DhPurchaseTakePaymentCommand extends Command {
 
             await this._handleError(
                 purchase_id,
-                'Couldn\'t execute takePayment command. Error: Data mismatch proven in dispute',
+                `Couldn't execute takePayment command for purchase with purchaseId ${purchase_id}. Error: Data mismatch proven in dispute`,
             );
         }
 
