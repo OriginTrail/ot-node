@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const Encryption = require('../RSAEncryption');
 const abi = require('ethereumjs-abi');
 const ImportUtilities = require('../ImportUtilities');
-const kadence = require('@deadcanaries/kadence');
 
 class PermissionedDataService {
     constructor(ctx) {
@@ -141,7 +140,7 @@ class PermissionedDataService {
 
     _encodePermissionedDataMerkleTree(merkleTree) {
         const rawKey = crypto.randomBytes(32);
-        const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
+        const key = Utilities.normalizeHex(rawKey.toString('hex'));
         const encodedArray = [];
 
         let index = 0;
