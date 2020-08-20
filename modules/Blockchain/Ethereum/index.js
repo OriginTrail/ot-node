@@ -1594,6 +1594,11 @@ class Ethereum {
         }
     }
 
+    /**
+     * Check how many events were emitted in a transaction from the transaction receipt
+     * @param receipt - the json object returned as a result of the transaction
+     * @return {Number | undefined} - Returns undefined if the receipt does not have a logs field
+     */
     numberOfEventsEmmitted(receipt) {
         if (!receipt || !receipt.logs || !Array.isArray(receipt.logs)) {
             return undefined;
