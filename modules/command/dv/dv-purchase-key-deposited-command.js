@@ -73,10 +73,10 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     if (validationResult.error) {
                         command.data.input_index_left = validationResult.inputIndexLeft;
                         command.data.output_index = validationResult.outputIndex;
-                        command.data.error_type = constants.PURCHASE_ERROR_TYPE.node_error;
+                        command.data.error_type = constants.PURCHASE_ERROR_TYPE.NODE_ERROR;
                         errorMessage = 'Detected error in permissioned data merkle tree.';
                     } else if (!rootIsValid) {
-                        command.data.error_type = constants.PURCHASE_ERROR_TYPE.root_error;
+                        command.data.error_type = constants.PURCHASE_ERROR_TYPE.ROOT_ERROR;
                         errorMessage = 'Detected error in permissioned data decoded root hash.';
                     }
 

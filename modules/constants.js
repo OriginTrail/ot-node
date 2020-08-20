@@ -106,8 +106,8 @@ exports.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS = 256;
  *  Types of errors supported for permissioned data purchase
  */
 exports.PURCHASE_ERROR_TYPE = {
-    node_error: 'node_error',
-    root_error: 'root_error',
+    NODE_ERROR: 'node_error',
+    ROOT_ERROR: 'root_error',
 };
 /**
  *

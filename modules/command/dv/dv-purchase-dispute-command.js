@@ -46,7 +46,7 @@ class DvPurchaseDisputeCommand extends Command {
             this.logger.important(`Initiating complaint for purchaseId ${purchase_id}`);
 
             let result;
-            if (error_type === constants.PURCHASE_ERROR_TYPE.node_error) {
+            if (error_type === constants.PURCHASE_ERROR_TYPE.NODE_ERROR) {
                 const {
                     input_index_left,
                     output_index,
@@ -72,7 +72,7 @@ class DvPurchaseDisputeCommand extends Command {
                     proofOfEncodedOutput,
                     proofOfEncodedInputLeft,
                 );
-            } else if (error_type === constants.PURCHASE_ERROR_TYPE.root_error) {
+            } else if (error_type === constants.PURCHASE_ERROR_TYPE.ROOT_ERROR) {
                 const {
                     rootHashIndex,
                     encodedRootHash,
