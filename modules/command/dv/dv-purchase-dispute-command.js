@@ -87,7 +87,7 @@ class DvPurchaseDisputeCommand extends Command {
                 );
             }
 
-            if (this.blockchain.numberOfEventsEmmitted(result) >= 1) {
+            if (this.blockchain.numberOfEventsEmitted(result) >= 1) {
                 this.logger.important(`Purchase complaint for purchaseId ${purchase_id} approved. Refund received.`);
             } else {
                 throw new Error(`Purchase complaint for purchaseId ${purchase_id} rejected.`);

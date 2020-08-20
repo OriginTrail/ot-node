@@ -640,8 +640,8 @@ class Blockchain {
      * @param receipt - the json object returned as a result of the transaction
      * @return {Number | undefined} - Returns undefined if the receipt does not have a logs field
      */
-    numberOfEventsEmmitted(receipt) {
-        return this.blockchain.numberOfEventsEmmitted(receipt);
+    numberOfEventsEmitted(receipt) {
+        return this.blockchain.numberOfEventsEmitted(receipt);
     }
 }
 
