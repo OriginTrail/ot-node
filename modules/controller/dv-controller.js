@@ -344,22 +344,27 @@ class DVController {
             data.forEach((obj) => {
                 if (not_owned_objects[obj.data_set_id]) {
                     if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
-                            .push(obj.ot_json_object_id);
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
+                            .ot_json_object_id.push(obj.ot_json_object_id);
                     } else {
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
-                            = [obj.ot_json_object_id];
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
-                            = obj.seller_erc_id;
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
+
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
+                            .ot_json_object_id = [obj.ot_json_object_id];
+                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
+                            .seller_erc_id = obj.seller_erc_id;
                     }
                 } else {
                     allDatasets.push(obj.data_set_id);
+
                     not_owned_objects[obj.data_set_id] = {};
+
                     not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id].ot_json_object_id
-                        = [obj.ot_json_object_id];
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id].seller_erc_id
-                        = obj.seller_erc_id;
+
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id]
+                        .ot_json_object_id = [obj.ot_json_object_id];
+                    not_owned_objects[obj.data_set_id][obj.seller_node_id]
+                        .seller_erc_id = obj.seller_erc_id;
                 }
             });
 
@@ -779,6 +784,30 @@ class DVController {
             res.send({
                 message: err,
             });
+        });
+    }
+
+    /**
+     * Handle new purchase on the blockchain and add the node that bought data as a new
+     * data seller
+     * @param purchase_id
+     * @param seller_erc_id
+     * @param seller_node_id
+     * @param data_set_id
+     * @param ot_object_id
+     * @param price
+     * @returns {Promise<void>}
+     */
+    async handleNewDataSeller(
+        purchase_id, seller_erc_id, seller_node_id,
+        data_set_id, ot_object_id, price,
+    ) {
+        await Models.data_sellers.create({
+            data_set_id,
+            ot_json_object_id: ot_object_id,
+            seller_node_id,
+            seller_erc_id,
+            price,
         });
     }
 }

@@ -469,6 +469,35 @@ class EventEmitter {
             }
         });
 
+        this._on('kad-purchase-complete', async (request) => {
+            const { message, messageSignature } = request;
+
+            logger.info(`Purchase confirmation from DV ${message.seller_node_id} received`);
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
+                return;
+            }
+
+            try {
+                const {
+                    purchase_id,
+                    data_set_id,
+                    ot_object_id,
+                    seller_node_id,
+                    seller_erc_id,
+                    price,
+                } = message;
+                await dvController.handleNewDataSeller(
+                    purchase_id, seller_erc_id, seller_node_id,
+                    data_set_id, ot_object_id, price,
+                );
+            } catch (error) {
+                const errorMessage = `Failed to process purchase completion message. ${error}.`;
+                logger.warn(errorMessage);
+            }
+        });
+
         // sync
         this._on('kad-replication-request', async (request, response) => {
             const kadReplicationRequest = transport.extractMessage(request);
