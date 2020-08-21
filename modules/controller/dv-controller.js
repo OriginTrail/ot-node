@@ -381,6 +381,8 @@ class DVController {
                     datasetTags: datasetHeader.datasetTags,
                     datasetDescription: datasetHeader.datasetDescription,
                     timestamp: dataInfo.import_timestamp,
+                    creator_identity: ImportUtilities.getDataCreator(datasetHeader),
+                    creator_wallet: dataInfo.data_provider_wallet,
                 };
             });
 
@@ -396,6 +398,9 @@ class DVController {
                                 name: not_owned_objects[dataset].metadata.datasetTitle,
                                 description: not_owned_objects[dataset].metadata.datasetDescription,
                                 tags: not_owned_objects[dataset].metadata.datasetTags,
+                                creator_wallet: not_owned_objects[dataset].metadata.creator_wallet,
+                                creator_identity:
+                                    not_owned_objects[dataset].metadata.creator_identity,
                             },
                             ot_objects: not_owned_objects[dataset][data_seller].ot_json_object_id,
                             seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,
@@ -445,6 +450,7 @@ class DVController {
     }
 
     async sendNetworkPurchase(request, response) {
+        this.logger.api('POST: Permissioned data purchase request.');
         if (request.body == null
             || request.body.data_set_id == null
             || request.body.seller_node_id == null

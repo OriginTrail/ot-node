@@ -206,9 +206,9 @@ class ImportUtilities {
      * @param permissioned_object
      * @returns {null}
      */
-    static calculatePermissionedDataHash(permissioned_object, type = 'distribution') {
+    static calculatePermissionedDataHash(permissioned_object) {
         const merkleTree = ImportUtilities
-            .calculatePermissionedDataMerkleTree(permissioned_object, type);
+            .calculatePermissionedDataMerkleTree(permissioned_object);
         return merkleTree.getRoot();
     }
 
@@ -219,7 +219,7 @@ class ImportUtilities {
      * @param permissioned_object
      * @returns {null}
      */
-    static calculatePermissionedDataMerkleTree(permissioned_object, type = 'distribution') {
+    static calculatePermissionedDataMerkleTree(permissioned_object) {
         if (!permissioned_object || !permissioned_object.data) {
             throw Error('Cannot calculate root hash of an empty object');
         }
@@ -237,7 +237,8 @@ class ImportUtilities {
             const block = data.slice(i, i + block_size).toString('hex');
             blocks.push(block.padStart(64, '0'));
         }
-        const merkleTree = new MerkleTree(blocks, type, 'sha3');
+
+        const merkleTree = new MerkleTree(blocks, 'purchase', 'soliditySha3');
         return merkleTree;
     }
 

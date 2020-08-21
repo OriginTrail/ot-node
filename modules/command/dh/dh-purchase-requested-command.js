@@ -92,7 +92,7 @@ class DhPurchaseRequestedCommand extends Command {
                 };
                 await this.commandExecutor.add({
                     name: 'dhPurchaseInitiatedCommand',
-                    delay: 1 * 60 * 1000, // todo check why is this necessary
+                    delay: 60 * 1000,
                     retries: 3,
                     data: commandData,
                 });
@@ -112,9 +112,13 @@ class DhPurchaseRequestedCommand extends Command {
             }
         }
 
-        this.logger.info(`Purchase confirmed for ot_object ${ot_json_object_id} received from ${dv_node_id}. Sending purchase response.`);
+        if (response.status === 'FAILED') {
+            this.logger.warn(`Failed to confirm purchase request. ${response.message}`);
+        } else {
+            this.logger.info(`Purchase confirmed for ot_object ${ot_json_object_id} received from ${dv_node_id}. Sending purchase response.`);
+        }
         await this._sendResponseToDv(response, dv_node_id);
-
+        this.logger.info(`Purchase request response sent to ${dv_node_id}.`);
         return Command.empty();
     }
 

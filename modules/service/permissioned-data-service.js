@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const Encryption = require('../RSAEncryption');
 const abi = require('ethereumjs-abi');
 const ImportUtilities = require('../ImportUtilities');
-const kadence = require('@deadcanaries/kadence');
 
 class PermissionedDataService {
     constructor(ctx) {
@@ -139,48 +138,68 @@ class PermissionedDataService {
         await Promise.all(promises);
     }
 
-    encodePermissionedData(permissionedObject) {
-        const merkleTree = ImportUtilities
-            .calculatePermissionedDataMerkleTree(permissionedObject.properties.permissioned_data, 'purchase');
+    _encodePermissionedDataMerkleTree(merkleTree) {
         const rawKey = crypto.randomBytes(32);
-        const key = Utilities.normalizeHex(Buffer.from(`${rawKey}`, 'utf8').toString('hex').padStart(64, '0'));
+        const key = Utilities.normalizeHex(rawKey.toString('hex'));
         const encodedArray = [];
+
         let index = 0;
-        merkleTree.levels.forEach((level) => {
-            for (let i = 0; i < level.length; i += 1) {
-                const leaf = level[i];
-                const keyHash = abi.soliditySHA3(
+        for (let levelIndex = 1; levelIndex < merkleTree.levels.length; levelIndex += 1) {
+            const level = merkleTree.levels[levelIndex];
+            for (let leafIndex = 0; leafIndex < level.length; leafIndex += 1, index += 1) {
+                const leaf = level[leafIndex];
+                let keyHash = abi.soliditySHA3(
                     ['bytes32', 'uint256'],
                     [key, index],
                 ).toString('hex');
+
                 encodedArray.push(Encryption.xor(leaf, keyHash));
-                index += 1;
+
+                if (leafIndex === level.length - 1 && level.length % 2 === 1) {
+                    index += 1;
+                    keyHash = abi.soliditySHA3(
+                        ['bytes32', 'uint256'],
+                        [key, index],
+                    ).toString('hex');
+                    encodedArray.push(Encryption.xor(leaf, keyHash));
+                }
             }
-        });
-        const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'sha3');
+        }
+        const encodedMerkleTree = new MerkleTree(encodedArray, 'purchase', 'soliditySha3');
         const encodedDataRootHash = encodedMerkleTree.getRoot();
-        const sorted_data = Utilities.sortedStringify(
-            permissionedObject.properties.permissioned_data.data,
-            true,
-        );
-        const data = Buffer.from(sorted_data);
         return {
-            permissioned_data_original_length: data.length,
             permissioned_data_array_length: merkleTree.levels[0].length,
             key,
             encoded_data: encodedArray,
-            permissioned_data_root_hash:
-                Utilities.normalizeHex(permissionedObject.properties
-                    .permissioned_data.permissioned_data_hash),
+            permissioned_data_root_hash: Utilities.normalizeHex(merkleTree.getRoot()),
             encoded_data_root_hash: Utilities.normalizeHex(encodedDataRootHash),
         };
     }
 
-    validateAndDecodePermissionedData(
-        permissionedDataArray, key,
-        permissionedDataArrayLength,
-        permissionedDataOriginalLength,
-    ) {
+    encodePermissionedData(permissionedObject) {
+        const merkleTree = ImportUtilities
+            .calculatePermissionedDataMerkleTree(permissionedObject.properties.permissioned_data, 'purchase');
+
+        const result = this._encodePermissionedDataMerkleTree(merkleTree);
+
+        const sorted_data = Utilities.sortedStringify(
+            permissionedObject.properties.permissioned_data.data,
+            true,
+        );
+
+        const data = Buffer.from(sorted_data);
+        result.permissioned_data_original_length = data.length;
+
+        return result;
+    }
+
+    /**
+     * Decodes the array of data with the given key
+     * @param permissionedDataArray - Array of elements encoded
+     * @param key - String key in hex form
+     * @returns {[]} - Decoded data
+     */
+    decodePermissionedData(permissionedDataArray, key) {
         const decodedDataArray = [];
         permissionedDataArray.forEach((element, index) => {
             const keyHash = abi.soliditySHA3(
@@ -190,25 +209,56 @@ class PermissionedDataService {
             decodedDataArray.push(Encryption.xor(element, keyHash));
         });
 
-        const originalDataArray = decodedDataArray.slice(0, permissionedDataArrayLength);
+        return decodedDataArray;
+    }
 
-        // todo add validation
-        // const originalDataMarkleTree = new MerkleTree(originalDataArray, 'purchase', 'sha3');
-        // var index = 0;
-        // originalDataMarkleTree.levels.forEach((level) => {
-        //     level.forEach((leaf) => {
-        //         if (leaf !== decodedDataArray[index]){
-        //             //found non matching index
-        //             return {
-        //                 : {},
-        //                 errorStatus: 'VALIDATION_FAILED',
-        //             };
-        //         }
-        //         index += 1;
-        //     });
-        // });
+    validatePermissionedDataTree(decodedMerkleTreeArray, firstLevelLength) {
+        const baseLevel = decodedMerkleTreeArray.slice(0, firstLevelLength);
+        const calculatedMerkleTree = new MerkleTree(baseLevel, 'purchase', 'soliditySha3');
 
-        // recreate original object
+        let decodedIndex = 0;
+        let previousLevelStart = 0;
+
+        for (let levelIndex = 1; levelIndex < calculatedMerkleTree.levels.length; levelIndex += 1) {
+            const level = calculatedMerkleTree.levels[levelIndex];
+
+            for (let leafIndex = 0; leafIndex < level.length; leafIndex += 1, decodedIndex += 1) {
+                if (level[leafIndex] !== decodedMerkleTreeArray[decodedIndex]) {
+                    return {
+                        error: true,
+                        inputIndexLeft: (leafIndex * 2) + previousLevelStart,
+                        outputIndex: decodedIndex,
+                    };
+                }
+            }
+
+            if (level.length % 2 === 1) {
+                decodedIndex += 1;
+            }
+
+            if (levelIndex > 1) {
+                const previousLevel = calculatedMerkleTree.levels[levelIndex - 1];
+                previousLevelStart += previousLevel.length;
+                if (previousLevel.length % 2 === 1) {
+                    previousLevelStart += 1;
+                }
+            }
+        }
+
+        return {};
+    }
+
+    validatePermissionedDataRoot(decodedMerkleTreeArray, permissionedDataRootHash) {
+        return Utilities.normalizeHex(permissionedDataRootHash) ===
+            Utilities.normalizeHex(decodedMerkleTreeArray[decodedMerkleTreeArray.length - 1]);
+    }
+
+    reconstructPermissionedData(
+        decodedMerkleTreeArray,
+        firstLevelLength,
+        permissionedDataOriginalLength,
+    ) {
+        const originalDataArray = decodedMerkleTreeArray.slice(0, firstLevelLength);
 
         const first_level_blocks = constants.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS;
         const default_block_size = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES;
@@ -224,8 +274,38 @@ class PermissionedDataService {
             originalDataString += block.toString();
         }
 
+        return JSON.parse(originalDataString);
+    }
+
+    prepareNodeDisputeData(encodedData, inputIndexLeft, outputIndex) {
+        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'soliditySha3');
+
+        const encodedInputLeft = encodedData[inputIndexLeft];
+        const encodedOutput = encodedData[outputIndex];
+
+        const proofOfEncodedInputLeft = encodedMerkleTree.createProof(inputIndexLeft);
+        const proofOfEncodedOutput = encodedMerkleTree.createProof(outputIndex);
+
         return {
-            permissionedData: JSON.parse(originalDataString),
+            encodedInputLeft,
+            encodedOutput,
+            proofOfEncodedInputLeft,
+            proofOfEncodedOutput,
+        };
+    }
+
+    prepareRootDisputeData(encodedData) {
+        const encodedMerkleTree = new MerkleTree(encodedData, 'purchase', 'soliditySha3');
+
+        const rootHashIndex = encodedMerkleTree.levels[0].length - 1;
+        const encodedRootHash = encodedData[rootHashIndex];
+
+        const proofOfEncodedRootHash = encodedMerkleTree.createProof(rootHashIndex);
+
+        return {
+            rootHashIndex,
+            encodedRootHash,
+            proofOfEncodedRootHash,
         };
     }
 

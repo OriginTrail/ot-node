@@ -58,7 +58,10 @@ class DhPurchaseTakePaymentCommand extends Command {
             dataTrade.status = 'DISPUTED';
             await dataTrade.save({ fields: ['status'] });
 
-            this.logger.warn(`Couldn't take payment for purchase ${purchase_id}`);
+            await this._handleError(
+                purchase_id,
+                `Couldn't execute takePayment command for purchase with purchaseId ${purchase_id}. Error: Data mismatch proven in dispute`,
+            );
         }
 
         return Command.empty();

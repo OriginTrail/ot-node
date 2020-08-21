@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Models = require('../../../models');
 const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 /**
  * Handles data location response.
@@ -28,6 +29,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
             purchase_id,
             permissioned_data_array_length,
             permissioned_data_original_length,
+            permissioned_data_root_hash,
         } = command.data;
 
         const events = await Models.events.findAll({
@@ -46,39 +48,64 @@ class DvPurchaseKeyDepositedCommand extends Command {
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
-                this.logger.important(`Purchase ${purchase_id} verified. Decoding data from given key`);
+                this.logger.important(`Purchase ${purchase_id} confirmed by seller. Decoding data from submitted key.`);
                 this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');
                 const { key } = JSON.parse(event.data);
-                const decodedPermissionedData = this.permissionedDataService
-                    .validateAndDecodePermissionedData(
-                        encoded_data, key, permissioned_data_array_length,
-                        permissioned_data_original_length,
-                    );
-                if (decodedPermissionedData.errorStatus) {
+
+                const decoded_data = this.permissionedDataService.decodePermissionedData(
+                    encoded_data,
+                    key,
+                );
+
+                const validationResult = this.permissionedDataService.validatePermissionedDataTree(
+                    decoded_data,
+                    permissioned_data_array_length,
+                );
+
+                const rootIsValid = this.permissionedDataService.validatePermissionedDataRoot(
+                    decoded_data,
+                    permissioned_data_root_hash,
+                );
+
+                if (validationResult.error || !rootIsValid) {
+                    let errorMessage;
+
+                    if (validationResult.error) {
+                        command.data.input_index_left = validationResult.inputIndexLeft;
+                        command.data.output_index = validationResult.outputIndex;
+                        command.data.error_type = constants.PURCHASE_ERROR_TYPE.NODE_ERROR;
+                        errorMessage = 'Detected error in permissioned data merkle tree.';
+                    } else if (!rootIsValid) {
+                        command.data.error_type = constants.PURCHASE_ERROR_TYPE.ROOT_ERROR;
+                        errorMessage = 'Detected error in permissioned data decoded root hash.';
+                    }
+
                     await this._handleError(
                         handler_id,
                         purchase_id,
-                        'Couldn\'t verify data with given key.',
+                        errorMessage,
                     );
 
-                    const commandData = {
-                        encoded_data,
-                    };
+                    command.data.key = key;
                     await this.commandExecutor.add({
                         name: 'dvPurchaseDisputeCommand',
-                        data: commandData,
+                        data: command.data,
                     });
                     return Command.empty();
                 }
+
+                const reconstructedPermissionedData = this.permissionedDataService
+                    .reconstructPermissionedData(
+                        decoded_data,
+                        permissioned_data_array_length,
+                        permissioned_data_original_length,
+                    );
 
                 const handler = await Models.handler_ids.findOne({
                     where: {
                         handler_id,
                     },
                 });
-
-                handler.status = 'COMPLETED';
-                await handler.save({ fields: ['status'] });
 
                 const {
                     data_set_id,
@@ -88,8 +115,11 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 await this.permissionedDataService.updatePermissionedDataInDb(
                     data_set_id,
                     ot_object_id,
-                    decodedPermissionedData.permissionedData,
+                    reconstructedPermissionedData,
                 );
+
+                handler.status = 'COMPLETED';
+                await handler.save({ fields: ['status'] });
 
                 await Models.data_trades.update(
                     {
@@ -128,12 +158,13 @@ class DvPurchaseKeyDepositedCommand extends Command {
     async recover(command, err) {
         const { handler_id, purchase_id } = command.data;
 
-        await this._handleError(handler_id, purchase_id, `Failed to process dvPurchaseKeyDepositedCommand. Error: ${err}`);
+        await this._handleError(handler_id, purchase_id, err);
 
         return Command.empty();
     }
 
     async _handleError(handler_id, purchase_id, errorMessage) {
+        this.logger.error(`Error occured in dvPurchaseKeyDepositedCommand. Reason given: ${errorMessage}`);
         await Models.data_trades.update({
             status: 'FAILED',
         }, {
