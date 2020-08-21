@@ -3,7 +3,7 @@ Feature: Permissioned data features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @fourth
+  @second
   Scenario: Whitelisted viewer should receive the complete dataset after query
   Given the replication difficulty is 1
   And I setup 4 nodes
