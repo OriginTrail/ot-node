@@ -382,16 +382,22 @@ class Blockchain {
 
     async complainAboutNode(
         purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
-        proofOfEncodedOutput, proofOfEncodedInputLeft,
+        proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
     ) {
         return this.blockchain.complainAboutNode(
             purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
-            proofOfEncodedOutput, proofOfEncodedInputLeft,
+            proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
         );
     }
 
-    async complainAboutRoot(purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex) {
-        return this.blockchain.complainAboutRoot();
+    async complainAboutRoot(
+        purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+        urgent,
+    ) {
+        return this.blockchain.complainAboutRoot(
+            purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+            urgent,
+        );
     }
 
     async sendCommitment(importId, dvWallet, commitment) {
