@@ -802,6 +802,63 @@ class DVController {
         purchase_id, seller_erc_id, seller_node_id,
         data_set_id, ot_object_id, price,
     ) {
+        /*
+        * [x] Check that I have the dataset
+        * [x] Check that I don't have the ot-object
+        * [x] Check that the seller has a purchase on blockchain
+        * [x] Check that the ot-object exists in the dataset
+        * [x] Check that the permissioned data hash matches the hash in the ot-object
+        * [] Check that the seller's seller is in my data_sellers table (not sure if necessary)
+        * */
+
+        const dataInfo = await Models.data_info.findAll({ where: { data_set_id } });
+        if (!dataInfo || !Array.isArray(dataInfo) || !dataInfo.length > 0) {
+            this.logger.info(`Dataset ${data_set_id} not imported on node, skipping adding data seller.`);
+            return;
+        }
+
+        const myDataPrice = await Models.data_sellers.findAll({
+            where: {
+                data_set_id,
+                ot_json_object_id: ot_object_id,
+                seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+            },
+        });
+
+        if (myDataPrice && Array.isArray(myDataPrice) && myDataPrice.length > 0) {
+            this.logger.info(`I already have permissioned data of object ${ot_object_id}` +
+                ` from dataset ${data_set_id}`);
+            return;
+        }
+
+        const purchase = await this.blockchain.getPurchase(purchase_id);
+        const {
+            seller,
+            buyer,
+            originalDataRootHash,
+        } = purchase;
+
+        if (Utilities.normalizeHex(buyer) !== Utilities.normalizeHex(seller_erc_id)) {
+            this.logger.warn('New data seller\'s ERC-725 identity does not match' +
+                ` the purchase buyer identity ${Utilities.normalizeHex(buyer)}`);
+            return;
+        }
+
+        const otObject = await this.importService.getOtObjectById(data_set_id, ot_object_id);
+        if (!otObject || !otObject.properties || !otObject.properties.permissioned_data) {
+            this.logger.info(`Object ${ot_object_id} not found in dataset ${data_set_id} ` +
+                'or does not contain permissioned data.');
+            return;
+        }
+
+        const permissionedDataHash = otObject.properties.permissioned_data.permissioned_data_hash;
+        if (Utilities.normalizeHex(permissionedDataHash) !==
+            Utilities.normalizeHex(originalDataRootHash)) {
+            this.logger.info('Purchase permissioned data root hash does not match ' +
+                'the permissioned data root hash from dataset.');
+            return;
+        }
+
         await Models.data_sellers.create({
             data_set_id,
             ot_json_object_id: ot_object_id,
@@ -809,6 +866,9 @@ class DVController {
             seller_erc_id,
             price,
         });
+
+        this.logger.notify(`Saved ${seller_node_id} as new seller for permissioned data ` +
+            `of object ${ot_object_id} from dataset ${data_set_id}`);
     }
 }
 
