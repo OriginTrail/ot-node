@@ -808,7 +808,6 @@ class DVController {
         * [x] Check that the seller has a purchase on blockchain
         * [x] Check that the ot-object exists in the dataset
         * [x] Check that the permissioned data hash matches the hash in the ot-object
-        * [] Check that the seller's seller is in my data_sellers table (not sure if necessary)
         * */
 
         const dataInfo = await Models.data_info.findAll({ where: { data_set_id } });
