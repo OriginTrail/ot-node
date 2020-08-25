@@ -10,6 +10,8 @@ class DvPurchaseKeyDepositedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.remoteControl = ctx.remoteControl;
+        this.web3 = ctx.web3;
+        this.transport = ctx.transport;
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
@@ -141,6 +143,29 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 });
                 this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
                 this.remoteControl.purchaseStatus('Purchase completed', 'You can preview the purchased data in My Purchases page.');
+
+                const purchaseCompletionObject = {
+                    message: {
+                        purchase_id,
+                        data_set_id,
+                        ot_object_id,
+                        seller_node_id: this.config.identity,
+                        seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                        price: this.config.default_data_price,
+                        wallet: this.config.node_wallet,
+                    },
+                };
+
+                purchaseCompletionObject.messageSignature =
+                    Utilities.generateRsvSignature(
+                        purchaseCompletionObject.message,
+                        this.web3,
+                        this.config.node_private_key,
+                    );
+
+                await this.transport.publish('kad-purchase-complete', purchaseCompletionObject);
+                this.logger.info('Published purchase confirmation on the network.');
+
                 return Command.empty();
             }
         }

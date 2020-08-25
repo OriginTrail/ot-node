@@ -176,7 +176,7 @@ class Kademlia {
                     'kad-permissioned-data-read-response', 'kad-permissioned-data-read-request',
                     'kad-send-encrypted-key', 'kad-encrypted-key-process-result',
                     'kad-replication-request', 'kad-replacement-replication-request', 'kad-replacement-replication-finished',
-                    'kad-public-key-request',
+                    'kad-public-key-request', 'kad-purchase-complete',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
@@ -465,6 +465,11 @@ class Kademlia {
         this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
+        });
+
+        this.node.quasar.quasarSubscribe('kad-purchase-complete', (message, err) => {
+            this.log.info('New purchase completed on the network');
+            this.emitter.emit('kad-purchase-complete', message);
         });
 
         // sync
