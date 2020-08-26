@@ -71,6 +71,7 @@ class DvPurchaseDisputeCommand extends Command {
                     Utilities.normalizeHex(encodedInputLeft),
                     proofOfEncodedOutput,
                     proofOfEncodedInputLeft,
+                    true,
                 );
             } else if (error_type === constants.PURCHASE_ERROR_TYPE.ROOT_ERROR) {
                 const {
@@ -84,6 +85,7 @@ class DvPurchaseDisputeCommand extends Command {
                     Utilities.normalizeHex(encodedRootHash),
                     proofOfEncodedRootHash,
                     rootHashIndex,
+                    true,
                 );
             }
 

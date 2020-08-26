@@ -1060,9 +1060,9 @@ class Ethereum {
 
     async complainAboutNode(
         purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
-        proofOfEncodedOutput, proofOfEncodedInputLeft,
+        proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
     ) {
-        const gasPrice = await this.getGasPrice();
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
@@ -1078,8 +1078,11 @@ class Ethereum {
         );
     }
 
-    async complainAboutRoot(purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex) {
-        const gasPrice = await this.getGasPrice();
+    async complainAboutRoot(
+        purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+        urgent,
+    ) {
+        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(gasPrice),
