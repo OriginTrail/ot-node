@@ -29,12 +29,6 @@ class RestAPIServiceV2 {
 
         this.version_id = 'v2.0';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
-        this.trading_type_purchased = 'PURCHASED';
-        this.trading_type_sold = 'SOLD';
-        this.trading_type_all = 'ALL';
-        this.trading_types = [
-            this.trading_type_purchased, this.trading_type_sold, this.trading_type_all,
-        ];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('ot-json', 'ot-json');

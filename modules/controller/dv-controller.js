@@ -26,6 +26,13 @@ class DVController {
         this.mapping_standards_for_event.set('GS1-EPCIS', 'gs1');
         this.mapping_standards_for_event.set('GRAPH', 'ot-json');
         this.mapping_standards_for_event.set('WOT', 'wot');
+
+        this.trading_type_purchased = 'PURCHASED';
+        this.trading_type_sold = 'SOLD';
+        this.trading_type_all = 'ALL';
+        this.trading_types = [
+            this.trading_type_purchased, this.trading_type_sold, this.trading_type_all,
+        ];
     }
 
     /**
