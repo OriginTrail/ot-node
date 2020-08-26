@@ -48,6 +48,12 @@ class ExportDataCommand extends Command {
         data.data_creator = fileContent.metadata.dataCreator;
         if (offer) {
             data.offer_id = offer.offer_id;
+        } else {
+            const holdingData =
+                await Models.holding_data.findOne({ where: { data_set_id: datasetId } });
+            if (holdingData) {
+                data.offer_id = holdingData.offer_id;
+            }
         }
         data.signature = fileContent.metadata.signature;
 

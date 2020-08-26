@@ -271,9 +271,9 @@ class PermissionedDataService {
         for (let i = 0; i < numberOfBlocks; i += 1) {
             const dataElement = Buffer.from(originalDataArray[i], 'hex');
             const block = dataElement.slice(dataElement.length - block_size, dataElement.length);
-            originalDataString += block.toString();
+            // todo we need better handling for padding removal
+            originalDataString += block.toString().split(' ').join('');
         }
-
         return JSON.parse(originalDataString);
     }
 
