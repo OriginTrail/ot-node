@@ -72,10 +72,15 @@ class DhPurchaseInitiatedCommand extends Command {
                     purchase_id: purchaseId,
                 };
 
+                let delay = await this.blockchain.getPaymentStageInterval();
+                delay = parseInt(delay, 10) * 1000;
+
+                this.logger.info(`Key deposited for purchaseID ${purchaseId}.`
+                    + ' Waiting for complaint window to expire before taking payment.');
                 await this.commandExecutor.add({
                     name: 'dhPurchaseTakePaymentCommand',
                     data: commandData,
-                    delay: 5 * 60 * 1000,
+                    delay,
                     retries: 3,
                 });
                 return Command.empty();

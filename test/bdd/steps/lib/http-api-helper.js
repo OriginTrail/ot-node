@@ -729,6 +729,115 @@ async function apiNodeInfo(nodeRpcUrl) {
 }
 
 /**
+ * Fetch api/latest/permissioned_data/available information
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @return {Promise.<InfoResponse>}
+ */
+async function apiPermissionedDataAvailable(nodeRpcUrl) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/latest/permissioned_data/available`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
+ * Fetch api/latest/network/permissioned_data/get_price
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {object} params body
+ * @return {Promise.<TrailResponse>}
+ */
+async function apiPermissionedDataGetPrice(nodeRpcUrl, params) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                body: params,
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/latest/network/permissioned_data/get_price`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+
+/**
+ * Fetch /api/latest/network/permissioned_data/get_price/result
+ * @typedef {Object} ImportResult
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} handler_id
+ * @return {Promise.<ImportResult>}
+ */
+async function apiPermissionedDataGetPriceResult(nodeRpcUrl, handler_id) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/latest/network/permissioned_data/get_price/result/${handler_id}`,
+            json: true,
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
+ * Fetch api/latest/network/permissioned_data/purchase
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {object} params body
+ * @return {Promise.<TrailResponse>}
+ */
+async function apiPermissionedDataPurchase(nodeRpcUrl, params) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                body: params,
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/latest/network/permissioned_data/purchase`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+
+/**
  * @typedef {Object} ApiBalanceInfo
  * @property {Object} profile info about profile balance
  * @property {string} profile.minimalStake minimal stake
@@ -792,4 +901,8 @@ module.exports = {
     apiGetDatasetInfo,
     apiQueryNetworkReadAndExport,
     apiWhitelistViewer,
+    apiPermissionedDataAvailable,
+    apiPermissionedDataGetPrice,
+    apiPermissionedDataGetPriceResult,
+    apiPermissionedDataPurchase,
 };

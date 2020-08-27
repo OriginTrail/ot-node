@@ -47,6 +47,7 @@ contract Marketplace {
     );
     event KeyDeposited(bytes32 purchaseId, bytes32 key);
     event MisbehaviourProven(bytes32 purchaseId, address sellerIdentity, address buyerIdentity);
+    event PurchaseCompleted(bytes32 purchaseId, address sellerIdentity, address buyerIdentity);
 
     function initiatePurchase(
         address sellerIdentity,
@@ -130,6 +131,8 @@ contract Marketplace {
 
         marketplaceStorage.setStage(purchaseId, 3);
         marketplaceStorage.setTimestamp(purchaseId, block.timestamp);
+
+        emit PurchaseCompleted(purchaseId, sellerIdentity, buyerIdentity);
     }
 
     function reserveTokens(address party, uint256 amount)

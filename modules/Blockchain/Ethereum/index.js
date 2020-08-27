@@ -966,10 +966,21 @@ class Ethereum {
         return this.marketplaceStorageContract.methods.purchase(purchaseId).call();
     }
 
+    async getPurchaseStatus(purchaseId) {
+        this.logger.trace(`Asking for purchase with id [${purchaseId}].`);
+        return this.marketplaceStorageContract.methods.getStage(purchaseId).call();
+    }
+
     async getPurchasedData(importId, wallet) {
         this.logger.trace(`Asking purchased data for import ${importId} and wallet ${wallet}.`);
         return this.readingContract.methods.purchased_data(importId, wallet).call();
     }
+
+    async getPaymentStageInterval() {
+        this.logger.trace('Reading payment stage interval from blockchain.');
+        return this.marketplaceContract.methods.paymentStageInterval().call();
+    }
+
 
     async initiatePurchase(
         sellerIdentity, buyerIdentity,
@@ -1044,6 +1055,44 @@ class Ethereum {
         return this.transactions.queueTransaction(
             this.marketplaceContractAbi, 'takePayment',
             [purchaseId], options,
+        );
+    }
+
+    async complainAboutNode(
+        purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+        proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
+    ) {
+        const gasPrice = await this.getGasPrice(urgent);
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.marketplaceContractAddress,
+        };
+
+        this.logger.trace(`complainAboutNode(${purchaseId},${outputIndex},${inputIndexLeft},` +
+        `${encodedOutput},${encodedInputLeft},${proofOfEncodedOutput},${proofOfEncodedInputLeft})`);
+        return this.transactions.queueTransaction(
+            this.marketplaceContractAbi, 'complainAboutNode',
+            [purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+                proofOfEncodedOutput, proofOfEncodedInputLeft], options,
+        );
+    }
+
+    async complainAboutRoot(
+        purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+        urgent,
+    ) {
+        const gasPrice = await this.getGasPrice(urgent);
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.marketplaceContractAddress,
+        };
+
+        this.logger.trace(`complainAboutRoot(${purchaseId},${encodedRootHash},${proofOfEncodedRootHash},${rootHashIndex})`);
+        return this.transactions.queueTransaction(
+            this.marketplaceContractAbi, 'complainAboutRoot',
+            [purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex], options,
         );
     }
 
@@ -1546,6 +1595,18 @@ class Ethereum {
         } else {
             return gasPrice;
         }
+    }
+
+    /**
+     * Check how many events were emitted in a transaction from the transaction receipt
+     * @param receipt - the json object returned as a result of the transaction
+     * @return {Number | undefined} - Returns undefined if the receipt does not have a logs field
+     */
+    numberOfEventsEmitted(receipt) {
+        if (!receipt || !receipt.logs || !Array.isArray(receipt.logs)) {
+            return undefined;
+        }
+        return receipt.logs.length;
     }
 }
 

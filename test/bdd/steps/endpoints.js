@@ -6,6 +6,7 @@ const {
 const BN = require('bn.js');
 const { expect } = require('chai');
 const fs = require('fs');
+const sleep = require('sleep-async')().Promise;
 
 const httpApiHelper = require('./lib/http-api-helper');
 
@@ -376,6 +377,103 @@ Given(
         expect(status, 'Whitelist response status should be SUCCESS').to.be.equal('SUCCESS');
     },
 );
+
+Given(/^([DC|DH|DV]+) gets the list of available datasets for trading$/, async function (viewer) {
+    this.logger.log(`${viewer} gets the list of available datasets for trading.`);
+    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+
+    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+
+    const availableResponse = await httpApiHelper.apiPermissionedDataAvailable(host);
+    expect(availableResponse[0], 'Should have keys called dataset, ot_objects, seller_erc_id, seller_node_id, timestamp')
+        .to.have.all.keys('dataset', 'ot_objects', 'seller_erc_id', 'seller_node_id', 'timestamp');
+
+    const { dataset, ot_objects, seller_node_id } = availableResponse[0];
+    expect(this.state.lastImport.data.dataset_id).to.be.equal(dataset.id);
+    this.state.availablePurchase = {
+        data_set_id: dataset.id,
+        seller_node_id,
+        ot_object_id: ot_objects[0],
+    };
+});
+
+Given(/^([DC|DH|DV]+) gets the price for the last imported dataset$/, async function (viewer) {
+    this.logger.log(`${viewer} gets the price for the last imported dataset.`);
+    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+
+    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+
+    const { handler_id } = await httpApiHelper.apiPermissionedDataGetPrice(host, this.state.availablePurchase);
+    await sleep.sleep(2000);
+    const response = await httpApiHelper.apiPermissionedDataGetPriceResult(host, handler_id);
+
+    expect(response, 'Should have keys called data and status').to.have.all.keys('data', 'status');
+    expect(response.status).to.be.equal('COMPLETED');
+});
+
+
+Given(/^([DC|DH|DV]+) initiates purchase for the last imported dataset and waits for confirmation$/, async function (viewer) {
+    this.logger.log(`${viewer} initiates purchase for the last imported dataset and waits for confirmation.`);
+    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+
+    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+
+    const { handler_id } = await httpApiHelper.apiPermissionedDataPurchase(host, this.state.availablePurchase);
+    this.state.lastPurchaseHandler = handler_id;
+
+    this.state.lastQueryNetworkId = {};
+    this.state[viewer.toLowerCase()].state.purchasedDatasets = {};
+    this.state[viewer.toLowerCase()].state.purchasedDatasets[this.state.availablePurchase.data_set_id] = {};
+
+    const source = this.state.dc;
+
+    const promise = new Promise((acc, reject) => {
+        source.once('purchase-confirmed', async (data) => {
+            const target = this.state[viewer.toLowerCase()];
+            if (target.state.identity === data.dv_identity) { acc(); } else { reject(); }
+        });
+    });
+
+    return promise;
+});
+
+Given(/^(DC|DV|DV2) waits for purchase to finish$/, { timeout: 300000 }, async function (targetNode) {
+    this.logger.log(`${targetNode} waits for purchase to finish.`);
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const source = this.state[targetNode.toLowerCase()];
+
+    const promise = new Promise((acc) => {
+        source.once('purchase-completed', async () => {
+            acc();
+        });
+    });
+
+
+    return promise;
+});
+
+
+Given(/^(DC|DV|DV2) waits to take a payment$/, { timeout: 300000 }, async function (targetNode) {
+    this.logger.log(`${targetNode} waits to take a payment.`);
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const source = this.state[targetNode.toLowerCase()];
+
+    const promise = new Promise((acc) => {
+        source.once('purchase-payment-taken', async () => {
+            acc();
+        });
+    });
+
+
+    return promise;
+});
+
 
 Given(/^default initial token amount should be deposited on (\d+)[st|nd|rd|th]+ node's profile$/, async function (nodeIndex) {
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
