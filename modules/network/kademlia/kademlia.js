@@ -34,6 +34,7 @@ const directMessageRequests = [
     { methodName: 'dataReadRequest', routeName: 'kad-data-read-request' },
     { methodName: 'sendDataReadResponse', routeName: 'kad-data-read-response' },
     { methodName: 'sendPermissionedDataReadRequest', routeName: 'kad-permissioned-data-read-request' },
+    { methodName: 'sendPermissionedDataReadResponse', routeName: 'kad-permissioned-data-read-response' },
     { methodName: 'sendDataPurchaseRequest', routeName: 'kad-data-purchase-request' },
     { methodName: 'sendDataPurchaseResponse', routeName: 'kad-data-purchase-response' },
     { methodName: 'sendPermissionedDataPriceRequest', routeName: 'kad-data-price-request' },
@@ -175,7 +176,7 @@ class Kademlia {
                     'kad-permissioned-data-read-response', 'kad-permissioned-data-read-request',
                     'kad-send-encrypted-key', 'kad-encrypted-key-process-result',
                     'kad-replication-request', 'kad-replacement-replication-request', 'kad-replacement-replication-finished',
-                    'kad-public-key-request',
+                    'kad-public-key-request', 'kad-purchase-complete',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
@@ -466,6 +467,11 @@ class Kademlia {
             this.emitter.emit('kad-data-location-request', message);
         });
 
+        this.node.quasar.quasarSubscribe('kad-purchase-complete', (message, err) => {
+            this.log.info('New purchase completed on the network');
+            this.emitter.emit('kad-purchase-complete', message);
+        });
+
         // sync
         this.node.use('kad-replication-request', (request, response, next) => {
             this.log.debug('kad-replication-request received');
@@ -524,6 +530,34 @@ class Kademlia {
         this.node.use('kad-permissioned-data-read-response', (request, response, next) => {
             this.log.debug('kad-permissioned-data-read-response received');
             this.emitter.emit('kad-permissioned-data-read-response', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-purchase-request', (request, response, next) => {
+            this.log.debug('kad-data-purchase-request received');
+            this.emitter.emit('kad-data-purchase-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-purchase-response', (request, response, next) => {
+            this.log.debug('kad-data-purchase-response received');
+            this.emitter.emit('kad-data-purchase-response', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-price-request', (request, response, next) => {
+            this.log.debug('kad-data-price-request received');
+            this.emitter.emit('kad-data-price-request', request);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-data-price-response', (request, response, next) => {
+            this.log.debug('kad-data-price-response received');
+            this.emitter.emit('kad-data-price-response', request);
             response.send([]);
         });
 
@@ -652,21 +686,6 @@ class Kademlia {
              */
             node.getNearestNeighbour = () =>
                 [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
-
-
-            node.sendUnpackedMessage = async (message, contactId, method) => {
-                const { contact, header } = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send(method, { message, header }, contact, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
 
             directMessageRequests.forEach((element) => {
                 node[element.methodName] = async (message, contactId) =>

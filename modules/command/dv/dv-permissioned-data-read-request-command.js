@@ -25,7 +25,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
             data_set_id,
             ot_object_id,
             seller_node_id,
-            handlerId,
+            handler_id,
         } = command.data;
 
         const message = {
@@ -34,7 +34,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
             dv_erc725_identity: this.config.erc725Identity,
-            handler_id: handlerId,
+            handler_id,
         };
         const dataReadRequestObject = {
             message,
@@ -45,7 +45,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
             ),
         };
 
-        await this.transport.sendPrivateDataReadRequest(
+        await this.transport.sendPermissionedDataReadRequest(
             dataReadRequestObject,
             seller_node_id,
         );
@@ -56,7 +56,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
     /**
      * Recover system from failure
      * @param command
-     * @param err
+     * @param error
      */
     async recover(command, error) {
         const { handler_id } = command.data;
