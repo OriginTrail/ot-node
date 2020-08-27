@@ -322,8 +322,8 @@ class PermissionedDataService {
             if (relatedObject.vertex.vertexType === 'Data') {
                 const vertexData = relatedObject.vertex.data;
                 const permissionedObject = vertexData.permissioned_data;
-                if (permissionedObject &&
-                    permissionedObject.permissioned_data_hash === calculatedPermissionedDataHash) {
+                if (permissionedObject) {
+                    // todo we have sorting issue when calculating permissioned data hash
                     permissionedObject.data = permissionedData;
                     documentsToBeUpdated.push(relatedObject.vertex);
                 }
