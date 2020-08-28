@@ -132,12 +132,21 @@ class DVController {
         const allDatasets = tradingData.map(element => element.data_set_id)
             .filter((value, index, self) => self.indexOf(value) === index);
 
+        const dataInfos = await Models.data_info.findAll({
+            where: {
+                data_set_id: {
+                    [Models.sequelize.Op.in]: allDatasets,
+                },
+            },
+        });
+
         const allMetadata = await this.importService.getMultipleDatasetMetadata(allDatasets);
 
         const returnArray = [];
         tradingData.forEach((element) => {
             const { datasetHeader } =
                 allMetadata.find(metadata => metadata._key === element.data_set_id);
+            const dataInfo = dataInfos.find(info => info.data_set_id === element.data_set_id);
             const type = normalizedIdentity === element.buyer_erc_id ? 'PURCHASED' : 'SOLD';
             returnArray.push({
                 data_set: {
@@ -145,6 +154,8 @@ class DVController {
                     name: datasetHeader.datasetTitle,
                     description: datasetHeader.datasetDescription,
                     tags: datasetHeader.datasetTags,
+                    creator_identity: ImportUtilities.getDataCreator(datasetHeader),
+                    creator_wallet: dataInfo.data_provider_wallet,
                 },
                 ot_json_object_id: element.ot_json_object_id,
                 buyer_erc_id: element.buyer_erc_id,
@@ -158,7 +169,6 @@ class DVController {
                 status: element.status,
             });
         });
-
         res.status(200);
         res.send(returnArray);
     }
