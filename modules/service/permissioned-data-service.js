@@ -181,7 +181,6 @@ class PermissionedDataService {
             .calculatePermissionedDataMerkleTree(permissionedObject.properties.permissioned_data, 'purchase');
 
         const result = this._encodePermissionedDataMerkleTree(merkleTree);
-        console.log('encode permissioned data: ');
         const data =
             Buffer.from(JSON.stringify(permissionedObject.properties.permissioned_data.data));
         result.permissioned_data_original_length = data.length;
