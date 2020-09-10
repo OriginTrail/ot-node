@@ -75,7 +75,20 @@ class DhPayOutCommand extends Command {
             } catch (error) {
                 if (error.message.includes('Gas price higher than maximum allowed price')) {
                     this.logger.info('Gas price too high, delaying call for 30 minutes');
-                    return Command.repeat();
+                    return {
+                        commands: [
+                            {
+                                name: 'dhPayOutCommand',
+                                delay: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
+                                retries: 3,
+                                transactional: false,
+                                data: {
+                                    offerId,
+                                    viaAPI: false,
+                                },
+                            },
+                        ],
+                    };
                 }
                 throw error;
             }

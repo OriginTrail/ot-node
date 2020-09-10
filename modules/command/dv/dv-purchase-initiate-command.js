@@ -1,4 +1,5 @@
 const Command = require('../command');
+const MerkleTree = require('../../Merkle');
 const Models = require('../../../models');
 
 const { Op } = Models.Sequelize;
@@ -30,8 +31,8 @@ class DvPurchaseInitiateCommand extends Command {
 
 
         if (status !== 'SUCCESSFUL') {
-            this.logger.trace(`Unable to initiate purchase, seller returned status: ${status} with message: ${message}`);
-            this._handleError(handler_id, status);
+            this.logger.warn(`Unable to initiate purchase, seller returned status: ${status} with message: ${message}`);
+            await this._handleError(handler_id, status);
             return Command.empty();
         }
         const {
@@ -39,16 +40,30 @@ class DvPurchaseInitiateCommand extends Command {
             seller_node_id,
             ot_object_id,
         } = await this._getHandlerData(handler_id);
+        this.logger.trace(`Received encoded permissioned data for object ${ot_object_id} from seller ${seller_node_id}. Verifying data integrity...`);
 
         const permissionedObject = await this.importService.getOtObjectById(
             data_set_id,
             ot_object_id,
         );
 
-        if (permissioned_data_root_hash !== permissionedObject.permissioned_data_hash) {
-            this._handleError(handler_id, 'Unable to initiate purchase. Permissioned data root hash validation failed');
+        if (permissioned_data_root_hash !==
+            permissionedObject.properties.permissioned_data.permissioned_data_hash) {
+            await this._handleError(handler_id, 'Unable to initiate purchase. Permissioned data root hash validation failed');
             return Command.empty();
         }
+
+        // Verify data integrity
+        // Recreate merkle tree
+        const encodedMerkleTree = new MerkleTree(encoded_data, 'purchase', 'soliditySha3');
+        const encodedDataRootHash = encodedMerkleTree.getRoot();
+
+        if (encoded_data_root_hash !== encodedDataRootHash) {
+            await this._handleError(handler_id, 'Unable to initiate purchase. Encoded data root hash validation failed');
+            return Command.empty();
+        }
+
+        this.logger.info('Purchase response verified. Initiating purchase on the blockchain...');
 
         const dataTrade = await Models.data_trades.findOne({
             where: {
@@ -60,17 +75,15 @@ class DvPurchaseInitiateCommand extends Command {
         });
         const result = await this.blockchain.initiatePurchase(
             dataTrade.seller_erc_id, dataTrade.buyer_erc_id,
-            dataTrade.price,
-            permissioned_data_root_hash, encoded_data_root_hash,
+            dataTrade.price, permissioned_data_root_hash, encoded_data_root_hash,
         );
 
-        const { purchaseId } = this.blockchain
-            .decodePurchaseInitiatedEventFromTransaction(result);
+        const { purchaseId } = this.blockchain.decodePurchaseInitiatedEventFromTransaction(result);
         this.logger.important(`Purchase ${purchaseId} initiated. Waiting for key from seller...`);
 
         if (!purchaseId) {
             this.remoteControl.purchaseStatus('Purchase failed', 'Unabled to initiate purchase to Blockchain.', true);
-            this._handleError(handler_id, 'Unable to initiate purchase to bc');
+            await this._handleError(handler_id, 'Unable to initiate purchase to bc');
             return Command.empty();
         }
 
@@ -84,11 +97,12 @@ class DvPurchaseInitiateCommand extends Command {
             purchase_id: purchaseId,
             permissioned_data_array_length,
             permissioned_data_original_length,
+            permissioned_data_root_hash,
         };
 
         await this.commandExecutor.add({
             name: 'dvPurchaseKeyDepositedCommand',
-            delay: 2 * 60 * 1000, // todo check why isn't it reading the default value
+            delay: 2 * 60 * 1000,
             retries: 3,
             data: commandData,
         });
@@ -122,6 +136,7 @@ class DvPurchaseInitiateCommand extends Command {
     }
 
     async _handleError(handler_id, errorMessage) {
+        this.logger.error(`Failed to initiate purchase: ${errorMessage}`);
         const handlerData = await this._getHandlerData(handler_id);
 
         await Models.data_trades.update({

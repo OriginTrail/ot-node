@@ -38,8 +38,9 @@ class DhPurchaseTakePaymentCommand extends Command {
                     seller_erc_id: dataTrade.seller_erc_id,
                     price: dataTrade.price,
                 });
+                this.logger.info(`Payment has been taken for purchase ${purchase_id}`);
             } catch (error) {
-                if (error.message.contains('Complaint window has not yet expired!')) {
+                if (error.message.includes('Complaint window has not yet expired!')) {
                     if (command.retries !== 0) {
                         return Command.retry();
                     }
@@ -57,7 +58,10 @@ class DhPurchaseTakePaymentCommand extends Command {
             dataTrade.status = 'DISPUTED';
             await dataTrade.save({ fields: ['status'] });
 
-            this.logger.warn(`Couldn't take payment for purchase ${purchase_id}`);
+            await this._handleError(
+                purchase_id,
+                `Couldn't execute takePayment command for purchase with purchaseId ${purchase_id}. Error: Data mismatch proven in dispute`,
+            );
         }
 
         return Command.empty();

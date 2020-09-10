@@ -59,6 +59,19 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
+            const allowedPermissionedDataElements = await Models.data_trades.findAll({
+                where: {
+                    data_set_id: importId,
+                    buyer_node_id: nodeId,
+                    status: 'COMPLETED',
+                },
+            });
+
+            const privateData = {};
+
+            allowedPermissionedDataElements.forEach(element =>
+                privateData[element.ot_json_object_id] = {});
+
             const document = await this.importService.getImport(importId);
 
             const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
