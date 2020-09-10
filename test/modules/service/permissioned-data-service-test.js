@@ -1,201 +1,394 @@
-const { describe, before, it } = require('mocha');
+const {
+    describe, before, beforeEach, it,
+} = require('mocha');
 const { assert, expect } = require('chai');
 const Web3 = require('web3');
+const ImportUtilities = require('../../../modules/ImportUtilities');
+const Utilities = require('./../../../modules/Utilities');
 const Storage = require('../../../modules/Storage');
 const models = require('../../../models');
+const sample_data = require('../test_data/otjson-graph');
+const defaultConfig = require('../../../config/config.json').mainnet;
+const rc = require('rc');
+const pjson = require('../../../package.json');
+const logger = require('../../../modules/logger');
+const awilix = require('awilix');
+const PermissionedDataService = require('../../../modules/service/permissioned-data-service');
+const MerkleTree = require('../../../modules/Merkle');
+const crypto = require('crypto');
+const abi = require('ethereumjs-abi');
+const Encryption = require('../../../modules/RSAEncryption');
 
+
+const samplePermissionedObject = {
+    properties: {
+        permissioned_data: {
+            data: {
+                'urn:ot:object:product:batch:humidity': '19.7',
+                'urn:ot:object:product:batch:power_feeding': '85',
+                'urn:ot:object:product:batch:productId': 'urn:ot:object:actor:id:KakaxiSN687',
+                'urn:ot:object:product:batch:rainfall': '0.0',
+                'urn:ot:object:product:batch:solar_radiation': '0.0',
+                'urn:ot:object:product:batch:temperature': '22.0',
+                vocabularyType: 'urn:ot:object:batch',
+            },
+        },
+    },
+};
+
+let config;
+let permissionedDataService;
+
+class GraphStorageMock {
+    constructor(log) {
+        this.logger = log;
+    }
+}
 
 describe('Permission data service test', () => {
+    beforeEach('Setup container', async () => {
+        // Create the container and set the injectionMode to PROXY (which is also the default).
+        process.env.NODE_ENV = 'mainnet';
+        const container = awilix.createContainer({
+            injectionMode: awilix.InjectionMode.PROXY,
+        });
 
-    // before('Setup models', async () => {
-    //     Storage.models = (await models.sequelize.sync()).models;
-    // });
-    //
-    // beforeEach('Setup ctx', async function setupCtx() {
-    //     this.timeout(5000);
-    //
-    //     const config = rc(pjson.name, defaultConfig);
-    //     systemDb = new Database();
-    //     systemDb.useBasicAuth(config.database.username, config.database.password);
-    //
-    //     // Drop test database if exist.
-    //     const listOfDatabases = await systemDb.listDatabases();
-    //     if (listOfDatabases.includes(databaseName)) {
-    //         await systemDb.dropDatabase(databaseName);
-    //     }
-    //
-    //     await systemDb.createDatabase(
-    //         databaseName,
-    //         [{
-    //             username: config.database.username,
-    //             passwd: config.database.password,
-    //             active: true,
-    //         }],
-    //     );
-    //
-    //     config.database.database = databaseName;
-    //     config.erc725Identity = '0x611d771aAfaa3D6Fb66c4a81D97768300a6882D5';
-    //     config.node_wallet = '0xa9a07f3c53ec5de8dd83039ca27fae83408e16f5';
-    //     config.node_private_key =
-    //     '952e45854ca5470a6d0b6cb86346c0e9c4f8f3a5a459657df8c94265183b9253';
-    //
-    //     // Create the container and set the injectionMode to PROXY (which is also the default).
-    //     const container = awilix.createContainer({
-    //         injectionMode: awilix.InjectionMode.PROXY,
-    //     });
-    //
-    //     const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
-    //
-    //     graphStorage = new GraphStorage(config.database, logger);
-    //     container.register({
-    //         logger: awilix.asValue(logger),
-    //         gs1Utilities: awilix.asClass(GS1Utilities),
-    //         graphStorage: awilix.asValue(graphStorage),
-    //         schemaValidator: awilix.asClass(SchemaValidator).singleton(),
-    //         importService: awilix.asClass(ImportService).singleton(),
-    //         epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
-    //         remoteControl: awilix.asValue({
-    //             importRequestData: () => {
-    //             },
-    //         }),
-    //         network: awilix.asClass(Network),
-    //         networkUtilities: awilix.asClass(NetworkUtilities),
-    //         emitter: awilix.asClass(EventEmitter),
-    //         product: awilix.asClass(Product),
-    //         web3: awilix.asValue(web3),
-    //         config: awilix.asValue(config),
-    //         permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
-    //     });
-    //     await graphStorage.connect();
-    //     importService = container.resolve('importService');
-    //     epcisOtJsonTranspiler = container.resolve('epcisOtJsonTranspiler');
-    // });
-    //
-    // it('Calculate the public root hash of one graph', () => {
-    //     const originalGraph = Utilities.
-    //     copyObject(sample_data.permissioned_data_graph['@graph']);
-    //     ImportUtilities.calculateGraphPermissionedDataHashes(originalGraph);
-    //
-    //     const shuffledGraph = Utilities.
-    //     copyObject(sample_data.permissioned_data_graph_shuffled['@graph']);
-    //     ImportUtilities.calculateGraphPermissionedDataHashes(shuffledGraph);
-    //
-    //     const differentGraph = Utilities.
-    //     copyObject(sample_data.permissioned_data_graph_2['@graph']);
-    //     ImportUtilities.calculateGraphPermissionedDataHashes(differentGraph);
-    //
-    //     const originalGraphRootHash = ImportUtilities.calculateGraphPublicHash(originalGraph);
-    //     const shuffledGraphRootHash = ImportUtilities.calculateGraphPublicHash(shuffledGraph);
-    //     const differentGraphRootHash = ImportUtilities.calculateGraphPublicHash(differentGraph);
-    //
-    //     assert(originalGraphRootHash != null);
-    //     assert(shuffledGraphRootHash != null);
-    //     assert(differentGraphRootHash != null);
-    //
-    //     // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
-    //     assert(typeof originalGraphRootHash === 'string');
-    //     assert(typeof shuffledGraphRootHash === 'string');
-    //     assert(typeof differentGraphRootHash === 'string');
-    //
-    //     assert(originalGraphRootHash.length === 66);
-    //     assert(shuffledGraphRootHash.length === 66);
-    //     assert(differentGraphRootHash.length === 66);
-    //
-    //     assert.equal(
-    //         originalGraphRootHash,
-    //         shuffledGraphRootHash,
-    //         'Graph root hash for same object with attributes in different order!',
-    //     );
-    //
-    //     assert.notEqual(
-    //         originalGraphRootHash,
-    //         differentGraphRootHash,
-    //         'Graph root hash for different objects is the same!',
-    //     );
-    // });
-    //
-    // it('Encoding verification', () => {
-    //     const permissionedObject = {
-    //         data: {
-    //             'urn:ot:object:product:batch:humidity': '19.7',
-    //             'urn:ot:object:product:batch:power_feeding': '85',
-    //             'urn:ot:object:product:batch:productId': 'urn:ot:object:actor:id:KakaxiSN687',
-    //             'urn:ot:object:product:batch:rainfall': '0.0',
-    //             'urn:ot:object:product:batch:solar_radiation': '0.0',
-    //             'urn:ot:object:product:batch:temperature': '22.0',
-    //             vocabularyType: 'urn:ot:object:batch',
-    //         },
-    //     };
-    //
-    //     const {
-    //         permissioned_data_original_length, permissioned_data_array_length, key,
-    //         encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
-    //     } = ImportUtilities.encodePermissionedData(permissionedObject);
-    //
-    //     const result = ImportUtilities.validateAndDecodePermissionedData(
-    //         encoded_data,
-    //         key,
-    //         permissioned_data_array_length,
-    //         permissioned_data_original_length,
-    //     );
-    //
-    //     assert.equal(
-    //         Utilities.sortedStringify(permissionedObject.data),
-    //         Utilities.sortedStringify(result.permissionedData),
-    //     );
-    // });
-    //
-    // it('Calculate the root hash on one permissioned data object', () => {
-    //     const originalObject = Utilities.copyObject(sample_data.permissioned_data_object);
-    //     const shuffledObject = Utilities.
-    //     copyObject(sample_data.permissioned_data_object_shuffled);
-    //     const differentObject = Utilities.copyObject(sample_data.permissioned_data_object_2);
-    //
-    //     const originalRootHash = ImportUtilities.calculatePermissionedDataHash(originalObject);
-    //     const shuffledRootHash = ImportUtilities.calculatePermissionedDataHash(shuffledObject);
-    //     const differentRootHash = ImportUtilities.calculatePermissionedDataHash(differentObject);
-    //
-    //     assert(originalRootHash != null);
-    //     assert(shuffledRootHash != null);
-    //     assert(differentRootHash != null);
-    //
-    //     // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
-    //     assert(typeof originalRootHash === 'string');
-    //     assert(typeof shuffledRootHash === 'string');
-    //     assert(typeof differentRootHash === 'string');
-    //
-    //     assert(originalRootHash.length === 66);
-    //     assert(shuffledRootHash.length === 66);
-    //     assert(differentRootHash.length === 66);
-    //
-    //     assert.equal(
-    //         originalRootHash,
-    //         shuffledRootHash,
-    //         'Permissioned data root hash for same object with attributes in different order!',
-    //     );
-    //
-    //     assert.notEqual(
-    //         originalRootHash,
-    //         differentRootHash,
-    //         'Permisssioned data root hash for different objects is the same!',
-    //     );
-    // });
-    // it('Calculating the root hash of an empty permissioned
-    // data object should throw an error', () => {
-    //     const testObject = {};
-    //
-    //     let errorHappened = false;
-    //     try {
-    //         ImportUtilities.calculatePermissionedDataHash(testObject);
-    //     } catch (e) {
-    //         errorHappened = true;
-    //         assert.equal(
-    //             e.message,
-    //             'Cannot calculate root hash of an empty object',
-    //             'Unexpected error received',
-    //         );
-    //     }
-    //
-    //     assert(errorHappened, 'calculatePermissionedDataHash did not throw an error!');
-    // });
+        const graphStorage = new GraphStorageMock(logger);
+
+        config = rc(pjson.name, defaultConfig);
+        container.register({
+            config: awilix.asValue(config),
+            logger: awilix.asValue(logger),
+            graphStorage: awilix.asValue(graphStorage),
+        });
+        permissionedDataService = new PermissionedDataService(container.cradle);
+    });
+
+    it('Calculate the public data hash', () => {
+        const originalGraph = Utilities
+            .copyObject(sample_data.permissioned_data_graph);
+        ImportUtilities.calculateGraphPermissionedDataHashes(originalGraph['@graph']);
+
+        const shuffledGraph = Utilities
+            .copyObject(sample_data.permissioned_data_graph_shuffled);
+        ImportUtilities.calculateGraphPermissionedDataHashes(shuffledGraph['@graph']);
+
+        const differentGraph = Utilities
+            .copyObject(sample_data.permissioned_data_graph_2);
+        ImportUtilities.calculateGraphPermissionedDataHashes(differentGraph['@graph']);
+
+        const originalGraphRootHash = ImportUtilities.calculateGraphPublicHash(originalGraph);
+        const shuffledGraphRootHash = ImportUtilities.calculateGraphPublicHash(shuffledGraph);
+        const differentGraphRootHash = ImportUtilities.calculateGraphPublicHash(differentGraph);
+
+        assert(originalGraphRootHash != null);
+        assert(shuffledGraphRootHash != null);
+        assert(differentGraphRootHash != null);
+
+        // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
+        assert(typeof originalGraphRootHash === 'string');
+        assert(typeof shuffledGraphRootHash === 'string');
+        assert(typeof differentGraphRootHash === 'string');
+
+        assert(originalGraphRootHash.length === 66);
+        assert(shuffledGraphRootHash.length === 66);
+        assert(differentGraphRootHash.length === 66);
+
+        assert.notEqual(
+            originalGraphRootHash,
+            shuffledGraphRootHash,
+            'Graph root hash for same object with attributes in different order!',
+        );
+
+        assert.notEqual(
+            originalGraphRootHash,
+            differentGraphRootHash,
+            'Graph root hash for different objects is the same!',
+        );
+    });
+
+    it('Should correctly reconstruct encoded object', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const decoded_data = permissionedDataService.decodePermissionedData(
+            encoded_data,
+            key,
+        );
+
+        const result = permissionedDataService.reconstructPermissionedData(
+            decoded_data,
+            permissioned_data_array_length,
+            permissioned_data_original_length,
+        );
+
+        assert.equal(
+            Utilities.sortedStringify(samplePermissionedObject.properties.permissioned_data.data),
+            Utilities.sortedStringify(result),
+            'Reconstructed object is not the same as the original object',
+        );
+    });
+
+    it('Should validate correct permissioned data tree with validatePermissionedDataTree', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        const validationResult = permissionedDataService.validatePermissionedDataTree(
+            decodedPermissionedData,
+            permissioned_data_array_length,
+        );
+
+        assert(!validationResult.error, 'Correctly encoded data returned an error.');
+    });
+
+    it('Should report error for incorrect permissioned data tree with validatePermissionedDataTree', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, permissioned_data_root_hash, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        const decodedDataMerkleTree = ImportUtilities
+            .calculatePermissionedDataMerkleTree(samplePermissionedObject.properties.permissioned_data, 'purchase');
+        const randomLevel = 2 +
+            Math.floor(Math.random() * (decodedDataMerkleTree.levels.length - 2));
+        const randomLeaf =
+            Math.floor(Math.random() * decodedDataMerkleTree.levels[randomLevel].length);
+
+        let corruptedIndex = randomLeaf;
+        let inputIndex = randomLeaf * 2;
+        for (let levelIndex = 1; levelIndex < randomLevel; levelIndex += 1) {
+            const level = decodedDataMerkleTree.levels[levelIndex];
+            if (level.length % 2 === 1) {
+                corruptedIndex += level.length + 1;
+            } else {
+                corruptedIndex += level.length;
+            }
+
+            if (levelIndex > 1) {
+                const previousLevel = decodedDataMerkleTree.levels[levelIndex - 1];
+                if (previousLevel.length % 2 === 1) {
+                    inputIndex += previousLevel.length + 1;
+                } else {
+                    inputIndex += previousLevel.length;
+                }
+            }
+        }
+
+        decodedPermissionedData[corruptedIndex] =
+            '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+        const validationResult = permissionedDataService.validatePermissionedDataTree(
+            decodedPermissionedData,
+            permissioned_data_array_length,
+        );
+
+        assert(validationResult.error, 'Corrupted decoded data passed validation.');
+        assert.equal(validationResult.outputIndex, corruptedIndex, 'Reported output index is incorrect');
+        assert.equal(validationResult.inputIndexLeft, inputIndex, 'Reported input index is incorrect');
+    });
+
+    it('Should validate correct permissioned data decoded root hash', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const permissionedDataRootHash = ImportUtilities
+            .calculatePermissionedDataHash(samplePermissionedObject.properties.permissioned_data);
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        const rootHashMatches = permissionedDataService
+            .validatePermissionedDataRoot(decodedPermissionedData, permissionedDataRootHash);
+
+        assert(rootHashMatches, 'Correct permissioned data root hash failed validation.');
+    });
+
+    it('Should report error for incorrect permissioned data decoded root hash', () => {
+        const {
+            permissioned_data_original_length, permissioned_data_array_length, key,
+            encoded_data, encoded_data_root_hash,
+        } = permissionedDataService.encodePermissionedData(samplePermissionedObject);
+
+        const permissionedDataRootHash =
+            '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+        const rootHashMatches = permissionedDataService
+            .validatePermissionedDataRoot(decodedPermissionedData, permissionedDataRootHash);
+
+        assert(!rootHashMatches, 'Correct permissioned data root hash failed validation.');
+    });
+
+    it('Should generate a valid proof for incorrect data', () => {
+        const blocks = [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'F',
+        ];
+
+        for (let i = 0; i < blocks.length; i += 1) {
+            blocks[i] = Buffer.from(blocks[i]).toString('hex').padStart(64, '0');
+        }
+
+        const originalMerkleTree = new MerkleTree(blocks, 'purchase', 'soliditySha3');
+
+        const {
+            key,
+            encoded_data,
+            permissioned_data_root_hash,
+            encoded_data_root_hash,
+        } = permissionedDataService._encodePermissionedDataMerkleTree(originalMerkleTree);
+
+        encoded_data[11] = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+        // 0 A \
+        // 1 B - AB \
+        // 2 C \     >- ABCD
+        // 3 D - CD /        \
+        // 4 E \              > - ABCDEFEF
+        // 5 F - EF >- EFEF /
+        // 6 AB
+        // 7 CD
+        // 8 EF
+        // 9 (EF)
+        // 10 ABCD
+        // 11 EFEF
+        // 12 ABCDEF
+
+        const encodedMerkleTree = new MerkleTree(encoded_data, 'purchase', 'soliditySha3');
+
+        const permissioned_data_array_length = 6;
+
+        const decodedPermissionedData = permissionedDataService
+            .decodePermissionedData(encoded_data, key);
+
+
+        const validationResult = permissionedDataService.validatePermissionedDataTree(
+            decodedPermissionedData,
+            permissioned_data_array_length,
+        );
+
+        assert(validationResult.error, 'Corrupted decoded data passed validation.');
+        assert.equal(validationResult.inputIndexLeft, 8);
+        assert.equal(validationResult.outputIndex, 11);
+
+        const {
+            encodedInputLeft,
+            encodedOutput,
+            proofOfEncodedInputLeft,
+            proofOfEncodedOutput,
+        } = permissionedDataService.prepareNodeDisputeData(
+            encoded_data,
+            validationResult.inputIndexLeft,
+            validationResult.outputIndex,
+        );
+
+        const outputProofResult = encodedMerkleTree.calculateProofResult(
+            proofOfEncodedOutput,
+            encodedOutput,
+            validationResult.outputIndex,
+        );
+        assert.equal(
+            Utilities.normalizeHex(outputProofResult),
+            Utilities.normalizeHex(encodedMerkleTree.getRoot()),
+            'Invalid Merkle proof for output element.',
+        );
+
+        const inputProofResult = encodedMerkleTree.calculateProofResult(
+            proofOfEncodedInputLeft,
+            encodedInputLeft,
+            validationResult.inputIndexLeft,
+        );
+        assert.equal(
+            Utilities.normalizeHex(inputProofResult),
+            Utilities.normalizeHex(encodedMerkleTree.getRoot()),
+            'Invalid Merkle proof for input element.',
+        );
+
+        const keyHash = abi.soliditySHA3(['bytes32', 'uint256'], [key, 8]);
+        const calculatedInput = Encryption.xor(encodedInputLeft, keyHash);
+        const decodedInput = decodedPermissionedData[validationResult.inputIndexLeft + 1];
+
+        assert.equal(calculatedInput, decodedInput, 'Decoded and manually decoded hashes do not match.');
+        assert.equal(decodedInput, originalMerkleTree.levels[2][2], 'Decoded and originally submitted hashes do not match.');
+
+        const expectedHash =
+            originalMerkleTree._generateInternalHash(calculatedInput, decodedInput);
+
+        assert.equal(expectedHash, originalMerkleTree.levels[3][1], 'Calculated and originally submitted output hashes do not match');
+
+        const actualHash = decodedPermissionedData[validationResult.outputIndex];
+        assert.notEqual(actualHash, originalMerkleTree.levels[3][1], 'Original and corrupted output hashes match');
+    });
+
+    it('Calculate the root hash on one permissioned data object', () => {
+        const originalObject = Utilities.copyObject(sample_data.permissioned_data_object);
+        const shuffledObject = Utilities
+            .copyObject(sample_data.permissioned_data_object_shuffled);
+        const differentObject = Utilities.copyObject(sample_data.permissioned_data_object_2);
+
+        const originalRootHash = ImportUtilities.calculatePermissionedDataHash(originalObject);
+        const shuffledRootHash = ImportUtilities.calculatePermissionedDataHash(shuffledObject);
+        const differentRootHash = ImportUtilities.calculatePermissionedDataHash(differentObject);
+
+        assert(originalRootHash != null);
+        assert(shuffledRootHash != null);
+        assert(differentRootHash != null);
+
+        // Hashes should be 32 Bytes (64 characters) with 0x preceding the hash, so 66 characters
+        assert(typeof originalRootHash === 'string');
+        assert(typeof shuffledRootHash === 'string');
+        assert(typeof differentRootHash === 'string');
+
+        assert(originalRootHash.length === 66);
+        assert(shuffledRootHash.length === 66);
+        assert(differentRootHash.length === 66);
+
+        assert.equal(
+            originalRootHash,
+            shuffledRootHash,
+            'Permissioned data root hash for same object with attributes in different order!',
+        );
+
+        assert.notEqual(
+            originalRootHash,
+            differentRootHash,
+            'Permisssioned data root hash for different objects is the same!',
+        );
+    });
+    // eslint-disable-next-line max-len
+    it('Calculating the root hash of an empty permissioned data object should throw an error', () => {
+        const testObject = {};
+
+        let errorHappened = false;
+        try {
+            ImportUtilities.calculatePermissionedDataHash(testObject);
+        } catch (e) {
+            errorHappened = true;
+            assert.equal(
+                e.message,
+                'Cannot calculate root hash of an empty object',
+                'Unexpected error received',
+            );
+        }
+
+        assert(errorHappened, 'calculatePermissionedDataHash did not throw an error!');
+    });
 });

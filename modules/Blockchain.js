@@ -338,8 +338,16 @@ class Blockchain {
         return this.blockchain.getPurchase(purchaseId);
     }
 
+    async getPurchaseStatus(purchaseId) {
+        return this.blockchain.getPurchaseStatus(purchaseId);
+    }
+
     async getPurchasedData(importId, wallet) {
         return this.blockchain.getPurchasedData(importId, wallet);
+    }
+
+    async getPaymentStageInterval() {
+        return this.blockchain.getPaymentStageInterval();
     }
 
     async initiatePurchase(
@@ -370,6 +378,26 @@ class Blockchain {
 
     async takePayment(purchaseId) {
         return this.blockchain.takePayment(purchaseId);
+    }
+
+    async complainAboutNode(
+        purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+        proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
+    ) {
+        return this.blockchain.complainAboutNode(
+            purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+            proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
+        );
+    }
+
+    async complainAboutRoot(
+        purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+        urgent,
+    ) {
+        return this.blockchain.complainAboutRoot(
+            purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+            urgent,
+        );
     }
 
     async sendCommitment(importId, dvWallet, commitment) {
@@ -611,6 +639,15 @@ class Blockchain {
      */
     async keyHasPurpose(identity, key, purpose) {
         return this.blockchain.keyHasPurpose(identity, key, purpose);
+    }
+
+    /**
+     * Check how many events were emitted in a transaction from the transaction receipt
+     * @param receipt - the json object returned as a result of the transaction
+     * @return {Number | undefined} - Returns undefined if the receipt does not have a logs field
+     */
+    numberOfEventsEmitted(receipt) {
+        return this.blockchain.numberOfEventsEmitted(receipt);
     }
 }
 

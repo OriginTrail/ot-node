@@ -102,6 +102,15 @@ exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
 exports.NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS = 256;
 /**
  *
+ * @constant {object} PURCHASE_ERROR_TYPE -
+ *  Types of errors supported for permissioned data purchase
+ */
+exports.PURCHASE_ERROR_TYPE = {
+    NODE_ERROR: 'node_error',
+    ROOT_ERROR: 'root_error',
+};
+/**
+ *
  * @constant {integer} PUBLIC_KEY_VALIDITY_IN_MILLS -
  *  Amount of time one node's public key hash is valid
  */
