@@ -181,13 +181,8 @@ class PermissionedDataService {
             .calculatePermissionedDataMerkleTree(permissionedObject.properties.permissioned_data, 'purchase');
 
         const result = this._encodePermissionedDataMerkleTree(merkleTree);
-
-        const sorted_data = Utilities.sortedStringify(
-            permissionedObject.properties.permissioned_data.data,
-            true,
-        );
-
-        const data = Buffer.from(sorted_data);
+        const data =
+            Buffer.from(JSON.stringify(permissionedObject.properties.permissioned_data.data));
         result.permissioned_data_original_length = data.length;
 
         return result;
@@ -266,15 +261,24 @@ class PermissionedDataService {
         let block_size = Math.min(Math
             .round(permissionedDataOriginalLength / first_level_blocks), default_block_size);
         block_size = block_size < 1 ? 1 : block_size;
-        const numberOfBlocks = permissionedDataOriginalLength / block_size;
-        let originalDataString = '';
+        const numberOfBlocks = Math.ceil(permissionedDataOriginalLength / block_size);
+        const originDataBufferArray = [];
         for (let i = 0; i < numberOfBlocks; i += 1) {
             const dataElement = Buffer.from(originalDataArray[i], 'hex');
-            const block = dataElement.slice(dataElement.length - block_size, dataElement.length);
-            // todo we need better handling for padding removal
-            originalDataString += block.toString().split(' ').join('');
+            let blockSize = block_size;
+            if (i + 1 === numberOfBlocks) {
+                // if last element, check for data length
+                const lastElementDataLength
+                    = permissionedDataOriginalLength - ((numberOfBlocks - 1) * block_size);
+                if (lastElementDataLength > 0) {
+                    blockSize = lastElementDataLength;
+                }
+            }
+            const block = dataElement.slice(dataElement.length - blockSize, dataElement.length);
+            originDataBufferArray.push(block);
         }
-        return JSON.parse(originalDataString);
+        const reconstructedData = Buffer.concat(originDataBufferArray).toString();
+        return JSON.parse(reconstructedData);
     }
 
     prepareNodeDisputeData(encodedData, inputIndexLeft, outputIndex) {
@@ -322,8 +326,8 @@ class PermissionedDataService {
             if (relatedObject.vertex.vertexType === 'Data') {
                 const vertexData = relatedObject.vertex.data;
                 const permissionedObject = vertexData.permissioned_data;
-                if (permissionedObject) {
-                    // todo we have sorting issue when calculating permissioned data hash
+                if (permissionedObject &&
+                    permissionedObject.permissioned_data_hash === calculatedPermissionedDataHash) {
                     permissionedObject.data = permissionedData;
                     documentsToBeUpdated.push(relatedObject.vertex);
                 }
