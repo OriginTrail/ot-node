@@ -420,6 +420,10 @@ class Kademlia {
         });
 
         this.node.use('*', async (request, response, next) => {
+            if (!this.validateContact(request.contact[0], request.contact[1])) {
+                response.send('Contact belongs to a different network.');
+                return;
+            }
             if (request.params.header) {
                 const header = JSON.parse(request.params.header);
                 if (header.ttl && header.from && header.to) {
@@ -802,9 +806,6 @@ class Kademlia {
             return false;
         }
 
-        if (this.config.requireApproval && !this.approvalService.isApproved(identity)) {
-            return false;
-        }
         return true;
     }
 
