@@ -242,17 +242,6 @@ function main() {
         logger.info('Identity given: ', process.env.ERC_725_IDENTITY);
     }
 
-    if (process.env.KAD_IDENTITY && process.env.KAD_IDENTITY_CHILD_INDEX) {
-        const identityFilePath =
-            path.join(localConfiguration.appDataPath, localConfiguration.identity_filepath);
-        const content = {
-            xprivkey: process.env.KAD_IDENTITY,
-            index: parseInt(process.env.KAD_IDENTITY_CHILD_INDEX, 10),
-        };
-        fs.writeFileSync(identityFilePath, JSON.stringify(content, null, 4));
-        logger.info('Kademlia identity given: ', process.env.KAD_IDENTITY);
-    }
-
     if (process.env.IMPORT_WHITELIST) {
         if (!externalConfig.network) {
             externalConfig.network = {};
