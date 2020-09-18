@@ -214,7 +214,7 @@ class Kademlia {
             if (!fs.existsSync(peerCacheFilePath)) {
                 fs.writeFileSync(peerCacheFilePath, '{}');
             } else {
-                this._filterPeerCache(peerCacheFilePath);
+                this._filterContacts(peerCacheFilePath);
             }
 
             this.node.rolodex = this.node.plugin(kadence.rolodex(peerCacheFilePath));
@@ -277,7 +277,7 @@ class Kademlia {
                     if (entry) {
                         this.log.info(`Connected to network via ${entry}`);
                         this.log.info(`Discovered ${this.node.router.size} peers from seed`);
-                        this._filterPeerCache(peerCacheFilePath);
+                        this._filterContacts(peerCacheFilePath);
                     }
                     resolve();
                 });
@@ -893,13 +893,18 @@ class Kademlia {
     }
 
 
-    _filterContacts() {
+
+    _filterRoutingTable() {
+        const message = {};
         const nodesToRemove = [];
+
         this.node.router.forEach((value, key, map) => {
             if (value.length > 0) {
                 value.forEach((bValue, bKey, bMap) => {
                     if (bValue.network_id !== this.config.network.id) {
                         nodesToRemove.push(bKey);
+                    } else {
+                        message[bKey] = bValue;
                     }
                 });
             }
@@ -908,18 +913,6 @@ class Kademlia {
         for (const nod of nodesToRemove) {
             this.node.router.removeContactByNodeId(nod);
         }
-
-        const message = {};
-        this.node.router.forEach((value, key, map) => {
-            if (value.length > 0) {
-                value.forEach((bValue, bKey, bMap) => {
-                    if (bValue.network_id !== this.config.network.id) {
-                        nodesToRemove.push(bKey);
-                    }
-                    message[bKey] = bValue;
-                });
-            }
-        });
 
         return message;
     }
@@ -936,9 +929,14 @@ class Kademlia {
             }
         }
 
-        this._filterContacts();
-
         fs.writeFileSync(peerCacheFilePath, JSON.stringify(peerCache));
+
+        return peerCache;
+    }
+
+    _filterContacts(peerCacheFilePath) {
+        this._filterPeerCache(peerCacheFilePath);
+        this._filterRoutingTable();
     }
 }
 
