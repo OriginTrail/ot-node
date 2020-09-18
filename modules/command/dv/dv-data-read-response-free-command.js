@@ -101,15 +101,15 @@ class DVDataReadResponseFreeCommand extends Command {
         );
 
         const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
-        const profile = await this.blockchain.getProfile(erc725Identity);
+        // const profile = await this.blockchain.getProfile(erc725Identity);
 
-        await this.permissionedDataService.addDataSellerForPermissionedData(
-            dataSetId,
-            erc725Identity,
-            0,
-            profile.nodeId.toLowerCase().slice(0, 42),
-            document['@graph'],
-        );
+        // await this.permissionedDataService.addDataSellerForPermissionedData(
+        //     dataSetId,
+        //     erc725Identity,
+        //     0,
+        //     profile.nodeId.toLowerCase().slice(0, 42),
+        //     document['@graph'],
+        // );
 
         const handler = await Models.handler_ids.findOne({
             where: { handler_id },

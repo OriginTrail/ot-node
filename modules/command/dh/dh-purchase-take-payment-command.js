@@ -31,13 +31,13 @@ class DhPurchaseTakePaymentCommand extends Command {
                 await this.blockchain.takePayment(purchase_id);
                 dataTrade.status = 'COMPLETED';
                 await dataTrade.save({ fields: ['status'] });
-                await Models.data_sellers.create({
-                    data_set_id: dataTrade.data_set_id,
-                    ot_json_object_id: dataTrade.ot_json_object_id,
-                    seller_node_id: dataTrade.seller_node_id,
-                    seller_erc_id: dataTrade.seller_erc_id,
-                    price: dataTrade.price,
-                });
+                // await Models.data_sellers.create({
+                //     data_set_id: dataTrade.data_set_id,
+                //     ot_json_object_id: dataTrade.ot_json_object_id,
+                //     seller_node_id: dataTrade.seller_node_id,
+                //     seller_erc_id: dataTrade.seller_erc_id,
+                //     price: dataTrade.price,
+                // });
                 this.logger.info(`Payment has been taken for purchase ${purchase_id}`);
             } catch (error) {
                 if (error.message.includes('Complaint window has not yet expired!')) {
