@@ -213,6 +213,8 @@ class Kademlia {
 
             if (!fs.existsSync(peerCacheFilePath)) {
                 fs.writeFileSync(peerCacheFilePath, '{}');
+            } else {
+                this._filterContacts(peerCacheFilePath);
             }
 
             this.node.rolodex = this.node.plugin(kadence.rolodex(peerCacheFilePath));
@@ -242,6 +244,23 @@ class Kademlia {
 
             this._registerRoutes();
 
+            // Override node's _updateContact method to filter contacts.
+            this.node._updateContact = (identity, contact) => {
+                try {
+                    if (!this.validateContact(identity, contact)) {
+                        this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
+                        return;
+                    }
+                } catch (err) {
+                    this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
+                    return;
+                }
+
+                // Simulate node's "super._updateContact(identity, contact)".
+                this.node.constructor.prototype.constructor.prototype
+                    ._updateContact.call(this.node, identity, contact);
+            };
+
             this.node.listen(this.config.node_port, () => {
                 this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
                 this.kademliaUtilities.registerControlInterface(this.config, this.node);
@@ -258,6 +277,7 @@ class Kademlia {
                     if (entry) {
                         this.log.info(`Connected to network via ${entry}`);
                         this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+                        this._filterContacts(peerCacheFilePath);
                     }
                     resolve();
                 });
@@ -870,6 +890,53 @@ class Kademlia {
             }
         }
         return null;
+    }
+
+
+
+    _filterRoutingTable() {
+        const message = {};
+        const nodesToRemove = [];
+
+        this.node.router.forEach((value, key, map) => {
+            if (value.length > 0) {
+                value.forEach((bValue, bKey, bMap) => {
+                    if (bValue.network_id !== this.config.network.id) {
+                        nodesToRemove.push(bKey);
+                    } else {
+                        message[bKey] = bValue;
+                    }
+                });
+            }
+        });
+
+        for (const nod of nodesToRemove) {
+            this.node.router.removeContactByNodeId(nod);
+        }
+
+        return message;
+    }
+
+    _filterPeerCache(peerCacheFilePath) {
+        const peerCacheFile = fs.readFileSync(peerCacheFilePath);
+
+        const peerCache = JSON.parse(peerCacheFile);
+
+        for (const id in peerCache) {
+            const elem = peerCache[id];
+            if (elem.network_id !== this.config.network.id) {
+                delete peerCache[id];
+            }
+        }
+
+        fs.writeFileSync(peerCacheFilePath, JSON.stringify(peerCache));
+
+        return peerCache;
+    }
+
+    _filterContacts(peerCacheFilePath) {
+        this._filterPeerCache(peerCacheFilePath);
+        this._filterRoutingTable();
     }
 }
 
