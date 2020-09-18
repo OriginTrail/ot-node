@@ -181,17 +181,17 @@ class DCController {
         const otObjects = await Promise.all(promises);
         replayMessage.ot_objects = otObjects;
 
-        const normalized_dv_erc725_identity = Utilities.normalizeHex(dv_erc725_identity);
-
-        privateDataPermissions.forEach(async (privateDataPermisssion) => {
-            await Models.data_sellers.create({
-                data_set_id,
-                ot_json_object_id: privateDataPermisssion.ot_json_object_id,
-                seller_node_id: nodeId.toLowerCase(),
-                seller_erc_id: normalized_dv_erc725_identity,
-                price: 0,
-            });
-        });
+        // const normalized_dv_erc725_identity = Utilities.normalizeHex(dv_erc725_identity);
+        //
+        // privateDataPermissions.forEach(async (privateDataPermisssion) => {
+        //     await Models.data_sellers.create({
+        //         data_set_id,
+        //         ot_json_object_id: privateDataPermisssion.ot_json_object_id,
+        //         seller_node_id: nodeId.toLowerCase(),
+        //         seller_erc_id: normalized_dv_erc725_identity,
+        //         price: 0,
+        //     });
+        // });
 
         const privateDataReadResponseObject = {
             message: replayMessage,
