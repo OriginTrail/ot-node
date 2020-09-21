@@ -113,7 +113,7 @@ class WotOtJsonTranspiler {
                         '@value': property.name,
                     },
                 ],
-                properties: property.values,
+                properties: { data: property.values },
                 relations: [],
             };
 
@@ -149,7 +149,7 @@ class WotOtJsonTranspiler {
             const createRelation = (id, data) => ({
                 '@type': 'otRelation',
                 relationType: 'PART_OF',
-                direction: 'reverse', // think about direction
+                direction: 'direct', // think about direction
                 linkedObject: {
                     '@id': id,
                 },
@@ -317,7 +317,7 @@ class WotOtJsonTranspiler {
             const property = {
                 id: otProperty.identifiers.find(x => x['@type'] === 'internal_id')['@value'],
                 name: otProperty.identifiers.find(x => x['@type'] === 'name')['@value'],
-                values: properties,
+                values: properties.data,
             };
 
             results.push(property);
