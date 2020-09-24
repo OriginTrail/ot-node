@@ -488,10 +488,10 @@ class EventEmitter {
                     seller_erc_id,
                     price,
                 } = message;
-                // await dvController.handleNewDataSeller(
-                //     purchase_id, seller_erc_id, seller_node_id,
-                //     data_set_id, ot_object_id, price,
-                // );
+                await dvController.handleNewDataSeller(
+                    purchase_id, seller_erc_id, seller_node_id,
+                    data_set_id, ot_object_id, price,
+                );
             } catch (error) {
                 const errorMessage = `Failed to process purchase completion message. ${error}.`;
                 logger.warn(errorMessage);

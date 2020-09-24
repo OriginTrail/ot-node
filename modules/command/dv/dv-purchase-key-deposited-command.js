@@ -134,13 +134,13 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     },
                 );
 
-                // await Models.data_sellers.create({
-                //     data_set_id,
-                //     ot_json_object_id: ot_object_id,
-                //     seller_node_id: this.config.identity,
-                //     seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
-                //     price: this.config.default_data_price,
-                // });
+                await Models.data_sellers.create({
+                    data_set_id,
+                    ot_json_object_id: ot_object_id,
+                    seller_node_id: this.config.identity,
+                    seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                    price: this.config.default_data_price,
+                });
                 this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
                 this.remoteControl.purchaseStatus('Purchase completed', 'You can preview the purchased data in My Purchases page.');
 
@@ -162,6 +162,8 @@ class DvPurchaseKeyDepositedCommand extends Command {
                         this.web3,
                         this.config.node_private_key,
                     );
+
+
 
                 await this.transport.publish('kad-purchase-complete', purchaseCompletionObject);
                 this.logger.info('Published purchase confirmation on the network.');

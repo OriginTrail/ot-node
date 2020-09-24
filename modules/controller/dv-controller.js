@@ -333,11 +333,12 @@ class DVController {
 
     async getPermissionedDataAvailable(req, res) {
         this.logger.api('GET: Permissioned data Available for purchase.');
-
-        const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(select 1 from data_trades as dt where ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id and status != "FAILED")';
+        const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(select 1 from data_trades as dt where ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id and status != "FAILED") ' +
+            'and NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
         const data = await Models.sequelize.query(
             query,
             {
+                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
                 type: QueryTypes.SELECT,
             },
         );
