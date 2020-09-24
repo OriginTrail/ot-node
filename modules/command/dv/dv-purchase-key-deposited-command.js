@@ -163,6 +163,8 @@ class DvPurchaseKeyDepositedCommand extends Command {
                         this.config.node_private_key,
                     );
 
+
+
                 await this.transport.publish('kad-purchase-complete', purchaseCompletionObject);
                 this.logger.info('Published purchase confirmation on the network.');
 
