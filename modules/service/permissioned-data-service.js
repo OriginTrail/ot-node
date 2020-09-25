@@ -277,7 +277,7 @@ class PermissionedDataService {
             const block = dataElement.slice(dataElement.length - blockSize, dataElement.length);
             originDataBufferArray.push(block);
         }
-        const reconstructedData = Buffer.concat(originDataBufferArray).toString();
+        const reconstructedData = Buffer.concat(originDataBufferArray).toString('utf8');
         return JSON.parse(reconstructedData);
     }
 
