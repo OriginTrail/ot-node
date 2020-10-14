@@ -893,7 +893,6 @@ class Kademlia {
     }
 
 
-
     _filterRoutingTable() {
         const message = {};
         const nodesToRemove = [];
