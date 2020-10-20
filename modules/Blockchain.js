@@ -20,13 +20,18 @@ class Blockchain {
 
         this.blockchain = [];
 
-        switch (this.config.blockchain_title) {
-        case 'Ethereum':
-            this.blockchain[0] = new Ethereum(ctx);
-            break;
-        default:
-            this.log.error('Unsupported blockchain', this.config.blockchain_title);
+        for (let i = 0; i < ctx.config.blockchain.implementations.length; i += 1) {
+            const implementation_configuration = ctx.config.blockchain.implementations[i];
+
+            switch (implementation_configuration.blockchain_title) {
+            case 'Ethereum':
+                this.blockchain[i] = new Ethereum(ctx, implementation_configuration);
+                break;
+            default:
+                this.log.error('Unsupported blockchain', this.config.blockchain_title);
+            }
         }
+
         this.pluginService.bootstrap();
     }
 
@@ -35,7 +40,18 @@ class Blockchain {
      * @returns {Promise<void>}
      */
     async initialize() {
-        await this.blockchain[0].initialize();
+        try {
+            const promises = [];
+
+            for (let i = 0; i < this.blockchain.length; i += 1) {
+                promises.push(this.blockchain[i].initialize());
+            }
+
+            await Promise.all(promises);
+        } catch (e) {
+            this.log.warn(`Failed to initialize all blockchain implementations. ${e}`);
+            throw e;
+        }
 
         if (!this.initalized) {
             this.initalized = true;
@@ -271,14 +287,6 @@ class Blockchain {
      */
     subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn, blockchain_id) {
         let implementation;
-
-        if (blockchain_id) {
-            implementation =
-                this.blockchain.find(element => element.config.network_id === blockchain_id);
-        } else {
-            // eslint-disable-next-line prefer-destructuring
-            implementation = this.blockchain[0];
-        }
 
         return new Promise((resolve, reject) => {
             let clearToken;

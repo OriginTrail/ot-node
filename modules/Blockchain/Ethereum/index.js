@@ -3,6 +3,7 @@ const BN = require('bn.js');
 const uuidv4 = require('uuid/v4');
 const ethereumAbi = require('ethereumjs-abi');
 const Op = require('sequelize/lib/operators');
+const Web3 = require('web3');
 
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
@@ -18,19 +19,17 @@ class Ethereum {
         web3,
         logger,
         pricingService,
-    }) {
+    }, configuration) {
         // Loading Web3
         this.emitter = emitter;
-        this.web3 = web3;
+        this.web3 = new Web3(new Web3.providers.HttpProvider(configuration.rpc_server_url));
         this.logger = logger;
         this.pricingService = pricingService;
 
-        this.config = {
-            wallet_address: config.node_wallet,
-            node_private_key: config.node_private_key,
-            erc725Identity: config.erc725Identity,
-        };
-        Object.assign(this.config, config.blockchain);
+        this.config = configuration;
+        this.config.wallet_address = config.node_wallet;
+        this.config.node_private_key = config.node_private_key;
+        this.config.erc725Identity = config.erc725Identity;
 
         this.transactions = new Transactions(
             this.web3,
@@ -46,8 +45,6 @@ class Ethereum {
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
         this.logger.info('Selected blockchain: Ethereum');
-
-        this.initalized = false;
     }
 
     /**
