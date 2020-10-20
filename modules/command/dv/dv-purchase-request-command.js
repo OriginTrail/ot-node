@@ -13,6 +13,7 @@ class DvPurchaseRequestCommand extends Command {
         this.logger = ctx.logger;
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -76,9 +77,10 @@ class DvPurchaseRequestCommand extends Command {
             }
         }
 
+        // todo pass blockchain identity
         const message = {
             data_set_id,
-            dv_erc725_identity: this.config.erc725Identity,
+            dv_erc725_identity: this.profileService.getIdentity('ethr'),
             handler_id,
             ot_json_object_id: ot_object_id,
             price: dataSeller.price,
@@ -99,11 +101,12 @@ class DvPurchaseRequestCommand extends Command {
             seller_node_id,
         );
 
+        // todo pass blockchain identity
         await Models.data_trades.create({
             data_set_id,
             ot_json_object_id: ot_object_id,
             buyer_node_id: this.config.identity,
-            buyer_erc_id: this.config.erc725Identity.toLowerCase(),
+            buyer_erc_id: this.profileService.getIdentity('ethr'),
             seller_node_id,
             seller_erc_id: dataSeller.seller_erc_id,
             price: dataSeller.price,

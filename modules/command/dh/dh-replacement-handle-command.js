@@ -22,6 +22,7 @@ class DHReplacementImportCommand extends Command {
         this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
         this.challengeService = ctx.challengeService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -39,10 +40,11 @@ class DHReplacementImportCommand extends Command {
         const dcNodeId = Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
 
         this.logger.trace(`Sending replacement request for offer ${offerId} to ${dcNodeId}.`);
+        // todo pass blockchain identity
         const response = await this.transport.replacementReplicationRequest({
             offerId,
             wallet: this.config.node_wallet,
-            dhIdentity: this.config.erc725Identity,
+            dhIdentity: this.profileService.getIdentity('ethr'),
         }, dcNodeId);
 
         this.logger.info(`Replacement replication request for ${offerId} sent to ${dcNodeId}`);
@@ -202,15 +204,17 @@ class DHReplacementImportCommand extends Command {
 
         this.logger.important(`[DH] Replacement replication finished for offer ID ${offerId}`);
 
+        // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
-            Utilities.denormalizeHex(this.config.erc725Identity)];
+            Utilities.denormalizeHex(this.profileService.getIdentity('ethr'))];
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
 
+        // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
-            dhIdentity: this.config.erc725Identity,
+            dhIdentity: this.profileService.getIdentity('ethr'),
             messageSignature: messageSignature.signature,
         };
 

@@ -156,7 +156,8 @@ class DCService {
      * @return {Promise<*>}
      */
     async hasProfileBalanceForOffer(tokenAmountPerHolder) {
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const profile = await this.blockchain.getProfile(this.profileService.getIdentity('ethr'));
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
@@ -454,6 +455,7 @@ class DCService {
             ot_objects,
         );
 
+        // todo pass blockchain identity
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
@@ -471,7 +473,7 @@ class DCService {
             transaction_hash: offer.transaction_hash,
             distributionSignature,
             color: colorNumber,
-            dcIdentity: this.config.erc725Identity,
+            dcIdentity: this.profileService.getIdentity('ethr'),
         };
 
         // send replication to DH

@@ -14,6 +14,7 @@ class DCOfferCreateBcCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -39,8 +40,9 @@ class DCOfferCreateBcCommand extends Command {
         let result;
 
         try {
+            // todo pass blockchain identity
             result = await this.blockchain.createOffer(
-                Utilities.normalizeHex(this.config.erc725Identity),
+                Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
                 dataSetId,
                 dataRootHash,
                 redLitigationHash,

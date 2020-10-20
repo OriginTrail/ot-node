@@ -24,6 +24,7 @@ class DhReplicationImportCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.blockchain = ctx.blockchain;
         this.challengeService = ctx.challengeService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -170,15 +171,17 @@ class DhReplicationImportCommand extends Command {
         }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
+        // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
-            Utilities.denormalizeHex(this.config.erc725Identity)];
+            this.profileService.getIdentity('ethr')];
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
 
+        // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
-            dhIdentity: this.config.erc725Identity,
+            dhIdentity: this.profileService.getIdentity('ethr'),
             messageSignature: messageSignature.signature,
             wallet: this.config.node_wallet,
         };

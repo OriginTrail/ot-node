@@ -17,6 +17,7 @@ class DhPayOutCommand extends Command {
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -36,7 +37,8 @@ class DhPayOutCommand extends Command {
             },
         });
 
-        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const blockchainIdentity = Utilities.normalizeHex(this.profileService.getIdentity('ethr'));
 
         if (!bid) {
             this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);

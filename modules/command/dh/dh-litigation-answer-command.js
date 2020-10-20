@@ -18,6 +18,7 @@ class DHLitigationAnswerCommand extends Command {
         this.replicationService = ctx.replicationService;
         this.challengeService = ctx.challengeService;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -41,7 +42,8 @@ class DHLitigationAnswerCommand extends Command {
             throw new Error(`Failed to find holding data for offer ${offerId}`);
         }
 
-        const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const dhIdentity = utilities.normalizeHex(this.profileService.getIdentity('ethr'));
         const { status, timestamp } = await this.blockchain.getLitigation(offerId, dhIdentity);
 
         const { litigation_interval_in_minutes } = await models.bids.findOne({

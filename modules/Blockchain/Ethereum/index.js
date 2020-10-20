@@ -7,6 +7,9 @@ const Op = require('sequelize/lib/operators');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
+const path = require('path');
+
+const blockchain_id = 'ethr';
 
 class Ethereum {
     /**
@@ -34,6 +37,8 @@ class Ethereum {
         };
         Object.assign(this.config, config.blockchain);
 
+        this.config[blockchain_id].erc725Identity = this._loadIdentityFromFile();
+
         this.transactions = new Transactions(
             this.web3,
             this.config.wallet_address,
@@ -50,6 +55,26 @@ class Ethereum {
         this.logger.info('Selected blockchain: Ethereum');
 
         this.initalized = false;
+    }
+
+    /**
+     * Reads identity from file
+     * @returns {Promise<erc725Identity>}
+     * @private
+     */
+    _loadIdentityFromFile() {
+        const implementation = this.config.blockchain.implementations
+            .filter(implementation => implementation.blockchain_id === blockchain_id);
+
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            implementation.identity_filepath,
+        );
+        if (fs.existsSync(identityFilePath)) {
+            const content = JSON.parse(fs.readFileSync(identityFilePath).toString());
+            return content.identity;
+        }
+        return null;
     }
 
     /**
@@ -1607,6 +1632,37 @@ class Ethereum {
             return undefined;
         }
         return receipt.logs.length;
+    }
+
+    /**
+     * Returns identity from configuration
+     */
+    getIdentity() {
+        return this.config[blockchain_id].erc725Identity;
+    }
+
+    /**
+     * Returns specific blockchain id
+     * @returns {string}
+     */
+    getBlockchainId() {
+        return blockchain_id;
+    }
+
+    saveIdentity(identity) {
+        this.config[blockchain_id].erc725Identity = Utilities.normalizeHex(identity);
+
+        const implementation = this.config.blockchain.implementations
+            .filter(implementation => implementation.blockchain_id === blockchain_id);
+
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            implementation.identity_filepath,
+        );
+
+        fs.writeFileSync(identityFilePath, JSON.stringify({
+            identity,
+        }));
     }
 }
 

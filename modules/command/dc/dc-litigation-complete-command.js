@@ -15,6 +15,7 @@ class DCLitigationCompleteCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -43,7 +44,8 @@ class DCLitigationCompleteCommand extends Command {
             return Command.empty();
         }
 
-        const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const dcIdentity = utilities.normalizeHex(this.profileService.getIdentity('ethr'));
 
         const challenge = await models.challenges.findOne({
             where:

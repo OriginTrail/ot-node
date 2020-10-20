@@ -321,7 +321,6 @@ class OTNode {
             // log.info(`Database version: ${myVersion}`);
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
-            console.log(err);
             process.exit(1);
         }
 
@@ -357,15 +356,7 @@ class OTNode {
         }
         await transport.start();
 
-        // Check if ERC725 has valid node ID.
-        const profile = await blockchain.getProfile(config.erc725Identity);
-
-        if (!profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
-            await blockchain.setNodeId(
-                config.erc725Identity,
-                Utilities.normalizeHex(config.identity.toLowerCase()),
-            );
-        }
+        await profileService.validateAndUpdateProfiles();
         // Initialize bugsnag notification service
         const errorNotificationService = container.resolve('errorNotificationService');
         await errorNotificationService.initialize();

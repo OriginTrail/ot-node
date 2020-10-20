@@ -181,7 +181,8 @@ class DHService {
      * @private
      */
     async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder) {
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const profile = await this.blockchain.getProfile(this.profileService.getIdentity('ethr'));
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
         const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);

@@ -649,6 +649,26 @@ class Blockchain {
     numberOfEventsEmitted(receipt) {
         return this.blockchain.numberOfEventsEmitted(receipt);
     }
+
+    /**
+     * Returns created identities from configuration
+     */
+    getIdentities() {
+        const identity = this.blockchain.getIdentity();
+        const identities = [{
+            blockchain_id: this.blockchain.getBlockchainId(),
+            response: identity ? { identity } : null,
+        }];
+
+        return identities;
+    }
+
+    /**
+     * Saves identity into file and configuration
+     */
+    saveIdentity(identity, blockchainId) {
+        this.blockchain.saveIdentity(identity);
+    }
 }
 
 module.exports = Blockchain;
