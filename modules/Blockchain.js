@@ -1,4 +1,9 @@
 const Ethereum = require('./Blockchain/Ethereum/index.js');
+const uuidv4 = require('uuid/v4');
+const Op = require('sequelize/lib/operators');
+
+const Utilities = require('./Utilities');
+const Models = require('../models');
 
 class Blockchain {
     /**
@@ -11,14 +16,22 @@ class Blockchain {
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
         this.pluginService = ctx.blockchainPluginService;
+        this.appState = ctx.appState;
 
-        switch (this.config.blockchain_title) {
-        case 'Ethereum':
-            this.blockchain = new Ethereum(ctx);
-            break;
-        default:
-            this.log.error('Unsupported blockchain', this.config.blockchain_title);
+        this.blockchain = [];
+
+        for (let i = 0; i < ctx.config.blockchain.implementations.length; i += 1) {
+            const implementation_configuration = ctx.config.blockchain.implementations[i];
+
+            switch (implementation_configuration.blockchain_title) {
+            case 'Ethereum':
+                this.blockchain[i] = new Ethereum(ctx, implementation_configuration);
+                break;
+            default:
+                this.log.error('Unsupported blockchain', this.config.blockchain_title);
+            }
         }
+
         this.pluginService.bootstrap();
     }
 
@@ -27,7 +40,28 @@ class Blockchain {
      * @returns {Promise<void>}
      */
     async initialize() {
-        await this.blockchain.initialize();
+        try {
+            const promises = [];
+
+            for (let i = 0; i < this.blockchain.length; i += 1) {
+                promises.push(this.blockchain[i].initialize());
+            }
+
+            await Promise.all(promises);
+        } catch (e) {
+            this.log.warn(`Failed to initialize all blockchain implementations. ${e}`);
+            throw e;
+        }
+
+        if (!this.initalized) {
+            this.initalized = true;
+            this.subscribeToEventPermanentWithCallback([
+                'ContractsChanged',
+            ], async (eventData) => {
+                this.log.notify('Contracts changed, refreshing information.');
+                await this.initialize();
+            });
+        }
     }
 
     /**
@@ -45,7 +79,7 @@ class Blockchain {
      * @param identity
      */
     getProfile(identity) {
-        return this.blockchain.getProfile(identity);
+        return this.blockchain[0].getProfile(identity);
     }
 
     /**
@@ -54,7 +88,7 @@ class Blockchain {
      * @param nodeId
      */
     async setNodeId(identity, nodeId) {
-        return this.blockchain.setNodeId(identity, nodeId);
+        return this.blockchain[0].setNodeId(identity, nodeId);
     }
 
     /**
@@ -73,7 +107,7 @@ class Blockchain {
         isSender725,
         blockchainIdentity,
     ) {
-        return this.blockchain.createProfile(
+        return this.blockchain[0].createProfile(
             managementWallet,
             profileNodeId, initialBalance, isSender725,
             blockchainIdentity,
@@ -85,7 +119,7 @@ class Blockchain {
      * @returns {Promise<*>}
      */
     async getProfileMinimumStake() {
-        return this.blockchain.getProfileMinimumStake();
+        return this.blockchain[0].getProfileMinimumStake();
     }
 
     /**
@@ -93,7 +127,7 @@ class Blockchain {
      * @return {Promise<*>}
      */
     async getProfileWithdrawalTime() {
-        return this.blockchain.getProfileWithdrawalTime();
+        return this.blockchain[0].getProfileWithdrawalTime();
     }
 
     /**
@@ -102,7 +136,7 @@ class Blockchain {
      * @returns {Promise}
      */
     increaseProfileApproval(tokenAmountIncrease) {
-        return this.blockchain.increaseProfileApproval(tokenAmountIncrease);
+        return this.blockchain[0].increaseProfileApproval(tokenAmountIncrease);
     }
 
     /**
@@ -119,7 +153,7 @@ class Blockchain {
         offerId, holderIdentity, litigatorIdentity,
         requestedObjectIndex, requestedBlockIndex, hashArray,
     ) {
-        return this.blockchain.initiateLitigation(
+        return this.blockchain[0].initiateLitigation(
             offerId,
             holderIdentity, litigatorIdentity, requestedObjectIndex, requestedBlockIndex, hashArray,
         );
@@ -143,7 +177,7 @@ class Blockchain {
         leafIndex,
         urgent,
     ) {
-        return this.blockchain.completeLitigation(
+        return this.blockchain[0].completeLitigation(
             offerId, holderIdentity,
             challengerIdentity, proofData, leafIndex, urgent,
         );
@@ -158,7 +192,7 @@ class Blockchain {
      * @return {Promise<any>}
      */
     answerLitigation(offerId, holderIdentity, answer, urgent) {
-        return this.blockchain.answerLitigation(offerId, holderIdentity, answer, urgent);
+        return this.blockchain[0].answerLitigation(offerId, holderIdentity, answer, urgent);
     }
 
     /**
@@ -169,7 +203,7 @@ class Blockchain {
      * @returns {Promise}
      */
     payOut(blockchainIdentity, offerId, urgent) {
-        return this.blockchain.payOut(blockchainIdentity, offerId, urgent);
+        return this.blockchain[0].payOut(blockchainIdentity, offerId, urgent);
     }
 
     /**
@@ -180,7 +214,7 @@ class Blockchain {
         blockchainIdentity,
         offerIds,
     ) {
-        return this.blockchain.payOutMultiple(
+        return this.blockchain[0].payOutMultiple(
             blockchainIdentity,
             offerIds,
         );
@@ -204,7 +238,7 @@ class Blockchain {
         litigationIntervalInMinutes,
         urgent,
     ) {
-        return this.blockchain.createOffer(
+        return this.blockchain[0].createOffer(
             blockchainIdentity,
             dataSetId,
             dataRootHash,
@@ -236,7 +270,7 @@ class Blockchain {
         parentIdentity,
         urgent,
     ) {
-        return this.blockchain.finalizeOffer(
+        return this.blockchain[0].finalizeOffer(
             blockchainIdentity, offerId, shift, confirmation1,
             confirmation2, confirmation3, encryptionType, holders, parentIdentity, urgent,
         );
@@ -249,10 +283,61 @@ class Blockchain {
      * @param endMs
      * @param endCallback
      * @param filterFn
+     * @param blockchain_id
      */
-    subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn) {
-        return this.blockchain
-            .subscribeToEvent(event, importId, endMs, endCallback, filterFn);
+    subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn, blockchain_id) {
+        let implementation;
+
+        return new Promise((resolve, reject) => {
+            let clearToken;
+            const token = setInterval(() => {
+                const where = {
+                    event,
+                    finished: 0,
+                };
+                if (importId) {
+                    where.import_id = importId;
+                }
+                if (blockchain_id) {
+                    where.blockchain_id = blockchain_id;
+                }
+
+                Models.events.findAll({
+                    where,
+                }).then((events) => {
+                    for (const eventData of events) {
+                        const parsedData = JSON.parse(eventData.dataValues.data);
+
+                        let ok = true;
+                        if (filterFn) {
+                            ok = filterFn(parsedData);
+                        }
+                        if (!ok) {
+                            // eslint-disable-next-line
+                            continue;
+                        }
+                        eventData.finished = true;
+                        // eslint-disable-next-line no-loop-func
+                        eventData.save().then(() => {
+                            clearTimeout(clearToken);
+                            clearInterval(token);
+                            resolve(parsedData);
+                        }).catch((err) => {
+                            this.logger.error(`Failed to update event ${event}. ${err}`);
+                            reject(err);
+                        });
+                        break;
+                    }
+                });
+            }, 2000);
+            clearToken = setTimeout(() => {
+                if (endCallback) {
+                    endCallback();
+                }
+                clearInterval(token);
+                resolve(null);
+            }, endMs);
+        });
     }
 
     /**
@@ -261,10 +346,62 @@ class Blockchain {
      * Calling this method will subscribe to Blockchain's event which will be
      * emitted globally using globalEmitter.
      * @param event Event to listen to
+     * @param blockchain_id - Blockchain to listen to
      * @returns {number | Object} Event handle
      */
-    async subscribeToEventPermanent(event) {
-        return this.blockchain.subscribeToEventPermanent(event);
+    async subscribeToEventPermanent(event, blockchain_id) {
+        const blockStartConditions = [];
+
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            const startBlockNumber = await implementation.getCurrentBlock();
+            blockStartConditions.push({
+                blockchain_id,
+                block: { [Op.gte]: startBlockNumber },
+            });
+        } else {
+            const promises = [];
+
+            for (let i = 0; i < this.blockchain.length; i += 1) {
+                const implementation = this.blockchain[i];
+                promises.push(implementation.getCurrentBlock());
+            }
+            const currentBlocks = await Promise.all(promises);
+
+            for (let i = 0; i < currentBlocks.length; i += 1) {
+                const implementation = this.blockchain[i];
+
+                blockStartConditions.push({
+                    blockchain_id: implementation.config.network_id,
+                    block: { [Op.gte]: currentBlocks[i] },
+                });
+            }
+        }
+
+        const that = this;
+        const handle = setInterval(async () => {
+            if (!that.appState.started) {
+                return;
+            }
+
+            const where = {
+                event,
+                finished: 0,
+                [Op.or]: blockStartConditions,
+            };
+
+            const eventData = await Models.events.findAll({ where });
+            if (eventData) {
+                eventData.forEach(async (data) => {
+                    this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
+                    data.finished = true;
+                    await data.save();
+                });
+            }
+        }, 2000);
+
+        return handle;
     }
 
     /**
@@ -273,37 +410,163 @@ class Blockchain {
      * Calling this method will subscribe to Blockchain's event which will be
      * emitted globally using globalEmitter.
      * Callback function will be executed when the event is emitted.
-     * @param event Event to listen to
-     * @param callback function to be executed
+     * @param event - Name of event to listen to
+     * @param callback - Function to be executed
+     * @param blockchain_id - Blockchain to listen to
      * @returns {number | Object} Event handle
      */
-    async subscribeToEventPermanentWithCallback(event, callback) {
-        return this.blockchain.subscribeToEventPermanentWithCallback(event, callback);
+    async subscribeToEventPermanentWithCallback(event, callback, blockchain_id) {
+        const blockStartConditions = [];
+
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            const startBlockNumber = await implementation.getCurrentBlock();
+            blockStartConditions.push({
+                blockchain_id,
+                block: { [Op.gte]: startBlockNumber },
+            });
+        } else {
+            const promises = [];
+
+            for (let i = 0; i < this.blockchain.length; i += 1) {
+                const implementation = this.blockchain[i];
+                promises.push(implementation.getCurrentBlock());
+            }
+            const currentBlocks = await Promise.all(promises);
+
+            for (let i = 0; i < currentBlocks.length; i += 1) {
+                const implementation = this.blockchain[i];
+
+                blockStartConditions.push({
+                    blockchain_id: implementation.config.network_id,
+                    block: { [Op.gte]: currentBlocks[i] },
+                });
+            }
+        }
+        const handle = setInterval(async () => {
+            const where = {
+                event,
+                finished: 0,
+                [Op.or]: blockStartConditions,
+            };
+
+            const eventData = await Models.events.findAll({ where });
+            if (eventData) {
+                eventData.forEach(async (data) => {
+                    try {
+                        callback({
+                            name: `eth-${data.event}`,
+                            value: JSON.parse(data.dataValues.data),
+                            blockchain_id: data.blockchain_id,
+                        });
+                        data.finished = true;
+                        await data.save();
+                    } catch (error) {
+                        this.logger.error(error);
+                    }
+                });
+            }
+        }, 2000);
+
+        return handle;
     }
 
     /**
      * Gets all past events for the contract
      * @param contractName
      */
-    getAllPastEvents(contractName) {
-        return this.blockchain
-            .getAllPastEvents(contractName);
+    async getAllPastEvents(contractName) {
+        const promises = [];
+
+        for (let i = 0; i < this.blockchain.length; i += 1) {
+            const implementation = this.blockchain[i];
+            const blockchain_id = this.blockchain[i].config.network_id;
+
+            promises.push(this
+                .getEventsFromImplementation(implementation, blockchain_id, contractName)
+                .then((result) => {
+                    this.handleReceivedEvents(result, contractName, blockchain_id);
+                }));
+        }
+
+        await Promise.all(promises);
+    }
+
+    async getEventsFromImplementation(implementation, blockchain_id, contractName) {
+        let fromBlock = 0;
+
+        // Find last queried block if any.
+        const lastEvent = await Models.events.findOne({
+            where: {
+                contract: contractName,
+                blockchain_id,
+            },
+            order: [
+                ['block', 'DESC'],
+            ],
+        });
+
+        if (lastEvent) {
+            fromBlock = lastEvent.block + 1;
+        } else {
+            const currentBlock = await implementation.getCurrentBlock();
+
+            fromBlock = Math.max(currentBlock - 100, 0);
+        }
+
+        return implementation.getAllPastEvents(contractName, fromBlock);
+    }
+
+    async handleReceivedEvents(events, contractName, blockchain_id) {
+        for (let i = 0; events && i < events.length; i += 1) {
+            const event = events[i];
+            const timestamp = Date.now();
+            if (event.returnValues.DH_wallet) {
+                event.returnValues.DH_wallet = event.returnValues.DH_wallet.toLowerCase();
+            }
+            /* eslint-disable-next-line */
+            await Models.events.create({
+                id: uuidv4(),
+                contract: contractName,
+                event: event.event,
+                data: JSON.stringify(event.returnValues),
+                data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
+                block: event.blockNumber,
+                blockchain_id,
+                timestamp,
+                finished: 0,
+            });
+        }
+
+
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        // Delete old events
+        await Models.events.destroy({
+            where: {
+                timestamp: {
+                    [Op.lt]: twoWeeksAgo.getTime(),
+                },
+                finished: 1,
+            },
+        });
     }
 
     async getStakedAmount(importId) {
-        return this.blockchain.getStakedAmount(importId);
+        return this.blockchain[0].getStakedAmount(importId);
     }
 
     async getHoldingIncome(importId) {
-        return this.blockchain.getHoldingIncome(importId);
+        return this.blockchain[0].getHoldingIncome(importId);
     }
 
     async getPurchaseIncome(importId, dvWallet) {
-        return this.blockchain.getPurchaseIncome(importId, dvWallet);
+        return this.blockchain[0].getPurchaseIncome(importId, dvWallet);
     }
 
     async getTotalPayouts(identity) {
-        return this.blockchain.getTotalPayouts(identity);
+        return this.blockchain[0].getTotalPayouts(identity);
     }
 
     /**
@@ -312,7 +575,7 @@ class Blockchain {
      * @returns {Promise}
      */
     getProfileBalance(wallet) {
-        return this.blockchain.getProfileBalance(wallet);
+        return this.blockchain[0].getProfileBalance(wallet);
     }
 
     /**
@@ -322,7 +585,7 @@ class Blockchain {
      * @returns {Promise<any>}
      */
     async depositTokens(blockchainIdentity, amount) {
-        return this.blockchain.depositTokens(blockchainIdentity, amount);
+        return this.blockchain[0].depositTokens(blockchainIdentity, amount);
     }
 
     /**
@@ -331,23 +594,23 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async getRootHash(dataSetId) {
-        return this.blockchain.getRootHash(dataSetId);
+        return this.blockchain[0].getRootHash(dataSetId);
     }
 
     async getPurchase(purchaseId) {
-        return this.blockchain.getPurchase(purchaseId);
+        return this.blockchain[0].getPurchase(purchaseId);
     }
 
     async getPurchaseStatus(purchaseId) {
-        return this.blockchain.getPurchaseStatus(purchaseId);
+        return this.blockchain[0].getPurchaseStatus(purchaseId);
     }
 
     async getPurchasedData(importId, wallet) {
-        return this.blockchain.getPurchasedData(importId, wallet);
+        return this.blockchain[0].getPurchasedData(importId, wallet);
     }
 
     async getPaymentStageInterval() {
-        return this.blockchain.getPaymentStageInterval();
+        return this.blockchain[0].getPaymentStageInterval();
     }
 
     async initiatePurchase(
@@ -355,7 +618,7 @@ class Blockchain {
         tokenAmount,
         originalDataRootHash, encodedDataRootHash,
     ) {
-        return this.blockchain.initiatePurchase(
+        return this.blockchain[0].initiatePurchase(
             sellerIdentity, buyerIdentity,
             tokenAmount,
             originalDataRootHash, encodedDataRootHash,
@@ -368,23 +631,23 @@ class Blockchain {
      * @returns {Promise<any>}
      */
     decodePurchaseInitiatedEventFromTransaction(result) {
-        return this.blockchain.decodePurchaseInitiatedEventFromTransaction(result);
+        return this.blockchain[0].decodePurchaseInitiatedEventFromTransaction(result);
     }
 
 
     async depositKey(purchaseId, key) {
-        return this.blockchain.depositKey(purchaseId, key);
+        return this.blockchain[0].depositKey(purchaseId, key);
     }
 
     async takePayment(purchaseId) {
-        return this.blockchain.takePayment(purchaseId);
+        return this.blockchain[0].takePayment(purchaseId);
     }
 
     async complainAboutNode(
         purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
         proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
     ) {
-        return this.blockchain.complainAboutNode(
+        return this.blockchain[0].complainAboutNode(
             purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
             proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
         );
@@ -394,40 +657,40 @@ class Blockchain {
         purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
         urgent,
     ) {
-        return this.blockchain.complainAboutRoot(
+        return this.blockchain[0].complainAboutRoot(
             purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
             urgent,
         );
     }
 
     async sendCommitment(importId, dvWallet, commitment) {
-        return this.blockchain.sendCommitment(importId, dvWallet, commitment);
+        return this.blockchain[0].sendCommitment(importId, dvWallet, commitment);
     }
 
     async initiateDispute(importId, dhWallet) {
-        return this.blockchain.initiateDispute(importId, dhWallet);
+        return this.blockchain[0].initiateDispute(importId, dhWallet);
     }
 
     async confirmPurchase(importId, dhWallet) {
-        return this.blockchain.confirmPurchase(importId, dhWallet);
+        return this.blockchain[0].confirmPurchase(importId, dhWallet);
     }
 
     async cancelPurchase(importId, correspondentWallet, senderIsDh) {
-        return this.blockchain.cancelPurchase(importId, correspondentWallet, senderIsDh);
+        return this.blockchain[0].cancelPurchase(importId, correspondentWallet, senderIsDh);
     }
 
     async sendProofData(
         importId, dvWallet, checksumLeft, checksumRight, checksumHash,
         randomNumber1, randomNumber2, decryptionKey, blockIndex,
     ) {
-        return this.blockchain.sendProofData(
+        return this.blockchain[0].sendProofData(
             importId, dvWallet, checksumLeft, checksumRight, checksumHash,
             randomNumber1, randomNumber2, decryptionKey, blockIndex,
         );
     }
 
     async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
-        return this.blockchain.sendEncryptedBlock(importId, dvWallet, encryptedBlock);
+        return this.blockchain[0].sendEncryptedBlock(importId, dvWallet, encryptedBlock);
     }
 
     /**
@@ -437,7 +700,7 @@ class Blockchain {
      * @param dvWallet
      */
     async payOutForReading(importId, dvWallet) {
-        return this.blockchain.payOutForReading(importId, dvWallet);
+        return this.blockchain[0].payOutForReading(importId, dvWallet);
     }
 
     /**
@@ -447,7 +710,7 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async startTokenWithdrawal(blockchainIdentity, amount) {
-        return this.blockchain.startTokenWithdrawal(blockchainIdentity, amount);
+        return this.blockchain[0].startTokenWithdrawal(blockchainIdentity, amount);
     }
 
     /**
@@ -456,28 +719,28 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async withdrawTokens(blockchainIdentity) {
-        return this.blockchain.withdrawTokens(blockchainIdentity);
+        return this.blockchain[0].withdrawTokens(blockchainIdentity);
     }
 
     /**
      * Get difficulty for the particular offer
      */
     async getOfferDifficulty(offerId) {
-        return this.blockchain.getOfferDifficulty(offerId);
+        return this.blockchain[0].getOfferDifficulty(offerId);
     }
 
     /**
      * Get all nodes which were added in the approval array
      */
     async getAddedNodes() {
-        return this.blockchain.getAddedNodes();
+        return this.blockchain[0].getAddedNodes();
     }
 
     /**
      * Get the statuses of all nodes which were added in the approval array
      */
     async getNodeStatuses() {
-        return this.blockchain.getNodeStatuses();
+        return this.blockchain[0].getNodeStatuses();
     }
 
     /**
@@ -485,7 +748,7 @@ class Blockchain {
      * @param nodeId
      */
     async nodeHasApproval(nodeId) {
-        return this.blockchain.nodeHasApproval(nodeId);
+        return this.blockchain[0].nodeHasApproval(nodeId);
     }
 
     /**
@@ -493,7 +756,7 @@ class Blockchain {
      * @return {any|*}
      */
     getTokenContractAddress() {
-        return this.blockchain.getTokenContractAddress();
+        return this.blockchain[0].getTokenContractAddress();
     }
 
     /**
@@ -503,7 +766,7 @@ class Blockchain {
      * @return {Promise<[]>}
      */
     getWalletPurposes(erc725Identity, wallet) {
-        return this.blockchain.getWalletPurposes(erc725Identity, wallet);
+        return this.blockchain[0].getWalletPurposes(erc725Identity, wallet);
     }
 
     /**
@@ -512,7 +775,7 @@ class Blockchain {
      * @param managementWallet - {string}
      */
     transferProfile(erc725identity, managementWallet) {
-        return this.blockchain.transferProfile(erc725identity, managementWallet);
+        return this.blockchain[0].transferProfile(erc725identity, managementWallet);
     }
 
     /**
@@ -521,7 +784,7 @@ class Blockchain {
      * @return {Promise<boolean>}
      */
     async isErc725IdentityOld(address) {
-        return this.blockchain.isErc725IdentityOld(address);
+        return this.blockchain[0].isErc725IdentityOld(address);
     }
 
     /**
@@ -530,7 +793,7 @@ class Blockchain {
      * @return {Promise<*>}
      */
     async getOffer(offerId) {
-        return this.blockchain.getOffer(offerId);
+        return this.blockchain[0].getOffer(offerId);
     }
 
     /**
@@ -540,7 +803,7 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async getHolder(offerId, holderIdentity) {
-        return this.blockchain.getHolder(offerId, holderIdentity);
+        return this.blockchain[0].getHolder(offerId, holderIdentity);
     }
 
     /**
@@ -557,7 +820,7 @@ class Blockchain {
         confirmation3,
         holders,
     ) {
-        return this.blockchain.replaceHolder(
+        return this.blockchain[0].replaceHolder(
             offerId,
             holderIdentity,
             litigatorIdentity,
@@ -576,7 +839,7 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async getLitigation(offerId, holderIdentity) {
-        return this.blockchain.getLitigation(offerId, holderIdentity);
+        return this.blockchain[0].getLitigation(offerId, holderIdentity);
     }
 
     /**
@@ -586,7 +849,7 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async getLitigationTimestamp(offerId, holderIdentity) {
-        return this.blockchain.getLitigationTimestamp(offerId, holderIdentity);
+        return this.blockchain[0].getLitigationTimestamp(offerId, holderIdentity);
     }
 
     /**
@@ -596,7 +859,7 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async getLitigationDifficulty(offerId, holderIdentity) {
-        return this.blockchain.getLitigationDifficulty(offerId, holderIdentity);
+        return this.blockchain[0].getLitigationDifficulty(offerId, holderIdentity);
     }
 
     /**
@@ -606,28 +869,28 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async getLitigationReplacementTask(offerId, holderIdentity) {
-        return this.blockchain.getLitigationReplacementTask(offerId, holderIdentity);
+        return this.blockchain[0].getLitigationReplacementTask(offerId, holderIdentity);
     }
 
     /**
      * Get staked amount for the holder
      */
     async getHolderStakedAmount(offerId, holderIdentity) {
-        return this.blockchain.getHolderStakedAmount(offerId, holderIdentity);
+        return this.blockchain[0].getHolderStakedAmount(offerId, holderIdentity);
     }
 
     /**
      * Get paid amount for the holder
      */
     async getHolderPaidAmount(offerId, holderIdentity) {
-        return this.blockchain.getHolderPaidAmount(offerId, holderIdentity);
+        return this.blockchain[0].getHolderPaidAmount(offerId, holderIdentity);
     }
 
     /**
      * Get litigation encryption type
      */
     async getHolderLitigationEncryptionType(offerId, holderIdentity) {
-        return this.blockchain.getHolderLitigationEncryptionType(offerId, holderIdentity);
+        return this.blockchain[0].getHolderLitigationEncryptionType(offerId, holderIdentity);
     }
 
     /**
@@ -638,7 +901,7 @@ class Blockchain {
      * @return {Promise<any>}
      */
     async keyHasPurpose(identity, key, purpose) {
-        return this.blockchain.keyHasPurpose(identity, key, purpose);
+        return this.blockchain[0].keyHasPurpose(identity, key, purpose);
     }
 
     /**
@@ -647,7 +910,7 @@ class Blockchain {
      * @return {Number | undefined} - Returns undefined if the receipt does not have a logs field
      */
     numberOfEventsEmitted(receipt) {
-        return this.blockchain.numberOfEventsEmitted(receipt);
+        return this.blockchain[0].numberOfEventsEmitted(receipt);
     }
 }
 

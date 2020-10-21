@@ -3,6 +3,7 @@ const BN = require('bn.js');
 const uuidv4 = require('uuid/v4');
 const ethereumAbi = require('ethereumjs-abi');
 const Op = require('sequelize/lib/operators');
+const Web3 = require('web3');
 
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
@@ -17,22 +18,18 @@ class Ethereum {
         emitter,
         web3,
         logger,
-        appState,
         pricingService,
-    }) {
+    }, configuration) {
         // Loading Web3
-        this.appState = appState;
         this.emitter = emitter;
-        this.web3 = web3;
+        this.web3 = new Web3(new Web3.providers.HttpProvider(configuration.rpc_server_url));
         this.logger = logger;
         this.pricingService = pricingService;
 
-        this.config = {
-            wallet_address: config.node_wallet,
-            node_private_key: config.node_private_key,
-            erc725Identity: config.erc725Identity,
-        };
-        Object.assign(this.config, config.blockchain);
+        this.config = configuration;
+        this.config.wallet_address = config.node_wallet;
+        this.config.node_private_key = config.node_private_key;
+        this.config.erc725Identity = config.erc725Identity;
 
         this.transactions = new Transactions(
             this.web3,
@@ -48,8 +45,6 @@ class Ethereum {
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
         this.logger.info('Selected blockchain: Ethereum');
-
-        this.initalized = false;
     }
 
     /**
@@ -195,16 +190,6 @@ class Ethereum {
         };
 
         this.logger.info('Smart contract instances initialized.');
-
-        if (!this.initalized) {
-            this.initalized = true;
-            this.subscribeToEventPermanentWithCallback([
-                'ContractsChanged',
-            ], async (eventData) => {
-                this.logger.notify('Contracts changed, refreshing information.');
-                await this.initialize();
-            });
-        }
     }
 
     /**
@@ -740,67 +725,21 @@ class Ethereum {
     /**
      * Gets all past events for the contract
      * @param contractName
+     * @param fromBlock
      */
-    async getAllPastEvents(contractName) {
+    async getAllPastEvents(contractName, fromBlock) {
         try {
-            const currentBlock = await this.getCurrentBlock();
-
-            let fromBlock = 0;
-
-            // Find last queried block if any.
-            const lastEvent = await Models.events.findOne({
-                where: {
-                    contract: contractName,
-                },
-                order: [
-                    ['block', 'DESC'],
-                ],
-            });
-
-            if (lastEvent) {
-                fromBlock = lastEvent.block + 1;
-            } else {
-                fromBlock = Math.max(currentBlock - 100, 0);
-            }
-
             const contract = this.contractsByName[contractName];
             if (Utilities.isZeroHash(contract._address)) {
                 return;
             }
+
             const events = await contract.getPastEvents('allEvents', {
                 fromBlock,
                 toBlock: 'latest',
             });
-            for (let i = 0; i < events.length; i += 1) {
-                const event = events[i];
-                const timestamp = Date.now();
-                if (event.returnValues.DH_wallet) {
-                    event.returnValues.DH_wallet = event.returnValues.DH_wallet.toLowerCase();
-                }
-                /* eslint-disable-next-line */
-                await Models.events.create({
-                    id: uuidv4(),
-                    contract: contractName,
-                    event: event.event,
-                    data: JSON.stringify(event.returnValues),
-                    data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
-                    block: event.blockNumber,
-                    timestamp,
-                    finished: 0,
-                });
-            }
 
-            const twoWeeksAgo = new Date();
-            twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-            // Delete old events
-            await Models.events.destroy({
-                where: {
-                    timestamp: {
-                        [Op.lt]: twoWeeksAgo.getTime(),
-                    },
-                    finished: 1,
-                },
-            });
+            return events;
         } catch (error) {
             if (error.msg && error.msg.includes('Invalid JSON RPC response')) {
                 this.logger.warn('Node failed to communicate with blockchain provider. Check internet connection');
@@ -865,79 +804,6 @@ class Ethereum {
                 resolve(null);
             }, endMs);
         });
-    }
-
-    /**
-     * Subscribes to Blockchain event
-     *
-     * Calling this method will subscribe to Blockchain's event which will be
-     * emitted globally using globalEmitter.
-     * @param event Event to listen to
-     * @returns {number | Object} Event handle
-     */
-    async subscribeToEventPermanent(event) {
-        const startBlockNumber = await this.web3.eth.getBlockNumber();
-
-        const that = this;
-        return setInterval(async () => {
-            if (!that.appState.started) {
-                return;
-            }
-            const where = {
-                [Op.or]: event.map(e => ({ event: e })),
-                block: { [Op.gte]: startBlockNumber },
-                finished: 0,
-            };
-
-            const eventData = await Models.events.findAll({ where });
-            if (eventData) {
-                eventData.forEach(async (data) => {
-                    this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
-                    data.finished = true;
-                    await data.save();
-                });
-            }
-        }, 2000);
-    }
-
-    /**
-     * Subscribes to Blockchain event with a callback specified
-     *
-     * Calling this method will subscribe to Blockchain's event which will be
-     * emitted globally using globalEmitter.
-     * Callback function will be executed when the event is emitted.
-     * @param event Event to listen to
-     * @param emitCallback function to be executed
-     * @returns {number | Object} Event handle
-     */
-    async subscribeToEventPermanentWithCallback(event, emitCallback) {
-        const startBlockNumber = await this.web3.eth.getBlockNumber();
-
-        const handle = setInterval(async () => {
-            const where = {
-                [Op.or]: event.map(e => ({ event: e })),
-                block: { [Op.gte]: startBlockNumber },
-                finished: 0,
-            };
-
-            const eventData = await Models.events.findAll({ where });
-            if (eventData) {
-                eventData.forEach(async (data) => {
-                    try {
-                        emitCallback({
-                            name: `eth-${data.event}`,
-                            value: JSON.parse(data.dataValues.data),
-                        });
-                        data.finished = true;
-                        await data.save();
-                    } catch (error) {
-                        this.logger.error(error);
-                    }
-                });
-            }
-        }, 2000);
-
-        return handle;
     }
 
     /**
