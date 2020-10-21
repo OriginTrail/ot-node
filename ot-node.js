@@ -93,10 +93,10 @@ try {
         process.abort();
     }
 
-    if (!config.blockchain.rpc_server_url) {
-        console.error('Please provide a valid RPC server URL.');
-        process.abort();
-    }
+    // if (!config.blockchain.rpc_server_url) {
+    //     console.error('Please provide a valid RPC server URL.');
+    //     process.abort();
+    // }
 } catch (error) {
     console.error(`Failed to read configuration. ${error}.`);
     console.error(error.stack);
@@ -188,7 +188,8 @@ class OTNode {
         config.publicKeyData = {};
 
         const web3 =
-            new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
+            new Web3(new Web3.providers
+                .HttpProvider(config.blockchain.implementations[0].rpc_server_url));
 
         const appState = {};
         if (config.is_bootstrap_node) {
@@ -307,7 +308,6 @@ class OTNode {
         const remoteControl = container.resolve('remoteControl');
         const profileService = container.resolve('profileService');
         const approvalService = container.resolve('approvalService');
-        await approvalService.initialize();
 
         emitter.initialize();
 
@@ -526,7 +526,6 @@ class OTNode {
         await blockchain.initialize();
 
         const approvalService = container.resolve('approvalService');
-        await approvalService.initialize();
 
         this.listenBlockchainEvents(blockchain);
 

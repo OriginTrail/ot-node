@@ -37,7 +37,7 @@ if (!argv.certs) {
 }
 
 if (!argv.identities) {
-    argv.identities = '../identities/';
+    argv.identities = '../data/identities/';
 }
 
 if (!argv.backup_directory) {

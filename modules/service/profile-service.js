@@ -120,7 +120,7 @@ class ProfileService {
         } while (createProfileCalled === false);
 
         if (!identityExists) {
-            const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet));
+            const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet), blockchainId);
             if (event) {
                 this.blockchain.saveIdentity(event.newIdentity, blockchainId);
                 this.logger.notify(`Identity created for node ${this.config.identity}. Identity is ${event.newIdentity}. For blockchain id: ${blockchainId}.`);
@@ -129,7 +129,7 @@ class ProfileService {
             }
         }
 
-        const event = await this.blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.getIdentity(blockchainId)));
+        const event = await this.blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.getIdentity(blockchainId)), blockchainId);
         if (event) {
             this.logger.notify(`Profile created for node ${this.config.identity}. For blockchain id: ${blockchainId}.`);
         } else {
@@ -253,16 +253,20 @@ class ProfileService {
      * Check if ERC725 has valid node ID. If not it updates node id on contract
      */
     async validateAndUpdateProfiles() {
-        // todo update once we have blockchain array
-        const identity = this.blockchain.getIdentity();
-        // Check if ERC725 has valid node ID.
-        const profile = await this.blockchain.getProfile(identity);
+        const identities = this.blockchain.getIdentities();
 
-        if (!profile.nodeId.toLowerCase().startsWith(`0x${this.config.identity.toLowerCase()}`)) {
-            await this.blockchain.setNodeId(
-                identity,
-                Utilities.normalizeHex(this.config.identity.toLowerCase()),
-            );
+        for (let i = 0; i < identities.length; i += 1) {
+            const { identity } = identities[i].response;
+            // eslint-disable-next-line no-await-in-loop
+            const profile = await this.blockchain.getProfile(identity);
+
+            if (!profile.nodeId.toLowerCase().startsWith(`0x${this.config.identity.toLowerCase()}`)) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.blockchain.setNodeId(
+                    identity,
+                    Utilities.normalizeHex(this.config.identity.toLowerCase()),
+                );
+            }
         }
     }
 
