@@ -919,18 +919,22 @@ class Kademlia {
     _filterPeerCache(peerCacheFilePath) {
         const peerCacheFile = fs.readFileSync(peerCacheFilePath);
 
-        const peerCache = JSON.parse(peerCacheFile);
+        try {
+            const peerCache = JSON.parse(peerCacheFile);
 
-        for (const id in peerCache) {
-            const elem = peerCache[id];
-            if (elem.network_id !== this.config.network.id) {
-                delete peerCache[id];
+            for (const id in peerCache) {
+                const elem = peerCache[id];
+                if (elem.network_id !== this.config.network.id) {
+                    delete peerCache[id];
+                }
             }
+
+            fs.writeFileSync(peerCacheFilePath, JSON.stringify(peerCache));
+
+            return peerCache;
+        } catch (e) {
+            fs.writeFileSync(peerCacheFilePath, '{}');
         }
-
-        fs.writeFileSync(peerCacheFilePath, JSON.stringify(peerCache));
-
-        return peerCache;
     }
 
     _filterContacts(peerCacheFilePath) {
