@@ -279,7 +279,6 @@ class ProfileService {
             const { identity } = response;
             const profile = profiles[i];
 
-            this.logger.important(`Let's compare ${profile.nodeId} with ${this.config.identity.toLowerCase()}`);
             if (!profile.nodeId.toLowerCase().startsWith(`0x${this.config.identity.toLowerCase()}`)) {
                 this.logger.important(`${profile.nodeId} does not match with ${this.config.identity.toLowerCase()}`);
                 promises.push(this.blockchain.setNodeId(

@@ -990,7 +990,6 @@ class Blockchain {
      */
     getIdentity(blockchain_id) {
         if (blockchain_id) {
-            console.log(blockchain_id);
             const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
 
             if (implementation) {

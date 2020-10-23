@@ -175,7 +175,7 @@ class DhReplicationImportCommand extends Command {
         // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
-            Utilities.normalizeHex(this.profileService.getIdentity(blockchain_id)),
+            Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),
         ];
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
