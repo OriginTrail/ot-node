@@ -139,7 +139,7 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(originalDocument, config, web3) {
+    static prepareDataset(originalDocument, config, web3, blockchain) {
         const datasetHeader = originalDocument.datasetHeader ? originalDocument.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(originalDocument['@graph']);
 
@@ -150,6 +150,7 @@ class ImportUtilities {
             datasetHeader.datasetDescription,
             datasetHeader.OTJSONVersion,
             datasetHeader.datasetCreationTimestamp,
+            blockchain,
         );
         const dataset = {
             '@id': '',
@@ -677,7 +678,16 @@ class ImportUtilities {
      * Fill in dataset header
      * @private
      */
-    static createDatasetHeader(config, transpilationInfo = null, datasetTags = [], datasetTitle = '', datasetDescription = '', OTJSONVersion = '1.2', datasetCreationTimestamp = new Date().toISOString()) {
+    static createDatasetHeader(
+        config,
+        transpilationInfo = null,
+        datasetTags = [],
+        datasetTitle = '',
+        datasetDescription = '',
+        OTJSONVersion = '1.2',
+        datasetCreationTimestamp = new Date().toISOString(),
+        blockchain,
+    ) {
         const header = {
             OTJSONVersion,
             datasetCreationTimestamp,
@@ -697,12 +707,12 @@ class ImportUtilities {
             validationSchemas: {
                 'erc725-main': {
                     schemaType: 'ethereum-725',
-                    networkId: config.blockchain.network_id,
+                    networkId: blockchain.blockchain_id,
                 },
                 merkleRoot: {
                     schemaType: 'merkle-root',
-                    networkId: config.blockchain.network_id,
-                    hubContractAddress: config.blockchain.hub_contract_address,
+                    networkId: blockchain.blockchain_id,
+                    hubContractAddress: blockchain.hub_contract_address,
                     // TODO: Add holding contract address and version. Hub address is useless.
                 },
             },
@@ -718,7 +728,7 @@ class ImportUtilities {
             dataCreator: {
                 identifiers: [
                     {
-                        identifierValue: config.erc725Identity,
+                        identifierValue: blockchain.identity,
                         identifierType: 'ERC725',
                         validationSchema: '/schemas/erc725-main',
                     },

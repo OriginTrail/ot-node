@@ -408,13 +408,14 @@ class EventEmitter {
                 holdingTimeInMinutes,
                 litigationIntervalInMinutes,
                 tokenAmountPerHolder,
+                blockchain_id,
             } = eventData;
 
             try {
                 await dhService.handleOffer(
                     offerId, dcNodeId,
                     dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-                    tokenAmountPerHolder, dataSetId,
+                    tokenAmountPerHolder, dataSetId, blockchain_id,
                 );
             } catch (e) {
                 logger.warn(e.message);

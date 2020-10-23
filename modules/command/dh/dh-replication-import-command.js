@@ -34,6 +34,7 @@ class DhReplicationImportCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            blockchain_id,
             dataSetId,
             documentPath,
             dcWallet,
@@ -68,7 +69,7 @@ class DhReplicationImportCommand extends Command {
         }
 
         const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
-        const blockchainRootHash = await this.blockchain.getRootHash(dataSetId);
+        const blockchainRootHash = await this.blockchain.getRootHash(dataSetId, blockchain_id);
 
         if (decryptedGraphRootHash !== blockchainRootHash) {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from Blockchain root hash ${blockchainRootHash}`);
@@ -174,14 +175,15 @@ class DhReplicationImportCommand extends Command {
         // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
-            this.profileService.getIdentity('ethr')];
+            Utilities.normalizeHex(this.profileService.getIdentity(blockchain_id)),
+        ];
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
 
         // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
-            dhIdentity: this.profileService.getIdentity('ethr'),
+            dhIdentity: Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),
             messageSignature: messageSignature.signature,
             wallet: this.config.node_wallet,
         };
@@ -196,6 +198,7 @@ class DhReplicationImportCommand extends Command {
                     period: 10 * 1000,
                     data: {
                         offerId,
+                        blockchain_id,
                     },
                 },
             ],
