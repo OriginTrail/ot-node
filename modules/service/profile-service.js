@@ -26,19 +26,35 @@ class ProfileService {
     async initProfile() {
         const identities = this.blockchain.getIdentities();
 
+        let promises = [];
+
         for (let i = 0; i < identities.length; i += 1) {
-            const identity = identities[i];
-            // eslint-disable-next-line no-await-in-loop
-            const isProfileCreated = await this
-                .isProfileCreated(identity.response.identity, identity.blockchain_id);
-            if (identity.response !== null && isProfileCreated) {
-                this.logger.notify(`Profile has already been created for node ${this.config.identity}, on blockchain: ${identity.blockchain_id}`);
+            const { response, blockchain_id } = identities[i];
+
+            promises.push(this.isProfileCreated(
+                response ? response.identity : response,
+                blockchain_id,
+            ));
+        }
+
+        const profiles = await Promise.all(promises);
+
+        promises = [];
+
+        for (let i = 0; i < identities.length; i += 1) {
+            const { response, blockchain_id } = identities[i];
+
+            if (profiles[i]) {
+                this.logger.notify(`Profile has already been created for node ${this.config.identity}, on blockchain: ${blockchain_id}`);
             } else {
-                // eslint-disable-next-line no-await-in-loop
-                await this
-                    .createAndSaveNewProfile(identity.response.identity, identity.blockchain_id);
+                promises.push(this.createAndSaveNewProfile(
+                    response ? response.identity : response,
+                    blockchain_id,
+                ));
             }
         }
+
+        await Promise.all(promises);
     }
 
     async createAndSaveNewProfile(profileIdentity, blockchainId) {
@@ -78,7 +94,7 @@ class ProfileService {
         } while (approvalIncreased === false);
 
         // set empty identity if there is none
-        const identity = identityExists ? profileIdentity : new BN(0, 16);
+        let identity = identityExists ? profileIdentity : new BN(0, 16);
 
         let createProfileCalled = false;
         do {
@@ -89,6 +105,7 @@ class ProfileService {
                         this.config.management_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
+                        blockchainId,
                     );
                     createProfileCalled = true;
                 } else {
@@ -99,6 +116,7 @@ class ProfileService {
                         this.config.node_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
+                        blockchainId,
                     );
                     createProfileCalled = true;
                 }
@@ -120,7 +138,17 @@ class ProfileService {
         } while (createProfileCalled === false);
 
         if (!identityExists) {
-            const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet), blockchainId);
+            const event = await this.blockchain.subscribeToEvent(
+                'IdentityCreated',
+                null,
+                5 * 60 * 1000,
+                null,
+                eventData =>
+                    Utilities.compareHexStrings(eventData.profile, this.config.node_wallet),
+                null,
+                blockchainId,
+            );
+
             if (event) {
                 this.blockchain.saveIdentity(event.newIdentity, blockchainId);
                 this.logger.notify(`Identity created for node ${this.config.identity}. Identity is ${event.newIdentity}. For blockchain id: ${blockchainId}.`);
@@ -129,9 +157,20 @@ class ProfileService {
             }
         }
 
-        const event = await this.blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.getIdentity(blockchainId)), blockchainId);
+
+        identity = this.getIdentity(blockchainId);
+        const event = await this.blockchain.subscribeToEvent(
+            'ProfileCreated',
+            null,
+            5 * 60 * 1000,
+            null,
+            eventData =>
+                Utilities.compareHexStrings(eventData.profile, identity),
+            null,
+            blockchainId,
+        );
         if (event) {
-            this.logger.notify(`Profile created for node ${this.config.identity}. For blockchain id: ${blockchainId}.`);
+            this.logger.notify(`Profile created for node ${this.config.identity}. For blockchain id: ${blockchainId} the profile identifier is ${identity}.`);
         } else {
             throw new Error('Profile could not be confirmed in timely manner. Please, try again later.');
         }
@@ -201,38 +240,6 @@ class ProfileService {
     }
 
     /**
-     * Check for ERC725 identity version and executes upgrade of the profile.
-     * @return {Promise<void>}
-     */
-    async upgradeProfile() {
-        // todo pass blockchain identity
-        const identity = this.getIdentity('ethr');
-        if (await this.blockchain.isErc725IdentityOld(identity)) {
-            this.logger.important('Old profile detected. Upgrading to new one.');
-            try {
-                const result = await this.blockchain.transferProfile(
-                    identity,
-                    this.config.management_wallet,
-                );
-                const newErc725Identity =
-                    Utilities.normalizeHex(result.logs[result.logs.length - 1].data.substr(
-                        result.logs[result.logs.length - 1].data.length - 40,
-                        40,
-                    ));
-
-                this.logger.important('**************************************************************************');
-                this.logger.important(`Your ERC725 identity has been upgraded and now has the new address: ${newErc725Identity}`);
-                this.logger.important('Please backup your ERC725 identity file.');
-                this.logger.important('**************************************************************************');
-                // todo pass blockchain identity
-                this.blockchain.saveIdentity(newErc725Identity, 'ethr');
-            } catch (transferError) {
-                throw Error(`Failed to transfer profile. ${transferError}. ${transferError.stack}`);
-            }
-        }
-    }
-
-    /**
      * Verify that the parent identity has this node's identity set as a sub-identity
      * @return {Promise<*>}
      */
@@ -255,23 +262,39 @@ class ProfileService {
     async validateAndUpdateProfiles() {
         const identities = this.blockchain.getIdentities();
 
+        let promises = [];
         for (let i = 0; i < identities.length; i += 1) {
-            const { identity } = identities[i].response;
-            // eslint-disable-next-line no-await-in-loop
-            const profile = await this.blockchain.getProfile(identity);
+            const { response, blockchain_id } = identities[i];
+            const { identity } = response;
 
+            promises.push(this.blockchain.getProfile(identity, blockchain_id));
+        }
+
+        const profiles = await Promise.all(promises);
+
+        promises = [];
+
+        for (let i = 0; i < identities.length; i += 1) {
+            const { response, blockchain_id } = identities[i];
+            const { identity } = response;
+            const profile = profiles[i];
+
+            this.logger.important(`Let's compare ${profile.nodeId} with ${this.config.identity.toLowerCase()}`);
             if (!profile.nodeId.toLowerCase().startsWith(`0x${this.config.identity.toLowerCase()}`)) {
-                // eslint-disable-next-line no-await-in-loop
-                await this.blockchain.setNodeId(
+                this.logger.important(`${profile.nodeId} does not match with ${this.config.identity.toLowerCase()}`);
+                promises.push(this.blockchain.setNodeId(
                     identity,
                     Utilities.normalizeHex(this.config.identity.toLowerCase()),
-                );
+                    blockchain_id,
+                ));
             }
         }
+
+        await Promise.all(promises);
     }
 
     getIdentity(blockchainId) {
-        this.blockchain.getIdentity(blockchainId);
+        return this.blockchain.getIdentity(blockchainId);
     }
 }
 

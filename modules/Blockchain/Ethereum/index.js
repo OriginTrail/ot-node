@@ -10,8 +10,6 @@ const Utilities = require('../../Utilities');
 const Models = require('../../../models');
 const path = require('path');
 
-const blockchain_id = 'ethr';
-
 class Ethereum {
     /**
      * Initializing Ethereum blockchain connector
@@ -30,9 +28,10 @@ class Ethereum {
         this.pricingService = pricingService;
 
         this.config = configuration;
+        this.config.appDataPath = config.appDataPath;
         this.config.wallet_address = config.node_wallet;
         this.config.node_private_key = config.node_private_key;
-        this.config.erc725Identity = this._loadIdentityFromFile();
+        this.config.identity = this._loadIdentityFromFile();
 
         this.transactions = new Transactions(
             this.web3,
@@ -1499,7 +1498,7 @@ class Ethereum {
      * Returns identity from configuration
      */
     getIdentity() {
-        return this.config.erc725Identity;
+        return this.config.identity;
     }
 
     /**
@@ -1507,11 +1506,11 @@ class Ethereum {
      * @returns {string}
      */
     getBlockchainId() {
-        return blockchain_id;
+        return this.config.network_id;
     }
 
     saveIdentity(identity) {
-        this.config.erc725Identity = Utilities.normalizeHex(identity);
+        this.config.identity = Utilities.normalizeHex(identity);
 
         const identityFilePath = path.join(
             this.config.appDataPath,

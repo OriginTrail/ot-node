@@ -20,7 +20,7 @@ class DhOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const { offerId, blockchain_id } = command.data;
 
         const events = await Models.events.findAll({
             where: {
@@ -71,6 +71,7 @@ class DhOfferFinalizedCommand extends Command {
                                     transactional: false,
                                     data: {
                                         offerId,
+                                        blockchain_id,
                                         viaAPI: false,
                                     },
                                 },

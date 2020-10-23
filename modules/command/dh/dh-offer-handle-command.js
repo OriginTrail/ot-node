@@ -24,6 +24,7 @@ class DHOfferHandleCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            blockchain_id,
             dcNodeId,
         } = command.data;
 
@@ -31,6 +32,7 @@ class DHOfferHandleCommand extends Command {
         // todo pass blockchain identity
         const response = await this.transport.replicationRequest({
             offerId,
+            blockchain_id,
             wallet: this.config.node_wallet,
             dhIdentity: this.profileService.getIdentity('ethr'),
         }, dcNodeId);
@@ -76,6 +78,7 @@ class DHOfferHandleCommand extends Command {
         const packedResponse = DHOfferHandleCommand._stripResponse(response);
         Object.assign(packedResponse, {
             dcNodeId,
+            blockchain_id,
             documentPath: path.join(cacheDirectory, offerId),
         });
         return {

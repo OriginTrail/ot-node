@@ -28,6 +28,7 @@ class DhPayOutCommand extends Command {
         const {
             offerId,
             urgent,
+            blockchain_id,
         } = command.data;
 
         const bid = await Models.bids.findOne({
@@ -53,7 +54,7 @@ class DhPayOutCommand extends Command {
         }
 
         const { status, timestamp } =
-            await this.blockchain.getLitigation(offerId, blockchainIdentity);
+            await this.blockchain.getLitigation(offerId, blockchainIdentity, blockchain_id);
         const { litigation_interval_in_minutes } = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
@@ -71,7 +72,7 @@ class DhPayOutCommand extends Command {
             this.logger.info(`I'm replaced or being replaced for offer ${offerId}, cannot be payed out.`);
         } else {
             try {
-                await this.blockchain.payOut(blockchainIdentity, offerId, urgent);
+                await this.blockchain.payOut(blockchainIdentity, offerId, urgent, blockchain_id);
                 this.logger.important(`Payout for offer ${offerId} successfully completed.`);
                 await this._printBalances(blockchainIdentity);
             } catch (error) {
@@ -131,12 +132,12 @@ class DhPayOutCommand extends Command {
      * @return {Promise<void>}
      * @private
      */
-    async _printBalances(blockchainIdentity) {
+    async _printBalances(blockchainIdentity, blockchain_id) {
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
         const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
         this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
 
-        const profile = await this.blockchain.getProfile(blockchainIdentity);
+        const profile = await this.blockchain.getProfile(blockchainIdentity, blockchain_id);
         const profileBalance = profile.stake;
         const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
         this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
