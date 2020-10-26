@@ -85,6 +85,7 @@ class Blockchain {
             if (implementation) {
                 return implementation.getProfile(identity);
             }
+            throw Error(`Cannot find implementation for chain ${blockchain_id}`);
         }
         return this.blockchain[0].getProfile(identity);
     }
@@ -98,7 +99,10 @@ class Blockchain {
         if (blockchain_id) {
             const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
 
-            return implementation.setNodeId(identity, nodeId);
+            if (implementation) {
+                return implementation.setNodeId(identity, nodeId);
+            }
+            throw Error(`Cannot find implementation for chain ${blockchain_id}`);
         }
         return this.blockchain[0].setNodeId(identity, nodeId);
     }
