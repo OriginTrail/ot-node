@@ -10,6 +10,7 @@ class DHReplacementCompleted extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -33,8 +34,9 @@ class DHReplacementCompleted extends Command {
                     offerId: eventOfferId,
                     challengerIdentity,
                 } = JSON.parse(e.data);
+                // todo pass blockchain identity
                 return Utilities.compareHexStrings(offerId, eventOfferId)
-                    && !Utilities.compareHexStrings(challengerIdentity, this.config.erc725Identity);
+                    && !Utilities.compareHexStrings(challengerIdentity, this.profileService.getIdentity('ethr'));
             });
             if (event) {
                 event.finished = true;
@@ -44,7 +46,8 @@ class DHReplacementCompleted extends Command {
                     chosenHolder,
                 } = JSON.parse(event.data);
 
-                if (Utilities.compareHexStrings(chosenHolder, this.config.erc725Identity)) {
+                // todo pass blockchain identity
+                if (Utilities.compareHexStrings(chosenHolder, this.profileService.getIdentity('ethr'))) {
                     this.logger.important(`Chosen as a replacement for offer ${offerId}.`);
 
                     const bid = await Models.bids.findOne({ where: { offer_id: offerId } });

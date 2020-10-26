@@ -12,6 +12,7 @@ class DHLitigationInitiatedCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -31,7 +32,8 @@ class DHLitigationInitiatedCommand extends Command {
                     const {
                         holderIdentity,
                     } = JSON.parse(e.data);
-                    return Utilities.compareHexStrings(holderIdentity, this.config.erc725Identity);
+                    // todo pass blockchain identity
+                    return Utilities.compareHexStrings(holderIdentity, this.profileService.getIdentity('ethr'));
                 });
                 if (event) {
                     event.finished = true;

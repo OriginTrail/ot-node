@@ -17,6 +17,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.graphStorage = ctx.graphStorage;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -134,23 +135,25 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     },
                 );
 
+                // todo pass blockchain identity
                 await Models.data_sellers.create({
                     data_set_id,
                     ot_json_object_id: ot_object_id,
                     seller_node_id: this.config.identity,
-                    seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                    seller_erc_id: this.profileService.getIdentity('ethr'),
                     price: this.config.default_data_price,
                 });
                 this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
                 this.remoteControl.purchaseStatus('Purchase completed', 'You can preview the purchased data in My Purchases page.');
 
+                // todo pass blockchain identity
                 const purchaseCompletionObject = {
                     message: {
                         purchase_id,
                         data_set_id,
                         ot_object_id,
                         seller_node_id: this.config.identity,
-                        seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                        seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
                         price: this.config.default_data_price,
                         wallet: this.config.node_wallet,
                     },

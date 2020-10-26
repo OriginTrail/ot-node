@@ -8,6 +8,7 @@ const Web3 = require('web3');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
+const path = require('path');
 
 class Ethereum {
     /**
@@ -27,9 +28,10 @@ class Ethereum {
         this.pricingService = pricingService;
 
         this.config = configuration;
+        this.config.appDataPath = config.appDataPath;
         this.config.wallet_address = config.node_wallet;
         this.config.node_private_key = config.node_private_key;
-        this.config.erc725Identity = config.erc725Identity;
+        this.config.identity = this._loadIdentityFromFile();
 
         this.transactions = new Transactions(
             this.web3,
@@ -45,6 +47,23 @@ class Ethereum {
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
         this.logger.info('Selected blockchain: Ethereum');
+    }
+
+    /**
+     * Reads identity from file
+     * @returns {Promise<erc725Identity>}
+     * @private
+     */
+    _loadIdentityFromFile() {
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            this.config.identity_filepath,
+        );
+        if (fs.existsSync(identityFilePath)) {
+            const content = JSON.parse(fs.readFileSync(identityFilePath).toString());
+            return content.identity;
+        }
+        return null;
     }
 
     /**
@@ -1473,6 +1492,34 @@ class Ethereum {
             return undefined;
         }
         return receipt.logs.length;
+    }
+
+    /**
+     * Returns identity from configuration
+     */
+    getIdentity() {
+        return this.config.identity;
+    }
+
+    /**
+     * Returns specific blockchain id
+     * @returns {string}
+     */
+    getBlockchainId() {
+        return this.config.network_id;
+    }
+
+    saveIdentity(identity) {
+        this.config.identity = Utilities.normalizeHex(identity);
+
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            this.config.identity_filepath,
+        );
+
+        fs.writeFileSync(identityFilePath, JSON.stringify({
+            identity,
+        }));
     }
 }
 

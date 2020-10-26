@@ -14,6 +14,7 @@ class DHOfferHandleCommand extends Command {
         this.config = ctx.config;
         this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -23,14 +24,17 @@ class DHOfferHandleCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            blockchain_id,
             dcNodeId,
         } = command.data;
 
         this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);
+        // todo pass blockchain identity
         const response = await this.transport.replicationRequest({
             offerId,
+            blockchain_id,
             wallet: this.config.node_wallet,
-            dhIdentity: this.config.erc725Identity,
+            dhIdentity: this.profileService.getIdentity('ethr'),
         }, dcNodeId);
 
         if (response.status === 'fail') {
@@ -74,6 +78,7 @@ class DHOfferHandleCommand extends Command {
         const packedResponse = DHOfferHandleCommand._stripResponse(response);
         Object.assign(packedResponse, {
             dcNodeId,
+            blockchain_id,
             documentPath: path.join(cacheDirectory, offerId),
         });
         return {

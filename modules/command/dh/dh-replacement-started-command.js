@@ -11,6 +11,7 @@ class DHReplacementStartedCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.dhService = ctx.dhService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -34,8 +35,8 @@ class DHReplacementStartedCommand extends Command {
                     challengerIdentity,
                     litigationRootHash,
                 } = JSON.parse(event.data);
-
-                if (utilities.compareHexStrings(this.config.erc725Identity, challengerIdentity)) {
+                // todo pass blockchain identity
+                if (utilities.compareHexStrings(this.profileService.getIdentity('ethr'), challengerIdentity)) {
                     return Command.repeat();
                 }
 
@@ -84,8 +85,9 @@ class DHReplacementStartedCommand extends Command {
                     offerId: eventOfferId,
                     holderIdentity,
                 } = JSON.parse(e.data);
+                // todo pass blockchain identity
                 return utilities.compareHexStrings(offerId, eventOfferId)
-                    && utilities.compareHexStrings(this.config.erc725Identity, holderIdentity);
+                    && utilities.compareHexStrings(this.profileService.getIdentity('ethr'), holderIdentity);
             });
 
             if (event != null) {

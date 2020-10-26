@@ -6,6 +6,7 @@ class ErrorNotificationService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.profileService = ctx.profileService;
     }
 
     initialize() {
@@ -17,6 +18,7 @@ class ErrorNotificationService {
 
         const releaseStage = process.env.NODE_ENV === 'mariner' ? 'mainnet' : process.env.NODE_ENV;
 
+        // todo pass blockchain identity
         Bugsnag.start({
             apiKey: pjson.config.bugsnagkey,
             appVersion: pjson.version,
@@ -33,7 +35,7 @@ class ErrorNotificationService {
                as user provided data so it can help us with debugging
             * */
             user: {
-                id: this.config.erc725Identity,
+                id: this.profileService.getIdentity('ethr'),
                 name: '',
                 email: '',
             },

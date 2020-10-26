@@ -360,11 +360,12 @@ class RemoteControl {
                         data_set_id: holding.data_set_id,
                     },
                 });
-
+                // todo pass blockchain identity
+                const identity = this.profileService.getIdentity('ethr');
                 const paidAmount = await this.blockchain
-                    .getHolderPaidAmount(bid.offer_id, this.config.erc725Identity);
+                    .getHolderPaidAmount(bid.offer_id, identity);
                 const stakedAmount = await this.blockchain
-                    .getHolderStakedAmount(bid.offer_id, this.config.erc725Identity);
+                    .getHolderStakedAmount(bid.offer_id, identity);
 
                 return {
                     data_set_id: holding.data_set_id,
@@ -388,8 +389,9 @@ class RemoteControl {
      * @return {Promise<Model>}
      */
     async _findHoldingByBid(bid) {
+        // todo pass blockchain identity
         const encryptionType = await this.blockchain
-            .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
+            .getHolderLitigationEncryptionType(bid.offer_id, this.profileService.getIdentity('ethr'));
 
         return Models.holding_data.findOne({
             where: {
@@ -524,7 +526,8 @@ class RemoteControl {
      * Get profile
      */
     async getProfile() {
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const profile = await this.blockchain.getProfile(this.profileService.getIdentity('ethr'));
         this.socket.emit('profile', profile);
     }
 
@@ -532,7 +535,8 @@ class RemoteControl {
      * Get total payments - earning in total
      */
     async getTotalPayouts() {
-        const totalAmount = await this.blockchain.getTotalPayouts(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const totalAmount = await this.blockchain.getTotalPayouts(this.profileService.getIdentity('ethr'));
         this.socket.emit('total_payouts', totalAmount);
     }
 

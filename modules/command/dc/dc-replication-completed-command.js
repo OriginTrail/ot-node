@@ -1,5 +1,5 @@
 const Command = require('../command');
-const utilities = require('../../Utilities');
+const Utilities = require('../../Utilities');
 const encryption = require('../../RSAEncryption');
 const models = require('../../../models/index');
 
@@ -27,12 +27,12 @@ class DcReplicationCompletedCommand extends Command {
         } = command.data;
 
         const toValidate = [
-            utilities.denormalizeHex(offerId),
-            utilities.denormalizeHex(dhIdentity)];
+            Utilities.denormalizeHex(offerId),
+            Utilities.denormalizeHex(dhIdentity)];
         const address = encryption.extractSignerAddress(toValidate, signature);
 
-        if (address.toUpperCase() !== dhWallet.toUpperCase()) {
-            throw new Error(`Failed to validate DH ${dhWallet} signature for offer ${offerId}`);
+        if (!Utilities.compareHexStrings(address, dhWallet)) {
+            throw new Error(`Faile d to validate DH ${dhWallet} signature for offer ${offerId}`);
         }
 
         const replicatedData = await models.replicated_data.findOne({

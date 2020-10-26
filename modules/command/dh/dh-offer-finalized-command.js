@@ -12,6 +12,7 @@ class DhOfferFinalizedCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.remoteControl = ctx.remoteControl;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -19,7 +20,7 @@ class DhOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const { offerId, blockchain_id } = command.data;
 
         const events = await Models.events.findAll({
             where: {
@@ -49,7 +50,8 @@ class DhOfferFinalizedCommand extends Command {
                 const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
                 const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
 
-                if (holders.includes(Utilities.normalizeHex(this.config.erc725Identity))) {
+                // todo pass blockchain identity
+                if (holders.includes(this.profileService.getIdentity(blockchain_id))) {
                     bid.status = 'CHOSEN';
                     await bid.save({ fields: ['status'] });
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
@@ -69,6 +71,7 @@ class DhOfferFinalizedCommand extends Command {
                                     transactional: false,
                                     data: {
                                         offerId,
+                                        blockchain_id,
                                         viaAPI: false,
                                     },
                                 },

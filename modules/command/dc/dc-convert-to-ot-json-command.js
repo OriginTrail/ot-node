@@ -12,6 +12,7 @@ class DcConvertToOtJsonCommand extends Command {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.importService = ctx.importService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -25,7 +26,16 @@ class DcConvertToOtJsonCommand extends Command {
                 let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
                 if (!document.signature) {
-                    document = ImportUtilities.prepareDataset(document, this.config, this.web3);
+                    const blockchain_id = this.blockchain.getDefaultBlockchainId();
+
+                    const blockchain = {
+                        blockchain_id,
+                        hub_contract_address: this.blockchain.getHubContractAddress(blockchain_id),
+                        identity: this.blockchain.getIdentity(blockchain_id),
+                    };
+
+                    document = ImportUtilities
+                        .prepareDataset(document, this.config, this.web3, blockchain);
                 }
 
                 fs.writeFileSync(documentPath, JSON.stringify(document));

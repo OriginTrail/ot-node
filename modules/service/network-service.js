@@ -8,15 +8,17 @@ class NetworkService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.profileService = ctx.profileService;
     }
 
     getPublicKeyData() {
+        // todo pass blockchain identity
         return {
             nodeId: this.config.identity,
             public_key: this.config.publicKeyData.publicKey,
             nonce: this.config.publicKeyData.nonce,
             proof: this.config.publicKeyData.proof,
-            erc725Identity: this.config.erc725Identity,
+            erc725Identity: this.profileService.getIdentity('ethr'),
         };
     }
 

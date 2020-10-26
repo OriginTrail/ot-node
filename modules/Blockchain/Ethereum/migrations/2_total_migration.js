@@ -134,6 +134,7 @@ module.exports = async (deployer, network, accounts) => {
         await token.finishMinting({ from: accounts[0] });
 
         break;
+    case 'development':
     case 'ganache':
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
             .then((result) => {

@@ -21,6 +21,7 @@ class DCController {
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -122,8 +123,9 @@ class DCController {
         const promises = [];
         req.body.ot_object_ids.forEach((ot_object) => {
             promises.push(new Promise(async (accept, reject) => {
+                // todo pass blockchain identity
                 const condition = {
-                    seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                    seller_erc_id: this.profileService.getIdentity('ethr'),
                     data_set_id: req.body.data_set_id.toLowerCase(),
                     ot_json_object_id: ot_object.id,
                 };
@@ -235,10 +237,11 @@ class DCController {
         this.logger.api('GET: Permissioned Data Owned.');
 
         const query = 'SELECT ds.data_set_id, ds.ot_json_object_id, ds.price, ( SELECT Count(*) FROM data_trades dt Where dt.seller_erc_id = ds.seller_erc_id and ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id ) as sales FROM  data_sellers ds where ds.seller_erc_id = :seller_erc ';
+        // todo pass blockchain identity
         const data = await Models.sequelize.query(
             query,
             {
-                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                replacements: { seller_erc: Utilities.normalizeHex(this.profileService.getIdentity('ethr')) },
                 type: QueryTypes.SELECT,
             },
         );
@@ -326,9 +329,10 @@ class DCController {
             data_set_id, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
+        // todo pass blockchain identity
         const condition = {
             where: {
-                seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                seller_erc_id: this.profileService.getIdentity('ethr'),
                 data_set_id,
                 ot_json_object_id,
             },

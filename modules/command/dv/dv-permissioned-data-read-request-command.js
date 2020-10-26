@@ -13,6 +13,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
         this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -28,12 +29,13 @@ class DVPermissionedDataReadRequestCommand extends Command {
             handler_id,
         } = command.data;
 
+        // todo pass blockchain identity
         const message = {
             data_set_id,
             ot_object_id,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
-            dv_erc725_identity: this.config.erc725Identity,
+            dv_erc725_identity: this.profileService.getIdentity('ethr'),
             handler_id,
         };
         const dataReadRequestObject = {

@@ -26,6 +26,7 @@ class ReplicationService {
         this.challengeService = ctx.challengeService;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.profileService = ctx.profileService;
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
 
         if (!fs.existsSync(replicationPath)) {
@@ -46,9 +47,10 @@ class ReplicationService {
 
         const otJson = await this.importService.getImport(offer.data_set_id);
 
+        // todo pass blockchain identity
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,
-            this.config.erc725Identity,
+            this.profileService.getIdentity('ethr'),
             this.config.default_data_price,
             this.config.identity,
             otJson['@graph'],

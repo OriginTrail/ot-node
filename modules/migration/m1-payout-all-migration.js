@@ -8,11 +8,12 @@ const BATCH_SIZE = 15;
  */
 class M1PayoutAllMigration {
     constructor({
-        logger, blockchain, config,
+        logger, blockchain, config, profileService,
     }) {
         this.logger = logger;
         this.config = config;
         this.blockchain = blockchain;
+        this.profileService = profileService;
     }
 
     /**
@@ -39,7 +40,8 @@ class M1PayoutAllMigration {
             throw new Error(message);
         }
 
-        const erc725Identity = Utilities.normalizeHex(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const erc725Identity = this.profileService.getIdentity('ethr');
         while (pendingPayOuts.length > 0) {
             const tempPending = pendingPayOuts.slice(0, BATCH_SIZE);
             pendingPayOuts = pendingPayOuts.slice(BATCH_SIZE);

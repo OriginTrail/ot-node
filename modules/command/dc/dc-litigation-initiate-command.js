@@ -18,6 +18,7 @@ class DCLitigationInitiateCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.remoteControl = ctx.remoteControl;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -68,7 +69,8 @@ class DCLitigationInitiateCommand extends Command {
         replicatedData.status = 'LITIGATION_STARTED';
         await replicatedData.save({ fields: ['status'] });
 
-        const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const dcIdentity = this.profileService.getIdentity('ethr');
         const otJson = await this.importService.getImport(offer.data_set_id);
 
         const encryptedDataset = importUtilities.encryptDataset(

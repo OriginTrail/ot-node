@@ -72,8 +72,9 @@ class DCOfferFinalizeCommand extends Command {
         );
         let result;
         try {
+            // todo pass blockchain identity
             result = await this.blockchain.finalizeOffer(
-                Utilities.normalizeHex(this.config.erc725Identity),
+                Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
                 offerId,
                 new BN(solution.shift, 10),
                 confirmations[0],

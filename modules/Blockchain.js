@@ -78,7 +78,15 @@ class Blockchain {
      * Gets profile by wallet
      * @param identity
      */
-    getProfile(identity) {
+    getProfile(identity, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            if (implementation) {
+                return implementation.getProfile(identity);
+            }
+            throw Error(`Cannot find implementation for chain ${blockchain_id}`);
+        }
         return this.blockchain[0].getProfile(identity);
     }
 
@@ -87,7 +95,15 @@ class Blockchain {
      * @param identity
      * @param nodeId
      */
-    async setNodeId(identity, nodeId) {
+    async setNodeId(identity, nodeId, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.setNodeId(identity, nodeId);
+            }
+            throw Error(`Cannot find implementation for chain ${blockchain_id}`);
+        }
         return this.blockchain[0].setNodeId(identity, nodeId);
     }
 
@@ -106,7 +122,17 @@ class Blockchain {
         initialBalance,
         isSender725,
         blockchainIdentity,
+        blockchain_id,
     ) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.createProfile(
+                managementWallet,
+                profileNodeId, initialBalance, isSender725,
+                blockchainIdentity,
+            );
+        }
         return this.blockchain[0].createProfile(
             managementWallet,
             profileNodeId, initialBalance, isSender725,
@@ -118,7 +144,12 @@ class Blockchain {
      * Gets minimum stake for creating a profile
      * @returns {Promise<*>}
      */
-    async getProfileMinimumStake() {
+    async getProfileMinimumStake(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.getProfileMinimumStake();
+        }
         return this.blockchain[0].getProfileMinimumStake();
     }
 
@@ -135,7 +166,12 @@ class Blockchain {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseProfileApproval(tokenAmountIncrease) {
+    increaseProfileApproval(tokenAmountIncrease, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.increaseProfileApproval(tokenAmountIncrease);
+        }
         return this.blockchain[0].increaseProfileApproval(tokenAmountIncrease);
     }
 
@@ -202,7 +238,12 @@ class Blockchain {
      * @param urgent
      * @returns {Promise}
      */
-    payOut(blockchainIdentity, offerId, urgent) {
+    payOut(blockchainIdentity, offerId, urgent, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.payOut(blockchainIdentity, offerId, urgent);
+        }
         return this.blockchain[0].payOut(blockchainIdentity, offerId, urgent);
     }
 
@@ -394,7 +435,9 @@ class Blockchain {
             const eventData = await Models.events.findAll({ where });
             if (eventData) {
                 eventData.forEach(async (data) => {
-                    this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
+                    const dataToSend = JSON.parse(data.dataValues.data);
+                    dataToSend.blockchain_id = data.dataValues.blockchain_id;
+                    this.emitter.emit(`eth-${data.event}`, dataToSend);
                     data.finished = true;
                     await data.save();
                 });
@@ -593,7 +636,12 @@ class Blockchain {
      * @param dataSetId Data set ID
      * @return {Promise<any>}
      */
-    async getRootHash(dataSetId) {
+    async getRootHash(dataSetId, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.getRootHash(dataSetId);
+        }
         return this.blockchain[0].getRootHash(dataSetId);
     }
 
@@ -792,7 +840,13 @@ class Blockchain {
      * @param offerId - offer ID
      * @return {Promise<*>}
      */
-    async getOffer(offerId) {
+    async getOffer(offerId, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.getOffer(offerId);
+        }
+
         return this.blockchain[0].getOffer(offerId);
     }
 
@@ -838,7 +892,12 @@ class Blockchain {
      * @param holderIdentity - Holder identity
      * @return {Promise<any>}
      */
-    async getLitigation(offerId, holderIdentity) {
+    async getLitigation(offerId, holderIdentity, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.getLitigation(offerId, holderIdentity);
+        }
         return this.blockchain[0].getLitigation(offerId, holderIdentity);
     }
 
@@ -911,6 +970,70 @@ class Blockchain {
      */
     numberOfEventsEmitted(receipt) {
         return this.blockchain[0].numberOfEventsEmitted(receipt);
+    }
+
+    /**
+     * Returns created identities from configuration
+     */
+    getIdentities() {
+        const identities = [];
+        for (let i = 0; i < this.blockchain.length; i += 1) {
+            const identity = this.blockchain[i].getIdentity();
+
+            identities.push({
+                blockchain_id: this.blockchain[i].getBlockchainId(),
+                response: identity ? { identity } : null,
+            });
+        }
+
+        return identities;
+    }
+
+    /**
+     * Returns created identities from configuration
+     */
+    getIdentity(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.getIdentity();
+            }
+        }
+        return this.blockchain[0].getIdentity();
+    }
+
+    /**
+     * Saves identity into file and configuration
+     */
+    saveIdentity(identity, blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.config.network_id === blockchain_id);
+
+            return implementation.saveIdentity(identity);
+        }
+        this.blockchain[0].saveIdentity(identity);
+    }
+
+    /**
+     * Returns the blockchain id of the default blockchain implementation
+     */
+    getDefaultBlockchainId() {
+        return this.blockchain[0].getBlockchainId();
+    }
+
+    /**
+     * Returns the hub contract address for a particular (od default) blockchain implementation
+     */
+    getHubContractAddress(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.getIdentity();
+            }
+        }
+        return this.blockchain[0].getIdentity();
     }
 }
 

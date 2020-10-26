@@ -20,6 +20,7 @@ class DVController {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
+        this.profileService = ctx.profileService;
 
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
@@ -114,7 +115,8 @@ class DVController {
                 message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
             });
         }
-        const normalizedIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const normalizedIdentity = this.profileService.getIdentity('ethr');
         const whereCondition = {};
         if (requestedType === this.trading_type_purchased) {
             whereCondition.buyer_erc_id = normalizedIdentity;
@@ -306,11 +308,12 @@ class DVController {
 
         const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
 
+        // todo pass blockchain identity
         await Models.data_sellers.create({
             data_set_id,
             ot_json_object_id: ot_object_id,
             seller_node_id: this.config.identity.toLowerCase(),
-            seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+            seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
             price: this.config.default_data_price,
         });
 
@@ -325,10 +328,11 @@ class DVController {
         this.logger.api('GET: Permissioned data Available for purchase.');
 
         const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
+        // todo pass blockchain identity
         const data = await Models.sequelize.query(
             query,
             {
-                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                replacements: { seller_erc: Utilities.normalizeHex(this.profileService.getIdentity('ethr')) },
                 type: QueryTypes.SELECT,
             },
         );
@@ -823,11 +827,12 @@ class DVController {
             return;
         }
 
+        // todo pass blockchain identity
         const myDataPrice = await Models.data_sellers.findAll({
             where: {
                 data_set_id,
                 ot_json_object_id: ot_object_id,
-                seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
             },
         });
 

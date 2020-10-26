@@ -24,6 +24,7 @@ class DHService {
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
         this.pricingService = ctx.pricingService;
+        this.profileService = ctx.profileService;
 
         const that = this;
         this.queue = new Queue((async (args, cb) => {
@@ -35,6 +36,7 @@ class DHService {
                 litigationIntervalInMinutes,
                 tokenAmountPerHolder,
                 dataSetId,
+                blockchain_id,
                 future,
             } = args;
             try {
@@ -46,6 +48,7 @@ class DHService {
                     litigationIntervalInMinutes,
                     tokenAmountPerHolder,
                     dataSetId,
+                    blockchain_id,
                 );
                 future.resolve();
             } catch (e) {
@@ -61,7 +64,7 @@ class DHService {
     handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-        tokenAmountPerHolder, dataSetId,
+        tokenAmountPerHolder, dataSetId, blockchain_id,
     ) {
         return new Promise((resolve, reject) => {
             this.queue.push({
@@ -72,6 +75,7 @@ class DHService {
                 litigationIntervalInMinutes,
                 tokenAmountPerHolder,
                 dataSetId,
+                blockchain_id,
                 future: {
                     resolve, reject,
                 },
@@ -86,7 +90,7 @@ class DHService {
     async _handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-        tokenAmountPerHolder, dataSetId,
+        tokenAmountPerHolder, dataSetId, blockchain_id,
     ) {
         if (dcNodeId === this.config.identity) {
             return; // the offer is mine
@@ -129,7 +133,7 @@ class DHService {
         }
 
         this.logger.info(`Accepting offer with price: ${tokenAmountPerHolder} TRAC.`);
-        const offer = await this.blockchain.getOffer(offerId);
+        const offer = await this.blockchain.getOffer(offerId, blockchain_id);
         const bid = await Models.bids.create({
             offer_id: offerId,
             dc_identity: offer.creator,
@@ -147,6 +151,7 @@ class DHService {
         const remainder = await this._calculatePessimisticMinimumDeposit(
             bid.id,
             tokenAmountPerHolder,
+            blockchain_id,
         );
 
         if (remainder) {
@@ -155,6 +160,7 @@ class DHService {
 
         const data = {
             offerId,
+            blockchain_id,
             dcNodeId,
             dataSetSizeInBytes,
             holdingTimeInMinutes,
@@ -180,11 +186,14 @@ class DHService {
      * @return {Promise<*>}
      * @private
      */
-    async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder) {
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+    async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder, blockchain_id) {
+        // todo pass blockchain identity
+        const profile = await this.blockchain
+            .getProfile(this.profileService.getIdentity(blockchain_id), blockchain_id);
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        const profileMinStake =
+            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id), 10);
 
         const offerStake = new BN(tokenAmountPerHolder, 10);
 

@@ -36,6 +36,10 @@ if (!argv.certs) {
     argv.certs = '../certs/';
 }
 
+if (!argv.identities) {
+    argv.identities = '../data/identities/';
+}
+
 if (!argv.backup_directory) {
     argv.backup_directory = '../backup/';
 }
@@ -46,11 +50,12 @@ const configPath = argv.config.lastIndexOf('/') === -1 ? '' : argv.config.slice(
 const configName = argv.config.slice(argv.config.lastIndexOf('/') + 1);
 const configDirectory = argv.configDir.replace(/\/$/, '');
 const certsDirectory = argv.certs.replace(/\/$/, '');
+const identitiesDirectory = argv.identities.replace(/\/$/, '');
 const backupPath = argv.backup_directory.replace(/\/$/, '');
 
 console.log('Setup path variables...');
 
-const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'arango.txt', 'houston.txt', 'system.db', 'erc725_identity.json', configName];
+const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'arango.txt', 'houston.txt', 'system.db', configName];
 const certs = ['fullchain.pem', 'privkey.pem'];
 
 let configFile;
@@ -117,6 +122,21 @@ try {
             console.log(`Backup: ${src} -> ${dest}`);
             fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
         }
+    }
+
+    // copy identity files
+    if (fs.existsSync(identitiesDirectory)) {
+        mkdirp.sync(`${backupPath}/${timestamp}/${identitiesDirectory}`, (err) => { if (err) { console.error(err); return 1; } });
+        const fileList = fs.readdirSync(identitiesDirectory);
+        fileList.forEach((identity) => {
+            const src = `${identitiesDirectory}/${identity}`;
+            const dest = `${backupPath}/${timestamp}/${identitiesDirectory}/${identity}`;
+
+            if (fs.existsSync(src)) {
+                console.log(`Backup: ${src} -> ${dest}`);
+                fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
+            }
+        });
     }
 
     console.log('Database export...');

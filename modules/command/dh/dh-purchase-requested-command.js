@@ -15,6 +15,7 @@ class DhPurchaseRequestedCommand extends Command {
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -96,13 +97,14 @@ class DhPurchaseRequestedCommand extends Command {
                     retries: 3,
                     data: commandData,
                 });
+                // todo pass blockchain identity
                 await Models.data_trades.create({
                     data_set_id,
                     ot_json_object_id,
                     buyer_node_id: dv_node_id,
                     buyer_erc_id: dv_erc725_identity,
                     seller_node_id: this.config.identity,
-                    seller_erc_id: this.config.erc725Identity.toLowerCase(),
+                    seller_erc_id: this.profileService.getIdentity('ethr').toLowerCase(),
                     price,
                     status: 'REQUESTED',
                 });

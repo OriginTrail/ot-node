@@ -29,6 +29,10 @@ if (!argv.certs) {
     argv.certs = '../certs/';
 }
 
+if (!argv.identities) {
+    argv.identities = '../identities/';
+}
+
 if (!argv.restore_directory) {
     argv.restore_directory = '../backup/';
 }
@@ -40,6 +44,7 @@ const configName = argv.config.slice(argv.config.lastIndexOf('/') + 1);
 const configDirectory = argv.configDir.replace(/\/$/, '');
 const certsDirectory = argv.certs.replace(/\/$/, '');
 const restorePath = argv.restore_directory.replace(/\/$/, '');
+const identitiesDirectory = argv.identities.replace(/\/$/, '');
 
 console.log('Setup path variables...');
 
@@ -61,6 +66,11 @@ if (!fs.existsSync(`${configDirectory}`)) {
 if (!fs.existsSync(`${certsDirectory}`)) {
     console.log(`Directory ${certsDirectory} does not exist. Creating...`);
     mkdirp.sync(`${certsDirectory}`);
+}
+
+if (!fs.existsSync(`${identitiesDirectory}`)) {
+    console.log(`Directory ${identitiesDirectory} does not exist. Creating...`);
+    mkdirp.sync(`${identitiesDirectory}`);
 }
 
 for (const file of files) {

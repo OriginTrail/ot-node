@@ -12,6 +12,7 @@ class DHController {
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
+        this.profileService = ctx.profileService;
     }
 
     isParameterProvided(request, response, parameter_name) {
@@ -48,11 +49,12 @@ class DHController {
         }
 
         const { dataset_id, ot_object_id, viewer_erc_id } = request.body;
+        // todo pass blockchain identity
         const requested_object = await Models.data_sellers.findOne({
             where: {
                 data_set_id: dataset_id,
                 ot_json_object_id: ot_object_id,
-                seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                seller_erc_id: this.profileService.getIdentity('ethr'),
             },
         });
 
@@ -70,13 +72,14 @@ class DHController {
 
         const buyer_node_id = Utilities.denormalizeHex(buyerProfile.nodeId.substring(0, 42));
 
+        // todo pass blockchain identity
         await Models.data_trades.create({
             data_set_id: dataset_id,
             ot_json_object_id: ot_object_id,
             buyer_node_id,
             buyer_erc_id: Utilities.normalizeHex(viewer_erc_id),
             seller_node_id: this.config.identity,
-            seller_erc_id: this.config.erc725Identity.toLowerCase(),
+            seller_erc_id: this.profileService.getIdentity('ethr'),
             price: '0',
             status: 'COMPLETED',
         });
