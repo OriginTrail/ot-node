@@ -40,7 +40,11 @@ class Ethereum {
         this.config.management_wallet = management_wallet;
 
         if (!this.config.node_wallet || !this.config.node_private_key) {
-            console.error('Please provide valid wallet.');
+            console.error('Please provide valid operational wallet.');
+        }
+
+        if (!this.config.management_wallet) {
+            console.error('Please provide valid management wallet.');
         }
 
         this.config.identity = Utilities.loadJsonFromFile(
