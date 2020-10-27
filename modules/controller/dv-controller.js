@@ -504,18 +504,20 @@ class DVController {
     }
 
     async sendPermissionedDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         const message = {
             data_set_id: dataSetId,
             handler_id: handlerId,
             ot_json_object_id: otJsonObjectId,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
         };
         const dataPriceRequestObject = {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 

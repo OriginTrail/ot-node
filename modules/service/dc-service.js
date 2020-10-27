@@ -433,9 +433,12 @@ class DCService {
             Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
             Utilities.denormalizeHex(replication.distributionRootHash),
         ];
+
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         const distributionSignature = Encryption.signMessage(
             this.web3, toSign,
-            Utilities.normalizeHex(this.config.node_private_key),
+            Utilities.normalizeHex(node_private_key),
         );
 
         const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
@@ -459,7 +462,7 @@ class DCService {
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
-            dc_wallet: this.config.node_wallet,
+            dc_wallet: node_wallet,
             otJson: replication.otJson,
             permissionedData,
             litigation_public_key: replication.litigationPublicKey,

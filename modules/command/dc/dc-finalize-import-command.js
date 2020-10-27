@@ -37,12 +37,14 @@ class DcFinalizeImport extends Command {
         }
 
         try {
+            const { node_wallet } = this.blockchain.getWallet('ethr');
+
             const import_timestamp = new Date();
             this.remoteControl.importRequestData();
             await Models.data_info.create({
                 data_set_id,
                 root_hash,
-                data_provider_wallet: data_provider_wallet || this.config.node_wallet,
+                data_provider_wallet: data_provider_wallet || node_wallet,
                 import_timestamp,
                 total_documents,
                 origin: purchased ? 'PURCHASED' : 'IMPORTED',

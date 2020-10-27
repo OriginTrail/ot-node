@@ -893,6 +893,22 @@ class Utilities {
     }
 
     /**
+     * Loads JSON data from file
+     * @returns {Promise<JSON object>}
+     * @private
+     */
+    static loadJsonFromFile(filePath, fileName) {
+        const file = path.join(
+            filePath,
+            fileName,
+        );
+        if (fs.existsSync(file)) {
+            return JSON.parse(fs.readFileSync(file));
+        }
+        return null;
+    }
+
+    /**
      * Write contents to file
      * @param directory
      * @param filename

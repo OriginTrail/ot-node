@@ -25,10 +25,12 @@ class DVDataReadRequestCommand extends Command {
             dataSetId, replyId, handlerId, nodeId,
         } = command.data;
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         const message = {
             id: replyId,
             data_set_id: dataSetId,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
             nodeId: this.config.identity,
             handler_id: handlerId,
         };
@@ -37,7 +39,7 @@ class DVDataReadRequestCommand extends Command {
             messageSignature: Utilities.generateRsvSignature(
                 message,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
         await this.transport.dataReadRequest(

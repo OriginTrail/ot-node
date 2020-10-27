@@ -1035,6 +1035,20 @@ class Blockchain {
         }
         return this.blockchain[0].getIdentity();
     }
+
+    /**
+     * Returns wallet public and private key from configuration
+     */
+    getWallet(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.getWallet();
+            }
+        }
+        return this.blockchain[0].getWallet();
+    }
 }
 
 module.exports = Blockchain;

@@ -226,14 +226,6 @@ function main() {
 
     web3.setProvider(new Web3.providers.HttpProvider(externalConfig.blockchain.rpc_server_url));
 
-    if (!externalConfig.node_wallet ||
-        !externalConfig.node_private_key ||
-        !web3.utils.isAddress(externalConfig.node_wallet)) {
-        logger.error('Wallet not provided! Please provide valid wallet.');
-        process.exit(1);
-        return;
-    }
-
     if (process.env.ERC_725_IDENTITY) {
         const erc725IdentityFilePath =
             path.join(localConfiguration.appDataPath, localConfiguration.erc725_identity_filepath);

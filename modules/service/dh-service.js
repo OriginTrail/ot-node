@@ -481,7 +481,7 @@ class DHService {
             // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
             const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor));
             const profileBalance =
-                new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
+                new BN((await this.blockchain.getProfile(this.blockchain.getWallet('ethr'))).balance, 10);
 
             if (profileBalance.lt(condition)) {
                 throw new Error('Not enough funds to handle data read request');
@@ -515,9 +515,11 @@ class DHService {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
+            const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
             const replyMessage = {
                 id,
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 nodeId: this.config.identity,
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
@@ -532,7 +534,7 @@ class DHService {
                 messageSignature: Utilities.generateRsvSignature(
                     replyMessage,
                     this.web3,
-                    this.config.node_private_key,
+                    node_private_key,
                 ),
             };
 
@@ -562,15 +564,17 @@ class DHService {
         // Wait for event from blockchain.
         await this.blockchain.subscribeToEvent('PurchaseInitiated', importId, 20 * 60 * 1000);
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         // purchase[DH_wallet][msg.sender][import_id]
         const purchase = await this.blockchain.getPurchase(
-            this.config.node_wallet,
+            node_wallet,
             networkReplyModel.receiver_wallet,
             importId,
         );
 
         if (!purchase) {
-            const errorMessage = `Failed to get purchase for: DH ${this.config.node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${importId}.`;
+            const errorMessage = `Failed to get purchase for: DH ${node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${importId}.`;
             this.logger.error(errorMessage);
             throw errorMessage;
         }
@@ -643,7 +647,7 @@ class DHService {
 
         await Models.data_holders.create({
             import_id: importId,
-            dh_wallet: this.config.node_wallet,
+            dh_wallet: node_wallet,
             dh_kademlia_id: this.config.identity,
             m1,
             m2,
@@ -659,7 +663,7 @@ class DHService {
         const encryptedPaddedKeyObject = {
             message: {
                 id: messageId,
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 nodeId: this.config.identifiers,
                 m1,
                 m2,
@@ -674,7 +678,7 @@ class DHService {
         encryptedPaddedKeyObject.messageSignature = Utilities.generateRsvSignature(
             encryptedPaddedKeyObject.message,
             this.web3,
-            this.config.node_private_key,
+            node_private_key,
         );
 
         await this.transport.sendEncryptedKey(encryptedPaddedKeyObject, nodeId);

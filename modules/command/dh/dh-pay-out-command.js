@@ -133,7 +133,8 @@ class DhPayOutCommand extends Command {
      * @private
      */
     async _printBalances(blockchainIdentity, blockchain_id) {
-        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
+        const { node_wallet } = this.blockchain.getWallet(blockchain_id);
+        const balance = await this.blockchain.getProfileBalance(node_wallet);
         const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
         this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
 

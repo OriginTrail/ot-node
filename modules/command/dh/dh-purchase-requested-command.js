@@ -35,9 +35,12 @@ class DhPurchaseRequestedCommand extends Command {
                 ot_json_object_id,
             },
         });
+
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         const response = {
             handler_id,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
         };
 
         const sellingData = await Models.data_sellers.findOne({
@@ -119,18 +122,18 @@ class DhPurchaseRequestedCommand extends Command {
         } else {
             this.logger.info(`Purchase confirmed for ot_object ${ot_json_object_id} received from ${dv_node_id}. Sending purchase response.`);
         }
-        await this._sendResponseToDv(response, dv_node_id);
+        await this._sendResponseToDv(response, dv_node_id, node_private_key);
         this.logger.info(`Purchase request response sent to ${dv_node_id}.`);
         return Command.empty();
     }
 
-    async _sendResponseToDv(response, dv_node_id) {
+    async _sendResponseToDv(response, dv_node_id, node_private_key) {
         const dataPurchaseResponseObject = {
             message: response,
             messageSignature: Utilities.generateRsvSignature(
                 response,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 
@@ -148,14 +151,16 @@ class DhPurchaseRequestedCommand extends Command {
     async recover(command, err) {
         const { handler_id, dv_node_id } = command.data;
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         const response = {
             handler_id,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
             message: `Failed to process dhPurchaseRequestedCommand, error: ${err}`,
             status: 'FAILED',
         };
 
-        await this._sendResponseToDv(response, dv_node_id);
+        await this._sendResponseToDv(response, dv_node_id, node_private_key);
 
         return Command.empty();
     }

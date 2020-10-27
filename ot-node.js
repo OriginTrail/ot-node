@@ -82,21 +82,6 @@ try {
             process.env.NODE_ENV,
         );
     }
-
-    if (!config.node_wallet || !config.node_private_key) {
-        console.error('Please provide valid wallet.');
-        process.abort();
-    }
-
-    if (!config.management_wallet) {
-        console.error('Please provide a valid management wallet.');
-        process.abort();
-    }
-
-    // if (!config.blockchain.rpc_server_url) {
-    //     console.error('Please provide a valid RPC server URL.');
-    //     process.abort();
-    // }
 } catch (error) {
     console.error(`Failed to read configuration. ${error}.`);
     console.error(error.stack);

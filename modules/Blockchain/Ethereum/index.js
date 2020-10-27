@@ -29,9 +29,24 @@ class Ethereum {
 
         this.config = configuration;
         this.config.appDataPath = config.appDataPath;
-        this.config.wallet_address = config.node_wallet;
-        this.config.node_private_key = config.node_private_key;
-        this.config.identity = this._loadIdentityFromFile();
+        const {
+            node_wallet,
+            node_private_key,
+            management_wallet,
+        } = Utilities.loadJsonFromFile(this.config.appDataPath, configuration.node_wallet_path);
+        this.config.wallet_address = node_wallet;
+        this.config.node_wallet = node_wallet;
+        this.config.node_private_key = node_private_key;
+        this.config.management_wallet = management_wallet;
+
+        if (!this.config.node_wallet || !this.config.node_private_key) {
+            console.error('Please provide valid wallet.');
+        }
+
+        this.config.identity = Utilities.loadJsonFromFile(
+            this.config.appDataPath,
+            this.config.node_identity_path,
+        ).identity;
 
         this.transactions = new Transactions(
             this.web3,
@@ -47,23 +62,6 @@ class Ethereum {
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
         this.logger.info('Selected blockchain: Ethereum');
-    }
-
-    /**
-     * Reads identity from file
-     * @returns {Promise<erc725Identity>}
-     * @private
-     */
-    _loadIdentityFromFile() {
-        const identityFilePath = path.join(
-            this.config.appDataPath,
-            this.config.identity_filepath,
-        );
-        if (fs.existsSync(identityFilePath)) {
-            const content = JSON.parse(fs.readFileSync(identityFilePath).toString());
-            return content.identity;
-        }
-        return null;
     }
 
     /**
@@ -1499,6 +1497,17 @@ class Ethereum {
      */
     getIdentity() {
         return this.config.identity;
+    }
+
+    /**
+     * Returns wallet from configuration
+     */
+    getWallet() {
+        return {
+            node_wallet: this.config.node_wallet,
+            node_private_key: this.config.node_private_key,
+            management_wallet: this.config.management_wallet,
+        };
     }
 
     /**

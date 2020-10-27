@@ -177,15 +177,18 @@ class DhReplicationImportCommand extends Command {
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),
         ];
+
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
+            .signMessage(this.web3, toSign, Utilities.normalizeHex(node_private_key));
 
         // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
             dhIdentity: Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),
             messageSignature: messageSignature.signature,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
         };
 
         await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);

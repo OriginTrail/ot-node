@@ -24,12 +24,14 @@ class InfoController {
                 is_bootstrap: this.config.is_bootstrap_node,
             };
 
+            const { node_wallet } = this.blockchain.getWallet('ethr');
+
             if (!this.config.is_bootstrap_node) {
                 const numberOfVertices = await this.graphStorage.getDocumentsCount('ot_vertices');
                 const numberOfEdges = await this.graphStorage.getDocumentsCount('ot_edges');
                 // todo pass blockchain identity
                 Object.assign(basicConfig, {
-                    node_wallet: this.config.node_wallet,
+                    node_wallet,
                     erc_725_identity: this.profileService.getIdentity('ethr'),
                     graph_size: {
                         number_of_vertices: numberOfVertices,

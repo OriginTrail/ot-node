@@ -29,11 +29,13 @@ class DVPermissionedDataReadRequestCommand extends Command {
             handler_id,
         } = command.data;
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+
         // todo pass blockchain identity
         const message = {
             data_set_id,
             ot_object_id,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
             nodeId: this.config.identity,
             dv_erc725_identity: this.profileService.getIdentity('ethr'),
             handler_id,
@@ -43,7 +45,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
             messageSignature: Utilities.generateRsvSignature(
                 message,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 

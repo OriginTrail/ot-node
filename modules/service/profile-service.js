@@ -99,10 +99,12 @@ class ProfileService {
         let createProfileCalled = false;
         do {
             try {
-                if (this.config.management_wallet) {
+                const { node_wallet, management_wallet } = this.blockchain.getWallet('ethr');
+
+                if (management_wallet) {
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchain.createProfile(
-                        this.config.management_wallet,
+                        management_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
                         blockchainId,
@@ -113,7 +115,7 @@ class ProfileService {
                         ' Please set management one.');
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchain.createProfile(
-                        this.config.node_wallet,
+                        node_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
                         blockchainId,
@@ -144,7 +146,7 @@ class ProfileService {
                 5 * 60 * 1000,
                 null,
                 eventData =>
-                    Utilities.compareHexStrings(eventData.profile, this.config.node_wallet),
+                    Utilities.compareHexStrings(eventData.profile, this.blockchain.getWallet('ethr')),
                 null,
                 blockchainId,
             );
