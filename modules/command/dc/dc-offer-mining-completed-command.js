@@ -77,29 +77,12 @@ class DcOfferMiningCompletedCommand extends Command {
                 };
             }
 
-            if (this.config.parentIdentity) {
-                const hasPermission = await this.profileService.hasParentPermission();
-                if (!hasPermission) {
-                    const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';
-                    this.logger.warn(message);
-                    throw new Error(message);
-                }
-
-                const hasFunds = await
-                this.dcService.parentHasProfileBalanceForOffer(offer.token_amount_per_holder);
-                if (!hasFunds) {
-                    const message = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
-                    this.logger.warn(message);
-                    throw new Error(message);
-                }
-            } else {
-                const hasFunds =
-                    await this.dcService.hasProfileBalanceForOffer(offer.token_amount_per_holder);
-                if (!hasFunds) {
-                    const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
-                    this.logger.warn(message);
-                    throw new Error(message);
-                }
+            const hasFunds =
+                await this.dcService.hasProfileBalanceForOffer(offer.token_amount_per_holder);
+            if (!hasFunds) {
+                const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+                this.logger.warn(message);
+                throw new Error(message);
             }
             const commandData = {
                 offerId, solution, handler_id, urgent: offer.urgent,
