@@ -30,7 +30,7 @@ class InfoController {
                 // todo pass blockchain identity
                 Object.assign(basicConfig, {
                     node_wallet: this.config.node_wallet,
-                    erc_725_identity: this.profileService.getIdentity('ethr'),
+                    erc_725_identity: this.profileService.getIdentity(),
                     graph_size: {
                         number_of_vertices: numberOfVertices,
                         number_of_edges: numberOfEdges,

@@ -54,7 +54,7 @@ class DHController {
             where: {
                 data_set_id: dataset_id,
                 ot_json_object_id: ot_object_id,
-                seller_erc_id: this.profileService.getIdentity('ethr'),
+                seller_erc_id: this.profileService.getIdentity(),
             },
         });
 
@@ -68,7 +68,7 @@ class DHController {
         }
 
         const buyerProfile =
-            await this.blockchain.getProfile(Utilities.normalizeHex(viewer_erc_id));
+            await this.blockchain.getProfile(Utilities.normalizeHex(viewer_erc_id)).response;
 
         const buyer_node_id = Utilities.denormalizeHex(buyerProfile.nodeId.substring(0, 42));
 
@@ -79,7 +79,7 @@ class DHController {
             buyer_node_id,
             buyer_erc_id: Utilities.normalizeHex(viewer_erc_id),
             seller_node_id: this.config.identity,
-            seller_erc_id: this.profileService.getIdentity('ethr'),
+            seller_erc_id: this.profileService.getIdentity(),
             price: '0',
             status: 'COMPLETED',
         });

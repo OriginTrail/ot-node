@@ -66,13 +66,13 @@ class DCOfferReplaceCommand extends Command {
         await this.blockchain.replaceHolder(
             offerId,
             dhIdentity,
-            this.profileService.getIdentity('ethr'),
+            this.profileService.getIdentity(),
             new BN(solution.shift, 10),
             confirmations[0],
             confirmations[1],
             confirmations[2],
             nodeIdentifiers,
-        );
+        ).response;
 
         return {
             commands: [

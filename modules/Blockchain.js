@@ -74,7 +74,7 @@ class Blockchain {
 
         const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
 
-        if (implementation && implementation.initalized) {
+        if (implementation && implementation.initialized) {
             return implementation;
         } else if (implementation) {
             throw new Error(`Cannot return implementation for blockchain_id ${blockchain_id}. Implementation is not initialized.`);
@@ -85,7 +85,7 @@ class Blockchain {
 
     _getDefaultImplementation() {
         for (const implementation of this.blockchain) {
-            if (implementation.initalized) return implementation;
+            if (implementation.initialized) return implementation;
         }
 
         throw new Error('Cannot return implementation. No implementation is initialized.');
@@ -113,10 +113,14 @@ class Blockchain {
      * Gets profile by wallet
      * @param identity
      * @param blockchain_id
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     getProfile(identity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getProfile(identity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getProfile(identity),
+        };
     }
 
     /**
@@ -124,10 +128,14 @@ class Blockchain {
      * @param identity
      * @param nodeId
      * @param blockchain_id
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async setNodeId(identity, nodeId, blockchain_id) {
+    setNodeId(identity, nodeId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.setNodeId(identity, nodeId);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.setNodeId(identity, nodeId),
+        };
     }
 
     /**
@@ -138,7 +146,7 @@ class Blockchain {
      * @param isSender725 - Is sender ERC 725?
      * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @param blockchain_id - Blockchain implementation
-     * @return {Promise<any>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     createProfile(
         managementWallet,
@@ -149,31 +157,40 @@ class Blockchain {
         blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.createProfile(
-            managementWallet,
-            profileNodeId, initialBalance, isSender725,
-            blockchainIdentity,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.createProfile(
+                managementWallet,
+                profileNodeId, initialBalance, isSender725,
+                blockchainIdentity,
+            ),
+        };
     }
 
     /**
      * Gets minimum stake for creating a profile
-     * @returns {Promise<*>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getProfileMinimumStake(blockchain_id) {
+    getProfileMinimumStake(blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getProfileMinimumStake();
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getProfileMinimumStake(),
+        };
     }
 
     /**
      * Increase token approval for escrow contract
      * @param {number} tokenAmountIncrease
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @returns {Promise}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     increaseProfileApproval(tokenAmountIncrease, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.increaseProfileApproval(tokenAmountIncrease);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.increaseProfileApproval(tokenAmountIncrease),
+        };
     }
 
     /**
@@ -187,15 +204,18 @@ class Blockchain {
      * @param {string} blockchain_id - Blockchain implementation to use
      * @return {Promise<any>}
      */
-    async initiateLitigation(
+    initiateLitigation(
         offerId, holderIdentity, litigatorIdentity,
         requestedObjectIndex, requestedBlockIndex, hashArray, blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.initiateLitigation(
-            offerId,
-            holderIdentity, litigatorIdentity, requestedObjectIndex, requestedBlockIndex, hashArray,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.initiateLitigation(
+                offerId, holderIdentity, litigatorIdentity,
+                requestedObjectIndex, requestedBlockIndex, hashArray,
+            ),
+        };
     }
 
     /**
@@ -207,9 +227,9 @@ class Blockchain {
      * @param leafIndex - the number of the block in the lowest level of the merkle tree
      * @param urgent - Whether max gas price should or not
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<void>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async completeLitigation(
+    completeLitigation(
         offerId,
         holderIdentity,
         challengerIdentity,
@@ -219,10 +239,13 @@ class Blockchain {
         blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.completeLitigation(
-            offerId, holderIdentity,
-            challengerIdentity, proofData, leafIndex, urgent,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.completeLitigation(
+                offerId, holderIdentity,
+                challengerIdentity, proofData, leafIndex, urgent,
+            ),
+        };
     }
 
     /**
@@ -232,11 +255,14 @@ class Blockchain {
      * @param answer
      * @param urgent - Whether maximum gas price should be used
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<any>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     answerLitigation(offerId, holderIdentity, answer, urgent, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.answerLitigation(offerId, holderIdentity, answer, urgent);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.answerLitigation(offerId, holderIdentity, answer, urgent),
+        };
     }
 
     /**
@@ -245,11 +271,14 @@ class Blockchain {
      * @param offerId
      * @param urgent
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @returns {Promise}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     payOut(blockchainIdentity, offerId, urgent, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.payOut(blockchainIdentity, offerId, urgent);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.payOut(blockchainIdentity, offerId, urgent),
+        };
     }
 
     /**
@@ -257,7 +286,7 @@ class Blockchain {
      * @param {string} blockchainIdentity - Blockchain identity to use
      * @param {string} offerIds - Offers to payOut
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @returns {Promise<any>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     payOutMultiple(
         blockchainIdentity,
@@ -265,12 +294,15 @@ class Blockchain {
         blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.payOutMultiple(blockchainIdentity, offerIds);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.payOutMultiple(blockchainIdentity, offerIds),
+        };
     }
 
     /**
      * Creates offer for the data storing on the Ethereum blockchain.
-     * @returns {Promise<any>} Return choose start-time.
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     createOffer(
         blockchainIdentity,
@@ -288,25 +320,28 @@ class Blockchain {
         blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.createOffer(
-            blockchainIdentity,
-            dataSetId,
-            dataRootHash,
-            redLitigationHash,
-            greenLitigationHash,
-            blueLitigationHash,
-            dcNodeId,
-            holdingTimeInMinutes,
-            tokenAmountPerHolder,
-            dataSizeInBytes,
-            litigationIntervalInMinutes,
-            urgent,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.createOffer(
+                blockchainIdentity,
+                dataSetId,
+                dataRootHash,
+                redLitigationHash,
+                greenLitigationHash,
+                blueLitigationHash,
+                dcNodeId,
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSizeInBytes,
+                litigationIntervalInMinutes,
+                urgent,
+            ),
+        };
     }
 
     /**
      * Finalizes offer on Blockchain
-     * @returns {Promise<any>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     finalizeOffer(
         blockchainIdentity,
@@ -322,10 +357,13 @@ class Blockchain {
         blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.finalizeOffer(
-            blockchainIdentity, offerId, shift, confirmation1,
-            confirmation2, confirmation3, encryptionType, holders, parentIdentity, urgent,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.finalizeOffer(
+                blockchainIdentity, offerId, shift, confirmation1,
+                confirmation2, confirmation3, encryptionType, holders, parentIdentity, urgent,
+            ),
+        };
     }
 
     /**
@@ -605,35 +643,32 @@ class Blockchain {
         });
     }
 
-    async getStakedAmount(importId, blockchain_id) {
+    /**
+     * Total amount of tokens paid out for node
+     * @param {string} identity
+     * @param {string} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    getTotalPayouts(identity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getStakedAmount(importId);
-    }
-
-    async getHoldingIncome(importId, blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getHoldingIncome(importId);
-    }
-
-    async getPurchaseIncome(importId, dvWallet, blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getPurchaseIncome(importId, dvWallet);
-    }
-
-    async getTotalPayouts(identity, blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getTotalPayouts(identity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getTotalPayouts(identity),
+        };
     }
 
     /**
-     * Gets balance from the profile
-     * @param wallet
+     * Gets token balance of a particular wallet
+     * @param {string} wallet
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @returns {Promise}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     getProfileBalance(wallet, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getProfileBalance(wallet);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getProfileBalance(wallet),
+        };
     }
 
     /**
@@ -641,50 +676,93 @@ class Blockchain {
      * @param blockchainIdentity
      * @param amount
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @returns {Promise<any>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async depositTokens(blockchainIdentity, amount, blockchain_id) {
+    depositTokens(blockchainIdentity, amount, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.depositTokens(blockchainIdentity, amount);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.depositTokens(blockchainIdentity, amount),
+        };
     }
 
     /**
-     * Gets root hash for import
-     * @param dataSetId Data set ID
+     * Gets the root hash (fingerprint) written in the blockchain for a given dataset
+     * @param {string} dataSetId - Data set ID
      * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<any>}
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getRootHash(dataSetId, blockchain_id) {
+    getRootHash(dataSetId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getRootHash(dataSetId);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getRootHash(dataSetId),
+        };
     }
 
-    async getPurchase(purchaseId, blockchain_id) {
+    /**
+     * Gets purchase object from blockchain
+     * @param {string} purchaseId
+     * @param {string} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    getPurchase(purchaseId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getPurchase(purchaseId);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getPurchase(purchaseId),
+        };
     }
 
-    async getPurchaseStatus(purchaseId, blockchain_id) {
+    /**
+     * Gets purchase status from blockchain
+     * @param {string} purchaseId
+     * @param {string} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    getPurchaseStatus(purchaseId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getPurchaseStatus(purchaseId);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getPurchaseStatus(purchaseId),
+        };
     }
 
-    async getPaymentStageInterval(blockchain_id) {
+    /**
+     * Gets the duration of a purchase stage from blockchain
+     * @param {string} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    getPaymentStageInterval(blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getPaymentStageInterval();
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getPaymentStageInterval(),
+        };
     }
 
-    async initiatePurchase(
+    /**
+     * Gets the duration of a purchase stage from blockchain
+     * @param {string} sellerIdentity - Seller's blockchain identity
+     * @param {string} buyerIdentity - Buyer's blockchain identity
+     * @param {string} tokenAmount - The token amount for purchase
+     * @param {string} originalDataRootHash - The root hash of the data in its original form
+     * @param {string} encodedDataRootHash - The root hash of the data in its encoded form
+     * @param {string} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    initiatePurchase(
         sellerIdentity, buyerIdentity,
-        tokenAmount,
-        originalDataRootHash, encodedDataRootHash, blockchain_id,
+        tokenAmount, originalDataRootHash, encodedDataRootHash, blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.initiatePurchase(
-            sellerIdentity, buyerIdentity,
-            tokenAmount,
-            originalDataRootHash, encodedDataRootHash,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.initiatePurchase(
+                sellerIdentity, buyerIdentity,
+                tokenAmount, originalDataRootHash, encodedDataRootHash,
+            ),
+        };
     }
 
     /**
@@ -695,40 +773,55 @@ class Blockchain {
      */
     decodePurchaseInitiatedEventFromTransaction(result, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.decodePurchaseInitiatedEventFromTransaction(result);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.decodePurchaseInitiatedEventFromTransaction(result),
+        };
     }
 
 
-    async depositKey(purchaseId, key, blockchain_id) {
+    depositKey(purchaseId, key, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.depositKey(purchaseId, key);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.depositKey(purchaseId, key),
+        };
     }
 
-    async takePayment(purchaseId, blockchain_id) {
+    takePayment(purchaseId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.takePayment(purchaseId);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.takePayment(purchaseId),
+        };
     }
 
-    async complainAboutNode(
+    complainAboutNode(
         purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
         proofOfEncodedOutput, proofOfEncodedInputLeft, urgent, blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.complainAboutNode(
-            purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
-            proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.complainAboutNode(
+                purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
+                proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
+            ),
+        };
     }
 
-    async complainAboutRoot(
+    complainAboutRoot(
         purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
         urgent, blockchain_id,
     ) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.complainAboutRoot(
-            purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
-            urgent,
-        );
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.complainAboutRoot(
+                purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+                urgent,
+            ),
+        };
     }
 
     /**
@@ -738,9 +831,12 @@ class Blockchain {
      * @param {string} blockchain_id - Blockchain implementation to use
      * @return {Promise<any>}
      */
-    async startTokenWithdrawal(blockchainIdentity, amount, blockchain_id) {
+    startTokenWithdrawal(blockchainIdentity, amount, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.startTokenWithdrawal(blockchainIdentity, amount);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.startTokenWithdrawal(blockchainIdentity, amount),
+        };
     }
 
     /**
@@ -749,9 +845,12 @@ class Blockchain {
      * @param {string} blockchain_id - Blockchain implementation to use
      * @return {Promise<any>}
      */
-    async withdrawTokens(blockchainIdentity, blockchain_id) {
+    withdrawTokens(blockchainIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.withdrawTokens(blockchainIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.withdrawTokens(blockchainIdentity),
+        };
     }
 
     /**
@@ -759,9 +858,12 @@ class Blockchain {
      * @param {string} offerId, Offer id to get difficulty for
      * @param {string} blockchain_id - Blockchain implementation to use
      */
-    async getOfferDifficulty(offerId, blockchain_id) {
+    getOfferDifficulty(offerId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getOfferDifficulty(offerId);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getOfferDifficulty(offerId),
+        };
     }
 
     /**
@@ -771,46 +873,69 @@ class Blockchain {
      */
     getTokenContractAddress(blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getTokenContractAddress();
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getTokenContractAddress(),
+        };
     }
 
     /**
-     * Returns purposes of the wallet.
-     * @param erc725Identity {string}
-     * @param wallet - {string}
-     * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<[]>}
+     * Returns purposes of the wallet for a given identity.
+     * @param {String} erc725Identity - The identity contract to check
+     * @param {String} wallet - The wallet whose purposes will be checked
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     *      which resolves to an array of numbers
      */
     getWalletPurposes(erc725Identity, wallet, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getWalletPurposes(erc725Identity, wallet);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getWalletPurposes(erc725Identity, wallet),
+        };
     }
 
     /**
      * Get offer by ID
-     * @param offerId - offer ID
-     * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<*>}
+     * @param {String} offerId - OfferId hex string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getOffer(offerId, blockchain_id) {
+    getOffer(offerId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getOffer(offerId);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getOffer(offerId),
+        };
     }
 
     /**
      * Get holders for offer ID
-     * @param offerId - Offer ID
-     * @param holderIdentity - Holder identity
-     * @return {Promise<any>}
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getHolder(offerId, holderIdentity, blockchain_id) {
+    getHolder(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getHolder(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getHolder(offerId, holderIdentity),
+        };
     }
 
     /**
      * Replaces holder
-     * @returns {Promise<any>}
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - The identity string of the holder to replace
+     * @param {String} litigatorIdentity - The identity string of the litigator
+     * @param {BN} shift - The shift of the task solution to use
+     * @param {String} confirmation1 - Signed offer confirmation from the first new holder
+     * @param {String} confirmation2 - Signed offer confirmation from the second new holder
+     * @param {String} confirmation3 - Signed offer confirmation from the third new holder
+     * @param {Array<String>} holders - The array containing the new holders' identity strings
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     replaceHolder(
         offerId,
@@ -821,89 +946,127 @@ class Blockchain {
         confirmation2,
         confirmation3,
         holders,
+        blockchain_id,
     ) {
-        return this.blockchain[0].replaceHolder(
-            offerId,
-            holderIdentity,
-            litigatorIdentity,
-            shift,
-            confirmation1,
-            confirmation2,
-            confirmation3,
-            holders,
-        );
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.replaceHolder(
+                offerId,
+                holderIdentity,
+                litigatorIdentity,
+                shift,
+                confirmation1,
+                confirmation2,
+                confirmation3,
+                holders,
+            ),
+        };
     }
 
     /**
      * Gets litigation information for the holder
-     * @param offerId - Offer ID
-     * @param holderIdentity - Holder identity
-     * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<any>}
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getLitigation(offerId, holderIdentity, blockchain_id) {
+    getLitigation(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getLitigation(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getLitigation(offerId, holderIdentity),
+        };
     }
 
     /**
      * Gets litigation timestamp for the holder
-     * @param offerId - Offer ID
-     * @param holderIdentity - Holder identity
-     * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<any>}
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getLitigationTimestamp(offerId, holderIdentity, blockchain_id) {
+    getLitigationTimestamp(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getLitigationTimestamp(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getLitigationTimestamp(offerId, holderIdentity),
+        };
     }
 
     /**
      * Gets last litigation difficulty
-     * @param offerId - Offer ID
-     * @param holderIdentity - Holder identity
-     * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<any>}
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getLitigationDifficulty(offerId, holderIdentity, blockchain_id) {
+    getLitigationDifficulty(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getLitigationDifficulty(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getLitigationDifficulty(offerId, holderIdentity),
+        };
     }
 
     /**
      * Gets last litigation replacement task
-     * @param offerId - Offer ID
-     * @param holderIdentity - Holder identity
-     * @param {string} blockchain_id - Blockchain implementation to use
-     * @return {Promise<any>}
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getLitigationReplacementTask(offerId, holderIdentity, blockchain_id) {
+    getLitigationReplacementTask(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getLitigationReplacementTask(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getLitigationReplacementTask(offerId, holderIdentity),
+        };
     }
 
     /**
      * Get staked amount for the holder
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getHolderStakedAmount(offerId, holderIdentity, blockchain_id) {
+    getHolderStakedAmount(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getHolderStakedAmount(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getHolderStakedAmount(offerId, holderIdentity),
+        };
     }
 
     /**
      * Get paid amount for the holder
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getHolderPaidAmount(offerId, holderIdentity, blockchain_id) {
+    getHolderPaidAmount(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getHolderPaidAmount(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getHolderPaidAmount(offerId, holderIdentity),
+        };
     }
 
     /**
      * Get litigation encryption type
+     * @param {String} offerId - OfferId hex string
+     * @param {String} holderIdentity - Holder's identity string
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getHolderLitigationEncryptionType(offerId, holderIdentity, blockchain_id) {
+    getHolderLitigationEncryptionType(offerId, holderIdentity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getHolderLitigationEncryptionType(offerId, holderIdentity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getHolderLitigationEncryptionType(offerId, holderIdentity),
+        };
     }
 
     /**
@@ -911,38 +1074,44 @@ class Blockchain {
      * @param identity - identity address
      * @param key - identity key
      * @param purpose - purpose to verify
-     * @param blockchain_id - implementation to use
-     * @return {Promise<any>}
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async keyHasPurpose(identity, key, purpose, blockchain_id) {
+    keyHasPurpose(identity, key, purpose, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.keyHasPurpose(identity, key, purpose);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.keyHasPurpose(identity, key, purpose),
+        };
     }
 
     /**
      * Check how many events were emitted in a transaction from the transaction receipt
-     * @param receipt - the json object returned as a result of the transaction
-     * @param blockchain_id -
-     * @return {Number | undefined} - Returns undefined if the receipt does not have a logs field
+     * @param {Object} receipt - the json object returned as a result of the transaction
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Number | undefined} - Returns undefined if the receipt does not have a logs field
      */
     numberOfEventsEmitted(receipt, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.numberOfEventsEmitted(receipt);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.numberOfEventsEmitted(receipt),
+        };
     }
 
     /**
      * Returns created identities from blockchain implementations
+     * @returns {Array<Object>} -
+     *      An array of objects containing the blockchain_id string and the response string
      */
     getAllIdentities() {
         const identities = [];
         for (let i = 0; i < this.blockchain.length; i += 1) {
             const implementation = this.blockchain[i];
             if (implementation.initialized) {
-                const identity = this.blockchain[i].getIdentity();
-
                 identities.push({
                     blockchain_id: implementation.getBlockchainId(),
-                    response: identity ? { identity } : null,
+                    response: implementation.getIdentity(),
                 });
             }
         }
@@ -952,29 +1121,42 @@ class Blockchain {
 
     /**
      * Returns created identities from configuration
-     * @param {string} blockchain_id - Blockchain implementation to use
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     getIdentity(blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getIdentity();
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getIdentity(),
+        };
     }
 
     /**
      * Saves identity into file and configuration
-     * @param {string} blockchain_id - Blockchain implementation to use
+     * @param {String} identity - The identity to save
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response void
      */
     saveIdentity(identity, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.saveIdentity(identity);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.saveIdentity(identity),
+        };
     }
 
     /**
      * Returns the hub contract address for a particular (od default) blockchain implementation
-     * @param {string} blockchain_id - Blockchain implementation to use
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response string
      */
     getHubContractAddress(blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
-        return implementation.getIdentity();
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getHubContractAddress(),
+        };
     }
 }
 

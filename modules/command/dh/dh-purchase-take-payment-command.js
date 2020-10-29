@@ -25,10 +25,10 @@ class DhPurchaseTakePaymentCommand extends Command {
                 purchase_id,
             },
         });
-        const bcPurchase = await this.blockchain.getPurchase(purchase_id);
+        const bcPurchase = await this.blockchain.getPurchase(purchase_id).response;
         if (bcPurchase.stage === '2') {
             try {
-                await this.blockchain.takePayment(purchase_id);
+                await this.blockchain.takePayment(purchase_id).response;
                 dataTrade.status = 'COMPLETED';
                 await dataTrade.save({ fields: ['status'] });
                 await Models.data_sellers.create({

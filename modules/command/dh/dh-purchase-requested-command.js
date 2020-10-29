@@ -104,7 +104,7 @@ class DhPurchaseRequestedCommand extends Command {
                     buyer_node_id: dv_node_id,
                     buyer_erc_id: dv_erc725_identity,
                     seller_node_id: this.config.identity,
-                    seller_erc_id: this.profileService.getIdentity('ethr').toLowerCase(),
+                    seller_erc_id: this.profileService.getIdentity().toLowerCase(),
                     price,
                     status: 'REQUESTED',
                 });

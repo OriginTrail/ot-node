@@ -75,7 +75,7 @@ class DVDataReadResponseFreeCommand extends Command {
 
         const { document, permissionedData } = message;
         // Calculate root hash and check is it the same on the SC.
-        const fingerprint = await this.blockchain.getRootHash(dataSetId);
+        const fingerprint = await this.blockchain.getRootHash(dataSetId).response;
 
         if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
             const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${dataSetId}`;
@@ -101,7 +101,7 @@ class DVDataReadResponseFreeCommand extends Command {
         );
 
         const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
-        const profile = await this.blockchain.getProfile(erc725Identity);
+        const profile = await this.blockchain.getProfile(erc725Identity).response;
 
         await this.permissionedDataService.addDataSellerForPermissionedData(
             dataSetId,

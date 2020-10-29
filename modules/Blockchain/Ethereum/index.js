@@ -201,9 +201,9 @@ class Ethereum {
             REPLACEMENT_CONTRACT: this.replacementContract,
         };
 
-        this.logger.info('Smart contract instances initialized.');
+        this.initialized = true;
 
-        if (!this.initialized) this.initialized = true;
+        this.logger.info('Smart contract instances initialized.');
     }
 
     /**
@@ -1361,6 +1361,14 @@ class Ethereum {
      */
     getBlockchainId() {
         return this.config.network_id;
+    }
+
+    /**
+     * Returns specific hub contract address
+     * @returns {string}
+     */
+    getHubContractAddress() {
+        return this.config.hub_contract_address;
     }
 
     saveIdentity(identity) {

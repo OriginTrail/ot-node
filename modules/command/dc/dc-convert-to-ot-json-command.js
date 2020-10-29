@@ -30,8 +30,9 @@ class DcConvertToOtJsonCommand extends Command {
 
                     const blockchain = {
                         blockchain_id,
-                        hub_contract_address: this.blockchain.getHubContractAddress(blockchain_id),
-                        identity: this.blockchain.getIdentity(blockchain_id),
+                        hub_contract_address:
+                            this.blockchain.getHubContractAddress(blockchain_id).response,
+                        identity: this.blockchain.getIdentity(blockchain_id).response,
                     };
 
                     document = ImportUtilities

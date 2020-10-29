@@ -63,7 +63,7 @@ class DhPurchaseInitiatedCommand extends Command {
                 const { purchaseId } = JSON.parse(event.data);
                 this.logger.important(`Purchase ${purchaseId} initiated`);
 
-                await this.blockchain.depositKey(purchaseId, encoded_object.key);
+                await this.blockchain.depositKey(purchaseId, encoded_object.key).response;
 
                 dataTrade.purchase_id = Utilities.normalizeHex(purchaseId);
                 await dataTrade.save({ fields: ['purchase_id'] });
@@ -72,7 +72,7 @@ class DhPurchaseInitiatedCommand extends Command {
                     purchase_id: purchaseId,
                 };
 
-                let delay = await this.blockchain.getPaymentStageInterval();
+                let delay = await this.blockchain.getPaymentStageInterval().response;
                 delay = parseInt(delay, 10) * 1000;
 
                 this.logger.info(`Key deposited for purchaseID ${purchaseId}.`

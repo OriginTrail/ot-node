@@ -50,7 +50,7 @@ class ReplicationService {
         // todo pass blockchain identity
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,
-            this.profileService.getIdentity('ethr'),
+            this.profileService.getIdentity(),
             this.config.default_data_price,
             this.config.identity,
             otJson['@graph'],

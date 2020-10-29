@@ -35,7 +35,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
             ot_object_id,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
-            dv_erc725_identity: this.profileService.getIdentity('ethr'),
+            dv_erc725_identity: this.profileService.getIdentity(),
             handler_id,
         };
         const dataReadRequestObject = {

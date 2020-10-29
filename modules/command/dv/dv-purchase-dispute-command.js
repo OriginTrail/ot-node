@@ -35,7 +35,7 @@ class DvPurchaseDisputeCommand extends Command {
         } = command.data;
 
         try {
-            const purchaseStatus = await this.blockchain.getPurchaseStatus(purchase_id);
+            const purchaseStatus = await this.blockchain.getPurchaseStatus(purchase_id).response;
 
             if (purchaseStatus !== '2') {
                 throw new Error(`Cannot issue complaint for purchaseId ${purchase_id}. Purchase already completed`);
@@ -72,7 +72,7 @@ class DvPurchaseDisputeCommand extends Command {
                     proofOfEncodedOutput,
                     proofOfEncodedInputLeft,
                     true,
-                );
+                ).response;
             } else if (error_type === constants.PURCHASE_ERROR_TYPE.ROOT_ERROR) {
                 const {
                     rootHashIndex,
@@ -86,7 +86,7 @@ class DvPurchaseDisputeCommand extends Command {
                     proofOfEncodedRootHash,
                     rootHashIndex,
                     true,
-                );
+                ).response;
             }
 
             if (this.blockchain.numberOfEventsEmitted(result) >= 1) {
