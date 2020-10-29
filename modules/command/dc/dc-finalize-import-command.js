@@ -9,6 +9,7 @@ class DcFinalizeImport extends Command {
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
+        this.blockchain = ctx.blockchain;
     }
 
     /**

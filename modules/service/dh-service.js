@@ -117,6 +117,7 @@ class DHService {
             return;
         }
 
+        // todo invoke blockchain service
         const offerPrice = await this.pricingService.calculateOfferPriceinTrac(
             dataSetSizeInBytes,
             holdingTimeInMinutes,

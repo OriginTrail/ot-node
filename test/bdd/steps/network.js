@@ -91,6 +91,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
 
     const walletCount = LocalBlockchain.wallets().length;
 
+    // todo merge default config
     const bootstrapNode = new OtNode({
         nodeConfiguration: {
             node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
@@ -102,8 +103,36 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 database: `origintrail-test-${uuidv4()}`,
             },
             blockchain: {
-                hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
+                implementations: [
+                    {
+                        blockchain_title: 'Ethereum',
+                        network_id: 'development',
+                        hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                        rpc_server_url: 'http://localhost:7545/',
+                        node_wallet_path: 'wallet.json',
+                        identity_filepath: 'erc725_identity.json',
+                        gas_limit: 2000000,
+                        gas_price: 20000000000,
+                        max_allowed_gas_price: 100000000000,
+                        dc_price_factor: '3',
+                        dh_price_factor: '2',
+                        trac_price_in_eth: '0.00005',
+                        plugins: [
+                            {
+                                enabled: false,
+                                provider: 'Hyperledger',
+                                name: 'fingerprint-plugin',
+                                config: {
+                                    url: 'URL',
+                                    auth: {
+                                        user: 'USER',
+                                        pass: 'PASS',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                ],
             },
             network: {
                 // TODO: Connect other if using multiple.
@@ -145,8 +174,36 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 database: `origintrail-test-${uuidv4()}`,
             },
             blockchain: {
-                hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
+                implementations: [
+                    {
+                        blockchain_title: 'Ethereum',
+                        network_id: 'development',
+                        hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                        rpc_server_url: 'http://localhost:7545/',
+                        node_wallet_path: 'wallet.json',
+                        identity_filepath: 'erc725_identity.json',
+                        gas_limit: 2000000,
+                        gas_price: 20000000000,
+                        max_allowed_gas_price: 100000000000,
+                        dc_price_factor: '3',
+                        dh_price_factor: '2',
+                        trac_price_in_eth: '0.00005',
+                        plugins: [
+                            {
+                                enabled: false,
+                                provider: 'Hyperledger',
+                                name: 'fingerprint-plugin',
+                                config: {
+                                    url: 'URL',
+                                    auth: {
+                                        user: 'USER',
+                                        pass: 'PASS',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                ],
             },
             local_network_only: true,
             dc_choose_time: 90000, // 90 seconds

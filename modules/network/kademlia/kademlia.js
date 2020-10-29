@@ -55,7 +55,6 @@ class Kademlia {
         this.emitter = ctx.emitter;
         this.kademliaUtilities = ctx.kademliaUtilities;
         this.config = ctx.config;
-        this.approvalService = ctx.approvalService;
         this.networkService = ctx.networkService;
         this.blockchain = ctx.blockchain;
 

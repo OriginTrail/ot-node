@@ -898,12 +898,14 @@ class Utilities {
      * @private
      */
     static loadJsonFromFile(filePath, fileName) {
-        const file = path.join(
-            filePath,
-            fileName,
-        );
-        if (fs.existsSync(file)) {
-            return JSON.parse(fs.readFileSync(file));
+        if (filePath && fileName) {
+            const file = path.join(
+                filePath,
+                fileName,
+            );
+            if (fs.existsSync(file)) {
+                return JSON.parse(fs.readFileSync(file));
+            }
         }
         return null;
     }

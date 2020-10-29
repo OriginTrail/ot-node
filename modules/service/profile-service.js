@@ -96,11 +96,10 @@ class ProfileService {
         // set empty identity if there is none
         let identity = identityExists ? profileIdentity : new BN(0, 16);
 
+        const { node_wallet, management_wallet } = this.blockchain.getWallet('ethr');
         let createProfileCalled = false;
         do {
             try {
-                const { node_wallet, management_wallet } = this.blockchain.getWallet('ethr');
-
                 if (management_wallet) {
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchain.createProfile(
@@ -146,7 +145,7 @@ class ProfileService {
                 5 * 60 * 1000,
                 null,
                 eventData =>
-                    Utilities.compareHexStrings(eventData.profile, this.blockchain.getWallet('ethr')),
+                    Utilities.compareHexStrings(eventData.profile, node_wallet),
                 null,
                 blockchainId,
             );

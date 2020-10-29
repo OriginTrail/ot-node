@@ -9,48 +9,59 @@ const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
 const path = require('path');
+const constants = require('../../constants');
 
 class Ethereum {
     /**
      * Initializing Ethereum blockchain connector
      */
     constructor({
-        config,
-        emitter,
-        web3,
-        logger,
-        pricingService,
+        config, emitter, web3, logger, gasStationService, tracPriceService,
     }, configuration) {
         // Loading Web3
         this.emitter = emitter;
         this.web3 = new Web3(new Web3.providers.HttpProvider(configuration.rpc_server_url));
         this.logger = logger;
-        this.pricingService = pricingService;
+        this.gasStationService = gasStationService;
+        this.tracPriceService = tracPriceService;
 
         this.config = configuration;
         this.config.appDataPath = config.appDataPath;
-        const {
-            node_wallet,
-            node_private_key,
-            management_wallet,
-        } = Utilities.loadJsonFromFile(this.config.appDataPath, configuration.node_wallet_path);
-        this.config.wallet_address = node_wallet;
-        this.config.node_wallet = node_wallet;
-        this.config.node_private_key = node_private_key;
-        this.config.management_wallet = management_wallet;
+        const walletObject = Utilities.loadJsonFromFile(
+            this.config.appDataPath,
+            configuration.node_wallet_path,
+        );
+        if (walletObject) {
+            const {
+                node_wallet,
+                node_private_key,
+                management_wallet,
+            } = walletObject;
+
+            this.config.wallet_address = node_wallet;
+            this.config.node_wallet = node_wallet;
+            this.config.node_private_key = node_private_key;
+            this.config.management_wallet = management_wallet;
+        }
 
         if (!this.config.node_wallet || !this.config.node_private_key) {
             console.error('Please provide valid operational wallet.');
+            return;
         }
 
         if (!this.config.management_wallet) {
             console.error('Please provide valid management wallet.');
+            return;
         }
 
-        this.config.identity = Utilities.loadJsonFromFile(
+        const identityObject = Utilities.loadJsonFromFile(
             this.config.appDataPath,
-            this.config.node_identity_path,
-        ).identity;
+            this.config.identity_filepath,
+        );
+
+        if (identityObject) {
+            this.config.identity = identityObject.identity;
+        }
 
         this.transactions = new Transactions(
             this.web3,
@@ -1476,12 +1487,56 @@ class Ethereum {
      * @returns {Promise<*|number>}
      */
     async getGasPrice(urgent = false) {
-        const gasPrice = await this.pricingService.getGasPrice();
+        const gasPrice = await this.calculateGasPrice();
         if (gasPrice > this.config.max_allowed_gas_price && !urgent) {
             throw new Error('Gas price higher than maximum allowed price');
         } else {
             return gasPrice;
         }
+    }
+
+    async calculateGasPrice() {
+        if (process.env.NODE_ENV === 'development') {
+            this.logger.trace(`Using default gas price from configuration: ${this.config.gas_price}`);
+            return this.config.gas_price;
+        }
+
+        const now = new Date().getTime();
+        if (this.config.gas_price_last_update_timestamp
+            + constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS > now) {
+            this.logger.trace(`Using gas price from configuration: ${this.config.gas_price}`);
+            return this.config.gas_price;
+        }
+        let gasStationGasPrice = await this.gasStationService.getGasPrice()
+            .catch((err) => { this.logger.warn(err); }) * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
+        gasStationGasPrice = Math.round(gasStationGasPrice);
+
+        let web3GasPrice = await this.web3.eth.getGasPrice()
+            .catch((err) => { this.logger.warn(err); }) * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
+        web3GasPrice = Math.round(web3GasPrice);
+        if (gasStationGasPrice && web3GasPrice) {
+            const gasPrice = (
+                gasStationGasPrice > web3GasPrice ? gasStationGasPrice : web3GasPrice);
+            this.saveNewGasPriceAndTime(gasPrice);
+            const service = gasStationGasPrice > web3GasPrice ? 'gas station' : 'web3';
+            this.logger.trace(`Using gas price from ${service} service: ${gasStationGasPrice}`);
+            return gasPrice;
+        } else if (gasStationGasPrice) {
+            this.saveNewGasPriceAndTime(gasStationGasPrice);
+            this.logger.trace(`Using gas price from gas station service: ${gasStationGasPrice}`);
+            return gasStationGasPrice;
+        } else if (web3GasPrice) {
+            this.saveNewGasPriceAndTime(web3GasPrice);
+            this.logger.trace(`Using gas price from web3 service: ${web3GasPrice}`);
+            return web3GasPrice;
+        }
+        this.logger.trace(`Using gas price from configuration: ${this.config.gas_price}`);
+        return this.config.gas_price;
+    }
+
+    saveNewGasPriceAndTime(gasPrice) {
+        this.config.gas_price = gasPrice;
+        this.config.gas_price_last_update_timestamp = new Date().getTime();
     }
 
     /**
@@ -1512,6 +1567,42 @@ class Ethereum {
             node_private_key: this.config.node_private_key,
             management_wallet: this.config.management_wallet,
         };
+    }
+
+    async getTracPrice() {
+        if (process.env.NODE_ENV === 'development') {
+            this.logger.trace(`Using default trac price in eth from configuration: ${this.config.trac_price_in_eth}`);
+            return this.config.trac_price_in_eth;
+        }
+
+        const now = new Date().getTime();
+        if (this.config.trac_price_in_eth_last_update_timestamp
+            + constants.TRAC_PRICE_IN_ETH_VALIDITY_TIME_IN_MILLS > now) {
+            this.logger.trace(`Using trac price in eth from configuration: ${this.config.trac_price_in_eth}`);
+            return this.config.trac_price_in_eth;
+        }
+
+        let tracPriceInEth = this.config.trac_price_in_eth;
+        const response = await this.tracPriceService.getTracPrice()
+            .catch((err) => {
+                this.logger.warn(err);
+            });
+        if (response) {
+            tracPriceInEth = response.data.origintrail.eth;
+        }
+        if (tracPriceInEth) {
+            this._saveNewTracPriceInEth(tracPriceInEth);
+            this.logger.trace(`Using trac price in eth from coingecko service: ${tracPriceInEth}`);
+        } else {
+            tracPriceInEth = this.config.trac_price_in_eth;
+            this.logger.trace(`Using trac price in eth from configuration: ${tracPriceInEth}`);
+        }
+        return tracPriceInEth;
+    }
+
+    _saveNewTracPriceInEth(tracePrice) {
+        this.config.trac_price_in_eth = tracePrice;
+        this.config.trac_price_in_eth_last_update_timestamp = new Date().getTime();
     }
 
     /**

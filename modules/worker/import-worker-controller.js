@@ -85,13 +85,15 @@ class ImportWorkerController {
         });
     }
 
-    async startOtjsonConverterWorker(command, standardId) {
+    async startOtjsonConverterWorker(command, standardId, blockchain) {
         this.logger.info('Starting ot-json converter worker');
         const { documentPath, handler_id } = command.data;
         const document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
-        forked.send(JSON.stringify({ config: this.config, dataset: document, standardId }));
+        forked.send(JSON.stringify({
+            config: this.config, dataset: document, standardId, blockchain,
+        }));
 
         forked.on('message', async (response) => {
             if (response.error) {

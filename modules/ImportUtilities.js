@@ -145,12 +145,12 @@ class ImportUtilities {
 
         const header = ImportUtilities.createDatasetHeader(
             config, null,
+            blockchain,
             datasetHeader.datasetTags,
             datasetHeader.datasetTitle,
             datasetHeader.datasetDescription,
             datasetHeader.OTJSONVersion,
             datasetHeader.datasetCreationTimestamp,
-            blockchain,
         );
         const dataset = {
             '@id': '',
@@ -681,12 +681,12 @@ class ImportUtilities {
     static createDatasetHeader(
         config,
         transpilationInfo = null,
+        blockchain,
         datasetTags = [],
         datasetTitle = '',
         datasetDescription = '',
         OTJSONVersion = '1.2',
         datasetCreationTimestamp = new Date().toISOString(),
-        blockchain,
     ) {
         const header = {
             OTJSONVersion,

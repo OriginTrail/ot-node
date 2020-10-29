@@ -22,18 +22,17 @@ class DcConvertToOtJsonCommand extends Command {
     async execute(command) {
         const { standard_id, documentPath, handler_id } = command.data;
         try {
+            const blockchain_id = this.blockchain.getDefaultBlockchainId();
+
+            const blockchain = {
+                blockchain_id,
+                hub_contract_address: this.blockchain.getHubContractAddress(blockchain_id),
+                identity: this.blockchain.getIdentity(blockchain_id),
+            };
             if (standard_id === 'ot-json') {
                 let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
                 if (!document.signature) {
-                    const blockchain_id = this.blockchain.getDefaultBlockchainId();
-
-                    const blockchain = {
-                        blockchain_id,
-                        hub_contract_address: this.blockchain.getHubContractAddress(blockchain_id),
-                        identity: this.blockchain.getIdentity(blockchain_id),
-                    };
-
                     document = ImportUtilities
                         .prepareDataset(document, this.config, this.web3, blockchain);
                 }
@@ -42,7 +41,11 @@ class DcConvertToOtJsonCommand extends Command {
 
                 return this.continueSequence(command.data, command.sequence);
             }
-            await this.importWorkerController.startOtjsonConverterWorker(command, standard_id);
+            await this.importWorkerController.startOtjsonConverterWorker(
+                command,
+                standard_id,
+                blockchain,
+            );
         } catch (error) {
             await this.commandExecutor.add({
                 name: 'dcFinalizeImportCommand',

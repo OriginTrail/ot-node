@@ -49,6 +49,7 @@ const ImportWorkerController = require('./modules/worker/import-worker-controlle
 const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
+const GasStationService = require('./modules/service/gas-station-service');
 
 const semver = require('semver');
 
@@ -172,6 +173,7 @@ class OTNode {
         config.erc725Identity = '';
         config.publicKeyData = {};
 
+        // todo invoke blockchain service
         const web3 =
             new Web3(new Web3.providers
                 .HttpProvider(config.blockchain.implementations[0].rpc_server_url));
@@ -284,6 +286,7 @@ class OTNode {
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
+            gasStationService: awilix.asClass(GasStationService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();

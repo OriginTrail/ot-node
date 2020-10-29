@@ -37,10 +37,18 @@ describe('Utilities module', () => {
             );
             assert.hasAllKeys(
                 config.blockchain, [
-                    'blockchain_title', 'network_id', 'gas_limit', 'gas_price', 'max_allowed_gas_price',
-                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth'],
+                    'implementations'],
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
+
+            assert.hasAllKeys(
+                config.blockchain.implementations[0], [
+                    'blockchain_title', 'network_id', 'gas_limit', 'gas_price', 'max_allowed_gas_price',
+                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet_path'],
+                `Some config items are missing in config.blockchain.implementations for environment '${environment}'`,
+            );
+
+
             assert.hasAllKeys(
                 config.network, [
                     'id', 'hostname', 'bootstraps', 'churnPlugin',
@@ -96,9 +104,9 @@ describe('Utilities module', () => {
     it('loadSelectedBlockchainInfo()', async () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
-            assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth']);
-            assert.equal(config.blockchain.blockchain_title, 'Ethereum');
+            assert.hasAllKeys(config.blockchain.implementations[0], ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
+                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet_path']);
+            assert.equal(config.blockchain.implementations[0].blockchain_title, 'Ethereum');
         });
     });
 

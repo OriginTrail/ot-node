@@ -52,6 +52,7 @@ class OtJsonUtilities {
         // eslint-disable-next-line global-require
         const header = require('./ImportUtilities').createDatasetHeader(
             config, null,
+            config.blockchain,
             dataset.datasetHeader.datasetTags,
             dataset.datasetHeader.datasetTitle,
             dataset.datasetHeader.datasetDescription,

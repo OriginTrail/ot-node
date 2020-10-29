@@ -20,9 +20,10 @@ class EpcisOtJsonTranspiler {
     /**
      * Convert EPCIS XML document to OT-JSON
      * @param xml - XML string
+     * @param blockchain
      * @return {*} - OT-JSON object
      */
-    convertToOTJson(xml) {
+    convertToOTJson(xml, blockchain) {
         if (xml == null) {
             throw new Error('[Transpilation Error] XML document cannot be empty');
         }
@@ -75,7 +76,11 @@ class EpcisOtJsonTranspiler {
 
         otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-        otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
+        otjson.datasetHeader = importUtilities.createDatasetHeader(
+            this.config,
+            transpilationInfo,
+            blockchain,
+        );
         importUtilities.calculateGraphPermissionedDataHashes(otjson['@graph']);
 
         let result = OtJsonUtilities.prepareDatasetForNewImport(otjson);

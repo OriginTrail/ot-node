@@ -16,6 +16,8 @@ class Blockchain {
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
         this.pluginService = ctx.blockchainPluginService;
+        this.gasStationService = ctx.gasStationService;
+        this.tracPriceService = ctx.tracPriceService;
         this.appState = ctx.appState;
 
         this.blockchain = [];
@@ -1048,6 +1050,34 @@ class Blockchain {
             }
         }
         return this.blockchain[0].getWallet();
+    }
+
+    /**
+     * Returns gas price from configuration
+     */
+    getGasPrice(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.calculateGasPrice();
+            }
+        }
+        return this.blockchain[0].calculateGasPrice();
+    }
+
+    /**
+     * Returns trac price from configuration
+     */
+    getTracPrice(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.getTracPrice();
+            }
+        }
+        return this.blockchain[0].getTracPrice();
     }
 }
 
