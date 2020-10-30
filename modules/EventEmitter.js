@@ -919,7 +919,6 @@ class EventEmitter {
 
             const senderId = transport.extractSenderID();
             try {
-                await dvService.handleEncryptedPaddedKey(message);
                 await transport.sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
                 }, senderId);

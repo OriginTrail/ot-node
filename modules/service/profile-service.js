@@ -24,7 +24,7 @@ class ProfileService {
      * Note: creates profile if there is none
      */
     async initProfile() {
-        const identities = this.blockchain.getIdentities();
+        const identities = this.blockchain.getAllIdentities();
 
         let promises = [];
 
@@ -240,27 +240,10 @@ class ProfileService {
     }
 
     /**
-     * Verify that the parent identity has this node's identity set as a sub-identity
-     * @return {Promise<*>}
-     */
-    async hasParentPermission() {
-        // todo pass blockchain identity
-        const hashedIdentity = EthereumAbi.soliditySHA3(['address'], [this.getIdentity('ethr')]).toString('hex');
-
-        const isChild = await this.blockchain.keyHasPurpose(
-            this.config.parentIdentity,
-            hashedIdentity,
-            new BN(237),
-        );
-
-        return isChild;
-    }
-
-    /**
      * Check if ERC725 has valid node ID. If not it updates node id on contract
      */
     async validateAndUpdateProfiles() {
-        const identities = this.blockchain.getIdentities();
+        const identities = this.blockchain.getAllIdentities();
 
         let promises = [];
         for (let i = 0; i < identities.length; i += 1) {

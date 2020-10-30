@@ -21,6 +21,8 @@ class Ethereum {
         logger,
         pricingService,
     }, configuration) {
+        this.initialized = false;
+
         // Loading Web3
         this.emitter = emitter;
         this.web3 = new Web3(new Web3.providers.HttpProvider(configuration.rpc_server_url));
@@ -92,15 +94,6 @@ class Ethereum {
         this.tokenContract = new this.web3.eth.Contract(
             this.tokenContractAbi,
             this.tokenContractAddress,
-        );
-
-        // Reading contract data
-        const readingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/reading.json');
-        this.readingContractAddress = await this._getReadingContractAddress();
-        this.readingContractAbi = JSON.parse(readingAbiFile);
-        this.readingContract = new this.web3.eth.Contract(
-            this.readingContractAbi,
-            this.readingContractAddress,
         );
 
         // Profile contract data
@@ -209,6 +202,8 @@ class Ethereum {
         };
 
         this.logger.info('Smart contract instances initialized.');
+
+        if (!this.initialized) this.initialized = true;
     }
 
     /**
@@ -856,11 +851,6 @@ class Ethereum {
         return this.marketplaceStorageContract.methods.getStage(purchaseId).call();
     }
 
-    async getPurchasedData(importId, wallet) {
-        this.logger.trace(`Asking purchased data for import ${importId} and wallet ${wallet}.`);
-        return this.readingContract.methods.purchased_data(importId, wallet).call();
-    }
-
     async getPaymentStageInterval() {
         this.logger.trace('Reading payment stage interval from blockchain.');
         return this.marketplaceContract.methods.paymentStageInterval().call();
@@ -981,117 +971,6 @@ class Ethereum {
         );
     }
 
-    async sendCommitment(importId, dvWallet, commitment) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
-        };
-
-        this.logger.trace(`sendCommitment (${importId}, ${dvWallet}, ${commitment})`);
-        return this.transactions.queueTransaction(
-            this.readingContractAbi, 'sendCommitment',
-            [importId, dvWallet, commitment], options,
-        );
-    }
-
-    async initiateDispute(importId, dhWallet) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
-        };
-
-        this.logger.trace(`initiateDispute (${importId}, ${dhWallet})`);
-        return this.transactions.queueTransaction(
-            this.readingContractAbi, 'initiateDispute',
-            [importId, dhWallet], options,
-        );
-    }
-
-    async confirmPurchase(importId, dhWallet) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
-        };
-
-        this.logger.trace(`confirmPurchase (${importId}, ${dhWallet})`);
-        return this.transactions.queueTransaction(
-            this.readingContractAbi, 'confirmPurchase',
-            [importId, dhWallet], options,
-        );
-    }
-
-    async cancelPurchase(importId, correspondentWallet, senderIsDh) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
-        };
-
-        this.logger.trace(`confirmPurchase (${importId}, ${correspondentWallet}, ${senderIsDh})`);
-        return this.transactions.queueTransaction(
-            this.readingContractAbi, 'confirmPurchase',
-            [importId, correspondentWallet, senderIsDh], options,
-        );
-    }
-
-    async sendProofData(
-        importId, dvWallet, checksumLeft, checksumRight, checksumHash,
-        randomNumber1, randomNumber2, decryptionKey, blockIndex,
-    ) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
-        };
-
-        this.logger.trace(`sendProofData (${importId} ${dvWallet} ${checksumLeft} ${checksumRight} ${checksumHash}, ${randomNumber1}, ${randomNumber2} ${decryptionKey} ${blockIndex})`);
-        return this.transactions.queueTransaction(
-            this.readingContractAbi, 'sendProofData',
-            [
-                importId, dvWallet, checksumLeft, checksumRight, checksumHash,
-                randomNumber1, randomNumber2, decryptionKey, blockIndex,
-            ], options,
-        );
-    }
-
-    async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
-        const gasPrice = await this.getGasPrice();
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
-        };
-
-        this.logger.trace(`sendEncryptedBlock (${importId}, ${dvWallet}, ${encryptedBlock})`);
-        return this.transactions.queueTransaction(
-            this.readingContractAbi, 'sendEncryptedBlock',
-            [importId, dvWallet, encryptedBlock], options,
-        );
-    }
-
-    async payOutForReading(importId, dvWallet, urgent) {
-        const gasPrice = await this.getGasPrice(urgent);
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
-            to: this.readingContractAddress,
-        };
-
-        this.logger.trace(`payOutForReading (${importId}, ${dvWallet})`);
-        return this.transactions.queueTransaction(
-            this.readingContractAbi, 'payOut',
-            [importId, dvWallet], options,
-        );
-    }
-
     /**
      * Get Profile minimum stake
      */
@@ -1154,31 +1033,6 @@ class Ethereum {
         });
     }
 
-    /**
-     * Get all nodes which were added in the approval array
-     */
-    async getAddedNodes() {
-        this.logger.trace('getAllNodes()');
-        return this.approvalContract.methods.getAllNodes().call();
-    }
-
-    /**
-     * Get the statuses of all nodes which were added in the approval array
-     */
-    async getNodeStatuses() {
-        this.logger.trace('getNodeStatuses()');
-        return this.approvalContract.methods.getNodeStatuses().call();
-    }
-
-    /**
-     * Check if a specific node still has approval
-     * @param nodeId
-     */
-    async nodeHasApproval(nodeId) {
-        nodeId = Utilities.normalizeHex(nodeId);
-        this.logger.trace(`nodeHasApproval(${nodeId})`);
-        return this.approvalContract.methods.nodeHasApproval(nodeId).call();
-    }
 
     /**
      * Token contract address getter
