@@ -204,6 +204,8 @@ class Ethereum {
         this.initialized = true;
 
         this.logger.info('Smart contract instances initialized.');
+
+        if (!this.initialized) this.initialized = true;
     }
 
     /**
