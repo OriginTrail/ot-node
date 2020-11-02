@@ -843,7 +843,7 @@ class Ethereum {
                             // eslint-disable-next-line
                             continue;
                         }
-                        eventData.finished = true;
+                        eventData.finished = 1;
                         // eslint-disable-next-line no-loop-func
                         eventData.save().then(() => {
                             clearTimeout(clearToken);
@@ -893,7 +893,7 @@ class Ethereum {
             if (eventData) {
                 eventData.forEach(async (data) => {
                     this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
-                    data.finished = true;
+                    data.finished = 1;
                     await data.save();
                 });
             }
@@ -928,7 +928,7 @@ class Ethereum {
                             name: `eth-${data.event}`,
                             value: JSON.parse(data.dataValues.data),
                         });
-                        data.finished = true;
+                        data.finished = 1;
                         await data.save();
                     } catch (error) {
                         this.logger.error(error);
