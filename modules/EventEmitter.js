@@ -100,6 +100,7 @@ class EventEmitter {
             dcService,
             dvController,
             commandExecutor,
+            dhController,
         } = this.ctx;
 
         this._on('api-trail', (data) => {
@@ -435,6 +436,7 @@ class EventEmitter {
             dcService,
             dvController,
             dcController,
+            dhController,
             networkService,
         } = this.ctx;
 
@@ -521,6 +523,36 @@ class EventEmitter {
                 );
             } catch (error) {
                 const errorMessage = `Failed to handle replication request. ${error}.`;
+                logger.warn(errorMessage);
+
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'fail',
+                    });
+                } catch (e) {
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
+                }
+            }
+        });
+
+        this._on('kad-replication-data', async (request, response) => {
+            const kadReplicationRequest = transport.extractMessage(request);
+            var replicationMessage = kadReplicationRequest;
+            if (kadReplicationRequest.messageSignature) {
+                const { message, messageSignature } = kadReplicationRequest;
+                replicationMessage = message;
+
+                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
+                    return;
+                }
+            }
+
+            const senderIdentity = transport.extractSenderID(request);
+            try {
+                await dhController.handleReplicationData(senderIdentity, request, response);
+            } catch (error) {
+                const errorMessage = `Failed to handle replication data. ${error}.`;
                 logger.warn(errorMessage);
 
                 try {

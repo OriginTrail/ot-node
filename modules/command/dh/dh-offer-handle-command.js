@@ -1,8 +1,5 @@
-const path = require('path');
-const fs = require('fs');
 const Command = require('../command');
-const Models = require('../../../models/index');
-const Utilities = require('../../Utilities');
+const Models = require('../../../models');
 
 /**
  * Handles new offer from the DH side
@@ -13,7 +10,7 @@ class DHOfferHandleCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
-        this.blockchain = ctx.blockchain;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -58,54 +55,20 @@ class DHOfferHandleCommand extends Command {
         bid.status = 'SENT';
         await bid.save({ fields: ['status'] });
 
-        this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Response received.`);
 
-        const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+        this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Acknowledgement received.`);
 
-        await Utilities.writeContentsToFile(
-            cacheDirectory,
-            offerId,
-            JSON.stringify({
-                otJson: response.otJson,
-                permissionedData: response.permissionedData,
-            }),
-        );
-
-        const packedResponse = DHOfferHandleCommand._stripResponse(response);
-        Object.assign(packedResponse, {
-            dcNodeId,
-            documentPath: path.join(cacheDirectory, offerId),
-        });
         return {
             commands: [
                 {
-                    name: 'dhReplicationImportCommand',
-                    data: packedResponse,
-                    transactional: false,
+                    name: 'dhReplicationTimeoutCommand',
+                    delay: this.config.dc_choose_time,
+                    data: {
+                        offerId,
+                        dcNodeId,
+                    },
                 },
             ],
-        };
-    }
-
-    /**
-     * Parse network response
-     * @param response  - Network response
-     * @private
-     */
-    static _stripResponse(response) {
-        return {
-            offerId: response.offer_id,
-            dataSetId: response.data_set_id,
-            dcWallet: response.dc_wallet,
-            dcNodeId: response.dcNodeId,
-            litigationPublicKey: response.litigation_public_key,
-            litigationRootHash: response.litigation_root_hash,
-            distributionPublicKey: response.distribution_public_key,
-            distributionPrivateKey: response.distribution_private_key,
-            distributionEpk: response.distribution_epk,
-            transactionHash: response.transaction_hash,
-            encColor: response.color,
-            dcIdentity: response.dcIdentity,
         };
     }
 

@@ -27,6 +27,15 @@ class HttpNetwork {
             return HttpNetwork.send(contact.hostname, data, this.config.identity);
         };
 
+        this.node.replicationData = async (message, contactId) => {
+            const data = {
+                type: 'kad-replication-data',
+                message,
+            };
+            const contact = await this.node.getContact(contactId);
+            return HttpNetwork.send(contact.hostname, data, this.config.identity);
+        };
+
         this.node.replicationFinished = async (message, contactId) => {
             const data = {
                 type: 'kad-replication-finished',
