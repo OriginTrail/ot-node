@@ -81,7 +81,7 @@
   "snyk": true,
   "dependencies": {
     "@bugsnag/js": "^7.0.0",
-    "@deadcanaries/kadence": "^6.1.9",
+    "@deadcanaries/kadence": "git+https://github.com/OriginTrail/kadence.git",
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
