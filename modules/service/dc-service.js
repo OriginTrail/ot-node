@@ -308,6 +308,29 @@ class DCService {
             return;
         }
 
+        const usedDH = await models.replicated_data.findOne({
+            where: {
+                dh_id: identity,
+                dh_wallet: wallet,
+                dh_identity: dhIdentity,
+                offer_id: offerId,
+            },
+        });
+
+        if (usedDH != null) {
+            this.logger.notify(`Cannot send replication to DH with network ID ${identity}. DH already requested replication with status ${usedDH.status}.`);
+
+            try {
+                await this.transport.sendResponse(response, {
+                    status: 'fail',
+                    message: `DH ${identity} already applied for offer, currently with status ${usedDH.status}`,
+                });
+            } catch (e) {
+                this.logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
+            }
+        }
+
+
         if (async_enabled) {
             await this._sendReplicationAcknowledgement(offer, identity, response);
 
