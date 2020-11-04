@@ -167,7 +167,7 @@ class DhReplicationImportCommand extends Command {
                 origin: 'HOLDING',
             });
         }
-        this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
+        this.logger.important(`[DH] Replication finished for offer_id ${offerId}`);
 
         const toSign = [
             Utilities.denormalizeHex(offerId),
@@ -187,7 +187,7 @@ class DhReplicationImportCommand extends Command {
         bid.status = 'REPLICATED';
         await bid.save({ fields: ['status'] });
 
-        this.logger.info(`Replication finished for offer ${offerId} sent to node ${dcNodeId}`);
+        this.logger.info(`Sent replication finished message for offer_id ${offerId} to node ${dcNodeId}`);
         return {
             commands: [
                 {

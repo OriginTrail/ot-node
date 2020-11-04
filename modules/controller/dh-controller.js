@@ -41,7 +41,7 @@ class DHController {
             } = request.params.message;
 
 
-            this.logger.notify(`Replication data for offer ${offerId} received from ${dcNodeId}. Response received.`);
+            this.logger.notify(`Received replication data for offer_id ${offerId} from node ${dcNodeId}.`);
 
             const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 

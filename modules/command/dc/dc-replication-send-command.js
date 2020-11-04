@@ -122,7 +122,7 @@ class DcReplicationSendCommand extends Command {
         if (response.status === 'fail') {
             this.logger.warn(`Sending replication data for offer ${offer.id} to ${identity} failed. ${response.message}`);
         } else {
-            this.logger.info(`Replication data for offer ${offer.id} successfully sent to ${identity}.`);
+            this.logger.info(`Successfully sent replication data for offer_id ${offer.offer_id} to node ${identity}.`);
         }
 
         return Command.empty();

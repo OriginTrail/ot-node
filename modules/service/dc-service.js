@@ -268,7 +268,7 @@ class DCService {
      * @returns {Promise<void>}
      */
     async handleReplicationRequest(offerId, wallet, identity, dhIdentity, async_enabled, response) {
-        this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
+        this.logger.info(`Received replication request for offer_id ${offerId} from node ${identity}.`);
 
         if (!offerId || !wallet || !dhIdentity) {
             const message = 'Asked replication without providing offer ID or wallet or identity.';
@@ -309,7 +309,7 @@ class DCService {
         }
 
         if (async_enabled) {
-            await this._sendReplicationAcknowledgement(offer, identity, response);
+            await this._sendReplicationAcknowledgement(offerId, identity, response);
 
             await this.commandExecutor.add({
                 name: 'dcReplicationSendCommand',
@@ -418,7 +418,7 @@ class DCService {
 
 
         if (async_enabled) {
-            await this._sendReplicationAcknowledgement(offer, identity, response);
+            await this._sendReplicationAcknowledgement(offerId, identity, response);
 
             await this.commandExecutor.add({
                 name: 'dcReplicationSendCommand',
@@ -452,7 +452,7 @@ class DCService {
 
         // send replication acknowledgement to DH
         await this.transport.sendResponse(response, payload);
-        this.logger.info(`Replication acknowledgement for offer ID ${offerId} sent to ${dhNetworkIdentity}.`);
+        this.logger.info(`Sending replication request acknowledgement for offer_id ${offerId} to node ${dhNetworkIdentity}.`);
     }
 
     /**
@@ -550,7 +550,7 @@ class DCService {
 
         // send replication to DH
         await this.transport.sendResponse(response, payload);
-        this.logger.info(`Replication for offer ID ${offer.id} sent to ${identity}.`);
+        this.logger.info(`Successfully sent replication data for offer_id ${offer.offer_id} to node ${identity}.`);
     }
 
     /**

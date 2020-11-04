@@ -497,13 +497,11 @@ class Kademlia {
 
         // sync
         this.node.use('kad-replication-request', (request, response, next) => {
-            this.log.debug('kad-replication-request received');
             this.emitter.emit('kad-replication-request', request, response);
         });
 
         // sync
         this.node.use('kad-replication-data', (request, response, next) => {
-            this.log.debug('kad-replication-data received');
             this.emitter.emit('kad-replication-data', request, response);
         });
 
@@ -522,7 +520,6 @@ class Kademlia {
 
         // async
         this.node.use('kad-replication-finished', (request, response, next) => {
-            this.log.debug('kad-replication-finished received');
             this.emitter.emit('kad-replication-finished', request, response);
             response.send([]);
         });

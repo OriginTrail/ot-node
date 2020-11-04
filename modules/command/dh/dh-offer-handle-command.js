@@ -26,7 +26,7 @@ class DHOfferHandleCommand extends Command {
             dcNodeId,
         } = command.data;
 
-        this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);
+        this.logger.trace(`Sending replication request for offer ${offerId} to node ${dcNodeId}.`);
         const response = await this.transport.replicationRequest({
             offerId,
             wallet: this.config.node_wallet,
@@ -60,7 +60,7 @@ class DHOfferHandleCommand extends Command {
         await bid.save({ fields: ['status'] });
 
         if (response.status === 'acknowledge') {
-            this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Acknowledgement received.`);
+            this.logger.notify(`Received replication request acknowledgement for offer_id ${offerId} from node ${dcNodeId}.`);
 
             return {
                 commands: [
@@ -76,7 +76,7 @@ class DHOfferHandleCommand extends Command {
             };
         }
 
-        this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Response received.`);
+        this.logger.notify(`Received replication data for offer_id ${offerId} from node ${dcNodeId}.`);
 
         const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
