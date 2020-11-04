@@ -308,29 +308,6 @@ class DCService {
             return;
         }
 
-        const usedDH = await models.replicated_data.findOne({
-            where: {
-                dh_id: identity,
-                dh_wallet: wallet,
-                dh_identity: dhIdentity,
-                offer_id: offerId,
-            },
-        });
-
-        if (usedDH != null) {
-            this.logger.notify(`Cannot send replication to DH with network ID ${identity}. DH already requested replication with status ${usedDH.status}.`);
-
-            try {
-                await this.transport.sendResponse(response, {
-                    status: 'fail',
-                    message: `DH ${identity} already applied for offer, currently with status ${usedDH.status}`,
-                });
-            } catch (e) {
-                this.logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
-            }
-        }
-
-
         if (async_enabled) {
             await this._sendReplicationAcknowledgement(offer, identity, response);
 
@@ -339,6 +316,7 @@ class DCService {
                 delay: 0,
                 data: {
                     internalOfferId: offer.id,
+                    offerId,
                     wallet,
                     identity,
                     dhIdentity,
@@ -487,26 +465,42 @@ class DCService {
      * @returns {Promise<void>}
      */
     async _sendReplication(offer, wallet, identity, dhIdentity, response) {
-        const colorNumber = Utilities.getRandomInt(2);
+        const usedDH = await models.replicated_data.findOne({
+            where: {
+                dh_id: identity,
+                dh_wallet: wallet,
+                dh_identity: dhIdentity,
+                offer_id: offer.offer_id,
+            },
+        });
+
+        let colorNumber = Utilities.getRandomInt(2);
+        if (usedDH != null && usedDH.status === 'STARTED' && usedDH.color) {
+            colorNumber = usedDH.color;
+        }
+
         const color = this.replicationService.castNumberToColor(colorNumber);
 
         const replication = await this.replicationService.loadReplication(offer.id, color);
-        await models.replicated_data.create({
-            dh_id: identity,
-            dh_wallet: wallet.toLowerCase(),
-            dh_identity: dhIdentity.toLowerCase(),
-            offer_id: offer.offer_id,
-            litigation_private_key: replication.litigationPrivateKey,
-            litigation_public_key: replication.litigationPublicKey,
-            distribution_public_key: replication.distributionPublicKey,
-            distribution_private_key: replication.distributionPrivateKey,
-            distribution_epk_checksum: replication.distributionEpkChecksum,
-            litigation_root_hash: replication.litigationRootHash,
-            distribution_root_hash: replication.distributionRootHash,
-            distribution_epk: replication.distributionEpk,
-            status: 'STARTED',
-            color: colorNumber,
-        });
+
+        if (!usedDH) {
+            await models.replicated_data.create({
+                dh_id: identity,
+                dh_wallet: wallet.toLowerCase(),
+                dh_identity: dhIdentity.toLowerCase(),
+                offer_id: offer.offer_id,
+                litigation_private_key: replication.litigationPrivateKey,
+                litigation_public_key: replication.litigationPublicKey,
+                distribution_public_key: replication.distributionPublicKey,
+                distribution_private_key: replication.distributionPrivateKey,
+                distribution_epk_checksum: replication.distributionEpkChecksum,
+                litigation_root_hash: replication.litigationRootHash,
+                distribution_root_hash: replication.distributionRootHash,
+                distribution_epk: replication.distributionEpk,
+                status: 'STARTED',
+                color: colorNumber,
+            });
+        }
 
         const toSign = [
             Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
