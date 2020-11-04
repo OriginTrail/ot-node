@@ -242,7 +242,7 @@ class OtNode extends EventEmitter {
         } else if (line.match(/I've been chosen for offer .+\./gi)) {
             const offerId = line.match(offerIdRegex)[0];
             this.state.takenBids.push(offerId);
-        } else if (line.match(/Replication for offer ID .+ sent to .+/gi)) {
+        } else if (line.match(/Replication data for offer .+ successfully sent to .+/gi)) {
             const internalOfferId = line.match(uuidRegex)[0];
             const dhId = line.match(identityRegex)[0];
             assert(internalOfferId);
