@@ -40,7 +40,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "password_file_name": "arango.txt",
       "port": 8529,
       "database": "origintrail-develop",
