@@ -1,7 +1,7 @@
 const axios = require('axios');
 const constants = require('../constants');
 
-const coinGeckoLink = '';
+const coinGeckoLink = 'https://api.coingecko.com/api/v3/simple/price?ids=origintrail&vs_currencies=eth';
 
 class TracPriceService {
     constructor(ctx) {
@@ -11,7 +11,7 @@ class TracPriceService {
 
 
     async getTracPrice() {
-        const response = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=origintrail&vs_currencies=eth')
+        const response = await axios.get(coinGeckoLink)
             .catch((err) => {
                 this.logger.warn(err);
                 return undefined;

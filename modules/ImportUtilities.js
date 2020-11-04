@@ -10,6 +10,7 @@ const Encryption = require('./RSAEncryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const OtJsonUtilities = require('./OtJsonUtilities');
+const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
 
 const data_constants = {
     vertexType: {
@@ -647,7 +648,9 @@ class ImportUtilities {
             sortedDataset = Utilities.copyObject(dataset);
         }
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
-        const { signature } = web3.eth.accounts.sign(
+
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        const signature = dataIntegrityService.sign(
             JSON.stringify(sortedDataset),
             Utilities.normalizeHex(config.node_private_key),
         );
@@ -670,7 +673,12 @@ class ImportUtilities {
         }
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
         delete sortedDataset.signature;
-        return web3.eth.accounts.recover(JSON.stringify(sortedDataset), dataset.signature.value);
+
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        return dataIntegrityService.recover(
+            JSON.stringify(sortedDataset),
+            dataset.signature.value,
+        );
     }
 
 

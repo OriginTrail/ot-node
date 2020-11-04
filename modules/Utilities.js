@@ -18,6 +18,7 @@ const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
+const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
 
 const logger = require('./logger');
 const { sha3_256 } = require('js-sha3');
@@ -698,13 +699,16 @@ class Utilities {
         } else {
             sortedMessage = JSON.stringify(Utilities.sortObject(message));
         }
-        const signature = web3.eth.accounts.sign(
+
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        const signature = dataIntegrityService.sign(
             sortedMessage,
             privateKey.toLowerCase().startsWith('0x') ?
                 privateKey : `0x${privateKey}`,
+            false,
         );
 
-        return { r: signature.r, s: signature.s, v: signature.v };
+        return { r: signature.r, s: signature.s, v: signature.recoveryParam };
     }
 
     static isMessageSigned(web3, message, signature) {
@@ -714,25 +718,12 @@ class Utilities {
         } else {
             sortedMessage = JSON.stringify(message);
         }
-        const signedAddress = web3.eth.accounts.recover(
-            sortedMessage,
-            signature.v,
-            signature.r,
-            signature.s,
-        );
 
-        // todo remove this patch in the next release
-        if (!Utilities.compareHexStrings(signedAddress, message.wallet)) {
-            const sortedMessage = Utilities.sortObject(message);
-            const signedAddress = web3.eth.accounts.recover(
-                JSON.stringify(sortedMessage),
-                signature.v,
-                signature.r,
-                signature.s,
-            );
-            return Utilities.compareHexStrings(signedAddress, message.wallet);
-        }
-        return true;
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        return dataIntegrityService.verify(
+            sortedMessage, signature,
+            false,
+        );
     }
 
     /**
@@ -1025,6 +1016,41 @@ class Utilities {
             return obj;
         }
         return [obj];
+    }
+
+    static fromNumber(num) {
+        const hex = num.toString(16);
+        return hex.length % 2 === 0 ? `0x${hex}` : `0x0${hex}`;
+    }
+
+    static toNumber(hex) {
+        return parseInt(hex.slice(2), 16);
+    }
+
+    static fromString(str) {
+        const bn = `0x${(str.slice(0, 2) === '0x' ? new BN(str.slice(2), 16) : new BN(str, 10)).toString('hex')}`;
+        return bn === '0x0' ? '0x' : bn;
+    }
+
+    static fromNat(bn) {
+        // eslint-disable-next-line no-nested-ternary
+        return bn === '0x0' ? '0x' : bn.length % 2 === 0 ? bn : `0x0${bn.slice(2)}`;
+    }
+
+    static pad(l, hex) {
+        return hex.length === (l * 2) + 2 ? hex : Utilities.pad(l, `0x0${hex.slice(2)}`);
+    }
+
+    static flatten(a) {
+        return `0x${a.reduce((r, s) => r + s.slice(2), '')}`;
+    }
+
+    static slice(i, j, bs) {
+        return `0x${bs.slice((i * 2) + 2, (j * 2) + 2)}`;
+    }
+
+    static length(a) {
+        return (a.length - 2) / 2;
     }
 }
 

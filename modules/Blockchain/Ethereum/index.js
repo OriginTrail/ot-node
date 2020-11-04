@@ -1496,7 +1496,7 @@ class Ethereum {
     }
 
     async calculateGasPrice() {
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV !== 'mainnet') {
             this.logger.trace(`Using default gas price from configuration: ${this.config.gas_price}`);
             return this.config.gas_price;
         }
