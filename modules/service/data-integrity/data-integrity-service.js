@@ -3,13 +3,6 @@
  */
 class DataIntegrityService {
     /**
-     * Creates a new instance of data integrity service
-     */
-    constructor(ctx) {
-        this.logger = ctx.logger;
-    }
-
-    /**
      * Sign
      */
     sign(content, privateKey) { }

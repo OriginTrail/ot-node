@@ -3,7 +3,7 @@ const EllipticDataIntegrityService = require('./elliptic-data-integrity-service'
 class DataIntegrityResolver {
     constructor() {
         if (!DataIntegrityResolver.instance) {
-            DataIntegrityResolver.instance = new DataIntegrityResolver();
+            DataIntegrityResolver.instance = this;
         }
 
         return DataIntegrityResolver.instance;
@@ -14,7 +14,7 @@ class DataIntegrityResolver {
     }
 
     resolve(type) {
-        switch (type.toUpperCase()) {
+        switch (type) {
         case 'ECDSA':
         default:
             return new EllipticDataIntegrityService();
