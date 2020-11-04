@@ -263,10 +263,11 @@ class DCService {
      * @param wallet - DH wallet
      * @param identity - Network identity
      * @param dhIdentity - DH ERC725 identity
+     * @param async_enabled - Whether or not the DH supports asynchronous communication
      * @param response - Network response
      * @returns {Promise<void>}
      */
-    async handleReplicationRequest(offerId, wallet, identity, dhIdentity, response) {
+    async handleReplicationRequest(offerId, wallet, identity, dhIdentity, async_enabled, response) {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
         if (!offerId || !wallet || !dhIdentity) {
@@ -307,20 +308,24 @@ class DCService {
             return;
         }
 
-        await this._sendReplicationAcknowledgement(offer, identity, response);
+        if (async_enabled) {
+            await this._sendReplicationAcknowledgement(offer, identity, response);
 
-        await this.commandExecutor.add({
-            name: 'dcReplicationSendCommand',
-            delay: 0,
-            data: {
-                internalOfferId: offer.id,
-                wallet,
-                identity,
-                dhIdentity,
-                response,
-            },
-            transactional: false,
-        });
+            await this.commandExecutor.add({
+                name: 'dcReplicationSendCommand',
+                delay: 0,
+                data: {
+                    internalOfferId: offer.id,
+                    wallet,
+                    identity,
+                    dhIdentity,
+                    response,
+                },
+                transactional: false,
+            });
+        } else {
+            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        }
     }
 
     /**
@@ -353,10 +358,11 @@ class DCService {
      * @param wallet - DH wallet
      * @param identity - Network identity
      * @param dhIdentity - DH ERC725 identity
+     * @param async_enabled - Whether or not the DH supports asynchronous communication
      * @param response - Network response
      * @returns {Promise<void>}
      */
-    async handleReplacementRequest(offerId, wallet, identity, dhIdentity, response) {
+    async handleReplacementRequest(offerId, wallet, identity, dhIdentity, async_enabled, response) {
         this.logger.info(`Replacement request for replication of offer ${offerId} received. Sender ${identity}`);
 
         if (!offerId || !wallet) {
@@ -402,25 +408,32 @@ class DCService {
             try {
                 await this.transport.sendResponse(response, {
                     status: 'fail',
+                    message: `DH ${identity} already applied for offer, currently with status ${usedDH.status}`,
                 });
             } catch (e) {
                 this.logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
             }
         }
-        await this._sendReplicationAcknowledgement(offer, identity, response);
 
-        await this.commandExecutor.add({
-            name: 'dcReplicationSendCommand',
-            delay: 0,
-            data: {
-                internalOfferId: offer.id,
-                wallet,
-                identity,
-                dhIdentity,
-                response,
-            },
-            transactional: false,
-        });
+
+        if (async_enabled) {
+            await this._sendReplicationAcknowledgement(offer, identity, response);
+
+            await this.commandExecutor.add({
+                name: 'dcReplicationSendCommand',
+                delay: 0,
+                data: {
+                    internalOfferId: offer.id,
+                    wallet,
+                    identity,
+                    dhIdentity,
+                    response,
+                },
+                transactional: false,
+            });
+        } else {
+            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        }
     }
 
     /**
@@ -433,12 +446,94 @@ class DCService {
     async _sendReplicationAcknowledgement(offerId, dhNetworkIdentity, response) {
         const payload = {
             offer_id: offerId,
-            status: 'success',
+            status: 'acknowledge',
         };
 
         // send replication acknowledgement to DH
         await this.transport.sendResponse(response, payload);
         this.logger.info(`Replication acknowledgement for offer ID ${offerId} sent to ${dhNetworkIdentity}.`);
+    }
+
+    /**
+     * Handles replication request from one DH
+     * @param offer - Offer
+     * @param wallet - DH wallet
+     * @param identity - Network identity
+     * @param dhIdentity - DH ERC725 identity
+     * @param response - Network response
+     * @returns {Promise<void>}
+     */
+    async _sendReplication(offer, wallet, identity, dhIdentity, response) {
+        const colorNumber = Utilities.getRandomInt(2);
+        const color = this.replicationService.castNumberToColor(colorNumber);
+
+        const replication = await this.replicationService.loadReplication(offer.id, color);
+        await models.replicated_data.create({
+            dh_id: identity,
+            dh_wallet: wallet.toLowerCase(),
+            dh_identity: dhIdentity.toLowerCase(),
+            offer_id: offer.offer_id,
+            litigation_private_key: replication.litigationPrivateKey,
+            litigation_public_key: replication.litigationPublicKey,
+            distribution_public_key: replication.distributionPublicKey,
+            distribution_private_key: replication.distributionPrivateKey,
+            distribution_epk_checksum: replication.distributionEpkChecksum,
+            litigation_root_hash: replication.litigationRootHash,
+            distribution_root_hash: replication.distributionRootHash,
+            distribution_epk: replication.distributionEpk,
+            status: 'STARTED',
+            color: colorNumber,
+        });
+
+        const toSign = [
+            Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
+            Utilities.denormalizeHex(replication.distributionRootHash),
+        ];
+        const distributionSignature = Encryption.signMessage(
+            this.web3, toSign,
+            Utilities.normalizeHex(this.config.node_private_key),
+        );
+
+        const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+            offer.data_set_id,
+            identity,
+        );
+
+        const promises = [];
+        for (const ot_object_id in permissionedData) {
+            promises.push(this.importService.getOtObjectById(offer.data_set_id, ot_object_id));
+        }
+
+        const ot_objects = await Promise.all(promises);
+
+        await this.permissionedDataService.attachPermissionedDataToMap(
+            permissionedData,
+            ot_objects,
+        );
+
+        const payload = {
+            offer_id: offer.offer_id,
+            data_set_id: offer.data_set_id,
+            dc_wallet: this.config.node_wallet,
+            otJson: replication.otJson,
+            permissionedData,
+            litigation_public_key: replication.litigationPublicKey,
+            distribution_public_key: replication.distributionPublicKey,
+            distribution_private_key: replication.distributionPrivateKey,
+            distribution_epk_checksum: replication.distributionEpkChecksum,
+            litigation_root_hash: replication.litigationRootHash,
+            distribution_root_hash: replication.distributionRootHash,
+            distribution_epk: replication.distributionEpk,
+            distribution_signature: distributionSignature.signature,
+            transaction_hash: offer.transaction_hash,
+            distributionSignature,
+            color: colorNumber,
+            dcIdentity: this.config.erc725Identity,
+        };
+
+        // send replication to DH
+        await this.transport.sendResponse(response, payload);
+        this.logger.info(`Replication for offer ID ${offer.id} sent to ${identity}.`);
     }
 
     /**

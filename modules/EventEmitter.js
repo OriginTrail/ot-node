@@ -514,11 +514,14 @@ class EventEmitter {
                 }
             }
 
-            const { offerId, wallet, dhIdentity } = replicationMessage;
+            const {
+                offerId, wallet, dhIdentity,
+                async_enabled,
+            } = replicationMessage;
             const identity = transport.extractSenderID(request);
             try {
                 await dcService.handleReplicationRequest(
-                    offerId, wallet, identity, dhIdentity,
+                    offerId, wallet, identity, dhIdentity, async_enabled,
                     response,
                 );
             } catch (error) {
@@ -569,7 +572,10 @@ class EventEmitter {
         this._on('kad-replacement-replication-request', async (request, response) => {
             try {
                 const message = transport.extractMessage(request);
-                const { offerId, wallet, dhIdentity } = message;
+                const {
+                    offerId, wallet, dhIdentity,
+                    async_enabled,
+                } = message;
                 const { wallet: senderWallet } = transport.extractSenderInfo(request);
                 const identity = transport.extractSenderID(request);
 
@@ -578,7 +584,7 @@ class EventEmitter {
                 }
 
                 await dcService.handleReplacementRequest(
-                    offerId, wallet, identity, dhIdentity,
+                    offerId, wallet, identity, dhIdentity, async_enabled,
                     response,
                 );
             } catch (error) {
