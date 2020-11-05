@@ -47,7 +47,7 @@ class PricingService {
     }
 
     async getGasPrice() {
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV !== 'mainnet') {
             this.logger.trace(`Using default gas price from configuration: ${this.config.blockchain.gas_price}`);
             return this.config.blockchain.gas_price;
         }

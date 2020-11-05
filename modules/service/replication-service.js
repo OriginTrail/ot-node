@@ -27,6 +27,7 @@ class ReplicationService {
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
         this.profileService = ctx.profileService;
+        this.replicationCache = {};
         const replicationPath = path.join(this.config.appDataPath, 'replication_cache');
 
         if (!fs.existsSync(replicationPath)) {
@@ -61,7 +62,7 @@ class ReplicationService {
         const hashes = {};
 
         const writeFilePromises = [];
-
+        this.replicationCache[internalOfferId] = {};
         for (let i = 0; i < 3; i += 1) {
             const color = this.castNumberToColor(i);
 
@@ -102,6 +103,7 @@ class ReplicationService {
                 distributionEpk: distEpk,
             };
 
+            this.replicationCache[internalOfferId][color] = replication;
             writeFilePromises.push(this.saveReplication(internalOfferId, color, replication));
 
             hashes[`${color}LitigationHash`] = litRootHash;
@@ -160,6 +162,8 @@ class ReplicationService {
         this.logger.info(`Deleting replications directory and cache for offer with internal ID ${internalOfferId}`);
         const offerDirPath = this._getOfferDirPath(internalOfferId);
         await Utilities.deleteDirectory(offerDirPath);
+
+        delete this.replicationCache[internalOfferId];
     }
 
     /**
@@ -180,6 +184,10 @@ class ReplicationService {
      * @return {Promise<*>}
      */
     async loadReplication(internalOfferId, color) {
+        if (this.replicationCache[internalOfferId]) {
+            this.logger.trace(`Loaded replication from cache for offer internal ID ${internalOfferId} and color ${color}`);
+            return this.replicationCache[internalOfferId][color];
+        }
         const offerDirPath = this._getOfferDirPath(internalOfferId);
         const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
