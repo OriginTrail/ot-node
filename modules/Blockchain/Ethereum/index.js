@@ -21,6 +21,7 @@ class Ethereum {
         logger,
         pricingService,
     }, configuration) {
+        this.contractsLoaded = false;
         this.initialized = false;
 
         // Loading Web3
@@ -72,7 +73,7 @@ class Ethereum {
      * Initializes Blockchain provider (get contract addresses, etc.)
      * @returns {Promise<void>}
      */
-    async initialize() {
+    async loadContracts() {
         // Holding contract data
         const holdingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding.json');
         this.holdingContractAddress = await this._getHoldingContractAddress();
@@ -201,11 +202,15 @@ class Ethereum {
             REPLACEMENT_CONTRACT: this.replacementContract,
         };
 
-        this.initialized = true;
+        this.contractsLoaded = true;
 
         this.logger.info('Smart contract instances initialized.');
 
         if (!this.initialized) this.initialized = true;
+    }
+
+    initialize() {
+        this.initialized = true;
     }
 
     /**

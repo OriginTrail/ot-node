@@ -24,17 +24,14 @@ class ProfileService {
      * Note: creates profile if there is none
      */
     async initProfile() {
-        const identities = this.blockchain.getAllIdentities();
+        const identities = this.blockchain.getAllIdentities(true);
 
         let promises = [];
 
         for (let i = 0; i < identities.length; i += 1) {
             const { response: identity, blockchain_id } = identities[i];
 
-            promises.push(this.isProfileCreated(
-                identity,
-                blockchain_id,
-            ));
+            promises.push(this.isProfileCreated(identity, blockchain_id));
         }
 
         const profiles = await Promise.all(promises);
@@ -45,12 +42,16 @@ class ProfileService {
             const { response: identity, blockchain_id } = identities[i];
 
             if (profiles[i]) {
+                this.blockchain.initialize(blockchain_id);
                 this.logger.notify(`Profile has already been created for node ${this.config.identity}, on blockchain: ${blockchain_id}`);
             } else {
                 promises.push(this.createAndSaveNewProfile(
                     identity,
                     blockchain_id,
-                ));
+                ).catch((e) => {
+                    this.logger.warn(`Failed to initialize profile on blockchain ${blockchain_id}. Scheduling reattempt.`);
+                    this.reinitializeProfile(blockchain_id);
+                }));
             }
         }
 
@@ -59,7 +60,8 @@ class ProfileService {
 
     async createAndSaveNewProfile(profileIdentity, blockchainId) {
         const identityExists = !!profileIdentity;
-        const profileMinStake = await this.blockchain.getProfileMinimumStake(blockchainId).response;
+        const profileMinStake = await this.blockchain
+            .getProfileMinimumStake(blockchainId, true).response;
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}, for blockchain id: ${blockchainId}`);
 
         let initialTokenAmount = null;
@@ -75,7 +77,7 @@ class ProfileService {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 await this.blockchain
-                    .increaseProfileApproval(initialTokenAmount, blockchainId).response;
+                    .increaseProfileApproval(initialTokenAmount, blockchainId, true).response;
                 approvalIncreased = true;
             } catch (error) {
                 if (error.message.includes('Gas price higher than maximum allowed price')) {
@@ -106,7 +108,7 @@ class ProfileService {
                         this.config.management_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
-                        blockchainId,
+                        blockchainId, true,
                     ).response;
                     createProfileCalled = true;
                 } else {
@@ -117,7 +119,7 @@ class ProfileService {
                         this.config.node_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
-                        blockchainId,
+                        blockchainId, true,
                     ).response;
                     createProfileCalled = true;
                 }
@@ -151,7 +153,7 @@ class ProfileService {
             );
 
             if (event) {
-                this.blockchain.saveIdentity(event.newIdentity, blockchainId);
+                this.blockchain.saveIdentity(event.newIdentity, blockchainId, true);
                 this.logger.notify(`Identity created for node ${this.config.identity}. Identity is ${event.newIdentity}. For blockchain id: ${blockchainId}.`);
             } else {
                 throw new Error('Identity could not be confirmed in timely manner. Please, try again later.');
@@ -159,7 +161,7 @@ class ProfileService {
         }
 
 
-        identity = this.getIdentity(blockchainId);
+        identity = this.getIdentity(blockchainId, true);
         const event = await this.blockchain.subscribeToEvent(
             'ProfileCreated',
             null,
@@ -171,6 +173,7 @@ class ProfileService {
             blockchainId,
         );
         if (event) {
+            this.blockchain.initialize(blockchainId);
             this.logger.notify(`Profile created for node ${this.config.identity}. For blockchain id: ${blockchainId} the profile identifier is ${identity}.`);
         } else {
             throw new Error('Profile could not be confirmed in timely manner. Please, try again later.');
@@ -186,7 +189,7 @@ class ProfileService {
             return false;
         }
 
-        const profile = await this.blockchain.getProfile(identity, blockchainId).response;
+        const profile = await this.blockchain.getProfile(identity, blockchainId, true).response;
 
         const zero = new BN(0);
         const stake = new BN(profile.stake, 10);
@@ -274,8 +277,42 @@ class ProfileService {
         await Promise.all(promises);
     }
 
-    getIdentity(blockchainId) {
-        return Utilities.normalizeHex(this.blockchain.getIdentity(blockchainId).response);
+    getIdentity(blockchainId, showUninitialized) {
+        return Utilities.normalizeHex(this.blockchain
+            .getIdentity(blockchainId, showUninitialized).response);
+    }
+
+    /**
+     * A periodic function that tries to reinitialize a profile for a specific blockchain after a
+     * failed initialization
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @returns {null}
+     */
+    reinitializeProfile(blockchain_id) {
+        let reinitializingInProgress = false;
+        const token = setInterval(async () => {
+            if (!reinitializingInProgress) {
+                reinitializingInProgress = true;
+                this.logger.notify(`Reinitializing the profile for blockchain_id ${blockchain_id}.`);
+                const identity = this.getIdentity(blockchain_id, true);
+
+                const profileCreated = await this.isProfileCreated(identity, blockchain_id);
+
+                if (profileCreated) {
+                    this.blockchain.initialize(blockchain_id);
+                    this.logger.notify(`Profile has already been created for node ${this.config.identity}, on blockchain: ${blockchain_id}`);
+                    clearInterval(token);
+                }
+
+                try {
+                    await this.createAndSaveNewProfile(identity, blockchain_id);
+                } catch (e) {
+                    this.logger.warn(`Failed to create a profile. ${e.toString()}`);
+                    this.logger.warn(`Failed to reinitialize profile on blockchain ${blockchain_id}. Scheduling reattempt.`);
+                    reinitializingInProgress = false;
+                }
+            }
+        }, constants.REINITIALIZE_DELAY_IN_MILLS);
     }
 }
 

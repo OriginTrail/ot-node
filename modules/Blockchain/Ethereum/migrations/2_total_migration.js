@@ -209,7 +209,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        for (let i = 0; i < 10; i += 1) {
+        for (let i = 1; i < 10; i += 1) {
             amounts.push(amountToMint);
             recepients.push(accounts[i]);
         }
@@ -231,6 +231,20 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
         console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
 
+        break;
+    case 'supplyTokens':
+        await Hub.at('0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a')
+            .then((result) => {
+                hub = result;
+            });
+        console.log(hub);
+        temp = await hub.getContractAddress.call('Token');
+        console.log(temp);
+        console.log(temp);
+        console.log(temp);
+        console.log(temp);
+        token = await TracToken.at(temp);
+        await token.transfer(accounts[0], amountToMint.divn(2), { from: accounts[1] });
         break;
     case 'setIdentity':
         temp = await deployer.deploy(TestingUtilities);

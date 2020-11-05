@@ -301,7 +301,7 @@ class OTNode {
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
+        await blockchain.loadContracts();
 
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -522,7 +522,7 @@ class OTNode {
         await transport.start();
 
         const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
+        await blockchain.loadContracts();
 
         const approvalService = container.resolve('approvalService');
 
