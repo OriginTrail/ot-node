@@ -18,7 +18,7 @@ class NetworkService {
             public_key: this.config.publicKeyData.publicKey,
             nonce: this.config.publicKeyData.nonce,
             proof: this.config.publicKeyData.proof,
-            erc725Identity: this.profileService.getIdentity('ethr'),
+            erc725Identity: this.profileService.getIdentity(),
         };
     }
 

@@ -43,8 +43,9 @@ class DHLitigationAnswerCommand extends Command {
         }
 
         // todo pass blockchain identity
-        const dhIdentity = utilities.normalizeHex(this.profileService.getIdentity('ethr'));
-        const { status, timestamp } = await this.blockchain.getLitigation(offerId, dhIdentity);
+        const dhIdentity = utilities.normalizeHex(this.profileService.getIdentity());
+        const { status, timestamp } =
+            await this.blockchain.getLitigation(offerId, dhIdentity).response;
 
         const { litigation_interval_in_minutes } = await models.bids.findOne({
             where: {
@@ -70,7 +71,8 @@ class DHLitigationAnswerCommand extends Command {
 
                 this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
 
-                await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer, true);
+                await this.blockchain
+                    .answerLitigation(offerId, dhIdentity, rawAnswer, true).response;
 
                 return {
                     commands: [

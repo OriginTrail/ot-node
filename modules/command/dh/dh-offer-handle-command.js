@@ -34,7 +34,7 @@ class DHOfferHandleCommand extends Command {
             offerId,
             blockchain_id,
             wallet: this.config.node_wallet,
-            dhIdentity: this.profileService.getIdentity('ethr'),
+            dhIdentity: this.profileService.getIdentity(blockchain_id),
         }, dcNodeId);
 
         if (response.status === 'fail') {

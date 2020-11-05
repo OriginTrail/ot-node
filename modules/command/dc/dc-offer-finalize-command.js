@@ -74,7 +74,7 @@ class DCOfferFinalizeCommand extends Command {
         try {
             // todo pass blockchain identity
             result = await this.blockchain.finalizeOffer(
-                Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
+                Utilities.normalizeHex(this.profileService.getIdentity()),
                 offerId,
                 new BN(solution.shift, 10),
                 confirmations[0],
@@ -84,7 +84,7 @@ class DCOfferFinalizeCommand extends Command {
                 nodeIdentifiers,
                 parentIdentity,
                 urgent,
-            );
+            ).response;
         } catch (error) {
             if (error.message.includes('Gas price higher than maximum allowed price')) {
                 const delay = constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS / 60 / 1000;

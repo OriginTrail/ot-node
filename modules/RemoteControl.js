@@ -361,11 +361,11 @@ class RemoteControl {
                     },
                 });
                 // todo pass blockchain identity
-                const identity = this.profileService.getIdentity('ethr');
+                const identity = this.profileService.getIdentity();
                 const paidAmount = await this.blockchain
-                    .getHolderPaidAmount(bid.offer_id, identity);
+                    .getHolderPaidAmount(bid.offer_id, identity).response;
                 const stakedAmount = await this.blockchain
-                    .getHolderStakedAmount(bid.offer_id, identity);
+                    .getHolderStakedAmount(bid.offer_id, identity).response;
 
                 return {
                     data_set_id: holding.data_set_id,
@@ -391,7 +391,10 @@ class RemoteControl {
     async _findHoldingByBid(bid) {
         // todo pass blockchain identity
         const encryptionType = await this.blockchain
-            .getHolderLitigationEncryptionType(bid.offer_id, this.profileService.getIdentity('ethr'));
+            .getHolderLitigationEncryptionType(
+                bid.offer_id,
+                this.profileService.getIdentity(),
+            ).response;
 
         return Models.holding_data.findOne({
             where: {
@@ -500,7 +503,7 @@ class RemoteControl {
      * Get amount of tokens currently staked in a job
      */
     async getStakedAmount(import_id) {
-        const stakedAmount = await this.blockchain.getStakedAmount(import_id);
+        const stakedAmount = await this.blockchain.getStakedAmount(import_id).response;
         this.socket.emit('jobStake', { stakedAmount, import_id });
     }
 
@@ -508,7 +511,7 @@ class RemoteControl {
      * Get payments for one data holding job
      */
     async getHoldingIncome(import_id) {
-        const holdingIncome = await this.blockchain.getHoldingIncome(import_id);
+        const holdingIncome = await this.blockchain.getHoldingIncome(import_id).response;
         this.socket.emit('holdingIncome', { holdingIncome, import_id });
     }
 
@@ -518,7 +521,7 @@ class RemoteControl {
     async getPurchaseIncome(data) {
         const DV_wallet = data.sourceWalletPerHolding;
         const import_id = data.importIdPerHolding;
-        const stakedAmount = await this.blockchain.getPurchaseIncome(import_id, DV_wallet);
+        const stakedAmount = await this.blockchain.getPurchaseIncome(import_id, DV_wallet).response;
         this.socket.emit('purchaseIncome', { stakedAmount, import_id, DV_wallet });
     }
 
@@ -527,7 +530,8 @@ class RemoteControl {
      */
     async getProfile() {
         // todo pass blockchain identity
-        const profile = await this.blockchain.getProfile(this.profileService.getIdentity('ethr'));
+        const profile = await this.blockchain
+            .getProfile(this.profileService.getIdentity()).response;
         this.socket.emit('profile', profile);
     }
 
@@ -536,7 +540,8 @@ class RemoteControl {
      */
     async getTotalPayouts() {
         // todo pass blockchain identity
-        const totalAmount = await this.blockchain.getTotalPayouts(this.profileService.getIdentity('ethr'));
+        const totalAmount = await this.blockchain
+            .getTotalPayouts(this.profileService.getIdentity()).response;
         this.socket.emit('total_payouts', totalAmount);
     }
 

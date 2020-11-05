@@ -133,7 +133,7 @@ class DHService {
         }
 
         this.logger.info(`Accepting offer with price: ${tokenAmountPerHolder} TRAC.`);
-        const offer = await this.blockchain.getOffer(offerId, blockchain_id);
+        const offer = await this.blockchain.getOffer(offerId, blockchain_id).response;
         const bid = await Models.bids.create({
             offer_id: offerId,
             dc_identity: offer.creator,
@@ -183,17 +183,18 @@ class DHService {
      * Calculates possible minimum amount to deposit (pessimistically)
      * @param bidId
      * @param tokenAmountPerHolder
+     * @param blockchain_id
      * @return {Promise<*>}
      * @private
      */
     async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder, blockchain_id) {
         // todo pass blockchain identity
         const profile = await this.blockchain
-            .getProfile(this.profileService.getIdentity(blockchain_id), blockchain_id);
+            .getProfile(this.profileService.getIdentity(blockchain_id), blockchain_id).response;
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
         const profileMinStake =
-            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id), 10);
+            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id).response, 10);
 
         const offerStake = new BN(tokenAmountPerHolder, 10);
 
@@ -266,15 +267,15 @@ class DHService {
         const penalizedPaidAmount = new BN(await this.blockchain.getHolderPaidAmount(
             offerId,
             penalizedHolderIdentity,
-        ));
+        ).response);
         const penalizedStakedAmount = new BN(await this.blockchain.getHolderStakedAmount(
             offerId,
             penalizedHolderIdentity,
-        ));
+        ).response);
 
         const stakeAmount = penalizedStakedAmount.sub(penalizedPaidAmount);
 
-        const offerBc = await this.blockchain.getOffer(offerId);
+        const offerBc = await this.blockchain.getOffer(offerId).response;
 
         const offerSoFarInMillis = Date.now() - (offerBc.startTime * 1000);
         const offerSoFarInMinutes = new BN(offerSoFarInMillis / (60 * 1000), 10);
@@ -283,8 +284,8 @@ class DHService {
 
         const replacementDurationInMinutes = offerHoldingTimeInMinutes.sub(offerSoFarInMinutes);
         if (bid == null) {
-            const profile =
-                await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
+            const profile = await this.blockchain
+                .getProfile(Utilities.normalizeHex(litigatorIdentity)).response;
             const dcNodeId =
                 Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
             bid = await Models.bids.create({
@@ -480,8 +481,8 @@ class DHService {
             // From smart contract:
             // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
             const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor));
-            const profileBalance =
-                new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
+            const profileBalance = new BN((await this.blockchain
+                .getProfile(this.profileService.getIdentity()).response).balance, 10);
 
             if (profileBalance.lt(condition)) {
                 throw new Error('Not enough funds to handle data read request');

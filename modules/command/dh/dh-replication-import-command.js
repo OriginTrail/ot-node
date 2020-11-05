@@ -69,7 +69,8 @@ class DhReplicationImportCommand extends Command {
         }
 
         const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
-        const blockchainRootHash = await this.blockchain.getRootHash(dataSetId, blockchain_id);
+        const blockchainRootHash =
+            await this.blockchain.getRootHash(dataSetId, blockchain_id).response;
 
         if (decryptedGraphRootHash !== blockchainRootHash) {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from Blockchain root hash ${blockchainRootHash}`);

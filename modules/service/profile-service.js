@@ -29,10 +29,10 @@ class ProfileService {
         let promises = [];
 
         for (let i = 0; i < identities.length; i += 1) {
-            const { response, blockchain_id } = identities[i];
+            const { response: identity, blockchain_id } = identities[i];
 
             promises.push(this.isProfileCreated(
-                response ? response.identity : response,
+                identity,
                 blockchain_id,
             ));
         }
@@ -42,13 +42,13 @@ class ProfileService {
         promises = [];
 
         for (let i = 0; i < identities.length; i += 1) {
-            const { response, blockchain_id } = identities[i];
+            const { response: identity, blockchain_id } = identities[i];
 
             if (profiles[i]) {
                 this.logger.notify(`Profile has already been created for node ${this.config.identity}, on blockchain: ${blockchain_id}`);
             } else {
                 promises.push(this.createAndSaveNewProfile(
-                    response ? response.identity : response,
+                    identity,
                     blockchain_id,
                 ));
             }
@@ -58,8 +58,8 @@ class ProfileService {
     }
 
     async createAndSaveNewProfile(profileIdentity, blockchainId) {
-        const identityExists = profileIdentity !== null;
-        const profileMinStake = await this.blockchain.getProfileMinimumStake(blockchainId);
+        const identityExists = !!profileIdentity;
+        const profileMinStake = await this.blockchain.getProfileMinimumStake(blockchainId).response;
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}, for blockchain id: ${blockchainId}`);
 
         let initialTokenAmount = null;
@@ -74,7 +74,8 @@ class ProfileService {
         do {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await this.blockchain.increaseProfileApproval(initialTokenAmount, blockchainId);
+                await this.blockchain
+                    .increaseProfileApproval(initialTokenAmount, blockchainId).response;
                 approvalIncreased = true;
             } catch (error) {
                 if (error.message.includes('Gas price higher than maximum allowed price')) {
@@ -106,7 +107,7 @@ class ProfileService {
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
                         blockchainId,
-                    );
+                    ).response;
                     createProfileCalled = true;
                 } else {
                     this.logger.important('Management wallet not set. Creating profile with operating wallet only.' +
@@ -117,7 +118,7 @@ class ProfileService {
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
                         blockchainId,
-                    );
+                    ).response;
                     createProfileCalled = true;
                 }
             } catch (error) {
@@ -185,7 +186,7 @@ class ProfileService {
             return false;
         }
 
-        const profile = await this.blockchain.getProfile(identity, blockchainId);
+        const profile = await this.blockchain.getProfile(identity, blockchainId).response;
 
         const zero = new BN(0);
         const stake = new BN(profile.stake, 10);
@@ -247,10 +248,9 @@ class ProfileService {
 
         let promises = [];
         for (let i = 0; i < identities.length; i += 1) {
-            const { response, blockchain_id } = identities[i];
-            const { identity } = response;
+            const { response: identity, blockchain_id } = identities[i];
 
-            promises.push(this.blockchain.getProfile(identity, blockchain_id));
+            promises.push(this.blockchain.getProfile(identity, blockchain_id).response);
         }
 
         const profiles = await Promise.all(promises);
@@ -258,8 +258,7 @@ class ProfileService {
         promises = [];
 
         for (let i = 0; i < identities.length; i += 1) {
-            const { response, blockchain_id } = identities[i];
-            const { identity } = response;
+            const { response: identity, blockchain_id } = identities[i];
             const profile = profiles[i];
 
             if (!profile.nodeId.toLowerCase().startsWith(`0x${this.config.identity.toLowerCase()}`)) {
@@ -268,7 +267,7 @@ class ProfileService {
                     identity,
                     Utilities.normalizeHex(this.config.identity.toLowerCase()),
                     blockchain_id,
-                ));
+                ).response);
             }
         }
 
@@ -276,7 +275,7 @@ class ProfileService {
     }
 
     getIdentity(blockchainId) {
-        return this.blockchain.getIdentity(blockchainId);
+        return Utilities.normalizeHex(this.blockchain.getIdentity(blockchainId).response);
     }
 }
 
