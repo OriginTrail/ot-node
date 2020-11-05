@@ -1,3 +1,5 @@
+const path = require('path');
+
 const Utilities = require('../Utilities');
 const Models = require('../../models');
 const constants = require('../constants');
@@ -12,6 +14,8 @@ class DHController {
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
+        this.transport = ctx.transport;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     isParameterProvided(request, response, parameter_name) {
@@ -28,6 +32,44 @@ class DHController {
         }
 
         return true;
+    }
+
+    async handleReplicationData(dcNodeId, request, response) {
+        try {
+            const {
+                offer_id: offerId, otJson, permissionedData,
+            } = request.params.message;
+
+
+            this.logger.notify(`Received replication data for offer_id ${offerId} from node ${dcNodeId}.`);
+
+            const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+
+            await Utilities.writeContentsToFile(
+                cacheDirectory,
+                offerId,
+                JSON.stringify({
+                    otJson,
+                    permissionedData,
+                }),
+            );
+
+            const packedResponse = DHController._stripResponse(request.params.message);
+            Object.assign(packedResponse, {
+                dcNodeId,
+                documentPath: path.join(cacheDirectory, offerId),
+            });
+
+            await this.commandExecutor.add({
+                name: 'dhReplicationImportCommand',
+                data: packedResponse,
+                transactional: false,
+            });
+        } catch (e) {
+            await this.transport.sendResponse(response, { status: 'fail', message: e });
+        }
+
+        await this.transport.sendResponse(response, { status: 'success' });
     }
 
     async whitelistViewer(request, response) {
@@ -189,6 +231,28 @@ class DHController {
 
             return response.concat(trailExtension);
         }
+    }
+
+    /**
+     * Parse network response
+     * @param response  - Network response
+     * @private
+     */
+    static _stripResponse(response) {
+        return {
+            offerId: response.offer_id,
+            dataSetId: response.data_set_id,
+            dcWallet: response.dc_wallet,
+            dcNodeId: response.dcNodeId,
+            litigationPublicKey: response.litigation_public_key,
+            litigationRootHash: response.litigation_root_hash,
+            distributionPublicKey: response.distribution_public_key,
+            distributionPrivateKey: response.distribution_private_key,
+            distributionEpk: response.distribution_epk,
+            transactionHash: response.transaction_hash,
+            encColor: response.color,
+            dcIdentity: response.dcIdentity,
+        };
     }
 }
 
