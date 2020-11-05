@@ -31,7 +31,6 @@ class DHOfferHandleCommand extends Command {
             offerId,
             wallet: this.config.node_wallet,
             dhIdentity: this.config.erc725Identity,
-            async_enabled: true,
         }, dcNodeId);
 
         if (response.status === 'fail') {

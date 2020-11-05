@@ -540,7 +540,8 @@ class EventEmitter {
 
         this._on('kad-replication-data', async (request, response) => {
             const kadReplicationRequest = transport.extractMessage(request);
-            var replicationMessage = kadReplicationRequest;
+            let replicationMessage = kadReplicationRequest;
+
             if (kadReplicationRequest.messageSignature) {
                 const { message, messageSignature } = kadReplicationRequest;
                 replicationMessage = message;
@@ -553,7 +554,11 @@ class EventEmitter {
 
             const senderIdentity = transport.extractSenderID(request);
             try {
-                await dhController.handleReplicationData(senderIdentity, request, response);
+                await dhController.handleReplicationData(
+                    senderIdentity,
+                    replicationMessage,
+                    response,
+                );
             } catch (error) {
                 const errorMessage = `Failed to handle replication data. ${error}.`;
                 logger.warn(errorMessage);
