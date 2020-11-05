@@ -234,7 +234,7 @@ class OtNode extends EventEmitter {
             this.emit('public-key-request');
         } else if (line.match(/Export complete.*/gi)) {
             this.emit('export-complete');
-        } else if (line.match(/.*\[DH] Replication finished for offer ID .+/gi)) {
+        } else if (line.match(/.*\[DH] Replication finished for offer_id .+/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
             this.state.addedBids.push(offerId);
@@ -242,13 +242,13 @@ class OtNode extends EventEmitter {
         } else if (line.match(/I've been chosen for offer .+\./gi)) {
             const offerId = line.match(offerIdRegex)[0];
             this.state.takenBids.push(offerId);
-        } else if (line.match(/Replication for offer ID .+ sent to .+/gi)) {
-            const internalOfferId = line.match(uuidRegex)[0];
+        } else if (line.match(/Successfully sent replication data for offer_id .+ to node .+\./gi)) {
+            const offer_id = line.match(offerIdRegex)[0];
             const dhId = line.match(identityRegex)[0];
-            assert(internalOfferId);
+            assert(offer_id);
             assert(dhId);
-            this.state.replications.push({ internalOfferId, dhId });
-            this.emit('dh-replicated', { internalOfferId, dhId });
+            this.state.replications.push({ offer_id, dhId });
+            this.emit('dh-replicated', { offer_id, dhId });
         } else if (line.includes('Get profile by wallet ')) {
             // note that node's wallet can also be access via nodeConfiguration directly
             const wallet = line.match(walletRegex)[0];

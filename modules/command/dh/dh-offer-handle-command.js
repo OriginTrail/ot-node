@@ -1,7 +1,7 @@
 const path = require('path');
-const fs = require('fs');
+
 const Command = require('../command');
-const Models = require('../../../models/index');
+const Models = require('../../../models');
 const Utilities = require('../../Utilities');
 
 /**
@@ -13,7 +13,7 @@ class DHOfferHandleCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
-        this.blockchain = ctx.blockchain;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -26,11 +26,12 @@ class DHOfferHandleCommand extends Command {
             dcNodeId,
         } = command.data;
 
-        this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);
+        this.logger.trace(`Sending replication request for offer ${offerId} to node ${dcNodeId}.`);
         const response = await this.transport.replicationRequest({
             offerId,
             wallet: this.config.node_wallet,
             dhIdentity: this.config.erc725Identity,
+            async_enabled: true,
         }, dcNodeId);
 
         if (response.status === 'fail') {
@@ -58,7 +59,24 @@ class DHOfferHandleCommand extends Command {
         bid.status = 'SENT';
         await bid.save({ fields: ['status'] });
 
-        this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Response received.`);
+        if (response.status === 'acknowledge') {
+            this.logger.notify(`Received replication request acknowledgement for offer_id ${offerId} from node ${dcNodeId}.`);
+
+            return {
+                commands: [
+                    {
+                        name: 'dhReplicationTimeoutCommand',
+                        delay: this.config.dc_choose_time,
+                        data: {
+                            offerId,
+                            dcNodeId,
+                        },
+                    },
+                ],
+            };
+        }
+
+        this.logger.notify(`Received replication data for offer_id ${offerId} from node ${dcNodeId}.`);
 
         const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
