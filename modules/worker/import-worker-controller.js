@@ -48,7 +48,7 @@ class ImportWorkerController {
             document, encryptedMap, wallet, handler_id,
         }));
 
-        forked.on('message', async (response) => {
+         forked.on('message', async (response) => {
             if (response.error) {
                 await this._sendErrorToFinalizeCommand(response.error, handler_id, documentPath);
                 forked.kill();

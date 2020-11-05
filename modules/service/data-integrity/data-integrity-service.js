@@ -8,9 +8,14 @@ class DataIntegrityService {
     sign(content, privateKey) { }
 
     /**
-    * Verify
-    */
+     * Verify
+     */
     verify(content, signature, publicKey) { }
+
+    /**
+     * Recover
+     */
+    recover(content, signature) { }
 }
 
 module.exports = DataIntegrityService;
