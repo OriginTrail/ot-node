@@ -70,7 +70,7 @@ class Ethereum {
     }
 
     /**
-     * Initializes Blockchain provider (get contract addresses, etc.)
+     * Loads contracts for Blockchain provider (get contract addresses, etc.)
      * @returns {Promise<void>}
      */
     async loadContracts() {
@@ -205,8 +205,6 @@ class Ethereum {
         this.contractsLoaded = true;
 
         this.logger.info('Smart contract instances initialized.');
-
-        if (!this.initialized) this.initialized = true;
     }
 
     initialize() {

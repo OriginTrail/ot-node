@@ -156,4 +156,4 @@ exports.PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE = 'permissioned.hide_attribu
  * @constant {Number} REINITIALIZE_DELAY_IN_MILLS -
  * The delay for a reinitialize attempt if a profile initialization failed
  */
-exports.REINITIALIZE_DELAY_IN_MILLS = 2 * 1000;
+exports.REINITIALIZE_DELAY_IN_MILLS = 15 * 60 * 1000;
