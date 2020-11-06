@@ -209,9 +209,9 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
+        for (let i = 0; i < 10; i += 1) {
             amounts.push(amountToMint);
             recepients.push(accounts[i]);
-        for (let i = 0; i < 10; i += 1) {
         }
         await token.mintMany(recepients, amounts, { from: accounts[0] });
         await token.finishMinting({ from: accounts[0] });
