@@ -655,8 +655,8 @@ class ImportUtilities {
             Utilities.normalizeHex(config.node_private_key),
         );
         dataset.signature = {
-            value: signature,
-            type: 'ethereum-signature',
+            value: signature.signature,
+            type: signature.type,
         };
 
         return dataset;

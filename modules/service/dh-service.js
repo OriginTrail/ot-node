@@ -117,11 +117,11 @@ class DHService {
             return;
         }
 
-        // todo invoke blockchain service
+        const { dh_price_factor } = this.blockchain.getPriceFactors(blockchain_id);
         const offerPrice = await this.pricingService.calculateOfferPriceinTrac(
             dataSetSizeInBytes,
             holdingTimeInMinutes,
-            this.config.blockchain.dh_price_factor,
+            dh_price_factor,
         );
         const myOfferPrice = offerPrice.finalPrice;
         const dhTokenPrice = new BN(myOfferPrice.toString(), 10);

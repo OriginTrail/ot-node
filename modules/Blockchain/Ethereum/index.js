@@ -1569,6 +1569,17 @@ class Ethereum {
         };
     }
 
+    /**
+     * Returns price factors from configuration
+     */
+
+    getPriceFactors() {
+        return {
+            dc_price_factor: this.config.dc_price_factor,
+            dh_price_factor: this.config.dh_price_factor,
+        };
+    }
+
     async getTracPrice() {
         if (process.env.NODE_ENV === 'development') {
             this.logger.trace(`Using default trac price in eth from configuration: ${this.config.trac_price_in_eth}`);

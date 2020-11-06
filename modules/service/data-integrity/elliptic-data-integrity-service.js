@@ -11,9 +11,11 @@ const BytesUtilities = require('../../BytesUtilities');
 // eslint-disable-next-line no-cond-assign,func-names,no-unsafe-finally,no-undef-init,no-undef
 const _slicedToArray = (function () { function sliceIterator(arr, i) { const _arr = []; let _n = true; let _d = false; let _e = undefined; try { for (let _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i.return) _i.return(); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } throw new TypeError('Invalid attempt to destructure non-iterable instance'); }; }());
 
+const SIGNATURE_TYPE = 'ethereum-signature';
+
 class EllipticDataIntegrityService extends DataIntegrityService {
-    sign(content, privateKey, encoded = true) {
-        super.sign(content, privateKey, encoded);
+    sign(content, privateKey) {
+        super.sign(content, privateKey);
 
         const keyPair = secp256k1.keyFromPrivate(BytesUtilities.normalizeHex(privateKey));
         const privKey = keyPair.getPrivate('hex');
@@ -21,22 +23,28 @@ class EllipticDataIntegrityService extends DataIntegrityService {
         const hash = sha3.keccak256(content);
         const signature = secp256k1.sign(hash, privKey, 'hex', { canonical: true });
 
-        if (encoded) {
-            return this.encodeSignature([
-                BytesUtilities.fromString(BytesUtilities.fromNumber(27 + signature.recoveryParam)),
-                BytesUtilities.pad(32, BytesUtilities.fromNat(`0x${signature.r.toString(16)}`)),
-                BytesUtilities.pad(32, BytesUtilities.fromNat(`0x${signature.s.toString(16)}`)),
-            ]);
-        }
+        const result = this.encodeSignature([
+            BytesUtilities.fromString(BytesUtilities.fromNumber(27 + signature.recoveryParam)),
+            BytesUtilities.pad(32, BytesUtilities.fromNat(`0x${signature.r.toString(16)}`)),
+            BytesUtilities.pad(32, BytesUtilities.fromNat(`0x${signature.s.toString(16)}`)),
+        ]);
 
-        return signature;
+        return { ...result, ...{ type: SIGNATURE_TYPE } };
     }
 
-    verify(content, signature, publicKey, encoded = true) {
-        super.verify(content, signature, publicKey, encoded);
+    verify(content, signature, publicKey) {
+        super.verify(content, signature);
 
         let vrs;
-        if (encoded) {
+        if (Object.keys(signature).includes('r') &&
+            Object.keys(signature).includes('s') &&
+            Object.keys(signature).includes('v')) {
+            vrs = {
+                v: BytesUtilities.toNumber(signature.v),
+                r: signature.r.slice(2),
+                s: signature.s.slice(2),
+            };
+        } else {
             const decoded = this.decodeSignature(signature);
 
             vrs = {
@@ -44,7 +52,7 @@ class EllipticDataIntegrityService extends DataIntegrityService {
                 r: decoded[1].slice(2),
                 s: decoded[2].slice(2),
             };
-        } else { vrs = signature; }
+        }
 
         const hash = sha3.keccak256(content);
         const pubKeyRecovered = secp256k1.recoverPubKey(
@@ -64,11 +72,19 @@ class EllipticDataIntegrityService extends DataIntegrityService {
         return false;
     }
 
-    recover(content, signature, encoded = true) {
-        super.recover(content, signature, encoded);
+    recover(content, signature) {
+        super.recover(content, signature);
 
         let vrs;
-        if (encoded) {
+        if (Object.keys(signature).includes('r') &&
+            Object.keys(signature).includes('s') &&
+            Object.keys(signature).includes('v')) {
+            vrs = {
+                v: BytesUtilities.toNumber(signature.v),
+                r: signature.r.slice(2),
+                s: signature.s.slice(2),
+            };
+        } else {
             const decoded = this.decodeSignature(signature);
 
             vrs = {
@@ -76,8 +92,7 @@ class EllipticDataIntegrityService extends DataIntegrityService {
                 r: decoded[1].slice(2),
                 s: decoded[2].slice(2),
             };
-        } else { vrs = signature; }
-
+        }
 
         const hash = sha3.keccak256(content);
         const pubKeyRecovered = secp256k1.recoverPubKey(
@@ -96,7 +111,9 @@ class EllipticDataIntegrityService extends DataIntegrityService {
         const r = BytesUtilities.pad(32, _ref2[1]);
         const s = BytesUtilities.pad(32, _ref2[2]);
 
-        return BytesUtilities.flatten([r, s, v]);
+        return {
+            signature: BytesUtilities.flatten([r, s, v]), r, s, v,
+        };
     }
 
     decodeSignature(hex) {

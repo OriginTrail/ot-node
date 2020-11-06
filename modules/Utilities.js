@@ -705,10 +705,9 @@ class Utilities {
             sortedMessage,
             privateKey.toLowerCase().startsWith('0x') ?
                 privateKey : `0x${privateKey}`,
-            false,
         );
 
-        return { r: signature.r, s: signature.s, v: signature.recoveryParam };
+        return { r: signature.r, s: signature.s, v: signature.v };
     }
 
     static isMessageSigned(web3, message, signature) {
@@ -720,10 +719,7 @@ class Utilities {
         }
 
         const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
-        return dataIntegrityService.verify(
-            sortedMessage, signature,
-            false,
-        );
+        return dataIntegrityService.verify(sortedMessage, signature, message.wallet);
     }
 
     /**

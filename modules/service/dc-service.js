@@ -41,13 +41,18 @@ class DCService {
         if (!holdingTimeInMinutes) {
             holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
         }
+
+        const blockchain_id = this.blockchain.getDefaultBlockchainId();
+        const { dc_price_factor } = this.blockchain.getPriceFactors(blockchain_id);
+
         let offerPrice = {};
         if (!tokenAmountPerHolder) {
             offerPrice = await this.pricingService
                 .calculateOfferPriceinTrac(
                     dataSizeInBytes,
                     holdingTimeInMinutes,
-                    this.config.blockchain.dc_price_factor,
+                    dc_price_factor,
+                    blockchain_id,
                 );
             tokenAmountPerHolder = offerPrice.finalPrice;
         }
@@ -59,7 +64,7 @@ class DCService {
             global_status: 'PENDING',
             trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
             gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
-            price_factor_used_for_price_calculation: this.config.blockchain.dc_price_factor,
+            price_factor_used_for_price_calculation: dc_price_factor,
         });
 
         if (!litigationIntervalInMinutes) {

@@ -1079,6 +1079,20 @@ class Blockchain {
         }
         return this.blockchain[0].getTracPrice();
     }
+
+    /**
+     * Returns price factors from configuration
+     */
+    getPriceFactors(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.getPriceFactors();
+            }
+        }
+        return this.blockchain[0].getPriceFactors();
+    }
 }
 
 module.exports = Blockchain;
