@@ -34,11 +34,11 @@ class DHController {
         return true;
     }
 
-    async handleReplicationData(dcNodeId, request, response) {
+    async handleReplicationData(dcNodeId, replicationMessage, response) {
         try {
             const {
                 offer_id: offerId, otJson, permissionedData,
-            } = request.params.message;
+            } = replicationMessage;
 
 
             this.logger.notify(`Received replication data for offer_id ${offerId} from node ${dcNodeId}.`);
@@ -54,7 +54,7 @@ class DHController {
                 }),
             );
 
-            const packedResponse = DHController._stripResponse(request.params.message);
+            const packedResponse = DHController._stripResponse(replicationMessage);
             Object.assign(packedResponse, {
                 dcNodeId,
                 documentPath: path.join(cacheDirectory, offerId),
