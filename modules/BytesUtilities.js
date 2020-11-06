@@ -1,4 +1,5 @@
 const BN = require('bn.js');
+const _ = require('underscore');
 
 class BytesUtilities {
     /**
@@ -78,6 +79,26 @@ class BytesUtilities {
 
     static length(a) {
         return (a.length - 2) / 2;
+    }
+
+    static isHexStrict(hex) {
+        return ((_.isString(hex) || _.isNumber(hex)) && /^(-)?0x[0-9a-f]*$/i.test(hex));
+    }
+
+    static hexToBytes(hex) {
+        hex = hex.toString(16);
+
+        if (!BytesUtilities.isHexStrict(hex)) {
+            throw new Error(`Given value "${hex}" is not a valid hex string.`);
+        }
+
+        hex = hex.replace(/^0x/i, '');
+        let bytes;
+        let c;
+        for (bytes = [], c = 0; c < hex.length; c += 2) {
+            bytes.push(parseInt(hex.substr(c, 2), 16));
+        }
+        return bytes;
     }
 }
 

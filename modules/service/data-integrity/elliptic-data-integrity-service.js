@@ -17,11 +17,12 @@ class EllipticDataIntegrityService extends DataIntegrityService {
     sign(content, privateKey) {
         super.sign(content, privateKey);
 
-        const keyPair = secp256k1.keyFromPrivate(BytesUtilities.normalizeHex(privateKey));
-        const privKey = keyPair.getPrivate('hex');
+        // const keyPair = ;
+        // const privKey = keyPair.getPrivate('hex');
 
-        const hash = sha3.keccak256(content);
-        const signature = secp256k1.sign(hash, privKey, 'hex', { canonical: true });
+        const hash = this.hashContent(content);
+        const signature = secp256k1.keyFromPrivate(Buffer.from(BytesUtilities.normalizeHex(privateKey).slice(2), 'hex'))
+            .sign(Buffer.from(hash.slice(2), 'hex'), { canonical: true });
 
         const result = this.encodeSignature([
             BytesUtilities.fromString(BytesUtilities.fromNumber(27 + signature.recoveryParam)),
@@ -54,15 +55,16 @@ class EllipticDataIntegrityService extends DataIntegrityService {
             };
         }
 
-        const hash = sha3.keccak256(content);
+        const hash = this.hashContent(content);
         const pubKeyRecovered = secp256k1.recoverPubKey(
-            Buffer.from(hash, 'hex'),
+            Buffer.from(hash.slice(2), 'hex'),
             vrs,
             vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
         );
 
-        if (secp256k1.verify(hash, vrs, pubKeyRecovered)) {
-            const publicHash = sha3.keccak256(`0x${pubKeyRecovered.encode('hex', false).slice(2)}`);
+        if (secp256k1.verify(hash.slice(2), vrs, pubKeyRecovered)) {
+            const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
+            const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
             const wallet = this.toChecksum(`0x${publicHash.slice(-40)}`);
 
             return BytesUtilities.normalizeHex(wallet).toLowerCase()
@@ -94,14 +96,15 @@ class EllipticDataIntegrityService extends DataIntegrityService {
             };
         }
 
-        const hash = sha3.keccak256(content);
+        const hash = this.hashContent(content);
         const pubKeyRecovered = secp256k1.recoverPubKey(
-            Buffer.from(hash, 'hex'),
+            Buffer.from(hash.slice(2), 'hex'),
             vrs,
             vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
         );
 
-        const publicHash = sha3.keccak256(`0x${pubKeyRecovered.encode('hex', false).slice(2)}`);
+        const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
+        const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
         return this.toChecksum(`0x${publicHash.slice(-40)}`);
     }
 
@@ -131,6 +134,16 @@ class EllipticDataIntegrityService extends DataIntegrityService {
                 address[i + 2].toUpperCase() :
                 address[i + 2];
         } return checksumAddress;
+    }
+
+    hashContent(content) {
+        const message = BytesUtilities.isHexStrict(content) ?
+            BytesUtilities.hexToBytes(content) : content;
+        const messageBuffer = Buffer.from(message);
+        const preamble = `\x19Ethereum Signed Message:\n${message.length}`;
+        const preambleBuffer = Buffer.from(preamble);
+        const ethMessage = Buffer.concat([preambleBuffer, messageBuffer]);
+        return `0x${sha3.keccak256(ethMessage)}`;
     }
 }
 

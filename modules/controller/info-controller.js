@@ -9,6 +9,7 @@ class InfoController {
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     async getNodeInfo(req, res) {
@@ -19,12 +20,12 @@ class InfoController {
 
             const basicConfig = {
                 version: pjson.version,
-                blockchain: this.config.blockchain.blockchain_title,
+                blockchain: this.blockchain.getBlockchainTitle(),
                 network,
                 is_bootstrap: this.config.is_bootstrap_node,
             };
 
-            const { node_wallet } = this.blockchain.getWallet('ethr');
+            const { node_wallet } = this.blockchain.getWallet();
 
             if (!this.config.is_bootstrap_node) {
                 const numberOfVertices = await this.graphStorage.getDocumentsCount('ot_vertices');

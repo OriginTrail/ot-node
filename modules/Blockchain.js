@@ -1053,6 +1053,20 @@ class Blockchain {
     }
 
     /**
+     * Returns blockchain title from configuration
+     */
+    getBlockchainTitle(blockchain_id) {
+        if (blockchain_id) {
+            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
+
+            if (implementation) {
+                return implementation.getBlockchainTitle();
+            }
+        }
+        return this.blockchain[0].getBlockchainTitle();
+    }
+
+    /**
      * Returns gas price from configuration
      */
     getGasPrice(blockchain_id) {

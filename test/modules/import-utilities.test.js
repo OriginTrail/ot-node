@@ -198,6 +198,6 @@ describe('Import utilities module ', () => {
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
 
         assert.equal(signerOfOriginal, signerOfShuffled);
-        assert.equal(signerOfShuffled, signingWallet.wallet);
+        assert.equal(signerOfShuffled.toLowerCase(), signingWallet.wallet.toLowerCase());
     });
 });

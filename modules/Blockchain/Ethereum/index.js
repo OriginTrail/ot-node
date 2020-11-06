@@ -1570,6 +1570,13 @@ class Ethereum {
     }
 
     /**
+     * Returns blockchain title from configuration
+     */
+    getBlockchainTitle() {
+        return this.config.blockchain_title;
+    }
+
+    /**
      * Returns price factors from configuration
      */
 
