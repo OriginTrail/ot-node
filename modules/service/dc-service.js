@@ -71,27 +71,11 @@ class DCService {
             litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);
         }
 
-        if (this.config.parentIdentity) {
-            const hasPermission = await this.profileService.hasParentPermission();
-            if (!hasPermission) {
-                const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';
-                this.logger.warn(message);
-                throw new Error(message);
-            }
-
-            const hasFunds = await this.parentHasProfileBalanceForOffer(tokenAmountPerHolder);
-            if (!hasFunds) {
-                const message = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
-                this.logger.warn(message);
-                throw new Error(message);
-            }
-        } else {
-            const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
-            if (!hasFunds) {
-                const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
-                this.logger.warn(message);
-                throw new Error(message);
-            }
+        const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
+        if (!hasFunds) {
+            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+            this.logger.warn(message);
+            throw new Error(message);
         }
 
         const commandData = {
@@ -126,12 +110,14 @@ class DCService {
      * Check for funds
      * @param identities
      * @param tokenAmountPerHolder
+     * @param blockchain_id
      * @return {Promise<*>}
      */
-    async checkDhFunds(identities, tokenAmountPerHolder) {
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+    async checkDhFunds(identities, tokenAmountPerHolder, blockchain_id) {
+        const profileMinStake =
+            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id).response, 10);
         const excluded = await Promise.all(identities.map(async (identity) => {
-            const profile = await this.blockchain.getProfile(identity);
+            const profile = await this.blockchain.getProfile(identity, blockchain_id).response;
             const profileStake = new BN(profile.stake, 10);
             const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
@@ -162,7 +148,8 @@ class DCService {
      */
     async hasProfileBalanceForOffer(tokenAmountPerHolder) {
         // todo pass blockchain identity
-        const profile = await this.blockchain.getProfile(this.profileService.getIdentity('ethr'));
+        const profile =
+            await this.blockchain.getProfile(this.profileService.getIdentity()).response;
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
@@ -174,35 +161,7 @@ class DCService {
             remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
         }
 
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
-        if (profileStake.sub(profileStakeReserved).sub(offerStake).lt(profileMinStake)) {
-            const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
-            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
-                remainder = stakeRemainder;
-            }
-        }
-        return !remainder;
-    }
-
-    /**
-     * Parent has enough balance on profile for creating an offer
-     * @param tokenAmountPerHolder - Tokens per DH
-     * @return {Promise<*>}
-     */
-    async parentHasProfileBalanceForOffer(tokenAmountPerHolder) {
-        const profile = await this.blockchain.getProfile(this.config.parentIdentity);
-        const profileStake = new BN(profile.stake, 10);
-        const profileStakeReserved = new BN(profile.stakeReserved, 10);
-
-        const offerStake = new BN(tokenAmountPerHolder, 10)
-            .mul(new BN(constants.DEFAULT_NUMBER_OF_HOLDERS, 10));
-
-        let remainder = null;
-        if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
-            remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
-        }
-
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake().response, 10);
         if (profileStake.sub(profileStakeReserved).sub(offerStake).lt(profileMinStake)) {
             const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
             if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
@@ -481,7 +440,7 @@ class DCService {
             transaction_hash: offer.transaction_hash,
             distributionSignature,
             color: colorNumber,
-            dcIdentity: this.profileService.getIdentity('ethr'),
+            dcIdentity: this.profileService.getIdentity(),
         };
 
         // send replication to DH

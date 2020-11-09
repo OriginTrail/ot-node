@@ -41,7 +41,7 @@ class M1PayoutAllMigration {
         }
 
         // todo pass blockchain identity
-        const erc725Identity = this.profileService.getIdentity('ethr');
+        const erc725Identity = this.profileService.getIdentity();
         while (pendingPayOuts.length > 0) {
             const tempPending = pendingPayOuts.slice(0, BATCH_SIZE);
             pendingPayOuts = pendingPayOuts.slice(BATCH_SIZE);
@@ -52,7 +52,7 @@ class M1PayoutAllMigration {
             let message;
             try {
                 // eslint-disable-next-line
-                await this.blockchain.payOutMultiple(erc725Identity, offerIds);
+                await this.blockchain.payOutMultiple(erc725Identity, offerIds).response;
                 for (const offerId of offerIds) {
                     this.logger.warn(`Payout successfully completed for offer ${offerId}.`);
                 }

@@ -45,7 +45,7 @@ class DCLitigationCompleteCommand extends Command {
         }
 
         // todo pass blockchain identity
-        const dcIdentity = utilities.normalizeHex(this.profileService.getIdentity('ethr'));
+        const dcIdentity = utilities.normalizeHex(this.profileService.getIdentity());
 
         const challenge = await models.challenges.findOne({
             where:
@@ -65,7 +65,7 @@ class DCLitigationCompleteCommand extends Command {
             answer,
             challenge.test_index,
             true,
-        );
+        ).response;
         return {
             commands: [
                 {

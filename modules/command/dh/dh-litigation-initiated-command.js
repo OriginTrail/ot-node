@@ -33,7 +33,10 @@ class DHLitigationInitiatedCommand extends Command {
                         holderIdentity,
                     } = JSON.parse(e.data);
                     // todo pass blockchain identity
-                    return Utilities.compareHexStrings(holderIdentity, this.profileService.getIdentity('ethr'));
+                    return Utilities.compareHexStrings(
+                        holderIdentity,
+                        this.profileService.getIdentity(),
+                    );
                 });
                 if (event) {
                     event.finished = true;

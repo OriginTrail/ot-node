@@ -36,7 +36,10 @@ class DHReplacementStartedCommand extends Command {
                     litigationRootHash,
                 } = JSON.parse(event.data);
                 // todo pass blockchain identity
-                if (utilities.compareHexStrings(this.profileService.getIdentity('ethr'), challengerIdentity)) {
+                if (utilities.compareHexStrings(
+                    this.profileService.getIdentity(),
+                    challengerIdentity,
+                )) {
                     return Command.repeat();
                 }
 
@@ -86,8 +89,8 @@ class DHReplacementStartedCommand extends Command {
                     holderIdentity,
                 } = JSON.parse(e.data);
                 // todo pass blockchain identity
-                return utilities.compareHexStrings(offerId, eventOfferId)
-                    && utilities.compareHexStrings(this.profileService.getIdentity('ethr'), holderIdentity);
+                return utilities.compareHexStrings(offerId, eventOfferId) &&
+                    utilities.compareHexStrings(this.profileService.getIdentity(), holderIdentity);
             });
 
             if (event != null) {

@@ -140,7 +140,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     data_set_id,
                     ot_json_object_id: ot_object_id,
                     seller_node_id: this.config.identity,
-                    seller_erc_id: this.profileService.getIdentity('ethr'),
+                    seller_erc_id: this.profileService.getIdentity(),
                     price: this.config.default_data_price,
                 });
                 this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
@@ -155,7 +155,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                         data_set_id,
                         ot_object_id,
                         seller_node_id: this.config.identity,
-                        seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
+                        seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity()),
                         price: this.config.default_data_price,
                         wallet: node_wallet,
                     },

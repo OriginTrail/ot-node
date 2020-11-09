@@ -70,7 +70,7 @@ class DCLitigationInitiateCommand extends Command {
         await replicatedData.save({ fields: ['status'] });
 
         // todo pass blockchain identity
-        const dcIdentity = this.profileService.getIdentity('ethr');
+        const dcIdentity = this.profileService.getIdentity();
         const otJson = await this.importService.getImport(offer.data_set_id);
 
         const encryptedDataset = importUtilities.encryptDataset(
@@ -92,7 +92,7 @@ class DCLitigationInitiateCommand extends Command {
         await this.blockchain.initiateLitigation(
             offerId, dhIdentity, dcIdentity, objectIndex, blockIndex,
             merkleProof,
-        );
+        ).response;
         return {
             commands: [{
                 name: 'dcLitigationInitiatedCommand',

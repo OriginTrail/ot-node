@@ -134,7 +134,7 @@ class DHService {
         }
 
         this.logger.info(`Accepting offer with price: ${tokenAmountPerHolder} TRAC.`);
-        const offer = await this.blockchain.getOffer(offerId, blockchain_id);
+        const offer = await this.blockchain.getOffer(offerId, blockchain_id).response;
         const bid = await Models.bids.create({
             offer_id: offerId,
             dc_identity: offer.creator,
@@ -184,17 +184,18 @@ class DHService {
      * Calculates possible minimum amount to deposit (pessimistically)
      * @param bidId
      * @param tokenAmountPerHolder
+     * @param blockchain_id
      * @return {Promise<*>}
      * @private
      */
     async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder, blockchain_id) {
         // todo pass blockchain identity
         const profile = await this.blockchain
-            .getProfile(this.profileService.getIdentity(blockchain_id), blockchain_id);
+            .getProfile(this.profileService.getIdentity(blockchain_id), blockchain_id).response;
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
         const profileMinStake =
-            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id), 10);
+            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id).response, 10);
 
         const offerStake = new BN(tokenAmountPerHolder, 10);
 
@@ -267,15 +268,15 @@ class DHService {
         const penalizedPaidAmount = new BN(await this.blockchain.getHolderPaidAmount(
             offerId,
             penalizedHolderIdentity,
-        ));
+        ).response);
         const penalizedStakedAmount = new BN(await this.blockchain.getHolderStakedAmount(
             offerId,
             penalizedHolderIdentity,
-        ));
+        ).response);
 
         const stakeAmount = penalizedStakedAmount.sub(penalizedPaidAmount);
 
-        const offerBc = await this.blockchain.getOffer(offerId);
+        const offerBc = await this.blockchain.getOffer(offerId).response;
 
         const offerSoFarInMillis = Date.now() - (offerBc.startTime * 1000);
         const offerSoFarInMinutes = new BN(offerSoFarInMillis / (60 * 1000), 10);
@@ -284,8 +285,8 @@ class DHService {
 
         const replacementDurationInMinutes = offerHoldingTimeInMinutes.sub(offerSoFarInMinutes);
         if (bid == null) {
-            const profile =
-                await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
+            const profile = await this.blockchain
+                .getProfile(Utilities.normalizeHex(litigatorIdentity)).response;
             const dcNodeId =
                 Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
             bid = await Models.bids.create({
@@ -482,7 +483,7 @@ class DHService {
             // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
             const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor));
             const profileBalance =
-                new BN((await this.blockchain.getProfile(this.blockchain.getWallet('ethr'))).balance, 10);
+                new BN((await this.blockchain.getProfile(this.blockchain.getWallet().node_wallet)).balance, 10);
 
             if (profileBalance.lt(condition)) {
                 throw new Error('Not enough funds to handle data read request');
@@ -540,10 +541,6 @@ class DHService {
             };
 
             await this.transport.sendDataReadResponse(dataReadResponseObject, nodeId);
-            await this.listenPurchaseInititation(
-                importId, wallet, offer, networkReplyModel,
-                holdingData, nodeId, id,
-            );
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.logger.warn(errorMessage);
@@ -551,214 +548,6 @@ class DHService {
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
-        }
-    }
-
-    /**
-     * Wait for purchase
-     * @return {Promise<void>}
-     */
-    async listenPurchaseInititation(
-        importId, wallet, offer,
-        networkReplyModel, holdingData, nodeId, messageId,
-    ) {
-        // Wait for event from blockchain.
-        await this.blockchain.subscribeToEvent('PurchaseInitiated', importId, 20 * 60 * 1000);
-
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
-
-        // purchase[DH_wallet][msg.sender][import_id]
-        const purchase = await this.blockchain.getPurchase(
-            node_wallet,
-            networkReplyModel.receiver_wallet,
-            importId,
-        );
-
-        if (!purchase) {
-            const errorMessage = `Failed to get purchase for: DH ${node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${importId}.`;
-            this.logger.error(errorMessage);
-            throw errorMessage;
-        }
-
-        // Check the conditions.
-        const purchaseTokenAmount = new BN(purchase.token_amount);
-        const purchaseStakeFactor = new BN(purchase.stake_factor);
-        const myPrice = new BN(offer.dataPrice);
-        const myStakeFactor = new BN(offer.stakeFactor);
-
-        if (!purchaseTokenAmount.eq(myPrice) || !purchaseStakeFactor.eq(myStakeFactor)) {
-            const errorMessage = `Whoa, we didn't agree on this. Purchase price and stake factor: ${purchaseTokenAmount} and ${purchaseStakeFactor}, my price and stake factor: ${myPrice} and ${myStakeFactor}.`;
-            this.logger.error(errorMessage);
-            throw errorMessage;
-        }
-
-        this.logger.info(`Purchase for import ${importId} seems just fine. Sending comm to contract.`);
-
-        // bool commitment_proof = this_purchase.commitment ==
-        // keccak256(checksum_left, checksum_right, checksum_hash,
-        //          random_number_1, random_number_2, decryption_key, block_index);
-
-        // Fetch epk from db.
-        if (!holdingData) {
-            this.logger.error(`Cannot find holding data info for import ID ${importId}`);
-            throw Error('Internal error');
-        }
-        const { epk } = holdingData;
-
-        const {
-            m1,
-            m2,
-            selectedBlockNumber,
-            selectedBlock,
-        } = Encryption.randomDataSplit(epk);
-
-        const r1 = Utilities.getRandomInt(100000);
-        const r2 = Utilities.getRandomInt(100000);
-
-        const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
-        const m2Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(
-            m2,
-            r1, r2, selectedBlockNumber + 1,
-        ));
-        const epkChecksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(epk, r1, r2));
-        const epkChecksumHash =
-            Utilities.normalizeHex(ethAbi.soliditySHA3(
-                ['uint256'],
-                [epkChecksum],
-            ).toString('hex'));
-        const e = crypto.randomBytes(32); // 256bits.
-        const eHex = Utilities.normalizeHex(e.toString('hex'));
-        // For litigation we'll need: Encryption.xor(selectedBlock, e);
-
-        // From smart contract:
-        // keccak256(checksum_left, checksum_right, checksum_hash,
-        //           random_number_1, random_number_2, decryption_key, block_index);
-        const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
-            ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
-            [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, eHex, selectedBlockNumber],
-        ).toString('hex'));
-
-        // store block number and block in db because of litigation.
-
-        await this.blockchain.sendCommitment(
-            importId,
-            networkReplyModel.receiver_wallet,
-            commitmentHash,
-        );
-
-        await Models.data_holders.create({
-            import_id: importId,
-            dh_wallet: node_wallet,
-            dh_kademlia_id: this.config.identity,
-            m1,
-            m2,
-            e: eHex,
-            sd: epkChecksum,
-            r1,
-            r2,
-            block_number: selectedBlockNumber,
-            block: selectedBlock,
-        });
-
-        // Send data to DV.
-        const encryptedPaddedKeyObject = {
-            message: {
-                id: messageId,
-                wallet: node_wallet,
-                nodeId: this.config.identifiers,
-                m1,
-                m2,
-                e: eHex,
-                r1,
-                r2,
-                sd: epkChecksum,
-                blockNumber: selectedBlockNumber,
-                import_id: importId,
-            },
-        };
-        encryptedPaddedKeyObject.messageSignature = Utilities.generateRsvSignature(
-            encryptedPaddedKeyObject.message,
-            this.web3,
-            node_private_key,
-        );
-
-        await this.transport.sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
-
-        this.listenPurchaseDispute(
-            importId, wallet, m2Checksum,
-            epkChecksumHash, selectedBlockNumber,
-            m1Checksum, r1, r2, e,
-        ).then(() => this.logger.info('Purchase dispute completed'));
-
-        this.listenPurchaseConfirmation(
-            importId, wallet, networkReplyModel,
-            selectedBlock, eHex,
-        ).then(() => this.logger.important('Purchase confirmation completed'));
-    }
-
-    /**
-     * Wait and process purchase confirmation
-     * @return {Promise<void>}
-     */
-    async listenPurchaseConfirmation(importId, wallet, networkReplyModel, selectedBlock, eHex) {
-        const eventData = await this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
-        if (!eventData) {
-            // Everything is ok.
-            this.logger.warn(`Purchase not confirmed for ${importId}.`);
-            await this.blockchain.cancelPurchase(importId, wallet, true);
-            this.logger.important(`Purchase for import ${importId} canceled.`);
-            return;
-        }
-
-        this.logger.important(`[DH] Purchase confirmed for import ID ${importId}`);
-        await this.blockchain.sendEncryptedBlock(
-            importId,
-            networkReplyModel.receiver_wallet,
-            Utilities.normalizeHex(Encryption.xor(
-                Buffer.from(selectedBlock, 'ascii').toString('hex'),
-                Utilities.denormalizeHex(eHex),
-            )),
-        );
-        this.logger.notify(`[DH] Encrypted block sent for import ID ${importId}`);
-        this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
-
-        // Call payOut() after 5 minutes. Requirement from contract.
-        setTimeout(() => {
-            this.blockchain.payOutForReading(importId, networkReplyModel.receiver_wallet)
-                .then(() => this.logger.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
-                .catch((error) => {
-                    this.logger.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`);
-                });
-        }, 5 * 60 * 1000);
-    }
-
-    /**
-     * Monitor for litigation event. Just in case.
-     * @return {Promise<void>}
-     */
-    async listenPurchaseDispute(
-        importId, wallet, m2Checksum, epkChecksumHash,
-        selectedBlockNumber, m1Checksum, r1, r2, e,
-    ) {
-        let eventData = await this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000);
-        if (!eventData) {
-            // Everything is ok.
-            this.logger.info(`No litigation process initiated for purchase for ${importId}.`);
-            return;
-        }
-
-        await this.blockchain.sendProofData(
-            importId, wallet, m1Checksum,
-            m2Checksum, epkChecksumHash, r1, r2,
-            Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
-        );
-
-        // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
-        eventData = this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 10 * 60 * 1000);
-        if (eventData.proof_was_correct) {
-            this.logger.info(`Litigation process for purchase ${importId} was fortunate for me.`);
-        } else {
-            this.logger.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
         }
     }
 

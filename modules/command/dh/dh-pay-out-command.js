@@ -39,7 +39,7 @@ class DhPayOutCommand extends Command {
         });
 
         // todo pass blockchain identity
-        const blockchainIdentity = Utilities.normalizeHex(this.profileService.getIdentity('ethr'));
+        const blockchainIdentity = Utilities.normalizeHex(this.profileService.getIdentity());
 
         if (!bid) {
             this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
@@ -53,8 +53,8 @@ class DhPayOutCommand extends Command {
             this.logger.important(`Offer ${offerId} has been completed successfully.`);
         }
 
-        const { status, timestamp } =
-            await this.blockchain.getLitigation(offerId, blockchainIdentity, blockchain_id);
+        const { status, timestamp } = await this.blockchain
+            .getLitigation(offerId, blockchainIdentity, blockchain_id).response;
         const { litigation_interval_in_minutes } = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
@@ -72,7 +72,8 @@ class DhPayOutCommand extends Command {
             this.logger.info(`I'm replaced or being replaced for offer ${offerId}, cannot be payed out.`);
         } else {
             try {
-                await this.blockchain.payOut(blockchainIdentity, offerId, urgent, blockchain_id);
+                await this.blockchain
+                    .payOut(blockchainIdentity, offerId, urgent, blockchain_id).response;
                 this.logger.important(`Payout for offer ${offerId} successfully completed.`);
                 await this._printBalances(blockchainIdentity);
             } catch (error) {
@@ -129,16 +130,19 @@ class DhPayOutCommand extends Command {
     /**
      * Print balances
      * @param blockchainIdentity
+     * @param blockchain_id
      * @return {Promise<void>}
      * @private
      */
     async _printBalances(blockchainIdentity, blockchain_id) {
         const { node_wallet } = this.blockchain.getWallet(blockchain_id);
-        const balance = await this.blockchain.getProfileBalance(node_wallet);
+        const balance = await this.blockchain
+            .getProfileBalance(node_wallet).response;
         const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
         this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
 
-        const profile = await this.blockchain.getProfile(blockchainIdentity, blockchain_id);
+        const profile = await this.blockchain
+            .getProfile(blockchainIdentity, blockchain_id).response;
         const profileBalance = profile.stake;
         const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
         this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);

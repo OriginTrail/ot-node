@@ -46,7 +46,10 @@ class DCOfferReplacementCompletedCommand extends Command {
                 } = JSON.parse(e.data);
                 // todo pass blockchain identity
                 return utilities.compareHexStrings(offerId, eventOfferId)
-                    && utilities.compareHexStrings(this.profileService.getIdentity('ethr'), challengerIdentity);
+                    && utilities.compareHexStrings(
+                        this.profileService.getIdentity(),
+                        challengerIdentity,
+                    );
             });
             if (event) {
                 event.finished = true;

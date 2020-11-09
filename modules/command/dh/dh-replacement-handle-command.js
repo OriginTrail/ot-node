@@ -36,7 +36,8 @@ class DHReplacementImportCommand extends Command {
         } = command.data;
 
         // Check if ERC725 has valid node ID.
-        const profile = await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
+        const profile =
+            await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity)).response;
         const dcNodeId = Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
 
         this.logger.trace(`Sending replacement request for offer ${offerId} to ${dcNodeId}.`);
@@ -44,7 +45,7 @@ class DHReplacementImportCommand extends Command {
         const response = await this.transport.replacementReplicationRequest({
             offerId,
             wallet: this.config.node_wallet,
-            dhIdentity: this.profileService.getIdentity('ethr'),
+            dhIdentity: this.profileService.getIdentity(),
         }, dcNodeId);
 
         this.logger.info(`Replacement replication request for ${offerId} sent to ${dcNodeId}`);
@@ -207,14 +208,14 @@ class DHReplacementImportCommand extends Command {
         // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
-            Utilities.denormalizeHex(this.profileService.getIdentity('ethr'))];
+            Utilities.denormalizeHex(this.profileService.getIdentity())];
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
 
         // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
-            dhIdentity: this.profileService.getIdentity('ethr'),
+            dhIdentity: this.profileService.getIdentity(),
             messageSignature: messageSignature.signature,
         };
 

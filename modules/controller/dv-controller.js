@@ -116,7 +116,7 @@ class DVController {
             });
         }
         // todo pass blockchain identity
-        const normalizedIdentity = this.profileService.getIdentity('ethr');
+        const normalizedIdentity = this.profileService.getIdentity();
         const whereCondition = {};
         if (requestedType === this.trading_type_purchased) {
             whereCondition.buyer_erc_id = normalizedIdentity;
@@ -313,7 +313,7 @@ class DVController {
             data_set_id,
             ot_json_object_id: ot_object_id,
             seller_node_id: this.config.identity.toLowerCase(),
-            seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
+            seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity()),
             price: this.config.default_data_price,
         });
 
@@ -332,7 +332,8 @@ class DVController {
         const data = await Models.sequelize.query(
             query,
             {
-                replacements: { seller_erc: Utilities.normalizeHex(this.profileService.getIdentity('ethr')) },
+                replacements:
+                    { seller_erc: Utilities.normalizeHex(this.profileService.getIdentity()) },
                 type: QueryTypes.SELECT,
             },
         );
@@ -834,7 +835,7 @@ class DVController {
             where: {
                 data_set_id,
                 ot_json_object_id: ot_object_id,
-                seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
+                seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity()),
             },
         });
 
@@ -844,7 +845,7 @@ class DVController {
             return;
         }
 
-        const purchase = await this.blockchain.getPurchase(purchase_id);
+        const purchase = await this.blockchain.getPurchase(purchase_id).response;
         const {
             seller,
             buyer,

@@ -74,7 +74,7 @@ class DCOfferFinalizeCommand extends Command {
         try {
             // todo pass blockchain identity
             result = await this.blockchain.finalizeOffer(
-                Utilities.normalizeHex(this.profileService.getIdentity('ethr')),
+                Utilities.normalizeHex(this.profileService.getIdentity()),
                 offerId,
                 new BN(solution.shift, 10),
                 confirmations[0],
@@ -84,7 +84,7 @@ class DCOfferFinalizeCommand extends Command {
                 nodeIdentifiers,
                 parentIdentity,
                 urgent,
-            );
+            ).response;
         } catch (error) {
             if (error.message.includes('Gas price higher than maximum allowed price')) {
                 const delay = constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS / 60 / 1000;
@@ -160,23 +160,11 @@ class DCOfferFinalizeCommand extends Command {
         }
 
         let errorMessage = err.message;
-        if (this.config.parentIdentity) {
-            const hasPermission = await this.profileService.hasParentPermission();
-            if (!hasPermission) {
-                errorMessage = 'Identity does not have permission to use parent identity funds!';
-            } else {
-                const hasFunds = await this.dcService
-                    .parentHasProfileBalanceForOffer(offer.token_amount_per_holder);
-                if (!hasFunds) {
-                    errorMessage = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
-                }
-            }
-        } else {
-            const hasFunds = await this.dcService
-                .hasProfileBalanceForOffer(offer.token_amount_per_holder);
-            if (!hasFunds) {
-                errorMessage = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
-            }
+
+        const hasFunds = await this.dcService
+            .hasProfileBalanceForOffer(offer.token_amount_per_holder);
+        if (!hasFunds) {
+            errorMessage = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
         }
         err.message = errorMessage;
         return this.invalidateOffer(command, err);

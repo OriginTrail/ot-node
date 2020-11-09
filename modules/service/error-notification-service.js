@@ -38,7 +38,7 @@ class ErrorNotificationService {
                as user provided data so it can help us with debugging
             * */
             user: {
-                id: this.profileService.getIdentity('ethr'),
+                id: this.profileService.getIdentity(),
                 name: '',
                 email: '',
             },

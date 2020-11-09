@@ -125,7 +125,7 @@ class DCController {
             promises.push(new Promise(async (accept, reject) => {
                 // todo pass blockchain identity
                 const condition = {
-                    seller_erc_id: this.profileService.getIdentity('ethr'),
+                    seller_erc_id: this.profileService.getIdentity(),
                     data_set_id: req.body.data_set_id.toLowerCase(),
                     ot_json_object_id: ot_object.id,
                 };
@@ -243,7 +243,8 @@ class DCController {
         const data = await Models.sequelize.query(
             query,
             {
-                replacements: { seller_erc: Utilities.normalizeHex(this.profileService.getIdentity('ethr')) },
+                replacements:
+                    { seller_erc: Utilities.normalizeHex(this.profileService.getIdentity()) },
                 type: QueryTypes.SELECT,
             },
         );
@@ -336,7 +337,7 @@ class DCController {
         // todo pass blockchain identity
         const condition = {
             where: {
-                seller_erc_id: this.profileService.getIdentity('ethr'),
+                seller_erc_id: this.profileService.getIdentity(),
                 data_set_id,
                 ot_json_object_id,
             },
