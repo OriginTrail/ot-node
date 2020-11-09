@@ -1165,70 +1165,55 @@ class Blockchain {
      * Returns wallet public and private key from configuration
      */
     getWallet(blockchain_id) {
-        if (blockchain_id) {
-            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
-
-            if (implementation) {
-                return implementation.getWallet();
-            }
-        }
-        return this.blockchain[0].getWallet();
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getWallet(),
+        };
     }
 
     /**
      * Returns blockchain title from configuration
      */
     getBlockchainTitle(blockchain_id) {
-        if (blockchain_id) {
-            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
-
-            if (implementation) {
-                return implementation.getBlockchainTitle();
-            }
-        }
-        return this.blockchain[0].getBlockchainTitle();
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getBlockchainTitle(),
+        };
     }
 
     /**
      * Returns gas price from configuration
      */
     getGasPrice(blockchain_id) {
-        if (blockchain_id) {
-            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
-
-            if (implementation) {
-                return implementation.calculateGasPrice();
-            }
-        }
-        return this.blockchain[0].calculateGasPrice();
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.calculateGasPrice(),
+        };
     }
 
     /**
      * Returns trac price from configuration
      */
     getTracPrice(blockchain_id) {
-        if (blockchain_id) {
-            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
-
-            if (implementation) {
-                return implementation.getTracPrice();
-            }
-        }
-        return this.blockchain[0].getTracPrice();
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getTracPrice(),
+        };
     }
 
     /**
      * Returns price factors from configuration
      */
     getPriceFactors(blockchain_id) {
-        if (blockchain_id) {
-            const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
-
-            if (implementation) {
-                return implementation.getPriceFactors();
-            }
-        }
-        return this.blockchain[0].getPriceFactors();
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getPriceFactors(),
+        };
     }
 }
 

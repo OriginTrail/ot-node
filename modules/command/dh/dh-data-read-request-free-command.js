@@ -36,7 +36,7 @@ class DHDataReadRequestFreeCommand extends Command {
         } = message;
 
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         try {
             // Check is it mine offer.

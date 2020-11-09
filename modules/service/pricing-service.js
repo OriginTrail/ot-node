@@ -43,9 +43,10 @@ class PricingService {
     }
 
     async _calculateBasePayoutInTrac(blockchain_id) {
-        const tracInEth = await this.blockchain.getTracPrice(blockchain_id);
+        const tracInEth = await this.blockchain.getTracPrice(blockchain_id).response;
 
-        const gasPriceInGwei = await this.blockchain.getGasPrice(blockchain_id) / 1000000000;
+        const gasPriceInGwei = await this.blockchain.getGasPrice(blockchain_id)
+            .response / 1000000000;
         const basePayoutInEth = (constants.BASE_PAYOUT_GAS * gasPriceInGwei) / 1000000000;
         const basePayoutCostInTrac = basePayoutInEth / tracInEth;
         return { basePayoutCostInTrac, tracInEth, gasPriceInGwei };

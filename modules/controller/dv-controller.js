@@ -505,7 +505,7 @@ class DVController {
     }
 
     async sendPermissionedDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const message = {
             data_set_id: dataSetId,

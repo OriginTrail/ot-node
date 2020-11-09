@@ -38,7 +38,7 @@ class DcFinalizeImport extends Command {
         }
 
         try {
-            const { node_wallet } = this.blockchain.getWallet('ethr');
+            const { node_wallet } = this.blockchain.getWallet().response;
 
             const import_timestamp = new Date();
             this.remoteControl.importRequestData();

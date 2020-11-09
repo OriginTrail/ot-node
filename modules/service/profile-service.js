@@ -97,7 +97,7 @@ class ProfileService {
         // set empty identity if there is none
         let identity = identityExists ? profileIdentity : new BN(0, 16);
 
-        const { node_wallet, management_wallet } = this.blockchain.getWallet('ethr');
+        const { node_wallet, management_wallet } = this.blockchain.getWallet().response;
         let createProfileCalled = false;
         do {
             try {

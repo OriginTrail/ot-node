@@ -40,5 +40,4 @@ describe('Data integrity service', () => {
         const valid = dataIntegrityService.verify(message, signature, wallet);
         assert.equal(valid, true);
     });
-
 });

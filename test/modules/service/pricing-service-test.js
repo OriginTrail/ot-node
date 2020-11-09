@@ -91,16 +91,18 @@ describe('Pricing service test', () => {
         });
         pricingService = new PricingService(container.cradle);
         blockchain = container.resolve('blockchain');
+
+        blockchain.blockchain[0].initialized = true;
     });
 
     it('Get gas price - env is develop - expect default is returned', async () => {
         process.env.NODE_ENV = 'development';
-        const gasPrice = await blockchain.getGasPrice('ethr');
+        const gasPrice = await blockchain.getGasPrice().response;
         assert.equal(gasPrice, defaultConfigGasPrice, 'Gas price should be the same as in config');
     });
 
     it('Get gas price - env is mainnet, all services return valid value - expect axios value is used', async () => {
-        const gasPrice = await blockchain.getGasPrice('ethr');
+        const gasPrice = await blockchain.getGasPrice().response;
         assert.equal(gasPrice, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Returned gas price price should be the same as default axios gas price');
         assert.equal(config.blockchain.implementations[0].gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Configuration gas price should be the same as default axios gas price');
         const now = new Date().getTime();
@@ -111,7 +113,7 @@ describe('Pricing service test', () => {
         const lastUpdateTimestamp = new Date().getTime() - (1000 * 25);
         config.blockchain.implementations[0].gas_price_last_update_timestamp = lastUpdateTimestamp;
         pricingService.config = config;
-        const gasPrice = await blockchain.getGasPrice('ethr');
+        const gasPrice = await blockchain.getGasPrice().response;
         assert.equal(gasPrice, config.blockchain.implementations[0].gas_price, 'Gas price should be the same as default config');
         assert.equal(config.blockchain.implementations[0].gas_price_last_update_timestamp, lastUpdateTimestamp, 'Timestamp should not be changed');
     });
@@ -120,7 +122,7 @@ describe('Pricing service test', () => {
         gasStationService.gasPrice = undefined;
         blockchain.blockchain[0].gasStationService = gasStationService;
         blockchain.blockchain[0].web3 = web3ServiceMock;
-        const gasPrice = await blockchain.getGasPrice('ethr');
+        const gasPrice = await blockchain.getGasPrice().response;
         const now = new Date().getTime();
         assert.equal(gasPrice, defaultWeb3GasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default web3');
         assert.equal(config.blockchain.implementations[0].gas_price, defaultWeb3GasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default web3');
@@ -131,7 +133,7 @@ describe('Pricing service test', () => {
         web3ServiceMock.eth.gasPrice = undefined;
         blockchain.blockchain[0].gasStationService = gasStationService;
         blockchain.blockchain[0].web3 = web3ServiceMock;
-        const gasPrice = await blockchain.getGasPrice('ethr');
+        const gasPrice = await blockchain.getGasPrice().response;
         const now = new Date().getTime();
         assert.equal(gasPrice, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default axios');
         assert.equal(config.blockchain.implementations[0].gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default axios');

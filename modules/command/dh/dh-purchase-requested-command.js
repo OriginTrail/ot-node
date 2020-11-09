@@ -36,7 +36,7 @@ class DhPurchaseRequestedCommand extends Command {
             },
         });
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const response = {
             handler_id,
@@ -151,7 +151,7 @@ class DhPurchaseRequestedCommand extends Command {
     async recover(command, err) {
         const { handler_id, dv_node_id } = command.data;
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const response = {
             handler_id,

@@ -179,7 +179,7 @@ class DhReplicationImportCommand extends Command {
             Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),
         ];
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(node_private_key));

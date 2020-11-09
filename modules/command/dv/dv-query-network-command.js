@@ -31,7 +31,7 @@ class DVQueryNetworkCommand extends Command {
             throw Error('Failed to store network query.');
         }
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const dataLocationRequestObject = {
             message: {

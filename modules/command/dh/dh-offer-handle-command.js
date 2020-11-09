@@ -28,7 +28,7 @@ class DHOfferHandleCommand extends Command {
             dcNodeId,
         } = command.data;
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);
         // todo pass blockchain identity

@@ -146,7 +146,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
                 this.remoteControl.purchaseStatus('Purchase completed', 'You can preview the purchased data in My Purchases page.');
 
-                const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+                const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
                 // todo pass blockchain identity
                 const purchaseCompletionObject = {

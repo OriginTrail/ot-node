@@ -140,7 +140,7 @@ class Kademlia {
                 }
             }
 
-            const { node_wallet } = this.blockchain.getWallet('ethr');
+            const { node_wallet } = this.blockchain.getWallet().response;
 
             // Initialize public contact data
             const contact = {

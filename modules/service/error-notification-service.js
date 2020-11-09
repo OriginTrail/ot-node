@@ -19,7 +19,7 @@ class ErrorNotificationService {
 
         const releaseStage = process.env.NODE_ENV === 'mariner' ? 'mainnet' : process.env.NODE_ENV;
 
-        const { node_wallet, management_wallet } = this.blockchain.getWallet('ethr');
+        const { node_wallet, management_wallet } = this.blockchain.getWallet().response;
 
         // todo pass blockchain identity
         Bugsnag.start({

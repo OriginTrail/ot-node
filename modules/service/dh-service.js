@@ -117,7 +117,7 @@ class DHService {
             return;
         }
 
-        const { dh_price_factor } = this.blockchain.getPriceFactors(blockchain_id);
+        const { dh_price_factor } = this.blockchain.getPriceFactors(blockchain_id).response;
         const offerPrice = await this.pricingService.calculateOfferPriceinTrac(
             dataSetSizeInBytes,
             holdingTimeInMinutes,
@@ -483,7 +483,10 @@ class DHService {
             // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
             const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor));
             const profileBalance =
-                new BN((await this.blockchain.getProfile(this.blockchain.getWallet().node_wallet)).balance, 10);
+                new BN((
+                    await this.blockchain.getProfile(this.blockchain.getWallet()
+                        .response.node_wallet)
+                ).balance, 10);
 
             if (profileBalance.lt(condition)) {
                 throw new Error('Not enough funds to handle data read request');
@@ -517,7 +520,7 @@ class DHService {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
-            const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+            const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
             const replyMessage = {
                 id,

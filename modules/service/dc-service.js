@@ -43,7 +43,7 @@ class DCService {
         }
 
         const blockchain_id = this.blockchain.getDefaultBlockchainId();
-        const { dc_price_factor } = this.blockchain.getPriceFactors(blockchain_id);
+        const { dc_price_factor } = this.blockchain.getPriceFactors(blockchain_id).response;
 
         let offerPrice = {};
         if (!tokenAmountPerHolder) {
@@ -398,7 +398,7 @@ class DCService {
             Utilities.denormalizeHex(replication.distributionRootHash),
         ];
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const distributionSignature = Encryption.signMessage(
             this.web3, toSign,

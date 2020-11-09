@@ -20,12 +20,12 @@ class InfoController {
 
             const basicConfig = {
                 version: pjson.version,
-                blockchain: this.blockchain.getBlockchainTitle(),
+                blockchain: this.blockchain.getBlockchainTitle().response,
                 network,
                 is_bootstrap: this.config.is_bootstrap_node,
             };
 
-            const { node_wallet } = this.blockchain.getWallet();
+            const { node_wallet } = this.blockchain.getWallet().response;
 
             if (!this.config.is_bootstrap_node) {
                 const numberOfVertices = await this.graphStorage.getDocumentsCount('ot_vertices');

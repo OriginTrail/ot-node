@@ -169,7 +169,7 @@ class DCController {
             ${ot_object_id} from dataset: ${data_set_id}`);
         }
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const replayMessage = {
             wallet: node_wallet,
@@ -332,7 +332,7 @@ class DCController {
             data_set_id, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         // todo pass blockchain identity
         const condition = {

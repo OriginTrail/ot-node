@@ -28,7 +28,7 @@ class DHReadDataLocationRequestCommand extends Command {
             msgNodeId, msgWallet, msgQuery, msgId,
         } = command.data;
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         // Check if mine publish.
         if (msgNodeId === this.config.identity && msgWallet === node_wallet) {

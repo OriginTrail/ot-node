@@ -29,7 +29,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
             handler_id,
         } = command.data;
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet('ethr');
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         // todo pass blockchain identity
         const message = {

@@ -488,7 +488,7 @@ class RemoteControl {
      * @param wallet
      */
     getBalance() {
-        const { node_wallet } = this.blockchain.getWallet('ethr');
+        const { node_wallet } = this.blockchain.getWallet().response;
         Utilities.getTracTokenBalance(
             this.web3, node_wallet,
             this.config.blockchain.token_contract_address,
