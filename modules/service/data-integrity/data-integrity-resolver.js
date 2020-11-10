@@ -2,22 +2,22 @@ const EllipticDataIntegrityService = require('./elliptic-data-integrity-service'
 
 class DataIntegrityResolver {
     constructor() {
-        if (!DataIntegrityResolver.instance) {
-            DataIntegrityResolver.instance = this;
-        }
-
-        return DataIntegrityResolver.instance;
+        DataIntegrityResolver.instance = this;
     }
 
     static getInstance() {
-        return new DataIntegrityResolver();
+        if (!DataIntegrityResolver.instance) {
+            return new DataIntegrityResolver();
+        }
+
+        return DataIntegrityResolver.instance;
     }
 
     resolve(type) {
         switch (type) {
         case 'ECDSA':
         default:
-            return new EllipticDataIntegrityService();
+            return EllipticDataIntegrityService.getInstance();
         }
     }
 }

@@ -14,11 +14,21 @@ const _slicedToArray = (function () { function sliceIterator(arr, i) { const _ar
 const SIGNATURE_TYPE = 'ethereum-signature';
 
 class EllipticDataIntegrityService extends DataIntegrityService {
+    constructor() {
+        super();
+        EllipticDataIntegrityService.instance = this;
+    }
+
+    static getInstance() {
+        if (!EllipticDataIntegrityService.instance) {
+            return new EllipticDataIntegrityService();
+        }
+
+        return EllipticDataIntegrityService.instance;
+    }
+
     sign(content, privateKey) {
         super.sign(content, privateKey);
-
-        // const keyPair = ;
-        // const privKey = keyPair.getPrivate('hex');
 
         const hash = this.hashContent(content);
         const signature = secp256k1.keyFromPrivate(Buffer.from(BytesUtilities.normalizeHex(privateKey).slice(2), 'hex'))
@@ -36,76 +46,83 @@ class EllipticDataIntegrityService extends DataIntegrityService {
     verify(content, signature, publicKey) {
         super.verify(content, signature);
 
-        let vrs;
-        if (Object.keys(signature).includes('r') &&
-            Object.keys(signature).includes('s') &&
-            Object.keys(signature).includes('v')) {
-            vrs = {
-                v: BytesUtilities.toNumber(signature.v),
-                r: signature.r.slice(2),
-                s: signature.s.slice(2),
-            };
-        } else {
-            const decoded = this.decodeSignature(signature);
+        try {
+            let vrs;
+            if (Object.keys(signature).includes('r') &&
+                Object.keys(signature).includes('s') &&
+                Object.keys(signature).includes('v')) {
+                vrs = {
+                    v: BytesUtilities.toNumber(signature.v),
+                    r: signature.r.slice(2),
+                    s: signature.s.slice(2),
+                };
+            } else {
+                const decoded = this.decodeSignature(signature);
 
-            vrs = {
-                v: BytesUtilities.toNumber(decoded[0]),
-                r: decoded[1].slice(2),
-                s: decoded[2].slice(2),
-            };
+                vrs = {
+                    v: BytesUtilities.toNumber(decoded[0]),
+                    r: decoded[1].slice(2),
+                    s: decoded[2].slice(2),
+                };
+            }
+
+            const hash = this.hashContent(content);
+            const pubKeyRecovered = secp256k1.recoverPubKey(
+                Buffer.from(hash.slice(2), 'hex'),
+                vrs,
+                vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
+            );
+
+            if (secp256k1.verify(hash.slice(2), vrs, pubKeyRecovered)) {
+                const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
+                const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
+                const wallet = this.toChecksum(`0x${publicHash.slice(-40)}`);
+
+                return BytesUtilities.normalizeHex(wallet).toLowerCase()
+                    === BytesUtilities.normalizeHex(publicKey).toLowerCase();
+            }
+            return false;
+        } catch (e) {
+            return false;
         }
-
-        const hash = this.hashContent(content);
-        const pubKeyRecovered = secp256k1.recoverPubKey(
-            Buffer.from(hash.slice(2), 'hex'),
-            vrs,
-            vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
-        );
-
-        if (secp256k1.verify(hash.slice(2), vrs, pubKeyRecovered)) {
-            const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
-            const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
-            const wallet = this.toChecksum(`0x${publicHash.slice(-40)}`);
-
-            return BytesUtilities.normalizeHex(wallet).toLowerCase()
-                === BytesUtilities.normalizeHex(publicKey).toLowerCase();
-        }
-
-        return false;
     }
 
     recover(content, signature) {
         super.recover(content, signature);
 
-        let vrs;
-        if (Object.keys(signature).includes('r') &&
-            Object.keys(signature).includes('s') &&
-            Object.keys(signature).includes('v')) {
-            vrs = {
-                v: BytesUtilities.toNumber(signature.v),
-                r: signature.r.slice(2),
-                s: signature.s.slice(2),
-            };
-        } else {
-            const decoded = this.decodeSignature(signature);
+        try {
+            let vrs;
+            if (Object.keys(signature).includes('r') &&
+                Object.keys(signature).includes('s') &&
+                Object.keys(signature).includes('v')) {
+                vrs = {
+                    v: BytesUtilities.toNumber(signature.v),
+                    r: signature.r.slice(2),
+                    s: signature.s.slice(2),
+                };
+            } else {
+                const decoded = this.decodeSignature(signature);
 
-            vrs = {
-                v: BytesUtilities.toNumber(decoded[0]),
-                r: decoded[1].slice(2),
-                s: decoded[2].slice(2),
-            };
+                vrs = {
+                    v: BytesUtilities.toNumber(decoded[0]),
+                    r: decoded[1].slice(2),
+                    s: decoded[2].slice(2),
+                };
+            }
+
+            const hash = this.hashContent(content);
+            const pubKeyRecovered = secp256k1.recoverPubKey(
+                Buffer.from(hash.slice(2), 'hex'),
+                vrs,
+                vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
+            );
+
+            const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
+            const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
+            return this.toChecksum(`0x${publicHash.slice(-40)}`);
+        } catch (e) {
+            return undefined;
         }
-
-        const hash = this.hashContent(content);
-        const pubKeyRecovered = secp256k1.recoverPubKey(
-            Buffer.from(hash.slice(2), 'hex'),
-            vrs,
-            vrs.v < 2 ? vrs.v : 1 - (vrs.v % 2),
-        );
-
-        const publicKeyRecovered = `0x${pubKeyRecovered.encode('hex', false).slice(2)}`;
-        const publicHash = sha3.keccak256(Buffer.from(publicKeyRecovered.slice(2), 'hex'));
-        return this.toChecksum(`0x${publicHash.slice(-40)}`);
     }
 
     encodeSignature(_ref) {

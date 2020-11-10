@@ -504,13 +504,13 @@ class OTNode {
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
         });
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
         await transport.start();
 
-        const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
 
         const approvalService = container.resolve('approvalService');
 

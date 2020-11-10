@@ -25,7 +25,6 @@ describe('Data integrity service', () => {
         assert.equal(valid, true);
     });
 
-
     it('Sign dataset using decoded signature', () => {
         const signature = dataIntegrityService.sign(
             message,
@@ -39,5 +38,21 @@ describe('Data integrity service', () => {
 
         const valid = dataIntegrityService.verify(message, signature, wallet);
         assert.equal(valid, true);
+    });
+
+
+    it('Sign dataset and check invalid signature', () => {
+        const signature = dataIntegrityService.sign(
+            message,
+            signingWallet.privateKey,
+        );
+
+        signature.signature = signature.signature.replace(/a/g, 'b');
+
+        const wallet = dataIntegrityService.recover(message, signature.signature);
+        assert.notEqual(wallet, signingWallet.wallet);
+
+        const valid = dataIntegrityService.verify(message, signature, wallet);
+        assert.equal(valid, false);
     });
 });
