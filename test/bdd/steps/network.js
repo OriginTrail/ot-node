@@ -1273,8 +1273,16 @@ Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then 
     const wallets = LocalBlockchain.wallets();
     const walletCount = LocalBlockchain.wallets().length;
 
-    const operationalWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.node_wallet;
-    let managementWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.management_wallet;
+    const node = this.state.nodes[nodeIndex - 1];
+
+    const nodeWalletPath = path.join(
+        node.options.configDir,
+        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const { node_wallet, management_wallet } = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8'));
+    const operationalWallet = node_wallet;
+    let managementWallet = management_wallet;
+
     let randomIndex;
     expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
 

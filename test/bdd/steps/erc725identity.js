@@ -216,7 +216,12 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid management wallet/, asyn
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
-    const nodeManagementWallet = node.options.nodeConfiguration.management_wallet;
+
+    const nodeWalletPath = path.join(
+        node.options.configDir,
+        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeManagementWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).management_wallet;
     const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeManagementWallet), 'hex'));
 
     // Profile file should exist in app-data-path.
@@ -241,7 +246,11 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a default management wallet/, as
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
-    const nodeWallet = node.options.nodeConfiguration.node_wallet;
+    const nodeWalletPath = path.join(
+        node.options.configDir,
+        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
     const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeWallet), 'hex'));
 
     // Profile file should exist in app-data-path.
