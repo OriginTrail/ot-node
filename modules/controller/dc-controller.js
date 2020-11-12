@@ -22,6 +22,7 @@ class DCController {
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
