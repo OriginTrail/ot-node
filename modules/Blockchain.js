@@ -28,7 +28,7 @@ class Blockchain {
                 this.blockchain[i] = new Ethereum(ctx, implementation_configuration);
                 break;
             default:
-                this.log.error('Unsupported blockchain', this.config.blockchain_title);
+                this.log.error('Unsupported blockchain', implementation_configuration.blockchain_title);
             }
         }
 

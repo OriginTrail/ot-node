@@ -48,6 +48,7 @@ console.log('Backup OT node...');
 
 const configPath = argv.config.lastIndexOf('/') === -1 ? '' : argv.config.slice(0, argv.config.lastIndexOf('/'));
 const configName = argv.config.slice(argv.config.lastIndexOf('/') + 1);
+// Removes a trailing forward slash ( / ) if it exists
 const configDirectory = argv.configDir.replace(/\/$/, '');
 const certsDirectory = argv.certs.replace(/\/$/, '');
 const identitiesDirectory = argv.identities.replace(/\/$/, '');
@@ -97,6 +98,24 @@ try {
         }
     }
 
+    if (fs.existsSync(identitiesDirectory)) {
+        const destDir = `${backupPath}/${timestamp}/identities`;
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir);
+        }
+
+        const fileList = fs.readdirSync(identitiesDirectory);
+        fileList.forEach((identity) => {
+            const src = `${identitiesDirectory}/${identity}`;
+            const dest = `${destDir}/${identity}`;
+
+            if (fs.existsSync(src)) {
+                console.log(`Backup: ${src} -> ${dest}`);
+                fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
+            }
+        });
+    }
+
     const migrationFolderPath = `${configDirectory}/migrations`;
     if (fs.existsSync(migrationFolderPath)) {
         const migrationFiles = fs.readdirSync(migrationFolderPath);
@@ -122,21 +141,6 @@ try {
             console.log(`Backup: ${src} -> ${dest}`);
             fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
         }
-    }
-
-    // copy identity files
-    if (fs.existsSync(identitiesDirectory)) {
-        mkdirp.sync(`${backupPath}/${timestamp}/${identitiesDirectory}`, (err) => { if (err) { console.error(err); return 1; } });
-        const fileList = fs.readdirSync(identitiesDirectory);
-        fileList.forEach((identity) => {
-            const src = `${identitiesDirectory}/${identity}`;
-            const dest = `${backupPath}/${timestamp}/${identitiesDirectory}/${identity}`;
-
-            if (fs.existsSync(src)) {
-                console.log(`Backup: ${src} -> ${dest}`);
-                fs.copyFileSync(src, dest, (err) => { if (err) { console.error(err); return 1; } });
-            }
-        });
     }
 
     console.log('Database export...');
