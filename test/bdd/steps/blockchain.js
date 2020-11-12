@@ -5,6 +5,8 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const BN = require('bn.js');
+const path = require('path');
+const fs = require('fs');
 
 const LocalBlockchain = require('./lib/local-blockchain');
 
@@ -55,7 +57,12 @@ Given(/^the (\d+)[st|nd|rd|th]+ node's spend all the (Ethers|Tokens)$/, async fu
     const { web3 } = this.state.localBlockchain;
 
     const targetWallet = this.state.localBlockchain.web3.eth.accounts.create();
-    const nodeWallet = node.options.nodeConfiguration.node_wallet;
+
+    const nodeWalletPath = path.join(
+        node.options.configDir,
+        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
 
     if (currencyType === 'Ethers') {
         const balance = await this.state.localBlockchain.getBalanceInEthers(nodeWallet);

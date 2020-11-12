@@ -777,11 +777,11 @@ describe.skip('Protocol tests', () => {
                 await sleep.sleep(500);
             }
 
-            const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId);
+            const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId).response;
             expect(result2).to.not.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
             expect(Utilities.isHexStrict(result2)).to.be.true;
 
-            const result1 = await testNode1.blockchain.getRootHash(testNode1.wallet, importId);
+            const result1 = await testNode1.blockchain.getRootHash(testNode1.wallet, importId).response;
             expect(result1).to.be.equal(result2);
         });
     });

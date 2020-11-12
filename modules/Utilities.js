@@ -715,7 +715,7 @@ class Utilities {
         if (typeof message === 'string' || message instanceof String) {
             sortedMessage = message;
         } else {
-            sortedMessage = JSON.stringify(message);
+            sortedMessage = JSON.stringify(Utilities.sortObject(message));
         }
 
         const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();

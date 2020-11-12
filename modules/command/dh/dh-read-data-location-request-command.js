@@ -17,6 +17,7 @@ class DHReadDataLocationRequestCommand extends Command {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
+        this.blockchain = ctx.blockchain;
     }
 
     /**

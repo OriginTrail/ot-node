@@ -226,6 +226,31 @@ function main() {
 
     web3.setProvider(new Web3.providers.HttpProvider(externalConfig.blockchain.rpc_server_url));
 
+    if (!externalConfig.node_wallet ||
+        !externalConfig.node_private_key ||
+        !web3.utils.isAddress(externalConfig.node_wallet)) {
+        logger.error('Wallet not provided! Please provide valid wallet.');
+        process.exit(1);
+        return;
+    }
+
+    if (externalConfig.node_wallet
+        && externalConfig.node_private_key
+        && externalConfig.management_wallet) {
+        fs.writeFileSync(
+            path.join(localConfiguration.appDataPath, 'wallet.json'),
+            JSON.stringify({
+                node_wallet: this.options.nodeConfiguration.node_wallet,
+                node_private_key: this.options.nodeConfiguration.node_private_key,
+                management_wallet: this.options.nodeConfiguration.management_wallet,
+            }),
+        );
+
+        delete externalConfig.node_wallet;
+        delete externalConfig.node_private_key;
+        delete externalConfig.management_wallet;
+    }
+
     if (process.env.ERC_725_IDENTITY) {
         const erc725IdentityFilePath =
             path.join(localConfiguration.appDataPath, localConfiguration.erc725_identity_filepath);

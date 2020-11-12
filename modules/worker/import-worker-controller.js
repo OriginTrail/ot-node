@@ -9,6 +9,7 @@ class ImportWorkerController {
         this.logger = ctx.logger;
         this.web3 = ctx.web3;
         this.importService = ctx.importService;
+        this.blockchain = ctx.blockchain;
 
         this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
@@ -101,7 +102,8 @@ class ImportWorkerController {
             } else {
                 const otjson = response;
 
-                const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
+                const { node_private_key } = this.blockchain.getWallet().response;
+                const signedOtjson = ImportUtilities.signDataset(otjson, node_private_key);
                 fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));
                 const commandData = {
                     documentPath,

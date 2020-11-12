@@ -169,7 +169,7 @@ class ImportUtilities {
         const rootHash = ImportUtilities.calculateDatasetRootHash(document);
         document.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
 
-        const signed = ImportUtilities.signDataset(document, config, web3);
+        const signed = ImportUtilities.signDataset(document, blockchain.node_private_key);
         return signed;
     }
 
@@ -642,7 +642,7 @@ class ImportUtilities {
      * Sign dataset
      * @static
      */
-    static signDataset(dataset, config, web3) {
+    static signDataset(dataset, nodePrivateKey) {
         let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingSignature(dataset);
         if (!sortedDataset) {
             sortedDataset = Utilities.copyObject(dataset);
@@ -652,7 +652,7 @@ class ImportUtilities {
         const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
         const signature = dataIntegrityService.sign(
             JSON.stringify(sortedDataset),
-            Utilities.normalizeHex(config.node_private_key),
+            Utilities.normalizeHex(nodePrivateKey),
         );
         dataset.signature = {
             value: signature.signature,

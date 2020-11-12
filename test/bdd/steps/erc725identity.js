@@ -17,9 +17,15 @@ Given(/^I manually create ERC725 identity for (\d+)[st|nd|rd|th]+ node$/, async 
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
-    const nodeWallet = node.options.nodeConfiguration.node_wallet;
-    const nodeWalletKey = node.options.nodeConfiguration.node_private_key;
-    const nodeManagementWallet = node.options.nodeConfiguration.management_wallet;
+    const nodeWalletPath = path.join(
+        node.options.configDir,
+        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWalletJson = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8'));
+
+    const nodeWallet = nodeWalletJson.node_wallet;
+    const nodeWalletKey = nodeWalletJson.node_private_key;
+    const nodeManagementWallet = nodeWalletJson.management_wallet;
 
     const identityContractInstance =
         await this.state.localBlockchain.createIdentity(
@@ -63,7 +69,11 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid ERC725 identity/, async 
     const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
     erc725Contract.options.address = erc725ProfileAddress;
 
-    const nodeWallet = node.options.nodeConfiguration.node_wallet;
+    const nodeWalletPath = path.join(
+        node.options.configDir,
+        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
     const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeWallet), 'hex'));
 
 
@@ -107,7 +117,11 @@ When(/^I set up the (\d+)[st|nd|rd|th]+ node as the parent of the (\d+)[st|nd|rd
     const parentNode = this.state.nodes[parentIndex - 1];
     const node = this.state.nodes[nodeIndex - 1];
 
-    const parentNodeWallet = parentNode.options.nodeConfiguration.node_wallet;
+    const nodeWalletPath = path.join(
+        parentNode.options.configDir,
+        parentNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const parentNodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
 
     // Profile file should exist in app-data-path.
     const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
@@ -156,8 +170,6 @@ When(/^I add the (\d+)[st|nd|rd|th]+ node erc identity as the parent in the (\d+
 
     const parentNode = this.state.nodes[parentIndex - 1];
     const node = this.state.nodes[nodeIndex - 1];
-
-    const parentNodeWallet = parentNode.options.nodeConfiguration.node_wallet;
 
     // Profile file should exist in app-data-path.
     const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');

@@ -29,6 +29,8 @@ class DcConvertToOtJsonCommand extends Command {
                 hub_contract_address:
                 this.blockchain.getHubContractAddress(blockchain_id).response,
                 identity: this.blockchain.getIdentity(blockchain_id).response,
+                node_private_key: this.blockchain.getWallet(blockchain_id)
+                    .response.node_private_key,
             };
             if (standard_id === 'ot-json') {
                 let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));

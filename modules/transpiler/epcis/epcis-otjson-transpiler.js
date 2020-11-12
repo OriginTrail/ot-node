@@ -93,7 +93,7 @@ class EpcisOtJsonTranspiler {
 
         // Until we update all routes to work with commands, keep this web3 implementation
         if (this.web3) {
-            result = importUtilities.signDataset(result, this.config, this.web3);
+            result = importUtilities.signDataset(result, blockchain.node_private_key);
         } else {
             const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
             if (sortedDataset) {
