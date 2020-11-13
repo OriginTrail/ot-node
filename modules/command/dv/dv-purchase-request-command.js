@@ -14,6 +14,7 @@ class DvPurchaseRequestCommand extends Command {
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
