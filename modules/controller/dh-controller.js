@@ -231,6 +231,8 @@ class DHController {
 
             return response.concat(trailExtension);
         }
+
+        return response;
     }
 
     /**

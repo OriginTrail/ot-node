@@ -47,7 +47,8 @@ class MinerService {
 
             this.logger.important(`Miner started for offer ${offerId}.`);
         } catch (e) {
-            this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ${offerId}`);
+            this.logger.error(`Unable to find solution for offer ${offerId}. Error: ${e}`);
+            this.emitter.emit('int-miner-solution', new MinerError(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ${offerId}`, offerId), null);
         }
     }
 }
