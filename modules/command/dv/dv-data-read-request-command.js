@@ -13,6 +13,7 @@ class DVDataReadRequestCommand extends Command {
         this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
+        this.blockchain = ctx.blockchain;
     }
 
     /**

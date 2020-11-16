@@ -160,7 +160,7 @@ class ImportUtilities {
             '@graph': originalDocument['@graph'],
         };
 
-        let document = OtJsonUtilities.prepareDatasetForNewImport(dataset);
+        let document = OtJsonUtilities.prepareDatasetForNewImport(dataset, blockchain);
         if (!document) {
             document = dataset;
         }
