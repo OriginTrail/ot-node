@@ -20,6 +20,7 @@ class DHDataReadRequestFreeCommand extends Command {
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**

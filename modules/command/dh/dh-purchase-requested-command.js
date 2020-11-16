@@ -16,6 +16,7 @@ class DhPurchaseRequestedCommand extends Command {
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
