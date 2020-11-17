@@ -150,3 +150,10 @@ exports.PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE = 'permissioned.show_attribu
  * visibility option for storing attribute to permissioned data
  */
 exports.PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE = 'permissioned.hide_attribute';
+
+/**
+ *
+ * @constant {Number} REINITIALIZE_DELAY_IN_MILLS -
+ * The delay for a reinitialize attempt if a profile initialization failed
+ */
+exports.REINITIALIZE_DELAY_IN_MILLS = 15 * 60 * 1000;

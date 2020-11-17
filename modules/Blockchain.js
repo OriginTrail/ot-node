@@ -41,17 +41,17 @@ class Blockchain {
      * Initialize Blockchain provider
      * @returns {Promise<void>}
      */
-    async initialize() {
+    async loadContracts() {
         try {
             const promises = [];
 
             for (let i = 0; i < this.blockchain.length; i += 1) {
-                promises.push(this.blockchain[i].initialize());
+                promises.push(this.blockchain[i].loadContracts());
             }
 
             await Promise.all(promises);
         } catch (e) {
-            this.log.warn(`Failed to initialize all blockchain implementations. ${e}`);
+            this.log.warn(`Failed to load contracts on all blockchain implementations. ${e}`);
             throw e;
         }
 
@@ -61,22 +61,32 @@ class Blockchain {
                 'ContractsChanged',
             ], async (eventData) => {
                 this.log.notify('Contracts changed, refreshing information.');
-                await this.initialize();
+                await this.loadContracts();
             });
         }
     }
 
+    initialize(blockchain_id) {
+        if (!blockchain_id) {
+            throw new Error('Cannot initialize blockchain implementation without blockchain_id');
+        }
+        const implementation = this._getImplementationFromId(blockchain_id, true);
+        implementation.initialize();
+    }
+
     /**
      * Retrieves an implementation based on the given blockchain_id
+     * @param {String} blockchain_id - Blockchain implementation identifier string
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      */
-    _getImplementationFromId(blockchain_id) {
+    _getImplementationFromId(blockchain_id, showUninitialized = false) {
         if (!blockchain_id) {
-            return this._getDefaultImplementation();
+            return this._getDefaultImplementation(showUninitialized);
         }
 
         const implementation = this.blockchain.find(e => e.getBlockchainId() === blockchain_id);
 
-        if (implementation && implementation.initialized) {
+        if (implementation && (implementation.initialized || showUninitialized)) {
             return implementation;
         } else if (implementation) {
             throw new Error(`Cannot return implementation for blockchain_id ${blockchain_id}. Implementation is not initialized.`);
@@ -85,9 +95,13 @@ class Blockchain {
         }
     }
 
-    _getDefaultImplementation() {
+    /**
+     * Retrieves the default blockchain implementation
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
+     */
+    _getDefaultImplementation(showUninitialized = false) {
         for (const implementation of this.blockchain) {
-            if (implementation.initialized) return implementation;
+            if (implementation.initialized || showUninitialized) return implementation;
         }
 
         throw new Error('Cannot return implementation. No implementation is initialized.');
@@ -95,9 +109,11 @@ class Blockchain {
 
     /**
      * Returns the blockchain id of the default blockchain implementation
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
+     * @returns {String} The identifier string of the default blockchain implementation
      */
-    getDefaultBlockchainId() {
-        const implementation = this._getDefaultImplementation();
+    getDefaultBlockchainId(showUninitialized = false) {
+        const implementation = this._getDefaultImplementation(showUninitialized);
         return implementation.getBlockchainId();
     }
 
@@ -115,10 +131,11 @@ class Blockchain {
      * Gets profile by wallet
      * @param identity
      * @param blockchain_id
+     * @param {Boolean} showUninitialized - Return all implementations, not only initialized ones
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    getProfile(identity, blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+    getProfile(identity, blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getProfile(identity),
@@ -147,7 +164,8 @@ class Blockchain {
      * @param initialBalance - Initial profile balance
      * @param isSender725 - Is sender ERC 725?
      * @param blockchainIdentity - ERC 725 identity (empty if there is none)
-     * @param blockchain_id - Blockchain implementation
+     * @param blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
     createProfile(
@@ -157,8 +175,9 @@ class Blockchain {
         isSender725,
         blockchainIdentity,
         blockchain_id,
+        showUninitialized = false,
     ) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.createProfile(
@@ -171,10 +190,12 @@ class Blockchain {
 
     /**
      * Gets minimum stake for creating a profile
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    getProfileMinimumStake(blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+    getProfileMinimumStake(blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getProfileMinimumStake(),
@@ -183,12 +204,13 @@ class Blockchain {
 
     /**
      * Increase token approval for escrow contract
-     * @param {number} tokenAmountIncrease
-     * @param {string} blockchain_id - Blockchain implementation to use
+     * @param {Number} tokenAmountIncrease - The amount of approval to increase in Abrashkin (mTRAC)
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    increaseProfileApproval(tokenAmountIncrease, blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+    increaseProfileApproval(tokenAmountIncrease, blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.increaseProfileApproval(tokenAmountIncrease),
@@ -1103,14 +1125,15 @@ class Blockchain {
 
     /**
      * Returns created identities from blockchain implementations
+     * @param {Boolean} showUninitialized - Return all implementations, not only initialized ones
      * @returns {Array<Object>} -
      *      An array of objects containing the blockchain_id string and the response string
      */
-    getAllIdentities() {
+    getAllIdentities(showUninitialized = false) {
         const identities = [];
         for (let i = 0; i < this.blockchain.length; i += 1) {
             const implementation = this.blockchain[i];
-            if (implementation.initialized) {
+            if (implementation.initialized || showUninitialized) {
                 identities.push({
                     blockchain_id: implementation.getBlockchainId(),
                     response: implementation.getIdentity(),
@@ -1124,10 +1147,11 @@ class Blockchain {
     /**
      * Returns created identities from configuration
      * @param {String} blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    getIdentity(blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+    getIdentity(blockchain_id, showUninitialized) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getIdentity(),
@@ -1138,10 +1162,11 @@ class Blockchain {
      * Saves identity into file and configuration
      * @param {String} identity - The identity to save
      * @param {String} blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      * @returns {Object} - An object containing the blockchain_id string and the response void
      */
-    saveIdentity(identity, blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+    saveIdentity(identity, blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.saveIdentity(identity),
