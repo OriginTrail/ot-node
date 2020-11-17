@@ -75,8 +75,7 @@ class DVDataReadResponseFreeCommand extends Command {
 
         const { document, permissionedData } = message;
         // Calculate root hash and check is it the same on the SC.
-        const fingerprintResponse = await this.blockchain.getRootHash(dataSetId);
-        const fingerprint = fingerprintResponse.response;
+        const fingerprint = await this.blockchain.getRootHash(dataSetId).response;
 
         if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
             const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${dataSetId}`;

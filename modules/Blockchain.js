@@ -694,11 +694,11 @@ class Blockchain {
      * @param {string} blockchain_id - Blockchain implementation to use
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    async getRootHash(dataSetId, blockchain_id) {
+    getRootHash(dataSetId, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
         return {
             blockchain_id: implementation.getBlockchainId(),
-            response: await implementation.getRootHash(dataSetId),
+            response: implementation.getRootHash(dataSetId),
         };
     }
 
