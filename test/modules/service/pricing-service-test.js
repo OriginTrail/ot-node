@@ -74,6 +74,7 @@ describe('Pricing service test', () => {
         config = rc(pjson.name, defaultConfig);
         config.blockchain.implementations[0].gas_price = defaultConfigGasPrice;
         config.blockchain.implementations[0].gas_price_last_update_timestamp = 0;
+        config.blockchain.implementations[0].rpc_server_url = 'http://localhost:7545/';
         gasStationService = new GasStationServiceMock(logger);
         web3ServiceMock = new Web3Mock(logger);
         container.register({
