@@ -78,7 +78,8 @@ class DvPurchaseInitiateCommand extends Command {
             dataTrade.price, permissioned_data_root_hash, encoded_data_root_hash,
         ).response;
 
-        const { purchaseId } = this.blockchain.decodePurchaseInitiatedEventFromTransaction(result).response;
+        const { purchaseId } = this.blockchain
+            .decodePurchaseInitiatedEventFromTransaction(result).response;
         this.logger.important(`Purchase ${purchaseId} initiated. Waiting for key from seller...`);
 
         if (!purchaseId) {

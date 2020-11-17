@@ -5,8 +5,36 @@
    "initial_deposit_amount": "10000000000000000000000",
    "local_network_only":true,
    "blockchain":{
-      "hub_contract_address":"0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a",
-      "rpc_server_url":"http://localhost:7545/"
+        "implementations": [
+           {
+             "blockchain_title": "Ethereum",
+             "network_id": "development",
+             "hub_contract_address":"0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a",
+             "rpc_server_url":"http://localhost:7545/",
+             "node_wallet_path": "wallet.json",
+             "identity_filepath": "erc725_identity.json",
+             "gas_limit": 2000000,
+             "gas_price": 20000000000,
+             "max_allowed_gas_price" : 100000000000,
+             "dc_price_factor" : "3",
+             "dh_price_factor" : "2",
+             "trac_price_in_eth" : "0.00005",
+             "plugins": [
+               {
+                 "enabled": false,
+                 "provider": "Hyperledger",
+                 "name": "fingerprint-plugin",
+                 "config": {
+                   "url": "URL",
+                   "auth": {
+                     "user": "USER",
+                     "pass": "PASS"
+                   }
+                 }
+               }
+             ]
+           }
+         ]
    },
    "network":{
       "bootstraps":[
