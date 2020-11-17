@@ -207,33 +207,6 @@ function main() {
         externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
     }
 
-    if (process.env.RPC_SERVER_URL) {
-        if (externalConfig.blockchain === undefined) {
-            externalConfig.blockchain = {};
-        }
-        externalConfig.blockchain.rpc_server_url = process.env.RPC_SERVER_URL;
-    }
-
-    if (!externalConfig.blockchain || !externalConfig.blockchain.rpc_server_url) {
-        logger.error('Please provide a valid RPC server URL.\n' +
-            'Add it to the blockchain section. For example:\n' +
-            '   "blockchain": {\n' +
-            '       "rpc_server_url": "http://your.server.url/"\n' +
-            '   }');
-        process.exit(1);
-        return;
-    }
-
-    web3.setProvider(new Web3.providers.HttpProvider(externalConfig.blockchain.rpc_server_url));
-
-    if (!externalConfig.node_wallet ||
-        !externalConfig.node_private_key ||
-        !web3.utils.isAddress(externalConfig.node_wallet)) {
-        logger.error('Wallet not provided! Please provide valid wallet.');
-        process.exit(1);
-        return;
-    }
-
     if (externalConfig.node_wallet
         && externalConfig.node_private_key
         && externalConfig.management_wallet) {
