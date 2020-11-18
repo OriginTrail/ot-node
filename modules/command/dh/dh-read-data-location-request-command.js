@@ -17,6 +17,7 @@ class DHReadDataLocationRequestCommand extends Command {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -28,8 +29,10 @@ class DHReadDataLocationRequestCommand extends Command {
             msgNodeId, msgWallet, msgQuery, msgId,
         } = command.data;
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         // Check if mine publish.
-        if (msgNodeId === this.config.identity && msgWallet === this.config.node_wallet) {
+        if (msgNodeId === this.config.identity && msgWallet === node_wallet) {
             this.logger.trace('Received mine publish. Ignoring.');
             return Command.empty();
         }
@@ -61,7 +64,7 @@ class DHReadDataLocationRequestCommand extends Command {
         const validImports = [];
         for (let i = 0; i < imports.length; i += 1) {
             if (imports[i].data_provider_wallet.toLowerCase()
-                === this.config.node_wallet.toLowerCase()) {
+                === node_wallet.toLowerCase()) {
                 // eslint-disable-next-line no-await-in-loop
                 const offer = await Models.offers.findOne({
                     attributes: ['offer_id'],
@@ -97,7 +100,7 @@ class DHReadDataLocationRequestCommand extends Command {
             });
         }
 
-        const wallet = this.config.node_wallet;
+        const wallet = node_wallet;
         const nodeId = this.config.identity;
         const dataPrice = 100000; // TODO add to configuration
 
@@ -182,7 +185,7 @@ class DHReadDataLocationRequestCommand extends Command {
             Utilities.generateRsvSignature(
                 messageResponse,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             );
 
         const dataLocationResponseObject = {

@@ -7,6 +7,7 @@ class ErrorNotificationService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     initialize() {
@@ -17,6 +18,8 @@ class ErrorNotificationService {
         delete cleanConfig.blockchain;
 
         const releaseStage = process.env.NODE_ENV === 'mariner' ? 'mainnet' : process.env.NODE_ENV;
+
+        const { node_wallet, management_wallet } = this.blockchain.getWallet().response;
 
         // todo pass blockchain identity
         Bugsnag.start({
@@ -45,8 +48,8 @@ class ErrorNotificationService {
             metadata: {
                 generalNodeInformation: {
                     nodeId: this.config.identity,
-                    managementWallet: this.config.management_wallet,
-                    operationalWallet: this.config.node_wallet,
+                    managementWallet: management_wallet,
+                    operationalWallet: node_wallet,
                 },
                 configuration: cleanConfig,
             },

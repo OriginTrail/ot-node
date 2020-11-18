@@ -49,9 +49,12 @@ class OtJsonUtilities {
         config.blockchain.hub_contract_address =
             dataset.datasetHeader.validationSchemas.merkleRoot.hubContractAddress;
         config.erc725Identity = dataset.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        config.blockchain.identity =
+            dataset.datasetHeader.dataCreator.identifiers[0].identifierValue;
         // eslint-disable-next-line global-require
         const header = require('./ImportUtilities').createDatasetHeader(
             config, null,
+            config.blockchain,
             dataset.datasetHeader.datasetTags,
             dataset.datasetHeader.datasetTitle,
             dataset.datasetHeader.datasetDescription,

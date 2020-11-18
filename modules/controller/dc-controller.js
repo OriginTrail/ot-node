@@ -22,6 +22,7 @@ class DCController {
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -169,8 +170,10 @@ class DCController {
             ${ot_object_id} from dataset: ${data_set_id}`);
         }
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         const replayMessage = {
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
             handler_id,
         };
         const promises = [];
@@ -200,7 +203,7 @@ class DCController {
             messageSignature: Utilities.generateRsvSignature(
                 JSON.stringify(replayMessage),
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
         await this.transport.sendPermissionedDataReadResponse(
@@ -330,6 +333,8 @@ class DCController {
             data_set_id, handler_id, dv_node_id, ot_json_object_id,
         } = request;
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         // todo pass blockchain identity
         const condition = {
             where: {
@@ -344,14 +349,14 @@ class DCController {
             response = {
                 handler_id,
                 status: 'COMPLETED',
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 price_in_trac: data.price,
             };
         } else {
             response = {
                 handler_id,
                 status: 'FAILED',
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
             };
         }
 
@@ -361,7 +366,7 @@ class DCController {
             messageSignature: Utilities.generateRsvSignature(
                 response,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 

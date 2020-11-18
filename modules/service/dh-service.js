@@ -117,10 +117,11 @@ class DHService {
             return;
         }
 
+        const { dh_price_factor } = this.blockchain.getPriceFactors(blockchain_id).response;
         const offerPrice = await this.pricingService.calculateOfferPriceinTrac(
             dataSetSizeInBytes,
             holdingTimeInMinutes,
-            this.config.blockchain.dh_price_factor,
+            dh_price_factor,
         );
         const myOfferPrice = offerPrice.finalPrice;
         const dhTokenPrice = new BN(myOfferPrice.toString(), 10);
@@ -481,8 +482,11 @@ class DHService {
             // From smart contract:
             // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
             const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor));
-            const profileBalance = new BN((await this.blockchain
-                .getProfile(this.profileService.getIdentity()).response).balance, 10);
+            const profileBalance =
+                new BN((
+                    await this.blockchain.getProfile(this.blockchain.getWallet()
+                        .response.node_wallet)
+                ).balance, 10);
 
             if (profileBalance.lt(condition)) {
                 throw new Error('Not enough funds to handle data read request');
@@ -516,9 +520,11 @@ class DHService {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
+            const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
             const replyMessage = {
                 id,
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 nodeId: this.config.identity,
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
@@ -533,7 +539,7 @@ class DHService {
                 messageSignature: Utilities.generateRsvSignature(
                     replyMessage,
                     this.web3,
-                    this.config.node_private_key,
+                    node_private_key,
                 ),
             };
 

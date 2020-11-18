@@ -14,6 +14,7 @@ class DvPurchaseRequestCommand extends Command {
         this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -77,6 +78,8 @@ class DvPurchaseRequestCommand extends Command {
             }
         }
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         // todo pass blockchain identity
         const message = {
             data_set_id,
@@ -84,14 +87,14 @@ class DvPurchaseRequestCommand extends Command {
             handler_id,
             ot_json_object_id: ot_object_id,
             price: dataSeller.price,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
         };
         const dataPurchaseRequestObject = {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 

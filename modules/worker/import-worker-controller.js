@@ -9,6 +9,7 @@ class ImportWorkerController {
         this.logger = ctx.logger;
         this.web3 = ctx.web3;
         this.importService = ctx.importService;
+        this.blockchain = ctx.blockchain;
 
         this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
@@ -85,13 +86,15 @@ class ImportWorkerController {
         });
     }
 
-    async startOtjsonConverterWorker(command, standardId) {
+    async startOtjsonConverterWorker(command, standardId, blockchain) {
         this.logger.info('Starting ot-json converter worker');
         const { documentPath, handler_id } = command.data;
         const document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
-        forked.send(JSON.stringify({ config: this.config, dataset: document, standardId }));
+        forked.send(JSON.stringify({
+            config: this.config, dataset: document, standardId, blockchain,
+        }));
 
         forked.on('message', async (response) => {
             if (response.error) {
@@ -99,7 +102,8 @@ class ImportWorkerController {
             } else {
                 const otjson = response;
 
-                const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
+                const { node_private_key } = this.blockchain.getWallet().response;
+                const signedOtjson = ImportUtilities.signDataset(otjson, node_private_key);
                 fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));
                 const commandData = {
                     documentPath,

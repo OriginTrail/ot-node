@@ -9,6 +9,7 @@ class DcFinalizeImport extends Command {
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -37,12 +38,14 @@ class DcFinalizeImport extends Command {
         }
 
         try {
+            const { node_wallet } = this.blockchain.getWallet().response;
+
             const import_timestamp = new Date();
             this.remoteControl.importRequestData();
             await Models.data_info.create({
                 data_set_id,
                 root_hash,
-                data_provider_wallet: data_provider_wallet || this.config.node_wallet,
+                data_provider_wallet: data_provider_wallet || node_wallet,
                 import_timestamp,
                 total_documents,
                 origin: purchased ? 'PURCHASED' : 'IMPORTED',

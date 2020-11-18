@@ -49,6 +49,7 @@ const ImportWorkerController = require('./modules/worker/import-worker-controlle
 const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
+const GasStationService = require('./modules/service/gas-station-service');
 
 const semver = require('semver');
 
@@ -82,21 +83,6 @@ try {
             process.env.NODE_ENV,
         );
     }
-
-    if (!config.node_wallet || !config.node_private_key) {
-        console.error('Please provide valid wallet.');
-        process.abort();
-    }
-
-    if (!config.management_wallet) {
-        console.error('Please provide a valid management wallet.');
-        process.abort();
-    }
-
-    // if (!config.blockchain.rpc_server_url) {
-    //     console.error('Please provide a valid RPC server URL.');
-    //     process.abort();
-    // }
 } catch (error) {
     console.error(`Failed to read configuration. ${error}.`);
     console.error(error.stack);
@@ -187,6 +173,7 @@ class OTNode {
         config.erc725Identity = '';
         config.publicKeyData = {};
 
+        // todo invoke blockchain service
         const web3 =
             new Web3(new Web3.providers
                 .HttpProvider(config.blockchain.implementations[0].rpc_server_url));
@@ -299,6 +286,7 @@ class OTNode {
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
+            gasStationService: awilix.asClass(GasStationService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -516,13 +504,13 @@ class OTNode {
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
         });
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
         await transport.start();
 
-        const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
 
         const approvalService = container.resolve('approvalService');
 

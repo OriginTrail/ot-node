@@ -20,6 +20,7 @@ class DHDataReadRequestFreeCommand extends Command {
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -34,6 +35,10 @@ class DHDataReadRequestFreeCommand extends Command {
         const {
             nodeId, wallet, id, data_set_id, handler_id,
         } = message;
+
+
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         try {
             // Check is it mine offer.
             const networkReplyModel = await Models.network_replies.find({ where: { id } });
@@ -87,7 +92,7 @@ class DHDataReadRequestFreeCommand extends Command {
 
             const replyMessage = {
                 id,
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 nodeId: this.config.identity,
                 data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
@@ -102,7 +107,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 messageSignature: Utilities.generateRsvSignature(
                     replyMessage,
                     this.web3,
-                    this.config.node_private_key,
+                    node_private_key,
                 ),
             };
 
@@ -116,7 +121,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 messageSignature: Utilities.generateRsvSignature(
                     errorMessage,
                     this.web3,
-                    this.config.node_private_key,
+                    node_private_key,
                 ),
             }, nodeId);
         }
