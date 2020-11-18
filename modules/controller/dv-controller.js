@@ -774,8 +774,7 @@ class DVController {
             return;
         }
 
-        this.blockchain.getRootHash(dataset_id).response.then((object) => {
-            const dataRootHash = object.response;
+        this.blockchain.getRootHash(dataset_id).response.then((dataRootHash) => {
             if (dataRootHash) {
                 if (!Utilities.isZeroHash(dataRootHash)) {
                     res.status(200);

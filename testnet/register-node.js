@@ -213,9 +213,9 @@ function main() {
         fs.writeFileSync(
             path.join(localConfiguration.appDataPath, 'wallet.json'),
             JSON.stringify({
-                node_wallet: this.options.nodeConfiguration.node_wallet,
-                node_private_key: this.options.nodeConfiguration.node_private_key,
-                management_wallet: this.options.nodeConfiguration.management_wallet,
+                node_wallet: externalConfig.node_wallet,
+                node_private_key: externalConfig.node_private_key,
+                management_wallet: externalConfig.management_wallet,
             }),
         );
 
