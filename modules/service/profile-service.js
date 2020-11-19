@@ -49,7 +49,7 @@ class ProfileService {
                     identity,
                     blockchain_id,
                 ).catch((error) => {
-                    this.logger.warn(error.toString());
+                    this.logger.warn(`Failed to create a profile. ${error.toString()}`);
                     this.logger.warn(`Failed to initialize profile on blockchain ${blockchain_id}. Scheduling reattempt.`);
                     this.reinitializeProfile(blockchain_id);
                 }));

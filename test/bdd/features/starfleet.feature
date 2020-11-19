@@ -3,7 +3,7 @@ Feature: Multiple blockchain related features
     Given the blockchains are set up
     And 1 bootstrap is running
 
-  @pending
+  @first
   Scenario: Check that node will fail to initialize if it's missing funds
     Given I setup 1 node
     And the 1st node's spend all the Ethers
