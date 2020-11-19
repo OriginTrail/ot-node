@@ -48,7 +48,8 @@ class ProfileService {
                 promises.push(this.createAndSaveNewProfile(
                     identity,
                     blockchain_id,
-                ).catch((e) => {
+                ).catch((error) => {
+                    this.logger.warn(error.toString());
                     this.logger.warn(`Failed to initialize profile on blockchain ${blockchain_id}. Scheduling reattempt.`);
                     this.reinitializeProfile(blockchain_id);
                 }));
@@ -99,7 +100,8 @@ class ProfileService {
         // set empty identity if there is none
         let identity = identityExists ? profileIdentity : new BN(0, 16);
 
-        const { node_wallet, management_wallet } = this.blockchain.getWallet().response;
+        const { node_wallet, management_wallet } =
+            this.blockchain.getWallet(blockchainId, true).response;
         let createProfileCalled = false;
         do {
             try {

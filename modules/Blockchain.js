@@ -1188,9 +1188,11 @@ class Blockchain {
 
     /**
      * Returns wallet public and private key from configuration
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      */
-    getWallet(blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+    getWallet(blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getWallet(),

@@ -99,6 +99,8 @@ const wallets = accountPrivateKeys.map(privateKey => ({
 class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger || console;
+        this.port = options.port || 7545;
+        this.name = options.name || 'ganache';
         this.server = Ganache.server({
             gasLimit: 7000000,
             time: new Date(),
@@ -113,14 +115,14 @@ class LocalBlockchain {
 
     async initialize() {
         return new Promise((accept, reject) => {
-            this.server.listen(7545, async (err, blockchain) => {
+            this.server.listen(this.port, async (err, blockchain) => {
                 if (err) {
                     reject(err);
                     return;
                 }
-                this.logger.info('Blockchain is up at http://localhost:7545/');
+                this.logger.info(`Blockchain is up at http://localhost:${this.port}/`);
                 // TODO: Use url from server.
-                this.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
+                this.web3 = new Web3(new Web3.providers.HttpProvider(`http://localhost:${this.port}`));
                 this.compileContracts();
                 await this.deployContracts();
                 assert(this.hubContractAddress !== '0x0000000000000000000000000000000000000000');
@@ -129,9 +131,7 @@ class LocalBlockchain {
                 assert(this.holdingStorageContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.tokenContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.profileContractAddress !== '0x0000000000000000000000000000000000000000');
-                assert(this.creditorHandlerContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.holdingContractAddress !== '0x0000000000000000000000000000000000000000');
-                assert(this.readingContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.litigationContractAddress !== '0x0000000000000000000000000000000000000000');
                 accept();
             });
@@ -147,7 +147,6 @@ class LocalBlockchain {
         const profileSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Profile.sol'), 'utf8');
         const holdingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Holding.sol'), 'utf8');
         const creditorHandlerSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/CreditorHandler.sol'), 'utf8');
-        const readingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Reading.sol'), 'utf8');
         const eRC725Source = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ERC725.sol'), 'utf8');
         const safeMathSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/SafeMath.sol'), 'utf8');
         const identitySource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Identity.sol'), 'utf8');
@@ -173,7 +172,6 @@ class LocalBlockchain {
                 'TracToken.sol': tokenSource,
                 'Hub.sol': hubSource,
                 'HoldingStorage.sol': holdingStorageSource,
-                'Reading.sol': readingSource,
                 'Profile.sol': profileSource,
                 'Holding.sol': holdingSource,
                 'CreditorHandler.sol': creditorHandlerSource,
@@ -223,11 +221,6 @@ class LocalBlockchain {
         this.contracts.CreditorHandler.data = `0x${compileResult.contracts['CreditorHandler.sol:CreditorHandler'].bytecode}`;
         this.contracts.CreditorHandler.abi = JSON.parse(compileResult.contracts['CreditorHandler.sol:CreditorHandler'].interface);
         this.contracts.CreditorHandler.artifact = new this.web3.eth.Contract(this.contracts.CreditorHandler.abi);
-
-        this.contracts.Reading = {};
-        this.contracts.Reading.data = `0x${compileResult.contracts['Reading.sol:Reading'].bytecode}`;
-        this.contracts.Reading.abi = JSON.parse(compileResult.contracts['Reading.sol:Reading'].interface);
-        this.contracts.Reading.artifact = new this.web3.eth.Contract(this.contracts.Reading.abi);
 
         this.contracts.LitigationStorage = {};
         this.contracts.LitigationStorage.data = `0x${compileResult.contracts['LitigationStorage.sol:LitigationStorage'].bytecode}`;
@@ -341,17 +334,6 @@ class LocalBlockchain {
         );
 
         await this.contracts.Hub.instance.methods.setContractAddress('CreditorHandler', this.contracts.CreditorHandler.instance._address)
-            .send({ from: accounts[7], gas: 3000000 })
-            .on('error', console.error);
-
-
-        this.logger.log('Deploying Reading contract');
-        [this.contracts.Reading.deploymentReceipt, this.contracts.Reading.instance] = await this._deployContract(
-            this.web3, this.contracts.Reading.artifact, this.contracts.Reading.data,
-            [this.contracts.Hub.instance._address], accounts[7],
-        );
-
-        await this.contracts.Hub.instance.methods.setContractAddress('Reading', this.contracts.Reading.instance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -543,10 +525,6 @@ class LocalBlockchain {
 
     get holdingContractAddress() {
         return this.contracts.Holding.instance._address;
-    }
-
-    get readingContractAddress() {
-        return this.contracts.Reading.instance._address;
     }
 
     get litigationContractAddress() {

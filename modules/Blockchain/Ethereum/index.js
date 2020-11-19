@@ -57,6 +57,8 @@ class Ethereum {
             return;
         }
 
+        console.log(`${JSON.stringify(this.config, null, 4)}`);
+
         const identityObject = Utilities.loadJsonFromFile(
             this.config.appDataPath,
             this.config.identity_filepath,
