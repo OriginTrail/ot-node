@@ -1229,28 +1229,12 @@ class Blockchain {
         };
     }
 
-    getTracTokenBalance(blockchain_id, getTracTokenBalance) {
-        const implementation = this._getImplementationFromId(blockchain_id);
-        return {
-            blockchain_id: implementation.getBlockchainId(),
-            response: implementation.getTracTokenBalance(getTracTokenBalance),
-        };
-    }
-
-    getBalance(blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
-        return {
-            blockchain_id: implementation.getBlockchainId(),
-            response: implementation.getBalance(),
-        };
-    }
-
-    fromWei(blockchain_id, balance, unit) {
-        const implementation = this._getImplementationFromId(blockchain_id);
-        return {
-            blockchain_id: implementation.getBlockchainId(),
-            response: implementation.fromWei(balance, unit),
-        };
+    static fromWei(blockchain_title, balance, unit) {
+        switch (blockchain_title) {
+        case 'Ethereum':
+        default:
+            return Ethereum.fromWei(balance, unit);
+        }
     }
 }
 

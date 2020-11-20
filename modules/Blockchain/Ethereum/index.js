@@ -469,8 +469,8 @@ class Ethereum {
      */
     getWalletBaseBalance(wallet) {
         return new Promise((resolve, reject) => {
-            this.logger.trace(`Getting ETh balance by wallet ${wallet}`);
-            this.web3.eth.getBalance(wallet).call()
+            this.logger.trace(`Getting ETH balance by wallet ${wallet}`);
+            this.web3.eth.getBalance(wallet)
                 .then((res) => {
                     resolve(res);
                 }).catch((e) => {
@@ -1526,34 +1526,8 @@ class Ethereum {
         return this.config.hub_contract_address;
     }
 
-    /**
-     * Returns TRAC token balance
-     */
-    async getTracTokenBalance(humanReadable) {
-        // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
-        const contractData = (`0x70a08231000000000000000000000000${this.config.node_wallet.slice(2)}`);
-        const result = await this.web3.eth.call({
-            to: this.tokenContractAddress,
-            data: contractData,
-        });
-        const tokensInWei = this.web3.utils.toBN(result).toString();
-        if (humanReadable) {
-            return this.web3.utils.fromWei(tokensInWei, 'ether');
-        }
-
-        return tokensInWei;
-    }
-
-    /**
-     * Returns ETH balance
-     */
-    async getBalance() {
-        // eslint-disable-next-line no-return-await
-        return await this.web3.eth.getBalance(this.config.node_wallet);
-    }
-
-    fromWei(balance, unit) {
-        return this.web3.utils.fromWei(balance, unit);
+    static fromWei(balance, unit) {
+        return Web3.utils.fromWei(balance, unit);
     }
 
     saveIdentity(identity) {
