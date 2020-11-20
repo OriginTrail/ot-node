@@ -371,7 +371,7 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     );
     const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
 
-    expect(ImportUtilities.extractDatasetSigner(response.document, new Web3()).toLowerCase() === nodeWallet, 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigner(response.document).toLowerCase() === nodeWallet, 'Signature not valid!').to.be.true;
 
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document);
     const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(response.document);
@@ -406,7 +406,7 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     );
     const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
 
-    expect(ImportUtilities.extractDatasetSigner(lastExport.data.formatted_dataset, new Web3()).toLowerCase() === nodeWallet.toLowerCase(), 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigner(lastExport.data.formatted_dataset).toLowerCase() === nodeWallet.toLowerCase(), 'Signature not valid!').to.be.true;
 });
 
 Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
@@ -545,7 +545,7 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
         .to.be.equal(calculatedDatasetId1);
 
     // check signature
-    const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigner(dataset1, new Web3());
+    const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigner(dataset1);
     expect(Utilities.normalizeHex(calcuatedDatasetSignature1), 'Dataset from API endpoint and manually calculated should match')
         .to.be.equal(Utilities.normalizeHex(nodeWallet1));
 
@@ -560,7 +560,7 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
         .to.be.equal(calculatedDatasetId2);
 
     // check signature
-    const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigner(dataset2, new Web3());
+    const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigner(dataset2);
     expect(Utilities.normalizeHex(calcuatedDatasetSignature2), 'Dataset from API endpoint and manually calculated should match')
         .to.be.equal(Utilities.normalizeHex(nodeWallet2));
 

@@ -446,14 +446,31 @@ class Ethereum {
     }
 
     /**
-     * Gets profile balance by wallet
+     * Gets TRAC balance by wallet
      * @param wallet
      * @returns {Promise}
      */
-    getProfileBalance(wallet) {
+    getWalletTokenBalance(wallet) {
         return new Promise((resolve, reject) => {
-            this.logger.trace(`Getting profile balance by wallet ${wallet}`);
+            this.logger.trace(`Getting TRAC balance by wallet ${wallet}`);
             this.tokenContract.methods.balanceOf(wallet).call()
+                .then((res) => {
+                    resolve(res);
+                }).catch((e) => {
+                    reject(e);
+                });
+        });
+    }
+
+    /**
+     * Gets ETH balance by wallet
+     * @param wallet
+     * @returns {Promise}
+     */
+    getWalletBaseBalance(wallet) {
+        return new Promise((resolve, reject) => {
+            this.logger.trace(`Getting ETh balance by wallet ${wallet}`);
+            this.web3.eth.getBalance(wallet).call()
                 .then((res) => {
                     resolve(res);
                 }).catch((e) => {

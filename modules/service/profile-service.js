@@ -15,7 +15,6 @@ class ProfileService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
-        this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
     }
 

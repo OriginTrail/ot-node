@@ -11,7 +11,6 @@ class DVPermissionedDataReadRequestCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
-        this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
         this.profileService = ctx.profileService;
     }

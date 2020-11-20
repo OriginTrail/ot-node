@@ -74,7 +74,6 @@ class ImportService {
     constructor(ctx) {
         this.db = ctx.graphStorage;
         this.schemaValidator = ctx.schemaValidator;
-        this.web3 = ctx.web3;
         this.log = ctx.logger;
         this.config = ctx.config;
     }
@@ -546,10 +545,7 @@ class ImportService {
 
         await this.db.addDatasetMetadata(metadata);
         // Extract wallet from signature.
-        const wallet = ImportUtilities.extractDatasetSigner(
-            document,
-            this.web3,
-        );
+        const wallet = ImportUtilities.extractDatasetSigner(document);
 
         // TODO: Verify that signer's wallet belongs to dataCreator ERC
 

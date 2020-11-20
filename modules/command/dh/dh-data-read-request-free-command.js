@@ -16,7 +16,6 @@ class DHDataReadRequestFreeCommand extends Command {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;

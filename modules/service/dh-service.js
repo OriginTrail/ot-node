@@ -20,7 +20,6 @@ class DHService {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchain = ctx.blockchain;
         this.transport = ctx.transport;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
         this.pricingService = ctx.pricingService;
