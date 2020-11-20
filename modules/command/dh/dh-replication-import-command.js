@@ -17,7 +17,6 @@ class DhReplicationImportCommand extends Command {
         this.config = ctx.config;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
         this.transport = ctx.transport;

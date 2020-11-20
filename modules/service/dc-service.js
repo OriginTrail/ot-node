@@ -9,7 +9,6 @@ const ImportUtilities = require('../ImportUtilities');
 
 class DCService {
     constructor(ctx) {
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.logger = ctx.logger;
         this.config = ctx.config;

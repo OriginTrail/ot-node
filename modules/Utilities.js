@@ -7,7 +7,6 @@ const ipaddr = require('ipaddr.js');
 const _ = require('lodash');
 const _u = require('underscore');
 const randomString = require('randomstring');
-const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
@@ -303,41 +302,6 @@ class Utilities {
     }
 
     /**
-     * Get wallet's balance in Ether
-     * @param web3 Instance of Web3
-     * @param wallet Address of the wallet.
-     * @returns {Promise<string |  | Object>}
-     */
-    static async getBalanceInEthers(web3, wallet) {
-        const result = await web3.eth.getBalance(wallet);
-        return web3.utils.fromWei(result, 'ether');
-    }
-
-    /**
-     * Get wallet's TRAC token balance in Ether
-     * @param web3 Instance of Web3
-     * @param wallet Address of the wallet.
-     * @param tokenContractAddress Contract address.
-     * @param humanReadable format result in floating point TRAC value or not i.e. 0.3.
-     * @returns {Promise<string |  | Object>}
-     */
-    static async getTracTokenBalance(web3, wallet, tokenContractAddress, humanReadable = true) {
-        const walletDenormalized = this.denormalizeHex(wallet);
-        // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
-        const contractData = (`0x70a08231000000000000000000000000${walletDenormalized}`);
-        const result = await web3.eth.call({
-            to: this.normalizeHex(tokenContractAddress),
-            data: contractData,
-        });
-        const tokensInWei = web3.utils.toBN(result).toString();
-        if (humanReadable) {
-            return web3.utils.fromWei(tokensInWei, 'ether');
-        }
-
-        return tokensInWei;
-    }
-
-    /**
      * Makes a copy of object
      *
      * @param object Obj
@@ -420,26 +384,6 @@ class Utilities {
     }
 
     /**
-     * Check on which network blockchain is running on
-     * @returns {Promise<any>}
-     */
-    static getNodeNetworkType() {
-        return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                web3.eth.net.getNetworkType()
-                    .then((result) => {
-                        resolve(result);
-                    }).catch((error) => {
-                        reject(error);
-                    });
-            }).catch((error) => {
-                reject(error);
-            });
-        });
-    }
-
-    /**
      * Pings infura rinkeby api methods endpoint
      * @returns {Promise<any>}
      */
@@ -487,22 +431,6 @@ class Utilities {
                     }
                 }).catch((err) => {
                     reject(err);
-                });
-        });
-    }
-
-    /**
-     * Gets block number from web3
-     * @returns {Promise<any>}
-     */
-    static getBlockNumberFromWeb3(web3) {
-        return new Promise((resolve, reject) => {
-            web3.eth.getBlockNumber()
-                .then((result) => {
-                    resolve(web3.utils.hexToNumber(result));
-                }).catch((error) => {
-                    logger.error(error);
-                    reject(error);
                 });
         });
     }

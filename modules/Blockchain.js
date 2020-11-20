@@ -18,6 +18,7 @@ class Blockchain {
         this.gasStationService = ctx.gasStationService;
         this.tracPriceService = ctx.tracPriceService;
         this.appState = ctx.appState;
+        this.web3 = ctx.web3;
 
         this.blockchain = [];
 
@@ -1226,6 +1227,30 @@ class Blockchain {
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getPriceFactors(),
+        };
+    }
+
+    getTracTokenBalance(blockchain_id, getTracTokenBalance) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getTracTokenBalance(getTracTokenBalance),
+        };
+    }
+
+    getBalance(blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getBalance(),
+        };
+    }
+
+    fromWei(blockchain_id, balance, unit) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.fromWei(balance, unit),
         };
     }
 }

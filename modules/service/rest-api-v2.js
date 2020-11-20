@@ -42,7 +42,7 @@ class RestAPIServiceV2 {
      */
     _exposeAPIRoutes(server) {
         const {
-            transport, emitter, blockchain, web3, config,
+            transport, emitter, blockchain, config,
         } = this.ctx;
 
         server.get(`/api/${this.version_id}/info`, async (req, res) => {
@@ -322,26 +322,23 @@ class RestAPIServiceV2 {
                 const { node_wallet } = blockchain.getWallet().response;
                 const erc725Identity = blockchain.getIdentity().response;
 
-                const walletEthBalance = await web3.eth.getBalance(node_wallet);
-                const walletTokenBalance = await Utilities.getTracTokenBalance(
-                    web3,
-                    node_wallet,
-                    blockchain.getTokenContractAddress().response,
-                    false,
-                );
+                const walletEthBalance = await blockchain.getBalance().response;
+                const walletTokenBalance =
+                    await blockchain.getTracTokenBalance(null, false).response;
+
                 const profile = await blockchain.getProfile(erc725Identity).response;
                 const profileMinimalStake = await blockchain.getProfileMinimumStake().response;
 
                 const body = {
                     wallet: {
                         address: node_wallet,
-                        ethBalance: humanReadable ? web3.utils.fromWei(walletEthBalance, 'ether') : walletEthBalance,
-                        tokenBalance: humanReadable ? web3.utils.fromWei(walletTokenBalance, 'ether') : walletTokenBalance,
+                        ethBalance: humanReadable ? blockchain.fromWei(null, walletEthBalance, 'ether').response : walletEthBalance,
+                        tokenBalance: humanReadable ? blockchain.fromWei(null, walletTokenBalance, 'ether').response : walletTokenBalance,
                     },
                     profile: {
-                        staked: humanReadable ? web3.utils.fromWei(profile.stake, 'ether') : profile.stake,
-                        reserved: humanReadable ? web3.utils.fromWei(profile.stakeReserved, 'ether') : profile.stakeReserved,
-                        minimalStake: humanReadable ? web3.utils.fromWei(profileMinimalStake, 'ether') : profileMinimalStake,
+                        staked: humanReadable ? blockchain.fromWei(null, profile.stake, 'ether').response : profile.stake,
+                        reserved: humanReadable ? blockchain.fromWei(null, profile.stakeReserved, 'ether').response : profile.stakeReserved,
+                        minimalStake: humanReadable ? blockchain.fromWei(null, profileMinimalStake, 'ether').response : profileMinimalStake,
                     },
                 };
 
