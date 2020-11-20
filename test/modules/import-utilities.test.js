@@ -166,9 +166,10 @@ describe('Import utilities module ', () => {
     it('Sign dataset', () => {
         const testGraphCopy = Object.assign({}, sample_data.graph);
         const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
-        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
+        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config.node_private_key);
 
-        const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
+        const signedShuffled =
+            ImportUtilities.signDataset(shuffledGraphCopy, config.node_private_key);
 
         assert(signedOriginal.signature != null);
         assert(signedShuffled.signature != null);
@@ -185,8 +186,9 @@ describe('Import utilities module ', () => {
         const testGraphCopy = Object.assign({}, sample_data.graph);
         const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
-        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config, web3);
-        const signedShuffled = ImportUtilities.signDataset(shuffledGraphCopy, config, web3);
+        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config.node_private_key);
+        const signedShuffled =
+            ImportUtilities.signDataset(shuffledGraphCopy, config.node_private_key);
 
         assert.equal(
             ImportUtilities
@@ -198,6 +200,6 @@ describe('Import utilities module ', () => {
         const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
 
         assert.equal(signerOfOriginal, signerOfShuffled);
-        assert.equal(signerOfShuffled, signingWallet.wallet);
+        assert.equal(signerOfShuffled.toLowerCase(), signingWallet.wallet.toLowerCase());
     });
 });

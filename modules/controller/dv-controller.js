@@ -505,18 +505,20 @@ class DVController {
     }
 
     async sendPermissionedDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         const message = {
             data_set_id: dataSetId,
             handler_id: handlerId,
             ot_json_object_id: otJsonObjectId,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
         };
         const dataPriceRequestObject = {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
                 this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 
@@ -772,7 +774,7 @@ class DVController {
             return;
         }
 
-        this.blockchain.getRootHash(dataset_id).then((dataRootHash) => {
+        this.blockchain.getRootHash(dataset_id).response.then((dataRootHash) => {
             if (dataRootHash) {
                 if (!Utilities.isZeroHash(dataRootHash)) {
                     res.status(200);

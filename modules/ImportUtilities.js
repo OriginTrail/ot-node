@@ -10,6 +10,7 @@ const Encryption = require('./RSAEncryption');
 const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const OtJsonUtilities = require('./OtJsonUtilities');
+const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
 
 const data_constants = {
     vertexType: {
@@ -145,12 +146,12 @@ class ImportUtilities {
 
         const header = ImportUtilities.createDatasetHeader(
             config, null,
+            blockchain,
             datasetHeader.datasetTags,
             datasetHeader.datasetTitle,
             datasetHeader.datasetDescription,
             datasetHeader.OTJSONVersion,
             datasetHeader.datasetCreationTimestamp,
-            blockchain,
         );
         const dataset = {
             '@id': '',
@@ -159,7 +160,7 @@ class ImportUtilities {
             '@graph': originalDocument['@graph'],
         };
 
-        let document = OtJsonUtilities.prepareDatasetForNewImport(dataset);
+        let document = OtJsonUtilities.prepareDatasetForNewImport(dataset, blockchain);
         if (!document) {
             document = dataset;
         }
@@ -168,7 +169,7 @@ class ImportUtilities {
         const rootHash = ImportUtilities.calculateDatasetRootHash(document);
         document.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
 
-        const signed = ImportUtilities.signDataset(document, config, web3);
+        const signed = ImportUtilities.signDataset(document, blockchain.node_private_key);
         return signed;
     }
 
@@ -641,19 +642,21 @@ class ImportUtilities {
      * Sign dataset
      * @static
      */
-    static signDataset(dataset, config, web3) {
+    static signDataset(dataset, nodePrivateKey) {
         let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingSignature(dataset);
         if (!sortedDataset) {
             sortedDataset = Utilities.copyObject(dataset);
         }
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
-        const { signature } = web3.eth.accounts.sign(
+
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        const signature = dataIntegrityService.sign(
             JSON.stringify(sortedDataset),
-            Utilities.normalizeHex(config.node_private_key),
+            Utilities.normalizeHex(nodePrivateKey),
         );
         dataset.signature = {
-            value: signature,
-            type: 'ethereum-signature',
+            value: signature.signature,
+            type: signature.type,
         };
 
         return dataset;
@@ -670,7 +673,12 @@ class ImportUtilities {
         }
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
         delete sortedDataset.signature;
-        return web3.eth.accounts.recover(JSON.stringify(sortedDataset), dataset.signature.value);
+
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        return dataIntegrityService.recover(
+            JSON.stringify(sortedDataset),
+            dataset.signature.value,
+        );
     }
 
 
@@ -681,12 +689,12 @@ class ImportUtilities {
     static createDatasetHeader(
         config,
         transpilationInfo = null,
+        blockchain,
         datasetTags = [],
         datasetTitle = '',
         datasetDescription = '',
         OTJSONVersion = '1.2',
         datasetCreationTimestamp = new Date().toISOString(),
-        blockchain,
     ) {
         const header = {
             OTJSONVersion,

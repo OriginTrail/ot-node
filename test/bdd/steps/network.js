@@ -91,6 +91,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
 
     const walletCount = LocalBlockchain.wallets().length;
 
+    // todo merge default config
     const bootstrapNode = new OtNode({
         nodeConfiguration: {
             node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
@@ -102,10 +103,39 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 database: `origintrail-test-${uuidv4()}`,
             },
             blockchain: {
-                hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
+                implementations: [
+                    {
+                        blockchain_title: 'Ethereum',
+                        network_id: 'development',
+                        hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                        rpc_server_url: 'http://localhost:7545/',
+                        node_wallet_path: 'wallet.json',
+                        identity_filepath: 'erc725_identity.json',
+                        gas_limit: 2000000,
+                        gas_price: 20000000000,
+                        max_allowed_gas_price: 100000000000,
+                        dc_price_factor: '3',
+                        dh_price_factor: '2',
+                        trac_price_in_eth: '0.00005',
+                        plugins: [
+                            {
+                                enabled: false,
+                                provider: 'Hyperledger',
+                                name: 'fingerprint-plugin',
+                                config: {
+                                    url: 'URL',
+                                    auth: {
+                                        user: 'USER',
+                                        pass: 'PASS',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                ],
             },
             network: {
+                id: 'Devnet',
                 // TODO: Connect other if using multiple.
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
@@ -137,6 +167,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             node_rpc_port: 9000 + i,
             node_remote_control_port: 4000 + i,
             network: {
+                id: 'Devnet',
                 bootstraps: this.state.bootstraps.map(bootstrap =>
                     `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
                 remoteWhitelist: ['localhost', '127.0.0.1'],
@@ -145,8 +176,36 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 database: `origintrail-test-${uuidv4()}`,
             },
             blockchain: {
-                hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                rpc_server_url: 'http://localhost:7545/', // TODO use from instance
+                implementations: [
+                    {
+                        blockchain_title: 'Ethereum',
+                        network_id: 'development',
+                        hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                        rpc_server_url: 'http://localhost:7545/',
+                        node_wallet_path: 'wallet.json',
+                        identity_filepath: 'erc725_identity.json',
+                        gas_limit: 2000000,
+                        gas_price: 20000000000,
+                        max_allowed_gas_price: 100000000000,
+                        dc_price_factor: '3',
+                        dh_price_factor: '2',
+                        trac_price_in_eth: '0.00005',
+                        plugins: [
+                            {
+                                enabled: false,
+                                provider: 'Hyperledger',
+                                name: 'fingerprint-plugin',
+                                config: {
+                                    url: 'URL',
+                                    auth: {
+                                        user: 'USER',
+                                        pass: 'PASS',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                ],
             },
             local_network_only: true,
             dc_choose_time: 90000, // 90 seconds
@@ -306,8 +365,13 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(response.document, 'response.document should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
+    const nodeWalletPath = path.join(
+        myNode.options.configDir,
+        myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
 
-    expect(ImportUtilities.extractDatasetSigner(response.document, new Web3()).toLowerCase() === myNode.options.nodeConfiguration.node_wallet, 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigner(response.document, new Web3()).toLowerCase() === nodeWallet, 'Signature not valid!').to.be.true;
 
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document);
     const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(response.document);
@@ -336,7 +400,13 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    expect(ImportUtilities.extractDatasetSigner(lastExport.data.formatted_dataset, new Web3()).toLowerCase() === myNode.options.nodeConfiguration.node_wallet.toLowerCase(), 'Signature not valid!').to.be.true;
+    const nodeWalletPath = path.join(
+        myNode.options.configDir,
+        myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
+
+    expect(ImportUtilities.extractDatasetSigner(lastExport.data.formatted_dataset, new Web3()).toLowerCase() === nodeWallet.toLowerCase(), 'Signature not valid!').to.be.true;
 });
 
 Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
@@ -457,6 +527,18 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
     const dc1 = this.state.nodes[nodeIndex1 - 1];
     const dc2 = this.state.nodes[nodeIndex2 - 1];
 
+    const nodeWalletPath1 = path.join(
+        dc1.options.configDir,
+        dc1.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWallet1 = JSON.parse(fs.readFileSync(nodeWalletPath1, 'utf8')).node_wallet;
+
+    const nodeWalletPath2 = path.join(
+        dc2.options.configDir,
+        dc2.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const nodeWallet2 = JSON.parse(fs.readFileSync(nodeWalletPath2, 'utf8')).node_wallet;
+
     // check dataset_id
     const calculatedDatasetId1 = ImportUtilities.calculateGraphPublicHash(dataset1);
     expect(this.state.secondLastImport.data.dataset_id, 'Dataset from API endpoint and manually calculated should match')
@@ -465,7 +547,7 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
     // check signature
     const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigner(dataset1, new Web3());
     expect(Utilities.normalizeHex(calcuatedDatasetSignature1), 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(Utilities.normalizeHex(dc1.options.nodeConfiguration.node_wallet));
+        .to.be.equal(Utilities.normalizeHex(nodeWallet1));
 
     // check root_hash
     const calculatedDatasetRootHash1 = ImportUtilities.calculateDatasetRootHash(dataset1);
@@ -480,7 +562,7 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
     // check signature
     const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigner(dataset2, new Web3());
     expect(Utilities.normalizeHex(calcuatedDatasetSignature2), 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(Utilities.normalizeHex(dc2.options.nodeConfiguration.node_wallet));
+        .to.be.equal(Utilities.normalizeHex(nodeWallet2));
 
     // check root_hash
     const calculatedDatasetRootHash2 = ImportUtilities.calculateDatasetRootHash(dataset2);
@@ -837,6 +919,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
                 network: {
+                    id: 'Devnet',
                     bootstraps: this.state.bootstraps.map(bootstrap =>
                         `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
                     remoteWhitelist: ['localhost', '127.0.0.1'],
@@ -845,8 +928,36 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                     database: `origintrail-test-${uuidv4()}`,
                 },
                 blockchain: {
-                    hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                    rpc_server_url: 'http://localhost:7545/', // TODO use from instance
+                    implementations: [
+                        {
+                            blockchain_title: 'Ethereum',
+                            network_id: 'development',
+                            hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                            rpc_server_url: 'http://localhost:7545/',
+                            node_wallet_path: 'wallet.json',
+                            identity_filepath: 'erc725_identity.json',
+                            gas_limit: 2000000,
+                            gas_price: 20000000000,
+                            max_allowed_gas_price: 100000000000,
+                            dc_price_factor: '3',
+                            dh_price_factor: '2',
+                            trac_price_in_eth: '0.00005',
+                            plugins: [
+                                {
+                                    enabled: false,
+                                    provider: 'Hyperledger',
+                                    name: 'fingerprint-plugin',
+                                    config: {
+                                        url: 'URL',
+                                        auth: {
+                                            user: 'USER',
+                                            pass: 'PASS',
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    ],
                 },
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',
@@ -1165,8 +1276,16 @@ Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then 
     const wallets = LocalBlockchain.wallets();
     const walletCount = LocalBlockchain.wallets().length;
 
-    const operationalWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.node_wallet;
-    let managementWallet = this.state.nodes[nodeIndex - 1].options.nodeConfiguration.management_wallet;
+    const node = this.state.nodes[nodeIndex - 1];
+
+    const nodeWalletPath = path.join(
+        node.options.configDir,
+        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+    );
+    const { node_wallet, management_wallet } = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8'));
+    const operationalWallet = node_wallet;
+    let managementWallet = management_wallet;
+
     let randomIndex;
     expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
 

@@ -16,6 +16,8 @@ class Blockchain {
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
         this.pluginService = ctx.blockchainPluginService;
+        this.gasStationService = ctx.gasStationService;
+        this.tracPriceService = ctx.tracPriceService;
         this.appState = ctx.appState;
 
         this.blockchain = [];
@@ -1181,6 +1183,61 @@ class Blockchain {
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getHubContractAddress(),
+        };
+    }
+
+    /**
+     * Returns wallet public and private key from configuration
+     */
+    getWallet(blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getWallet(),
+        };
+    }
+
+    /**
+     * Returns blockchain title from configuration
+     */
+    getBlockchainTitle(blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getBlockchainTitle(),
+        };
+    }
+
+    /**
+     * Returns gas price from configuration
+     */
+    getGasPrice(blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.calculateGasPrice(),
+        };
+    }
+
+    /**
+     * Returns trac price from configuration
+     */
+    getTracPrice(blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getTracPrice(),
+        };
+    }
+
+    /**
+     * Returns price factors from configuration
+     */
+    getPriceFactors(blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getPriceFactors(),
         };
     }
 }

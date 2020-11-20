@@ -15,9 +15,10 @@ class WotOtJsonTranspiler {
     /**
      * Convert WOT JSON document to OT-JSON
      * @param wotJson - json string
+     * @param blockchain
      * @return {*} - OT-JSON object
      */
-    convertToOTJson(wotJson) {
+    convertToOTJson(wotJson, blockchain) {
         if (wotJson == null) {
             throw new Error('[Transpilation Error] JSON document cannot be empty');
         }
@@ -56,7 +57,11 @@ class WotOtJsonTranspiler {
 
         otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-        otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
+        otjson.datasetHeader = importUtilities.createDatasetHeader(
+            this.config,
+            transpilationInfo,
+            blockchain,
+        );
 
         let result = OtJsonUtilities.prepareDatasetForNewImport(otjson);
         if (!result) {
@@ -68,7 +73,7 @@ class WotOtJsonTranspiler {
 
         // Until we update all routes to work with commands, keep this web3 implementation
         if (this.web3) {
-            result = importUtilities.signDataset(result, this.config, this.web3);
+            result = importUtilities.signDataset(result, blockchain.node_private_key);
         } else {
             const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
             if (sortedDataset) {

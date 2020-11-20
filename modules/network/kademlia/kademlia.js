@@ -55,8 +55,8 @@ class Kademlia {
         this.emitter = ctx.emitter;
         this.kademliaUtilities = ctx.kademliaUtilities;
         this.config = ctx.config;
-        this.approvalService = ctx.approvalService;
         this.networkService = ctx.networkService;
+        this.blockchain = ctx.blockchain;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
@@ -140,13 +140,16 @@ class Kademlia {
                 }
             }
 
+            const implementation = this.blockchain.getWallet();
+            const { node_wallet } = implementation.response;
+
             // Initialize public contact data
             const contact = {
                 hostname,
                 protocol: 'https:',
                 port: this.config.node_port,
                 // agent: kadence.version.protocol,
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 network_id: this.config.network.id,
                 identity: this.config.identity,
             };

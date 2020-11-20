@@ -20,9 +20,10 @@ class EpcisOtJsonTranspiler {
     /**
      * Convert EPCIS XML document to OT-JSON
      * @param xml - XML string
+     * @param blockchain
      * @return {*} - OT-JSON object
      */
-    convertToOTJson(xml) {
+    convertToOTJson(xml, blockchain) {
         if (xml == null) {
             throw new Error('[Transpilation Error] XML document cannot be empty');
         }
@@ -75,7 +76,11 @@ class EpcisOtJsonTranspiler {
 
         otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-        otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
+        otjson.datasetHeader = importUtilities.createDatasetHeader(
+            this.config,
+            transpilationInfo,
+            blockchain,
+        );
         importUtilities.calculateGraphPermissionedDataHashes(otjson['@graph']);
 
         let result = OtJsonUtilities.prepareDatasetForNewImport(otjson);
@@ -88,7 +93,7 @@ class EpcisOtJsonTranspiler {
 
         // Until we update all routes to work with commands, keep this web3 implementation
         if (this.web3) {
-            result = importUtilities.signDataset(result, this.config, this.web3);
+            result = importUtilities.signDataset(result, blockchain.node_private_key);
         } else {
             const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
             if (sortedDataset) {

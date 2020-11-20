@@ -319,20 +319,22 @@ class RestAPIServiceV2 {
 
             try {
                 const humanReadable = req.query.humanReadable === 'true';
+                const { node_wallet } = blockchain.getWallet().response;
+                const erc725Identity = blockchain.getIdentity().response;
 
-                const walletEthBalance = await web3.eth.getBalance(config.node_wallet);
+                const walletEthBalance = await web3.eth.getBalance(node_wallet);
                 const walletTokenBalance = await Utilities.getTracTokenBalance(
                     web3,
-                    config.node_wallet,
-                    blockchain.getTokenContractAddress(),
+                    node_wallet,
+                    blockchain.getTokenContractAddress().response,
                     false,
                 );
-                const profile = await blockchain.getProfile(config.erc725Identity);
-                const profileMinimalStake = await blockchain.getProfileMinimumStake();
+                const profile = await blockchain.getProfile(erc725Identity).response;
+                const profileMinimalStake = await blockchain.getProfileMinimumStake().response;
 
                 const body = {
                     wallet: {
-                        address: config.node_wallet,
+                        address: node_wallet,
                         ethBalance: humanReadable ? web3.utils.fromWei(walletEthBalance, 'ether') : walletEthBalance,
                         tokenBalance: humanReadable ? web3.utils.fromWei(walletTokenBalance, 'ether') : walletTokenBalance,
                     },

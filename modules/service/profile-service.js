@@ -99,13 +99,14 @@ class ProfileService {
         // set empty identity if there is none
         let identity = identityExists ? profileIdentity : new BN(0, 16);
 
+        const { node_wallet, management_wallet } = this.blockchain.getWallet().response;
         let createProfileCalled = false;
         do {
             try {
-                if (this.config.management_wallet) {
+                if (management_wallet) {
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchain.createProfile(
-                        this.config.management_wallet,
+                        management_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
                         blockchainId, true,
@@ -116,7 +117,7 @@ class ProfileService {
                         ' Please set management one.');
                     // eslint-disable-next-line no-await-in-loop
                     await this.blockchain.createProfile(
-                        this.config.node_wallet,
+                        node_wallet,
                         this.config.identity,
                         initialTokenAmount, identityExists, identity,
                         blockchainId, true,
@@ -147,7 +148,7 @@ class ProfileService {
                 5 * 60 * 1000,
                 null,
                 eventData =>
-                    Utilities.compareHexStrings(eventData.profile, this.config.node_wallet),
+                    Utilities.compareHexStrings(eventData.profile, node_wallet),
                 null,
                 blockchainId,
             );

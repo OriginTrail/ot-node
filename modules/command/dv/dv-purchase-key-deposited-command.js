@@ -146,6 +146,8 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
                 this.remoteControl.purchaseStatus('Purchase completed', 'You can preview the purchased data in My Purchases page.');
 
+                const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
                 // todo pass blockchain identity
                 const purchaseCompletionObject = {
                     message: {
@@ -155,7 +157,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                         seller_node_id: this.config.identity,
                         seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity()),
                         price: this.config.default_data_price,
-                        wallet: this.config.node_wallet,
+                        wallet: node_wallet,
                     },
                 };
 
@@ -163,7 +165,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     Utilities.generateRsvSignature(
                         purchaseCompletionObject.message,
                         this.web3,
-                        this.config.node_private_key,
+                        node_private_key,
                     );
 
                 await this.transport.publish('kad-purchase-complete', purchaseCompletionObject);
