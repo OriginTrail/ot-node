@@ -12,7 +12,6 @@ const DELAY_ON_FAIL_IN_MILLS = 5 * 60 * 1000;
 class DhPayOutCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.web3 = ctx.web3;
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
@@ -136,15 +135,16 @@ class DhPayOutCommand extends Command {
      */
     async _printBalances(blockchainIdentity, blockchain_id) {
         const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
-        const balance = await this.blockchain
-            .getWalletTokenBalance(node_wallet).response;
-        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
+        const balance =
+            await this.blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response;
+        const balanceInTRAC = this.blockchain.fromWei(blockchain_id, balance, 'ether').response;
         this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
 
         const profile = await this.blockchain
             .getProfile(blockchainIdentity, blockchain_id).response;
         const profileBalance = profile.stake;
-        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        const profileBalanceInTRAC =
+            this.blockchain.fromWei(blockchain_id, profileBalance, 'ether').response;
         this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
