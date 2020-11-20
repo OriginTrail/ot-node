@@ -44,7 +44,6 @@ class DVPermissionedDataReadRequestCommand extends Command {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
                 node_private_key,
             ),
         };

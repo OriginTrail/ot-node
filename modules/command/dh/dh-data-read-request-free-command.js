@@ -106,7 +106,6 @@ class DHDataReadRequestFreeCommand extends Command {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
                     replyMessage,
-                    this.web3,
                     node_private_key,
                 ),
             };
@@ -120,7 +119,6 @@ class DHDataReadRequestFreeCommand extends Command {
                 message: errorMessage,
                 messageSignature: Utilities.generateRsvSignature(
                     errorMessage,
-                    this.web3,
                     node_private_key,
                 ),
             }, nodeId);

@@ -692,7 +692,7 @@ class Utilities {
         return Math.abs(myBid.sub(offer));
     }
 
-    static generateRsvSignature(message, web3, privateKey) {
+    static generateRsvSignature(message, privateKey) {
         let sortedMessage;
         if (typeof message === 'string' || message instanceof String) {
             sortedMessage = message;
@@ -710,7 +710,7 @@ class Utilities {
         return { r: signature.r, s: signature.s, v: signature.v };
     }
 
-    static isMessageSigned(web3, message, signature) {
+    static isMessageSigned(message, signature) {
         let sortedMessage;
         if (typeof message === 'string' || message instanceof String) {
             sortedMessage = message;

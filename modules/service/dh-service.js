@@ -538,7 +538,6 @@ class DHService {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
                     replyMessage,
-                    this.web3,
                     node_private_key,
                 ),
             };

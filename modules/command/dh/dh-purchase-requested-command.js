@@ -133,7 +133,6 @@ class DhPurchaseRequestedCommand extends Command {
             message: response,
             messageSignature: Utilities.generateRsvSignature(
                 response,
-                this.web3,
                 node_private_key,
             ),
         };

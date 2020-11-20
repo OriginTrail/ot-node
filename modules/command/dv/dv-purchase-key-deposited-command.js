@@ -164,7 +164,6 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 purchaseCompletionObject.messageSignature =
                     Utilities.generateRsvSignature(
                         purchaseCompletionObject.message,
-                        this.web3,
                         node_private_key,
                     );
 
