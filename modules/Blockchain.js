@@ -1,9 +1,16 @@
 const Ethereum = require('./Blockchain/Ethereum/index.js');
 const uuidv4 = require('uuid/v4');
 const Op = require('sequelize/lib/operators');
+const deepExtend = require('deep-extend');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const configjson = require('../config/config.json');
+
+const defaultBlockchainConfig = Utilities.copyObject(configjson[
+    process.env.NODE_ENV &&
+    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+        process.env.NODE_ENV : 'development'].blockchain);
 
 class Blockchain {
     /**
@@ -22,8 +29,10 @@ class Blockchain {
 
         this.blockchain = [];
 
-        for (let i = 0; i < ctx.config.blockchain.implementations.length; i += 1) {
-            const implementation_configuration = ctx.config.blockchain.implementations[i];
+        this.config = this.attachDefaultConfig(this.config, defaultBlockchainConfig);
+
+        for (let i = 0; i < this.config.implementations.length; i += 1) {
+            const implementation_configuration = this.config.implementations[i];
 
             switch (implementation_configuration.blockchain_title) {
             case 'Ethereum':
@@ -64,6 +73,40 @@ class Blockchain {
                 await this.initialize();
             });
         }
+    }
+
+    /**
+     * Attaches the default configuration for each blockchain implementation
+     * because the user defined blockchain configuration overwrites it on node startup
+     * @param config {Object} - The running blockchain configuration, with user defined values
+     * @param defaultConfig {Object} - The default blockchain configuration for current environment
+     * @returns {Object} - The new blockchain configuration
+     */
+    attachDefaultConfig(config, defaultConfig) {
+        const result = Object.assign({}, config);
+
+        if (config.implementations && defaultConfig.implementations
+        && Array.isArray(config.implementations) && Array.isArray(defaultConfig.implementations)) {
+            const defaults = defaultConfig.implementations;
+
+            result.implementations = [];
+
+            for (const implUserConfig of config.implementations) {
+                if (!implUserConfig.blockchain_title) {
+                    throw Error(`Blockchain implementation missing title.\nGiven config: ${JSON.stringify(implUserConfig, null, 4)}`);
+                }
+
+                const implDefaultConfig =
+                    defaults.find(cfg => cfg.blockchain_title === implUserConfig.blockchain_title);
+                if (!implDefaultConfig) {
+                    throw Error(`Unsupported blockchain ${implUserConfig.blockchain_title}`);
+                }
+
+                result.implementations.push(deepExtend({}, implDefaultConfig, implUserConfig));
+            }
+        }
+
+        return result;
     }
 
     /**
