@@ -18,7 +18,6 @@ class Blockchain {
         this.gasStationService = ctx.gasStationService;
         this.tracPriceService = ctx.tracPriceService;
         this.appState = ctx.appState;
-        this.web3 = ctx.web3;
 
         this.blockchain = [];
 

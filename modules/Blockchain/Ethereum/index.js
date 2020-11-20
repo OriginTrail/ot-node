@@ -16,7 +16,7 @@ class Ethereum {
      * Initializing Ethereum blockchain connector
      */
     constructor({
-        config, emitter, web3, logger, gasStationService, tracPriceService,
+        config, emitter, logger, gasStationService, tracPriceService,
     }, configuration) {
         this.initialized = false;
 
