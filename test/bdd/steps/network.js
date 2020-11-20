@@ -1215,8 +1215,7 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
     const response = await httpApiHelper.apiNodeInfo(bootstrap.state.node_rpc_url);
 
     expect(response, 'response should contain version, blockchain, network and is_bootstrap keys').to.have.keys([
-        'version', 'blockchain',
-        'network', 'is_bootstrap',
+        'version', 'network', 'is_bootstrap',
     ]);
 });
 
