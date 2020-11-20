@@ -329,6 +329,11 @@ class Kademlia {
         } else if (this.kademliaUtilities.checkBootstraps(peers)
             && this.kademliaUtilities.getRoutingTable(this.node.router)) {
             this.log.info(`Skipping network join, using existing ${peers.length} seeds`);
+
+            // todo experimental - should be removed
+            const end = Date.now();
+            this.log.info(`Network join lasted ${end - start} ms`);
+
             callback(null, peers);
         } else {
             this.log.info(`Joining network from ${peers.length} seeds`);
@@ -344,14 +349,15 @@ class Kademlia {
                 } else {
                     this.kademliaUtilities.setBootstraps(peers);
                     this.kademliaUtilities.setRoutingTable(this.node.router);
+
+                    // todo experimental - should be removed
+                    const end = Date.now();
+                    this.log.info(`Network join lasted ${end - start} ms`);
+
                     callback(null, result);
                 }
             });
         }
-
-        // todo experimental - should be removed
-        const end = Date.now();
-        this.log.info(`Network join lasted ${end - start} ms`);
     }
 
     /**

@@ -147,7 +147,7 @@ class KademliaUtils {
      * Load routing table
      */
     getRoutingTable(router) {
-        const HOUR = 1000 * 60 * 60;
+        const HOUR = 1000 * 60 * 60 * 24;
         const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'router.json');
         if (!fs.existsSync(filePath)) {
             return false;
