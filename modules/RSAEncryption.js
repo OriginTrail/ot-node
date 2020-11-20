@@ -5,6 +5,7 @@ const xor = require('buffer-xor');
 const abi = require('ethereumjs-abi');
 const Utilities = require('./Utilities');
 const utils = require('ethereumjs-util');
+const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
 
 class RSAEncryption {
     /**
@@ -319,9 +320,13 @@ class RSAEncryption {
      * @param privateKey (padded with 0x)
      * @returns {Signature object}
      */
-    static signMessage(web3, dataArgs, privateKey) {
+    static signMessage(dataArgs, privateKey) {
         const hash = this.generateHash(dataArgs);
-        return web3.eth.accounts.sign(hash, privateKey);
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        return dataIntegrityService.sign(
+            hash,
+            privateKey,
+        );
     }
 
     /**

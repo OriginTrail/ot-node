@@ -400,10 +400,8 @@ class DCService {
 
         const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
-        const distributionSignature = Encryption.signMessage(
-            this.web3, toSign,
-            Utilities.normalizeHex(node_private_key),
-        );
+        const distributionSignature = Encryption
+            .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
         const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
             offer.data_set_id,

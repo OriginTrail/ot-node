@@ -182,7 +182,7 @@ class DhReplicationImportCommand extends Command {
         const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(node_private_key));
+            .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
         // todo pass blockchain identity
         const replicationFinishedMessage = {

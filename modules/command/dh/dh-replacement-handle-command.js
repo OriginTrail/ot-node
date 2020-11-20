@@ -210,7 +210,7 @@ class DHReplacementImportCommand extends Command {
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(this.profileService.getIdentity())];
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
+            .signMessage(toSign, Utilities.normalizeHex(this.config.node_private_key));
 
         // todo pass blockchain identity
         const replicationFinishedMessage = {
