@@ -56,8 +56,6 @@ const semver = require('semver');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
-const Web3 = require('web3');
-
 const log = require('./modules/logger');
 
 global.__basedir = __dirname;
@@ -173,14 +171,9 @@ class OTNode {
         config.erc725Identity = '';
         config.publicKeyData = {};
 
-        // todo invoke blockchain service
-        const web3 =
-            new Web3(new Web3.providers
-                .HttpProvider(config.blockchain.implementations[0].rpc_server_url));
-
         const appState = {};
         if (config.is_bootstrap_node) {
-            await this.startBootstrapNode({ appState }, web3);
+            await this.startBootstrapNode({ appState });
             return;
         }
 
@@ -265,7 +258,6 @@ class OTNode {
             approvalService: awilix.asClass(ApprovalService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
-            web3: awilix.asValue(web3),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
@@ -470,7 +462,7 @@ class OTNode {
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode({ appState }, web3) {
+    async startBootstrapNode({ appState }) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
@@ -485,7 +477,6 @@ class OTNode {
 
         container.register({
             emitter: awilix.asValue({}),
-            web3: awilix.asValue(web3),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),

@@ -43,7 +43,6 @@ class RemoteControl {
         this.blockchain = ctx.blockchain;
         this.log = ctx.logger;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.socket = new SocketDecorator(ctx.logger);
         this.profileService = ctx.profileService;
 
@@ -485,18 +484,15 @@ class RemoteControl {
 
     /**
      * Get wallet balance
-     * @param wallet
      */
     getBalance() {
-        const { node_wallet } = this.blockchain.getWallet().response;
-        Utilities.getTracTokenBalance(
-            this.web3, node_wallet,
-            this.config.blockchain.token_contract_address,
-        ).then((trac) => {
+        const { response, blockchain_id } = this.blockchain.getWallet();
+        const { node_wallet } = response;
+        this.blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response.then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        this.web3.eth.getBalance(node_wallet).then((balance) => {
-            this.socket.emit('balance', balance);
+        this.blockchain.getWalletBaseBalance(node_wallet, blockchain_id).response.then((base) => {
+            this.socket.emit('balance', base);
         });
     }
 

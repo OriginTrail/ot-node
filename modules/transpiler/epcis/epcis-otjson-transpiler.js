@@ -13,7 +13,7 @@ const deepExtend = require('deep-extend');
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
-        this.web3 = ctx.web3;
+
         this.connectionTypes = ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC', 'READ_POINT', 'BIZ_LOCATION'];
     }
 
@@ -91,14 +91,9 @@ class EpcisOtJsonTranspiler {
         const merkleRoot = importUtilities.calculateDatasetRootHash(result);
         result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
 
-        // Until we update all routes to work with commands, keep this web3 implementation
-        if (this.web3) {
-            result = importUtilities.signDataset(result, blockchain.node_private_key);
-        } else {
-            const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
-            if (sortedDataset) {
-                result = sortedDataset;
-            }
+        const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
+        if (sortedDataset) {
+            result = sortedDataset;
         }
         return result;
     }

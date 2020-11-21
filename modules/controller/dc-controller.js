@@ -19,7 +19,6 @@ class DCController {
         this.graphStorage = ctx.graphStorage;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
-        this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
         this.profileService = ctx.profileService;
         this.blockchain = ctx.blockchain;
@@ -202,7 +201,6 @@ class DCController {
             message: replayMessage,
             messageSignature: Utilities.generateRsvSignature(
                 JSON.stringify(replayMessage),
-                this.web3,
                 node_private_key,
             ),
         };
@@ -365,7 +363,6 @@ class DCController {
             message: response,
             messageSignature: Utilities.generateRsvSignature(
                 response,
-                this.web3,
                 node_private_key,
             ),
         };

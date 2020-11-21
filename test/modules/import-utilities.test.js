@@ -196,8 +196,8 @@ describe('Import utilities module ', () => {
             ImportUtilities.sortStringifyDataset(signedShuffled),
         );
 
-        const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal, web3);
-        const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled, web3);
+        const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal);
+        const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled);
 
         assert.equal(signerOfOriginal, signerOfShuffled);
         assert.equal(signerOfShuffled.toLowerCase(), signingWallet.wallet.toLowerCase());

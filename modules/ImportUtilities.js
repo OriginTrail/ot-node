@@ -140,7 +140,7 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(originalDocument, config, web3, blockchain) {
+    static prepareDataset(originalDocument, config, blockchain) {
         const datasetHeader = originalDocument.datasetHeader ? originalDocument.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(originalDocument['@graph']);
 
@@ -666,7 +666,7 @@ class ImportUtilities {
      * Extract Signer from OT-JSON signature
      * @static
      */
-    static extractDatasetSigner(dataset, web3) {
+    static extractDatasetSigner(dataset) {
         let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingSignature(dataset);
         if (!sortedDataset) {
             sortedDataset = Utilities.copyObject(dataset);

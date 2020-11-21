@@ -17,7 +17,6 @@ class DVController {
 
         this.transport = ctx.transport;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
         this.profileService = ctx.profileService;
@@ -517,7 +516,6 @@ class DVController {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
                 node_private_key,
             ),
         };

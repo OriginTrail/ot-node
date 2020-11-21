@@ -11,7 +11,6 @@ class DVDataReadRequestCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
-        this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
         this.blockchain = ctx.blockchain;
     }
@@ -39,7 +38,6 @@ class DVDataReadRequestCommand extends Command {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
                 node_private_key,
             ),
         };

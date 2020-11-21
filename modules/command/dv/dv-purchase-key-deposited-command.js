@@ -10,7 +10,6 @@ class DvPurchaseKeyDepositedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.remoteControl = ctx.remoteControl;
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.logger = ctx.logger;
         this.config = ctx.config;
@@ -164,7 +163,6 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 purchaseCompletionObject.messageSignature =
                     Utilities.generateRsvSignature(
                         purchaseCompletionObject.message,
-                        this.web3,
                         node_private_key,
                     );
 

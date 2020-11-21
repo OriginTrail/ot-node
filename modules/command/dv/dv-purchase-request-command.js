@@ -11,7 +11,6 @@ class DvPurchaseRequestCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
         this.logger = ctx.logger;
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.profileService = ctx.profileService;
         this.blockchain = ctx.blockchain;
@@ -93,7 +92,6 @@ class DvPurchaseRequestCommand extends Command {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
                 node_private_key,
             ),
         };

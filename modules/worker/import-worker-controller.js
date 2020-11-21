@@ -7,7 +7,6 @@ const OtJsonUtilities = require('../OtJsonUtilities');
 class ImportWorkerController {
     constructor(ctx) {
         this.logger = ctx.logger;
-        this.web3 = ctx.web3;
         this.importService = ctx.importService;
         this.blockchain = ctx.blockchain;
 
@@ -36,10 +35,7 @@ class ImportWorkerController {
         const otjson_size_in_bytes = bytes(document);
         document = JSON.parse(document);
         // Extract wallet from signature.
-        const wallet = ImportUtilities.extractDatasetSigner(
-            document,
-            this.web3,
-        );
+        const wallet = ImportUtilities.extractDatasetSigner(document);
 
         await this.importService.validateDocument(document);
 
