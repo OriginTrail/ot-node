@@ -370,15 +370,15 @@ class OtNode extends EventEmitter {
             this.emit('deposit-command-completed');
         } else if (line.match(/Replication window for .+ is closed\. Replicated to .+ peers\. Verified .+\./gi)) {
             this.emit('replication-window-closed');
-        } else if (line.match(/.*Offer with internal ID .+ for data set .+ written to blockchain. Waiting for DHs\.\.\./gi)) {
+        } else if (line.match(/.*Offer with internal ID .+ for data set .+ written to blockchain .+\. Waiting for DHs\.\.\./gi)) {
             this.emit('offer-written-blockchain');
         } else if (line.match(/Command dhPayOutCommand and ID .+ processed\./gi)) {
             this.emit('dh-pay-out-finalized');
         } else if (line.match(/Accepting offer with price: .+ TRAC\./gi)) {
             const result = line.match(walletAmountRegex);
             this.state.calculatedOfferPrice = result[result.length - 1];
-        } else if (line.match(/Payout for offer .+ successfully completed\./gi)) {
-            const offerId = line.match(/Payout for offer .+ successfully completed\./gi)[0].match(/Payout for offer (.*?) successfully completed\./)[1];
+        } else if (line.match(/Payout for offer .+ successfully completed.+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
             this.emit(`dh-pay-out-offer-${offerId}-completed`);
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');

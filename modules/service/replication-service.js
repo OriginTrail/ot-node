@@ -22,6 +22,7 @@ class ReplicationService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.importService = ctx.importService;
@@ -38,20 +39,30 @@ class ReplicationService {
     /**
      * Creates replications for one Offer
      * @param internalOfferId   - Internal Offer ID
+     * @param blockchain_id {String} - Blockchain implementation to use
      * @returns {Promise<void>}
      */
-    async createReplications(internalOfferId) {
+    async createReplications(internalOfferId, blockchain_id) {
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         if (!offer) {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
 
-        const otJson = await this.importService.getImport(offer.data_set_id);
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchain_id).response;
 
-        // todo pass blockchain identity
+        const otJson = await this.importService.getImport(offer.data_set_id);
+        let dataset;
+        const datasetSigner = ImportUtilities.extractDatasetSigner(otJson);
+        if (Utilities.normalizeHex(datasetSigner) !== Utilities.normalizeHex(node_wallet)) {
+            this.logger.info(`Signature stored for dataset is for another blockchain implementation, updating signature for ${blockchain_id} blockchain`);
+            dataset = ImportUtilities.updateDatasetSignature(otJson, node_private_key);
+        } else {
+            dataset = otJson;
+        }
+
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,
-            this.profileService.getIdentity(),
+            this.profileService.getIdentity(blockchain_id),
             this.config.default_data_price,
             this.config.identity,
             otJson['@graph'],

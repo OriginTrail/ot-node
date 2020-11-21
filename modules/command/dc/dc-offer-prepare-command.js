@@ -22,10 +22,11 @@ class DCOfferPrepareCommand extends Command {
      */
     async execute(command) {
         const {
-            internalOfferId,
+            internalOfferId, blockchain_id,
         } = command.data;
 
-        const distLitRootHashes = await this.replicationService.createReplications(internalOfferId);
+        const distLitRootHashes =
+            await this.replicationService.createReplications(internalOfferId, blockchain_id);
 
         const { data } = command;
         Object.assign(data, distLitRootHashes);

@@ -86,8 +86,22 @@ class DhReplicationImportCommand extends Command {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);
         }
 
-        const originalRootHash = otJson.datasetHeader.dataIntegrity.proofs[0].proofValue;
-        if (decryptedGraphRootHash !== originalRootHash) {
+        let rootHashValidated = false;
+        let originalRootHash;
+        for (const schema in otJson.datasetHeader.validationSchemas) {
+            if (otJson.datasetHeader.validationSchemas[schema].networkId === blockchain_id) {
+                const proof = otJson.datasetHeader.dataIntegrity
+                    .proofs.find(proof => (proof.validationSchema === schema));
+
+                if (proof && proof.proofValue) {
+                    const originalRootHash = proof.proofValue;
+                    if (decryptedGraphRootHash === originalRootHash) {
+                        rootHashValidated = true;
+                    }
+                }
+            }
+        }
+        if (!rootHashValidated) {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from document root hash ${originalRootHash}`);
         }
 
@@ -143,6 +157,7 @@ class DhReplicationImportCommand extends Command {
         const importResult = await this.importService.importFile({
             document: decryptedDataset,
             encryptedMap,
+            blockchain_id,
         });
 
         fs.unlinkSync(documentPath);
@@ -172,13 +187,12 @@ class DhReplicationImportCommand extends Command {
         }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
-        // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),
         ];
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchain_id).response;
 
         const messageSignature = Encryption
             .signMessage(toSign, Utilities.normalizeHex(node_private_key));

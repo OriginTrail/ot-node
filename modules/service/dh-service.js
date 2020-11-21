@@ -95,7 +95,7 @@ class DHService {
             return; // the offer is mine
         }
 
-        this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
+        this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId} on blockchain ${blockchain_id}.`);
         if (dataSetSizeInBytes) {
             const dataSizeInMB = dataSetSizeInBytes / 1000000;
             if (dataSizeInMB > this.config.dh_maximum_dataset_filesize_in_mb) {
@@ -121,6 +121,7 @@ class DHService {
             dataSetSizeInBytes,
             holdingTimeInMinutes,
             dh_price_factor,
+            blockchain_id,
         );
         const myOfferPrice = offerPrice.finalPrice;
         const dhTokenPrice = new BN(myOfferPrice.toString(), 10);

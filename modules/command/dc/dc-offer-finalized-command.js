@@ -28,12 +28,15 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId, nodeIdentifiers, handler_id } = command.data;
+        const {
+            offerId, nodeIdentifiers, handler_id, blockchain_id,
+        } = command.data;
 
         const events = await Models.events.findAll({
             where: {
                 event: 'OfferFinalized',
                 finished: 0,
+                blockchain_id,
             },
         });
         if (events) {
@@ -47,7 +50,7 @@ class DcOfferFinalizedCommand extends Command {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                this.logger.important(`Offer ${offerId} finalized`);
+                this.logger.important(`Offer ${offerId} finalized on blockchain ${blockchain_id}`);
 
                 const handler = await Models.handler_ids.findOne({
                     where: { handler_id },
@@ -169,6 +172,7 @@ class DcOfferFinalizedCommand extends Command {
                 endTime, this.config.numberOfChallenges,
             );
 
+            // TODO: Add blockchain_id to challenges
             await forEach(challenges, async challenge =>
                 Models.challenges.create({
                     dh_id: replicatedData.dh_id,

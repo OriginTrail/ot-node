@@ -263,12 +263,12 @@ class EventEmitter {
         });
 
         this._on('api-payout', async (data) => {
-            const { offerId, urgent } = data;
+            const { offerId, urgent, blockchain_id } = data;
 
-            logger.info(`Payout called for offer ${offerId}.`);
+            logger.info(`Payout called for offer ${offerId} on blockchain ${blockchain_id}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await profileService.payOut(offerId, urgent);
+                await profileService.payOut(offerId, urgent, blockchain_id);
 
                 data.response.status(200);
                 data.response.send({
