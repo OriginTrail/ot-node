@@ -140,16 +140,12 @@ class Kademlia {
                 }
             }
 
-            const implementation = this.blockchain.getWallet();
-            const { node_wallet } = implementation.response;
-
             // Initialize public contact data
             const contact = {
                 hostname,
                 protocol: 'https:',
                 port: this.config.node_port,
                 // agent: kadence.version.protocol,
-                wallet: node_wallet,
                 network_id: this.config.network.id,
                 identity: this.config.identity,
             };

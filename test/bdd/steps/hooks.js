@@ -67,8 +67,16 @@ After(function (testCase, done) {
             }));
     this.state.nodes.forEach(node => (node.isRunning && node.stop()));
     this.state.bootstraps.forEach(node => (node.isRunning && node.stop()));
-    if (this.state.localBlockchain && this.state.localBlockchain.server) {
-        this.state.localBlockchain.server.close();
+    if (this.state.localBlockchain) {
+        if (Array.isArray(this.state.localBlockchain)) {
+            for (const blockchain of this.state.localBlockchain) {
+                if (blockchain.server) {
+                    blockchain.server.close();
+                }
+            }
+        } else if (this.state.localBlockchain.server) {
+            this.state.localBlockchain.server.close();
+        }
     }
 
     Promise.all(nodesWaits).then(() => {

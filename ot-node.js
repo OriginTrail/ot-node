@@ -289,7 +289,7 @@ class OTNode {
             gasStationService: awilix.asClass(GasStationService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
+        await blockchain.loadContracts();
 
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -488,7 +488,6 @@ class OTNode {
             web3: awilix.asValue(web3),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
-            approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
@@ -504,17 +503,9 @@ class OTNode {
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
         });
-        const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
-
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
         await transport.start();
-
-
-        const approvalService = container.resolve('approvalService');
-
-        this.listenBlockchainEvents(blockchain);
 
         const restApiController = container.resolve('restApiController');
         try {
