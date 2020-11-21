@@ -232,6 +232,20 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
 
         break;
+    case 'supplyTokens':
+        await Hub.at('0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a')
+            .then((result) => {
+                hub = result;
+            });
+        console.log(hub);
+        temp = await hub.getContractAddress.call('Token');
+        console.log(temp);
+        console.log(temp);
+        console.log(temp);
+        console.log(temp);
+        token = await TracToken.at(temp);
+        await token.transfer(accounts[0], amountToMint.divn(2), { from: accounts[1] });
+        break;
     case 'setIdentity':
         temp = await deployer.deploy(TestingUtilities);
         temp = await TestingUtilities.deployed();

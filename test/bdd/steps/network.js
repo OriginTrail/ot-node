@@ -28,7 +28,7 @@ const Web3 = require('web3');
 
 // Identity difficulty 8.
 const bootstrapIdentity = {
-    ff62cb1f692431d901833d55b93c7d991b4087f1: {
+    '2297d30d9783e467eb7b8af04077ab1882a17215': {
         privateKey: '9627b68c24de09f1566b4b8c9ff32b6909ffe676d3e610c69c38556a0823841b',
         nonce: 8,
         proof: '675c0000728c00000e030000382a000098310000a99a00004b53000033ca000044a00000ecc60000b0c400004ae100001b2f0000258900005a8d0000d1b00000b929000070860000701700004672000073a50000c2be0000a65c00004d8e00005e410000137d000091090000c9aa0000baa00000fade000014050000cce40000',
@@ -85,6 +85,62 @@ function unpackRawTable(rawTable) {
     return unpacked;
 }
 
+function loadBlockchainConfig(localBlockchain) {
+    const blockchain_template = {
+        blockchain_title: 'Ethereum',
+        gas_limit: 2000000,
+        gas_price: 20000000000,
+        max_allowed_gas_price: 100000000000,
+        dc_price_factor: '3',
+        dh_price_factor: '2',
+        trac_price_in_eth: '0.00005',
+        plugins: [
+            {
+                enabled: false,
+                provider: 'Hyperledger',
+                name: 'fingerprint-plugin',
+                config: {
+                    url: 'URL',
+                    auth: {
+                        user: 'USER',
+                        pass: 'PASS',
+                    },
+                },
+            },
+        ],
+    };
+
+    const blockchain_config = {
+        implementations: [],
+    };
+
+    if (Array.isArray(localBlockchain)) {
+        for (const blockchain of localBlockchain) {
+            const new_config = Object.assign({}, blockchain_template);
+
+            new_config.hub_contract_address = blockchain.hubContractAddress;
+            new_config.network_id = blockchain.name;
+            new_config.node_wallet_path = `wallet_${blockchain.name}.json`;
+            new_config.identity_filepath = `identity_${blockchain.name}.json`;
+            new_config.rpc_server_url = `http://localhost:${blockchain.port}/`;
+
+            blockchain_config.implementations.push(new_config);
+        }
+    } else {
+        const new_config = Object.assign({}, blockchain_template);
+
+        new_config.hub_contract_address = localBlockchain.hubContractAddress;
+        new_config.network_id = 'development';
+        new_config.node_wallet_path = 'wallet.json';
+        new_config.identity_filepath = 'erc725_identity.json';
+        new_config.rpc_server_url = 'http://localhost:7545/';
+
+        blockchain_config.implementations.push(new_config);
+    }
+
+    return blockchain_config;
+}
+
 Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
@@ -102,42 +158,11 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             database: {
                 database: `origintrail-test-${uuidv4()}`,
             },
-            blockchain: {
-                implementations: [
-                    {
-                        blockchain_title: 'Ethereum',
-                        network_id: 'development',
-                        hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                        rpc_server_url: 'http://localhost:7545/',
-                        node_wallet_path: 'wallet.json',
-                        identity_filepath: 'erc725_identity.json',
-                        gas_limit: 2000000,
-                        gas_price: 20000000000,
-                        max_allowed_gas_price: 100000000000,
-                        dc_price_factor: '3',
-                        dh_price_factor: '2',
-                        trac_price_in_eth: '0.00005',
-                        plugins: [
-                            {
-                                enabled: false,
-                                provider: 'Hyperledger',
-                                name: 'fingerprint-plugin',
-                                config: {
-                                    url: 'URL',
-                                    auth: {
-                                        user: 'USER',
-                                        pass: 'PASS',
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                ],
-            },
+            blockchain: loadBlockchainConfig(this.state.localBlockchain),
             network: {
                 id: 'Devnet',
                 // TODO: Connect other if using multiple.
-                bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
+                bootstraps: ['https://localhost:5278/#2297d30d9783e467eb7b8af04077ab1882a17215'],
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
             initial_deposit_amount: '10000000000000000000000',
@@ -146,7 +171,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
         appDataBaseDir: this.parameters.appDataBaseDir,
     });
 
-    bootstrapNode.options.identity = bootstrapIdentity.ff62cb1f692431d901833d55b93c7d991b4087f1;
+    bootstrapNode.options.identity = bootstrapIdentity['2297d30d9783e467eb7b8af04077ab1882a17215'];
     bootstrapNode.initialize();
     this.state.bootstraps.push(bootstrapNode);
 
@@ -156,7 +181,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
 
 Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
-    this.logger.log(`I setup ${nodeCount} nodes`);
+    this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
 
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeConfiguration = {
@@ -175,38 +200,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             database: {
                 database: `origintrail-test-${uuidv4()}`,
             },
-            blockchain: {
-                implementations: [
-                    {
-                        blockchain_title: 'Ethereum',
-                        network_id: 'development',
-                        hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                        rpc_server_url: 'http://localhost:7545/',
-                        node_wallet_path: 'wallet.json',
-                        identity_filepath: 'erc725_identity.json',
-                        gas_limit: 2000000,
-                        gas_price: 20000000000,
-                        max_allowed_gas_price: 100000000000,
-                        dc_price_factor: '3',
-                        dh_price_factor: '2',
-                        trac_price_in_eth: '0.00005',
-                        plugins: [
-                            {
-                                enabled: false,
-                                provider: 'Hyperledger',
-                                name: 'fingerprint-plugin',
-                                config: {
-                                    url: 'URL',
-                                    auth: {
-                                        user: 'USER',
-                                        pass: 'PASS',
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                ],
-            },
+            blockchain: loadBlockchainConfig(this.state.localBlockchain),
             local_network_only: true,
             dc_choose_time: 90000, // 90 seconds
             initial_deposit_amount: '10000000000000000000000',
@@ -249,6 +243,24 @@ Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     this.state.nodes.forEach((node) => {
         nodesStarts.push(new Promise((accept, reject) => {
             node.once('initialized', () => accept());
+            node.once('error', reject);
+        }));
+        node.start();
+    });
+
+    Promise.all(nodesStarts).then(() => done());
+});
+
+Given(/^I start the node[s]* without waiting$/, { timeout: 3000000 }, function (done) {
+    this.logger.log('I start the nodes without waiting');
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const nodesStarts = [];
+
+    this.state.nodes.forEach((node) => {
+        nodesStarts.push(new Promise((accept, reject) => {
+            node.once('started', () => accept());
             node.once('error', reject);
         }));
         node.start();
@@ -1203,8 +1215,7 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
     const response = await httpApiHelper.apiNodeInfo(bootstrap.state.node_rpc_url);
 
     expect(response, 'response should contain version, blockchain, network and is_bootstrap keys').to.have.keys([
-        'version', 'blockchain',
-        'network', 'is_bootstrap',
+        'version', 'network', 'is_bootstrap',
     ]);
 });
 
