@@ -167,9 +167,9 @@ class ImportUtilities {
         document['@id'] = ImportUtilities.calculateGraphPublicHash(document);
 
         const rootHash = ImportUtilities.calculateDatasetRootHash(document);
-        document.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+        ImportUtilities.attachDatasetRootHash(document.datasetHeader, rootHash);
 
-        const signed = ImportUtilities.signDataset(document, blockchain.node_private_key);
+        const signed = ImportUtilities.signDataset(document, blockchain[0].node_private_key);
         return signed;
     }
 
@@ -663,6 +663,17 @@ class ImportUtilities {
     }
 
     /**
+     * Update dataset signature
+     * @static
+     */
+    static updateDatasetSignature(dataset, nodePrivateKey) {
+        const updatedDataset = Utilities.copyObject(dataset);
+        delete updatedDataset.signature;
+
+        return ImportUtilities.signDataset(dataset, nodePrivateKey);
+    }
+
+    /**
      * Extract Signer from OT-JSON signature
      * @static
      */
@@ -696,6 +707,33 @@ class ImportUtilities {
         OTJSONVersion = '1.2',
         datasetCreationTimestamp = new Date().toISOString(),
     ) {
+        const dataCreatorIdentifiers = [];
+        const dataIntegrityProofs = [];
+        const validationSchemas = {};
+        for (const implementation of blockchain) {
+            dataCreatorIdentifiers.push({
+                identifierValue: implementation.identity,
+                identifierType: 'ERC725',
+                validationSchema: `/schemas/erc725-main/${implementation.blockchain_id}`,
+                // todo support other identifier types
+            });
+            validationSchemas[`/schemas/erc725-main/${implementation.blockchain_id}`] = {
+                schemaType: 'ethereum-725',
+                networkId: implementation.blockchain_id,
+            };
+
+            dataIntegrityProofs.push({
+                proofValue: '',
+                proofType: 'merkleRootHash',
+                validationSchema: `/schemas/merkleRoot/${implementation.blockchain_id}`,
+            });
+            validationSchemas[`/schemas/merkleRoot/${implementation.blockchain_id}`] = {
+                schemaType: 'merkle-root',
+                networkId: implementation.blockchain_id,
+                hubContractAddress: implementation.hub_contract_address,
+            };
+        }
+
         const header = {
             OTJSONVersion,
             datasetCreationTimestamp,
@@ -712,35 +750,12 @@ class ImportUtilities {
             }
              */
             relatedDatasets: [],
-            validationSchemas: {
-                'erc725-main': {
-                    schemaType: 'ethereum-725',
-                    networkId: blockchain.blockchain_id,
-                },
-                merkleRoot: {
-                    schemaType: 'merkle-root',
-                    networkId: blockchain.blockchain_id,
-                    hubContractAddress: blockchain.hub_contract_address,
-                    // TODO: Add holding contract address and version. Hub address is useless.
-                },
-            },
+            validationSchemas,
             dataIntegrity: {
-                proofs: [
-                    {
-                        proofValue: '',
-                        proofType: 'merkleRootHash',
-                        validationSchema: '/schemas/merkleRoot',
-                    },
-                ],
+                proofs: dataIntegrityProofs,
             },
             dataCreator: {
-                identifiers: [
-                    {
-                        identifierValue: blockchain.identity,
-                        identifierType: 'ERC725',
-                        validationSchema: '/schemas/erc725-main',
-                    },
-                ],
+                identifiers: dataCreatorIdentifiers,
             },
         };
 
@@ -749,6 +764,14 @@ class ImportUtilities {
         }
 
         return header;
+    }
+
+    static attachDatasetRootHash(datasetHeader, rootHash, proofType = 'merkleRootHash') {
+        for (const proofObject of datasetHeader.dataIntegrity.proofs) {
+            if (proofObject.proofType === proofType) {
+                proofObject.proofValue = rootHash;
+            }
+        }
     }
 
     /**

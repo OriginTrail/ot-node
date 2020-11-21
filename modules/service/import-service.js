@@ -127,10 +127,11 @@ class ImportService {
         const {
             document,
             encryptedMap,
+            blockchain_id,
         } = data;
 
         // TODO: validate document here.
-        await this.validateDocument(document);
+        await this.validateDocument(document, blockchain_id);
 
         const datasetId = _id(document);
         const header = document.datasetHeader;
@@ -742,9 +743,10 @@ class ImportService {
     /**
      * Validates the OT-JSON document's metadata to be in valid OT-JSON format.
      * @param document OT-JSON document.
+     * @param blockchain_id {String} Blockchain implementation to use
      * @private
      */
-    async validateDocument(document) {
+    async validateDocument(document, blockchain_id) {
         if (document == null) {
             throw Error('[Validation Error] Document cannot be null.');
         }
@@ -798,20 +800,25 @@ class ImportService {
         }
 
         const { identifiers } = dataCreator;
-        if (!Array.isArray(identifiers) || identifiers.length !== 1) {
+        if (!Array.isArray(identifiers) || identifiers.length === 0) {
             throw Error('[Validation Error] Unexpected format of data creator.');
         }
 
         // Data creator identifier must contain ERC725 and the proper schema
         const ERCIdentifier = identifiers.find(identifierObject => (
-            identifierObject.identifierType === 'ERC725'
+            identifierObject.identifierType === 'ERC725' &&
+            identifierObject.validationSchema.includes(blockchain_id)
         ));
         if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
-            ERCIdentifier.validationSchema !== '/schemas/erc725-main' ||
+            !ERCIdentifier.validationSchema.includes('/schemas/erc725-main') ||
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('[Validation Error] Wrong format of data creator.');
         }
-        await this.schemaValidator.validateSchema(document, ERCIdentifier.validationSchema);
+        await this.schemaValidator.validateSchema({
+            document,
+            schemaName: ERCIdentifier.validationSchema,
+            network_id: blockchain_id,
+        });
 
         this._validateRelatedEntities(graph);
     }

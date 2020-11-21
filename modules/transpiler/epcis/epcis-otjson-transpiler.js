@@ -89,7 +89,7 @@ class EpcisOtJsonTranspiler {
         }
         result['@id'] = importUtilities.calculateGraphPublicHash(result);
         const merkleRoot = importUtilities.calculateDatasetRootHash(result);
-        result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
+        importUtilities.attachDatasetRootHash(result.datasetHeader, merkleRoot);
 
         const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
         if (sortedDataset) {
