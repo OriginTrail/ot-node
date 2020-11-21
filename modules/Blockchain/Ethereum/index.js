@@ -97,23 +97,6 @@ class Ethereum {
     }
 
     /**
-     * Reads identity from file
-     * @returns {Promise<erc725Identity>}
-     * @private
-     */
-    _loadIdentityFromFile() {
-        const identityFilePath = path.join(
-            this.config.appDataPath,
-            this.config.identity_filepath,
-        );
-        if (fs.existsSync(identityFilePath)) {
-            const content = JSON.parse(fs.readFileSync(identityFilePath).toString());
-            return content.identity;
-        }
-        return null;
-    }
-
-    /**
      * Loads contracts for Blockchain provider (get contract addresses, etc.)
      * @returns {Promise<void>}
      */
