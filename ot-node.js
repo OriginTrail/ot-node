@@ -61,10 +61,10 @@ const log = require('./modules/logger');
 global.__basedir = __dirname;
 
 let context;
-const defaultConfig = configjson[
+const defaultConfig = Utilities.copyObject(configjson[
     process.env.NODE_ENV &&
     ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-        process.env.NODE_ENV : 'development'];
+        process.env.NODE_ENV : 'development']);
 
 let config;
 try {
