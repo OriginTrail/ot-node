@@ -29,12 +29,25 @@ class InfoController {
                 const numberOfVertices = await this.graphStorage.getDocumentsCount('ot_vertices');
                 const numberOfEdges = await this.graphStorage.getDocumentsCount('ot_edges');
 
-                const { node_wallet } = this.blockchain.getWallet().response;
-                // todo pass blockchain identity
+                const identityResponses = this.blockchain.getAllIdentities();
+                const blockchain = [];
+                for (const identityResponse of identityResponses) {
+                    const { blockchain_id, response: identity } = identityResponse;
+                    const { node_wallet } =
+                        this.blockchain.getWallet(blockchain_id).response;
+                    const blockchain_title =
+                        this.blockchain.getBlockchainTitle(blockchain_id).response;
+
+                    blockchain.push({
+                        blockchain_title,
+                        blockchain_id,
+                        node_wallet,
+                        identity,
+                    });
+                }
+
                 Object.assign(basicConfig, {
-                    blockchain: this.blockchain.getBlockchainTitle().response,
-                    node_wallet,
-                    erc_725_identity: this.profileService.getIdentity(),
+                    blockchain,
                     graph_size: {
                         number_of_vertices: numberOfVertices,
                         number_of_edges: numberOfEdges,
