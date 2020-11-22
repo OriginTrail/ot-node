@@ -63,6 +63,7 @@ describe('GS1 Importer tests', () => {
         return {
             document: epcisOtJsonTranspiler.convertToOTJson(content, blockchain),
             encryptedMap: null,
+            blockchain_id: blockchain[0].blockchain_id,
         };
     }
 

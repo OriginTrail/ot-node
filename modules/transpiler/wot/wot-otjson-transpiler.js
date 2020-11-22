@@ -77,7 +77,7 @@ class WotOtJsonTranspiler {
         /* todo This is a workaround to detect if a node is running in a spawned process or in the
         main loop, we should find another way to make this distinction */
         if (this.logger) {
-            result = importUtilities.signDataset(result, blockchain.node_private_key);
+            result = importUtilities.signDataset(result, blockchain[0].node_private_key);
         } else {
             const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
             if (sortedDataset) {
