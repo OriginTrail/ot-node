@@ -8,6 +8,9 @@ const { sha3_256 } = require('js-sha3');
 class WotOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
+        /* todo This is a workaround to detect if a node is running in a spawned process or in the
+        main loop, we should find another way to make this distinction */
+        this.logger = ctx.logger;
         this.connectionTypes = ['PART OF', 'OBSERVES', 'OBSERVATION_READ_POINT'];
     }
 
@@ -70,9 +73,16 @@ class WotOtJsonTranspiler {
         const merkleRoot = importUtilities.calculateDatasetRootHash(result);
         importUtilities.attachDatasetRootHash(result.datasetHeader, merkleRoot);
 
-        const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
-        if (sortedDataset) {
-            result = sortedDataset;
+        // Until we update all routes to work with commands, keep this signing implementation
+        /* todo This is a workaround to detect if a node is running in a spawned process or in the
+        main loop, we should find another way to make this distinction */
+        if (this.logger) {
+            result = importUtilities.signDataset(result, blockchain[0].node_private_key);
+        } else {
+            const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
+            if (sortedDataset) {
+                result = sortedDataset;
+            }
         }
         return result;
     }
