@@ -105,18 +105,18 @@ describe('Pricing service test', () => {
     it('Get gas price - env is mainnet, all services return valid value - expect axios value is used', async () => {
         const gasPrice = await blockchain.getGasPrice().response;
         assert.equal(gasPrice, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Returned gas price price should be the same as default axios gas price');
-        assert.equal(config.blockchain.implementations[0].gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Configuration gas price should be the same as default axios gas price');
+        assert.equal(blockchain.blockchain[0].config.gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Configuration gas price should be the same as default axios gas price');
         const now = new Date().getTime();
-        assert.closeTo(config.blockchain.implementations[0].gas_price_last_update_timestamp, now, 1000, 'Now should be set as new timestamp');
+        assert.closeTo(blockchain.blockchain[0].config.gas_price_last_update_timestamp, now, 1000, 'Now should be set as new timestamp');
     });
 
     it('Get gas price - env is mainnet, all services return valid value, timestamp is not older than 30 min - expect config value is used', async () => {
         const lastUpdateTimestamp = new Date().getTime() - (1000 * 25);
-        config.blockchain.implementations[0].gas_price_last_update_timestamp = lastUpdateTimestamp;
+        blockchain.blockchain[0].config.gas_price_last_update_timestamp = lastUpdateTimestamp;
         pricingService.config = config;
         const gasPrice = await blockchain.getGasPrice().response;
-        assert.equal(gasPrice, config.blockchain.implementations[0].gas_price, 'Gas price should be the same as default config');
-        assert.equal(config.blockchain.implementations[0].gas_price_last_update_timestamp, lastUpdateTimestamp, 'Timestamp should not be changed');
+        assert.equal(gasPrice, blockchain.blockchain[0].config.gas_price, 'Gas price should be the same as default config');
+        assert.equal(blockchain.blockchain[0].config.gas_price_last_update_timestamp, lastUpdateTimestamp, 'Timestamp should not be changed');
     });
 
     it('Get gas price - env is mainnet, axios returns undefined - expect web3 value is used', async () => {
@@ -126,8 +126,8 @@ describe('Pricing service test', () => {
         const gasPrice = await blockchain.getGasPrice().response;
         const now = new Date().getTime();
         assert.equal(gasPrice, defaultWeb3GasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default web3');
-        assert.equal(config.blockchain.implementations[0].gas_price, defaultWeb3GasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default web3');
-        assert.closeTo(config.blockchain.implementations[0].gas_price_last_update_timestamp, now, 1000, 'Timestamp should not be changed');
+        assert.equal(blockchain.blockchain[0].config.gas_price, defaultWeb3GasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default web3');
+        assert.closeTo(blockchain.blockchain[0].config.gas_price_last_update_timestamp, now, 1000, 'Timestamp should not be changed');
     });
 
     it('Get gas price - env is mainnet, web3 returns undefined - expect axios value is used', async () => {
@@ -137,8 +137,8 @@ describe('Pricing service test', () => {
         const gasPrice = await blockchain.getGasPrice().response;
         const now = new Date().getTime();
         assert.equal(gasPrice, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default axios');
-        assert.equal(config.blockchain.implementations[0].gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default axios');
-        assert.closeTo(config.blockchain.implementations[0].gas_price_last_update_timestamp, now, 1000, 'Timestamp should not be changed');
+        assert.equal(blockchain.blockchain[0].config.gas_price, defaultGasStationGasPrice * constants.AVERAGE_GAS_PRICE_MULTIPLIER, 'Gas price should be the same as default axios');
+        assert.closeTo(blockchain.blockchain[0].config.gas_price_last_update_timestamp, now, 1000, 'Timestamp should not be changed');
     });
 
     it('Calculate offer price in trac - data size in bytes not provided - expect error', async () => {
