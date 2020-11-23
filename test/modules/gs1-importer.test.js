@@ -253,6 +253,7 @@ describe('GS1 Importer tests', () => {
                         data_set_id,
                     } = await importService.importFile({
                         document: otJson,
+                        blockchain_id: blockchain[0].blockchain_id,
                     });
 
                     const otJsonFromDb = await importService.getImport(data_set_id);
