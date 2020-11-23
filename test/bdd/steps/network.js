@@ -1219,8 +1219,8 @@ Given(/^(\d+)[st|nd|rd|th]+ bootstrap should reply on info route$/, { timeout: 3
     ]);
 });
 
-Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async function () {
-    this.logger.log('Selected DHes should be payed out');
+Given(/^selected DHes should be paid out*$/, { timeout: 180000 }, async function () {
+    this.logger.log('Selected DHes should be paid out');
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
 
     const myPromises = [];
@@ -1232,7 +1232,7 @@ Given(/^selected DHes should be payed out*$/, { timeout: 180000 }, async functio
             if (node.state.takenBids.length === 1) {
                 node.once('dh-pay-out-finalized', async () => {
                     const myBalance = await httpApiHelper.apiBalance(node.state.node_rpc_url, false);
-                    const a = new BN(myBalance.profile.staked);
+                    const a = new BN(myBalance[0].profile.staked);
                     const b = new BN(node.options.nodeConfiguration.initial_deposit_amount);
                     const c = new BN(node.state.calculatedOfferPrice);
                     expect(a.sub(b).toString()).to.be.equal(c.toString());

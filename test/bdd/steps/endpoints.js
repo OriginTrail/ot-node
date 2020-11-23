@@ -479,7 +479,7 @@ Given(/^default initial token amount should be deposited on (\d+)[st|nd|rd|th]+ 
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const balance = await httpApiHelper.apiBalance(this.state.nodes[nodeIndex - 1].state.node_rpc_url, false);
-    const staked = new BN(balance.profile.staked);
+    const staked = new BN(balance[0].profile.staked);
     const initialDepositAmount = new BN(this.state.nodes[nodeIndex - 1].options.nodeConfiguration.initial_deposit_amount);
 
     expect(staked.toString()).to.be.equal(initialDepositAmount.toString());
