@@ -21,6 +21,7 @@ class DCController {
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -364,6 +365,27 @@ class DCController {
             dataPriceResponseObject,
             dv_node_id,
         );
+    }
+
+
+    async removePermissionedData(req, res) {
+        if (req.body === undefined ||
+            req.body.dataset_id === undefined ||
+            req.body.identifier_value === undefined ||
+            req.body.identifier_type === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { dataset_id, identifier_value, identifier_type } = req.body;
+        const status = await this.permissionedDataService
+            .removePermissionedData(identifier_value, identifier_type, dataset_id);
+        res.status(200);
+        res.send(status);
     }
 }
 

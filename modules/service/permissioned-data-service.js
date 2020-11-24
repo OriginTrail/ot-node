@@ -336,6 +336,25 @@ class PermissionedDataService {
         });
         await Promise.all(promises);
     }
+
+    async removePermissionedData(identifier_value, identifier_type, dataset_id){
+        const key = Utilities.keyFrom(identifier_type, identifier_value);
+
+        let status;
+        try {
+            await this.graphStorage.removePermissionedData({
+                identifierKey: key,
+                datasetId: dataset_id,
+            });
+
+            status = 'COMPLETED';
+        } catch (e) {
+            status = 'FAILED';
+            this.logger.error(e.message);
+        }
+
+        return status;
+    }
 }
 
 module.exports = PermissionedDataService;

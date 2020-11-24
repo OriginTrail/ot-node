@@ -240,6 +240,47 @@ class ArangoJS {
         return result;
     }
 
+    async removePermissionedData(queryObject) {
+        const {
+            identifierKey,
+            datasetId,
+        } = queryObject;
+
+        const queryParams = {
+            identifierKey,
+            datasetId,
+        };
+        const queryString = `LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKey))
+                            LET entityObjects = UNIQUE(FLATTEN(
+                                FOR identifierObject IN identifierObjects
+                                    FILTER identifierObject != null
+                                    LET identifiedObject = (
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    AND @datasetId IN v.datasets
+                                    RETURN v
+                                    )
+                                RETURN identifiedObject 
+                            ))
+                            
+                            FOR entityObject IN entityObjects
+                                FILTER entityObject != null
+                                FOR v, e IN 1..1 OUTBOUND entityObject ot_edges
+                                FILTER e.edgeType == 'dataRelation'
+                                AND @datasetId IN v.datasets
+                                RETURN v`;
+
+        const results = await this.runQuery(queryString, queryParams);
+
+        const collectionName = 'ot_vertices';
+        const collection = this.db.collection(collectionName);
+
+        for (let i = 0; i < results.length; i += 1) {
+            results[i].data.permissioned_data = {};
+            // eslint-disable-next-line no-await-in-loop
+            await this.updateDocument('ot_vertices', results[i]);
+        }
+    }
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
