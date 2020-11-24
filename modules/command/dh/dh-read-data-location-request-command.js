@@ -15,7 +15,6 @@ class DHReadDataLocationRequestCommand extends Command {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
     }
@@ -184,7 +183,6 @@ class DHReadDataLocationRequestCommand extends Command {
         const messageResponseSignature =
             Utilities.generateRsvSignature(
                 messageResponse,
-                this.web3,
                 node_private_key,
             );
 

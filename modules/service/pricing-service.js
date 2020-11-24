@@ -8,7 +8,6 @@ class PricingService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.gasStationService = ctx.gasStationService;
-        this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
     }
 

@@ -11,7 +11,6 @@ class DhPurchaseRequestedCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
@@ -133,7 +132,6 @@ class DhPurchaseRequestedCommand extends Command {
             message: response,
             messageSignature: Utilities.generateRsvSignature(
                 response,
-                this.web3,
                 node_private_key,
             ),
         };

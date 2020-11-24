@@ -10,7 +10,6 @@ class DcConvertToOtJsonCommand extends Command {
         this.importWorkerController = ctx.importWorkerController;
         this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.importService = ctx.importService;
         this.blockchain = ctx.blockchain;
     }
@@ -36,8 +35,7 @@ class DcConvertToOtJsonCommand extends Command {
                 let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
                 if (!document.signature) {
-                    document = ImportUtilities
-                        .prepareDataset(document, this.config, this.web3, blockchain);
+                    document = ImportUtilities.prepareDataset(document, this.config, blockchain);
                 }
 
                 fs.writeFileSync(documentPath, JSON.stringify(document));

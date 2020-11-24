@@ -126,7 +126,6 @@ describe('GS1 Importer tests', () => {
             networkUtilities: awilix.asClass(NetworkUtilities),
             emitter: awilix.asClass(EventEmitter),
             product: awilix.asClass(Product),
-            web3: awilix.asValue(web3),
             config: awilix.asValue(config),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
         });

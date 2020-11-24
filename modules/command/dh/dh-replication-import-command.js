@@ -17,7 +17,6 @@ class DhReplicationImportCommand extends Command {
         this.config = ctx.config;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
@@ -182,7 +181,7 @@ class DhReplicationImportCommand extends Command {
         const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(node_private_key));
+            .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
         // todo pass blockchain identity
         const replicationFinishedMessage = {

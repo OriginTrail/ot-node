@@ -74,14 +74,6 @@ describe('Utilities module', () => {
         });
     });
 
-    it.skip('getNodeNetworkType()', async () => {
-        await Utilities.getNodeNetworkType().then((result) => {
-            assert.equal(result, 'rinkeby');
-        }).catch((error) => {
-            console.log(error);
-        });
-    });
-
     // way to check is rinkeby with our token healthy
     it.skip('getInfuraRinkebyApiMethods()', async () => {
         const response = await Utilities.getInfuraRinkebyApiMethods();

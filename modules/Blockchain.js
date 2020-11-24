@@ -12,7 +12,6 @@ class Blockchain {
      */
     constructor(ctx) {
         this.log = ctx.logger;
-        this.web3 = ctx.web3;
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
         this.pluginService = ctx.blockchainPluginService;
@@ -687,11 +686,25 @@ class Blockchain {
      * @param {string} blockchain_id - Blockchain implementation to use
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    getProfileBalance(wallet, blockchain_id) {
+    getWalletTokenBalance(wallet, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
         return {
             blockchain_id: implementation.getBlockchainId(),
-            response: implementation.getProfileBalance(wallet),
+            response: implementation.getWalletTokenBalance(wallet),
+        };
+    }
+
+    /**
+     * Gets base (eg ETH) balance of a particular wallet
+     * @param {string} wallet
+     * @param {string} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    getWalletBaseBalance(wallet, blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getWalletBaseBalance(wallet),
         };
     }
 
@@ -1241,6 +1254,14 @@ class Blockchain {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getPriceFactors(),
         };
+    }
+
+    static fromWei(blockchain_title, balance, unit) {
+        switch (blockchain_title) {
+        case 'Ethereum':
+        default:
+            return Ethereum.fromWei(balance, unit);
+        }
     }
 }
 

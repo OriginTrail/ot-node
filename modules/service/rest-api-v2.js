@@ -4,6 +4,7 @@ const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 const Utilities = require('../Utilities');
 const Models = require('../../models');
+const Blockchain = require('../Blockchain');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -42,7 +43,7 @@ class RestAPIServiceV2 {
      */
     _exposeAPIRoutes(server) {
         const {
-            transport, emitter, blockchain, web3, config,
+            transport, emitter, blockchain, config,
         } = this.ctx;
 
         server.get(`/api/${this.version_id}/info`, async (req, res) => {
@@ -319,29 +320,32 @@ class RestAPIServiceV2 {
 
             try {
                 const humanReadable = req.query.humanReadable === 'true';
-                const { node_wallet } = blockchain.getWallet().response;
-                const erc725Identity = blockchain.getIdentity().response;
 
-                const walletEthBalance = await web3.eth.getBalance(node_wallet);
-                const walletTokenBalance = await Utilities.getTracTokenBalance(
-                    web3,
-                    node_wallet,
-                    blockchain.getTokenContractAddress().response,
-                    false,
-                );
-                const profile = await blockchain.getProfile(erc725Identity).response;
-                const profileMinimalStake = await blockchain.getProfileMinimumStake().response;
+                const { blockchain_id, response } = blockchain.getWallet();
+                const { node_wallet } = response;
+                const erc725Identity = blockchain.getIdentity(blockchain_id).response;
+                const blockchain_title = blockchain.getBlockchainTitle(blockchain_id).response;
+
+                const walletBaseBalance =
+                    await blockchain.getWalletBaseBalance(node_wallet, blockchain_id).response;
+                const walletTokenBalance =
+                    await blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response;
+
+                const profile =
+                    await blockchain.getProfile(erc725Identity, blockchain_id).response;
+                const profileMinimalStake =
+                    await blockchain.getProfileMinimumStake(blockchain_id).response;
 
                 const body = {
                     wallet: {
                         address: node_wallet,
-                        ethBalance: humanReadable ? web3.utils.fromWei(walletEthBalance, 'ether') : walletEthBalance,
-                        tokenBalance: humanReadable ? web3.utils.fromWei(walletTokenBalance, 'ether') : walletTokenBalance,
+                        ethBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletBaseBalance, 'ether') : walletBaseBalance,
+                        tokenBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletTokenBalance, 'ether') : walletTokenBalance,
                     },
                     profile: {
-                        staked: humanReadable ? web3.utils.fromWei(profile.stake, 'ether') : profile.stake,
-                        reserved: humanReadable ? web3.utils.fromWei(profile.stakeReserved, 'ether') : profile.stakeReserved,
-                        minimalStake: humanReadable ? web3.utils.fromWei(profileMinimalStake, 'ether') : profileMinimalStake,
+                        staked: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stake, 'ether') : profile.stake,
+                        reserved: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stakeReserved, 'ether') : profile.stakeReserved,
+                        minimalStake: humanReadable ? Blockchain.fromWei(blockchain_title, profileMinimalStake, 'ether') : profileMinimalStake,
                     },
                 };
 

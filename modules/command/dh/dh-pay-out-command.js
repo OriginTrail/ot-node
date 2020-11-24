@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const constants = require('../../constants');
+const Blockchain = require('../../Blockchain');
 
 const Models = require('../../../models/index');
 
@@ -12,7 +13,6 @@ const DELAY_ON_FAIL_IN_MILLS = 5 * 60 * 1000;
 class DhPayOutCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.web3 = ctx.web3;
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
@@ -135,16 +135,19 @@ class DhPayOutCommand extends Command {
      * @private
      */
     async _printBalances(blockchainIdentity, blockchain_id) {
-        const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
-        const balance = await this.blockchain
-            .getProfileBalance(node_wallet).response;
-        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
+        const blockchain_title = this.blockchain.getBlockchainTitle(blockchain_id).response;
 
+        const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
         const profile = await this.blockchain
             .getProfile(blockchainIdentity, blockchain_id).response;
+
+        const walletBalance =
+            await this.blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response;
+        const walletBalanceInTRAC = Blockchain.fromWei(blockchain_title, walletBalance, 'ether');
+        this.logger.info(`Wallet balance: ${walletBalanceInTRAC} TRAC`);
+
         const profileBalance = profile.stake;
-        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        const profileBalanceInTRAC = Blockchain.fromWei(blockchain_title, profileBalance, 'ether');
         this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
