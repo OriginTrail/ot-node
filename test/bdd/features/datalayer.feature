@@ -314,3 +314,15 @@ Feature: Data layer related features
     Given DC initiates the replication for last imported dataset
     And DC waits for public key request
     And I wait for replications to finish
+
+  @fourth
+  Scenario: Check that local query returns valid object
+    And I setup 4 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    Given DC runs local query consisting of path: "id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
+    Then  The last local query should have valid keys

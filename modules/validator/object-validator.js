@@ -18,8 +18,8 @@ class ObjectValidator {
             if (path == null) {
                 return new Error('PATH parameter missing');
             }
-            if (typeof path !== 'string') {
-                return new Error('PATH parameter is not a string');
+            if (typeof path !== 'string' && typeof path !== 'object') {
+                return new Error('PATH parameter is not a string or array');
             }
             if (value == null) {
                 return new Error('VALUE parameter missing');

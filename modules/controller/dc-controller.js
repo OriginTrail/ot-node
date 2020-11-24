@@ -4,6 +4,7 @@ const Utilities = require('../Utilities');
 const constants = require('../constants');
 const { QueryTypes } = require('sequelize');
 const BN = require('bn.js');
+const ObjectValidator = require('../validator/object-validator');
 
 /**
  * DC related API controller
@@ -364,6 +365,51 @@ class DCController {
             dataPriceResponseObject,
             dv_node_id,
         );
+    }
+
+    /**
+     * Query local data
+     * @param query Query
+     * @returns {Promise<*>}
+     */
+    async queryLocal(query) {
+        this.logger.info(`Local query handling triggered with ${JSON.stringify(query)}.`);
+        const validationError = ObjectValidator.validateSearchQueryObject(query);
+        if (validationError) {
+            throw validationError;
+        }
+
+        const pathsArray = Utilities.arrayze(query[0].path);
+        const valuesArray = Utilities.arrayze(query[0].value);
+        const { opcode } = query[0];
+
+        let response = [];
+        for (let i = 0; i < valuesArray.length; i += 1) {
+            let result =
+                // eslint-disable-next-line no-await-in-loop
+                await this.graphStorage.findLocalQuery({
+                    idType: pathsArray[i],
+                    identifierKey: valuesArray[i],
+                    opcode,
+                });
+            result = this.importService.packTrailData(result);
+            response = response.concat(result);
+        }
+        for (let i = 0; i < response.length; i += 1) {
+            response[i].offers = [];
+            for (let j = 0; j < response[i].datasets.length; j += 1) {
+                // eslint-disable-next-line no-await-in-loop
+                const offer = await Models.offers.findOne({
+                    where: { data_set_id: response[i].datasets[j] },
+                });
+
+                if (offer) {
+                    response[i].offers = offer.offer_id;
+                } else response[i].offers.push(null);
+            }
+        }
+
+        return response;
     }
 }
 

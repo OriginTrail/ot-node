@@ -260,6 +260,35 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
+
+Given(/^([DC|DH]+) runs local query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, { timeout: 90000 }, async function (whichNode, path, value, opcode) {
+    expect(!!this.state[whichNode.toLowerCase()], 'DC/DH node not defined. Use other step to define it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    const dv = this.state[whichNode.toLowerCase()];
+
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const queryNetworkResponse =
+        await httpApiHelper.apiQueryLocal(dv.state.node_rpc_url, jsonQuery);
+    expect(queryNetworkResponse.length, 'Response should be an array').to.be.equal(1);
+    expect(Object.keys(queryNetworkResponse[0]), 'Array element should have datasets, offers, otObject').to.have.members(['datasets', 'offers', 'otObject']);
+    // eslint-disable-next-line prefer-destructuring
+    this.state.lastLocalQueryResponse = queryNetworkResponse[0];
+});
+
+Then(/^The last local query should have valid keys$/, { timeout: 90000 }, function () {
+    expect(this.state.lastLocalQueryResponse, 'Last local query not defined').to.not.be.equal(null);
+    expect(Object.keys(this.state.lastLocalQueryResponse), 'Array element should have datasets, offers, otObject').to.have.members(['datasets', 'offers', 'otObject']);
+});
+
 Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 90000 }, async function (whichDV, whichImport, exportType) {
     this.logger.log(`${whichDV} sends read and export request.`);
     expect(exportType, 'exportType can only be OT-JSON, GS1-EPCIS, WOT or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));

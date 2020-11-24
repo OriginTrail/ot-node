@@ -240,6 +240,85 @@ class ArangoJS {
         return result;
     }
 
+    async findLocalQuery(queryObject) {
+        const {
+            identifierKey,
+            opcode,
+            idType,
+        } = queryObject;
+
+        const queryParams = {
+            identifierKey,
+            idType,
+        };
+
+        let operator = '';
+        switch (opcode) {
+        case 'EQ':
+            operator = '==';
+            break;
+        case 'IN':
+            operator = 'IN';
+            break;
+        default:
+            throw new Error(`OPCODE ${opcode} is not supported`);
+        }
+
+        const queryString = `LET identifierObjects = (
+                                FOR v IN ot_vertices
+                                FILTER v.vertexType == "Identifier"
+                                AND v.identifierType == @idType
+                                and v.identifierValue ${operator} @identifierKey
+                                RETURN v
+                            )
+                            
+                            // Fetch the start entity for trail
+                            LET startObjects = UNIQUE(FLATTEN(
+                                FOR identifierObject IN identifierObjects
+                                    FILTER identifierObject != null
+                                    LET identifiedObject = (
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    RETURN v
+                                    )
+                                RETURN identifiedObject
+                            ))
+                            
+                            LET startObjectsWithTimestamps = (
+                            FOR startObject in startObjects
+                                FILTER startObject != null
+                                FOR dataset in startObject.datasets
+                                    FOR d IN ot_datasets
+                                        FILTER d._key == dataset
+                                        return {otObject: startObject, timestamp: d.datasetHeader.datasetCreationTimestamp})
+                                        
+                            let latestObjects = (
+                                FOR e IN startObjectsWithTimestamps  
+                                SORT e.timestamp DESC
+                                LIMIT 1
+                                RETURN e
+                              )
+                              
+                            FOR latestObject in latestObjects
+                            FILTER latestObject.otObject != null
+                            let p = (FOR v, e in 1..1 OUTBOUND latestObject.otObject ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                AND e.datasets != null
+                                AND v.datasets != null
+                                AND LENGTH(INTERSECTION(e.datasets, v.datasets, latestObject.otObject.datasets)) > 0
+                                RETURN  {
+                                    "vertex": v,
+                                    "edge": e
+                                    })
+                            return {
+                                "rootObject": latestObject.otObject,
+                                "relatedObjects": p
+                                }`;
+
+        const result = await this.runQuery(queryString, queryParams);
+        return result;
+    }
+
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
