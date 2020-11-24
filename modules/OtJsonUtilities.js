@@ -73,7 +73,7 @@ class OtJsonUtilities {
         for (const creatorId of datasetHeader.dataCreator.identifiers) {
             const identity = creatorId.identifierValue;
             const blockchain_id =
-                datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
+                datasetHeader.validationSchemas[creatorId.validationSchema].networkId;
 
             const schemaPostfix = creatorId.validationSchema.split('erc725-main').pop();
             const schemaEndpoint = `/schemas/merkleRoot${schemaPostfix}`;
