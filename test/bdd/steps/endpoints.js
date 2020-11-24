@@ -284,9 +284,13 @@ Given(/^([DC|DH]+) runs local query consisting of path: "(\S+)", value: "(\S+)" 
     this.state.lastLocalQueryResponse = queryNetworkResponse[0];
 });
 
-Then(/^The last local query should have valid keys$/, { timeout: 90000 }, function () {
+Then(/^The last local query should return otObject from the last imported dataset$/, { timeout: 90000 }, function () {
     expect(this.state.lastLocalQueryResponse, 'Last local query not defined').to.not.be.equal(null);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastImport.data.dataset_id, 'Last imports data set id seems not defined').to.be.equal(true);
+    expect(this.state.lastLocalQueryResponse.datasets.length, 'Local query should return only latest dataset').to.be.equal(1);
     expect(Object.keys(this.state.lastLocalQueryResponse), 'Array element should have datasets, offers, otObject').to.have.members(['datasets', 'offers', 'otObject']);
+    expect(this.state.lastImport.data.dataset_id, 'otObject should be from the latest imported dataset').to.be.equal(this.state.lastLocalQueryResponse.datasets[0]);
 });
 
 Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 90000 }, async function (whichDV, whichImport, exportType) {

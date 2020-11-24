@@ -176,7 +176,7 @@ class RestAPIServiceV2 {
         }
 
         server.post(`/api/${this.version_id}/query/local`, async (req, res, next) => {
-            await this._queryLocal(req, res);
+            await this.dcController.queryLocal(req, res);
         });
 
         /** Network related routes */
@@ -387,33 +387,6 @@ class RestAPIServiceV2 {
 
         res.status(200);
         res.send(response);
-    }
-
-    async _queryLocal(req, res) {
-        this.logger.api('POST: Query local request received.');
-
-        let error = RestAPIValidator.validateBodyRequired(req.body);
-        if (error) {
-            res.status(400);
-            res.send({
-                message: error.message,
-            });
-            return;
-        }
-
-        const { query } = req.body;
-        error = RestAPIValidator.validateSearchQuery(query);
-        if (error) {
-            res.status(400);
-            res.send({
-                message: error.message,
-            });
-            return;
-        }
-
-        const result = await this.dcController.queryLocal(query);
-        res.status(200);
-        res.send(result);
     }
 
     async _networkQuery(req, res) {

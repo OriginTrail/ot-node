@@ -372,29 +372,32 @@ class DCController {
      * @param query Query
      * @returns {Promise<*>}
      */
-    async queryLocal(query) {
+    async queryLocal(req, res) {
+        this.logger.api('POST: Query local request received.');
+        if (!req.body) {
+            res.status(400);
+            res.send({
+                message: 'Body is missing',
+            });
+            return;
+        }
+
+        const { query } = req.body;
+
         this.logger.info(`Local query handling triggered with ${JSON.stringify(query)}.`);
         const validationError = ObjectValidator.validateSearchQueryObject(query);
         if (validationError) {
             throw validationError;
         }
 
-        const pathsArray = Utilities.arrayze(query[0].path);
+        const { path } = query[0];
         const valuesArray = Utilities.arrayze(query[0].value);
-        const { opcode } = query[0];
 
-        let response = [];
-        for (let i = 0; i < valuesArray.length; i += 1) {
-            let result =
-                // eslint-disable-next-line no-await-in-loop
-                await this.graphStorage.findLocalQuery({
-                    idType: pathsArray[i],
-                    identifierKey: valuesArray[i],
-                    opcode,
-                });
-            result = this.importService.packTrailData(result);
-            response = response.concat(result);
-        }
+        const result = await this.graphStorage.findLocalQuery({
+            idType: path,
+            identifierKey: valuesArray,
+        });
+        const response = this.importService.packLocalQueryData(result);
         for (let i = 0; i < response.length; i += 1) {
             response[i].offers = [];
             for (let j = 0; j < response[i].datasets.length; j += 1) {
@@ -409,7 +412,8 @@ class DCController {
             }
         }
 
-        return response;
+        res.status(200);
+        res.send(response);
     }
 }
 

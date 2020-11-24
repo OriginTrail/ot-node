@@ -243,7 +243,6 @@ class ArangoJS {
     async findLocalQuery(queryObject) {
         const {
             identifierKey,
-            opcode,
             idType,
         } = queryObject;
 
@@ -253,15 +252,10 @@ class ArangoJS {
         };
 
         let operator = '';
-        switch (opcode) {
-        case 'EQ':
-            operator = '==';
-            break;
-        case 'IN':
+        if (typeof identifierKey === 'object') {
             operator = 'IN';
-            break;
-        default:
-            throw new Error(`OPCODE ${opcode} is not supported`);
+        } else {
+            operator = '==';
         }
 
         const queryString = `LET identifierObjects = (
@@ -272,46 +266,50 @@ class ArangoJS {
                                 RETURN v
                             )
                             
+                            let latestIdentifierObjects = (
+                            FOR identifierObject in identifierObjects
+                                FILTER identifierObject != null
+                                let datasets = (
+                                FOR dataset in identifierObject.datasets
+                                    let d = DOCUMENT('ot_datasets', dataset)
+                                    return { dataset, timestamp: d.datasetHeader.datasetCreationTimestamp}
+                                )
+                                
+                                let latestDataset = (
+                                FOR d IN datasets  
+                                SORT d.timestamp DESC
+                                LIMIT 1
+                                RETURN d.dataset
+                                )
+                                
+                                return {vertex: identifierObject, latestDataset: latestDataset[0] })
+                            
                             // Fetch the start entity for trail
                             LET startObjects = UNIQUE(FLATTEN(
-                                FOR identifierObject IN identifierObjects
-                                    FILTER identifierObject != null
+                                FOR identifierObject IN latestIdentifierObjects
+                                    FILTER identifierObject.vertex != null
                                     LET identifiedObject = (
-                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject.vertex ot_edges
                                     FILTER e.edgeType == 'IdentifierRelation'
+                                    and identifierObject.latestDataset in v.datasets
                                     RETURN v
                                     )
-                                RETURN identifiedObject
+                                RETURN {vertex: identifiedObject[0], latestDataset: identifierObject.latestDataset }
                             ))
                             
-                            LET startObjectsWithTimestamps = (
                             FOR startObject in startObjects
-                                FILTER startObject != null
-                                FOR dataset in startObject.datasets
-                                    FOR d IN ot_datasets
-                                        FILTER d._key == dataset
-                                        return {otObject: startObject, timestamp: d.datasetHeader.datasetCreationTimestamp})
-                                        
-                            let latestObjects = (
-                                FOR e IN startObjectsWithTimestamps  
-                                SORT e.timestamp DESC
-                                LIMIT 1
-                                RETURN e
-                              )
-                              
-                            FOR latestObject in latestObjects
-                            FILTER latestObject.otObject != null
-                            let p = (FOR v, e in 1..1 OUTBOUND latestObject.otObject ot_edges
+                            FILTER startObject.vertex != null
+                            let p = (FOR v, e in 1..1 OUTBOUND startObject.vertex ot_edges
                                 FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
                                 AND e.datasets != null
                                 AND v.datasets != null
-                                AND LENGTH(INTERSECTION(e.datasets, v.datasets, latestObject.otObject.datasets)) > 0
+                                AND LENGTH(INTERSECTION(e.datasets, v.datasets, startObject.vertex.datasets)) > 0
                                 RETURN  {
                                     "vertex": v,
                                     "edge": e
                                     })
                             return {
-                                "rootObject": latestObject.otObject,
+                                "rootObject": startObject,
                                 "relatedObjects": p
                                 }`;
 

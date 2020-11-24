@@ -317,12 +317,12 @@ Feature: Data layer related features
 
   @fourth
   Scenario: Check that local query returns valid object
-    And I setup 4 nodes
+    And I setup 1 nodes
     And I start the nodes
     And I use 1st node as DC
-    And DC imports "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1-EPCIS
+    And DC imports "importers/json_examples/local-query1.json" as GRAPH
     And DC waits for import to finish
-    Given DC initiates the replication for last imported dataset
-    And I wait for replications to finish
-    Given DC runs local query consisting of path: "id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
-    Then  The last local query should have valid keys
+    And DC imports "importers/json_examples/local-query2.json" as GRAPH
+    And DC waits for import to finish
+    Given DC runs local query consisting of path: "id", value: "test1" and opcode: "EQ"
+    Then  The last local query should return otObject from the last imported dataset
