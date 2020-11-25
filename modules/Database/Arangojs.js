@@ -3,6 +3,7 @@ const request = require('superagent');
 const Utilities = require('../Utilities');
 const { normalizeGraph } = require('./graph-converter');
 const constants = require('../constants');
+const { execSync, spawn } = require('child_process');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -26,6 +27,32 @@ class ArangoJS {
         this.dbInfo = {
             username, password, database, host, port,
         };
+    }
+
+    startReplication(databaseConfiguration) {
+        const output = execSync('' +
+            `/Applications/ArangoDB3-CLI.app/Contents/Resources/arangosh
+            db._useDatabase("${databaseConfiguration.database}");
+            require("@arangodb/replication").setupReplication({
+              endpoint: "${databaseConfiguration.replication_info.endpoint}:${databaseConfiguration.port}",
+              username: "${databaseConfiguration.replication_info.username}",
+              password: "${databaseConfiguration.replication_info.password}",
+              verbose: true,
+              includeSystem: false,
+              incremental: true,
+              autoResync: true
+            });
+            require("@arangodb/replication").applier.start();
+            `);
+        this.log.trace(output.toString('utf8'));
+    }
+
+    stopReplication() {
+        const output = execSync('' +
+            `/Applications/ArangoDB3-CLI.app/Contents/Resources/arangosh
+            require("@arangodb/replication").applier.stop();
+            `);
+        this.log.trace(output.toString('utf8'));
     }
 
     /**

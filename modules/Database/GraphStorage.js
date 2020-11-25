@@ -65,6 +65,34 @@ class GraphStorage {
         });
     }
 
+    startReplication(databaseConfiguration) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.startReplication(databaseConfiguration).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    stopReplication() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.stopReplication().then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     findTrail(queryObject) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
