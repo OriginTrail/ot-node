@@ -527,7 +527,7 @@ class Blockchain {
                 const implementation = this.blockchain[i];
 
                 blockStartConditions.push({
-                    blockchain_id: implementation.config.network_id,
+                    blockchain_id: implementation.getBlockchainId(),
                     block: { [Op.gte]: currentBlocks[i] },
                 });
             }
