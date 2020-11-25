@@ -260,6 +260,21 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
+
+Given(/^([DC|DH]+) removes permissioned data from the last imported dataset consisting of path: "(\S+)", value: "(\S+)"$/, { timeout: 90000 }, async function (whichNode, path, value) {
+    expect(!!this.state[whichNode.toLowerCase()], 'DC/DH node not defined. Use other step to define it.').to.be.equal(true);
+    const node = this.state[whichNode.toLowerCase()];
+
+    const jsonQuery = {
+        identifier_type: path,
+        identifier_value: value,
+        dataset_id: this.state.lastImport.data.dataset_id,
+    };
+    const response =
+        await httpApiHelper.apiRemovePermissionedData(node.state.node_rpc_url, jsonQuery);
+    expect(response.status, 'Response should have message and query_id').to.be.equal('COMPLETED');
+});
+
 Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 90000 }, async function (whichDV, whichImport, exportType) {
     this.logger.log(`${whichDV} sends read and export request.`);
     expect(exportType, 'exportType can only be OT-JSON, GS1-EPCIS, WOT or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
@@ -411,6 +426,20 @@ Given(/^([DC|DH|DV]+) gets the price for the last imported dataset$/, async func
     expect(response.status).to.be.equal('COMPLETED');
 });
 
+Given(/^([DC|DH|DV]+) unsuccessfully gets the price for the last imported dataset$/, async function (viewer) {
+    this.logger.log(`${viewer} gets the price for the last imported dataset.`);
+    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+
+    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+
+    const { handler_id } = await httpApiHelper.apiPermissionedDataGetPrice(host, this.state.availablePurchase);
+    await sleep.sleep(2000);
+    const response = await httpApiHelper.apiPermissionedDataGetPriceResult(host, handler_id);
+
+    expect(response, 'Should have keys called data and status').to.have.all.keys('data', 'status');
+    expect(response.status).to.be.equal('FAILED');
+});
+
 
 Given(/^([DC|DH|DV]+) initiates purchase for the last imported dataset and waits for confirmation$/, async function (viewer) {
     this.logger.log(`${viewer} initiates purchase for the last imported dataset and waits for confirmation.`);
@@ -431,6 +460,31 @@ Given(/^([DC|DH|DV]+) initiates purchase for the last imported dataset and waits
         source.once('purchase-confirmed', async (data) => {
             const target = this.state[viewer.toLowerCase()];
             if (target.state.identity === data.dv_identity) { acc(); } else { reject(); }
+        });
+    });
+
+    return promise;
+});
+
+
+Then(/^([DC|DH|DV]+) unsuccessfully initiates purchase for the last imported dataset$/, async function (viewer) {
+    this.logger.log(`${viewer} initiates purchase for the last imported dataset and waits for confirmation.`);
+    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+
+    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+
+    const { handler_id } = await httpApiHelper.apiPermissionedDataPurchase(host, this.state.availablePurchase);
+    this.state.lastPurchaseHandler = handler_id;
+
+    this.state.lastQueryNetworkId = {};
+    this.state[viewer.toLowerCase()].state.purchasedDatasets = {};
+    this.state[viewer.toLowerCase()].state.purchasedDatasets[this.state.availablePurchase.data_set_id] = {};
+
+    const source = this.state.dc;
+
+    const promise = new Promise((acc, reject) => {
+        source.once('purchase-not-confirmed', async () => {
+            acc();
         });
     });
 

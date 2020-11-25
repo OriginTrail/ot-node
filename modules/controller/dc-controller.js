@@ -385,7 +385,7 @@ class DCController {
         const status = await this.permissionedDataService
             .removePermissionedData(identifier_value, identifier_type, dataset_id);
         res.status(200);
-        res.send(status);
+        res.send({ status });
     }
 }
 

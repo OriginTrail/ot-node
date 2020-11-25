@@ -337,7 +337,7 @@ class PermissionedDataService {
         await Promise.all(promises);
     }
 
-    async removePermissionedData(identifier_value, identifier_type, dataset_id){
+    async removePermissionedData(identifier_value, identifier_type, dataset_id) {
         const key = Utilities.keyFrom(identifier_type, identifier_value);
 
         let status;
@@ -345,6 +345,14 @@ class PermissionedDataService {
             await this.graphStorage.removePermissionedData({
                 identifierKey: key,
                 datasetId: dataset_id,
+            });
+
+            await Models.data_sellers.destroy({
+                where: {
+                    data_set_id: dataset_id,
+                    seller_erc_id: this.config.erc725Identity,
+                    ot_json_object_id: identifier_value,
+                },
             });
 
             status = 'COMPLETED';

@@ -272,13 +272,13 @@ class ArangoJS {
 
         const results = await this.runQuery(queryString, queryParams);
 
-        const collectionName = 'ot_vertices';
-        const collection = this.db.collection(collectionName);
-
         for (let i = 0; i < results.length; i += 1) {
-            results[i].data.permissioned_data = {};
+            if (results[i].data.permissioned_data.data) {
+                delete results[i].data.permissioned_data.data;
+            }
+            const vertex = results[i];
             // eslint-disable-next-line no-await-in-loop
-            await this.updateDocument('ot_vertices', results[i]);
+            await this.replaceDocument('ot_vertices', vertex);
         }
     }
 
@@ -884,6 +884,20 @@ class ArangoJS {
         ArangoJS._deNormalizeConnection(document);
         const collection = this.db.collection(collectionName);
         const response = await collection.update(document._key, document);
+        return ArangoJS._normalize(response);
+    }
+
+
+    /**
+     * Update document in ArangoDB graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async replaceDocument(collectionName, document) {
+        ArangoJS._deNormalizeConnection(document);
+        const collection = this.db.collection(collectionName);
+        const response = await collection.replace(document._key, document);
         return ArangoJS._normalize(response);
     }
 
