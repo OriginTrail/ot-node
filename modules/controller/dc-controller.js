@@ -401,14 +401,27 @@ class DCController {
         for (let i = 0; i < response.length; i += 1) {
             response[i].offers = [];
             for (let j = 0; j < response[i].datasets.length; j += 1) {
+                let offer_id = null;
+
                 // eslint-disable-next-line no-await-in-loop
                 const offer = await Models.offers.findOne({
-                    where: { data_set_id: response[i].datasets[j] },
+                    where: { data_set_id: response[i].datasets[j], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
                 });
 
                 if (offer) {
-                    response[i].offers = offer.offer_id;
-                } else response[i].offers.push(null);
+                    // eslint-disable-next-line prefer-destructuring
+                    offer_id = offer.offer_id;
+                } else {
+                    // eslint-disable-next-line no-await-in-loop
+                    const bid = await Models.bids.findOne({
+                        where: { data_set_id: response[i].datasets[j], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+                    });
+
+                    // eslint-disable-next-line prefer-destructuring
+                    if (bid) { offer_id = bid.offer_id; }
+                }
+
+                response[i].offers.push(offer_id);
             }
         }
 
