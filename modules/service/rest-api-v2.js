@@ -78,6 +78,10 @@ class RestAPIServiceV2 {
             this._getStandards(req, res);
         });
 
+        server.get(`/api/${this.version_id}/blockchains`, async (req, res) => {
+            await this.infoController.getBlockchains(req, res);
+        });
+
         server.get(`/api/${this.version_id}/get_element_issuer_identity/:element_id`, async (req, res) => {
             await this._getElementIssuerIdentity(req, res);
         });
@@ -322,12 +326,12 @@ class RestAPIServiceV2 {
             try {
                 const humanReadable = req.query.humanReadable === 'true';
 
-                const identityResponses = blockchain.getAllIdentities();
+                const blockchains = this.infoController.getBlockchainInfo();
                 const promises = [];
-                for (const identityResponse of identityResponses) {
-                    const { blockchain_id, response: identity } = identityResponse;
-                    const { node_wallet } = blockchain.getWallet(blockchain_id).response;
-                    const blockchain_title = blockchain.getBlockchainTitle(blockchain_id).response;
+                for (const blockchain_info of blockchains) {
+                    const {
+                        blockchain_id, blockchain_title, node_wallet, identity,
+                    } = blockchain_info;
 
                     // eslint-disable-next-line no-loop-func
                     promises.push(new Promise(async (resolve, reject) => {

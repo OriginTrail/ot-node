@@ -29,22 +29,7 @@ class InfoController {
                 const numberOfVertices = await this.graphStorage.getDocumentsCount('ot_vertices');
                 const numberOfEdges = await this.graphStorage.getDocumentsCount('ot_edges');
 
-                const identityResponses = this.blockchain.getAllIdentities();
-                const blockchain = [];
-                for (const identityResponse of identityResponses) {
-                    const { blockchain_id, response: identity } = identityResponse;
-                    const { node_wallet } =
-                        this.blockchain.getWallet(blockchain_id).response;
-                    const blockchain_title =
-                        this.blockchain.getBlockchainTitle(blockchain_id).response;
-
-                    blockchain.push({
-                        blockchain_title,
-                        blockchain_id,
-                        node_wallet,
-                        identity,
-                    });
-                }
+                const blockchain = this.getBlockchainInfo();
 
                 Object.assign(basicConfig, {
                     blockchain,
@@ -64,6 +49,50 @@ class InfoController {
                 message: error,
             });
         }
+    }
+
+    async getBlockchains(req, res) {
+        this.logger.api('GET: Node blockchains request received.');
+
+        try {
+            if (!this.config.is_bootstrap_node) {
+                const blockchain = this.getBlockchainInfo();
+                res.status(200);
+                res.send(blockchain);
+            } else {
+                res.status(200);
+                res.send({
+                    message: 'Node is running as bootstrap, no blockchain is initialized',
+                });
+            }
+        } catch (error) {
+            this.logger.error(`Failed to process /api/info route. ${error}`);
+            res.status(500);
+            res.send({
+                message: error.toString(),
+            });
+        }
+    }
+
+    getBlockchainInfo() {
+        const identityResponses = this.blockchain.getAllIdentities();
+        const blockchain_info = [];
+        for (const identityResponse of identityResponses) {
+            const { blockchain_id, response: identity } = identityResponse;
+            const { node_wallet } =
+                this.blockchain.getWallet(blockchain_id).response;
+            const blockchain_title =
+                this.blockchain.getBlockchainTitle(blockchain_id).response;
+
+            blockchain_info.push({
+                blockchain_title,
+                blockchain_id,
+                node_wallet,
+                identity,
+            });
+        }
+
+        return blockchain_info;
     }
 
     async getDatasetInfo(request, response) {
