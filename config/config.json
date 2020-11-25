@@ -115,7 +115,7 @@
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
     "reputationWindowInMinutes": 129600,
-    "is_fallback_node": true
+    "is_fallback_node": false
   },
   "testnet": {
     "identity": null,
