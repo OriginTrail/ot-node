@@ -337,30 +337,30 @@ class PermissionedDataService {
         await Promise.all(promises);
     }
 
-    async removePermissionedData(identifier_value, identifier_type, dataset_id) {
-        const key = Utilities.keyFrom(identifier_type, identifier_value);
+    async removePermissionedDataInDb(dataSetId, otObjectId) {
+        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+            dataSetId,
+            otObjectId,
+        );
+        const documentsToBeReplaced = [];
+        let status = false;
+        otObject.relatedObjects.forEach((relatedObject) => {
+            if (relatedObject.vertex.vertexType === 'Data') {
+                const vertexData = relatedObject.vertex.data;
+                const permissionedObject = vertexData.permissioned_data;
+                if (permissionedObject) {
+                    delete permissionedObject.data;
+                    documentsToBeReplaced.push(relatedObject.vertex);
+                    status = true;
+                }
+            }
+        });
 
-        let status;
-        try {
-            await this.graphStorage.removePermissionedData({
-                identifierKey: key,
-                datasetId: dataset_id,
-            });
-
-            await Models.data_sellers.destroy({
-                where: {
-                    data_set_id: dataset_id,
-                    seller_erc_id: this.config.erc725Identity,
-                    ot_json_object_id: identifier_value,
-                },
-            });
-
-            status = 'COMPLETED';
-        } catch (e) {
-            status = 'FAILED';
-            this.logger.error(e.message);
-        }
-
+        const promises = [];
+        documentsToBeReplaced.forEach((document) => {
+            promises.push(this.graphStorage.replaceDocument('ot_vertices', document));
+        });
+        await Promise.all(promises);
         return status;
     }
 }

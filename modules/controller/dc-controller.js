@@ -381,9 +381,22 @@ class DCController {
             return;
         }
 
-        const { dataset_id, identifier_value, identifier_type } = req.body;
-        const status = await this.permissionedDataService
-            .removePermissionedData(identifier_value, identifier_type, dataset_id);
+        const { dataset_id, identifier_value } = req.body;
+
+        let status = await this.permissionedDataService.removePermissionedDataInDb(
+            dataset_id,
+            identifier_value,
+        );
+
+        await Models.data_sellers.destroy({
+            where: {
+                data_set_id: dataset_id,
+                seller_erc_id: this.config.erc725Identity,
+                ot_json_object_id: identifier_value,
+            },
+        });
+
+        if (status) { status = 'COMPLETED'; } else { status = 'FAILED'; }
         res.status(200);
         res.send({ status });
     }

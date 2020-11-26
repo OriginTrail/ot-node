@@ -101,21 +101,6 @@ class GraphStorage {
         });
     }
 
-
-    removePermissionedData(queryObject) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database.'));
-            } else {
-                this.db.removePermissionedData(queryObject).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
     /**
      * Finds imports IDs based on data location query
      *
@@ -352,6 +337,16 @@ class GraphStorage {
      */
     async updateDocument(collectionName, document) {
         return this.db.updateDocument(collectionName, document);
+    }
+
+    /**
+     * Replace document in graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async replaceDocument(collectionName, document) {
+        return this.db.replaceDocument(collectionName, document);
     }
 
     /**

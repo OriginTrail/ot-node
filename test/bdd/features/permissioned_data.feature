@@ -50,7 +50,7 @@ Feature: Permissioned data features
     And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
 
-  @third
+  @second
   Scenario: Remove permissioned data and initiates purchase request
     Given the replication difficulty is 1
     And I setup 4 nodes
