@@ -132,7 +132,7 @@ Feature: Data layer related features
 #    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
 #    Then last consensus response should have 1 event with 1 match
 
-  @first
+  @skip
   Scenario: Latest datalayer import and data read query
     Given I setup 1 node
     And I start the node
