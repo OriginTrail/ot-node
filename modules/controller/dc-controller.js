@@ -399,30 +399,31 @@ class DCController {
         });
         const response = this.importService.packLocalQueryData(result);
         for (let i = 0; i < response.length; i += 1) {
-            response[i].offers = [];
-            for (let j = 0; j < response[i].datasets.length; j += 1) {
-                let offer_id = null;
+            const datasets = [];
+            let offer_id = null;
 
+            // eslint-disable-next-line no-await-in-loop
+            const offer = await Models.offers.findOne({
+                where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+            });
+
+            if (offer) {
+                // eslint-disable-next-line prefer-destructuring
+                offer_id = offer.offer_id;
+            } else {
                 // eslint-disable-next-line no-await-in-loop
-                const offer = await Models.offers.findOne({
-                    where: { data_set_id: response[i].datasets[j], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+                const bid = await Models.bids.findOne({
+                    where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
                 });
 
-                if (offer) {
                     // eslint-disable-next-line prefer-destructuring
-                    offer_id = offer.offer_id;
-                } else {
-                    // eslint-disable-next-line no-await-in-loop
-                    const bid = await Models.bids.findOne({
-                        where: { data_set_id: response[i].datasets[j], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
-                    });
-
-                    // eslint-disable-next-line prefer-destructuring
-                    if (bid) { offer_id = bid.offer_id; }
-                }
-
-                response[i].offers.push(offer_id);
+                if (bid) { offer_id = bid.offer_id; }
             }
+
+            // eslint-disable-next-line prefer-destructuring
+            response[i].dataset_id = response[i].datasets[0];
+            response[i].offer_id = datasets;
+            delete response[i].datasets;
         }
 
         res.status(200);

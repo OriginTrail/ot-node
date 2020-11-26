@@ -20,7 +20,7 @@ Feature: Data layer related features
     And DC waits for last offer to get written to blockchain
     Then checking again first import's root hash should point to remembered value
 
-  @fourth
+  @skip
   Scenario: Smoke check data-layer basic endpoints
     Given I setup 2 nodes
     And I start the nodes
@@ -163,7 +163,7 @@ Feature: Data layer related features
     And DV waits for export to finish
     Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
 
-  @second
+  @skip
   Scenario: Data location with multiple identifiers
     Given I setup 1 node
     And I start the node

@@ -279,7 +279,7 @@ Given(/^([DC|DH]+) runs local query consisting of path: "(\S+)", value: "(\S+)" 
     const queryNetworkResponse =
         await httpApiHelper.apiQueryLocal(dv.state.node_rpc_url, jsonQuery);
     expect(queryNetworkResponse.length, 'Response should be an array').to.be.equal(1);
-    expect(Object.keys(queryNetworkResponse[0]), 'Array element should have datasets, offers, otObject').to.have.members(['datasets', 'offers', 'otObject']);
+    expect(Object.keys(queryNetworkResponse[0]), 'Array element should have datasets, offers, otObject').to.have.members(['dataset_id', 'offer_id', 'otObject']);
     // eslint-disable-next-line prefer-destructuring
     this.state.lastLocalQueryResponse = queryNetworkResponse[0];
 });
@@ -288,9 +288,8 @@ Then(/^The last local query should return otObject from the last imported datase
     expect(this.state.lastLocalQueryResponse, 'Last local query not defined').to.not.be.equal(null);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastImport.data.dataset_id, 'Last imports data set id seems not defined').to.be.equal(true);
-    expect(this.state.lastLocalQueryResponse.datasets.length, 'Local query should return only latest dataset').to.be.equal(1);
-    expect(Object.keys(this.state.lastLocalQueryResponse), 'Array element should have datasets, offers, otObject').to.have.members(['datasets', 'offers', 'otObject']);
-    expect(this.state.lastImport.data.dataset_id, 'otObject should be from the latest imported dataset').to.be.equal(this.state.lastLocalQueryResponse.datasets[0]);
+    expect(Object.keys(this.state.lastLocalQueryResponse), 'Array element should have datasets, otObject').to.have.members(['dataset_id', 'offer_id', 'otObject']);
+    expect(this.state.lastImport.data.dataset_id, 'otObject should be from the latest imported dataset').to.be.equal(this.state.lastLocalQueryResponse.dataset_id);
 });
 
 Given(/^the ([DV|DV2]+) sends read and export for (last import|second last import) from DC as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout: 90000 }, async function (whichDV, whichImport, exportType) {
