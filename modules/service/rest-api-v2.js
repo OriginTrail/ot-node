@@ -175,6 +175,10 @@ class RestAPIServiceV2 {
             });
         }
 
+        server.post(`/api/${this.version_id}/query/local`, async (req, res, next) => {
+            await this.dcController.queryLocal(req, res);
+        });
+
         /** Network related routes */
         server.get(`/api/${this.version_id}/network/get-contact/:node_id`, async (req, res) => {
             const nodeId = req.params.node_id;
@@ -212,27 +216,6 @@ class RestAPIServiceV2 {
 
             const { type } = req.body;
             emitter.emit(type, req, res);
-        });
-
-        server.post(`/api/${this.version_id}/query/local`, (req, res, next) => {
-            this.logger.api('POST: Local query request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const queryObject = req.body.query;
-            error = RestAPIValidator.validateSearchQuery(queryObject);
-            if (error) {
-                return next(error);
-            }
-
-            // TODO: Decrypt returned vertices
-            emitter.emit('api-query', {
-                query: queryObject,
-                response: res,
-            });
         });
 
         server.get(`/api/${this.version_id}/query/local/import/:data_set_id`, (req, res) => {
