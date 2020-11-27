@@ -21,7 +21,7 @@ class ArangoClient {
                 this.logger.error('Failed to fetch Arango replication applier configuration. Error: ', err);
                 throw err;
             });
-        return response;
+        return response.data;
     }
 
     async setupReplicationApplierConfiguration(applierConfiguration
@@ -31,34 +31,34 @@ class ArangoClient {
                 this.logger.error('Failed to setup Arango replication applier. Error: ', err);
                 throw err;
             });
-        return response;
+        return response.data;
     }
 
-    async startReplicationApplier(global = true) {
-        const response = await axios.put(`${this.baseUrl}/_api/replication/applier-start`, { global })
+    async startReplicationApplier() {
+        const response = await axios.put(`${this.baseUrl}/_api/replication/applier-start`)
             .catch((err) => {
                 this.logger.error('Failed to start Arango replication applier. Error: ', err);
                 throw err;
             });
-        return response;
+        return response.data;
     }
 
     async getReplicationApplierState() {
-        const response = await axios.put(`${this.baseUrl}/_api/replication/applier-state`)
+        const response = await axios.get(`${this.baseUrl}/_api/replication/applier-state`)
             .catch((err) => {
                 this.logger.error('Failed to fetch state of Arango replication applier. Error: ', err);
                 throw err;
             });
-        return response;
+        return response.data;
     }
 
-    async stopReplicationApplier(global = true) {
-        const response = await axios.put(`${this.baseUrl}/_api/replication/applier-stop`, { global })
+    async stopReplicationApplier() {
+        const response = await axios.put(`${this.baseUrl}/_api/replication/applier-stop`)
             .catch((err) => {
                 this.logger.error('Failed to stop Arango replication applier. Error: ', err);
                 throw err;
             });
-        return response;
+        return response.data;
     }
 }
 

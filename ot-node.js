@@ -356,7 +356,10 @@ class OTNode {
             log.notify('Exiting busy wait loop');
             graphStorage.stopReplication();
         } else {
-            await graphStorage.stopReplication();
+            const replicationState = await graphStorage.getReplicationApplierState();
+            if (replicationState.state.running) {
+                await graphStorage.stopReplication();
+            }
         }
 
         // Starting the kademlia
