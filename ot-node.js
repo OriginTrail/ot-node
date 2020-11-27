@@ -344,7 +344,7 @@ class OTNode {
         if (config.is_fallback_node) {
             log.notify('Entering busy wait loop');
             // start replication for arango
-            graphStorage.startReplication(config.database);
+            await graphStorage.startReplication();
             const doWhile = true;
             do {
                 const promise = new Promise((resolve, reject) => {
@@ -355,6 +355,8 @@ class OTNode {
             } while (doWhile);
             log.notify('Exiting busy wait loop');
             graphStorage.stopReplication();
+        } else {
+            await graphStorage.stopReplication();
         }
 
         // Starting the kademlia

@@ -28,11 +28,7 @@ class GraphStorage {
                 case 'arangodb':
                     try {
                         this.db = new ArangoJS(
-                            this.selectedDatabase.username,
-                            this.selectedDatabase.password,
-                            this.selectedDatabase.database,
-                            this.selectedDatabase.host,
-                            this.selectedDatabase.port,
+                            this.selectedDatabase,
                             this.logger,
                         );
                         await this.__initDatabase__();
@@ -65,12 +61,12 @@ class GraphStorage {
         });
     }
 
-    startReplication(databaseConfiguration) {
+    startReplication() {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database.'));
             } else {
-                this.db.startReplication(databaseConfiguration).then((result) => {
+                this.db.startReplication().then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -85,6 +81,20 @@ class GraphStorage {
                 reject(Error('Not connected to graph database.'));
             } else {
                 this.db.stopReplication().then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    getReplicationState() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.getReplicationState().then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

@@ -49,7 +49,8 @@
       "replication_info": {
         "endpoint": "",
         "username": "",
-        "password": ""
+        "password": "",
+        "port": "8529"
       }
     },
     "blockchain": {
@@ -167,7 +168,8 @@
       "replication_info": {
         "endpoint": "",
         "username": "",
-        "password": ""
+        "password": "",
+        "port": "8529"
       }
     },
     "blockchain": {
@@ -289,7 +291,8 @@
       "replication_info": {
         "endpoint": "10.1.0.5",
         "username": "root",
-        "password": ""
+        "password": "",
+        "port": "8529"
       }
     },
     "blockchain": {
