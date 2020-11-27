@@ -193,7 +193,8 @@ process.on('message', async (dataFromParent) => {
 
                     // Add has-data edge.
                     const hasDataEdge = {
-                        _key: Utilities.keyFrom(dataCreatorIdentifiers, entityVertex._key, dataVertex._key),
+                        _key: Utilities
+                            .keyFrom(dataCreatorIdentifiers, entityVertex._key, dataVertex._key),
                         _from: entityVertex._key,
                         _to: dataVertex._key,
                         edgeType: constants.edgeType.dataRelation,
