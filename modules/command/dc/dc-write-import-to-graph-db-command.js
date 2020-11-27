@@ -25,7 +25,8 @@ class DcWriteImportToGraphDbCommand extends Command {
         } = command.data;
         try {
             const { vertices, edges, metadata } = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
-            const dataCreator = ImportUtilities.getDataCreator(metadata.datasetHeader);
+            const dataCreatorIdentifiers =
+                ImportUtilities.getDataCreatorIdentifiers(metadata.datasetHeader);
 
             await forEachSeries(vertices, vertex => this.graphStorage.addVertex(vertex));
             await forEachSeries(edges, edge => this.graphStorage.addEdge(edge));
@@ -47,7 +48,8 @@ class DcWriteImportToGraphDbCommand extends Command {
                             relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
                                 const expectedErc725 = this._value(expectedCreator);
 
-                                if (dataCreator === expectedErc725) {
+                                if (dataCreatorIdentifiers
+                                    .find(elem => elem.identifierValue === expectedErc725)) {
                                     hasConnection1 = true;
                                 }
                             });
@@ -61,15 +63,16 @@ class DcWriteImportToGraphDbCommand extends Command {
                                         const metadata = await this.graphStorage
                                             .findMetadataByImportId(datasetId);
 
-                                        if (data.expectedConnectionCreators != null) {
+                                        if (metadata && data.expectedConnectionCreators != null) {
                                             data.expectedConnectionCreators
                                                 .forEach((expectedCreator) => {
                                                     const expectedErc725 =
                                                         this._value(expectedCreator);
 
-                                                    if (metadata && expectedErc725 ===
-                                                        metadata.datasetHeader.dataCreator
-                                                            .identifiers.find(x => x.identifierType === 'ERC725').identifierValue) {
+                                                    if (metadata.datasetHeader.dataCreator
+                                                        .identifiers.find(elem =>
+                                                            elem.identifierValue === expectedErc725)
+                                                    ) {
                                                         hasConnection2 = true;
                                                     }
                                                 });
@@ -88,7 +91,8 @@ class DcWriteImportToGraphDbCommand extends Command {
                         }
 
                         await this.graphStorage.addEdge({
-                            _key: Utilities.keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                            _key: Utilities
+                                .keyFrom(dataCreatorIdentifiers, vertex._key, relatedVertex._key),
                             _from: vertex._key,
                             _to: relatedVertex._key,
                             relationType: 'CONNECTION_DOWNSTREAM',
@@ -96,7 +100,8 @@ class DcWriteImportToGraphDbCommand extends Command {
                         });
 
                         await this.graphStorage.addEdge({
-                            _key: Utilities.keyFrom(dataCreator, relatedVertex._key, vertex._key),
+                            _key: Utilities
+                                .keyFrom(dataCreatorIdentifiers, relatedVertex._key, vertex._key),
                             _from: relatedVertex._key,
                             _to: vertex._key,
                             relationType: 'CONNECTION_DOWNSTREAM',

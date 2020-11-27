@@ -137,6 +137,7 @@ class DHService {
         const offer = await this.blockchain.getOffer(offerId, blockchain_id).response;
         const bid = await Models.bids.create({
             offer_id: offerId,
+            blockchain_id,
             dc_identity: offer.creator,
             data_set_id: dataSetId,
             dc_node_id: dcNodeId,
@@ -499,7 +500,7 @@ class DHService {
                     wallet: DH_WALLET,
                     nodeId: KAD_ID
                     agreementStatus: CONFIRMED/REJECTED,
-                    data_provider_wallet,
+                    data_provider_wallets,
                     encryptedData: { … }
                 },
                 messageSignature: {
@@ -526,7 +527,7 @@ class DHService {
                 id,
                 wallet: node_wallet,
                 nodeId: this.config.identity,
-                data_provider_wallet: dataInfo.data_provider_wallet,
+                data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
                 agreementStatus: 'CONFIRMED',
                 encryptedData: {
                     vertices,

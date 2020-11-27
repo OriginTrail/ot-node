@@ -15,11 +15,8 @@ class ImportWorkerController {
     }
 
     /**
-     * Call miner process
-     * @param task
-     * @param wallets
-     * @param difficulty
-     * @param offerId
+     * Start graph converter worker to convert an OT-JSON to a graph format
+     * @param command {Object}
      */
     async startGraphConverterWorker(command) {
         this.logger.info('Starting graph converter worker');
@@ -27,7 +24,7 @@ class ImportWorkerController {
             documentPath,
             handler_id,
             encryptedMap,
-            data_provider_wallet,
+            data_provider_wallets,
             purchased,
         } = command.data;
 
@@ -37,15 +34,11 @@ class ImportWorkerController {
         const otjson_size_in_bytes = bytes(document);
         document = JSON.parse(document);
         // Extract wallet from signature.
-        const wallet = ImportUtilities.extractDatasetSigner(document);
-
         await this.importService.validateDocument(document, blockchain_id);
 
         const forked = fork('modules/worker/graph-converter-worker.js');
 
-        forked.send(JSON.stringify({
-            document, encryptedMap, wallet, handler_id,
-        }));
+        forked.send(JSON.stringify({ document, encryptedMap }));
 
         forked.on('message', async (response) => {
             if (response.error) {
@@ -69,7 +62,7 @@ class ImportWorkerController {
                 data_hash: parsedData.data_hash,
                 total_documents: parsedData.total_documents,
                 otjson_size_in_bytes,
-                data_provider_wallet,
+                data_provider_wallets,
                 purchased,
             };
 
@@ -100,8 +93,7 @@ class ImportWorkerController {
             } else {
                 const otjson = response;
 
-                const { node_private_key } = this.blockchain.getWallet().response;
-                const signedOtjson = ImportUtilities.signDataset(otjson, node_private_key);
+                const signedOtjson = ImportUtilities.signDataset(otjson, blockchain);
                 fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));
                 const commandData = {
                     documentPath,

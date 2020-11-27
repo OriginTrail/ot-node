@@ -21,7 +21,7 @@ class DcFinalizeImport extends Command {
             error,
             handler_id,
             data_set_id,
-            data_provider_wallet,
+            data_provider_wallets,
             purchased,
             documentPath,
             root_hash,
@@ -40,12 +40,23 @@ class DcFinalizeImport extends Command {
         try {
             const { node_wallet } = this.blockchain.getWallet().response;
 
+            let dataProviderWallets;
+            if (!data_provider_wallets) {
+                dataProviderWallets = this.blockchain.getAllWallets()
+                    .map(elem => ({
+                        network_id: elem.blockchain_id,
+                        wallet: elem.response.node_wallet,
+                    }));
+            } else {
+                dataProviderWallets = data_provider_wallets;
+            }
+
             const import_timestamp = new Date();
             this.remoteControl.importRequestData();
             await Models.data_info.create({
                 data_set_id,
                 root_hash,
-                data_provider_wallet: data_provider_wallet || node_wallet,
+                data_provider_wallets: JSON.stringify(dataProviderWallets),
                 import_timestamp,
                 total_documents,
                 origin: purchased ? 'PURCHASED' : 'IMPORTED',

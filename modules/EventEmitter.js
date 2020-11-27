@@ -212,7 +212,7 @@ class EventEmitter {
                     data_size: di.data_size,
                     transaction_hash: await ImportUtilities
                         .getTransactionHash(di.data_set_id, di.origin),
-                    data_provider_wallet: di.data_provider_wallet,
+                    data_provider_wallets: JSON.parse(di.data_provider_wallets),
                 }));
                 data.response.send(await Promise.all(promises));
             } catch (e) {
@@ -321,7 +321,7 @@ class EventEmitter {
                         document: formattedDataset,
                         root_hash: dataInfo.root_hash,
                         transaction: transactionHash,
-                        data_provider_wallet: dataInfo.data_provider_wallet,
+                        data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
                     });
                 }
             } catch (error) {

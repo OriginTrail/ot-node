@@ -397,8 +397,8 @@ class DVController {
                     datasetTags: datasetHeader.datasetTags,
                     datasetDescription: datasetHeader.datasetDescription,
                     timestamp: dataInfo.import_timestamp,
-                    creator_identity: ImportUtilities.getDataCreator(datasetHeader),
-                    creator_wallet: dataInfo.data_provider_wallet,
+                    creator_identities: ImportUtilities.extractDatasetIdentities(datasetHeader),
+                    creator_wallets: JSON.parse(dataInfo.data_provider_wallets),
                 };
             });
 
@@ -415,8 +415,8 @@ class DVController {
                                 description: not_owned_objects[dataset].metadata.datasetDescription,
                                 tags: not_owned_objects[dataset].metadata.datasetTags,
                                 creator_wallet: not_owned_objects[dataset].metadata.creator_wallet,
-                                creator_identity:
-                                    not_owned_objects[dataset].metadata.creator_identity,
+                                creator_identities:
+                                    not_owned_objects[dataset].metadata.creator_identities,
                             },
                             ot_objects: not_owned_objects[dataset][data_seller].ot_json_object_id,
                             seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,

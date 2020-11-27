@@ -195,7 +195,7 @@ class DHReplacementImportCommand extends Command {
                 data_set_id: importResult.data_set_id,
                 total_documents: importResult.vertices.length,
                 root_hash: importResult.root_hash,
-                data_provider_wallet: importResult.wallet,
+                data_provider_wallets: importResult.wallet,
                 import_timestamp: new Date(),
                 data_size: dataSize,
                 origin: 'HOLDING',

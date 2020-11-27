@@ -49,7 +49,8 @@ class DhOfferFinalizedCommand extends Command {
                 } = JSON.parse(event.data);
 
                 const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
-                const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+                const bid =
+                    await Models.bids.findOne({ where: { offer_id: offerId, blockchain_id } });
 
                 // todo pass blockchain identity
                 if (holders.includes(this.profileService.getIdentity(blockchain_id))) {

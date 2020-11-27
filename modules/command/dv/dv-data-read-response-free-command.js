@@ -48,7 +48,7 @@ class DVDataReadResponseFreeCommand extends Command {
         const replyId = message.id;
         const {
             data_set_id: dataSetId,
-            data_provider_wallet: dcWallet,
+            data_provider_wallets,
             wallet: dhWallet,
             transaction_hash,
             handler_id,
@@ -74,11 +74,12 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         const { document, permissionedData } = message;
-        // Calculate root hash and check is it the same on the SC.
-        const fingerprint = await this.blockchain.getRootHash(dataSetId).response;
+        // Calculate root hash and check is it the same on the SC
+        const { blockchain_id, response: fingerprint } =
+            await this.blockchain.getRootHash(dataSetId);
 
         if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
-            const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${dataSetId}`;
+            const errorMessage = `Couldn't not find fingerprint for import ID ${dataSetId} on chain ${blockchain_id}`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
@@ -185,7 +186,7 @@ class DVDataReadResponseFreeCommand extends Command {
             const commandData = {
                 documentPath: path.join(cacheDirectory, handler_id),
                 handler_id,
-                data_provider_wallet: dcWallet,
+                data_provider_wallets,
                 purchased: true,
             };
 

@@ -20,11 +20,12 @@ class DCOfferCleanupCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            blockchain_id,
         } = command.data;
 
-        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
+        const offer = await models.offers.findOne({ where: { offer_id: offerId, blockchain_id } });
         if (offer == null) {
-            throw new Error(`Failed to find offer ${offerId}`);
+            throw new Error(`Failed to find offer ${offerId} on chain ${blockchain_id}`);
         }
 
         offer.status = 'COMPLETED';

@@ -130,7 +130,7 @@ class ExportController {
                     data_hash: data.data_hash || null,
                     transaction_hash: data.transaction_hash,
                     data_creator: data.data_creator,
-                    dc_node_wallet: data.dc_node_wallet,
+                    dc_node_wallets: data.dc_node_wallets,
                     offer_id: data.offer_id || null,
                     import_status: data.import_status,
                     export_status: data.export_status,

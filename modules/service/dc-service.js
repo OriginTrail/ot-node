@@ -64,6 +64,7 @@ class DCService {
             trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
             gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
             price_factor_used_for_price_calculation: dc_price_factor,
+            blockchain_id,
         });
 
         if (!litigationIntervalInMinutes) {
@@ -399,7 +400,8 @@ class DCService {
             Utilities.denormalizeHex(replication.distributionRootHash),
         ];
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet, node_private_key } =
+            this.blockchain.getWallet(offer.blockchain_id).response;
 
         const distributionSignature = Encryption
             .signMessage(toSign, Utilities.normalizeHex(node_private_key));
@@ -421,7 +423,6 @@ class DCService {
             ot_objects,
         );
 
-        // todo pass blockchain identity
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
@@ -439,7 +440,7 @@ class DCService {
             transaction_hash: offer.transaction_hash,
             distributionSignature,
             color: colorNumber,
-            dcIdentity: this.profileService.getIdentity(),
+            dcIdentity: this.profileService.getIdentity(offer.blockchain_id),
         };
 
         // send replication to DH

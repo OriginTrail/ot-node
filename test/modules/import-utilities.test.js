@@ -15,7 +15,13 @@ const signingWallet = {
 };
 
 const config = {
-    node_private_key: signingWallet.privateKey,
+    blockchain: {
+        implementations: [
+            {
+                node_private_key: signingWallet.privateKey,
+            },
+        ],
+    },
 };
 
 describe('Import utilities module ', () => {
@@ -166,10 +172,11 @@ describe('Import utilities module ', () => {
     it('Sign dataset', () => {
         const testGraphCopy = Object.assign({}, sample_data.graph);
         const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
-        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config.node_private_key);
 
+        const signedOriginal =
+            ImportUtilities.signDataset(testGraphCopy, config.blockchain.implementations);
         const signedShuffled =
-            ImportUtilities.signDataset(shuffledGraphCopy, config.node_private_key);
+            ImportUtilities.signDataset(shuffledGraphCopy, config.blockchain.implementations);
 
         assert(signedOriginal.signature != null);
         assert(signedShuffled.signature != null);
@@ -186,18 +193,18 @@ describe('Import utilities module ', () => {
         const testGraphCopy = Object.assign({}, sample_data.graph);
         const shuffledGraphCopy = Object.assign({}, sample_data.shuffledGraph);
 
-        const signedOriginal = ImportUtilities.signDataset(testGraphCopy, config.node_private_key);
+        const signedOriginal =
+            ImportUtilities.signDataset(testGraphCopy, config.blockchain.implementations);
         const signedShuffled =
-            ImportUtilities.signDataset(shuffledGraphCopy, config.node_private_key);
+            ImportUtilities.signDataset(shuffledGraphCopy, config.blockchain.implementations);
 
-        assert.equal(
-            ImportUtilities
-                .sortStringifyDataset(signedOriginal),
-            ImportUtilities.sortStringifyDataset(signedShuffled),
-        );
+        assert(signedOriginal.signature != null);
+        assert(signedShuffled.signature != null);
 
-        const signerOfOriginal = await ImportUtilities.extractDatasetSigner(signedOriginal);
-        const signerOfShuffled = await ImportUtilities.extractDatasetSigner(signedShuffled);
+        const signerOfOriginal =
+            await ImportUtilities.extractDatasetSigners(signedOriginal)[0].wallet;
+        const signerOfShuffled =
+            await ImportUtilities.extractDatasetSigners(signedShuffled)[0].wallet;
 
         assert.equal(signerOfOriginal, signerOfShuffled);
         assert.equal(signerOfShuffled.toLowerCase(), signingWallet.wallet.toLowerCase());
