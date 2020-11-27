@@ -33,7 +33,7 @@ class ArangoJS {
             port: selectedDatabase.port,
         };
 
-        this.arangoClient = new ArangoClient(selectedDatabase);
+        this.arangoClient = new ArangoClient(selectedDatabase, log);
     }
 
     async startReplication() {

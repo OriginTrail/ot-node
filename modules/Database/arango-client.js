@@ -1,13 +1,15 @@
 const axios = require('axios');
 
 class ArangoClient {
-    constructor(selectedDatabase) {
+    constructor(selectedDatabase, logger) {
+        this.logger = logger;
         this.baseUrl = `http://${selectedDatabase.host}:${selectedDatabase.port}/_db/${selectedDatabase.database}`;
 
         this.defaultApplierConfiguration = {
-            endpoint: `${selectedDatabase.replication_info.endpoint}:${selectedDatabase.replication_info.port}`,
+            endpoint: `tcp://${selectedDatabase.replication_info.endpoint}:${selectedDatabase.replication_info.port}`,
             username: `${selectedDatabase.replication_info.username}`,
             password: `${selectedDatabase.replication_info.password}`,
+            database: 'origintrail',
             verbose: false,
             includeSystem: false,
             incremental: true,
