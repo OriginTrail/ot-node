@@ -89,12 +89,12 @@ class GraphStorage {
         });
     }
 
-    getReplicationState() {
+    getReplicationApplierState() {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database.'));
             } else {
-                this.db.getReplicationState().then((result) => {
+                this.db.getReplicationApplierState().then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

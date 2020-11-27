@@ -63,7 +63,7 @@ class ArangoJS {
         }
     }
 
-    async getReplicationState() {
+    async getReplicationApplierState() {
         const response = await this.arangoClient.getReplicationApplierState();
         return response;
     }
