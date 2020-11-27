@@ -635,6 +635,31 @@ class ImportService {
         return otObjects;
     }
 
+    packLocalQueryData(data) {
+        const reconstructedObjects = [];
+        for (const object of data) {
+            const { relatedObjects } = object;
+            let { rootObject } = object;
+
+            rootObject.vertex.datasets = [rootObject.latestDataset];
+            rootObject = rootObject.vertex;
+
+            reconstructedObjects.push(this._createObjectGraph(rootObject, relatedObjects));
+        }
+
+        const otObjects = [];
+
+        for (let i = 0; i < reconstructedObjects.length; i += 1) {
+            if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
+                otObjects.push({
+                    otObject: reconstructedObjects[i],
+                    datasets: data[i].rootObject.vertex.datasets,
+                });
+            }
+        }
+        return otObjects;
+    }
+
     _createObjectGraph(graphObject, relatedObjects) {
         const otObject = this._constructOtObject(relatedObjects);
         otObject['@id'] = graphObject.uid;

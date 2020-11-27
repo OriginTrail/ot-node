@@ -79,6 +79,20 @@ class GraphStorage {
         });
     }
 
+    findLocalQuery(queryObject) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.findLocalQuery(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     /**
      * Finds objects based on ids and datasets which contain them
      *

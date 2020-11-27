@@ -226,24 +226,6 @@ class EventEmitter {
             }
         });
 
-        this._on('api-query', (data) => {
-            logger.info(`Get vertices triggered with query ${JSON.stringify(data.query)}`);
-            product.getVertices(data.query).then((res) => {
-                if (res.length === 0) {
-                    data.response.status(204);
-                } else {
-                    data.response.status(200);
-                }
-                data.response.send(res);
-            }).catch((error) => {
-                logger.error(`Failed to get vertices for query ${JSON.stringify(data.query)}`);
-                data.response.status(500);
-                data.response.send({
-                    message: `Failed to get vertices for query ${JSON.stringify(data.query)}`,
-                });
-            });
-        });
-
         this._on('api-offer-status', async (data) => {
             const { replicationId } = data;
             logger.info(`Offer status for internal ID ${replicationId} triggered.`);
