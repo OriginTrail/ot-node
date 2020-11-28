@@ -111,9 +111,11 @@ class Ethereum {
         // Old Holding contract data
         const oldHoldingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/old-holding.json');
         this.oldHoldingContractAddress = await this._getOldHoldingContractAddress();
-        this.oldHoldingContractAbi = JSON.parse(oldHoldingAbiFile);
-        this.oldHoldingContract = new this.web3.eth
-            .Contract(this.oldHoldingContractAbi, this.oldHoldingContractAddress);
+        if (!Utilities.isZeroHash(this.oldHoldingContractAddress)) {
+            this.oldHoldingContractAbi = JSON.parse(oldHoldingAbiFile);
+            this.oldHoldingContract = new this.web3.eth
+                .Contract(this.oldHoldingContractAbi, this.oldHoldingContractAddress);
+        }
 
         // Token contract data
         const tokenAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/token.json');
@@ -163,11 +165,13 @@ class Ethereum {
         // Old Holding storage contract data
         const oldHoldingStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding-storage.json');
         this.oldHoldingStorageContractAddress = await this._getOldHoldingStorageContractAddress();
-        this.oldHoldingStorageContractAbi = JSON.parse(oldHoldingStorageAbiFile);
-        this.oldHoldingStorageContract = new this.web3.eth.Contract(
-            this.oldHoldingStorageContractAbi,
-            this.oldHoldingStorageContractAddress,
-        );
+        if (!Utilities.isZeroHash(this.oldHoldingContractAddress)) {
+            this.oldHoldingStorageContractAbi = JSON.parse(oldHoldingStorageAbiFile);
+            this.oldHoldingStorageContract = new this.web3.eth.Contract(
+                this.oldHoldingStorageContractAbi,
+                this.oldHoldingStorageContractAddress,
+            );
+        }
 
         // Litigation contract data
         const litigationAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/litigation.json');
@@ -228,6 +232,10 @@ class Ethereum {
             MARKETPLACE_CONTRACT: this.marketplaceContract,
             REPLACEMENT_CONTRACT: this.replacementContract,
         };
+
+        if (this.oldHoldingContract) {
+            this.contractsByName.OLD_HOLDING_CONTRACT = this.oldHoldingContract;
+        }
 
         this.contractsLoaded = true;
 
@@ -442,7 +450,7 @@ class Ethereum {
     async getRootHash(dataSetId) {
         this.logger.trace(`[${this.getBlockchainId()}] Fetching root hash for data set ${dataSetId}`);
         const rootHash = await this.holdingStorageContract.methods.fingerprint(dataSetId).call();
-        if (Utilities.isZeroHash(rootHash)) {
+        if (Utilities.isZeroHash(rootHash) && this.oldHoldingStorageContract) {
             return this.oldHoldingStorageContract.methods.fingerprint(dataSetId).call();
         }
         return rootHash;
@@ -603,7 +611,7 @@ class Ethereum {
         let contractAddress = this.holdingContractAddress;
 
         const offer = await this.getOffer(offerId);
-        if (Utilities.isZeroHash(offer['0'])) {
+        if (Utilities.isZeroHash(offer['0']) && this.oldHoldingContract) {
             contractAddress = this.oldHoldingContractAddress;
         }
         const gasPrice = await this.getGasPrice(urgent);
@@ -793,7 +801,7 @@ class Ethereum {
     async getAllPastEvents(contractName, fromBlock) {
         try {
             const contract = this.contractsByName[contractName];
-            if (Utilities.isZeroHash(contract._address)) {
+            if (!contract || Utilities.isZeroHash(contract._address)) {
                 return;
             }
 
