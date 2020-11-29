@@ -181,6 +181,17 @@ describe('Import utilities module ', () => {
         assert(signedOriginal.signature != null);
         assert(signedShuffled.signature != null);
 
+        // Delete timestamps since they won't match up
+        const length = Math.max(signedOriginal.signature.length, signedShuffled.signature.length);
+        for (let i = 0; i < length; i += 1) {
+            if (signedOriginal.signature[i]) {
+                delete signedOriginal.signature[i].created;
+            }
+            if (signedShuffled.signature[i]) {
+                delete signedShuffled.signature[i].created;
+            }
+        }
+
         assert.equal(
             ImportUtilities
                 .sortStringifyDataset(signedOriginal),
