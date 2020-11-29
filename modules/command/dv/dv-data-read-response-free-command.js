@@ -75,21 +75,43 @@ class DVDataReadResponseFreeCommand extends Command {
 
         const { document, permissionedData } = message;
         // Calculate root hash and check is it the same on the SC
-        const { blockchain_id, response: fingerprint } =
-            await this.blockchain.getRootHash(dataSetId);
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
 
-        if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
-            const errorMessage = `Couldn't not find fingerprint for import ID ${dataSetId} on chain ${blockchain_id}`;
+        const signerArray = ImportUtilities.extractDatasetSigners(document);
+        const myBlockchains = this.blockchain.getAllWallets().map(e => e.blockchain_id);
+
+        const validationData = {
+            fingerprints_exist: 0,
+            fingerprints_match: 0,
+        };
+        for (const signerObject of signerArray) {
+            if (myBlockchains.includes(signerObject.network_id)) {
+                // eslint-disable-next-line no-await-in-loop
+                const fingerprint = await this.blockchain
+                    .getRootHash(dataSetId, signerObject.network_id).response;
+
+                if (fingerprint && !Utilities.isZeroHash(fingerprint)) {
+                    validationData.fingerprints_exist += 1;
+                    if (fingerprint === rootHash) {
+                        validationData.fingerprints_match += 1;
+                    } else {
+                        this.logger.warn(`Fingerprint root hash for dataset ${dataSetId} does not match on blockchain ${signerObject.network_id}. ` +
+                            ` Calculated root hash ${rootHash} differs from received blockchain fingerprint ${fingerprint}`);
+                    }
+                }
+            }
+        }
+
+        if (validationData.fingerprints_exist === 0) {
+            const errorMessage = `Couldn't not find fingerprint for dataset_id ${dataSetId} on any chain to validate.`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
-
-        if (fingerprint !== rootHash) {
-            const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
+        if (validationData.fingerprints_exist !== validationData.fingerprints_match) {
+            const errorMessage = `Fingerprint root hash for dataset ${dataSetId} does not match with the fingerprint received from the blockchain.`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
