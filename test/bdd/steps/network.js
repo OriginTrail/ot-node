@@ -451,7 +451,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
-    let keys = ['formatted_dataset', 'data_creator', 'dc_node_wallet', 'transaction_hash'];
+    let keys = ['formatted_dataset', 'data_creator', 'dc_node_wallets', 'transaction_hash'];
     if (lastExport.data.export_status) {
         expect(lastExport.data.export_status, 'response.data.export_status should be "COMPLETED"')
             .to.be.equal('COMPLETED');
