@@ -129,6 +129,10 @@ class RestAPIServiceV2 {
             await this.dhController.whitelistViewer(req, res);
         });
 
+        server.post(`/api/${this.version_id}/permissioned_data/remove`, async (req, res) => {
+            await this.dcController.removePermissionedData(req, res);
+        });
+
         server.post(`/api/${this.version_id}/network/read_export`, async (req, res) => {
             await this.dvController.handleDataReadExportRequest(req, res);
         });

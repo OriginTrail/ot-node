@@ -354,6 +354,16 @@ class GraphStorage {
     }
 
     /**
+     * Replace document in graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async replaceDocument(collectionName, document) {
+        return this.db.replaceDocument(collectionName, document);
+    }
+
+    /**
      * Updates document with the import ID
      * @param collectionName
      * @param document

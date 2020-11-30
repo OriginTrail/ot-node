@@ -923,6 +923,20 @@ class ArangoJS {
         return ArangoJS._normalize(response);
     }
 
+
+    /**
+     * Update document in ArangoDB graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async replaceDocument(collectionName, document) {
+        ArangoJS._deNormalizeConnection(document);
+        const collection = this.db.collection(collectionName);
+        const response = await collection.replace(document._key, document);
+        return ArangoJS._normalize(response);
+    }
+
     /**
      * Get document from ArangoDB graph database
      * @param {string} - collectionName
