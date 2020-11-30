@@ -4,6 +4,7 @@ const Utilities = require('../Utilities');
 const constants = require('../constants');
 const { QueryTypes } = require('sequelize');
 const BN = require('bn.js');
+const ObjectValidator = require('../validator/object-validator');
 
 /**
  * DC related API controller
@@ -21,6 +22,7 @@ class DCController {
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -364,6 +366,103 @@ class DCController {
             dataPriceResponseObject,
             dv_node_id,
         );
+    }
+
+
+    async removePermissionedData(req, res) {
+        if (req.body === undefined ||
+            req.body.dataset_id === undefined ||
+            req.body.identifier_value === undefined ||
+            req.body.identifier_type === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { dataset_id, identifier_value } = req.body;
+
+        let status = await this.permissionedDataService.removePermissionedDataInDb(
+            dataset_id,
+            identifier_value,
+        );
+
+        await Models.data_sellers.destroy({
+            where: {
+                data_set_id: dataset_id,
+                seller_erc_id: this.config.erc725Identity,
+                ot_json_object_id: identifier_value,
+            },
+        });
+
+        if (status) { status = 'COMPLETED'; } else { status = 'FAILED'; }
+        res.status(200);
+        res.send({ status });
+    }
+
+    /**
+     * Query local data
+     * @param query Query
+     * @returns {Promise<*>}
+     */
+    async queryLocal(req, res) {
+        this.logger.api('POST: Query local request received.');
+        if (!req.body) {
+            res.status(400);
+            res.send({
+                message: 'Body is missing',
+            });
+            return;
+        }
+
+        const { query } = req.body;
+
+        this.logger.info(`Local query handling triggered with ${JSON.stringify(query)}.`);
+        const validationError = ObjectValidator.validateSearchQueryObject(query);
+        if (validationError) {
+            throw validationError;
+        }
+
+        const { path } = query[0];
+        const valuesArray = Utilities.arrayze(query[0].value);
+
+        const result = await this.graphStorage.findLocalQuery({
+            idType: path,
+            identifierKey: valuesArray,
+        });
+        const response = this.importService.packLocalQueryData(result);
+        for (let i = 0; i < response.length; i += 1) {
+            const datasets = [];
+            let offer_id = null;
+
+            // eslint-disable-next-line no-await-in-loop
+            const offer = await Models.offers.findOne({
+                where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+            });
+
+            if (offer) {
+                // eslint-disable-next-line prefer-destructuring
+                offer_id = offer.offer_id;
+            } else {
+                // eslint-disable-next-line no-await-in-loop
+                const bid = await Models.bids.findOne({
+                    where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+                });
+
+                    // eslint-disable-next-line prefer-destructuring
+                if (bid) { offer_id = bid.offer_id; }
+            }
+
+            // eslint-disable-next-line prefer-destructuring
+            response[i].dataset_id = response[i].datasets[0];
+            response[i].offer_id = datasets;
+            delete response[i].datasets;
+        }
+
+        res.status(200);
+        res.send(response);
     }
 }
 
