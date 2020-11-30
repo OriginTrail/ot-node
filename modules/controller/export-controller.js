@@ -127,11 +127,11 @@ class ExportController {
                 data: {
                     formatted_dataset: dataset.formatted_dataset,
                     root_hash: data.root_hash,
-                    data_hash: data.data_hash || null,
+                    data_hash: data.data_hash,
                     transaction_hash: data.transaction_hash,
                     data_creator: data.data_creator,
                     dc_node_wallet: data.dc_node_wallet,
-                    offer_id: data.offer_id || null,
+                    offer_id: data.offer_id,
                     import_status: data.import_status,
                     export_status: data.export_status,
                 },
