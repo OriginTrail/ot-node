@@ -24,7 +24,7 @@ class DvPurchaseInitiateCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            handler_id, status, message, encoded_data,
+            handler_id, blockchain_id, status, message, encoded_data,
             permissioned_data_root_hash, encoded_data_root_hash,
             permissioned_data_array_length, permissioned_data_original_length,
         } = command.data;
@@ -68,6 +68,7 @@ class DvPurchaseInitiateCommand extends Command {
         const dataTrade = await Models.data_trades.findOne({
             where: {
                 data_set_id,
+                blockchain_id,
                 ot_json_object_id: ot_object_id,
                 seller_node_id,
                 status: { [Op.ne]: 'FAILED' },
@@ -75,11 +76,11 @@ class DvPurchaseInitiateCommand extends Command {
         });
         const result = await this.blockchain.initiatePurchase(
             dataTrade.seller_erc_id, dataTrade.buyer_erc_id,
-            dataTrade.price, permissioned_data_root_hash, encoded_data_root_hash,
+            dataTrade.price, permissioned_data_root_hash, encoded_data_root_hash, blockchain_id,
         ).response;
 
         const { purchaseId } = this.blockchain
-            .decodePurchaseInitiatedEventFromTransaction(result).response;
+            .decodePurchaseInitiatedEventFromTransaction(result, blockchain_id).response;
         this.logger.important(`Purchase ${purchaseId} initiated. Waiting for key from seller...`);
 
         if (!purchaseId) {
@@ -94,6 +95,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         const commandData = {
             handler_id,
+            blockchain_id,
             encoded_data,
             purchase_id: purchaseId,
             permissioned_data_array_length,

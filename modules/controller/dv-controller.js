@@ -487,7 +487,7 @@ class DVController {
             return;
         }
         const {
-            data_set_id, seller_node_id, ot_object_id,
+            data_set_id, seller_node_id, ot_object_id, blockchain_id,
         } = request.body;
         const inserted_object = await Models.handler_ids.create({
             data: JSON.stringify({
@@ -506,6 +506,7 @@ class DVController {
             handler_id,
             ot_object_id,
             seller_node_id,
+            blockchain_id,
         };
 
         await this.commandExecutor.add({
@@ -870,7 +871,7 @@ class DVController {
             originalDataRootHash,
         } = purchase;
 
-        if (Utilities.normalizeHex(buyer) !== Utilities.normalizeHex(seller_erc_id)) {
+        if (!Utilities.compareHexStrings(buyer, seller_erc_id)) {
             this.logger.warn('New data seller\'s ERC-725 identity does not match' +
                 ` the purchase buyer identity ${Utilities.normalizeHex(buyer)}`);
             return;
@@ -884,8 +885,7 @@ class DVController {
         }
 
         const permissionedDataHash = otObject.properties.permissioned_data.permissioned_data_hash;
-        if (Utilities.normalizeHex(permissionedDataHash) !==
-            Utilities.normalizeHex(originalDataRootHash)) {
+        if (!Utilities.compareHexStrings(permissionedDataHash, originalDataRootHash)) {
             this.logger.info('Purchase permissioned data root hash does not match ' +
                 'the permissioned data root hash from dataset.');
             return;

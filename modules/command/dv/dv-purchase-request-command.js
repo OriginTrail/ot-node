@@ -1,3 +1,5 @@
+const BN = require('bn.js');
+
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
@@ -27,20 +29,26 @@ class DvPurchaseRequestCommand extends Command {
             handler_id,
             ot_object_id,
             seller_node_id,
+            blockchain_id,
         } = command.data;
 
         this.remoteControl.purchaseStatus('Initiating purchase', 'Your purchase request is being processed. Please be patient.');
 
-        const dataSeller = await Models.data_sellers.findOne({
-            where: {
-                data_set_id,
-                ot_json_object_id: ot_object_id,
-                seller_node_id,
-            },
-        });
+        const seller_filter = {
+            data_set_id,
+            ot_json_object_id: ot_object_id,
+            seller_node_id,
+        };
+        if (blockchain_id) {
+            seller_filter.blockchain_id = blockchain_id;
+        }
+        const dataSeller = await Models.data_sellers.findAll({ where: seller_filter });
 
-        if (!dataSeller) {
+        if (!dataSeller || !Array.isArray(dataSeller) || dataSeller.length === 0) {
             const error = `Unable to find data seller info with params: ${data_set_id}, ${ot_object_id}, ${seller_node_id}`;
+            if (blockchain_id) {
+                error.concat(`, ${blockchain_id}`);
+            }
             this.logger.error(error);
             await Models.handler_ids.update(
                 {
@@ -77,15 +85,29 @@ class DvPurchaseRequestCommand extends Command {
             }
         }
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        let selected_price = new BN(dataSeller[0].price);
+        let selected_blockchain_id = dataSeller[0].blockchain_id;
+        if (!blockchain_id) {
+            for (const seller of dataSeller) {
+                const seller_price = new BN(seller.price);
+                if (seller_price.lt(selected_price)) {
+                    selected_price = seller_price;
+                    selected_blockchain_id = seller.blockchain_id;
+                }
+            }
+        }
+
+        const { node_wallet, node_private_key } =
+            this.blockchain.getWallet(selected_blockchain_id).response;
 
         // todo pass blockchain identity
         const message = {
             data_set_id,
-            dv_erc725_identity: this.profileService.getIdentity(),
+            dv_erc725_identity: this.profileService.getIdentity(selected_blockchain_id),
             handler_id,
             ot_json_object_id: ot_object_id,
-            price: dataSeller.price,
+            price: selected_price,
+            blockchain_id: selected_blockchain_id,
             wallet: node_wallet,
         };
         const dataPurchaseRequestObject = {
@@ -102,12 +124,12 @@ class DvPurchaseRequestCommand extends Command {
             seller_node_id,
         );
 
-        // todo pass blockchain identity
         await Models.data_trades.create({
             data_set_id,
+            blockchain_id,
             ot_json_object_id: ot_object_id,
             buyer_node_id: this.config.identity,
-            buyer_erc_id: this.profileService.getIdentity(),
+            buyer_erc_id: this.profileService.getIdentity(selected_blockchain_id),
             seller_node_id,
             seller_erc_id: dataSeller.seller_erc_id,
             price: dataSeller.price,

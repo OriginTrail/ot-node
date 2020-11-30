@@ -120,20 +120,26 @@ class PermissionedDataService {
         return result;
     }
 
-    async addDataSellerForPermissionedData(dataSetId, sellerErcId, price, sellerNodeId, dataset) {
+    async addDataSellerForPermissionedData(
+        dataSetId, sellerErcId, blockchain_id_array,
+        price, sellerNodeId, dataset,
+    ) {
         const permissionedData = this.getGraphPermissionedData(dataset);
         if (permissionedData.length === 0) {
             return;
         }
         const promises = [];
         permissionedData.forEach((otObjectId) => {
-            promises.push(Models.data_sellers.create({
-                data_set_id: dataSetId,
-                ot_json_object_id: otObjectId,
-                seller_node_id: Utilities.denormalizeHex(sellerNodeId),
-                seller_erc_id: Utilities.normalizeHex(sellerErcId),
-                price,
-            }));
+            for (const blockchain_id of blockchain_id_array) {
+                promises.push(Models.data_sellers.create({
+                    data_set_id: dataSetId,
+                    blockchain_id,
+                    ot_json_object_id: otObjectId,
+                    seller_node_id: Utilities.denormalizeHex(sellerNodeId),
+                    seller_erc_id: Utilities.normalizeHex(sellerErcId),
+                    price,
+                }));
+            }
         });
         await Promise.all(promises);
     }

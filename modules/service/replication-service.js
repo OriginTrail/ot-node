@@ -53,6 +53,7 @@ class ReplicationService {
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,
             this.profileService.getIdentity(blockchain_id),
+            [blockchain_id],
             this.config.default_data_price,
             this.config.identity,
             otJson['@graph'],

@@ -25,7 +25,8 @@ class DhPurchaseRequestedCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
+            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
+            price, blockchain_id,
         } = command.data;
         this.logger.important(`Purchase request for ot_object ${ot_json_object_id} received from ${dv_node_id}.`);
         const dataTrades = await Models.data_trades.findAll({
@@ -36,7 +37,7 @@ class DhPurchaseRequestedCommand extends Command {
             },
         });
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchain_id).response;
 
         const response = {
             handler_id,
@@ -47,6 +48,7 @@ class DhPurchaseRequestedCommand extends Command {
             where: {
                 data_set_id,
                 ot_json_object_id,
+                blockchain_id,
                 seller_node_id: this.config.identity,
             },
         });
@@ -85,12 +87,26 @@ class DhPurchaseRequestedCommand extends Command {
                 response.encoded_data = encodedObject.encoded_data;
                 response.permissioned_data_root_hash = encodedObject.permissioned_data_root_hash;
                 response.encoded_data_root_hash = encodedObject.encoded_data_root_hash;
+                response.blockchain_id = blockchain_id;
                 response.message = 'Data purchase request completed!';
                 response.status = 'SUCCESSFUL';
+
+                await Models.data_trades.create({
+                    data_set_id,
+                    ot_json_object_id,
+                    blockchain_id,
+                    buyer_node_id: dv_node_id,
+                    buyer_erc_id: dv_erc725_identity,
+                    seller_node_id: this.config.identity,
+                    seller_erc_id: this.profileService.getIdentity(blockchain_id).toLowerCase(),
+                    price,
+                    status: 'REQUESTED',
+                });
 
                 const commandData = {
                     data_set_id,
                     ot_json_object_id,
+                    blockchain_id,
                     buyer_node_id: dv_node_id,
                     encoded_object: encodedObject,
                 };
@@ -99,17 +115,6 @@ class DhPurchaseRequestedCommand extends Command {
                     delay: 60 * 1000,
                     retries: 3,
                     data: commandData,
-                });
-                // todo pass blockchain identity
-                await Models.data_trades.create({
-                    data_set_id,
-                    ot_json_object_id,
-                    buyer_node_id: dv_node_id,
-                    buyer_erc_id: dv_erc725_identity,
-                    seller_node_id: this.config.identity,
-                    seller_erc_id: this.profileService.getIdentity().toLowerCase(),
-                    price,
-                    status: 'REQUESTED',
                 });
             } else {
                 response.message = `Unable to find permissioned data with object id: ${ot_json_object_id} and dataset id: ${data_set_id}`;

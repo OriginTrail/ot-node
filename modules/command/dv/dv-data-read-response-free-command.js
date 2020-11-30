@@ -80,6 +80,7 @@ class DVDataReadResponseFreeCommand extends Command {
         const signerArray = ImportUtilities.extractDatasetSigners(document);
         const myBlockchains = this.blockchain.getAllWallets().map(e => e.blockchain_id);
 
+        const availableBlockchains = [];
         const validationData = {
             fingerprints_exist: 0,
             fingerprints_match: 0,
@@ -94,6 +95,7 @@ class DVDataReadResponseFreeCommand extends Command {
                     validationData.fingerprints_exist += 1;
                     if (fingerprint === rootHash) {
                         validationData.fingerprints_match += 1;
+                        availableBlockchains.push(signerObject.network_id);
                     } else {
                         this.logger.warn(`Fingerprint root hash for dataset ${dataSetId} does not match on blockchain ${signerObject.network_id}. ` +
                             ` Calculated root hash ${rootHash} differs from received blockchain fingerprint ${fingerprint}`);
@@ -129,6 +131,7 @@ class DVDataReadResponseFreeCommand extends Command {
         await this.permissionedDataService.addDataSellerForPermissionedData(
             dataSetId,
             erc725Identity,
+            availableBlockchains,
             0,
             profile.nodeId.toLowerCase().slice(0, 42),
             document['@graph'],

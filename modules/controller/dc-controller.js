@@ -229,7 +229,8 @@ class DCController {
 
     async handleNetworkPurchaseRequest(request) {
         const {
-            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
+            data_set_id, dv_erc725_identity, handler_id,
+            dv_node_id, ot_json_object_id, price, blockchain_id,
         } = request;
 
         // todo validate data in request
@@ -240,6 +241,7 @@ class DCController {
             handler_id,
             dv_node_id,
             ot_json_object_id,
+            blockchain_id,
             price,
         };
 

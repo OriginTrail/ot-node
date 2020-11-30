@@ -19,20 +19,21 @@ class DhPurchaseTakePaymentCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
-        const { purchase_id } = command.data;
+        const { purchase_id, blockchain_id } = command.data;
         const dataTrade = await Models.data_trades.findOne({
             where: {
                 purchase_id,
             },
         });
-        const bcPurchase = await this.blockchain.getPurchase(purchase_id).response;
+        const bcPurchase = await this.blockchain.getPurchase(purchase_id, blockchain_id).response;
         if (bcPurchase.stage === '2') {
             try {
-                await this.blockchain.takePayment(purchase_id).response;
+                await this.blockchain.takePayment(purchase_id, blockchain_id).response;
                 dataTrade.status = 'COMPLETED';
                 await dataTrade.save({ fields: ['status'] });
                 await Models.data_sellers.create({
                     data_set_id: dataTrade.data_set_id,
+                    blockchain_id,
                     ot_json_object_id: dataTrade.ot_json_object_id,
                     seller_node_id: dataTrade.seller_node_id,
                     seller_erc_id: dataTrade.seller_erc_id,
