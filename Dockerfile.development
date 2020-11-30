@@ -19,6 +19,7 @@ RUN /install-arango.sh
 
 RUN export LC_ALL=C
 
+RUN apt-get install -y libpq-dev
 RUN apt-get update && apt install -y -qq supervisor
 RUN mkdir -p /var/log/supervisor
 COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -34,7 +35,7 @@ RUN ln -s /ot-node/init /ot-node/current
 
 # Add files
 COPY . /ot-node/current
-RUN postgres -P 5432 -D /ot-node/data/psql-data >logfile 2>&1 &
+RUN service postgresql start
 RUN service arangodb3 start && cd /ot-node/current && npm install && npm run setup -- --configDir=/ot-node/data
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
