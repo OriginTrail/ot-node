@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "4.1.12",
+  "version": "4.1.18",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -81,7 +81,7 @@
   "snyk": true,
   "dependencies": {
     "@bugsnag/js": "^7.0.0",
-    "@deadcanaries/kadence": "^6.1.9",
+    "@deadcanaries/kadence": "git+https://github.com/OriginTrail/kadence.git",
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
@@ -127,7 +127,7 @@
     "jsonld": "^1.6.2",
     "jsprim": "^2.0.0",
     "leveldown": "^3.0.0",
-    "levelup": "^2.0.2",
+    "levelup": "4.3.2",
     "libxml-xsd": "^0.5.2",
     "lodash": "^4.17.5",
     "machinepack-zip": "^1.1.0",

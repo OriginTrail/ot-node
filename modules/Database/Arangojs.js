@@ -3,6 +3,8 @@ const request = require('superagent');
 const Utilities = require('../Utilities');
 const { normalizeGraph } = require('./graph-converter');
 const constants = require('../constants');
+const { execSync, spawn } = require('child_process');
+const ArangoClient = require('./arango-client');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -17,15 +19,53 @@ class ArangoJS {
      * @param {string} - host
      * @param {number} - port
      */
-    constructor(username, password, database, host, port, log) {
+    constructor(selectedDatabase, log) {
         this.log = log;
-        this.db = new Database(`http://${host}:${port}`);
-        this.db.useDatabase(database);
-        this.db.useBasicAuth(username, password);
+        this.db = new Database(`http://${selectedDatabase.host}:${selectedDatabase.port}`);
+        this.db.useDatabase(selectedDatabase.database);
+        this.db.useBasicAuth(selectedDatabase.username, selectedDatabase.password);
 
         this.dbInfo = {
-            username, password, database, host, port,
+            username: selectedDatabase.username,
+            password: selectedDatabase.password,
+            database: selectedDatabase.database,
+            host: selectedDatabase.host,
+            port: selectedDatabase.port,
         };
+
+        this.arangoClient = new ArangoClient(selectedDatabase, log);
+    }
+
+    async startReplication() {
+        // get replication state
+        let stateResponse = await this.arangoClient.getReplicationApplierState();
+
+        if (!stateResponse.state.running) {
+            this.log.trace(`Applier is not running state message: ${stateResponse.state.progress.message}`);
+            this.log.trace('Setting applier configuration');
+            await this.arangoClient.setupReplicationApplierConfiguration();
+            this.log.trace('Setting applier configuration finalized successfully');
+            this.log.trace('Starting applier replication...');
+            await this.arangoClient.startReplicationApplier();
+            stateResponse = await this.arangoClient.getReplicationApplierState();
+            this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
+        } else {
+            this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
+        }
+    }
+
+    async stopReplication() {
+        const applierResponse = await this.arangoClient.stopReplicationApplier();
+        if (!applierResponse.state.running) {
+            this.log.trace(`Applier successfully stopped: ${applierResponse.state.progress.message}`);
+        } else {
+            this.log.error('Something went wrong. Unable to stop applier');
+        }
+    }
+
+    async getReplicationApplierState() {
+        const response = await this.arangoClient.getReplicationApplierState();
+        return response;
     }
 
     /**

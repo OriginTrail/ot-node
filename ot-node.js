@@ -338,6 +338,30 @@ class OTNode {
             log.notify('================================================================');
         }
 
+        /**
+         * Start busy wait loop if fallback node
+         */
+        if (config.is_fallback_node) {
+            log.notify('Entering busy wait loop');
+            // start replication for arango
+            await graphStorage.startReplication();
+            const doWhile = true;
+            do {
+                const promise = new Promise((resolve, reject) => {
+                    setTimeout(() => resolve('done!'), 10000);
+                });
+                // eslint-disable-next-line no-await-in-loop
+                await promise;
+            } while (doWhile);
+            log.notify('Exiting busy wait loop');
+            graphStorage.stopReplication();
+        } else {
+            const replicationState = await graphStorage.getReplicationApplierState();
+            if (replicationState.state.running) {
+                await graphStorage.stopReplication();
+            }
+        }
+
         // Starting the kademlia
         const transport = container.resolve('transport');
         await transport.init(container.cradle);

@@ -45,7 +45,13 @@
       "port": 8529,
       "database": "origintrail-develop",
       "host": "localhost",
-      "max_path_length": 1000
+      "max_path_length": 1000,
+      "replication_info": {
+        "endpoint": "",
+        "username": "",
+        "password": "",
+        "port": "8529"
+      }
     },
     "blockchain": {
       "blockchain_title": "Ethereum",
@@ -109,7 +115,8 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600
+    "reputationWindowInMinutes": 129600,
+    "is_fallback_node": false
   },
   "testnet": {
     "identity": null,
@@ -157,7 +164,13 @@
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",
-      "max_path_length": 1000
+      "max_path_length": 1000,
+      "replication_info": {
+        "endpoint": "",
+        "username": "",
+        "password": "",
+        "port": "8529"
+      }
     },
     "blockchain": {
       "blockchain_title": "Ethereum",
@@ -225,7 +238,8 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600
+    "reputationWindowInMinutes": 129600,
+    "is_fallback_node": false
   },
   "mainnet": {
     "identity": null,
@@ -273,7 +287,13 @@
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",
-      "max_path_length": 1000
+      "max_path_length": 1000,
+      "replication_info": {
+        "endpoint": "10.1.0.5",
+        "username": "root",
+        "password": "",
+        "port": "8529"
+      }
     },
     "blockchain": {
       "blockchain_title": "Ethereum",
@@ -343,6 +363,7 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600
+    "reputationWindowInMinutes": 129600,
+    "is_fallback_node": false
   }
 }

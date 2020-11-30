@@ -4,6 +4,7 @@ const assert = require('assert');
 const boscar = require('boscar');
 const utilities = require('../../Utilities');
 const Control = require('../../Control');
+const Bucket = require('@deadcanaries/kadence/lib/bucket');
 
 class KademliaUtils {
     constructor(ctx) {
@@ -78,14 +79,102 @@ class KademliaUtils {
     }
 
     /**
-    * Verifies if we are on the test network and otherconfig checks
-    */
+     * Verifies if we are on the test network and otherconfig checks
+     */
     verifyConfiguration(config) {
         if (config.traverse_nat_enabled && config.onion_enabled) {
             this.log.error('Refusing to start with both TraverseNatEnabled and ' +
-          'OnionEnabled - this is a privacy risk');
+                'OnionEnabled - this is a privacy risk');
             process.exit(1);
         }
+    }
+
+    /**
+     * Save bootstrap nodes
+     */
+    setBootstraps(nodes) {
+        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'bootstraps.json');
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        fs.writeFileSync(filePath, JSON.stringify(nodes));
+    }
+
+    /**
+     * Check if bootstrap nodes have changed
+     */
+    checkBootstraps(nodes) {
+        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'bootstraps.json');
+        if (!fs.existsSync(filePath) || nodes.length === 0) {
+            return false;
+        }
+
+        const existingBootstraps = JSON.parse(fs.readFileSync(filePath));
+
+        for (let i = 0; i < existingBootstraps.length; i += 1) {
+            if (nodes.indexOf(existingBootstraps[i]) === -1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Save routing table
+     */
+    setRoutingTable(map) {
+        const obj = {};
+
+        map.forEach((value, key) => {
+            const childObj = {};
+            value.forEach((childValue, childKey) => {
+                childObj[childKey] = childValue;
+            });
+            obj[key] = childObj;
+        });
+
+        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'router.json');
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        const result = JSON.stringify({ timestamp: new Date(), routingTable: obj });
+        fs.writeFileSync(filePath, result);
+    }
+
+    /**
+     * Load routing table
+     */
+    getRoutingTable(router) {
+        const HOUR = 1000 * 60 * 60 * 24;
+        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'router.json');
+        if (!fs.existsSync(filePath)) {
+            return false;
+        }
+        const obj = JSON.parse(fs.readFileSync(filePath));
+        const { routingTable } = obj;
+        try {
+            const lastTimestamp = new Date(obj.timestamp);
+            const currentTimestamp = new Date() - HOUR;
+
+            if (lastTimestamp > currentTimestamp) {
+                Object.keys(routingTable).forEach((key) => {
+                    const value = routingTable[key];
+                    const childMap = new Bucket();
+                    Object.keys(value).forEach((childKey) => {
+                        childMap.set(childKey, value[childKey]);
+                    });
+                    router.set(parseInt(key, 10), childMap);
+                });
+                return true;
+            }
+            // eslint-disable-next-line no-empty
+        } catch (e) {
+            console.log(e);
+        }
+
+        return false;
     }
 }
 

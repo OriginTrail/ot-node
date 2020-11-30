@@ -711,8 +711,8 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
         await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
     const promises = [];
-    dc.state.replications.forEach(({ internalOfferId, dhId }) => {
-        if (dc.state.offers.internalIDs[internalOfferId].dataSetId ===
+    dc.state.replications.forEach(({ offer_id, dhId }) => {
+        if (dc.state.offers.offerIDs[offer_id].dataSetId ===
             this.state.lastImport.data.dataset_id) {
             const node =
                 this.state.nodes.find(node => node.state.identity === dhId);
