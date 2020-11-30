@@ -757,10 +757,12 @@ class Ethereum {
                 ],
             });
 
-            if (lastEvent) {
-                fromBlock = lastEvent.block + 1;
-            } else {
+            if (!lastEvent) {
                 fromBlock = Math.max(currentBlock - 100, 0);
+            } else if (currentBlock - lastEvent.block >= 2000) {
+                fromBlock = currentBlock - 2000;
+            } else {
+                fromBlock = lastEvent.block + 1;
             }
 
             const contract = this.contractsByName[contractName];
