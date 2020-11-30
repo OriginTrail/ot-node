@@ -457,7 +457,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
             .to.be.equal('COMPLETED');
         keys = keys.concat(['export_status', 'import_status', 'root_hash']);
         if (lastExport.data.import_status === 'COMPLETED') {
-            keys = keys.concat(['offer_id', 'data_hash']);
+            keys = keys.concat(['data_hash']);
         }
     } else {
         keys = keys.concat(['root_hash', 'data_hash']);
