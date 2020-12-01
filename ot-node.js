@@ -169,9 +169,6 @@ class OTNode {
 
         // sync models
         try {
-            execSync('/etc/init.d/postgresql start');
-            execSync('/etc/init.d/postgresql status');
-            execSync('systemctl is-enabled postgresql');
             Storage.models = (await models.sequelize.sync()).models;
             Storage.db = models.sequelize;
         } catch (error) {
