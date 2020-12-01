@@ -322,36 +322,52 @@ class RestAPIServiceV2 {
             try {
                 const humanReadable = req.query.humanReadable === 'true';
 
-                const { blockchain_id, response } = blockchain.getWallet();
-                const { node_wallet } = response;
-                const erc725Identity = blockchain.getIdentity(blockchain_id).response;
-                const blockchain_title = blockchain.getBlockchainTitle(blockchain_id).response;
+                const identityResponses = blockchain.getAllIdentities();
+                const promises = [];
+                for (const identityResponse of identityResponses) {
+                    const { blockchain_id, response: identity } = identityResponse;
+                    const { node_wallet } = blockchain.getWallet(blockchain_id).response;
+                    const blockchain_title = blockchain.getBlockchainTitle(blockchain_id).response;
 
-                const walletBaseBalance =
-                    await blockchain.getWalletBaseBalance(node_wallet, blockchain_id).response;
-                const walletTokenBalance =
-                    await blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response;
+                    // eslint-disable-next-line no-loop-func
+                    promises.push(new Promise(async (resolve, reject) => {
+                        try {
+                            const walletBaseBalance = await blockchain
+                                .getWalletBaseBalance(node_wallet, blockchain_id).response;
+                            const walletTokenBalance = await blockchain
+                                .getWalletTokenBalance(node_wallet, blockchain_id).response;
 
-                const profile =
-                    await blockchain.getProfile(erc725Identity, blockchain_id).response;
-                const profileMinimalStake =
-                    await blockchain.getProfileMinimumStake(blockchain_id).response;
+                            const profile =
+                                await blockchain.getProfile(identity, blockchain_id).response;
+                            const profileMinimalStake =
+                                await blockchain.getProfileMinimumStake(blockchain_id).response;
 
-                const body = {
-                    wallet: {
-                        address: node_wallet,
-                        ethBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletBaseBalance, 'ether') : walletBaseBalance,
-                        tokenBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletTokenBalance, 'ether') : walletTokenBalance,
-                    },
-                    profile: {
-                        staked: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stake, 'ether') : profile.stake,
-                        reserved: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stakeReserved, 'ether') : profile.stakeReserved,
-                        minimalStake: humanReadable ? Blockchain.fromWei(blockchain_title, profileMinimalStake, 'ether') : profileMinimalStake,
-                    },
-                };
+                            const body = {
+                                blockchain_id,
+                                blockchain_title,
+                                wallet: {
+                                    address: node_wallet,
+                                    ethBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletBaseBalance, 'ether') : walletBaseBalance,
+                                    tokenBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletTokenBalance, 'ether') : walletTokenBalance,
+                                },
+                                profile: {
+                                    address: identity,
+                                    staked: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stake, 'ether') : profile.stake,
+                                    reserved: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stakeReserved, 'ether') : profile.stakeReserved,
+                                    minimalStake: humanReadable ? Blockchain.fromWei(blockchain_title, profileMinimalStake, 'ether') : profileMinimalStake,
+                                },
+                            };
+                            resolve(body);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    }));
+                }
+
+                const result = await Promise.all(promises);
 
                 res.status(200);
-                res.send(body);
+                res.send(result);
             } catch (error) {
                 this.logger.error(`Failed to get balance. ${error.message}.`);
                 res.status(503);
