@@ -8,13 +8,16 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         node_ip: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         status: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         timestamp: {
-            type: Sequelize.INTEGER,
+            allowNull: false,
+            type: Sequelize.DATE,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('node_status'),

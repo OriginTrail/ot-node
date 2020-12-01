@@ -116,7 +116,12 @@
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
     "reputationWindowInMinutes": 129600,
-    "is_fallback_node": false
+    "high_availability": {
+      "is_fallback_node": false,
+      "hostnames": ["10.1.0.4","10.1.0.5"],
+      "hostname": "10.1.0.5",
+      "master_hostname": "10.1.0.5"
+    }
   },
   "testnet": {
     "identity": null,
@@ -239,7 +244,12 @@
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
     "reputationWindowInMinutes": 129600,
-    "is_fallback_node": false
+    "high_availability": {
+      "is_fallback_node": false,
+      "hostnames": ["10.1.0.4","10.1.0.5"],
+      "hostname": "10.1.0.5",
+      "master_hostname": "10.1.0.5"
+    }
   },
   "mainnet": {
     "identity": null,
@@ -364,6 +374,11 @@
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
     "reputationWindowInMinutes": 129600,
-    "is_fallback_node": false
+    "high_availability": {
+      "is_fallback_node": false,
+      "hostnames": ["10.1.0.4","10.1.0.5"],
+      "hostname": "10.1.0.5",
+      "master_hostname": "10.1.0.5"
+    }
   }
 }

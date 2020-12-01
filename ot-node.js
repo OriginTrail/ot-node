@@ -49,6 +49,10 @@ const ImportWorkerController = require('./modules/worker/import-worker-controlle
 const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
+const { fork } = require('child_process');
+const sleep = require('sleep');
+const Models = require('./models/index');
+const { execSync } = require('child_process');
 
 const semver = require('semver');
 
@@ -58,6 +62,8 @@ const configjson = require('./config/config.json');
 const Web3 = require('web3');
 
 const log = require('./modules/logger');
+
+const forkedStatusCheck = fork('scripts/status-check-worker.js');
 
 global.__basedir = __dirname;
 
@@ -108,6 +114,8 @@ process.on('unhandledRejection', (reason, p) => {
         return;
     }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
+
+    forkedStatusCheck.kill();
 });
 
 process.on('uncaughtException', (err) => {
@@ -116,6 +124,8 @@ process.on('uncaughtException', (err) => {
         process.exit(1);
     }
     log.error(`Caught exception: ${err}.\n ${err.stack}`);
+
+    forkedStatusCheck.kill();
 });
 
 process.on('warning', (warning) => {
@@ -136,10 +146,15 @@ process.on('exit', (code) => {
         log.error(`Whoops, terminating with code: ${code}`);
         break;
     }
+
+    forkedStatusCheck.kill();
 });
 
 process.on('SIGINT', () => {
     log.important('SIGINT caught. Exiting...');
+
+
+    forkedStatusCheck.kill();
     process.exit(0);
 });
 
@@ -341,25 +356,57 @@ class OTNode {
         /**
          * Start busy wait loop if fallback node
          */
-        if (config.is_fallback_node) {
+        if (config.high_availability.is_fallback_node) {
             log.notify('Entering busy wait loop');
             // start replication for arango
             await graphStorage.startReplication();
-            const doWhile = true;
+            let doWhile = true;
             do {
-                const promise = new Promise((resolve, reject) => {
-                    setTimeout(() => resolve('done!'), 10000);
-                });
                 // eslint-disable-next-line no-await-in-loop
-                await promise;
+                const nodeStatus = await Models.node_status.findOne({
+                    where: { node_ip: config.high_availability.master_hostname },
+                    order: {
+                        timestamp: 'DESC',
+                    },
+                });
+
+                if (nodeStatus) {
+                    const elapsed = (new Date() - new Date(nodeStatus.timestamp)) / 1000;
+                    if (elapsed > 10) {
+                        doWhile = false;
+                    }
+                } else {
+                    doWhile = false;
+                }
+
+                sleep.sleep(5);
             } while (doWhile);
             log.notify('Exiting busy wait loop');
             graphStorage.stopReplication();
+
+            const remoteConfigPath = '~/ot-node/.origintrail_noderc_remote';
+            execSync(`scp -i /home/azureuser/keys/ha2 azureuser@10.1.0.4:~/origintrail_noderc ${remoteConfigPath}`);
+            const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
+            remoteConfig.high_availability.is_fallback_node = true;
+            remoteConfig.high_availability.master_hostname = config.high_availability.hostname;
+            fs.writeFileSync(remoteConfigPath, JSON.stringify(remoteConfig));
+            execSync(`scp -i /home/azureuser/keys/ha2 ${remoteConfigPath} azureuser@10.1.0.4:~/origintrail_noderc`);
+            execSync('ssh -i /home/azureuser/keys/ha2 azureuser@10.1.0.4 "docker restart otnode"');
+
+            config.high_availability.is_fallback_node = false;
+            config.high_availability.master_hostname = config.high_availability.hostname;
+
+            const localConfig = JSON.parse(fs.readFileSync(config.appDataPath));
+            localConfig.high_availability.is_fallback_node = true;
+            localConfig.high_availability.master_hostname = localConfig.high_availability.hostname;
+            fs.writeFileSync(config.appDataPath, JSON.stringify(localConfig));
         } else {
             const replicationState = await graphStorage.getReplicationApplierState();
             if (replicationState.state.running) {
                 await graphStorage.stopReplication();
             }
+
+            forkedStatusCheck.send(JSON.stringify({ config }));
         }
 
         // Starting the kademlia
