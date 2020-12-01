@@ -55,6 +55,10 @@ module.exports = {
             .changeColumn('reputation_data', 'timestamp', {
                 type: Sequelize.BIGINT,
             });
+        await queryInterface
+            .changeColumn('handler_ids', 'timestamp', {
+                type: Sequelize.BIGINT,
+            });
     },
     down: async (queryInterface) => { },
 };

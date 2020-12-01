@@ -75,7 +75,7 @@ function checkForUpdate() {
 
         // Point Sequelize to the right path.
         process.env.SEQUELIZEDB = path.join(appMigrationDirPath, 'system.db');
-
+        execSync('/etc/init.d/postgresql start');
         // Run migrations
         let output = execSync(
             './node_modules/.bin/sequelize db:migrate --config config/sequelizeConfig.js',

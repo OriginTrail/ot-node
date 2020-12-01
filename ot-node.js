@@ -624,5 +624,6 @@ function main() {
 }
 
 // Make sure the Sequelize meta table is migrated before running main.
+execSync('/etc/init.d/postgresql start');
 const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
 migrationSequelizeMeta.run().then(main);
