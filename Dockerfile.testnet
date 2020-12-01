@@ -22,6 +22,7 @@ RUN apt-get install -y libpq-dev
 RUN apt-get update && apt install -y -qq supervisor
 RUN mkdir -p /var/log/supervisor
 COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 RUN apt-get -y install nano wget
 
 #PostgresDB
@@ -38,7 +39,7 @@ RUN echo "listen_addresses='localhost, *'" >> /etc/postgresql/12/main/postgresql
 EXPOSE 5432
 VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
-RUN /etc/init.d/postgresql restart
+RUN /etc/init.d/postgresql start
 
 # Creating link
 RUN mkdir -p /ot-node/init

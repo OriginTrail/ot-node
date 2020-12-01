@@ -5,6 +5,7 @@ if (!process.env.NODE_ENV) {
     process.env.NODE_ENV = 'testnet';
 }
 
+const { execSync } = require('child_process');
 const HttpNetwork = require('./modules/network/http/http-network');
 const Kademlia = require('./modules/network/kademlia/kademlia');
 const Transport = require('./modules/network/transport');
@@ -168,6 +169,9 @@ class OTNode {
 
         // sync models
         try {
+            execSync('/etc/init.d/postgresql start');
+            execSync('/etc/init.d/postgresql status');
+            execSync('systemctl is-enabled postgresql');
             Storage.models = (await models.sequelize.sync()).models;
             Storage.db = models.sequelize;
         } catch (error) {
