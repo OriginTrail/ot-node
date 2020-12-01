@@ -38,12 +38,11 @@ class DhPayOutCommand extends Command {
             },
         });
 
-        // todo pass blockchain identity
-        const blockchainIdentity = Utilities.normalizeHex(this.profileService.getIdentity());
+        const blockchainIdentity = this.profileService.getIdentity(blockchain_id);
 
         if (!bid) {
             this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
-            await this._printBalances(blockchainIdentity);
+            await this._printBalances(blockchainIdentity, blockchain_id);
             return Command.empty();
         }
         if (bid.status !== 'COMPLETED') {
@@ -74,8 +73,8 @@ class DhPayOutCommand extends Command {
             try {
                 await this.blockchain
                     .payOut(blockchainIdentity, offerId, urgent, blockchain_id).response;
-                this.logger.important(`Payout for offer ${offerId} successfully completed.`);
-                await this._printBalances(blockchainIdentity);
+                this.logger.important(`Payout for offer ${offerId} successfully completed on blockchain ${blockchain_id}.`);
+                await this._printBalances(blockchainIdentity, blockchain_id);
             } catch (error) {
                 if (error.message.includes('Gas price higher than maximum allowed price')) {
                     this.logger.info('Gas price too high, delaying call for 30 minutes');

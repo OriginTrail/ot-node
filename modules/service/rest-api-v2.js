@@ -288,6 +288,7 @@ class RestAPIServiceV2 {
 
             emitter.emit('api-payout', {
                 offerId: req.query.offer_id,
+                blockchain_id: req.query.blockchain_id,
                 response: res,
             });
         });

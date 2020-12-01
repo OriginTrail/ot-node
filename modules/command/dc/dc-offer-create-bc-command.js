@@ -35,14 +35,14 @@ class DCOfferCreateBcCommand extends Command {
             litigationIntervalInMinutes,
             handler_id,
             urgent,
+            blockchain_id,
         } = command.data;
 
         let result;
 
         try {
-            // todo pass blockchain identity
             result = await this.blockchain.createOffer(
-                Utilities.normalizeHex(this.profileService.getIdentity()),
+                Utilities.normalizeHex(this.profileService.getIdentity(blockchain_id)),
                 dataSetId,
                 dataRootHash,
                 redLitigationHash,
@@ -54,6 +54,7 @@ class DCOfferCreateBcCommand extends Command {
                 dataSizeInBytes,
                 litigationIntervalInMinutes,
                 urgent,
+                blockchain_id,
             ).response;
         } catch (error) {
             if (error.message.includes('Gas price higher than maximum allowed price')) {
@@ -69,14 +70,15 @@ class DCOfferCreateBcCommand extends Command {
                 handler.data = JSON.stringify(handler_data);
                 await handler.save({ fields: ['data', 'timestamp'] });
 
-                const message = `Offer creation has been delayed on ${(new Date(Date.now())).toUTCString()} due to high gas price`;
+                const message = `Offer finalization for internalOfferId ${internalOfferId} on chain ` +
+                    `${blockchain_id} has been delayed at ${(new Date(Date.now())).toUTCString()} due to high gas price`;
                 await Models.offers.update({ message }, { where: { id: internalOfferId } });
 
                 return Command.repeat();
             }
             throw error;
         }
-        this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
+        this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain ${blockchain_id}. Waiting for DHs...`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.transaction_hash = result.transactionHash;

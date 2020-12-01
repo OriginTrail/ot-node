@@ -35,6 +35,7 @@ class DCOfferFinalizeCommand extends Command {
             solution,
             handler_id,
             urgent,
+            blockchain_id,
         } = command.data;
 
         const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
@@ -74,7 +75,7 @@ class DCOfferFinalizeCommand extends Command {
         try {
             // todo pass blockchain identity
             result = await this.blockchain.finalizeOffer(
-                Utilities.normalizeHex(this.profileService.getIdentity()),
+                this.profileService.getIdentity(blockchain_id),
                 offerId,
                 new BN(solution.shift, 10),
                 confirmations[0],
@@ -84,6 +85,7 @@ class DCOfferFinalizeCommand extends Command {
                 nodeIdentifiers,
                 parentIdentity,
                 urgent,
+                blockchain_id,
             ).response;
         } catch (error) {
             if (error.message.includes('Gas price higher than maximum allowed price')) {
@@ -99,7 +101,8 @@ class DCOfferFinalizeCommand extends Command {
                 handler.data = JSON.stringify(handler_data);
                 await handler.save({ fields: ['data', 'timestamp'] });
 
-                const message = `Offer finalization has been delayed on ${(new Date(Date.now())).toUTCString()} due to high gas price`;
+                const message = `Offer finalization for offer_id ${offerId} on chain ` +
+                    `${blockchain_id} has been delayed at ${(new Date(Date.now())).toUTCString()} due to high gas price`;
                 await Models.offers.update({ message }, { where: { offer_id: offerId } });
 
                 return Command.repeat();
@@ -117,7 +120,9 @@ class DCOfferFinalizeCommand extends Command {
                 {
                     name: 'dcOfferFinalizedCommand',
                     period: 5000,
-                    data: { offerId, nodeIdentifiers, handler_id },
+                    data: {
+                        offerId, nodeIdentifiers, handler_id, blockchain_id,
+                    },
                 },
             ],
         };

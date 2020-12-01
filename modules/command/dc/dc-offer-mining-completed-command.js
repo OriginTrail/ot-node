@@ -29,6 +29,7 @@ class DcOfferMiningCompletedCommand extends Command {
             success,
             isReplacement,
             handler_id,
+            blockchain_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
@@ -38,6 +39,7 @@ class DcOfferMiningCompletedCommand extends Command {
             let excludedDHs = await this.dcService.checkDhFunds(
                 solution.nodeIdentifiers,
                 offer.token_amount_per_holder,
+                blockchain_id,
             );
             if (excludedDHs.length > 0) {
                 // send back to miner
@@ -77,15 +79,15 @@ class DcOfferMiningCompletedCommand extends Command {
                 };
             }
 
-            const hasFunds =
-                await this.dcService.hasProfileBalanceForOffer(offer.token_amount_per_holder);
+            const hasFunds = await this.dcService
+                .hasProfileBalanceForOffer(offer.token_amount_per_holder, blockchain_id);
             if (!hasFunds) {
                 const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
                 this.logger.warn(message);
                 throw new Error(message);
             }
             const commandData = {
-                offerId, solution, handler_id, urgent: offer.urgent,
+                offerId, solution, handler_id, urgent: offer.urgent, blockchain_id,
             };
             const commandSequence = ['dcOfferFinalizeCommand'];
             return {
@@ -121,7 +123,7 @@ class DcOfferMiningCompletedCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { offerId, handler_id } = command.data;
+        const { offerId, handler_id, blockchain_id } = command.data;
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
@@ -142,6 +144,7 @@ class DcOfferMiningCompletedCommand extends Command {
                 litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
                 datasetId: offer.data_set_id,
                 holdingTimeInMinutes: offer.holding_time_in_minutes,
+                blockchain_id,
             },
             constants.PROCESS_NAME.offerHandling,
         );

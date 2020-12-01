@@ -209,9 +209,10 @@ class ProfileService {
      * Initiates payout opertaion
      * @param offerId
      * @param urgent
+     * @param blockchain_id
      * @return {Promise<void>}
      */
-    async payOut(offerId, urgent) {
+    async payOut(offerId, urgent, blockchain_id) {
         await this.commandExecutor.add({
             name: 'dhPayOutCommand',
             delay: 0,
@@ -219,10 +220,11 @@ class ProfileService {
             data: {
                 urgent,
                 offerId,
+                blockchain_id,
                 viaAPI: true,
             },
         });
-        this.logger.notify(`Pay-out for offer ${offerId} initiated.`);
+        this.logger.notify(`Pay-out for offer ${offerId} on blockchain ${blockchain_id} initiated.`);
     }
 
     /**

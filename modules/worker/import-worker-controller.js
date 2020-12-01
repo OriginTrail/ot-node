@@ -31,13 +31,15 @@ class ImportWorkerController {
             purchased,
         } = command.data;
 
+        const blockchain_id = this.blockchain.getDefaultBlockchainId();
+
         let document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
         const otjson_size_in_bytes = bytes(document);
         document = JSON.parse(document);
         // Extract wallet from signature.
         const wallet = ImportUtilities.extractDatasetSigner(document);
 
-        await this.importService.validateDocument(document);
+        await this.importService.validateDocument(document, blockchain_id);
 
         const forked = fork('modules/worker/graph-converter-worker.js');
 

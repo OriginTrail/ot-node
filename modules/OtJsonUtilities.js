@@ -44,13 +44,7 @@ class OtJsonUtilities {
 
     static _repackDataset(dataset) {
         const config = {};
-        config.blockchain = {};
-        config.blockchain.network_id = dataset.datasetHeader.validationSchemas.merkleRoot.networkId;
-        config.blockchain.hub_contract_address =
-            dataset.datasetHeader.validationSchemas.merkleRoot.hubContractAddress;
-        config.erc725Identity = dataset.datasetHeader.dataCreator.identifiers[0].identifierValue;
-        config.blockchain.identity =
-            dataset.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        config.blockchain = OtJsonUtilities._extractBlockchainData(dataset.datasetHeader);
         // eslint-disable-next-line global-require
         const header = require('./ImportUtilities').createDatasetHeader(
             config, null,
@@ -72,6 +66,29 @@ class OtJsonUtilities {
             '@graph': graph,
             signature: dataset.signature,
         };
+    }
+
+    static _extractBlockchainData(datasetHeader) {
+        const result = [];
+        for (const creatorId of datasetHeader.dataCreator.identifiers) {
+            const identity = creatorId.identifierValue;
+            const blockchain_id =
+                datasetHeader.validationSchemas[creatorId.validationSchema].networkId;
+
+            const schemaPostfix = creatorId.validationSchema.split('erc725-main').pop();
+            const schemaEndpoint = `/schemas/merkleRoot${schemaPostfix}`;
+            const hub_contract_address =
+                datasetHeader.validationSchemas[schemaEndpoint].hubContractAddress;
+
+            result.push({
+                blockchain_id,
+                identity,
+                hub_contract_address,
+            });
+        }
+        result.sort((a, b) => a.blockchain_id.localeCompare(b.blockchain_id));
+
+        return result;
     }
 
     /**

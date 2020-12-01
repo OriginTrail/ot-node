@@ -34,6 +34,7 @@ class DCController {
         if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
             utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&
+            utilities.validateStringParameter(req.body.blockchain_id) &&
             utilities.validateNumberParameter(req.body.litigation_interval_in_minutes)) {
             var handlerId = null;
             var offerId = '';
@@ -49,6 +50,22 @@ class DCController {
                     });
                     return;
                 }
+                let blockchain_id;
+                if (req.body.blockchain_id) {
+                    // eslint-disable-next-line prefer-destructuring
+                    blockchain_id = req.body.blockchain_id;
+                    try {
+                        this.blockchain._getImplementationFromId(blockchain_id);
+                    } catch (error) {
+                        this.logger.info(`Invalid request. ${error.toString()}`);
+                        res.status(400);
+                        res.send({
+                            message: `Invalid blockchain_id ${blockchain_id}`,
+                        });
+                    }
+                } else {
+                    blockchain_id = this.blockchain.getDefaultBlockchainId();
+                }
 
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
@@ -59,7 +76,7 @@ class DCController {
                     req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
                     req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
                     req.body.litigation_interval_in_minutes, handlerId,
-                    req.body.urgent,
+                    req.body.urgent, blockchain_id,
                 );
                 const handler_data = {
                     status: 'PUBLISHING_TO_BLOCKCHAIN',
