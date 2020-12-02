@@ -1,5 +1,5 @@
 #base image
-FROM quay.io/baselibrary/ubuntu:16.04
+FROM ubuntu:16.04
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
 ARG targetEnvironment=testnet
