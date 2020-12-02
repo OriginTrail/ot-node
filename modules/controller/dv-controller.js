@@ -823,7 +823,7 @@ class DVController {
         });
     }
 
-    handleGetFingerprint(req, res) {
+    async handleGetFingerprint(req, res) {
         this.logger.api('GET: Fingerprint request received.');
         const { dataset_id } = req.params;
         if (dataset_id == null) {
@@ -834,31 +834,43 @@ class DVController {
             return;
         }
 
-        this.blockchain.getRootHash(dataset_id).response.then((dataRootHash) => {
+        const allBlockchainIds = this.blockchain.getAllBlockchainIds();
+        const promises = allBlockchainIds.map(blockchain_id =>
+            this.blockchain.getRootHash(dataset_id, blockchain_id).response);
+        const allRootHashes = await Promise.all(promises);
+
+        const result = [];
+        let foundHashes = 0;
+        for (let i = 0; i < allRootHashes.length; i += 1) {
+            const blockchain_id = allBlockchainIds[i];
+            const dataRootHash = allRootHashes[i];
+
             if (dataRootHash) {
                 if (!Utilities.isZeroHash(dataRootHash)) {
-                    res.status(200);
-                    res.send({
+                    foundHashes += 1;
+                    result.push({
+                        blockchain_id,
                         root_hash: dataRootHash,
                     });
                 } else {
-                    res.status(404);
-                    res.send({
+                    result.push({
+                        blockchain_id,
                         message: `Root hash not found for ${dataset_id}`,
                     });
                 }
             } else {
-                res.status(500);
-                res.send({
-                    message: `Failed to get root hash for ${dataset_id}`,
+                result.push({
+                    blockchain_id,
+                    message: `Root hash not found for ${dataset_id}`,
                 });
             }
-        }).catch((err) => {
-            res.status(500);
-            res.send({
-                message: err,
-            });
-        });
+        }
+        if (foundHashes > 0) {
+            res.status(200);
+        } else {
+            res.status(404);
+        }
+        res.send(result);
     }
 
     /**

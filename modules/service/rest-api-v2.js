@@ -300,8 +300,8 @@ class RestAPIServiceV2 {
         /** Get root hash for provided data query
          * @param Query params: data_set_id
          */
-        server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, (req, res) => {
-            this.dvController.handleGetFingerprint(req, res);
+        server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, async (req, res) => {
+            await this.dvController.handleGetFingerprint(req, res);
         });
 
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
