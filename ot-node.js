@@ -362,6 +362,7 @@ class OTNode {
             await graphStorage.startReplication();
             let doWhile = true;
             do {
+                // todo swap after 2min
                 // eslint-disable-next-line no-await-in-loop
                 const nodeStatus = await Models.node_status.findOne({
                     where: { node_ip: config.high_availability.master_hostname },
