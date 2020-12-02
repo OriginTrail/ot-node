@@ -12,7 +12,6 @@ process.on('message', async (data) => {
             const supervisorStatus = execSync('supervisorctl status | awk \'{print $1, $2, $6, $7}\'').toString().split('\n');
             // const supervisorStatus = 'arango RUNNING 6 days,\notnode RUNNING 6 days,
             // \notnodelistener RUNNING 6 days,\nremote_syslog RUNNING 6 days,'.split('\n');
-            console.log(`Reveived supervisor status ${JSON.stringify(supervisorStatus)}`);
             for (let i = 1; i < supervisorStatus.length; i += 1) {
                 const status = supervisorStatus[i].split(' ');
                 if (['otnode', 'arango'].includes(status[0])) {
