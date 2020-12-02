@@ -120,7 +120,8 @@
       "is_fallback_node": false,
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "master_hostname": "10.1.0.5",
-      "private_hostname": ""
+      "private_hostname": "",
+      "switch_nodes_in_minutes": 15
     }
   },
   "testnet": {
@@ -248,7 +249,8 @@
       "is_fallback_node": false,
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "master_hostname": "10.1.0.5",
-      "private_hostname": ""
+      "private_hostname": "",
+      "switch_nodes_in_minutes": 15
     }
   },
   "mainnet": {
@@ -378,7 +380,8 @@
       "is_fallback_node": false,
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "master_hostname": "10.1.0.5",
-      "private_hostname": ""
+      "private_hostname": "",
+      "switch_nodes_in_minutes": 15
     }
   }
 }

@@ -253,7 +253,6 @@ class OTNode {
             }
         }
 
-        Object.seal(config);
 
         // Checking if selected graph database exists
         try {
@@ -357,10 +356,16 @@ class OTNode {
         if (config.high_availability.is_fallback_node) {
             log.notify('Entering busy wait loop');
             // start replication for arango
+            await this._updateConfigurationOnMaster(
+                config,
+                false,
+                config.high_availability.master_hostname,
+                config.high_availability.master_hostname,
+                false,
+            );
             await graphStorage.startReplication();
             let doWhile = true;
             do {
-                // todo swap after 2min
                 // eslint-disable-next-line no-await-in-loop
                 const nodeStatus = await models.node_status.findOne({
                     where: { hostname: config.high_availability.master_hostname },
@@ -374,38 +379,28 @@ class OTNode {
                 } else {
                     doWhile = false;
                 }
+
+                const waitTime = config.high_availability.switch_nodes_in_minutes * 60 * 1000;
                 // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
-                    setTimeout(() => resolve('done!'), 5000);
+                    setTimeout(() => resolve('done!'), waitTime);
                 });
             } while (doWhile);
             log.notify('Exiting busy wait loop');
-            graphStorage.stopReplication();
-
-            log.trace('Updated configuration on previous master node.');
-            const masterHostname = config.high_availability.master_hostname;
-            const remoteConfigFolderPath = '/ot-node/remote_config';
-            const remoteConfigPath = `${remoteConfigFolderPath}/.origintrail_noderc`;
-            execSync(`mkdir -p ${remoteConfigFolderPath}`);
-            execSync(`scp root@${masterHostname}:~/.origintrail_noderc ${remoteConfigFolderPath}`);
-            const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
-            remoteConfig.high_availability.is_fallback_node = true;
-            remoteConfig.high_availability.master_hostname =
-                config.high_availability.private_hostname;
-            fs.writeFileSync(remoteConfigPath, JSON.stringify(remoteConfig));
-            execSync(`scp ${remoteConfigPath} root@${masterHostname}:~/.origintrail_noderc`);
-            execSync(`ssh root@${masterHostname} "docker restart otnode"`);
-            log.trace('Master node restarted');
+            await graphStorage.stopReplication();
+            await this._updateConfigurationOnMaster(
+                config,
+                true,
+                config.high_availability.master_hostname,
+                config.high_availability.private_hostname,
+                true,
+            );
 
             // we probably don't need this
             config.high_availability.is_fallback_node = false;
             config.high_availability.master_hostname = config.high_availability.private_hostname;
 
-            const localConfig = JSON.parse(fs.readFileSync(config.appDataPath));
-            localConfig.high_availability.is_fallback_node = true;
-            localConfig.high_availability.master_hostname =
-                localConfig.high_availability.private_hostname;
-            fs.writeFileSync(config.appDataPath, JSON.stringify(localConfig));
+            forkedStatusCheck.send(JSON.stringify({ config }));
         } else {
             const replicationState = await graphStorage.getReplicationApplierState();
             if (replicationState.state.running) {
@@ -415,6 +410,7 @@ class OTNode {
             forkedStatusCheck.send(JSON.stringify({ config }));
         }
 
+        Object.seal(config);
         // Starting the kademlia
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
@@ -484,6 +480,29 @@ class OTNode {
             log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
             console.log(e);
             process.exit(1);
+        }
+    }
+
+    async _updateConfigurationOnMaster(
+        config,
+        isFallbackNode,
+        currentMasterHostname,
+        newMasterHostname,
+        restartMasterNode,
+    ) {
+        log.trace('Updated configuration on previous master node.');
+        const remoteConfigFolderPath = '/ot-node/remote_config';
+        const remoteConfigPath = `${remoteConfigFolderPath}/.origintrail_noderc`;
+        execSync(`mkdir -p ${remoteConfigFolderPath}`);
+        execSync(`scp root@${currentMasterHostname}:~/.origintrail_noderc ${remoteConfigFolderPath}`);
+        const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
+        remoteConfig.high_availability.is_fallback_node = isFallbackNode;
+        remoteConfig.high_availability.master_hostname = newMasterHostname;
+        fs.writeFileSync(remoteConfigPath, JSON.stringify(remoteConfig, null, 4));
+        execSync(`scp ${remoteConfigPath} root@${currentMasterHostname}:~/.origintrail_noderc`);
+        if (restartMasterNode) {
+            execSync(`ssh root@${currentMasterHostname} "docker restart otnode"`);
+            log.trace('Master node restarted');
         }
     }
 
