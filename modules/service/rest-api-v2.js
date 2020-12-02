@@ -55,6 +55,10 @@ class RestAPIServiceV2 {
             await this.infoController.getNodeInfo(req, res);
         });
 
+        server.post(`/api/${this.version_id}/node_data`, async (req, res) => {
+            await this.infoController.getNodeData(req, res);
+        });
+
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
             await this._importDataset(req, res);
         });

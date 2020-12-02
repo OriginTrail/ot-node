@@ -47,6 +47,7 @@ const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
+const OtNodeClient = require('./modules/service/ot-node-client');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
 const { fork } = require('child_process');
@@ -310,6 +311,7 @@ class OTNode {
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
+            otNodeClient: awilix.asClass(OtNodeClient).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -350,64 +352,10 @@ class OTNode {
             log.notify('================================================================');
         }
 
-        /**
-         * Start busy wait loop if fallback node
-         */
-        if (config.high_availability.is_fallback_node) {
-            log.notify('Entering busy wait loop');
-            // start replication for arango
-            await this._updateConfigurationOnMaster(
-                config,
-                false,
-                config.high_availability.master_hostname,
-                config.high_availability.master_hostname,
-                false,
-            );
-            await graphStorage.startReplication();
-            let doWhile = true;
-            do {
-                // eslint-disable-next-line no-await-in-loop
-                const nodeStatus = await models.node_status.findOne({
-                    where: { hostname: config.high_availability.master_hostname },
-                });
+        if (config.high_availability_setup) {
+            const highAvailabilityService = container.resolve('highAvailabilityService');
 
-                if (nodeStatus) {
-                    const elapsed = (new Date() - new Date(nodeStatus.timestamp)) / 1000;
-                    if (elapsed > 10) {
-                        doWhile = false;
-                    }
-                } else {
-                    doWhile = false;
-                }
-
-                const waitTime = config.high_availability.switch_nodes_in_minutes * 60 * 1000;
-                // eslint-disable-next-line no-await-in-loop
-                await new Promise((resolve, reject) => {
-                    setTimeout(() => resolve('done!'), waitTime);
-                });
-            } while (doWhile);
-            log.notify('Exiting busy wait loop');
-            await graphStorage.stopReplication();
-            await this._updateConfigurationOnMaster(
-                config,
-                true,
-                config.high_availability.master_hostname,
-                config.high_availability.private_hostname,
-                true,
-            );
-
-            // we probably don't need this
-            config.high_availability.is_fallback_node = false;
-            config.high_availability.master_hostname = config.high_availability.private_hostname;
-
-            forkedStatusCheck.send(JSON.stringify({ config }));
-        } else {
-            const replicationState = await graphStorage.getReplicationApplierState();
-            if (replicationState.state.running) {
-                await graphStorage.stopReplication();
-            }
-
-            forkedStatusCheck.send(JSON.stringify({ config }));
+            await highAvailabilityService.startHighAvailabilityNode(forkedStatusCheck);
         }
 
         Object.seal(config);
@@ -480,29 +428,6 @@ class OTNode {
             log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
             console.log(e);
             process.exit(1);
-        }
-    }
-
-    async _updateConfigurationOnMaster(
-        config,
-        isFallbackNode,
-        currentMasterHostname,
-        newMasterHostname,
-        restartMasterNode,
-    ) {
-        log.trace('Updated configuration on previous master node.');
-        const remoteConfigFolderPath = '/ot-node/remote_config';
-        const remoteConfigPath = `${remoteConfigFolderPath}/.origintrail_noderc`;
-        execSync(`mkdir -p ${remoteConfigFolderPath}`);
-        execSync(`scp root@${currentMasterHostname}:~/.origintrail_noderc ${remoteConfigFolderPath}`);
-        const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
-        remoteConfig.high_availability.is_fallback_node = isFallbackNode;
-        remoteConfig.high_availability.master_hostname = newMasterHostname;
-        fs.writeFileSync(remoteConfigPath, JSON.stringify(remoteConfig, null, 4));
-        execSync(`scp ${remoteConfigPath} root@${currentMasterHostname}:~/.origintrail_noderc`);
-        if (restartMasterNode) {
-            execSync(`ssh root@${currentMasterHostname} "docker restart otnode"`);
-            log.trace('Master node restarted');
         }
     }
 

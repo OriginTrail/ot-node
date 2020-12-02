@@ -1,5 +1,6 @@
 {
   "development": {
+    "high_availability_setup": false,
     "identity": null,
     "houston_password": null,
     "node_port": 5278,
@@ -121,10 +122,12 @@
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "master_hostname": "10.1.0.5",
       "private_hostname": "",
+      "remote_hostname": "",
       "switch_nodes_in_minutes": 15
     }
   },
   "testnet": {
+    "high_availability_setup": false,
     "identity": null,
     "houston_password": null,
     "node_port": 5278,
@@ -250,10 +253,12 @@
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "master_hostname": "10.1.0.5",
       "private_hostname": "",
+      "remote_hostname": "",
       "switch_nodes_in_minutes": 15
     }
   },
   "mainnet": {
+    "high_availability_setup": false,
     "identity": null,
     "houston_password": null,
     "node_port": 5278,
@@ -381,6 +386,7 @@
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "master_hostname": "10.1.0.5",
       "private_hostname": "",
+      "remote_hostname": "",
       "switch_nodes_in_minutes": 15
     }
   }

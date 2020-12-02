@@ -1,6 +1,8 @@
 const pjson = require('../../package.json');
 const Models = require('../../models/index');
 const ImportUtilities = require('../ImportUtilities');
+const fs = require('fs');
+const path = require('path');
 
 class InfoController {
     constructor(ctx) {
@@ -40,6 +42,44 @@ class InfoController {
             res.send(basicConfig);
         } catch (error) {
             this.logger.error(`Failed to process /api/info route. ${error}`);
+            res.status(500);
+            res.send({
+                message: error,
+            });
+        }
+    }
+
+    async getNodeData(req, res) {
+        this.logger.api('GET: Node data request received.');
+        // todo we should allow this call only for nodes that are part of ha setup
+        // todo add encryption we can use wallet since both nodes in ha
+        //  setup should have the same wallet
+        try {
+            const response = {};
+
+            if (req.body.erc725Identity) {
+                response.erc725Identity = fs.readFileSync(path.join(
+                    this.config.appDataPath,
+                    this.config.erc725_identity_filepath,
+                )).toString();
+            }
+            if (req.body.kademliaCert) {
+                response.kademliaCert = fs.readFileSync(path.join(
+                    this.config.appDataPath,
+                    this.config.ssl_certificate_path,
+                ));
+            }
+            if (req.body.kademliaKey) {
+                response.kademliaKey = fs.readFileSync(path.join(
+                    this.config.appDataPath,
+                    this.config.ssl_keypath,
+                ));
+            }
+
+            res.status(200);
+            res.send(response);
+        } catch (error) {
+            this.logger.error(`Failed to process /api/node_data route. ${error}`);
             res.status(500);
             res.send({
                 message: error,
