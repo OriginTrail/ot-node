@@ -24,9 +24,9 @@ class DvPurchaseInitiateCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            handler_id, blockchain_id, status, message, encoded_data,
+            handler_id, status, message, encoded_data,
             permissioned_data_root_hash, encoded_data_root_hash,
-            permissioned_data_array_length, permissioned_data_original_length,
+            permissioned_data_array_length, permissioned_data_original_length, blockchain_id,
         } = command.data;
 
 
@@ -68,15 +68,14 @@ class DvPurchaseInitiateCommand extends Command {
         const dataTrade = await Models.data_trades.findOne({
             where: {
                 data_set_id,
-                blockchain_id,
                 ot_json_object_id: ot_object_id,
                 seller_node_id,
                 status: { [Op.ne]: 'FAILED' },
             },
         });
         const result = await this.blockchain.initiatePurchase(
-            dataTrade.seller_erc_id, dataTrade.buyer_erc_id,
-            dataTrade.price, permissioned_data_root_hash, encoded_data_root_hash, blockchain_id,
+            dataTrade.seller_erc_id, dataTrade.buyer_erc_id, dataTrade.price,
+            permissioned_data_root_hash, encoded_data_root_hash, blockchain_id,
         ).response;
 
         const { purchaseId } = this.blockchain
@@ -166,7 +165,7 @@ class DvPurchaseInitiateCommand extends Command {
             },
         });
 
-        return JSON.parse(handler.data);
+        return JSON.parse(handler.dataValues.data);
     }
 }
 

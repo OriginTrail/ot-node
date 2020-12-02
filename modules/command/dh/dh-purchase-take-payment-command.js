@@ -35,8 +35,8 @@ class DhPurchaseTakePaymentCommand extends Command {
                     data_set_id: dataTrade.data_set_id,
                     blockchain_id,
                     ot_json_object_id: dataTrade.ot_json_object_id,
-                    seller_node_id: dataTrade.seller_node_id,
-                    seller_erc_id: dataTrade.seller_erc_id,
+                    seller_node_id: dataTrade.buyer_node_id,
+                    seller_erc_id: dataTrade.buyer_erc_id,
                     price: dataTrade.price,
                 });
                 this.logger.info(`Payment has been taken for purchase ${purchase_id}`);

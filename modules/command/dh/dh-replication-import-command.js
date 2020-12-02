@@ -149,7 +149,7 @@ class DhReplicationImportCommand extends Command {
         await this.permissionedDataService.addDataSellerForPermissionedData(
             dataSetId,
             dcIdentity,
-            [blockchain_id],
+            blockchain_id,
             0,
             dcNodeId,
             decryptedDataset['@graph'],

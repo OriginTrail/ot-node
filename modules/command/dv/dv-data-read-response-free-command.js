@@ -86,18 +86,18 @@ class DVDataReadResponseFreeCommand extends Command {
             fingerprints_match: 0,
         };
         for (const signerObject of signerArray) {
-            if (myBlockchains.includes(signerObject.network_id)) {
+            if (myBlockchains.includes(signerObject.blockchain_id)) {
                 // eslint-disable-next-line no-await-in-loop
                 const fingerprint = await this.blockchain
-                    .getRootHash(dataSetId, signerObject.network_id).response;
+                    .getRootHash(dataSetId, signerObject.blockchain_id).response;
 
                 if (fingerprint && !Utilities.isZeroHash(fingerprint)) {
                     validationData.fingerprints_exist += 1;
                     if (fingerprint === rootHash) {
                         validationData.fingerprints_match += 1;
-                        availableBlockchains.push(signerObject.network_id);
+                        availableBlockchains.push(signerObject.blockchain_id);
                     } else {
-                        this.logger.warn(`Fingerprint root hash for dataset ${dataSetId} does not match on blockchain ${signerObject.network_id}. ` +
+                        this.logger.warn(`Fingerprint root hash for dataset ${dataSetId} does not match on blockchain ${signerObject.blockchain_id}. ` +
                             ` Calculated root hash ${rootHash} differs from received blockchain fingerprint ${fingerprint}`);
                     }
                 }
@@ -125,14 +125,23 @@ class DVDataReadResponseFreeCommand extends Command {
             permissionedData,
         );
 
-        const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
-        const profile = await this.blockchain.getProfile(erc725Identity).response;
+        const dataCreatorIdentities =
+            ImportUtilities.extractDatasetIdentities(document.datasetHeader);
 
-        await this.permissionedDataService.addDataSellerForPermissionedData(
+        let profilePromise;
+        for (const identityObject of dataCreatorIdentities) {
+            const { identity, blockchain_id } = identityObject;
+            if (availableBlockchains.includes(blockchain_id)) {
+                profilePromise = this.blockchain.getProfile(identity, blockchain_id).response;
+                break;
+            }
+        }
+        const profile = await profilePromise;
+        await this.permissionedDataService.addMultipleDataSellerForPermissionedData(
             dataSetId,
-            erc725Identity,
+            dataCreatorIdentities,
             availableBlockchains,
-            0,
+            undefined,
             profile.nodeId.toLowerCase().slice(0, 42),
             document['@graph'],
         );

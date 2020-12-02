@@ -191,12 +191,12 @@ class DHReadDataLocationRequestCommand extends Command {
         const fingerprint_data = [];
 
         for (const wallet_data of data_provider_wallets) {
-            const { network_id } = wallet_data;
-            const fingerprintObject = { network_id };
+            const { blockchain_id } = wallet_data;
+            const fingerprintObject = { blockchain_id };
             try {
                 // eslint-disable-next-line no-await-in-loop
                 const fingerprint = await this.blockchain
-                    .getRootHash(dataset_id, network_id).response;
+                    .getRootHash(dataset_id, blockchain_id).response;
 
                 if (fingerprint && !Utilities.isZeroHash(fingerprint)
                      && Utilities.compareHexStrings(fingerprint, root_hash)) {

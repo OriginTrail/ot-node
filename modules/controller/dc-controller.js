@@ -137,34 +137,47 @@ class DCController {
             return;
         }
 
+        const blockchain_ids = req.body.blockchain_id ?
+            [req.body.blockchain_id] : this.blockchain.getAllBlockchainIds();
+
         const promises = [];
         req.body.ot_object_ids.forEach((ot_object) => {
             promises.push(new Promise(async (accept, reject) => {
-                // todo pass blockchain identity
                 const condition = {
-                    seller_erc_id: this.profileService.getIdentity(),
+                    seller_node_id: this.config.identity,
                     data_set_id: req.body.data_set_id.toLowerCase(),
                     ot_json_object_id: ot_object.id,
+                    blockchain_id: {
+                        [Models.Sequelize.Op.in]: blockchain_ids,
+                    },
                 };
 
-                const data = await Models.data_sellers.findOne({
+                const data = await Models.data_sellers.findAll({
                     where: condition,
                 });
 
-                if (data) {
-                    await Models.data_sellers.update(
-                        { price: ot_object.price_in_trac },
-                        { where: { id: data.id } },
-                    );
+                if (data && Array.isArray(data) && data.length > 0) {
+                    const promises = [];
+                    for (const data_object of data) {
+                        promises.push(Models.data_sellers.update(
+                            { price: ot_object.price_in_trac },
+                            { where: { id: data_object.id } },
+                        ));
+                    }
+                    await Promise.all(promises);
                     accept();
                 } else {
-                    reject();
+                    reject(Error(`Could not find a permissioned data object for ${ot_object.id} in dataset ${req.body.data_set_id}`
+                   + ` replicated to blockchains: ${blockchain_ids}.`));
                 }
             }));
         });
         await Promise.all(promises).then(() => {
             res.status(200);
             res.send({ status: 'COMPLETED' });
+        }).catch((error) => {
+            res.status(400);
+            res.send({ status: error.toString() });
         });
     }
 
@@ -239,10 +252,10 @@ class DCController {
             data_set_id,
             dv_erc725_identity,
             handler_id,
-            dv_node_id,
             ot_json_object_id,
-            blockchain_id,
             price,
+            blockchain_id,
+            dv_node_id,
         };
 
         await this.commandExecutor.add({
@@ -256,13 +269,20 @@ class DCController {
     async getPermissionedDataOwned(req, res) {
         this.logger.api('GET: Permissioned Data Owned.');
 
-        const query = 'SELECT ds.data_set_id, ds.ot_json_object_id, ds.price, ( SELECT Count(*) FROM data_trades dt Where dt.seller_erc_id = ds.seller_erc_id and ds.data_set_id = dt.data_set_id and ds.ot_json_object_id = dt.ot_json_object_id ) as sales FROM  data_sellers ds where ds.seller_erc_id = :seller_erc ';
-        // todo pass blockchain identity
+        const allMyIdentities = this.blockchain.getAllBlockchainIds()
+            .map(id => this.profileService.getIdentity(id));
+        const query =
+            'SELECT ds.data_set_id, ds.ot_json_object_id, ds.price, ds.blockchain_id, ' +
+            '( SELECT Count(*) FROM data_trades dt WHERE dt.seller_erc_id = ds.seller_erc_id ' +
+            'AND ds.data_set_id = dt.data_set_id and ds.blockchain_id = dt.blockchain_id AND ' +
+            'ds.ot_json_object_id = dt.ot_json_object_id AND dt.status = \'COMPLETED\') as sales ' +
+            'FROM  data_sellers ds WHERE ds.seller_erc_id IN (:seller_ercs)';
+
+
         const data = await Models.sequelize.query(
             query,
             {
-                replacements:
-                    { seller_erc: Utilities.normalizeHex(this.profileService.getIdentity()) },
+                replacements: { seller_ercs: allMyIdentities },
                 type: QueryTypes.SELECT,
             },
         );
@@ -284,19 +304,38 @@ class DCController {
              */
             data.forEach((obj) => {
                 if (owned_objects[obj.data_set_id]) {
-                    owned_objects[obj.data_set_id].ot_objects.push({
-                        id: obj.ot_json_object_id,
-                        price: obj.price,
-                        sales: obj.sales,
-                    });
-                    owned_objects[obj.data_set_id].total_sales.iadd(new BN(obj.sales, 10));
-                    owned_objects[obj.data_set_id].total_price.iadd(new BN(obj.price, 10));
+                    const ot_object = owned_objects[obj.data_set_id]
+                        .ot_objects.find(added_obj => added_obj.id === obj.ot_json_object_id);
+
+                    if (ot_object) {
+                        ot_object.prices.push({
+                            blockchain_id: obj.blockchain_id,
+                            price_in_trac: obj.price,
+                        });
+                        ot_object.sales = (new BN(ot_object.sales, 10))
+                            .iadd(new BN(obj.sales, 10)).toString();
+                        owned_objects[obj.data_set_id].total_sales.iadd(new BN(obj.sales, 10));
+                    } else {
+                        owned_objects[obj.data_set_id].ot_objects.push({
+                            id: obj.ot_json_object_id,
+                            prices: [{
+                                blockchain_id: obj.blockchain_id,
+                                price_in_trac: obj.price,
+                            }],
+                            sales: obj.sales,
+                        });
+                        owned_objects[obj.data_set_id].total_sales.iadd(new BN(obj.sales, 10));
+                        owned_objects[obj.data_set_id].total_price.iadd(new BN(obj.price, 10));
+                    }
                 } else {
                     allDatasets.push(obj.data_set_id);
                     owned_objects[obj.data_set_id] = {};
                     owned_objects[obj.data_set_id].ot_objects = [{
                         id: obj.ot_json_object_id,
-                        price: obj.price,
+                        prices: [{
+                            blockchain_id: obj.blockchain_id,
+                            price_in_trac: obj.price,
+                        }],
                         sales: obj.sales,
                     }];
                     owned_objects[obj.data_set_id].total_sales = new BN(obj.sales, 10);
@@ -352,22 +391,28 @@ class DCController {
 
         const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
-        // todo pass blockchain identity
-        const condition = {
+        let response;
+        const data = await Models.data_sellers.findAll({
             where: {
-                seller_erc_id: this.profileService.getIdentity(),
+                seller_node_id: this.config.identity,
                 data_set_id,
                 ot_json_object_id,
             },
-        };
-        let response;
-        const data = await Models.data_sellers.findOne(condition);
-        if (data) {
+        });
+        if (data && Array.isArray(data) && data.length > 0) {
+            const prices = [];
+            for (const price of data) {
+                prices.push({
+                    blockchain_id: price.blockchain_id,
+                    seller_erc_id: this.profileService.getIdentity(price.blockchain_id),
+                    price_in_trac: price.price,
+                });
+            }
             response = {
                 handler_id,
                 status: 'COMPLETED',
                 wallet: node_wallet,
-                price_in_trac: data.price,
+                prices,
             };
         } else {
             response = {
