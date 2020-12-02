@@ -28,18 +28,18 @@ process.on('message', async (data) => {
             const updateFields = isLive ? { status, timestamp } : { status };
             // eslint-disable-next-line no-await-in-loop
             const node_status = await Models.node_status.findOne({
-                where: { hostname: config.network.hostname },
+                where: { hostname: config.high_availability.private_hostname },
             });
             if (node_status) {
                 // eslint-disable-next-line no-await-in-loop
                 await Models.node_status.update(
                     updateFields,
-                    { where: { hostname: config.network.hostname } },
+                    { where: { hostname: config.high_availability.private_hostname } },
                 );
             } else {
                 // eslint-disable-next-line no-await-in-loop
                 await Models.node_status.create({
-                    hostname: config.network.hostname, status, timestamp,
+                    hostname: config.high_availability.private_hostname, status, timestamp,
                 });
             }
 

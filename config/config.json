@@ -119,7 +119,8 @@
     "high_availability": {
       "is_fallback_node": false,
       "hostnames": ["10.1.0.4","10.1.0.5"],
-      "master_hostname": "10.1.0.5"
+      "master_hostname": "10.1.0.5",
+      "private_hostname": ""
     }
   },
   "testnet": {
@@ -246,7 +247,8 @@
     "high_availability": {
       "is_fallback_node": false,
       "hostnames": ["10.1.0.4","10.1.0.5"],
-      "master_hostname": "10.1.0.5"
+      "master_hostname": "10.1.0.5",
+      "private_hostname": ""
     }
   },
   "mainnet": {
@@ -375,7 +377,8 @@
     "high_availability": {
       "is_fallback_node": false,
       "hostnames": ["10.1.0.4","10.1.0.5"],
-      "master_hostname": "10.1.0.5"
+      "master_hostname": "10.1.0.5",
+      "private_hostname": ""
     }
   }
 }

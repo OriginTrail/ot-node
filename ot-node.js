@@ -363,10 +363,7 @@ class OTNode {
                 // todo swap after 2min
                 // eslint-disable-next-line no-await-in-loop
                 const nodeStatus = await models.node_status.findOne({
-                    where: { node_ip: config.high_availability.master_hostname },
-                    order: {
-                        timestamp: 'DESC',
-                    },
+                    where: { hostname: config.high_availability.master_hostname },
                 });
 
                 if (nodeStatus) {
@@ -387,21 +384,27 @@ class OTNode {
 
             log.trace('Updated configuration on previous master node.');
             const masterHostname = config.high_availability.master_hostname;
-            const remoteConfigPath = '~/ot-node/.origintrail_noderc_remote';
-            execSync(`scp root@${masterHostname}:~/origintrail_noderc ${remoteConfigPath}`);
+            const remoteConfigFolderPath = '/ot-node/remote_config';
+            const remoteConfigPath = `${remoteConfigFolderPath}/.origintrail_noderc`;
+            execSync(`mkdir -p ${remoteConfigFolderPath}`);
+            execSync(`scp root@${masterHostname}:~/.origintrail_noderc ${remoteConfigFolderPath}`);
             const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
             remoteConfig.high_availability.is_fallback_node = true;
-            remoteConfig.high_availability.master_hostname = config.network.hostname;
+            remoteConfig.high_availability.master_hostname =
+                config.high_availability.private_hostname;
             fs.writeFileSync(remoteConfigPath, JSON.stringify(remoteConfig));
-            execSync(`scp ${remoteConfigPath} root@${masterHostname}:~/origintrail_noderc`);
+            execSync(`scp ${remoteConfigPath} root@${masterHostname}:~/.origintrail_noderc`);
             execSync(`ssh root@${masterHostname} "docker restart otnode"`);
             log.trace('Master node restarted');
+
+            // we probably don't need this
             config.high_availability.is_fallback_node = false;
-            config.high_availability.master_hostname = config.network.hostname;
+            config.high_availability.master_hostname = config.high_availability.private_hostname;
 
             const localConfig = JSON.parse(fs.readFileSync(config.appDataPath));
             localConfig.high_availability.is_fallback_node = true;
-            localConfig.high_availability.master_hostname = localConfig.network.hostname;
+            localConfig.high_availability.master_hostname =
+                localConfig.high_availability.private_hostname;
             fs.writeFileSync(config.appDataPath, JSON.stringify(localConfig));
         } else {
             const replicationState = await graphStorage.getReplicationApplierState();
