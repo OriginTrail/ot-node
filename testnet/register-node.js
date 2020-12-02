@@ -37,6 +37,8 @@ if (argv.configDir) {
 
 function checkForUpdate() {
     try {
+        execSync('/etc/init.d/postgresql start');
+        const data = execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:migrate');
         // Important: this file is running in the context of older version so
         // all the migrations has to be run in the context of updated version
         // of the node. This particularly means that newer version may have
