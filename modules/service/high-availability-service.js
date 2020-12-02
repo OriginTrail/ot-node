@@ -94,7 +94,9 @@ class HighAvailabilityService {
     }
 
     async getMasterNodeData(masterHostname) {
-        const request = {};
+        const request = {
+            kadenceDHT: true,
+        };
         // fetch identities if missing
         const identityFilePath = path.join(
             this.config.appDataPath,
