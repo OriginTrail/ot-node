@@ -116,9 +116,9 @@ class InfoController {
             return;
         }
 
-        const identity = await this.graphStorage.findIssuerIdentityForDatasetId(datasetId);
+        const identities = await this.graphStorage.findIssuerIdentitiesForDatasetId(datasetId);
 
-        if (!identity && identity.length > 0) {
+        if (!identities && identities.length > 0) {
             this.logger.info(`Issuer identity for data set ID ${datasetId} does not exist.`);
             response.status(404);
             response.send({
@@ -141,30 +141,29 @@ class InfoController {
             transaction_hash: transactionHash,
             blockchain_network: this.config.network.id,
             data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
-            data_creator: {
-                identifier_type: identity[0].identifierType,
-                identifier_value: identity[0].identifierValue,
-                validation_schema: identity[0].validationSchema,
-            },
-
+            data_creator_identities: identities,
         };
-        const offer = await Models.offers.findOne({ where: { data_set_id: datasetId } });
-        if (offer) {
-            const replication_info = {
-                offer_id: offer.offer_id,
-                number_of_replications: offer.number_of_replications,
-                number_of_verified_replications: offer.number_of_verified_replications,
-                gas_price_used_for_price_calculation: offer.gas_price_used_for_price_calculation,
-                holding_time_in_minutes: offer.holding_time_in_minutes,
-                offer_finalize_transaction_hash: offer.offer_finalize_transaction_hash,
-                price_factor_used_for_price_calculation:
-                offer.price_factor_used_for_price_calculation,
-                status: offer.status,
-                token_amount_per_holder: offer.token_amount_per_holder,
-                trac_in_eth_used_for_price_calculation:
-                offer.trac_in_eth_used_for_price_calculation,
-            };
-            result.replication_info = replication_info;
+        const offers = await Models.offers.findAll({ where: { data_set_id: datasetId } });
+        if (offers && Array.isArray(offers) && offers.length > 0) {
+            result.replication_info = [];
+            for (const offer of offers) {
+                result.replication_info.push({
+                    offer_id: offer.offer_id,
+                    blockchain_id: offer.blockchain_id,
+                    number_of_replications: offer.number_of_replications,
+                    number_of_verified_replications: offer.number_of_verified_replications,
+                    gas_price_used_for_price_calculation:
+                        offer.gas_price_used_for_price_calculation,
+                    holding_time_in_minutes: offer.holding_time_in_minutes,
+                    offer_finalize_transaction_hash: offer.offer_finalize_transaction_hash,
+                    price_factor_used_for_price_calculation:
+                    offer.price_factor_used_for_price_calculation,
+                    status: offer.status,
+                    token_amount_per_holder: offer.token_amount_per_holder,
+                    trac_in_eth_used_for_price_calculation:
+                    offer.trac_in_eth_used_for_price_calculation,
+                });
+            }
         }
         response.status(200);
         response.send(result);
