@@ -2,7 +2,7 @@ const uuidv4 = require('uuid/v4');
 
 module.exports = (sequelize, DataTypes) => {
     const node_status = sequelize.define('node_status', {
-        node_ip: DataTypes.STRING,
+        hostname: DataTypes.STRING,
         status: DataTypes.STRING,
         timestamp: DataTypes.DATE,
     }, {

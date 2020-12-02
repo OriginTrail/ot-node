@@ -7,7 +7,7 @@ module.exports = {
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        node_ip: {
+        hostname: {
             allowNull: false,
             type: Sequelize.STRING,
         },

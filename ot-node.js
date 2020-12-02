@@ -50,8 +50,6 @@ const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
 const { fork } = require('child_process');
-const sleep = require('sleep');
-const Models = require('./models/index');
 const { execSync } = require('child_process');
 
 const semver = require('semver');
@@ -364,7 +362,7 @@ class OTNode {
             do {
                 // todo swap after 2min
                 // eslint-disable-next-line no-await-in-loop
-                const nodeStatus = await Models.node_status.findOne({
+                const nodeStatus = await models.node_status.findOne({
                     where: { node_ip: config.high_availability.master_hostname },
                     order: {
                         timestamp: 'DESC',
@@ -379,27 +377,31 @@ class OTNode {
                 } else {
                     doWhile = false;
                 }
-
-                sleep.sleep(5);
+                // eslint-disable-next-line no-await-in-loop
+                await new Promise((resolve, reject) => {
+                    setTimeout(() => resolve('done!'), 5000);
+                });
             } while (doWhile);
             log.notify('Exiting busy wait loop');
             graphStorage.stopReplication();
 
+            log.trace('Updated configuration on previous master node.');
+            const masterHostname = config.high_availability.master_hostname;
             const remoteConfigPath = '~/ot-node/.origintrail_noderc_remote';
-            execSync(`scp -i /home/azureuser/keys/ha2 azureuser@10.1.0.4:~/origintrail_noderc ${remoteConfigPath}`);
+            execSync(`scp root@${masterHostname}:~/origintrail_noderc ${remoteConfigPath}`);
             const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
             remoteConfig.high_availability.is_fallback_node = true;
-            remoteConfig.high_availability.master_hostname = config.high_availability.hostname;
+            remoteConfig.high_availability.master_hostname = config.network.hostname;
             fs.writeFileSync(remoteConfigPath, JSON.stringify(remoteConfig));
-            execSync(`scp -i /home/azureuser/keys/ha2 ${remoteConfigPath} azureuser@10.1.0.4:~/origintrail_noderc`);
-            execSync('ssh -i /home/azureuser/keys/ha2 azureuser@10.1.0.4 "docker restart otnode"');
-
+            execSync(`scp ${remoteConfigPath} root@${masterHostname}:~/origintrail_noderc`);
+            execSync(`ssh root@${masterHostname} "docker restart otnode"`);
+            log.trace('Master node restarted');
             config.high_availability.is_fallback_node = false;
-            config.high_availability.master_hostname = config.high_availability.hostname;
+            config.high_availability.master_hostname = config.network.hostname;
 
             const localConfig = JSON.parse(fs.readFileSync(config.appDataPath));
             localConfig.high_availability.is_fallback_node = true;
-            localConfig.high_availability.master_hostname = localConfig.high_availability.hostname;
+            localConfig.high_availability.master_hostname = localConfig.network.hostname;
             fs.writeFileSync(config.appDataPath, JSON.stringify(localConfig));
         } else {
             const replicationState = await graphStorage.getReplicationApplierState();
