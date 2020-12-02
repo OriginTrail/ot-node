@@ -104,8 +104,8 @@ configDirs.forEach((configPath) => {
     let out = execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:migrate');
     console.log(out.toString());
     console.info(`Running seeders for '${dbPath}'...`);
-    // out = execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
-    // console.log(out.toString());
+    out = execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
+    console.log(out.toString());
 });
 
 // Graph DB.
