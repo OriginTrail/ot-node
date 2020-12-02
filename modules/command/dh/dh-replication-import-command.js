@@ -149,6 +149,7 @@ class DhReplicationImportCommand extends Command {
         await this.permissionedDataService.addDataSellerForPermissionedData(
             dataSetId,
             dcIdentity,
+            blockchain_id,
             0,
             dcNodeId,
             decryptedDataset['@graph'],
@@ -160,6 +161,7 @@ class DhReplicationImportCommand extends Command {
             blockchain_id,
         });
 
+        const data_provider_wallets = importResult.wallets;
         fs.unlinkSync(documentPath);
 
         if (importResult.error) {
@@ -178,7 +180,7 @@ class DhReplicationImportCommand extends Command {
                 // TODO: add field data_provider_id_type: 'ERC725' || 'Unknown'
                 // TODO: add field data_creator_id: otjson.datasetHeader.dataCreator
                 // TODO: add field data_creator_id_type: 'ERC725' || 'Unknown'
-                data_provider_wallet: dcWallet, // TODO: rename to data_creator_wallet
+                data_provider_wallets: JSON.stringify(data_provider_wallets),
                 import_timestamp: new Date(),
                 otjson_size_in_bytes: dataSize,
                 data_hash: dataHash,
@@ -197,7 +199,6 @@ class DhReplicationImportCommand extends Command {
         const messageSignature = Encryption
             .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
-        // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
             dhIdentity: Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),

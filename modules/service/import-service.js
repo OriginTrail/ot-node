@@ -135,7 +135,7 @@ class ImportService {
 
         const datasetId = _id(document);
         const header = document.datasetHeader;
-        const dataCreator = ImportUtilities.getDataCreator(header);
+        const dataCreatorIdentifiers = ImportUtilities.getDataCreatorIdentifiers(header);
 
         // Result
         const vertices = [];
@@ -162,13 +162,13 @@ class ImportService {
                 throw Error(`OT-JSON object ${_id(otObject)} missing relations parameter`);
             }
 
-            objectIds.push(Utilities.keyFrom(dataCreator, _id(otObject)));
+            objectIds.push(Utilities.keyFrom(dataCreatorIdentifiers, _id(otObject)));
 
             switch (_type(otObject)) {
             case constants.objectType.otObject: {
                 // Create entity vertex.
                 const entityVertex = {};
-                entityVertex._key = Utilities.keyFrom(dataCreator, _id(otObject));
+                entityVertex._key = Utilities.keyFrom(dataCreatorIdentifiers, _id(otObject));
                 entityVertex.uid = _id(otObject);
                 entityVertex.vertexType = constants.vertexType.entityObject;
                 // TODO: videti sa aleksom da li ide .data.objectType
@@ -195,7 +195,7 @@ class ImportService {
                         // Add identity edge.
                         const identifyEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 identifierVertex._key,
                                 entityVertex._key,
                             ),
@@ -212,7 +212,7 @@ class ImportService {
 
                         const identifiedByEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 entityVertex._key,
                                 identifierVertex._key,
                             ),
@@ -237,7 +237,7 @@ class ImportService {
                     }
                     const dataVertex = {
                         _key: Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             Utilities.keyFrom(otObject.properties),
                         ),
                         vertexType: constants.vertexType.data,
@@ -253,7 +253,7 @@ class ImportService {
                     // Add has-data edge.
                     const hasDataEdge = {
                         _key: Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             entityVertex._key,
                             dataVertex._key,
                         ),
@@ -272,13 +272,13 @@ class ImportService {
                         const relationEdge = {};
                         relationEdge._from = entityVertex._key;
                         relationEdge._to = Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             _id(relation.linkedObject),
                         );
                         relationEdge.edgeType = constants.edgeType.otRelation;
                         relationEdge.relationType = relation.relationType;
                         relationEdge._key = Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             relationEdge._from,
                             relationEdge._to,
                             relationEdge.relationType,
@@ -300,7 +300,7 @@ class ImportService {
                 // Create connector vertex.
                 const connectorVertex = {
                     _key: Utilities.keyFrom(
-                        dataCreator,
+                        dataCreatorIdentifiers,
                         _id(otObject),
                     ),
                     uid: _id(otObject),
@@ -328,7 +328,7 @@ class ImportService {
                         // Add identity edge.
                         const identifyEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 identifierVertex._key,
                                 connectorVertex._key,
                             ),
@@ -345,7 +345,7 @@ class ImportService {
 
                         const identifiedByEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 connectorVertex._key,
                                 identifierVertex._key,
                             ),
@@ -365,7 +365,7 @@ class ImportService {
                 if (otObject.properties != null) {
                     const dataVertex = {
                         _key: Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             Utilities.keyFrom(otObject.properties),
                         ),
                         vertexType: constants.vertexType.data,
@@ -381,7 +381,7 @@ class ImportService {
                     // Add has-data edge.
                     const hasDataEdge = {
                         _key: Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             connectorVertex._key,
                             dataVertex._key,
                         ),
@@ -400,11 +400,11 @@ class ImportService {
                         const relationEdge = {};
                         relationEdge._from = connectorVertex._key;
                         relationEdge._to = Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             _id(relation.linkedObject),
                         );
                         relationEdge._key = Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             relationEdge._from,
                             relationEdge._to,
                         );
@@ -486,7 +486,8 @@ class ImportService {
                         relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
                             const expectedErc725 = _value(expectedCreator);
 
-                            if (dataCreator === expectedErc725) {
+                            if (dataCreatorIdentifiers
+                                .find(elem => elem.identifierValue === expectedErc725)) {
                                 hasConnection1 = true;
                             }
                         });
@@ -500,14 +501,15 @@ class ImportService {
                                     const metadata = await this.db
                                         .findMetadataByImportId(datasetId);
 
-                                    if (data.expectedConnectionCreators != null) {
+                                    if (metadata && data.expectedConnectionCreators != null) {
                                         data.expectedConnectionCreators
                                             .forEach((expectedCreator) => {
                                                 const expectedErc725 = _value(expectedCreator);
 
-                                                if (metadata && expectedErc725 ===
-                                                metadata.datasetHeader.dataCreator.identifiers
-                                                    .find(x => x.identifierType === 'ERC725').identifierValue) {
+                                                if (metadata.datasetHeader.dataCreator.identifiers
+                                                    .find(elem =>
+                                                        elem.identifierValue === expectedErc725)
+                                                ) {
                                                     hasConnection2 = true;
                                                 }
                                             });
@@ -526,7 +528,8 @@ class ImportService {
                     }
 
                     await this.db.addEdge({
-                        _key: Utilities.keyFrom(dataCreator, vertex._key, relatedVertex._key),
+                        _key: Utilities
+                            .keyFrom(dataCreatorIdentifiers, vertex._key, relatedVertex._key),
                         _from: vertex._key,
                         _to: relatedVertex._key,
                         relationType: 'CONNECTION_DOWNSTREAM',
@@ -534,7 +537,8 @@ class ImportService {
                     });
 
                     await this.db.addEdge({
-                        _key: Utilities.keyFrom(dataCreator, relatedVertex._key, vertex._key),
+                        _key: Utilities
+                            .keyFrom(dataCreatorIdentifiers, relatedVertex._key, vertex._key),
                         _from: relatedVertex._key,
                         _to: vertex._key,
                         relationType: 'CONNECTION_DOWNSTREAM',
@@ -546,7 +550,7 @@ class ImportService {
 
         await this.db.addDatasetMetadata(metadata);
         // Extract wallet from signature.
-        const wallet = ImportUtilities.extractDatasetSigner(document);
+        const wallets = ImportUtilities.extractDatasetSigners(document);
 
         // TODO: Verify that signer's wallet belongs to dataCreator ERC
 
@@ -559,7 +563,7 @@ class ImportService {
             vertices: deduplicateVertices,
             edges: deduplicateEdges,
             data_set_id: datasetId,
-            wallet,
+            wallets,
         };
     }
 

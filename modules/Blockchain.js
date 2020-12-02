@@ -150,6 +150,23 @@ class Blockchain {
     }
 
     /**
+     * Returns the blockchain id of every blockchain implementation
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
+     * @returns {String} The identifier string of the default blockchain implementation
+     */
+    getAllBlockchainIds(showUninitialized = false) {
+        const blockchainIds = [];
+        for (let i = 0; i < this.blockchain.length; i += 1) {
+            const implementation = this.blockchain[i];
+            if (implementation.initialized || showUninitialized) {
+                blockchainIds.push(implementation.getBlockchainId());
+            }
+        }
+
+        return blockchainIds;
+    }
+
+    /**
      * Returns the blockchain id of the default blockchain implementation
      * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      * @returns {String} The identifier string of the default blockchain implementation
@@ -1215,6 +1232,40 @@ class Blockchain {
     }
 
     /**
+     * Returns wallets from blockchain implementations
+     * @param {Boolean} showUninitialized - Return all implementations, not only initialized ones
+     * @returns {Array<Object>} -
+     *      An array of objects containing the blockchain_id string and the response string
+     */
+    getAllWallets(showUninitialized = false) {
+        const wallets = [];
+        for (let i = 0; i < this.blockchain.length; i += 1) {
+            const implementation = this.blockchain[i];
+            if (implementation.initialized || showUninitialized) {
+                wallets.push({
+                    blockchain_id: implementation.getBlockchainId(),
+                    response: implementation.getWallet(),
+                });
+            }
+        }
+
+        return wallets;
+    }
+
+    /**
+     * Returns wallet public and private key from configuration
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
+     */
+    getWallet(blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getWallet(),
+        };
+    }
+
+    /**
      * Saves identity into file and configuration
      * @param {String} identity - The identity to save
      * @param {String} blockchain_id - Blockchain implementation to use
@@ -1239,19 +1290,6 @@ class Blockchain {
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getHubContractAddress(),
-        };
-    }
-
-    /**
-     * Returns wallet public and private key from configuration
-     * @param {String} blockchain_id - Blockchain implementation to use
-     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
-     */
-    getWallet(blockchain_id, showUninitialized = false) {
-        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
-        return {
-            blockchain_id: implementation.getBlockchainId(),
-            response: implementation.getWallet(),
         };
     }
 

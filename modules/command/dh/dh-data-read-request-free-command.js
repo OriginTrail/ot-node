@@ -93,7 +93,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 id,
                 wallet: node_wallet,
                 nodeId: this.config.identity,
-                data_provider_wallet: dataInfo.data_provider_wallet,
+                data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
                 agreementStatus: 'CONFIRMED',
                 document,
                 permissionedData,

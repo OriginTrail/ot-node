@@ -11,6 +11,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
         super(ctx);
         this.remoteControl = ctx.remoteControl;
         this.transport = ctx.transport;
+        this.blockchain = ctx.blockchain;
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.commandExecutor = ctx.commandExecutor;
@@ -27,6 +28,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
     async execute(command, transaction) {
         const {
             handler_id,
+            blockchain_id,
             encoded_data,
             purchase_id,
             permissioned_data_array_length,
@@ -112,7 +114,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 const {
                     data_set_id,
                     ot_object_id,
-                } = JSON.parse(handler.data);
+                } = JSON.parse(handler.dataValues.data);
 
                 await this.permissionedDataService.updatePermissionedDataInDb(
                     data_set_id,
@@ -134,29 +136,71 @@ class DvPurchaseKeyDepositedCommand extends Command {
                     },
                 );
 
-                // todo pass blockchain identity
-                await Models.data_sellers.create({
-                    data_set_id,
-                    ot_json_object_id: ot_object_id,
-                    seller_node_id: this.config.identity,
-                    seller_erc_id: this.profileService.getIdentity(),
-                    price: this.config.default_data_price,
-                });
+                const allBlockchainIds = this.blockchain.getAllBlockchainIds();
+
+                const data_info =
+                    await Models.data_info.findOne({ where: { data_set_id } });
+                const data_provier_wallets = JSON.parse(data_info.dataValues.data_provider_wallets);
+                let promises = [];
+                for (const provider_element of data_provier_wallets) {
+                    if (allBlockchainIds.includes(provider_element.blockchain_id)) {
+                        promises.push(this.blockchain
+                            .getRootHash(data_set_id, provider_element.blockchain_id).response
+                            .then(res => ({
+                                blockchain_id: provider_element.blockchain_id,
+                                root_hash: res,
+                            })));
+                    }
+                }
+
+                const allRootHashes = await Promise.all(promises);
+                const validBlockchainIds = [];
+                for (const response of allRootHashes) {
+                    const { root_hash } = response;
+                    if (root_hash && !Utilities.isZeroHash(root_hash)
+                        && Utilities.compareHexStrings(root_hash, data_info.root_hash)) {
+                        validBlockchainIds.push(response.blockchain_id);
+                    }
+                }
+
+                const prices = [];
+                const identities = [];
+                promises = [];
+                for (const bc_id of validBlockchainIds) {
+                    const identity = this.profileService.getIdentity(bc_id);
+                    prices.push({
+                        blockchain_id: bc_id,
+                        price_in_trac: this.config.default_data_price,
+                    });
+                    identities.push({
+                        blockchain_id: bc_id,
+                        identity,
+                    });
+                    promises.push(Models.data_sellers.create({
+                        data_set_id,
+                        blockchain_id: bc_id,
+                        ot_json_object_id: ot_object_id,
+                        seller_node_id: this.config.identity,
+                        seller_erc_id: identity,
+                        price: this.config.default_data_price,
+                    }));
+                }
                 this.logger.important(`Purchase ${purchase_id} completed. Data stored successfully`);
                 this.remoteControl.purchaseStatus('Purchase completed', 'You can preview the purchased data in My Purchases page.');
 
-                const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+                const { node_wallet, node_private_key } =
+                    this.blockchain.getWallet(blockchain_id).response;
 
-                // todo pass blockchain identity
                 const purchaseCompletionObject = {
                     message: {
                         purchase_id,
+                        blockchain_id,
                         data_set_id,
                         ot_object_id,
                         seller_node_id: this.config.identity,
-                        seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity()),
-                        price: this.config.default_data_price,
+                        seller_erc_ids: identities,
                         wallet: node_wallet,
+                        prices,
                     },
                 };
 

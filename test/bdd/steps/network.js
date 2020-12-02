@@ -369,9 +369,9 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
 
     const response = await httpApiHelper.apiImportInfo(myNode.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
-    expect(response, 'response should contain root_hash, dataSetId, document, transaction and data_provider_wallet keys').to.have.keys([
+    expect(response, 'response should contain root_hash, dataSetId, document, transaction and data_provider_wallets keys').to.have.keys([
         'dataSetId', 'root_hash', 'document',
-        'transaction', 'data_provider_wallet',
+        'transaction', 'data_provider_wallets',
     ]);
 
     expect(response.document, 'response.document should be in OT JSON format')
@@ -383,7 +383,7 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     );
     const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
 
-    expect(ImportUtilities.extractDatasetSigner(response.document).toLowerCase() === nodeWallet, 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigners(response.document)[0].wallet.toLowerCase() === nodeWallet, 'Signature not valid!').to.be.true;
 
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document);
     const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(response.document);
@@ -418,7 +418,7 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     );
     const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
 
-    expect(ImportUtilities.extractDatasetSigner(lastExport.data.formatted_dataset).toLowerCase() === nodeWallet.toLowerCase(), 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigners(lastExport.data.formatted_dataset)[0].wallet.toLowerCase() === nodeWallet.toLowerCase(), 'Signature not valid!').to.be.true;
 });
 
 Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
@@ -451,13 +451,13 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
-    let keys = ['formatted_dataset', 'data_creator', 'dc_node_wallet', 'transaction_hash'];
+    let keys = ['formatted_dataset', 'data_creator', 'dc_node_wallets', 'transaction_hash'];
     if (lastExport.data.export_status) {
         expect(lastExport.data.export_status, 'response.data.export_status should be "COMPLETED"')
             .to.be.equal('COMPLETED');
         keys = keys.concat(['export_status', 'import_status', 'root_hash']);
         if (lastExport.data.import_status === 'COMPLETED') {
-            keys = keys.concat(['offer_id', 'data_hash']);
+            keys = keys.concat(['data_hash']);
         }
     } else {
         keys = keys.concat(['root_hash', 'data_hash']);
@@ -557,7 +557,7 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
         .to.be.equal(calculatedDatasetId1);
 
     // check signature
-    const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigner(dataset1);
+    const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigners(dataset1)[0].wallet;
     expect(Utilities.normalizeHex(calcuatedDatasetSignature1), 'Dataset from API endpoint and manually calculated should match')
         .to.be.equal(Utilities.normalizeHex(nodeWallet1));
 
@@ -572,7 +572,7 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
         .to.be.equal(calculatedDatasetId2);
 
     // check signature
-    const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigner(dataset2);
+    const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigners(dataset2)[0].wallet;
     expect(Utilities.normalizeHex(calcuatedDatasetSignature2), 'Dataset from API endpoint and manually calculated should match')
         .to.be.equal(Utilities.normalizeHex(nodeWallet2));
 
