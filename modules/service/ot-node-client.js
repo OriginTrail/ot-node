@@ -5,14 +5,14 @@ class OtNodeClient {
         this.logger = ctx.logger;
     }
 
-    async getNodeData(remoteHostname, request) {
+    async getNodeData(remoteHostname, body) {
         this.baseUrl = `http://${remoteHostname}:8900/api/latest`;
         return new Promise((accept, reject) => {
             request({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 url: `${this.baseUrl}/node_data`,
-                body: request,
+                body,
                 json: true,
             }, (error, response, body) => {
                 if (error) {
