@@ -12,8 +12,8 @@ class OtNodeClient {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 url: `${this.baseUrl}/node_data`,
-                json: true,
                 body: request,
+                json: true,
             }, (error, response, body) => {
                 if (error) {
                     reject(error);
