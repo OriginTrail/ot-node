@@ -47,7 +47,7 @@ class DCOfferReplacementCompletedCommand extends Command {
                     && utilities.compareHexStrings(this.config.erc725Identity, challengerIdentity);
             });
             if (event) {
-                event.finished = true;
+                event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
                 const offer = await models.offers.findOne({

@@ -5,6 +5,7 @@ if (!process.env.NODE_ENV) {
     process.env.NODE_ENV = 'testnet';
 }
 
+const { execSync } = require('child_process');
 const HttpNetwork = require('./modules/network/http/http-network');
 const Kademlia = require('./modules/network/kademlia/kademlia');
 const Transport = require('./modules/network/transport');
@@ -181,17 +182,17 @@ class OTNode {
         log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
         // sync models
-        try {
-            Storage.models = (await models.sequelize.sync()).models;
-            Storage.db = models.sequelize;
-        } catch (error) {
-            if (error.constructor.name === 'ConnectionError') {
-                console.error('Failed to open database. Did you forget to run "npm run setup"?');
-                process.abort();
-            }
-            console.error(error);
-            process.abort();
-        }
+        // try {
+        //     Storage.models = (await models.sequelize.sync()).models;
+        //     Storage.db = models.sequelize;
+        // } catch (error) {
+        //     if (error.constructor.name === 'ConnectionError') {
+        //         console.error('Failed to open database. Did you forget to run "npm run setup"?');
+        //         process.abort();
+        //     }
+        //     console.error(error);
+        //     process.abort();
+        // }
 
         await this._runNetworkIdentityMigration(config);
 
@@ -620,5 +621,6 @@ function main() {
 }
 
 // Make sure the Sequelize meta table is migrated before running main.
+execSync('/etc/init.d/postgresql start');
 const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
 migrationSequelizeMeta.run().then(main);

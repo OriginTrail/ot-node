@@ -33,7 +33,7 @@ class DcOfferTaskCommand extends Command {
             },
         });
         if (event) {
-            event.finished = true;
+            event.finished = 1;
             await event.save({ fields: ['finished'] });
 
             const data = JSON.parse(event.data);

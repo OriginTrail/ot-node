@@ -37,6 +37,8 @@ if (argv.configDir) {
 
 function checkForUpdate() {
     try {
+        execSync('/etc/init.d/postgresql start');
+        execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:migrate');
         // Important: this file is running in the context of older version so
         // all the migrations has to be run in the context of updated version
         // of the node. This particularly means that newer version may have
@@ -75,7 +77,7 @@ function checkForUpdate() {
 
         // Point Sequelize to the right path.
         process.env.SEQUELIZEDB = path.join(appMigrationDirPath, 'system.db');
-
+        execSync('/etc/init.d/postgresql start');
         // Run migrations
         let output = execSync(
             './node_modules/.bin/sequelize db:migrate --config config/sequelizeConfig.js',
