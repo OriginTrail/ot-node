@@ -51,6 +51,7 @@ class HighAvailabilityService {
             this.logger.notify('Exiting busy wait loop');
             await this.getMasterNodeData(this.config.high_availability.master_hostname);
             await this.graphStorage.stopReplication();
+            await this.stopPostgresReplication();
             await this._updateConfigurationOnRemoteNode(
                 true,
                 this.config.high_availability.master_hostname,
@@ -62,6 +63,8 @@ class HighAvailabilityService {
             this.config.high_availability.is_fallback_node = false;
             this.config.high_availability.master_hostname =
                 this.config.high_availability.private_hostname;
+
+
 
             forkedStatusCheck.send(JSON.stringify({ config: this.config }));
         } else {
@@ -178,9 +181,10 @@ class HighAvailabilityService {
     //
     // }
     //
-    // async stopPostgresReplication() {
-    //
-    // }
+    async stopPostgresReplication() {
+        execSync('pg_ctlcluster 12 main promote');
+
+    }
 }
 
 module.exports = HighAvailabilityService;
