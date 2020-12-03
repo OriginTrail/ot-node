@@ -83,7 +83,9 @@ class HighAvailabilityService {
         this.logger.trace('Updated configuration on previous master node.');
         const remoteConfigFolderPath = '/ot-node/remote_config';
         const remoteConfigPath = `${remoteConfigFolderPath}/.origintrail_noderc`;
-        execSync(`mkdir -p ${remoteConfigFolderPath}`);
+        if (!fs.existsSync(remoteConfigFolderPath)) {
+            execSync(`mkdir -p ${remoteConfigFolderPath}`);
+        }
         execSync(`scp root@${remoteNodeHostname}:~/.origintrail_noderc ${remoteConfigFolderPath}`);
         const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
         remoteConfig.high_availability.is_fallback_node = isFallbackNode;
@@ -171,6 +173,14 @@ class HighAvailabilityService {
             this.logger.error(e.message);
         }
     }
+
+    // async startPostgresReplication() {
+    //
+    // }
+    //
+    // async stopPostgresReplication() {
+    //
+    // }
 }
 
 module.exports = HighAvailabilityService;
