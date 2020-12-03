@@ -45,7 +45,7 @@ class DcFinalizeImport extends Command {
                 dataProviderWallets = this.blockchain.getAllWallets()
                     .map(elem => ({
                         blockchain_id: elem.blockchain_id,
-                        wallet: elem.response.node_wallet,
+                        wallet: Utilities.normalizeHex(elem.response.node_wallet),
                     }));
             } else {
                 dataProviderWallets = data_provider_wallets;
