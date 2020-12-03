@@ -17,7 +17,6 @@ class DhReplicationImportCommand extends Command {
         this.config = ctx.config;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
@@ -87,8 +86,22 @@ class DhReplicationImportCommand extends Command {
             throw Error(`Calculated distribution hash ${encryptedGraphRootHash} differs from DC distribution hash ${litigationRootHash}`);
         }
 
-        const originalRootHash = otJson.datasetHeader.dataIntegrity.proofs[0].proofValue;
-        if (decryptedGraphRootHash !== originalRootHash) {
+        let rootHashValidated = false;
+        let originalRootHash;
+        for (const schema in otJson.datasetHeader.validationSchemas) {
+            if (otJson.datasetHeader.validationSchemas[schema].networkId === blockchain_id) {
+                const proof = otJson.datasetHeader.dataIntegrity
+                    .proofs.find(proof => (proof.validationSchema === schema));
+
+                if (proof && proof.proofValue) {
+                    const originalRootHash = proof.proofValue;
+                    if (decryptedGraphRootHash === originalRootHash) {
+                        rootHashValidated = true;
+                    }
+                }
+            }
+        }
+        if (!rootHashValidated) {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from document root hash ${originalRootHash}`);
         }
 
@@ -136,6 +149,7 @@ class DhReplicationImportCommand extends Command {
         await this.permissionedDataService.addDataSellerForPermissionedData(
             dataSetId,
             dcIdentity,
+            blockchain_id,
             0,
             dcNodeId,
             decryptedDataset['@graph'],
@@ -144,8 +158,10 @@ class DhReplicationImportCommand extends Command {
         const importResult = await this.importService.importFile({
             document: decryptedDataset,
             encryptedMap,
+            blockchain_id,
         });
 
+        const data_provider_wallets = importResult.wallets;
         fs.unlinkSync(documentPath);
 
         if (importResult.error) {
@@ -164,7 +180,7 @@ class DhReplicationImportCommand extends Command {
                 // TODO: add field data_provider_id_type: 'ERC725' || 'Unknown'
                 // TODO: add field data_creator_id: otjson.datasetHeader.dataCreator
                 // TODO: add field data_creator_id_type: 'ERC725' || 'Unknown'
-                data_provider_wallet: dcWallet, // TODO: rename to data_creator_wallet
+                data_provider_wallets: JSON.stringify(data_provider_wallets),
                 import_timestamp: new Date(),
                 otjson_size_in_bytes: dataSize,
                 data_hash: dataHash,
@@ -173,18 +189,16 @@ class DhReplicationImportCommand extends Command {
         }
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
-        // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),
         ];
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchain_id).response;
 
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(node_private_key));
+            .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
-        // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
             dhIdentity: Utilities.denormalizeHex(this.profileService.getIdentity(blockchain_id)),

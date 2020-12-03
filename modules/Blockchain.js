@@ -1,9 +1,16 @@
 const Ethereum = require('./Blockchain/Ethereum/index.js');
 const uuidv4 = require('uuid/v4');
 const Op = require('sequelize/lib/operators');
+const deepExtend = require('deep-extend');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const configjson = require('../config/config.json');
+
+const defaultBlockchainConfig = Utilities.copyObject(configjson[
+    process.env.NODE_ENV &&
+    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+        process.env.NODE_ENV : 'development'].blockchain);
 
 class Blockchain {
     /**
@@ -12,7 +19,6 @@ class Blockchain {
      */
     constructor(ctx) {
         this.log = ctx.logger;
-        this.web3 = ctx.web3;
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
         this.pluginService = ctx.blockchainPluginService;
@@ -22,8 +28,10 @@ class Blockchain {
 
         this.blockchain = [];
 
-        for (let i = 0; i < ctx.config.blockchain.implementations.length; i += 1) {
-            const implementation_configuration = ctx.config.blockchain.implementations[i];
+        this.config = this.attachDefaultConfig(this.config, defaultBlockchainConfig);
+
+        for (let i = 0; i < this.config.implementations.length; i += 1) {
+            const implementation_configuration = this.config.implementations[i];
 
             switch (implementation_configuration.blockchain_title) {
             case 'Ethereum':
@@ -75,6 +83,40 @@ class Blockchain {
     }
 
     /**
+     * Attaches the default configuration for each blockchain implementation
+     * because the user defined blockchain configuration overwrites it on node startup
+     * @param config {Object} - The running blockchain configuration, with user defined values
+     * @param defaultConfig {Object} - The default blockchain configuration for current environment
+     * @returns {Object} - The new blockchain configuration
+     */
+    attachDefaultConfig(config, defaultConfig) {
+        const result = Object.assign({}, config);
+
+        if (config.implementations && defaultConfig.implementations
+        && Array.isArray(config.implementations) && Array.isArray(defaultConfig.implementations)) {
+            const defaults = defaultConfig.implementations;
+
+            result.implementations = [];
+
+            for (const implUserConfig of config.implementations) {
+                if (!implUserConfig.blockchain_title) {
+                    throw Error(`Blockchain implementation missing title.\nGiven config: ${JSON.stringify(implUserConfig, null, 4)}`);
+                }
+
+                const implDefaultConfig =
+                    defaults.find(cfg => cfg.blockchain_title === implUserConfig.blockchain_title);
+                if (!implDefaultConfig) {
+                    throw Error(`Unsupported blockchain ${implUserConfig.blockchain_title}`);
+                }
+
+                result.implementations.push(deepExtend({}, implDefaultConfig, implUserConfig));
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Retrieves an implementation based on the given blockchain_id
      * @param {String} blockchain_id - Blockchain implementation identifier string
      * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
@@ -105,6 +147,23 @@ class Blockchain {
         }
 
         throw new Error('Cannot return implementation. No implementation is initialized.');
+    }
+
+    /**
+     * Returns the blockchain id of every blockchain implementation
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
+     * @returns {String} The identifier string of the default blockchain implementation
+     */
+    getAllBlockchainIds(showUninitialized = false) {
+        const blockchainIds = [];
+        for (let i = 0; i < this.blockchain.length; i += 1) {
+            const implementation = this.blockchain[i];
+            if (implementation.initialized || showUninitialized) {
+                blockchainIds.push(implementation.getBlockchainId());
+            }
+        }
+
+        return blockchainIds;
     }
 
     /**
@@ -485,7 +544,7 @@ class Blockchain {
                 const implementation = this.blockchain[i];
 
                 blockStartConditions.push({
-                    blockchain_id: implementation.config.network_id,
+                    blockchain_id: implementation.getBlockchainId(),
                     block: { [Op.gte]: currentBlocks[i] },
                 });
             }
@@ -687,11 +746,25 @@ class Blockchain {
      * @param {string} blockchain_id - Blockchain implementation to use
      * @returns {Object} - An object containing the blockchain_id string and the response promise
      */
-    getProfileBalance(wallet, blockchain_id) {
+    getWalletTokenBalance(wallet, blockchain_id) {
         const implementation = this._getImplementationFromId(blockchain_id);
         return {
             blockchain_id: implementation.getBlockchainId(),
-            response: implementation.getProfileBalance(wallet),
+            response: implementation.getWalletTokenBalance(wallet),
+        };
+    }
+
+    /**
+     * Gets base (eg ETH) balance of a particular wallet
+     * @param {string} wallet
+     * @param {string} blockchain_id - Blockchain implementation to use
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    getWalletBaseBalance(wallet, blockchain_id) {
+        const implementation = this._getImplementationFromId(blockchain_id);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getWalletBaseBalance(wallet),
         };
     }
 
@@ -1159,6 +1232,40 @@ class Blockchain {
     }
 
     /**
+     * Returns wallets from blockchain implementations
+     * @param {Boolean} showUninitialized - Return all implementations, not only initialized ones
+     * @returns {Array<Object>} -
+     *      An array of objects containing the blockchain_id string and the response string
+     */
+    getAllWallets(showUninitialized = false) {
+        const wallets = [];
+        for (let i = 0; i < this.blockchain.length; i += 1) {
+            const implementation = this.blockchain[i];
+            if (implementation.initialized || showUninitialized) {
+                wallets.push({
+                    blockchain_id: implementation.getBlockchainId(),
+                    response: implementation.getWallet(),
+                });
+            }
+        }
+
+        return wallets;
+    }
+
+    /**
+     * Returns wallet public and private key from configuration
+     * @param {String} blockchain_id - Blockchain implementation to use
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
+     */
+    getWallet(blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getWallet(),
+        };
+    }
+
+    /**
      * Saves identity into file and configuration
      * @param {String} identity - The identity to save
      * @param {String} blockchain_id - Blockchain implementation to use
@@ -1183,17 +1290,6 @@ class Blockchain {
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getHubContractAddress(),
-        };
-    }
-
-    /**
-     * Returns wallet public and private key from configuration
-     */
-    getWallet(blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
-        return {
-            blockchain_id: implementation.getBlockchainId(),
-            response: implementation.getWallet(),
         };
     }
 
@@ -1239,6 +1335,14 @@ class Blockchain {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getPriceFactors(),
         };
+    }
+
+    static fromWei(blockchain_title, balance, unit) {
+        switch (blockchain_title) {
+        case 'Ethereum':
+        default:
+            return Ethereum.fromWei(balance, unit);
+        }
     }
 }
 

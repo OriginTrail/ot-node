@@ -140,7 +140,7 @@ class ImportUtilities {
         return graph;
     }
 
-    static prepareDataset(originalDocument, config, web3, blockchain) {
+    static prepareDataset(originalDocument, config, blockchain) {
         const datasetHeader = originalDocument.datasetHeader ? originalDocument.datasetHeader : {};
         ImportUtilities.calculateGraphPermissionedDataHashes(originalDocument['@graph']);
 
@@ -167,9 +167,9 @@ class ImportUtilities {
         document['@id'] = ImportUtilities.calculateGraphPublicHash(document);
 
         const rootHash = ImportUtilities.calculateDatasetRootHash(document);
-        document.datasetHeader.dataIntegrity.proofs[0].proofValue = rootHash;
+        ImportUtilities.attachDatasetRootHash(document.datasetHeader, rootHash);
 
-        const signed = ImportUtilities.signDataset(document, blockchain.node_private_key);
+        const signed = ImportUtilities.signDataset(document, blockchain);
         return signed;
     }
 
@@ -642,7 +642,7 @@ class ImportUtilities {
      * Sign dataset
      * @static
      */
-    static signDataset(dataset, nodePrivateKey) {
+    static signDataset(dataset, blockchain_data) {
         let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingSignature(dataset);
         if (!sortedDataset) {
             sortedDataset = Utilities.copyObject(dataset);
@@ -650,23 +650,52 @@ class ImportUtilities {
         ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
 
         const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
-        const signature = dataIntegrityService.sign(
-            JSON.stringify(sortedDataset),
-            Utilities.normalizeHex(nodePrivateKey),
-        );
-        dataset.signature = {
-            value: signature.signature,
-            type: signature.type,
-        };
+        dataset.signature = [];
+
+        if (Array.isArray(blockchain_data)) {
+            for (const elem of blockchain_data) {
+                const { node_private_key: privKey, blockchain_id } = elem;
+                const signature = dataIntegrityService.sign(
+                    JSON.stringify(sortedDataset),
+                    Utilities.normalizeHex(privKey),
+                );
+
+                dataset.signature.push({
+                    type: signature.type,
+                    proofPurpose: 'assertionMethod',
+                    created: (new Date(Date.now())).toISOString(),
+                    domain: blockchain_id,
+                    proofValue: signature.signature,
+                });
+            }
+
+            dataset.signature.sort((a, b) => a.domain.localeCompare(b.domain));
+        } else {
+            throw new Error('Cannot generate signature with given blockchain structure');
+        }
 
         return dataset;
     }
 
-    /**
-     * Extract Signer from OT-JSON signature
-     * @static
-     */
-    static extractDatasetSigner(dataset, web3) {
+    static extractDatasetSigners(dataset) {
+        const signers = [];
+        if (dataset && Array.isArray(dataset.signature) && dataset.signature.length > 0) {
+            for (const proof of dataset.signature) {
+                const wallet =
+                    ImportUtilities.extractDatasetSignerUsingProof(dataset, proof.proofValue);
+                const { domain: blockchain_id } = proof;
+
+                signers.push({
+                    blockchain_id,
+                    wallet,
+                });
+            }
+        }
+
+        return signers;
+    }
+
+    static extractDatasetSignerUsingProof(dataset, signature) {
         let sortedDataset = OtJsonUtilities.prepareDatasetForGeneratingSignature(dataset);
         if (!sortedDataset) {
             sortedDataset = Utilities.copyObject(dataset);
@@ -677,10 +706,9 @@ class ImportUtilities {
         const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
         return dataIntegrityService.recover(
             JSON.stringify(sortedDataset),
-            dataset.signature.value,
+            signature,
         );
     }
-
 
     /**
      * Fill in dataset header
@@ -696,6 +724,33 @@ class ImportUtilities {
         OTJSONVersion = '1.2',
         datasetCreationTimestamp = new Date().toISOString(),
     ) {
+        const dataCreatorIdentifiers = [];
+        const dataIntegrityProofs = [];
+        const validationSchemas = {};
+        for (const implementation of blockchain) {
+            dataCreatorIdentifiers.push({
+                identifierValue: implementation.identity,
+                identifierType: 'ERC725',
+                validationSchema: `/schemas/erc725-main/${implementation.blockchain_id}`,
+                // todo support other identifier types
+            });
+            validationSchemas[`/schemas/erc725-main/${implementation.blockchain_id}`] = {
+                schemaType: 'ethereum-725',
+                networkId: implementation.blockchain_id,
+            };
+
+            dataIntegrityProofs.push({
+                proofValue: '',
+                proofType: 'merkleRootHash',
+                validationSchema: `/schemas/merkleRoot/${implementation.blockchain_id}`,
+            });
+            validationSchemas[`/schemas/merkleRoot/${implementation.blockchain_id}`] = {
+                schemaType: 'merkle-root',
+                networkId: implementation.blockchain_id,
+                hubContractAddress: implementation.hub_contract_address,
+            };
+        }
+
         const header = {
             OTJSONVersion,
             datasetCreationTimestamp,
@@ -712,35 +767,12 @@ class ImportUtilities {
             }
              */
             relatedDatasets: [],
-            validationSchemas: {
-                'erc725-main': {
-                    schemaType: 'ethereum-725',
-                    networkId: blockchain.blockchain_id,
-                },
-                merkleRoot: {
-                    schemaType: 'merkle-root',
-                    networkId: blockchain.blockchain_id,
-                    hubContractAddress: blockchain.hub_contract_address,
-                    // TODO: Add holding contract address and version. Hub address is useless.
-                },
-            },
+            validationSchemas,
             dataIntegrity: {
-                proofs: [
-                    {
-                        proofValue: '',
-                        proofType: 'merkleRootHash',
-                        validationSchema: '/schemas/merkleRoot',
-                    },
-                ],
+                proofs: dataIntegrityProofs,
             },
             dataCreator: {
-                identifiers: [
-                    {
-                        identifierValue: blockchain.identity,
-                        identifierType: 'ERC725',
-                        validationSchema: '/schemas/erc725-main',
-                    },
-                ],
+                identifiers: dataCreatorIdentifiers,
             },
         };
 
@@ -751,14 +783,44 @@ class ImportUtilities {
         return header;
     }
 
+    static attachDatasetRootHash(datasetHeader, rootHash, proofType = 'merkleRootHash') {
+        for (const proofObject of datasetHeader.dataIntegrity.proofs) {
+            if (proofObject.proofType === proofType) {
+                proofObject.proofValue = rootHash;
+            }
+        }
+    }
+
     /**
-     * Extract Dataset creator identifier value from OT-JSON or graph header
+     * Extract Dataset creator identifier values from OT-JSON or graph header
      * @static
      * @param datasetHeader Header of the dataset in which the dataCreator field exists
      * @returns String - Dataset creator identifier value (Currently ERC725 Identity)
      */
-    static getDataCreator(datasetHeader) {
-        return datasetHeader.dataCreator.identifiers[0].identifierValue;
+    static getDataCreatorIdentifiers(datasetHeader) {
+        return datasetHeader.dataCreator.identifiers;
+    }
+
+    static extractDatasetIdentities(datasetHeader) {
+        if (!datasetHeader || !datasetHeader.dataCreator.identifiers
+            || !datasetHeader.validationSchemas
+            || !Array.isArray(datasetHeader.dataCreator.identifiers)
+            || datasetHeader.dataCreator.identifiers.length < 1) {
+            return;
+        }
+        const identities = [];
+
+        for (const identifierObject of datasetHeader.dataCreator.identifiers) {
+            const validationSchema =
+                datasetHeader.validationSchemas[identifierObject.validationSchema];
+
+            identities.push({
+                blockchain_id: validationSchema.networkId,
+                identity: identifierObject.identifierValue,
+            });
+        }
+
+        return identities;
     }
 
     /**

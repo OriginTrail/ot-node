@@ -48,7 +48,7 @@ class DVDataReadResponseFreeCommand extends Command {
         const replyId = message.id;
         const {
             data_set_id: dataSetId,
-            data_provider_wallet: dcWallet,
+            data_provider_wallets,
             wallet: dhWallet,
             transaction_hash,
             handler_id,
@@ -74,21 +74,46 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         const { document, permissionedData } = message;
-        // Calculate root hash and check is it the same on the SC.
-        const fingerprint = await this.blockchain.getRootHash(dataSetId).response;
+        // Calculate root hash and check is it the same on the SC
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
 
-        if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
-            const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${dataSetId}`;
+        const signerArray = ImportUtilities.extractDatasetSigners(document);
+        const myBlockchains = this.blockchain.getAllWallets().map(e => e.blockchain_id);
+
+        const availableBlockchains = [];
+        const validationData = {
+            fingerprints_exist: 0,
+            fingerprints_match: 0,
+        };
+        for (const signerObject of signerArray) {
+            if (myBlockchains.includes(signerObject.blockchain_id)) {
+                // eslint-disable-next-line no-await-in-loop
+                const fingerprint = await this.blockchain
+                    .getRootHash(dataSetId, signerObject.blockchain_id).response;
+
+                if (fingerprint && !Utilities.isZeroHash(fingerprint)) {
+                    validationData.fingerprints_exist += 1;
+                    if (fingerprint === rootHash) {
+                        validationData.fingerprints_match += 1;
+                        availableBlockchains.push(signerObject.blockchain_id);
+                    } else {
+                        this.logger.warn(`Fingerprint root hash for dataset ${dataSetId} does not match on blockchain ${signerObject.blockchain_id}. ` +
+                            ` Calculated root hash ${rootHash} differs from received blockchain fingerprint ${fingerprint}`);
+                    }
+                }
+            }
+        }
+
+        if (validationData.fingerprints_exist === 0) {
+            const errorMessage = `Couldn't not find fingerprint for dataset_id ${dataSetId} on any chain to validate.`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
-
-        if (fingerprint !== rootHash) {
-            const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
+        if (validationData.fingerprints_exist !== validationData.fingerprints_match) {
+            const errorMessage = `Fingerprint root hash for dataset ${dataSetId} does not match with the fingerprint received from the blockchain.`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
@@ -100,13 +125,23 @@ class DVDataReadResponseFreeCommand extends Command {
             permissionedData,
         );
 
-        const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
-        const profile = await this.blockchain.getProfile(erc725Identity).response;
+        const dataCreatorIdentities =
+            ImportUtilities.extractDatasetIdentities(document.datasetHeader);
 
-        await this.permissionedDataService.addDataSellerForPermissionedData(
+        let profilePromise;
+        for (const identityObject of dataCreatorIdentities) {
+            const { identity, blockchain_id } = identityObject;
+            if (availableBlockchains.includes(blockchain_id)) {
+                profilePromise = this.blockchain.getProfile(identity, blockchain_id).response;
+                break;
+            }
+        }
+        const profile = await profilePromise;
+        await this.permissionedDataService.addMultipleDataSellerForPermissionedData(
             dataSetId,
-            erc725Identity,
-            0,
+            dataCreatorIdentities,
+            availableBlockchains,
+            undefined,
             profile.nodeId.toLowerCase().slice(0, 42),
             document['@graph'],
         );
@@ -185,7 +220,7 @@ class DVDataReadResponseFreeCommand extends Command {
             const commandData = {
                 documentPath: path.join(cacheDirectory, handler_id),
                 handler_id,
-                data_provider_wallet: dcWallet,
+                data_provider_wallets,
                 purchased: true,
             };
 

@@ -156,7 +156,7 @@ Feature: Test basic network features
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
     And DC waits for holding time
-    Then selected DHes should be payed out
+    Then selected DHes should be paid out
 
   @fourth
   Scenario: DH with disabled auto-payouts

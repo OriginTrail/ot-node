@@ -16,7 +16,6 @@ class DHDataReadRequestFreeCommand extends Command {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
@@ -94,7 +93,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 id,
                 wallet: node_wallet,
                 nodeId: this.config.identity,
-                data_provider_wallet: dataInfo.data_provider_wallet,
+                data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
                 agreementStatus: 'CONFIRMED',
                 document,
                 permissionedData,
@@ -106,7 +105,6 @@ class DHDataReadRequestFreeCommand extends Command {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
                     replyMessage,
-                    this.web3,
                     node_private_key,
                 ),
             };
@@ -120,7 +118,6 @@ class DHDataReadRequestFreeCommand extends Command {
                 message: errorMessage,
                 messageSignature: Utilities.generateRsvSignature(
                     errorMessage,
-                    this.web3,
                     node_private_key,
                 ),
             }, nodeId);

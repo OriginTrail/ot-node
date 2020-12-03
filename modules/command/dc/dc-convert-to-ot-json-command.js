@@ -10,7 +10,6 @@ class DcConvertToOtJsonCommand extends Command {
         this.importWorkerController = ctx.importWorkerController;
         this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.importService = ctx.importService;
         this.blockchain = ctx.blockchain;
     }
@@ -22,22 +21,13 @@ class DcConvertToOtJsonCommand extends Command {
     async execute(command) {
         const { standard_id, documentPath, handler_id } = command.data;
         try {
-            const blockchain_id = this.blockchain.getDefaultBlockchainId();
+            const blockchain = this._getBlockchainImplementationParameters();
 
-            const blockchain = {
-                blockchain_id,
-                hub_contract_address:
-                this.blockchain.getHubContractAddress(blockchain_id).response,
-                identity: this.blockchain.getIdentity(blockchain_id).response,
-                node_private_key: this.blockchain.getWallet(blockchain_id)
-                    .response.node_private_key,
-            };
             if (standard_id === 'ot-json') {
                 let document = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
 
                 if (!document.signature) {
-                    document = ImportUtilities
-                        .prepareDataset(document, this.config, this.web3, blockchain);
+                    document = ImportUtilities.prepareDataset(document, this.config, blockchain);
                 }
 
                 fs.writeFileSync(documentPath, JSON.stringify(document));
@@ -62,6 +52,26 @@ class DcConvertToOtJsonCommand extends Command {
             });
         }
         return Command.empty();
+    }
+
+    _getBlockchainImplementationParameters() {
+        const result = [];
+        const blockchainIdentities = this.blockchain.getAllIdentities();
+
+        for (const responseObject of blockchainIdentities) {
+            const { blockchain_id, response: identity } = responseObject;
+            result.push({
+                blockchain_id,
+                identity,
+                hub_contract_address:
+                    this.blockchain.getHubContractAddress(blockchain_id).response,
+                node_private_key:
+                    this.blockchain.getWallet(blockchain_id).response.node_private_key,
+            });
+        }
+        result.sort((a, b) => a.blockchain_id.localeCompare(b.blockchain_id));
+
+        return result;
     }
 
     /**

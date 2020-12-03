@@ -15,7 +15,6 @@ class ProfileService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
-        this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -48,7 +47,8 @@ class ProfileService {
                 promises.push(this.createAndSaveNewProfile(
                     identity,
                     blockchain_id,
-                ).catch((e) => {
+                ).catch((error) => {
+                    this.logger.warn(`Failed to create a profile. ${error.toString()}`);
                     this.logger.warn(`Failed to initialize profile on blockchain ${blockchain_id}. Scheduling reattempt.`);
                     this.reinitializeProfile(blockchain_id);
                 }));
@@ -99,7 +99,8 @@ class ProfileService {
         // set empty identity if there is none
         let identity = identityExists ? profileIdentity : new BN(0, 16);
 
-        const { node_wallet, management_wallet } = this.blockchain.getWallet().response;
+        const { node_wallet, management_wallet } =
+            this.blockchain.getWallet(blockchainId, true).response;
         let createProfileCalled = false;
         do {
             try {
@@ -208,9 +209,10 @@ class ProfileService {
      * Initiates payout opertaion
      * @param offerId
      * @param urgent
+     * @param blockchain_id
      * @return {Promise<void>}
      */
-    async payOut(offerId, urgent) {
+    async payOut(offerId, urgent, blockchain_id) {
         await this.commandExecutor.add({
             name: 'dhPayOutCommand',
             delay: 0,
@@ -218,10 +220,11 @@ class ProfileService {
             data: {
                 urgent,
                 offerId,
+                blockchain_id,
                 viaAPI: true,
             },
         });
-        this.logger.notify(`Pay-out for offer ${offerId} initiated.`);
+        this.logger.notify(`Pay-out for offer ${offerId} on blockchain ${blockchain_id} initiated.`);
     }
 
     /**

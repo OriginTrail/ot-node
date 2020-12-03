@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const constants = require('../../constants');
+const Blockchain = require('../../Blockchain');
 
 const Models = require('../../../models/index');
 
@@ -12,7 +13,6 @@ const DELAY_ON_FAIL_IN_MILLS = 5 * 60 * 1000;
 class DhPayOutCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.web3 = ctx.web3;
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
@@ -38,12 +38,11 @@ class DhPayOutCommand extends Command {
             },
         });
 
-        // todo pass blockchain identity
-        const blockchainIdentity = Utilities.normalizeHex(this.profileService.getIdentity());
+        const blockchainIdentity = this.profileService.getIdentity(blockchain_id);
 
         if (!bid) {
             this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
-            await this._printBalances(blockchainIdentity);
+            await this._printBalances(blockchainIdentity, blockchain_id);
             return Command.empty();
         }
         if (bid.status !== 'COMPLETED') {
@@ -74,8 +73,8 @@ class DhPayOutCommand extends Command {
             try {
                 await this.blockchain
                     .payOut(blockchainIdentity, offerId, urgent, blockchain_id).response;
-                this.logger.important(`Payout for offer ${offerId} successfully completed.`);
-                await this._printBalances(blockchainIdentity);
+                this.logger.important(`Payout for offer ${offerId} successfully completed on blockchain ${blockchain_id}.`);
+                await this._printBalances(blockchainIdentity, blockchain_id);
             } catch (error) {
                 if (error.message.includes('Gas price higher than maximum allowed price')) {
                     this.logger.info('Gas price too high, delaying call for 30 minutes');
@@ -135,16 +134,19 @@ class DhPayOutCommand extends Command {
      * @private
      */
     async _printBalances(blockchainIdentity, blockchain_id) {
-        const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
-        const balance = await this.blockchain
-            .getProfileBalance(node_wallet).response;
-        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
+        const blockchain_title = this.blockchain.getBlockchainTitle(blockchain_id).response;
 
+        const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
         const profile = await this.blockchain
             .getProfile(blockchainIdentity, blockchain_id).response;
+
+        const walletBalance =
+            await this.blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response;
+        const walletBalanceInTRAC = Blockchain.fromWei(blockchain_title, walletBalance, 'ether');
+        this.logger.info(`Wallet balance: ${walletBalanceInTRAC} TRAC`);
+
         const profileBalance = profile.stake;
-        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        const profileBalanceInTRAC = Blockchain.fromWei(blockchain_title, profileBalance, 'ether');
         this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 

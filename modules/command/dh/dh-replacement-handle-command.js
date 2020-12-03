@@ -16,7 +16,6 @@ class DHReplacementImportCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
@@ -196,7 +195,7 @@ class DHReplacementImportCommand extends Command {
                 data_set_id: importResult.data_set_id,
                 total_documents: importResult.vertices.length,
                 root_hash: importResult.root_hash,
-                data_provider_wallet: importResult.wallet,
+                data_provider_wallets: importResult.wallet,
                 import_timestamp: new Date(),
                 data_size: dataSize,
                 origin: 'HOLDING',
@@ -210,7 +209,7 @@ class DHReplacementImportCommand extends Command {
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(this.profileService.getIdentity())];
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
+            .signMessage(toSign, Utilities.normalizeHex(this.config.node_private_key));
 
         // todo pass blockchain identity
         const replicationFinishedMessage = {

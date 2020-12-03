@@ -16,7 +16,7 @@ Feature: Data layer related features
     And I wait for replications to finish
     When I deploy a new Holding contract
     And DC waits for holding time
-    Then selected DHes should be payed out
+    Then selected DHes should be paid out
 
   @fourth
   Scenario: Check that updating the Holding contract doesn't make an offer fail
@@ -34,4 +34,4 @@ Feature: Data layer related features
     And I deploy a new Holding contract
     And I wait for replications to finish
     And DC waits for holding time
-    Then selected DHes should be payed out
+    Then selected DHes should be paid out

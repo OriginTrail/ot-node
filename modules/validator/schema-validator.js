@@ -3,7 +3,7 @@
  */
 
 const ethutils = require('ethereumjs-util');
-const importUtilities = require('../ImportUtilities');
+const ImportUtilities = require('../ImportUtilities');
 const Utilities = require('../Utilities');
 const web3 = require('web3');
 
@@ -15,15 +15,23 @@ class SchemaValidator {
 
     /**
      * Validate a particular schema
-     * @param document OT-JSON dataset
-     * @param schemaName the name of the schema to be validated
+     * @param data
      */
-    async validateSchema(document, schemaName) {
-        await this.supportedSchemas[schemaName](document);
+    async validateSchema(data) {
+        const { document, schemaName } = data;
+        let selectedSchema;
+        for (const schema in this.supportedSchemas) {
+            if (schemaName.includes(schema)) {
+                selectedSchema = this.supportedSchemas[schema];
+            }
+        }
+        if (selectedSchema) {
+            await selectedSchema(data);
+        }
     }
 
     _getSignerAddress(document) {
-        const merkleRoot = importUtilities.calculateDatasetRootHash(document);
+        const merkleRoot = ImportUtilities.calculateDatasetRootHash(document);
         const { signature } = document;
 
         const { value } = signature;
@@ -42,10 +50,10 @@ class SchemaValidator {
         return Utilities.normalizeHex(addr);
     }
 
-    async _validateERC725Schema(document) {
-        // TODO Validate that the schema is on the same network
-
-        const signer = this._getSignerAddress(document);
+    async _validateERC725Schema(data) {
+        // TODO Add ERC725 validation
+        const { document, schemaName } = data;
+        const signers = ImportUtilities.extractDatasetSigners(document);
 
         const { datasetHeader } = document;
         const { dataCreator } = datasetHeader;
@@ -54,18 +62,18 @@ class SchemaValidator {
         }
 
         const { identifiers } = dataCreator;
-        if (!Array.isArray(identifiers) || identifiers.length !== 1) {
+        if (!Array.isArray(identifiers) || identifiers.length === 0) {
             throw Error('[Validation Error] Unexpected format of data creator.');
         }
 
         // Data creator identifier must contain ERC725 and the proper schema
         const ERCIdentifier = identifiers.find(identifierObject => (
             identifierObject.identifierType === 'ERC725'
-            && identifierObject.networkId === this.config.blockchain.network_id
+            && identifierObject.validationSchemas === schemaName
         ));
 
         if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
-            ERCIdentifier.validationSchema !== '/schemas/erc725-main' ||
+            !ERCIdentifier.validationSchema.includes('/schemas/erc725-main') ||
             !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
             throw Error('[Validation Error] Wrong format of data creator.');
         }

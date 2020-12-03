@@ -99,6 +99,7 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
         const dataSetId = `0x${'1234'.padStart(64, '0')}`;
         const offer = await models.offers.create({
             data_set_id: dataSetId,
+            blockchain_id: 'development',
             message: 'Offer is pending',
             status: 'PENDING',
             global_status: 'PENDING',

@@ -26,6 +26,7 @@ class DvPurchaseDisputeCommand extends Command {
         // send dispute purchase to bc
         const {
             handler_id,
+            blockchain_id,
             encoded_data,
             key,
             purchase_id,
@@ -35,7 +36,8 @@ class DvPurchaseDisputeCommand extends Command {
         } = command.data;
 
         try {
-            const purchaseStatus = await this.blockchain.getPurchaseStatus(purchase_id).response;
+            const purchaseStatus = await this.blockchain
+                .getPurchaseStatus(purchase_id, blockchain_id).response;
 
             if (purchaseStatus !== '2') {
                 throw new Error(`Cannot issue complaint for purchaseId ${purchase_id}. Purchase already completed`);
@@ -72,6 +74,7 @@ class DvPurchaseDisputeCommand extends Command {
                     proofOfEncodedOutput,
                     proofOfEncodedInputLeft,
                     true,
+                    blockchain_id,
                 ).response;
             } else if (error_type === constants.PURCHASE_ERROR_TYPE.ROOT_ERROR) {
                 const {
@@ -86,10 +89,11 @@ class DvPurchaseDisputeCommand extends Command {
                     proofOfEncodedRootHash,
                     rootHashIndex,
                     true,
+                    blockchain_id,
                 ).response;
             }
 
-            if (this.blockchain.numberOfEventsEmitted(result) >= 1) {
+            if (this.blockchain.numberOfEventsEmitted(result, blockchain_id).response >= 1) {
                 this.logger.important(`Purchase complaint for purchaseId ${purchase_id} approved. Refund received.`);
             } else {
                 throw new Error(`Purchase complaint for purchaseId ${purchase_id} rejected.`);

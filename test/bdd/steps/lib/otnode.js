@@ -64,14 +64,16 @@ class OtNode extends EventEmitter {
         if (this.options.nodeConfiguration.node_wallet
             && this.options.nodeConfiguration.node_private_key
             && this.options.nodeConfiguration.management_wallet) {
-            fs.writeFileSync(
-                path.join(this.options.configDir, 'wallet.json'),
-                JSON.stringify({
-                    node_wallet: this.options.nodeConfiguration.node_wallet,
-                    node_private_key: this.options.nodeConfiguration.node_private_key,
-                    management_wallet: this.options.nodeConfiguration.management_wallet,
-                }),
-            );
+            for (const blockchain of this.options.nodeConfiguration.blockchain.implementations) {
+                fs.writeFileSync(
+                    path.join(this.options.configDir, blockchain.node_wallet_path),
+                    JSON.stringify({
+                        node_wallet: this.options.nodeConfiguration.node_wallet,
+                        node_private_key: this.options.nodeConfiguration.node_private_key,
+                        management_wallet: this.options.nodeConfiguration.management_wallet,
+                    }),
+                );
+            }
 
             delete this.options.nodeConfiguration.node_wallet;
             delete this.options.nodeConfiguration.node_private_key;
@@ -226,7 +228,9 @@ class OtNode extends EventEmitter {
         let line = stripAnsi(data.toString());
         line = line.replace(/[^\x20-\x7E]+/g, '');
 
-        if (line.includes('OT Node started')) {
+        if (line.includes('======================================================')) {
+            this.emit('started');
+        } else if (line.includes('OT Node started')) {
             this.logger.log(`Node ${this.id} initialized.`);
             this.state.initialized = true;
             this.emit('initialized');
@@ -366,15 +370,15 @@ class OtNode extends EventEmitter {
             this.emit('deposit-command-completed');
         } else if (line.match(/Replication window for .+ is closed\. Replicated to .+ peers\. Verified .+\./gi)) {
             this.emit('replication-window-closed');
-        } else if (line.match(/.*Offer with internal ID .+ for data set .+ written to blockchain. Waiting for DHs\.\.\./gi)) {
+        } else if (line.match(/.*Offer with internal ID .+ for data set .+ written to blockchain .+\. Waiting for DHs\.\.\./gi)) {
             this.emit('offer-written-blockchain');
         } else if (line.match(/Command dhPayOutCommand and ID .+ processed\./gi)) {
             this.emit('dh-pay-out-finalized');
         } else if (line.match(/Accepting offer with price: .+ TRAC\./gi)) {
             const result = line.match(walletAmountRegex);
             this.state.calculatedOfferPrice = result[result.length - 1];
-        } else if (line.match(/Payout for offer .+ successfully completed\./gi)) {
-            const offerId = line.match(/Payout for offer .+ successfully completed\./gi)[0].match(/Payout for offer (.*?) successfully completed\./)[1];
+        } else if (line.match(/Payout for offer .+ successfully completed.+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
             this.emit(`dh-pay-out-offer-${offerId}-completed`);
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
@@ -441,6 +445,8 @@ class OtNode extends EventEmitter {
             this.emit('purchase-completed');
         } else if (line.match(/Payment has been taken for purchase .+/gi)) {
             this.emit('purchase-payment-taken');
+        } else if (line.match(/Failed to initialize profile on blockchain .+/gi)) {
+            this.emit('profile-initialize-failed');
         }
     }
 

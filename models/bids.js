@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
         },
         offer_id: DataTypes.STRING,
+        blockchain_id: DataTypes.STRING,
         data_set_id: DataTypes.STRING,
         dc_node_id: DataTypes.STRING,
         dc_identity: DataTypes.STRING,

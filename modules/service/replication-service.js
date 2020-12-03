@@ -22,6 +22,7 @@ class ReplicationService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.importService = ctx.importService;
@@ -38,9 +39,10 @@ class ReplicationService {
     /**
      * Creates replications for one Offer
      * @param internalOfferId   - Internal Offer ID
+     * @param blockchain_id {String} - Blockchain implementation to use
      * @returns {Promise<void>}
      */
-    async createReplications(internalOfferId) {
+    async createReplications(internalOfferId, blockchain_id) {
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         if (!offer) {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
@@ -48,10 +50,10 @@ class ReplicationService {
 
         const otJson = await this.importService.getImport(offer.data_set_id);
 
-        // todo pass blockchain identity
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,
-            this.profileService.getIdentity(),
+            this.profileService.getIdentity(blockchain_id),
+            blockchain_id,
             this.config.default_data_price,
             this.config.identity,
             otJson['@graph'],

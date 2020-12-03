@@ -647,12 +647,12 @@ class GraphStorage {
      * @param datasetId
      * @returns {Promise}
      */
-    async findIssuerIdentityForDatasetId(datasetId) {
+    async findIssuerIdentitiesForDatasetId(datasetId) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findIssuerIdentityForDatasetId(datasetId).then((result) => {
+                this.db.findIssuerIdentitiesForDatasetId(datasetId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

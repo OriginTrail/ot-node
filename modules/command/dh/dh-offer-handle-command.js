@@ -28,10 +28,9 @@ class DHOfferHandleCommand extends Command {
             dcNodeId,
         } = command.data;
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
 
         this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);
-        // todo pass blockchain identity
         const response = await this.transport.replicationRequest({
             offerId,
             blockchain_id,
@@ -39,15 +38,16 @@ class DHOfferHandleCommand extends Command {
             dhIdentity: this.profileService.getIdentity(blockchain_id),
         }, dcNodeId);
 
-        if (response.status === 'fail') {
-            const bid = await Models.bids.findOne({
-                where: {
-                    offer_id: offerId,
-                },
-            });
+        const bid = await Models.bids.findOne({
+            where: {
+                offer_id: offerId,
+                blockchain_id,
+            },
+        });
 
+        if (response.status === 'fail') {
             bid.status = 'FAILED';
-            let message = `Failed to receive replication from ${dcNodeId} for offer ${offerId}.`;
+            let message = `Failed to receive replication from ${dcNodeId} for offer ${offerId} on chain ${blockchain_id}.`;
             if (response.message != null) {
                 message = `${message} Data creator reason: ${response.message}`;
             }
@@ -58,9 +58,6 @@ class DHOfferHandleCommand extends Command {
             return Command.empty();
         }
 
-        const bid = await Models.bids.findOne({
-            where: { offer_id: offerId },
-        });
         bid.status = 'SENT';
         await bid.save({ fields: ['status'] });
 
