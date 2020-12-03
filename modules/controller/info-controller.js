@@ -56,6 +56,8 @@ class InfoController {
         //  setup should have the same wallet
         try {
             const response = {};
+            console.log(JSON.stringify(req.body));
+            console.log(JSON.stringify(req));
 
             if (req.body.erc725Identity) {
                 response.erc725Identity = fs.readFileSync(path.join(
