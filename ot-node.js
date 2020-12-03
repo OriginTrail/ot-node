@@ -5,7 +5,6 @@ if (!process.env.NODE_ENV) {
     process.env.NODE_ENV = 'testnet';
 }
 
-const { execSync } = require('child_process');
 const HttpNetwork = require('./modules/network/http/http-network');
 const Kademlia = require('./modules/network/kademlia/kademlia');
 const Transport = require('./modules/network/transport');
@@ -51,8 +50,7 @@ const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
-const { fork } = require('child_process');
-const { execSync } = require('child_process');
+const { fork, execSync } = require('child_process');
 
 const semver = require('semver');
 
