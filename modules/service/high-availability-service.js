@@ -23,7 +23,7 @@ class HighAvailabilityService {
                 false,
             );
             await this.graphStorage.startReplication();
-
+            this.startPostgresReplication();
             let doWhile = true;
             do {
                 // eslint-disable-next-line no-await-in-loop
@@ -51,7 +51,7 @@ class HighAvailabilityService {
             this.logger.notify('Exiting busy wait loop');
             await this.getMasterNodeData(this.config.high_availability.master_hostname);
             await this.graphStorage.stopReplication();
-            await this.stopPostgresReplication();
+            this.stopPostgresReplication();
             await this._updateConfigurationOnRemoteNode(
                 true,
                 this.config.high_availability.master_hostname,
@@ -63,7 +63,6 @@ class HighAvailabilityService {
             this.config.high_availability.is_fallback_node = false;
             this.config.high_availability.master_hostname =
                 this.config.high_availability.private_hostname;
-
 
 
             forkedStatusCheck.send(JSON.stringify({ config: this.config }));
@@ -177,14 +176,17 @@ class HighAvailabilityService {
         }
     }
 
-    // async startPostgresReplication() {
-    //
-    // }
-    //
-    async stopPostgresReplication() {
-        execSync('pg_ctlcluster 12 main promote');
+    startPostgresReplication() {
+        execSync('/etc/init.d/postgresql stop');
+        execSync('rm -rfv /var/lib/postgresql/12/main/*');
+        execSync('su -c "pg_basebackup -h 10.1.0.5 -U ot_node -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres');
+        execSync('/etc/init.d/postgresql start');
+    }
 
+    stopPostgresReplication() {
+        execSync('pg_ctlcluster 12 main promote');
     }
 }
 
 module.exports = HighAvailabilityService;
+
