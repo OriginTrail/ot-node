@@ -687,7 +687,7 @@ class ImportUtilities {
 
                 signers.push({
                     blockchain_id,
-                    wallet,
+                    wallet: Utilities.normalizeHex(wallet),
                 });
             }
         }
