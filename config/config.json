@@ -123,7 +123,7 @@
       "master_hostname": "10.1.0.5",
       "private_hostname": "",
       "remote_hostname": "",
-      "switch_nodes_in_minutes": 15
+      "switch_nodes_in_minutes": 5
     }
   },
   "testnet": {
@@ -254,7 +254,7 @@
       "master_hostname": "10.1.0.5",
       "private_hostname": "",
       "remote_hostname": "",
-      "switch_nodes_in_minutes": 15
+      "switch_nodes_in_minutes": 5
     }
   },
   "mainnet": {
@@ -387,7 +387,7 @@
       "master_hostname": "10.1.0.5",
       "private_hostname": "",
       "remote_hostname": "",
-      "switch_nodes_in_minutes": 15
+      "switch_nodes_in_minutes": 5
     }
   }
 }
