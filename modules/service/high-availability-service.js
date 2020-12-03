@@ -41,7 +41,7 @@ class HighAvailabilityService {
                 }
 
                 // eslint-disable-next-line no-await-in-loop
-                await this.getMasterNodeData();
+                await this.getMasterNodeData(this.config.high_availability.master_hostname);
                 const waitTime = this.config.high_availability.switch_nodes_in_minutes * 60 * 1000;
                 // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
@@ -49,7 +49,7 @@ class HighAvailabilityService {
                 });
             } while (doWhile);
             this.logger.notify('Exiting busy wait loop');
-            await this.getMasterNodeData();
+            await this.getMasterNodeData(this.config.high_availability.master_hostname);
             await this.graphStorage.stopReplication();
             await this._updateConfigurationOnRemoteNode(
                 true,
