@@ -137,8 +137,6 @@ class HighAvailabilityService {
             }
             const masterNodeData = await this.otNodeClient.getNodeData(masterHostname, request);
 
-            console.log(masterNodeData);
-
             if (masterNodeData.erc725Identity) {
                 fs.writeFileSync(path.join(
                     this.config.appDataPath,

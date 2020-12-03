@@ -56,8 +56,6 @@ class InfoController {
         //  setup should have the same wallet
         try {
             const response = {};
-            console.log(JSON.stringify(req.body));
-            console.log(JSON.stringify(req));
 
             if (req.body.erc725Identity) {
                 response.erc725Identity = fs.readFileSync(path.join(
@@ -69,25 +67,25 @@ class InfoController {
                 response.kademliaCert = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     this.config.ssl_certificate_path,
-                ));
+                )).toString();
             }
             if (req.body.kademliaKey) {
                 response.kademliaKey = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     this.config.ssl_keypath,
-                ));
+                )).toString();
             }
             if (req.body.bootstraps) {
                 response.bootstraps = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     'bootstraps.json',
-                ));
+                )).toString();
             }
             if (req.body.routingTable) {
                 response.routingTable = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     'router.json',
-                ));
+                )).toString();
             }
 
             res.status(200);
