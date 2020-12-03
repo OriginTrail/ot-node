@@ -4,10 +4,6 @@ MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
 ARG targetEnvironment=development
 
-ENV NODE_ENV=$targetEnvironment
-ENV GRANAX_USE_SYSTEM_TOR=1
-ENV OT_NODE_DISTRIBUTION=docker
-
 RUN apt-get -qq update && apt-get -qq -y install curl
 RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
 RUN apt-get -qq update && apt-get -qq -y install wget apt-transport-https software-properties-common build-essential git nodejs sqlite unzip nano
@@ -30,11 +26,15 @@ RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg ma
 RUN apt-get update && apt-get install -y python-software-properties software-properties-common postgresql-12 postgresql-client-12 postgresql-contrib-12
 USER postgres
 RUN    /etc/init.d/postgresql start &&\
-    psql --command "CREATE USER root WITH SUPERUSER PASSWORD 'origintrail'; CREATE USER ot_node WITH PASSWORD 'origintrail';" &&\
+    psql --command "CREATE USER root WITH SUPERUSER PASSWORD 'origintrail'; CREATE USER ot_node WITH Replication PASSWORD 'origintrail';" &&\
     createdb -O ot_node ot_node_db
 USER root
-RUN echo "host all  all    0.0.0.0/0  md5" >> /etc/postgresql/12/main/pg_hba.conf
-RUN echo "listen_addresses='localhost, *'" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "host replication  all    0.0.0.0/0  trust" >> /etc/postgresql/12/main/pg_hba.conf
+RUN echo "listen_addresses='*'" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "wal_level = replica" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "max_wal_senders = 10" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "wal_keep_segments = 64" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "hot_standby = on" >> /etc/postgresql/12/main/postgresql.conf
 EXPOSE 5432
 VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
