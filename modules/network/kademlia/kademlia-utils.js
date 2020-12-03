@@ -93,7 +93,7 @@ class KademliaUtils {
      * Save bootstrap nodes
      */
     setBootstraps(nodes) {
-        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'bootstraps.json');
+        const filePath = path.join(this.config.appDataPath, 'bootstraps.json');
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
@@ -105,7 +105,7 @@ class KademliaUtils {
      * Check if bootstrap nodes have changed
      */
     checkBootstraps(nodes) {
-        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'bootstraps.json');
+        const filePath = path.join(this.config.appDataPath, 'bootstraps.json');
         if (!fs.existsSync(filePath) || nodes.length === 0) {
             return false;
         }
@@ -134,7 +134,7 @@ class KademliaUtils {
             obj[key] = childObj;
         });
 
-        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'router.json');
+        const filePath = path.join(this.config.appDataPath, 'router.json');
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
@@ -148,7 +148,7 @@ class KademliaUtils {
      */
     getRoutingTable(router) {
         const HOUR = 1000 * 60 * 60 * 24;
-        const filePath = path.join(this.config.appDataPath, 'kadence.dht', 'router.json');
+        const filePath = path.join(this.config.appDataPath, 'router.json');
         if (!fs.existsSync(filePath)) {
             return false;
         }

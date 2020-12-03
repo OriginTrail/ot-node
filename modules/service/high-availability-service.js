@@ -40,6 +40,8 @@ class HighAvailabilityService {
                     doWhile = false;
                 }
 
+                // eslint-disable-next-line no-await-in-loop
+                await this.getMasterNodeData();
                 const waitTime = this.config.high_availability.switch_nodes_in_minutes * 60 * 1000;
                 // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
@@ -47,6 +49,7 @@ class HighAvailabilityService {
                 });
             } while (doWhile);
             this.logger.notify('Exiting busy wait loop');
+            await this.getMasterNodeData();
             await this.graphStorage.stopReplication();
             await this._updateConfigurationOnRemoteNode(
                 true,
@@ -94,34 +97,81 @@ class HighAvailabilityService {
     }
 
     async getMasterNodeData(masterHostname) {
-        const request = {
-            kadenceDHT: true,
-        };
-        // fetch identities if missing
-        const identityFilePath = path.join(
-            this.config.appDataPath,
-            this.config.erc725_identity_filepath,
-        );
-        if (!fs.existsSync(identityFilePath)) {
-            request.erc725Identity = true;
-        }
-        const kademliaCertFilePath = path.join(
-            this.config.appDataPath,
-            this.config.ssl_certificate_path,
-        );
-        if (!fs.existsSync(kademliaCertFilePath)) {
-            request.kademliaCert = true;
-        }
-        const kademliaKeyFilePath = path.join(
-            this.config.appDataPath,
-            this.config.ssl_keypath,
-        );
-        if (!fs.existsSync(kademliaKeyFilePath)) {
-            request.kademliaKey = true;
-        }
-        const masterNodeData = await this.otNodeClient.getNodeData(masterHostname, request);
+        try {
+            const request = {};
+            // fetch identities if missing
+            const identityFilePath = path.join(
+                this.config.appDataPath,
+                this.config.erc725_identity_filepath,
+            );
+            if (!fs.existsSync(identityFilePath)) {
+                request.erc725Identity = true;
+            }
+            const kademliaCertFilePath = path.join(
+                this.config.appDataPath,
+                this.config.ssl_certificate_path,
+            );
+            if (!fs.existsSync(kademliaCertFilePath)) {
+                request.kademliaCert = true;
+            }
+            const kademliaKeyFilePath = path.join(
+                this.config.appDataPath,
+                this.config.ssl_keypath,
+            );
+            if (!fs.existsSync(kademliaKeyFilePath)) {
+                request.kademliaKey = true;
+            }
+            const bootstrapsFilePath = path.join(
+                this.config.appDataPath,
+                'bootstraps.json',
+            );
+            if (!fs.existsSync(bootstrapsFilePath)) {
+                request.bootstraps = true;
+            }
+            const routingTableFilePath = path.join(
+                this.config.appDataPath,
+                'router.json',
+            );
+            if (!fs.existsSync(routingTableFilePath)) {
+                request.routingTable = true;
+            }
+            const masterNodeData = await this.otNodeClient.getNodeData(masterHostname, request);
 
-        console.log(masterNodeData);
+            console.log(masterNodeData);
+
+            if (masterNodeData.erc725Identity) {
+                fs.writeFileSync(path.join(
+                    this.config.appDataPath,
+                    this.config.erc725_identity_filepath,
+                ), masterNodeData.erc725Identity);
+            }
+            if (masterNodeData.kademliaCert) {
+                fs.writeFileSync(path.join(
+                    this.config.appDataPath,
+                    this.config.ssl_certificate_path,
+                ), masterNodeData.kademliaCert);
+            }
+            if (masterNodeData.kademliaKey) {
+                fs.writeFileSync(path.join(
+                    this.config.appDataPath,
+                    this.config.ssl_keypath,
+                ), masterNodeData.kademliaKey);
+            }
+            if (masterNodeData.bootstraps) {
+                fs.writeFileSync(path.join(
+                    this.config.appDataPath,
+                    'bootstraps.json',
+                ), masterNodeData.bootstraps);
+            }
+            if (masterNodeData.routingTable) {
+                fs.writeFileSync(path.join(
+                    this.config.appDataPath,
+                    'router.json',
+                ), masterNodeData.routingTable);
+            }
+        } catch (e) {
+            this.logger.error(e.message);
+        }
     }
 }
 

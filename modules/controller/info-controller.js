@@ -75,6 +75,18 @@ class InfoController {
                     this.config.ssl_keypath,
                 ));
             }
+            if (req.body.bootstraps) {
+                response.bootstraps = fs.readFileSync(path.join(
+                    this.config.appDataPath,
+                    'bootstraps.json',
+                ));
+            }
+            if (req.body.routingTable) {
+                response.routingTable = fs.readFileSync(path.join(
+                    this.config.appDataPath,
+                    'router.json',
+                ));
+            }
 
             res.status(200);
             res.send(response);
