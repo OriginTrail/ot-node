@@ -687,7 +687,7 @@ class ImportUtilities {
 
                 signers.push({
                     network_id,
-                    wallet,
+                    wallet: Utilities.normalizeHex(wallet),
                 });
             }
         }
