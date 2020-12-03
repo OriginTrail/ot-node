@@ -1,4 +1,4 @@
-const axios = require('axios');
+const request = require('request');
 
 class OtNodeClient {
     constructor(ctx) {
@@ -7,15 +7,21 @@ class OtNodeClient {
 
     async getNodeData(remoteHostname, request) {
         this.baseUrl = `http://${remoteHostname}:8900/api/latest`;
-        const response = await axios.post(
-            `${this.baseUrl}/node_data`,
-            request,
-        )
-            .catch((err) => {
-                this.logger.error('Failed to fetch node data: ', err);
-                throw err;
+        return new Promise((accept, reject) => {
+            request({
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                url: `${this.baseUrl}/node_data`,
+                json: true,
+                body: request,
+            }, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                accept(body);
             });
-        return response.data;
+        });
     }
 }
 
