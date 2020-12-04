@@ -1,8 +1,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const models = require('../../models');
-
+const { Pool } = require('pg');
 
 class HighAvailabilityService {
     constructor(ctx) {
@@ -22,34 +21,42 @@ class HighAvailabilityService {
                 this.config.high_availability.master_hostname,
                 false,
             );
+            await this.getMasterNodeData(this.config.high_availability.master_hostname);
             await this.graphStorage.startReplication();
-            this.startPostgresReplication();
+            this.startPostgresReplication(this.config.high_availability.remote_hostname);
             let doWhile = true;
+            const pool = new Pool({
+                user: 'ot_node',
+                host: 'localhost',
+                database: 'ot_node_db',
+                password: 'origintrail',
+                port: 5432,
+            });
+            const client = await pool.connect();
             do {
-                // eslint-disable-next-line no-await-in-loop
-                const nodeStatus = await models.node_status.findOne({
-                    where: { hostname: this.config.high_availability.master_hostname },
-                });
+                try {
+                    // eslint-disable-next-line no-await-in-loop
+                    const response = await client.query('SELECT * FROM node_status where hostname= $1', [this.config.high_availability.master_hostname]);
+                    const nodeStatus = response.rows[0];
 
-                if (nodeStatus) {
-                    const elapsed = (new Date() - new Date(nodeStatus.timestamp)) / 1000;
-                    if (elapsed > 10) {
+                    if (nodeStatus) {
+                        const elapsed = (new Date() - new Date(nodeStatus.timestamp)) / 1000;
+                        if (elapsed > 10) {
+                            this.logger.notify('Master node unresponsive taking over...');
+                            doWhile = false;
+                        }
+                    } else {
                         doWhile = false;
                     }
-                } else {
-                    doWhile = false;
+                } catch (e) {
+                    this.logger.error(e);
                 }
-
-                // eslint-disable-next-line no-await-in-loop
-                await this.getMasterNodeData(this.config.high_availability.master_hostname);
-                const waitTime = this.config.high_availability.switch_nodes_in_minutes * 60 * 1000;
                 // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
-                    setTimeout(() => resolve('done!'), waitTime);
+                    setTimeout(() => resolve('done!'), 2000);
                 });
             } while (doWhile);
-            this.logger.notify('Exiting busy wait loop');
-            await this.getMasterNodeData(this.config.high_availability.master_hostname);
+            client.release();
             await this.graphStorage.stopReplication();
             this.stopPostgresReplication();
             await this._updateConfigurationOnRemoteNode(
@@ -102,6 +109,7 @@ class HighAvailabilityService {
 
     async getMasterNodeData(masterHostname) {
         try {
+            this.logger.trace('Synchronizing with master node....');
             const request = {};
             // fetch identities if missing
             const identityFilePath = path.join(
@@ -171,20 +179,25 @@ class HighAvailabilityService {
                     'router.json',
                 ), masterNodeData.routingTable);
             }
+            this.logger.trace('Synchronizing with master node completed.');
         } catch (e) {
             this.logger.error(e.message);
         }
     }
 
-    startPostgresReplication() {
+    startPostgresReplication(remoteHostname) {
+        this.logger.trace('Starting postgres replication');
         execSync('/etc/init.d/postgresql stop');
         execSync('rm -rfv /var/lib/postgresql/12/main/*');
-        execSync('su -c "pg_basebackup -h 10.1.0.5 -U ot_node -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres');
+        execSync(`su -c "pg_basebackup -h ${remoteHostname} -U ot_node -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres`);
         execSync('/etc/init.d/postgresql start');
+        this.logger.trace('Postgres replication started successfully');
     }
 
     stopPostgresReplication() {
+        this.logger.trace('Stopping postgres replication');
         execSync('pg_ctlcluster 12 main promote');
+        this.logger.trace('Postgres replication stopped successfully');
     }
 }
 
