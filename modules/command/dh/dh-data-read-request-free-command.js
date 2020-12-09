@@ -86,8 +86,8 @@ class DHDataReadRequestFreeCommand extends Command {
 
             ImportUtilities.removeGraphPermissionedData(document['@graph']);
 
-            const transactionHash = await ImportUtilities
-                .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
+            const replicationInfo = await ImportUtilities
+                .getReplicationInfo(dataInfo.data_set_id, dataInfo.origin);
 
             const replyMessage = {
                 id,
@@ -98,7 +98,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 document,
                 permissionedData,
                 data_set_id: importId,
-                transaction_hash: transactionHash,
+                replication_info: replicationInfo,
                 handler_id,
             };
             const dataReadResponseObject = {

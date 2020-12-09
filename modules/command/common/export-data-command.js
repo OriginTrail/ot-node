@@ -32,7 +32,6 @@ class ExportDataCommand extends Command {
         );
 
         const dataInfo = await Models.data_info.findOne({ where: { data_set_id: datasetId } });
-        const offer = await Models.offers.findOne({ where: { data_set_id: datasetId } });
 
         const handler = await Models.handler_ids.findOne({
             where: { handler_id: handlerId },
@@ -43,12 +42,9 @@ class ExportDataCommand extends Command {
             data.root_hash = dataInfo.root_hash;
         }
         data.data_hash = dataInfo.data_hash;
-        data.transaction_hash = await ImportUtilities
-            .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
-        data.data_creator = fileContent.metadata.dataCreator;
-        if (offer) {
-            data.offer_id = offer.offer_id;
-        }
+        data.replication_info = await ImportUtilities
+            .getReplicationInfo(dataInfo.data_set_id, dataInfo.origin);
+        data.data_creators = fileContent.metadata.dataCreator;
         data.signature = fileContent.metadata.signature;
 
         await Models.handler_ids.update(

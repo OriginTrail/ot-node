@@ -210,8 +210,8 @@ class EventEmitter {
                     total_documents: di.total_documents,
                     root_hash: di.root_hash,
                     data_size: di.data_size,
-                    transaction_hash: await ImportUtilities
-                        .getTransactionHash(di.data_set_id, di.origin),
+                    replication_info: await ImportUtilities
+                        .getReplicationInfo(di.data_set_id, di.origin),
                     data_provider_wallets: JSON.parse(di.data_provider_wallets),
                 }));
                 data.response.send(await Promise.all(promises));
@@ -263,12 +263,12 @@ class EventEmitter {
         });
 
         this._on('api-payout', async (data) => {
-            const { offerId, urgent, blockchain_id } = data;
+            const { offerId, urgent } = data;
 
-            logger.info(`Payout called for offer ${offerId} on blockchain ${blockchain_id}.`);
+            logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await profileService.payOut(offerId, urgent, blockchain_id);
+                await profileService.payOut(offerId, urgent, bid.dataValues.blockchain_id);
 
                 data.response.status(200);
                 data.response.send({
@@ -312,16 +312,16 @@ class EventEmitter {
                     default: throw Error('Invalid response format.');
                     }
 
-                    const transactionHash = await ImportUtilities
-                        .getTransactionHash(dataSetId, dataInfo.origin);
+                    const replicationInfo = await ImportUtilities
+                        .getReplicationInfo(dataSetId, dataInfo.origin);
 
                     data.response.status(200);
                     data.response.send({
                         dataSetId,
                         document: formattedDataset,
                         root_hash: dataInfo.root_hash,
-                        transaction: transactionHash,
                         data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
+                        replication_info: replicationInfo,
                     });
                 }
             } catch (error) {
