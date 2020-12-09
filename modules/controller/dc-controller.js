@@ -18,6 +18,7 @@ class DCController {
         this.dcService = ctx.dcService;
         this.remoteControl = ctx.remoteControl;
         this.graphStorage = ctx.graphStorage;
+        this.documentStorage = ctx.documentStorage;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
@@ -463,6 +464,55 @@ class DCController {
 
         res.status(200);
         res.send(response);
+    }
+
+    async handleStagingDataCreate(req, res) {
+        this.logger.api('POST: Staging data create request received.');
+        if (!req.body) {
+            res.status(400);
+            res.send({
+                message: 'Body is missing',
+            });
+            return;
+        }
+
+        await this.documentStorage.createStagingData(req.body);
+
+        res.status(200);
+        res.send({ status: 'COMPLETED' });
+    }
+
+    async handleStagingDataRemove(req, res) {
+        this.logger.api('POST: Staging data remove request received.');
+        if (!req.body) {
+            res.status(400);
+            res.send({
+                message: 'Body is missing',
+            });
+            return;
+        }
+
+        await this.documentStorage.removeStagingData(req.body);
+
+        res.status(200);
+        res.send({ status: 'COMPLETED' });
+    }
+
+
+    async handleStagingDataPublish(req, res) {
+        this.logger.api('POST: Staging data remove request received.');
+        if (!req.body) {
+            res.status(400);
+            res.send({
+                message: 'Body is missing',
+            });
+            return;
+        }
+
+        const data = await this.documentStorage.publishStagingData();
+
+        res.status(200);
+        res.send(data);
     }
 }
 

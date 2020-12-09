@@ -179,6 +179,18 @@ class RestAPIServiceV2 {
             });
         }
 
+        server.post(`/api/${this.version_id}/staging_data/create`, async (req, res) => {
+            await this.dcController.handleStagingDataCreate(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/staging_data/remove`, async (req, res) => {
+            await this.dcController.handleStagingDataRemove(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/staging_data/publish`, async (req, res) => {
+            await this.dcController.handleStagingDataPublish(req, res);
+        });
+
         server.post(`/api/${this.version_id}/query/local`, async (req, res, next) => {
             await this.dcController.queryLocal(req, res);
         });
