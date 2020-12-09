@@ -34,8 +34,8 @@ contract Holding is Ownable {
     event PaidOut(bytes32 offerId, address holder, uint256 amount);
 
     function createOffer(address identity, uint256 dataSetId,
-    uint256 dataRootHash, uint256 redLitigationHash, uint256 greenLitigationHash, uint256 blueLitigationHash, uint256 dcNodeId,
-    uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
+        uint256 dataRootHash, uint256 redLitigationHash, uint256 greenLitigationHash, uint256 blueLitigationHash, uint256 dcNodeId,
+        uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
         require(Approval(hub.getContractAddress("Approval")).identityHasApproval(identity), "Identity does not have approval for using the contract");
@@ -63,7 +63,7 @@ contract Holding is Ownable {
 
 
         //We calculate the task for the data creator to solve
-            //Calculating task difficulty
+        //Calculating task difficulty
         uint256 difficulty;
         if(HoldingStorage(hub.getContractAddress("HoldingStorage")).getDifficultyOverride() != 0) {
             difficulty = HoldingStorage(hub.getContractAddress("HoldingStorage")).getDifficultyOverride();
@@ -79,6 +79,7 @@ contract Holding is Ownable {
         HoldingStorage(hub.getContractAddress("HoldingStorage")).setOfferParameters(
             offerId,
             identity,
+            bytes32(dataSetId),
             holdingTimeInMinutes,
             tokenAmountPerHolder,
             litigationIntervalInMinutes,
@@ -250,7 +251,7 @@ contract Holding is Ownable {
         uint8 v;
 
         if (sig.length != 65)
-          return address(0);
+            return address(0);
 
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, hash));
@@ -262,9 +263,9 @@ contract Holding is Ownable {
             r := mload(add(sig, 32))
             s := mload(add(sig, 64))
 
-            // Here we are loading the last 32 bytes. We exploit the fact that
-            // 'mload' will pad with zeroes if we overread.
-            // There is no 'mload8' to do this, but that would be nicer.
+        // Here we are loading the last 32 bytes. We exploit the fact that
+        // 'mload' will pad with zeroes if we overread.
+        // There is no 'mload8' to do this, but that would be nicer.
             v := byte(0, mload(add(sig, 96)))
         }
 

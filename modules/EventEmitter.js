@@ -99,6 +99,7 @@ class EventEmitter {
             dcService,
             dvController,
             commandExecutor,
+            dhController,
         } = this.ctx;
 
         this._on('api-trail', (data) => {
@@ -222,24 +223,6 @@ class EventEmitter {
                     message: 'Failed to get information about imports',
                 });
             }
-        });
-
-        this._on('api-query', (data) => {
-            logger.info(`Get vertices triggered with query ${JSON.stringify(data.query)}`);
-            product.getVertices(data.query).then((res) => {
-                if (res.length === 0) {
-                    data.response.status(204);
-                } else {
-                    data.response.status(200);
-                }
-                data.response.send(res);
-            }).catch((error) => {
-                logger.error(`Failed to get vertices for query ${JSON.stringify(data.query)}`);
-                data.response.status(500);
-                data.response.send({
-                    message: `Failed to get vertices for query ${JSON.stringify(data.query)}`,
-                });
-            });
         });
 
         this._on('api-offer-status', async (data) => {
@@ -435,6 +418,7 @@ class EventEmitter {
             dcService,
             dvController,
             dcController,
+            dhController,
             networkService,
         } = this.ctx;
 
@@ -513,11 +497,13 @@ class EventEmitter {
                 }
             }
 
-            const { offerId, wallet, dhIdentity } = replicationMessage;
+            const {
+                offerId, wallet, dhIdentity, async_enabled,
+            } = replicationMessage;
             const identity = transport.extractSenderID(request);
             try {
                 await dcService.handleReplicationRequest(
-                    offerId, wallet, identity, dhIdentity,
+                    offerId, wallet, identity, dhIdentity, async_enabled,
                     response,
                 );
             } catch (error) {
@@ -534,11 +520,49 @@ class EventEmitter {
             }
         });
 
+        this._on('kad-replication-data', async (request, response) => {
+            const kadReplicationRequest = transport.extractMessage(request);
+            let replicationMessage = kadReplicationRequest;
+
+            if (kadReplicationRequest.messageSignature) {
+                const { message, messageSignature } = kadReplicationRequest;
+                replicationMessage = message;
+
+                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
+                    return;
+                }
+            }
+
+            const senderIdentity = transport.extractSenderID(request);
+            try {
+                await dhController.handleReplicationData(
+                    senderIdentity,
+                    replicationMessage,
+                    response,
+                );
+            } catch (error) {
+                const errorMessage = `Failed to handle replication data. ${error}.`;
+                logger.warn(errorMessage);
+
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'fail',
+                    });
+                } catch (e) {
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
+                }
+            }
+        });
+
         // sync
         this._on('kad-replacement-replication-request', async (request, response) => {
             try {
                 const message = transport.extractMessage(request);
-                const { offerId, wallet, dhIdentity } = message;
+                const {
+                    offerId, wallet, dhIdentity,
+                    async_enabled,
+                } = message;
                 const { wallet: senderWallet } = transport.extractSenderInfo(request);
                 const identity = transport.extractSenderID(request);
 
@@ -547,7 +571,7 @@ class EventEmitter {
                 }
 
                 await dcService.handleReplacementRequest(
-                    offerId, wallet, identity, dhIdentity,
+                    offerId, wallet, identity, dhIdentity, async_enabled,
                     response,
                 );
             } catch (error) {
