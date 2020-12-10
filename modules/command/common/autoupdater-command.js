@@ -89,11 +89,7 @@ class AutoupdaterCommand extends Command {
                     }));
 
                     // Force restarting the docker container.
-                    if (this.config.high_availability_setup) {
-                        this.process.exit(1);
-                    } else {
-                        this.process.exit(4);
-                    }
+                    this.process.exit(4);
                     accept(); // Needed for tests.
                 }).on('error', (error) => {
                     this.logger.error(`Failed to check prepare update. ${error}`);

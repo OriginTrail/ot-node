@@ -120,8 +120,20 @@ function checkForUpdate() {
             }
         });
 
-        logger.important(`OT Node updated to ${updateInfo.version}. Resetting...`);
-        process.exit(2);
+        const localConfigPath = path.join('/ot-node/', `.${pjson.name}rc`);
+        let externalConfig = {};
+
+        // Use any previous saved configuration
+        if (fs.existsSync(localConfigPath)) {
+            externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
+        }
+        if (externalConfig.high_availability_setup) {
+            logger.important(`OT Node updated to ${updateInfo.version}.`);
+            this.process.exit(0);
+        } else {
+            logger.important(`OT Node updated to ${updateInfo.version}. Resetting...`);
+            process.exit(2);
+        }
     } catch (error) {
         logger.error(`Failed to run update. ${error}.\n${error.stack}`);
     }
