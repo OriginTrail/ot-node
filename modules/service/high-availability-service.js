@@ -12,7 +12,7 @@ class HighAvailabilityService {
 
     async startHighAvailabilityNode(forkedStatusCheck) {
         const masterNodeAvailable = await this.isRemoteNodeAvailable();
-        if (this.config.high_availability.is_fallback_node && masterNodeAvailable) {
+        if (masterNodeAvailable) {
             this.logger.notify('Entering busy wait loop');
 
             await this.getMasterNodeData(this.config.high_availability.remote_hostname);
@@ -21,18 +21,17 @@ class HighAvailabilityService {
             let doWhile = true;
             do {
                 // eslint-disable-next-line no-await-in-loop
-                doWhile = await this.isRemoteNodeAvailable();
-
-                // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
                     setTimeout(() => resolve(), 2000);
                 });
+                // eslint-disable-next-line no-await-in-loop
+                doWhile = await this.isRemoteNodeAvailable();
             } while (doWhile);
-            await this.graphStorage.stopReplication();
-            this.stopPostgresReplication();
+            this.logger.notify('Remote node not available taking over');
             this.restartRemoteNode(this.config.high_availability.remote_hostname);
         }
         this.logger.info('Starting as active node');
+        this.stopPostgresReplication();
         const replicationState = await this.graphStorage.getReplicationApplierState();
         if (replicationState.state.running) {
             await this.graphStorage.stopReplication();
@@ -149,7 +148,6 @@ class HighAvailabilityService {
     }
 
     async isRemoteNodeAvailable() {
-        this.logger.info('Checking state of remote node...');
         const remoteHostname = this.config.high_availability.remote_hostname;
         const retries = 3;
 
@@ -158,7 +156,6 @@ class HighAvailabilityService {
                 // eslint-disable-next-line no-await-in-loop
                 const response = await this.otNodeClient.healthCheck(remoteHostname, 3000);
                 if (response.statusCode === 200) {
-                    this.logger.info('Remote node is in active state.');
                     return true;
                 }
                 this.logger.trace('Remote node is not in active state. attempt: ', i + 1);
