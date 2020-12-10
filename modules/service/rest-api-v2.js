@@ -604,11 +604,6 @@ class RestAPIServiceV2 {
         res.send(returnChallenges);
     }
 
-    // This is hardcoded import in case it is needed to make new importer with this method
-    async _importDataset(req, res) {
-
-    }
-
     async _replicateDataset(req, res) {
         this.logger.api('POST: Replication of imported data request received.');
 

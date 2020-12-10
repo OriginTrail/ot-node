@@ -105,16 +105,8 @@ class MongoDB {
         let results = [];
 
         try {
-            results = await db.collection(this.collection).find(
-                {},
-                // { session },
-            ).toArray();
-
-
-            await db.collection(this.collection).removeMany(
-                {},
-                // { session },
-            );
+            results = await db.collection(this.collection).find({}).toArray();
+            await db.collection(this.collection).removeMany({});
 
             // await session.commitTransaction();
         } catch (error) {
