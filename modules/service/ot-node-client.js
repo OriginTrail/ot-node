@@ -23,6 +23,24 @@ class OtNodeClient {
             });
         });
     }
+
+    async healthCheck(remoteHostname, timeout = 60000) {
+        this.baseUrl = `http://${remoteHostname}:8900/api/latest`;
+        return new Promise((accept, reject) => {
+            request({
+                timeout,
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                url: `${this.baseUrl}/health_check`,
+            }, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                accept(response);
+            });
+        });
+    }
 }
 
 module.exports = OtNodeClient;

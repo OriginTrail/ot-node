@@ -1,7 +1,6 @@
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { Pool } = require('pg');
 
 class HighAvailabilityService {
     constructor(ctx) {
@@ -12,99 +11,46 @@ class HighAvailabilityService {
     }
 
     async startHighAvailabilityNode(forkedStatusCheck) {
-        if (this.config.high_availability.is_fallback_node) {
+        const masterNodeAvailable = await this.isRemoteNodeAvailable();
+        if (this.config.high_availability.is_fallback_node && masterNodeAvailable) {
             this.logger.notify('Entering busy wait loop');
-            // start replication for arango
-            await this._updateConfigurationOnRemoteNode(
-                false,
-                this.config.high_availability.master_hostname,
-                this.config.high_availability.master_hostname,
-                false,
-            );
-            await this.getMasterNodeData(this.config.high_availability.master_hostname);
+
+            await this.getMasterNodeData(this.config.high_availability.remote_hostname);
             await this.graphStorage.startReplication();
             this.startPostgresReplication(this.config.high_availability.remote_hostname);
             let doWhile = true;
-            const pool = new Pool({
-                user: 'ot_node',
-                host: 'localhost',
-                database: 'ot_node_db',
-                password: 'origintrail',
-                port: 5432,
-            });
-            const client = await pool.connect();
             do {
-                try {
-                    // eslint-disable-next-line no-await-in-loop
-                    const response = await client.query('SELECT * FROM node_status where hostname= $1', [this.config.high_availability.master_hostname]);
-                    const nodeStatus = response.rows[0];
+                // eslint-disable-next-line no-await-in-loop
+                doWhile = await this.isRemoteNodeAvailable();
 
-                    if (nodeStatus) {
-                        const elapsed = (new Date() - new Date(nodeStatus.timestamp)) / 1000;
-                        if (elapsed > 10) {
-                            this.logger.notify('Master node unresponsive taking over...');
-                            doWhile = false;
-                        }
-                    } else {
-                        doWhile = false;
-                    }
-                } catch (e) {
-                    this.logger.error(e);
-                }
                 // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
-                    setTimeout(() => resolve('done!'), 2000);
+                    setTimeout(() => resolve(), 2000);
                 });
             } while (doWhile);
-            client.release();
             await this.graphStorage.stopReplication();
             this.stopPostgresReplication();
-            await this._updateConfigurationOnRemoteNode(
-                true,
-                this.config.high_availability.master_hostname,
-                this.config.high_availability.private_hostname,
-                true,
-            );
-
-            // we probably don't need this
-            this.config.high_availability.is_fallback_node = false;
-            this.config.high_availability.master_hostname =
-                this.config.high_availability.private_hostname;
-
-
-            forkedStatusCheck.send(JSON.stringify({ config: this.config }));
-        } else {
-            const replicationState = await this.graphStorage.getReplicationApplierState();
-            if (replicationState.state.running) {
-                await this.graphStorage.stopReplication();
-            }
-
-            forkedStatusCheck.send(JSON.stringify({ config: this.config }));
+            this.restartRemoteNode(this.config.high_availability.remote_hostname);
+        }
+        this.logger.info('Starting as active node');
+        const replicationState = await this.graphStorage.getReplicationApplierState();
+        if (replicationState.state.running) {
+            await this.graphStorage.stopReplication();
         }
     }
 
-    async _updateConfigurationOnRemoteNode(
-        isFallbackNode,
-        remoteNodeHostname,
-        newMasterHostname,
-        restartMasterNode,
-    ) {
-        this.logger.trace('Updated configuration on previous master node.');
-        const remoteConfigFolderPath = '/ot-node/remote_config';
-        const remoteConfigPath = `${remoteConfigFolderPath}/.origintrail_noderc`;
-        if (!fs.existsSync(remoteConfigFolderPath)) {
-            execSync(`mkdir -p ${remoteConfigFolderPath}`);
-        }
-        execSync(`scp root@${remoteNodeHostname}:~/.origintrail_noderc ${remoteConfigFolderPath}`);
-        const remoteConfig = JSON.parse(fs.readFileSync(remoteConfigPath));
-        remoteConfig.high_availability.is_fallback_node = isFallbackNode;
-        remoteConfig.high_availability.master_hostname = newMasterHostname;
-        fs.writeFileSync(remoteConfigPath, JSON.stringify(remoteConfig, null, 4));
-        execSync(`scp ${remoteConfigPath} root@${remoteNodeHostname}:~/.origintrail_noderc`);
-        if (restartMasterNode) {
-            execSync(`ssh root@${remoteNodeHostname} "docker restart otnode"`);
-            this.logger.trace('Master node restarted');
-        }
+    restartRemoteNode(remoteNodeHostname) {
+        exec(`ssh root@${remoteNodeHostname} "docker restart otnode"`, (error, stdout, stderr) => {
+            if (error) {
+                console.log(`Unable to restart remote node error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.log(`Unable to restart remote node error: ${stderr}`);
+                return;
+            }
+            this.logger.trace('Remote node restarted');
+        });
     }
 
     async getMasterNodeData(masterHostname) {
@@ -181,14 +127,16 @@ class HighAvailabilityService {
             }
             this.logger.trace('Synchronizing with master node completed.');
         } catch (e) {
-            this.logger.error(e.message);
+            this.logger.error(`Failed to synchronize with master node. Error message: ${e.message}`);
         }
     }
 
     startPostgresReplication(remoteHostname) {
         this.logger.trace('Starting postgres replication');
         execSync('/etc/init.d/postgresql stop');
-        execSync('rm -rfv /var/lib/postgresql/12/main/*');
+        if (fs.existsSync('/var/lib/postgresql/12/main')) {
+            execSync('rm -rfv /var/lib/postgresql/12/main/*');
+        }
         execSync(`su -c "pg_basebackup -h ${remoteHostname} -U ot_node -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres`);
         execSync('/etc/init.d/postgresql start');
         this.logger.trace('Postgres replication started successfully');
@@ -198,6 +146,34 @@ class HighAvailabilityService {
         this.logger.trace('Stopping postgres replication');
         execSync('pg_ctlcluster 12 main promote');
         this.logger.trace('Postgres replication stopped successfully');
+    }
+
+    async isRemoteNodeAvailable() {
+        this.logger.info('Checking state of remote node...');
+        const remoteHostname = this.config.high_availability.remote_hostname;
+        const retries = 3;
+
+        for (let i = 0; i < retries; i += 1) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                const response = await this.otNodeClient.healthCheck(remoteHostname, 3000);
+                if (response.statusCode === 200) {
+                    this.logger.info('Remote node is in active state.');
+                    return true;
+                }
+                this.logger.trace('Remote node is not in active state. attempt: ', i + 1);
+            } catch (error) {
+                this.logger.trace(`Unable to fetch health check for remote node error: ${error.message}, attempt: ${i + 1}`);
+            }
+            if (i + 1 < retries) {
+                // eslint-disable-next-line no-await-in-loop
+                await new Promise((resolve, reject) => {
+                    setTimeout(() => resolve(), 2000); // todo move to configuration
+                });
+            }
+        }
+        this.logger.info('Remote node is not in active state.');
+        return false;
     }
 }
 
