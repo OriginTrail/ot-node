@@ -3,6 +3,9 @@ const Utilities = require('../Utilities');
 const { sha3_256 } = require('js-sha3');
 const { forEachSeries } = require('p-iteration');
 const OtJsonUtilities = require('../OtJsonUtilities');
+const Models = require('../../models');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * Returns value of '@id' property.
@@ -77,6 +80,53 @@ class ImportService {
         this.web3 = ctx.web3;
         this.log = ctx.logger;
         this.config = ctx.config;
+        this.commandExecutor = ctx.commandExecutor;
+    }
+
+    async importDataset(fileContent, standard_id) {
+        const inserted_object = await Models.handler_ids.create({
+            status: 'PENDING',
+        });
+
+        const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
+
+        try {
+            await Utilities.writeContentsToFile(
+                cacheDirectory,
+                inserted_object.dataValues.handler_id,
+                fileContent,
+            );
+        } catch (e) {
+            const filePath =
+                path.join(cacheDirectory, inserted_object.dataValues.handler_id);
+
+            if (fs.existsSync(filePath)) {
+                await Utilities.deleteDirectory(filePath);
+            }
+            throw Error(`Error when creating import cache file for handler_id ${inserted_object.dataValues.handler_id}. ${e.message}`);
+        }
+
+        const commandData = {
+            standard_id,
+            documentPath: path.join(cacheDirectory, inserted_object.dataValues.handler_id),
+            handler_id: inserted_object.dataValues.handler_id,
+        };
+        const commandSequence = [
+            'dcConvertToOtJsonCommand',
+            'dcConvertToGraphCommand',
+            'dcWriteImportToGraphDbCommand',
+            'dcFinalizeImportCommand',
+        ];
+
+        await this.commandExecutor.add({
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
+            data: commandData,
+            transactional: false,
+        });
+
+        return inserted_object.dataValues.handler_id;
     }
 
     async getImportDbData(datasetId, encColor = null) {

@@ -32,6 +32,25 @@ class MongoDB {
         await client.close();
     }
 
+
+    /**
+     * Reinitialize database
+     * @return {Promise<MongoClient>}
+     */
+    async reinitialize() {
+        const client = await MongoClient.connect(this.url, {
+            useUnifiedTopology: true,
+            useNewUrlParser: true,
+        });
+        const db = client.db(this.database);
+        const existingCollection = await db.listCollections({ name: this.collection }).next();
+        if (existingCollection) {
+            await db.dropCollection(this.collection);
+        }
+        await db.createCollection(this.collection);
+        await client.close();
+    }
+
     /**
      * Create document in MongoDB
      * @param documents
@@ -68,42 +87,46 @@ class MongoDB {
 
 
     /**
-     * Get document in MongoDB
+     * Find and remove in MongoDB
      * @returns {Promise<any>}
      */
 
-    async publishStagingData() {
+    async findAndRemoveStagingData() {
         const client = await MongoClient.connect(this.url, {
             useUnifiedTopology: true,
             useNewUrlParser: true,
         });
-        // const session = client.startSession();
+
+
         const db = client.db(this.database);
 
-        // const transactionOptions = {
-        //     readPreference: 'primary',
-        //     readConcern: { level: 'local' },
-        //     writeConcern: { w: 'majority' },
-        // };
+        // const session = client.startSession();
+        // session.startTransaction();
+        let results = [];
 
-        // let objects;
-        // const transactionResults = await session.withTransaction(async () => {
-        // eslint-disable-next-line prefer-const
-        const result = await db.collection(this.collection).find({},
-            // { session },
-        ).toArray();
+        try {
+            results = await db.collection(this.collection).find(
+                {},
+                // { session },
+            ).toArray();
 
 
-        await db.collection(this.collection).removeMany({},
-            // { session },
-        );
-        // }, transactionOptions);
+            await db.collection(this.collection).removeMany(
+                {},
+                // { session },
+            );
+
+            // await session.commitTransaction();
+        } catch (error) {
+            // await session.abortTransaction();
+            throw error;
+        }
 
 
         // await session.endSession();
         await client.close();
 
-        return result;
+        return results;
     }
 
     identify() {

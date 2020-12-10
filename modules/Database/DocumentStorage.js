@@ -53,12 +53,12 @@ class DocumentStorage {
         });
     }
 
-    publishStagingData() {
+    findAndRemoveStagingData() {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to document database.'));
             } else {
-                this.db.publishStagingData().then((result) => {
+                this.db.findAndRemoveStagingData().then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

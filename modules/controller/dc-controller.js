@@ -24,8 +24,83 @@ class DCController {
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
         this.permissionedDataService = ctx.permissionedDataService;
+
+        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
+
+        this.mapping_standards_for_event = new Map();
+        this.mapping_standards_for_event.set('ot-json', 'ot-json');
+        this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
+        this.mapping_standards_for_event.set('graph', 'ot-json');
+        this.mapping_standards_for_event.set('wot', 'wot');
     }
 
+    async importDataset(req, res) {
+        this.logger.api('POST: Import of data request received.');
+
+        if (req.body === undefined) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        // Check if import type is valid
+        if (req.body.standard_id === undefined ||
+            this.stanards.indexOf(req.body.standard_id) === -1) {
+            res.status(400);
+            res.send({
+                message: 'Invalid import type',
+            });
+            return;
+        }
+
+        const standard_id =
+            this.mapping_standards_for_event.get(req.body.standard_id.toLowerCase());
+
+        let fileContent;
+        if (req.files !== undefined && req.files.file !== undefined) {
+            const inputFile = req.files.file.path;
+            fileContent = await Utilities.fileContents(inputFile);
+        } else if (req.body.file !== undefined) {
+            fileContent = req.body.file;
+        }
+
+        if (fileContent) {
+            try {
+                const handler_id = await this.importService.importDataset(fileContent, standard_id);
+                res.status(200);
+                res.send({
+                    handler_id,
+                });
+            } catch (e) {
+                res.status(400);
+                res.send({
+                    message: 'No import data provided',
+                });
+            }
+        } else {
+            res.status(400);
+            res.send({
+                message: 'No import data provided',
+            });
+        }
+    }
+
+    /**
+     * Get all supported standards
+     * @param req
+     * @param res
+     * @private
+     */
+    getStandards(req, res) {
+        const msg = [];
+        this.stanards.forEach(standard =>
+            msg.push(standard));
+        res.send({
+            message: msg,
+        });
+    }
     /**
      * Validate create offer request and import
      *
@@ -500,19 +575,15 @@ class DCController {
 
 
     async handleStagingDataPublish(req, res) {
-        this.logger.api('POST: Staging data remove request received.');
-        if (!req.body) {
-            res.status(400);
-            res.send({
-                message: 'Body is missing',
-            });
-            return;
-        }
+        this.logger.api('POST: Staging data publish request received.');
 
-        const data = await this.documentStorage.publishStagingData();
+        const data = await this.documentStorage.findAndRemoveStagingData();
+        const handler_id = await this.importService.importDataset(JSON.stringify({ '@graph': data }), 'ot-json');
 
         res.status(200);
-        res.send(data);
+        res.send({
+            handler_id,
+        });
     }
 }
 
