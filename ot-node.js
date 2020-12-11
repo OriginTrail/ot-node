@@ -16,7 +16,6 @@ const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-
 const fs = require('fs');
 const path = require('path');
 const models = require('./models');
-const Storage = require('./modules/Storage');
 const SchemaValidator = require('./modules/validator/schema-validator');
 const GS1Utilities = require('./modules/importer/gs1-utilities');
 const WOTImporter = require('./modules/importer/wot-importer');
@@ -48,9 +47,8 @@ const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-passwor
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
-const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
-const { fork, execSync } = require('child_process');
+const { execSync } = require('child_process');
 
 const semver = require('semver');
 
@@ -60,8 +58,6 @@ const configjson = require('./config/config.json');
 const Web3 = require('web3');
 
 const log = require('./modules/logger');
-
-const forkedStatusCheck = fork('scripts/status-check-worker.js');
 
 global.__basedir = __dirname;
 
@@ -112,8 +108,6 @@ process.on('unhandledRejection', (reason, p) => {
         return;
     }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
-
-    forkedStatusCheck.kill();
 });
 
 process.on('uncaughtException', (err) => {
@@ -122,8 +116,6 @@ process.on('uncaughtException', (err) => {
         process.exit(1);
     }
     log.error(`Caught exception: ${err}.\n ${err.stack}`);
-
-    forkedStatusCheck.kill();
 });
 
 process.on('warning', (warning) => {
@@ -144,15 +136,12 @@ process.on('exit', (code) => {
         log.error(`Whoops, terminating with code: ${code}`);
         break;
     }
-
-    forkedStatusCheck.kill();
 });
 
 process.on('SIGINT', () => {
     log.important('SIGINT caught. Exiting...');
 
 
-    forkedStatusCheck.kill();
     process.exit(0);
 });
 
@@ -354,7 +343,7 @@ class OTNode {
         if (config.high_availability_setup) {
             const highAvailabilityService = container.resolve('highAvailabilityService');
 
-            await highAvailabilityService.startHighAvailabilityNode(forkedStatusCheck);
+            await highAvailabilityService.startHighAvailabilityNode();
         }
 
         Object.seal(config);

@@ -41,17 +41,25 @@ class ArangoJS {
         let stateResponse = await this.arangoClient.getReplicationApplierState();
 
         if (!stateResponse.state.running) {
-            this.log.trace(`Applier is not running state message: ${stateResponse.state.progress.message}`);
-            this.log.trace('Setting applier configuration');
+            this.log.trace('Applier is not running state.');
+            this.log.trace('Setting applier configuration.');
             await this.arangoClient.setupReplicationApplierConfiguration();
-            this.log.trace('Setting applier configuration finalized successfully');
+            this.log.trace('Setting applier configuration finalized successfully.');
             this.log.trace('Starting applier replication...');
             await this.arangoClient.startReplicationApplier();
+            // in order to get right message we need to wait 2 sec
+            await this.sleepForMiliseconds(2000);
             stateResponse = await this.arangoClient.getReplicationApplierState();
             this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
         } else {
             this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
         }
+    }
+
+    async sleepForMiliseconds(timeout) {
+        await new Promise((resolve, reject) => {
+            setTimeout(() => resolve(), timeout);
+        });
     }
 
     async stopReplication() {

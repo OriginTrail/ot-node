@@ -17,17 +17,13 @@ class ArangoClient {
         };
 
         this.authToken = Buffer.from(`${selectedDatabase.username}:${selectedDatabase.password}`, 'utf8').toString('base64');
-
-        this.auth = {
-            username: selectedDatabase.username,
-            password: selectedDatabase.password,
-        };
+        this.authorizationHeader = { Authorization: `Basic ${this.authToken}` };
     }
 
     async getApplierConfiguration() {
         const response = await axios.get(
             `${this.baseUrl}/_api/replication/applier-config`,
-            { headers: { Authorization: `Basic ${this.authToken}` } },
+            { headers: this.authorizationHeader },
         )
             .catch((err) => {
                 this.logger.error('Failed to fetch Arango replication applier configuration. Error: ', err);
@@ -40,7 +36,8 @@ class ArangoClient {
     = this.defaultApplierConfiguration) {
         const response = await axios.put(
             `${this.baseUrl}/_api/replication/applier-config`,
-            applierConfiguration, { headers: { Authorization: `Basic ${this.authToken}` } },
+            applierConfiguration,
+            { headers: this.authorizationHeader },
         )
             .catch((err) => {
                 this.logger.error('Failed to setup Arango replication applier. Error: ', err);
@@ -52,7 +49,8 @@ class ArangoClient {
     async startReplicationApplier() {
         const response = await axios.put(
             `${this.baseUrl}/_api/replication/applier-start`,
-            { headers: { Authorization: `Basic ${this.authToken}` } },
+            null,
+            { headers: this.authorizationHeader },
         )
             .catch((err) => {
                 this.logger.error('Failed to start Arango replication applier. Error: ', err);
@@ -64,7 +62,7 @@ class ArangoClient {
     async getReplicationApplierState() {
         const response = await axios.get(
             `${this.baseUrl}/_api/replication/applier-state`,
-            { headers: { Authorization: `Basic ${this.authToken}` } },
+            { headers: this.authorizationHeader },
         )
             .catch((err) => {
                 this.logger.error('Failed to fetch state of Arango replication applier. Error: ', err);
@@ -76,7 +74,7 @@ class ArangoClient {
     async stopReplicationApplier() {
         const response = await axios.put(
             `${this.baseUrl}/_api/replication/applier-stop`,
-            { headers: { Authorization: `Basic ${this.authToken}` } },
+            { headers: this.authorizationHeader },
         )
             .catch((err) => {
                 this.logger.error('Failed to stop Arango replication applier. Error: ', err);
