@@ -21,6 +21,7 @@ class HighAvailabilityService {
                 try {
                     // eslint-disable-next-line no-await-in-loop
                     await this.startFallbackSync();
+                    break;
                 } catch (error) {
                     this.logger.error('Unable to start fallback node. Error: ', error);
                     if (i + 1 === maxNumberOfFallbackSyncRetries) {
@@ -66,8 +67,16 @@ class HighAvailabilityService {
 
     async updateOrCreateNodeState(nodeState, status, hostname) {
         if (nodeState) {
-            nodeState.status = status;
-            await nodeState.save();
+            await Models.node_status.update(
+                {
+                    status,
+                },
+                {
+                    where: {
+                        hostname,
+                    },
+                },
+            );
         } else {
             await Models.node_status.create({
                 hostname,
@@ -82,22 +91,23 @@ class HighAvailabilityService {
 
         await this.getMasterNodeData(this.config.high_availability.remote_hostname);
 
+        await this.graphStorage.startReplication();
+        this.startPostgresReplication(this.config.high_availability.remote_hostname);
+        let remoteNodeAvailable = true;
         const refreshIntervalId = setInterval(
             async () => {
-                await this.getMasterNodeData(this.config.high_availability.remote_hostname);
+                if (remoteNodeAvailable) {
+                    await this.getMasterNodeData(this.config.high_availability.remote_hostname);
+                }
             },
             10000, // read from configuration set 24h
         );
-
-        await this.graphStorage.startReplication();
-        this.startPostgresReplication(this.config.high_availability.remote_hostname);
-        let doWhile = true;
         do {
             // eslint-disable-next-line no-await-in-loop
             await this.sleepForMiliseconds(2000);
             // eslint-disable-next-line no-await-in-loop
-            doWhile = await this.isRemoteNodeAvailable();
-        } while (doWhile);
+            remoteNodeAvailable = await this.isRemoteNodeAvailable();
+        } while (remoteNodeAvailable);
         this.logger.notify('Remote node not available taking over');
         clearInterval(refreshIntervalId);
         this.restartRemoteNode(this.config.high_availability.remote_hostname);
@@ -233,9 +243,16 @@ class HighAvailabilityService {
     }
 
     stopPostgresReplication() {
-        this.logger.trace('Stopping postgres replication');
-        execSync('pg_ctlcluster 12 main promote');
-        this.logger.trace('Postgres replication stopped successfully');
+        try {
+            this.logger.trace('Stopping postgres replication');
+            execSync('pg_ctlcluster 12 main promote');
+            this.logger.trace('Postgres replication stopped successfully');
+        } catch (error) {
+            if (error.message.includes('server is not in standby mode')) {
+                return;
+            }
+            throw error;
+        }
     }
 
     async isRemoteNodeAvailable() {

@@ -74,6 +74,7 @@ class ArangoClient {
     async stopReplicationApplier() {
         const response = await axios.put(
             `${this.baseUrl}/_api/replication/applier-stop`,
+            null,
             { headers: this.authorizationHeader },
         )
             .catch((err) => {
