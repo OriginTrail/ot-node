@@ -14,21 +14,22 @@ class HighAvailabilityService {
     }
 
     async startHighAvailabilityNode() {
-        const maxNumberOfFallbackSyncRetries = 3;
+        const { fallback_sync_retries_number, fallback_sync_retries_delay } =
+            this.config.high_availability;
         const masterNodeAvailable = await this.isRemoteNodeAvailable();
         if (masterNodeAvailable) {
-            for (let i = 0; i < maxNumberOfFallbackSyncRetries; i += 1) {
+            for (let i = 0; i < fallback_sync_retries_number; i += 1) {
                 try {
                     // eslint-disable-next-line no-await-in-loop
                     await this.startFallbackSync();
                     break;
                 } catch (error) {
                     this.logger.error('Unable to start fallback node. Error: ', error);
-                    if (i + 1 === maxNumberOfFallbackSyncRetries) {
+                    if (i + 1 === fallback_sync_retries_number) {
                         process.exit(1);
                     }
                     // eslint-disable-next-line no-await-in-loop
-                    await this.sleepForMiliseconds(60000);
+                    await this.sleepForMiliseconds(fallback_sync_retries_delay);
                 }
             }
         }
@@ -88,7 +89,10 @@ class HighAvailabilityService {
 
     async startFallbackSync() {
         this.logger.notify('Entering busy wait loop');
-
+        const {
+            active_node_data_sync_interval,
+            is_remote_node_available_retries_delay,
+        } = this.config.high_availability;
         await this.getMasterNodeData(this.config.high_availability.remote_hostname);
 
         await this.graphStorage.startReplication();
@@ -100,11 +104,11 @@ class HighAvailabilityService {
                     await this.getMasterNodeData(this.config.high_availability.remote_hostname);
                 }
             },
-            10000, // read from configuration set 24h
+            active_node_data_sync_interval, // read from configuration set 24h
         );
         do {
             // eslint-disable-next-line no-await-in-loop
-            await this.sleepForMiliseconds(2000);
+            await this.sleepForMiliseconds(is_remote_node_available_retries_delay);
             // eslint-disable-next-line no-await-in-loop
             remoteNodeAvailable = await this.isRemoteNodeAvailable();
         } while (remoteNodeAvailable);
@@ -256,13 +260,20 @@ class HighAvailabilityService {
     }
 
     async isRemoteNodeAvailable() {
-        const remoteHostname = this.config.high_availability.remote_hostname;
+        const {
+            remoteHostname,
+            is_remote_node_available_retries_delay,
+            is_remote_node_available_retries_timeout,
+        } = this.config.high_availability;
         const retries = 3;
 
         for (let i = 0; i < retries; i += 1) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                const response = await this.otNodeClient.healthCheck(remoteHostname, 3000);
+                const response = await this.otNodeClient.healthCheck(
+                    remoteHostname,
+                    is_remote_node_available_retries_timeout,
+                );
                 if (response.statusCode === 200) {
                     return true;
                 }
@@ -272,7 +283,7 @@ class HighAvailabilityService {
             }
             if (i + 1 < retries) {
                 // eslint-disable-next-line no-await-in-loop
-                await this.sleepForMiliseconds(2000);
+                await this.sleepForMiliseconds(is_remote_node_available_retries_delay);
             }
         }
         this.logger.info('Remote node is not in active state.');
