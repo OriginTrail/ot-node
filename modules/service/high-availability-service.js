@@ -261,17 +261,17 @@ class HighAvailabilityService {
 
     async isRemoteNodeAvailable() {
         const {
-            remoteHostname,
+            remote_hostname,
+            is_remote_node_available_retries_number,
             is_remote_node_available_retries_delay,
             is_remote_node_available_retries_timeout,
         } = this.config.high_availability;
-        const retries = 3;
 
-        for (let i = 0; i < retries; i += 1) {
+        for (let i = 0; i < is_remote_node_available_retries_number; i += 1) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 const response = await this.otNodeClient.healthCheck(
-                    remoteHostname,
+                    remote_hostname,
                     is_remote_node_available_retries_timeout,
                 );
                 if (response.statusCode === 200) {
@@ -281,7 +281,7 @@ class HighAvailabilityService {
             } catch (error) {
                 this.logger.trace(`Unable to fetch health check for remote node error: ${error.message}, attempt: ${i + 1}`);
             }
-            if (i + 1 < retries) {
+            if (i + 1 < is_remote_node_available_retries_number) {
                 // eslint-disable-next-line no-await-in-loop
                 await this.sleepForMiliseconds(is_remote_node_available_retries_delay);
             }
