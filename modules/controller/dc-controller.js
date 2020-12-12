@@ -434,7 +434,6 @@ class DCController {
         });
         const response = this.importService.packLocalQueryData(result);
         for (let i = 0; i < response.length; i += 1) {
-            const datasets = [];
             let offer_id = null;
 
             // eslint-disable-next-line no-await-in-loop
@@ -457,7 +456,7 @@ class DCController {
 
             // eslint-disable-next-line prefer-destructuring
             response[i].dataset_id = response[i].datasets[0];
-            response[i].offer_id = datasets;
+            response[i].offer_id = offer_id;
             delete response[i].datasets;
         }
 
