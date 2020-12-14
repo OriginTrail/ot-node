@@ -121,12 +121,13 @@
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "private_hostname": "",
       "remote_hostname": "",
+      "remote_ip_address": "",
       "fallback_sync_attempts_number": 3,
-      "fallback_sync_retries_delay": 60000,
+      "fallback_sync_attempts_delay": 60000,
       "active_node_data_sync_interval": 3600000,
-      "is_remote_node_available_retries_number": 3,
-      "is_remote_node_available_retries_delay": 2000,
-      "is_remote_node_available_retries_timeout": 3000
+      "is_remote_node_available_attempts_number": 3,
+      "is_remote_node_available_attempts_delay": 2000,
+      "is_remote_node_available_attempts_timeout": 3000
     }
   },
   "testnet": {
@@ -255,12 +256,13 @@
       "hostnames": ["10.1.0.4","10.1.0.5"],
       "private_hostname": "",
       "remote_hostname": "",
+      "remote_ip_address": "",
       "fallback_sync_attempts_number": 3,
-      "fallback_sync_retries_delay": 60000,
+      "fallback_sync_attempts_delay": 60000,
       "active_node_data_sync_interval": 3600000,
-      "is_remote_node_available_retries_number": 3,
-      "is_remote_node_available_retries_delay": 2000,
-      "is_remote_node_available_retries_timeout": 3000
+      "is_remote_node_available_attempts_number": 3,
+      "is_remote_node_available_attempts_delay": 2000,
+      "is_remote_node_available_attempts_timeout": 3000
     }
   },
   "mainnet": {
