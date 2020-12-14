@@ -360,6 +360,15 @@ class Kademlia {
         }
     }
 
+    async dumpNetworkInfo() {
+        const peers = Array.from(new Set(this.config.network.bootstraps
+            .concat(await this.node.rolodex.getBootstrapCandidates())));
+
+
+        this.kademliaUtilities.setBootstraps(peers);
+        this.kademliaUtilities.setRoutingTable(this.node.router);
+    }
+
     /**
      * Returns if we consider we are connected to the network
      * @return {boolean}

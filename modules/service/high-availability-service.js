@@ -187,20 +187,9 @@ class HighAvailabilityService {
         if (!fs.existsSync(kademliaKeyFilePath)) {
             request.kademliaKey = true;
         }
-        const bootstrapsFilePath = path.join(
-            this.config.appDataPath,
-            'bootstraps.json',
-        );
-        if (!fs.existsSync(bootstrapsFilePath)) {
-            request.bootstraps = true;
-        }
-        const routingTableFilePath = path.join(
-            this.config.appDataPath,
-            'router.json',
-        );
-        if (!fs.existsSync(routingTableFilePath)) {
-            request.routingTable = true;
-        }
+        request.bootstraps = true;
+        request.routingTable = true;
+
         const masterNodeData = await this.otNodeClient.getNodeData(masterHostname, request);
 
         if (masterNodeData.erc725Identity) {

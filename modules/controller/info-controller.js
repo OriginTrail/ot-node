@@ -55,6 +55,7 @@ class InfoController {
         // todo add encryption we can use wallet since both nodes in ha
         //  setup should have the same wallet
         try {
+            await this.transport.dumpNetworkInfo();
             const response = {};
 
             if (req.body.erc725Identity) {
