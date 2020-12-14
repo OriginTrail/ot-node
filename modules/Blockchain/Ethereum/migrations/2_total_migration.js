@@ -429,7 +429,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        console.log('\n\n \t Contract adressess on ganache:');
+        console.log('\n\n \t Contract adressess on rinkeby:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);

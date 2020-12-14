@@ -32,7 +32,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         if (status !== 'SUCCESSFUL') {
             this.logger.warn(`Unable to initiate purchase, seller returned status: ${status} with message: ${message}`);
-            await this._handleError(handler_id, status);
+            await this._handleError(handler_id, message);
             return Command.empty();
         }
         const {
