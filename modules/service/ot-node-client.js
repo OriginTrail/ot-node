@@ -6,7 +6,7 @@ class OtNodeClient {
     }
 
     async getNodeData(remoteHostname, body) {
-        this.baseUrl = `http://${remoteHostname}:8900/api/latest`;
+        this.baseUrl = `https://${remoteHostname}:8900/api/latest`;
         return new Promise((accept, reject) => {
             request({
                 method: 'POST',
@@ -25,7 +25,7 @@ class OtNodeClient {
     }
 
     async healthCheck(remoteHostname, timeout = 60000) {
-        this.baseUrl = `http://${remoteHostname}:8900/api/latest`;
+        this.baseUrl = `https://${remoteHostname}:8900/api/latest`;
         return new Promise((accept, reject) => {
             request({
                 timeout,

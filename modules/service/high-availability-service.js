@@ -14,22 +14,23 @@ class HighAvailabilityService {
     }
 
     async startHighAvailabilityNode() {
-        const { fallback_sync_retries_number, fallback_sync_retries_delay } =
+        const { fallback_sync_attempts_number, fallback_sync_attempts_delay } =
             this.config.high_availability;
-        const masterNodeAvailable = await this.isRemoteNodeAvailable();
-        if (masterNodeAvailable) {
-            for (let i = 0; i < fallback_sync_retries_number; i += 1) {
+        const remoteNodeAvailable = await this.isRemoteNodeAvailable();
+        if (remoteNodeAvailable) {
+            for (let i = 0; i < fallback_sync_attempts_number; i += 1) {
                 try {
                     // eslint-disable-next-line no-await-in-loop
                     await this.startFallbackSync();
                     break;
                 } catch (error) {
                     this.logger.error('Unable to start fallback node. Error: ', error);
-                    if (i + 1 === fallback_sync_retries_number) {
+                    if (i + 1 === fallback_sync_attempts_number) {
+                        // todo add some kind of notification - add log, connect to papertrail
                         process.exit(1);
                     }
                     // eslint-disable-next-line no-await-in-loop
-                    await this.sleepForMiliseconds(fallback_sync_retries_delay);
+                    await this.sleepForMiliseconds(fallback_sync_attempts_delay);
                 }
             }
         }
@@ -91,12 +92,12 @@ class HighAvailabilityService {
         this.logger.notify('Entering busy wait loop');
         const {
             active_node_data_sync_interval,
-            is_remote_node_available_retries_delay,
+            is_remote_node_available_attempts_delay,
         } = this.config.high_availability;
         await this.getMasterNodeData(this.config.high_availability.remote_hostname);
 
         await this.graphStorage.startReplication();
-        this.startPostgresReplication(this.config.high_availability.remote_hostname);
+        this.startPostgresReplication(this.config.high_availability.remote_ip_address);
         let remoteNodeAvailable = true;
         const refreshIntervalId = setInterval(
             async () => {
@@ -104,17 +105,17 @@ class HighAvailabilityService {
                     await this.getMasterNodeData(this.config.high_availability.remote_hostname);
                 }
             },
-            active_node_data_sync_interval, // read from configuration set 24h
+            active_node_data_sync_interval, // read from configuration set 12h
         );
         do {
             // eslint-disable-next-line no-await-in-loop
-            await this.sleepForMiliseconds(is_remote_node_available_retries_delay);
+            await this.sleepForMiliseconds(is_remote_node_available_attempts_delay);
             // eslint-disable-next-line no-await-in-loop
             remoteNodeAvailable = await this.isRemoteNodeAvailable();
         } while (remoteNodeAvailable);
         this.logger.notify('Remote node not available taking over');
         clearInterval(refreshIntervalId);
-        this.restartRemoteNode(this.config.high_availability.remote_hostname);
+        this.restartRemoteNode(this.config.high_availability.remote_ip_address);
     }
 
     async restartRemoteNode(remoteNodeHostname) {
@@ -262,17 +263,17 @@ class HighAvailabilityService {
     async isRemoteNodeAvailable() {
         const {
             remote_hostname,
-            is_remote_node_available_retries_number,
-            is_remote_node_available_retries_delay,
-            is_remote_node_available_retries_timeout,
+            is_remote_node_available_attempts_number,
+            is_remote_node_available_attempts_delay,
+            is_remote_node_available_attempts_timeout,
         } = this.config.high_availability;
 
-        for (let i = 0; i < is_remote_node_available_retries_number; i += 1) {
+        for (let i = 0; i < is_remote_node_available_attempts_number; i += 1) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 const response = await this.otNodeClient.healthCheck(
                     remote_hostname,
-                    is_remote_node_available_retries_timeout,
+                    is_remote_node_available_attempts_timeout,
                 );
                 if (response.statusCode === 200) {
                     return true;
@@ -281,9 +282,9 @@ class HighAvailabilityService {
             } catch (error) {
                 this.logger.trace(`Unable to fetch health check for remote node error: ${error.message}, attempt: ${i + 1}`);
             }
-            if (i + 1 < is_remote_node_available_retries_number) {
+            if (i + 1 < is_remote_node_available_attempts_number) {
                 // eslint-disable-next-line no-await-in-loop
-                await this.sleepForMiliseconds(is_remote_node_available_retries_delay);
+                await this.sleepForMiliseconds(is_remote_node_available_attempts_delay);
             }
         }
         this.logger.info('Remote node is not in active state.');
