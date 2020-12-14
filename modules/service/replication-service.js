@@ -48,17 +48,7 @@ class ReplicationService {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchain_id).response;
-
         const otJson = await this.importService.getImport(offer.data_set_id);
-        let dataset;
-        const datasetSigner = ImportUtilities.extractDatasetSigner(otJson);
-        if (Utilities.normalizeHex(datasetSigner) !== Utilities.normalizeHex(node_wallet)) {
-            this.logger.info(`Signature stored for dataset is for another blockchain implementation, updating signature for ${blockchain_id} blockchain`);
-            dataset = ImportUtilities.updateDatasetSignature(otJson, node_private_key);
-        } else {
-            dataset = otJson;
-        }
 
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,

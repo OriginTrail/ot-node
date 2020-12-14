@@ -46,7 +46,7 @@ class DHReadDataLocationRequestCommand extends Command {
 
         // Filter imports not stored in local DB.
         let imports = await Models.data_info.findAll({
-            attributes: ['data_set_id', 'data_provider_wallet'],
+            attributes: ['data_set_id', 'data_provider_wallets'],
             where: {
                 data_set_id: {
                     [Op.in]: graphImports,
@@ -62,8 +62,10 @@ class DHReadDataLocationRequestCommand extends Command {
 
         const validImports = [];
         for (let i = 0; i < imports.length; i += 1) {
-            if (imports[i].data_provider_wallet.toLowerCase()
-                === node_wallet.toLowerCase()) {
+            const data_provider_wallets = JSON.parse(imports[i].data_provider_wallets);
+
+            if (data_provider_wallets.find(elem =>
+                elem.wallet.toLowerCase() === node_wallet.toLowerCase())) {
                 // eslint-disable-next-line no-await-in-loop
                 const offer = await Models.offers.findOne({
                     attributes: ['offer_id'],

@@ -99,13 +99,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         const dataCreator = {
-            identifiers: [
-                {
-                    identifierValue: ImportUtilities.getDataCreator(dataset.datasetHeader),
-                    identifierType: 'ERC725',
-                    validationSchema: '/schemas/erc725-main',
-                },
-            ],
+            identifiers: ImportUtilities.getDataCreatorIdentifiers(dataset.datasetHeader),
         };
         const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset);
 

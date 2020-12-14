@@ -53,7 +53,7 @@ class SchemaValidator {
     async _validateERC725Schema(data) {
         // TODO Add ERC725 validation
         const { document, schemaName } = data;
-        const signer = ImportUtilities.extractDatasetSigner(document);
+        const signers = ImportUtilities.extractDatasetSigners(document);
 
         const { datasetHeader } = document;
         const { dataCreator } = datasetHeader;

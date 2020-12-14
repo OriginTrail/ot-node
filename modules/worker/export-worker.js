@@ -5,7 +5,6 @@ const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 const OtJsonUtilities = require('../OtJsonUtilities');
 const fs = require('fs');
-const Web3 = require('web3');
 
 process.on('message', async (data) => {
     const {
@@ -40,9 +39,7 @@ process.on('message', async (data) => {
             }
         }
 
-        const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
-
-        const dc_node_wallet = ImportUtilities.extractDatasetSigner(document);
+        const dc_node_wallets = ImportUtilities.extractDatasetSigners(document);
         const data_creator = document.datasetHeader.dataCreator;
 
         let dataset;
@@ -75,7 +72,7 @@ process.on('message', async (data) => {
             await Utilities.writeContentsToFile(
                 cacheDirectory,
                 handlerId,
-                JSON.stringify({ formatted_dataset: dataset, dc_node_wallet, data_creator }),
+                JSON.stringify({ formatted_dataset: dataset, dc_node_wallets, data_creator }),
             );
         } catch (e) {
             const filePath = path.join(cacheDirectory, handlerId);

@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         gas_price_used_for_price_calculation: DataTypes.STRING,
         price_factor_used_for_price_calculation: DataTypes.INTEGER,
         offer_finalize_transaction_hash: DataTypes.STRING(128),
+        blockchain_id: DataTypes.STRING,
     }, {});
     offers.associate = (models) => {
     // associations can be defined here

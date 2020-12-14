@@ -84,7 +84,8 @@ class DcOfferFinalizedCommand extends Command {
                     },
                 });
 
-                const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
+                const offer =
+                    await Models.offers.findOne({ where: { offer_id: offerId, blockchain_id } });
                 offer.status = 'FINALIZED';
                 offer.global_status = 'ACTIVE';
                 offer.number_of_replications = replications;
@@ -115,6 +116,7 @@ class DcOfferFinalizedCommand extends Command {
                             name: 'dcOfferCleanupCommand',
                             data: {
                                 offerId,
+                                blockchain_id,
                             },
                             delay: scheduledTime,
                         },
