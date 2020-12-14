@@ -18,6 +18,7 @@ class RestAPIServiceV2 {
         this.dhController = ctx.dhController;
         this.dvController = ctx.dvController;
         this.infoController = ctx.infoController;
+        this.didController = ctx.didController;
 
         this.exportController = ctx.exportController;
         this.remoteControl = ctx.remoteControl;
@@ -181,6 +182,13 @@ class RestAPIServiceV2 {
 
         server.post(`/api/${this.version_id}/staging_data/publish`, async (req, res) => {
             await this.dcController.handleStagingDataPublish(req, res);
+
+        server.post(`/api/${this.version_id}/did/resolve`, async (req, res, next) => {
+            await this.didController.resolve(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/did/authenticate`, async (req, res, next) => {
+            await this.didController.authenticate(req, res);
         });
 
         server.post(`/api/${this.version_id}/query/local`, async (req, res, next) => {
