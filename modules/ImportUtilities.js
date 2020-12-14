@@ -554,43 +554,104 @@ class ImportUtilities {
     }
 
     /**
-     * Gets transaction hash for the data set
+     * Gets replication information for a dataset
      * @param dataSetId Data set ID
      * @param origin    Data set origin
-     * @return {Promise<string|null>}
+     * @return {Promise<Array<String>|null>}
      */
-    static async getTransactionHash(dataSetId, origin) {
-        let transactionHash = null;
+    static async getReplicationInfo(dataSetId, origin) {
+        let replicationInfo = null;
 
         switch (origin) {
         case 'PURCHASED': {
-            const purchasedData = await Models.purchased_data.findOne({
+            const purchasedData = await Models.purchased_data.findAll({
                 where: { data_set_id: dataSetId },
             });
-            transactionHash = purchasedData.transaction_hash;
+            if (purchasedData && Array.isArray(purchasedData) && purchasedData.length > 0) {
+                replicationInfo = purchasedData.map(element => ({
+                    origin,
+                    offer_id: element.dataValues.offer_id,
+                    blockchain_id: element.dataValues.blockchain_id,
+                    offer_creation_transaction_hash: element.dataValues.transaction_hash,
+                }));
+            }
             break;
         }
         case 'HOLDING': {
-            const holdingData = await Models.holding_data.findOne({
+            const bids = await Models.bids.findAll({
                 where: { data_set_id: dataSetId },
             });
-            transactionHash = holdingData.transaction_hash;
+
+            const holdingData = await Models.holding_data.findAll({
+                where: { data_set_id: dataSetId },
+            });
+
+
+            if (bids && Array.isArray(bids) && bids.length > 0) {
+                replicationInfo = [];
+
+                for (const bid of bids) {
+                    const holdingDataEntry = holdingData
+                        .find(hd => hd.dataValues.offer_id === bid.dataValues.offer_id);
+                    if (holdingDataEntry) {
+                        const { transaction_hash } = holdingDataEntry.dataValues;
+
+                        replicationInfo.push({
+                            origin,
+                            offer_id: bid.dataValues.offer_id,
+                            blockchain_id: bid.dataValues.blockchain_id,
+                            status: bid.dataValues.status,
+
+                            offer_creation_transaction_hash: transaction_hash,
+
+                            token_amount_per_holder: bid.dataValues.token_amount,
+                            holding_time_in_minutes: bid.dataValues.holding_time_in_minutes,
+                            data_size_in_bytes: bid.dataValues.data_size_in_bytes,
+                            litigation_interval_in_minutes:
+                                bid.dataValues.litigation_interval_in_minutes,
+                        });
+                    }
+                }
+            }
             break;
         }
         case 'IMPORTED': {
-            // TODO support many offers for the same data set
             const offers = await Models.offers.findAll({
                 where: { data_set_id: dataSetId },
             });
-            if (offers.length > 0) {
-                transactionHash = offers[0].transaction_hash;
+
+            if (offers && Array.isArray(offers) && offers.length > 0) {
+                replicationInfo = offers.map(e => ({
+                    origin,
+                    offer_id: e.dataValues.offer_id,
+                    blockchain_id: e.dataValues.blockchain_id,
+                    status: e.dataValues.status,
+
+                    offer_creation_transaction_hash: e.dataValues.transaction_hash,
+                    offer_finalize_transaction_hash: e.dataValues.offer_finalize_transaction_hash,
+
+                    number_of_replications:
+                        e.dataValues.number_of_replications,
+                    number_of_verified_replications:
+                        e.dataValues.number_of_verified_replications,
+
+                    token_amount_per_holder: e.dataValues.token_amount_per_holder,
+                    holding_time_in_minutes: e.dataValues.holding_time_in_minutes,
+
+                    gas_price_used_for_price_calculation:
+                        e.dataValues.gas_price_used_for_price_calculation,
+                    price_factor_used_for_price_calculation:
+                        e.dataValues.price_factor_used_for_price_calculation,
+                    trac_in_eth_used_for_price_calculation:
+                        e.dataValues.trac_in_eth_used_for_price_calculation,
+                }));
             }
             break;
         }
         default:
             throw new Error(`Failed to find transaction hash for ${dataSetId} and origin ${origin}. Origin not valid.`);
         }
-        return transactionHash;
+        return replicationInfo;
     }
 
     /**

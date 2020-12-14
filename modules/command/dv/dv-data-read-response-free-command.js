@@ -50,7 +50,7 @@ class DVDataReadResponseFreeCommand extends Command {
             data_set_id: dataSetId,
             data_provider_wallets,
             wallet: dhWallet,
-            transaction_hash,
+            replication_info: received_replication_info,
             handler_id,
         } = message;
 
@@ -155,6 +155,16 @@ class DVDataReadResponseFreeCommand extends Command {
             readExport,
         } = JSON.parse(handler.data);
 
+        const replication_info = [];
+        for (const replication of received_replication_info) {
+            replication_info.push({
+                origin: 'PURCHASED',
+                offer_id: replication.offer_id,
+                blockchain_id: replication.blockchain_id,
+                offer_creation_transaction_hash: replication.offer_creation_transaction_hash,
+            });
+        }
+
         if (readExport) {
             let sortedDataset = OtJsonUtilities.prepareDatasetForDataRead(document);
             if (!sortedDataset) {
@@ -182,7 +192,7 @@ class DVDataReadResponseFreeCommand extends Command {
             });
 
             const data = JSON.parse(handler.data);
-            data.transaction_hash = transaction_hash;
+            data.replication_info = replication_info;
             data.data_creator = document.datasetHeader.dataCreator;
             data.signature = document.signature;
             data.root_hash = rootHash;
@@ -245,10 +255,16 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         // Store holding information and generate keys for eventual data replication.
-        await Models.purchased_data.create({
-            data_set_id: dataSetId,
-            transaction_hash,
-        });
+        const promises = [];
+        for (const replication of replication_info) {
+            promises.push(Models.purchased_data.create({
+                data_set_id: dataSetId,
+                transaction_hash: replication.offer_creation_transaction_hash,
+                offer_id: replication.offer_id,
+                blockchain_id: replication.blockchain_id,
+            }));
+        }
+        await Promise.all(promises);
 
         this.logger.info(`Data set ID ${dataSetId} import started.`);
         this.logger.trace(`DataSet ${dataSetId} purchased for query ID ${networkQueryResponse.query_id}, ` +

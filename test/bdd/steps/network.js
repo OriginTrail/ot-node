@@ -441,6 +441,25 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
         .to.be.equal(ot_logo);
 });
 
+
+Then(/^the last exported dataset should not contain permissioned data as "([^"]*)"$/, async function (objectId) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const { lastExport } = this.state;
+
+    expect(lastExport.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
+    expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    expect(lastExport.data.formatted_dataset['@graph']
+        .find(x => x['@id'] === objectId).properties.permissioned_data.data)
+        .to.be.equal(undefined);
+});
+
 Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async function (importedFilePath) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -805,8 +824,8 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
         await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
     const promises = [];
-    dc.state.replications.forEach(({ internalOfferId, dhId }) => {
-        if (dc.state.offers.internalIDs[internalOfferId].dataSetId ===
+    dc.state.replications.forEach(({ offer_id, dhId }) => {
+        if (dc.state.offers.offerIDs[offer_id].dataSetId ===
             this.state.lastImport.data.dataset_id) {
             const node =
                 this.state.nodes.find(node => node.state.identity === dhId);

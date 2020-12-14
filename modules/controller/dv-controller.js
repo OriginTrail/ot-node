@@ -370,29 +370,51 @@ class DVController {
              */
             data.forEach((obj) => {
                 const {
-                    data_set_id, seller_node_id, ot_json_object_id: ot_object_id, seller_erc_id,
+                    data_set_id,
+                    blockchain_id,
+                    seller_node_id,
+                    ot_json_object_id: ot_object_id,
+                    seller_erc_id,
                 } = obj;
-                if (not_owned_objects[data_set_id]) {
-                    if (not_owned_objects[data_set_id][seller_node_id]
-                        && !not_owned_objects[data_set_id][seller_node_id].ot_objects
-                            .includes(ot_object_id)) {
-                        not_owned_objects[data_set_id][seller_node_id].ot_objects
-                            .push(ot_object_id);
-                    } else if (!not_owned_objects[data_set_id][seller_node_id]) {
-                        not_owned_objects[data_set_id][seller_node_id] = {
-                            ot_objects: [ot_object_id],
-                            seller_erc_id,
-                        };
-                    }
-                } else {
+
+
+                if (!not_owned_objects[data_set_id]) {
+                    // Add new dataset and seller and object
                     allDatasets.push(data_set_id);
 
                     not_owned_objects[data_set_id] = {};
 
                     not_owned_objects[data_set_id][seller_node_id] = {
                         ot_objects: [ot_object_id],
-                        seller_erc_id,
+                        identities: [{
+                            blockchain_id,
+                            seller_erc_id,
+                        }],
                     };
+                } else if (!not_owned_objects[data_set_id][seller_node_id]) {
+                    // Add new seller and object
+                    not_owned_objects[data_set_id][seller_node_id] = {
+                        ot_objects: [ot_object_id],
+                        identities: [{
+                            blockchain_id,
+                            seller_erc_id,
+                        }],
+                    };
+                } else if (!not_owned_objects[data_set_id][seller_node_id]
+                    .ot_objects.includes(ot_object_id)) {
+                    // Add new object
+                    not_owned_objects[data_set_id][seller_node_id].ot_objects
+                        .push(ot_object_id);
+                }
+
+
+                if (!not_owned_objects[data_set_id][seller_node_id]
+                    .identities.find(e => e.blockchain_id === blockchain_id)) {
+                    // Add new blockchain and appropriate identity
+                    not_owned_objects[data_set_id][seller_node_id].identities.push({
+                        blockchain_id,
+                        seller_erc_id,
+                    });
                 }
             });
 
@@ -436,7 +458,7 @@ class DVController {
                                     not_owned_objects[dataset].metadata.creator_identities,
                             },
                             ot_objects: not_owned_objects[dataset][data_seller].ot_objects,
-                            seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,
+                            seller_identities: not_owned_objects[dataset][data_seller].identities,
                         });
                     }
                 }

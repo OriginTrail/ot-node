@@ -680,11 +680,11 @@ class Blockchain {
             ],
         });
 
-        if (lastEvent) {
-            fromBlock = lastEvent.block + 1;
-        } else {
-            const currentBlock = await implementation.getCurrentBlock();
+        const currentBlock = await implementation.getCurrentBlock();
 
+        if (lastEvent) {
+            fromBlock = Math.max(currentBlock - 2000, lastEvent.block + 1);
+        } else {
             fromBlock = Math.max(currentBlock - 100, 0);
         }
 

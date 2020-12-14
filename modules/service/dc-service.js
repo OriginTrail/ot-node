@@ -230,11 +230,12 @@ class DCService {
      * @param wallet - DH wallet
      * @param identity - Network identity
      * @param dhIdentity - DH ERC725 identity
+     * @param async_enabled - Whether or not the DH supports asynchronous communication
      * @param response - Network response
      * @returns {Promise<void>}
      */
-    async handleReplicationRequest(offerId, wallet, identity, dhIdentity, response) {
-        this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
+    async handleReplicationRequest(offerId, wallet, identity, dhIdentity, async_enabled, response) {
+        this.logger.info(`Received replication request for offer_id ${offerId} from node ${identity}.`);
 
         if (!offerId || !wallet || !dhIdentity) {
             const message = 'Asked replication without providing offer ID or wallet or identity.';
@@ -274,7 +275,25 @@ class DCService {
             return;
         }
 
-        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        if (async_enabled) {
+            await this._sendReplicationAcknowledgement(offerId, identity, response);
+
+            await this.commandExecutor.add({
+                name: 'dcReplicationSendCommand',
+                delay: 0,
+                data: {
+                    internalOfferId: offer.id,
+                    offerId,
+                    wallet,
+                    identity,
+                    dhIdentity,
+                    response,
+                },
+                transactional: false,
+            });
+        } else {
+            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        }
     }
 
     /**
@@ -307,10 +326,11 @@ class DCService {
      * @param wallet - DH wallet
      * @param identity - Network identity
      * @param dhIdentity - DH ERC725 identity
+     * @param async_enabled - Whether or not the DH supports asynchronous communication
      * @param response - Network response
      * @returns {Promise<void>}
      */
-    async handleReplacementRequest(offerId, wallet, identity, dhIdentity, response) {
+    async handleReplacementRequest(offerId, wallet, identity, dhIdentity, async_enabled, response) {
         this.logger.info(`Replacement request for replication of offer ${offerId} received. Sender ${identity}`);
 
         if (!offerId || !wallet) {
@@ -356,12 +376,50 @@ class DCService {
             try {
                 await this.transport.sendResponse(response, {
                     status: 'fail',
+                    message: `DH ${identity} already applied for offer, currently with status ${usedDH.status}`,
                 });
             } catch (e) {
                 this.logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
             }
         }
-        await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+
+
+        if (async_enabled) {
+            await this._sendReplicationAcknowledgement(offerId, identity, response);
+
+            await this.commandExecutor.add({
+                name: 'dcReplicationSendCommand',
+                delay: 0,
+                data: {
+                    internalOfferId: offer.id,
+                    wallet,
+                    identity,
+                    dhIdentity,
+                    response,
+                },
+                transactional: false,
+            });
+        } else {
+            await this._sendReplication(offer, wallet, identity, dhIdentity, response);
+        }
+    }
+
+    /**
+     * Sends a replication acknowledgment to da data holder
+     * @param offerId - OfferId
+     * @param dhNetworkIdentity - DH Network identity
+     * @param response - Network response
+     * @returns {Promise<void>}
+     */
+    async _sendReplicationAcknowledgement(offerId, dhNetworkIdentity, response) {
+        const payload = {
+            offer_id: offerId,
+            status: 'acknowledge',
+        };
+
+        // send replication acknowledgement to DH
+        await this.transport.sendResponse(response, payload);
+        this.logger.info(`Sending replication request acknowledgement for offer_id ${offerId} to node ${dhNetworkIdentity}.`);
     }
 
     /**
@@ -374,26 +432,42 @@ class DCService {
      * @returns {Promise<void>}
      */
     async _sendReplication(offer, wallet, identity, dhIdentity, response) {
-        const colorNumber = Utilities.getRandomInt(2);
+        const usedDH = await models.replicated_data.findOne({
+            where: {
+                dh_id: identity,
+                dh_wallet: wallet,
+                dh_identity: dhIdentity,
+                offer_id: offer.offer_id,
+            },
+        });
+
+        let colorNumber = Utilities.getRandomInt(2);
+        if (usedDH != null && usedDH.status === 'STARTED' && usedDH.color) {
+            colorNumber = usedDH.color;
+        }
+
         const color = this.replicationService.castNumberToColor(colorNumber);
 
         const replication = await this.replicationService.loadReplication(offer.id, color);
-        await models.replicated_data.create({
-            dh_id: identity,
-            dh_wallet: wallet.toLowerCase(),
-            dh_identity: dhIdentity.toLowerCase(),
-            offer_id: offer.offer_id,
-            litigation_private_key: replication.litigationPrivateKey,
-            litigation_public_key: replication.litigationPublicKey,
-            distribution_public_key: replication.distributionPublicKey,
-            distribution_private_key: replication.distributionPrivateKey,
-            distribution_epk_checksum: replication.distributionEpkChecksum,
-            litigation_root_hash: replication.litigationRootHash,
-            distribution_root_hash: replication.distributionRootHash,
-            distribution_epk: replication.distributionEpk,
-            status: 'STARTED',
-            color: colorNumber,
-        });
+
+        if (!usedDH) {
+            await models.replicated_data.create({
+                dh_id: identity,
+                dh_wallet: wallet.toLowerCase(),
+                dh_identity: dhIdentity.toLowerCase(),
+                offer_id: offer.offer_id,
+                litigation_private_key: replication.litigationPrivateKey,
+                litigation_public_key: replication.litigationPublicKey,
+                distribution_public_key: replication.distributionPublicKey,
+                distribution_private_key: replication.distributionPrivateKey,
+                distribution_epk_checksum: replication.distributionEpkChecksum,
+                litigation_root_hash: replication.litigationRootHash,
+                distribution_root_hash: replication.distributionRootHash,
+                distribution_epk: replication.distributionEpk,
+                status: 'STARTED',
+                color: colorNumber,
+            });
+        }
 
         const toSign = [
             Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
@@ -445,7 +519,7 @@ class DCService {
 
         // send replication to DH
         await this.transport.sendResponse(response, payload);
-        this.logger.info(`Replication for offer ID ${offer.id} sent to ${identity}.`);
+        this.logger.info(`Successfully sent replication data for offer_id ${offer.offer_id} to node ${identity}.`);
     }
 
     /**
