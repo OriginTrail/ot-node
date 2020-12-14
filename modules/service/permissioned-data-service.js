@@ -120,15 +120,63 @@ class PermissionedDataService {
         return result;
     }
 
-    async addDataSellerForPermissionedData(dataSetId, sellerErcId, price, sellerNodeId, dataset) {
+    async addMultipleDataSellerForPermissionedData(
+        dataSetId, sellerErcIds, blockchain_id_array,
+        prices, sellerNodeId, dataset,
+    ) {
         const permissionedData = this.getGraphPermissionedData(dataset);
         if (permissionedData.length === 0) {
             return;
         }
         const promises = [];
+        for (const otObjectId of permissionedData) {
+            for (const blockchain_id of blockchain_id_array) {
+                const seller_erc_id = sellerErcIds
+                    .find(e => e.blockchain_id === blockchain_id).identity;
+
+                const price = prices ? prices
+                    .find(e => e.blockchain_id === blockchain_id).price_in_trac : 0;
+
+                promises.push(Models.data_sellers.create({
+                    data_set_id: dataSetId,
+                    blockchain_id,
+                    ot_json_object_id: otObjectId,
+                    seller_node_id: Utilities.denormalizeHex(sellerNodeId),
+                    seller_erc_id: Utilities.normalizeHex(seller_erc_id),
+                    price,
+                }));
+            }
+        }
+        await Promise.all(promises);
+    }
+
+    async addDataSellerForPermissionedData(
+        dataSetId, sellerErcId, blockchain_id,
+        price, sellerNodeId, dataset,
+    ) {
+        const permissionedData = this.getGraphPermissionedData(dataset);
+        if (permissionedData.length === 0) {
+            return;
+        }
+        const promises = [];
+
+        const existingData = await Models.data_sellers.findAll({
+            where: {
+                data_set_id: dataSetId,
+                blockchain_id,
+                seller_erc_id: Utilities.normalizeHex(sellerErcId),
+                seller_node_id: Utilities.denormalizeHex(sellerNodeId),
+            },
+        });
+
+        if (existingData && Array.isArray(existingData) && existingData.length > 0) {
+            return;
+        }
+
         permissionedData.forEach((otObjectId) => {
             promises.push(Models.data_sellers.create({
                 data_set_id: dataSetId,
+                blockchain_id,
                 ot_json_object_id: otObjectId,
                 seller_node_id: Utilities.denormalizeHex(sellerNodeId),
                 seller_erc_id: Utilities.normalizeHex(sellerErcId),

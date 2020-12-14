@@ -660,7 +660,7 @@ describe.skip('Protocol tests', () => {
                 import_hash: importHash,
                 data_provider_wallets: JSON.stringify([{
                     wallet: Utilities.normalizeHex(testNode1.wallet),
-                    network_id: 'testing',
+                    blockchain_id: 'testing',
                 }]),
                 import_timestamp: new Date(),
                 total_documents: vertices.length,

@@ -44,15 +44,15 @@ class DVService {
         };
         const myBlockchainIds = this.blockchain.getAllBlockchainIds();
         for (const fingerprint_object of dataset_info.fingerprint_data) {
-            const { network_id, root_hash } = fingerprint_object;
+            const { blockchain_id, root_hash } = fingerprint_object;
 
             if (root_hash) {
                 validationResult.root_hashes_received += 1;
 
-                if (myBlockchainIds.includes(network_id)) {
+                if (myBlockchainIds.includes(blockchain_id)) {
                     // eslint-disable-next-line no-await-in-loop
                     const fingerprint = await this
-                        .blockchain.getRootHash(data_set_id, network_id).response;
+                        .blockchain.getRootHash(data_set_id, blockchain_id).response;
 
                     validationResult.root_hashes_fetched += 1;
 
@@ -61,13 +61,13 @@ class DVService {
                         validationResult.root_hashes_valid += 1;
                     } else if (fingerprint && !Utilities.isZeroHash(fingerprint)) {
                         this.logger.warn('Root hashes do not match. ' +
-                            `Found ${fingerprint} on blockchain ${network_id} but expected ${root_hash} based on network response`);
+                            `Found ${fingerprint} on blockchain ${blockchain_id} but expected ${root_hash} based on network response`);
                     } else {
                         this.logger.warn('Root hashes do not match. ' +
-                            `Found empty hash on blockchain ${network_id} but expected ${root_hash} based on network response`);
+                            `Found empty hash on blockchain ${blockchain_id} but expected ${root_hash} based on network response`);
                     }
                 } else {
-                    this.logger.trace(`Cannot validate root hash for dataset ${data_set_id} on unsupported blockchain ${network_id}.`);
+                    this.logger.trace(`Cannot validate root hash for dataset ${data_set_id} on unsupported blockchain ${blockchain_id}.`);
                 }
             }
         }

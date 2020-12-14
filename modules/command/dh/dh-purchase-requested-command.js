@@ -1,6 +1,9 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
+
+const { Op } = Models.Sequelize;
+
 /**
  * Handles data location response.
  */
@@ -25,18 +28,11 @@ class DhPurchaseRequestedCommand extends Command {
      */
     async execute(command, transaction) {
         const {
-            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id, price,
+            data_set_id, dv_erc725_identity, handler_id, dv_node_id, ot_json_object_id,
+            price, blockchain_id,
         } = command.data;
         this.logger.important(`Purchase request for ot_object ${ot_json_object_id} received from ${dv_node_id}.`);
-        const dataTrades = await Models.data_trades.findAll({
-            where: {
-                buyer_node_id: dv_node_id,
-                data_set_id,
-                ot_json_object_id,
-            },
-        });
-
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchain_id).response;
 
         const response = {
             handler_id,
@@ -47,17 +43,24 @@ class DhPurchaseRequestedCommand extends Command {
             where: {
                 data_set_id,
                 ot_json_object_id,
+                blockchain_id,
                 seller_node_id: this.config.identity,
             },
         });
 
-        if (dataTrades && dataTrades.length > 0) {
-            const dataTrade = dataTrades.find(dataTrade => dataTrade.status !== 'FAILED');
-            if (dataTrade) {
-                response.message = `Data purchase already completed or in progress! Previous purchase status: ${dataTrade.status}`;
-                response.status = 'FAILED';
-            }
+        const existingDataTrade = await Models.data_trades.findOne({
+            where: {
+                buyer_node_id: dv_node_id,
+                data_set_id,
+                ot_json_object_id,
+                status: { [Op.ne]: 'FAILED' },
+            },
+        });
+        if (existingDataTrade) {
+            response.status = 'FAILED';
+            response.message = `Data purchase already completed or in progress! Previous purchase status: ${existingDataTrade.status}`;
         }
+
         if (!sellingData) {
             response.status = 'FAILED';
             response.message = 'I dont have requested data';
@@ -78,19 +81,38 @@ class DhPurchaseRequestedCommand extends Command {
             if (permissionedObject) {
                 const encodedObject =
                     await this.permissionedDataService.encodePermissionedData(permissionedObject);
-                response.permissioned_data_original_length =
-                    encodedObject.permissioned_data_original_length;
-                response.permissioned_data_array_length =
-                    encodedObject.permissioned_data_array_length;
+
+                response.status = 'SUCCESSFUL';
+                response.message = 'Data purchase request completed!';
+
                 response.encoded_data = encodedObject.encoded_data;
+
                 response.permissioned_data_root_hash = encodedObject.permissioned_data_root_hash;
                 response.encoded_data_root_hash = encodedObject.encoded_data_root_hash;
-                response.message = 'Data purchase request completed!';
-                response.status = 'SUCCESSFUL';
+
+                response.permissioned_data_array_length =
+                    encodedObject.permissioned_data_array_length;
+                response.permissioned_data_original_length =
+                    encodedObject.permissioned_data_original_length;
+
+                response.blockchain_id = blockchain_id;
+
+                await Models.data_trades.create({
+                    data_set_id,
+                    ot_json_object_id,
+                    blockchain_id,
+                    buyer_node_id: dv_node_id,
+                    buyer_erc_id: dv_erc725_identity,
+                    seller_node_id: this.config.identity,
+                    seller_erc_id: this.profileService.getIdentity(blockchain_id).toLowerCase(),
+                    price,
+                    status: 'REQUESTED',
+                });
 
                 const commandData = {
                     data_set_id,
                     ot_json_object_id,
+                    blockchain_id,
                     buyer_node_id: dv_node_id,
                     encoded_object: encodedObject,
                 };
@@ -99,17 +121,6 @@ class DhPurchaseRequestedCommand extends Command {
                     delay: 60 * 1000,
                     retries: 3,
                     data: commandData,
-                });
-                // todo pass blockchain identity
-                await Models.data_trades.create({
-                    data_set_id,
-                    ot_json_object_id,
-                    buyer_node_id: dv_node_id,
-                    buyer_erc_id: dv_erc725_identity,
-                    seller_node_id: this.config.identity,
-                    seller_erc_id: this.profileService.getIdentity().toLowerCase(),
-                    price,
-                    status: 'REQUESTED',
                 });
             } else {
                 response.message = `Unable to find permissioned data with object id: ${ot_json_object_id} and dataset id: ${data_set_id}`;

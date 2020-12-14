@@ -48,17 +48,25 @@ class DHController {
             return;
         }
 
-        const { dataset_id, ot_object_id, viewer_erc_id } = request.body;
-        // todo pass blockchain identity
-        const requested_object = await Models.data_sellers.findOne({
+        const {
+            dataset_id, ot_object_id, viewer_erc_id,
+        } = request.body;
+
+        const allBlockchainIds = this.blockchain.getAllBlockchainIds();
+        const allMyIdentites =
+            allBlockchainIds.map(bc_id => this.profileService.getIdentity(bc_id));
+        const requested_objects = await Models.data_sellers.findAll({
             where: {
                 data_set_id: dataset_id,
                 ot_json_object_id: ot_object_id,
-                seller_erc_id: this.profileService.getIdentity(),
+                seller_erc_id: {
+                    [Models.Sequelize.Op.in]: allMyIdentites,
+                },
             },
         });
 
-        if (requested_object === null) {
+        if (!requested_objects || !Array.isArray(requested_objects)
+            || requested_objects.length === 0) {
             response.status(400);
             response.send({
                 message: 'Specified ot-object does not exist',
@@ -67,19 +75,53 @@ class DHController {
             return;
         }
 
-        const buyerProfile =
-            await this.blockchain.getProfile(Utilities.normalizeHex(viewer_erc_id)).response;
+        const promises = [];
+        for (const blockchain_id of allBlockchainIds) {
+            promises.push(this.blockchain
+                .getProfile(Utilities.normalizeHex(viewer_erc_id), blockchain_id).response
+                .then(res => ({
+                    blockchain_id,
+                    profile: res,
+                })));
+        }
+        const buyerProfiles = await Promise.all(promises);
 
-        const buyer_node_id = Utilities.denormalizeHex(buyerProfile.nodeId.substring(0, 42));
+        if (!buyerProfiles) {
+            response.status(400);
+            response.send({
+                message: `Could not find profile for buyer ${viewer_erc_id} on any blockchain`,
+                status: 'FAILED',
+            });
+        }
+        const buyerProfile = buyerProfiles.find((foundProfile) => {
+            if (!foundProfile.profile.nodeId) {
+                return false;
+            }
+            const node_id = Utilities.normalizeHex(foundProfile.profile.nodeId.substring(0, 42));
+
+            return !Utilities.isZeroHash(node_id);
+        });
+        if (!buyerProfile) {
+            response.status(400);
+            response.send({
+                message: `Could not find node id for buyer ${viewer_erc_id} on any blockchain`,
+                status: 'FAILED',
+            });
+        }
+
+        const buyer_node_id =
+            Utilities.denormalizeHex(buyerProfile.profile.nodeId.substring(0, 42));
+        const { blockchain_id } = buyerProfile;
 
         // todo pass blockchain identity
         await Models.data_trades.create({
             data_set_id: dataset_id,
+            blockchain_id,
             ot_json_object_id: ot_object_id,
             buyer_node_id,
             buyer_erc_id: Utilities.normalizeHex(viewer_erc_id),
             seller_node_id: this.config.identity,
-            seller_erc_id: this.profileService.getIdentity(),
+            seller_erc_id: this.profileService.getIdentity(blockchain_id),
             price: '0',
             status: 'COMPLETED',
         });

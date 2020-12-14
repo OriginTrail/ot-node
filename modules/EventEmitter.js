@@ -482,15 +482,16 @@ class EventEmitter {
             try {
                 const {
                     purchase_id,
+                    blockchain_id,
                     data_set_id,
                     ot_object_id,
                     seller_node_id,
-                    seller_erc_id,
-                    price,
+                    seller_erc_ids,
+                    prices,
                 } = message;
                 await dvController.handleNewDataSeller(
-                    purchase_id, seller_erc_id, seller_node_id,
-                    data_set_id, ot_object_id, price,
+                    purchase_id, blockchain_id, seller_erc_ids, seller_node_id,
+                    data_set_id, ot_object_id, prices,
                 );
             } catch (error) {
                 const errorMessage = `Failed to process purchase completion message. ${error}.`;

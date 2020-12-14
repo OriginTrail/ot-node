@@ -683,10 +683,10 @@ class ImportUtilities {
             for (const proof of dataset.signature) {
                 const wallet =
                     ImportUtilities.extractDatasetSignerUsingProof(dataset, proof.proofValue);
-                const { domain: network_id } = proof;
+                const { domain: blockchain_id } = proof;
 
                 signers.push({
-                    network_id,
+                    blockchain_id,
                     wallet: Utilities.normalizeHex(wallet),
                 });
             }
@@ -802,18 +802,20 @@ class ImportUtilities {
     }
 
     static extractDatasetIdentities(datasetHeader) {
-        if (!datasetHeader || !datasetHeader.identifiers || !datasetHeader.validationSchemas ||
-            !Array.isArray(datasetHeader.identifiers) || datasetHeader.identifiers.length < 1) {
+        if (!datasetHeader || !datasetHeader.dataCreator.identifiers
+            || !datasetHeader.validationSchemas
+            || !Array.isArray(datasetHeader.dataCreator.identifiers)
+            || datasetHeader.dataCreator.identifiers.length < 1) {
             return;
         }
         const identities = [];
 
-        for (const identifierObject of datasetHeader.identifiers) {
+        for (const identifierObject of datasetHeader.dataCreator.identifiers) {
             const validationSchema =
                 datasetHeader.validationSchemas[identifierObject.validationSchema];
 
             identities.push({
-                network_id: validationSchema.networkId,
+                blockchain_id: validationSchema.networkId,
                 identity: identifierObject.identifierValue,
             });
         }
