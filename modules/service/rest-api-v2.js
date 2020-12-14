@@ -182,6 +182,7 @@ class RestAPIServiceV2 {
 
         server.post(`/api/${this.version_id}/staging_data/publish`, async (req, res) => {
             await this.dcController.handleStagingDataPublish(req, res);
+        });
 
         server.post(`/api/${this.version_id}/did/resolve`, async (req, res, next) => {
             await this.didController.resolve(req, res);
