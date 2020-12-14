@@ -150,6 +150,23 @@ class Blockchain {
     }
 
     /**
+     * Returns the blockchain id of every blockchain implementation
+     * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
+     * @returns {String} The identifier string of the default blockchain implementation
+     */
+    getAllBlockchainIds(showUninitialized = false) {
+        const blockchainIds = [];
+        for (let i = 0; i < this.blockchain.length; i += 1) {
+            const implementation = this.blockchain[i];
+            if (implementation.initialized || showUninitialized) {
+                blockchainIds.push(implementation.getBlockchainId());
+            }
+        }
+
+        return blockchainIds;
+    }
+
+    /**
      * Returns the blockchain id of the default blockchain implementation
      * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
      * @returns {String} The identifier string of the default blockchain implementation

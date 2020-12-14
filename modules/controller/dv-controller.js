@@ -20,6 +20,7 @@ class DVController {
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
         this.profileService = ctx.profileService;
+        this.dvService = ctx.dvService;
 
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
@@ -197,6 +198,16 @@ class DVController {
                 res.send({ message });
                 return;
             }
+
+            const checkResult = await this.dvService.checkFingerprintData(data_set_id, offer);
+
+            if (!checkResult.passed) {
+                this.logger.trace(checkResult.message);
+                res.status(400);
+                res.send({ message: checkResult.message });
+                return;
+            }
+
             const handler_data = {
                 data_set_id,
                 reply_id,
@@ -678,6 +689,15 @@ class DVController {
                     transactional: false,
                 });
             } else {
+                const checkResult = await this.dvService.checkFingerprintData(data_set_id, offer);
+
+                if (!checkResult.passed) {
+                    this.logger.trace(checkResult.message);
+                    res.status(400);
+                    res.send({ message: checkResult.message });
+                    return;
+                }
+
                 this.logger.info(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
                 this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
 
