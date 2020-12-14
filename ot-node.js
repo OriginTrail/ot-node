@@ -11,6 +11,7 @@ const Transport = require('./modules/network/transport');
 const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
+const DocumentStorage = require('./modules/Database/DocumentStorage');
 const Blockchain = require('./modules/Blockchain');
 const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-plugin-service');
 const fs = require('fs');
@@ -286,6 +287,7 @@ class OTNode {
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
+            documentStorage: awilix.asValue(new DocumentStorage(log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
@@ -321,6 +323,17 @@ class OTNode {
             // log.info(`Database version: ${myVersion}`);
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
+            console.log(err);
+            process.exit(1);
+        }
+
+        // Connecting to document database
+        const documentStorage = container.resolve('documentStorage');
+        try {
+            await documentStorage.connect();
+            log.info(`Connected to document database: ${documentStorage.identify()}`);
+        } catch (err) {
+            log.error(`Failed to connect to the document database: ${documentStorage.identify()}`);
             console.log(err);
             process.exit(1);
         }
@@ -521,6 +534,7 @@ class OTNode {
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             restApiController: awilix.asClass(RestApiController).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
+            documentStorage: awilix.asValue(new DocumentStorage(log)),
             epcisOtJsonTranspiler: awilix.asClass(EpcisOtJsonTranspiler).singleton(),
             wotOtJsonTranspiler: awilix.asClass(WotOtJsonTranspiler).singleton(),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),

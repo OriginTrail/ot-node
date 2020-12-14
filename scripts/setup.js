@@ -16,6 +16,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const argv = require('minimist')(process.argv.slice(2));
 const rc = require('rc');
+const MongoDB = require('../modules/Database/MongoDB');
 
 // Check for arguments sanity.
 if (argv.all && argv.configDir) {
@@ -147,3 +148,11 @@ arangoDbs.forEach((database) => {
     });
 });
 
+
+const db = new MongoDB(
+    'origintrail',
+    'staging_data',
+    null,
+);
+
+db.reinitialize();

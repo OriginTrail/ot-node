@@ -1,5 +1,3 @@
-const path = require('path');
-const fs = require('fs');
 const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 const Utilities = require('../Utilities');
@@ -29,13 +27,7 @@ class RestAPIServiceV2 {
         this.importService = ctx.importService;
 
         this.version_id = 'v2.0';
-        this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.graphStorage = ctx.graphStorage;
-        this.mapping_standards_for_event = new Map();
-        this.mapping_standards_for_event.set('ot-json', 'ot-json');
-        this.mapping_standards_for_event.set('gs1-epcis', 'gs1');
-        this.mapping_standards_for_event.set('graph', 'ot-json');
-        this.mapping_standards_for_event.set('wot', 'wot');
     }
 
     /**
@@ -51,7 +43,7 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
-            await this._importDataset(req, res);
+            await this.dcController.importDataset(req, res);
         });
 
         server.get(`/api/${this.version_id}/import/result/:handler_id`, async (req, res) => {
@@ -75,7 +67,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
-            this._getStandards(req, res);
+            this.dcController.getStandards(req, res);
         });
 
         server.get(`/api/${this.version_id}/get_element_issuer_identity/:element_id`, async (req, res) => {
@@ -179,6 +171,17 @@ class RestAPIServiceV2 {
                 await this.dvController.getTradingData(req, res);
             });
         }
+
+        server.post(`/api/${this.version_id}/staging_data/create`, async (req, res) => {
+            await this.dcController.handleStagingDataCreate(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/staging_data/remove`, async (req, res) => {
+            await this.dcController.handleStagingDataRemove(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/staging_data/publish`, async (req, res) => {
+            await this.dcController.handleStagingDataPublish(req, res);
 
         server.post(`/api/${this.version_id}/did/resolve`, async (req, res, next) => {
             await this.didController.resolve(req, res);
@@ -609,123 +612,10 @@ class RestAPIServiceV2 {
         res.send(returnChallenges);
     }
 
-    // This is hardcoded import in case it is needed to make new importer with this method
-    async _importDataset(req, res) {
-        this.logger.api('POST: Import of data request received.');
-
-        if (req.body === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        // Check if import type is valid
-        if (req.body.standard_id === undefined ||
-            this.stanards.indexOf(req.body.standard_id) === -1) {
-            res.status(400);
-            res.send({
-                message: 'Invalid import type',
-            });
-            return;
-        }
-
-        const standard_id =
-            this.mapping_standards_for_event.get(req.body.standard_id.toLowerCase());
-
-        let fileContent;
-        if (req.files !== undefined && req.files.file !== undefined) {
-            const inputFile = req.files.file.path;
-            fileContent = await Utilities.fileContents(inputFile);
-        } else if (req.body.file !== undefined) {
-            fileContent = req.body.file;
-        }
-
-        if (fileContent) {
-            try {
-                const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
-                });
-
-                const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
-
-                try {
-                    await Utilities.writeContentsToFile(
-                        cacheDirectory,
-                        inserted_object.dataValues.handler_id,
-                        fileContent,
-                    );
-                } catch (e) {
-                    const filePath =
-                        path.join(cacheDirectory, inserted_object.dataValues.handler_id);
-
-                    if (fs.existsSync(filePath)) {
-                        await Utilities.deleteDirectory(filePath);
-                    }
-                    res.status(500);
-                    res.send({
-                        message: `Error when creating import cache file for handler_id ${inserted_object.dataValues.handler_id}. ${e.message}`,
-                    });
-                    return;
-                }
-
-                const commandData = {
-                    standard_id,
-                    documentPath: path.join(cacheDirectory, inserted_object.dataValues.handler_id),
-                    handler_id: inserted_object.dataValues.handler_id,
-                };
-                const commandSequence = [
-                    'dcConvertToOtJsonCommand',
-                    'dcConvertToGraphCommand',
-                    'dcWriteImportToGraphDbCommand',
-                    'dcFinalizeImportCommand',
-                ];
-
-                await this.commandExecutor.add({
-                    name: commandSequence[0],
-                    sequence: commandSequence.slice(1),
-                    delay: 0,
-                    data: commandData,
-                    transactional: false,
-                });
-                res.status(200);
-                res.send({
-                    handler_id: inserted_object.dataValues.handler_id,
-                });
-            } catch (e) {
-                res.status(400);
-                res.send({
-                    message: 'No import data provided',
-                });
-            }
-        } else {
-            res.status(400);
-            res.send({
-                message: 'No import data provided',
-            });
-        }
-    }
-
     async _replicateDataset(req, res) {
         this.logger.api('POST: Replication of imported data request received.');
 
         this.dcController.handleReplicateRequest(req, res);
-    }
-
-    /**
-     * Get all supported standards
-     * @param req
-     * @param res
-     * @private
-     */
-    _getStandards(req, res) {
-        const msg = [];
-        this.stanards.forEach(standard =>
-            msg.push(standard));
-        res.send({
-            message: msg,
-        });
     }
 
     _getConnectionTypes(req, res) {
