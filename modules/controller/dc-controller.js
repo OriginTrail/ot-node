@@ -446,6 +446,7 @@ class DCController {
 
 
     async removePermissionedData(req, res) {
+        this.logger.api('GET: Remove permissioned data request recieved.');
         if (req.body === undefined ||
             req.body.dataset_id === undefined ||
             req.body.identifier_value === undefined ||

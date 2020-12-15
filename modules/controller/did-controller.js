@@ -12,7 +12,7 @@ class DIDController {
      * @returns {Promise<*>}
      */
     async resolve(req, res) {
-        this.logger.api('POST: DID resolve request request received.');
+        this.logger.api('POST: DID resolve request received.');
         if (!req.body) {
             res.status(400);
             res.send({
@@ -39,7 +39,7 @@ class DIDController {
      * @returns {Promise<*>}
      */
     async authenticate(req, res) {
-        this.logger.api('POST: DID resolve request request received.');
+        this.logger.api('POST: DID authentication request received.');
         if (!req.body) {
             res.status(400);
             res.send({
