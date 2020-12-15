@@ -371,7 +371,7 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
 
     expect(response, 'response should contain root_hash, dataSetId, document, transaction and data_provider_wallets keys').to.have.keys([
         'dataSetId', 'root_hash', 'document',
-        'transaction', 'data_provider_wallets',
+        'replication_info', 'data_provider_wallets',
     ]);
 
     expect(response.document, 'response.document should be in OT JSON format')
@@ -470,7 +470,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
-    let keys = ['formatted_dataset', 'data_creator', 'dc_node_wallets', 'transaction_hash'];
+    let keys = ['formatted_dataset', 'dc_node_wallets', 'replication_info'];
     if (lastExport.data.export_status) {
         expect(lastExport.data.export_status, 'response.data.export_status should be "COMPLETED"')
             .to.be.equal('COMPLETED');
@@ -524,9 +524,9 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const { dc } = this.state;
 
-    const fingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-    expect(fingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    const fingerprints = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
+    expect(Array.isArray(fingerprints), 'fingerprints response should be an array');
+    expect(fingerprints.length > 0, 'fingerprint response should not be empty');
 
 
     const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
@@ -535,12 +535,18 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     const calculatedDataSetId = ImportUtilities.calculateGraphPublicHash(importInfo.document);
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(importInfo.document);
 
-    expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
-        .to.be.equal(calculatedRootHash);
     expect(this.state.lastImport.data.root_hash, 'Root hash from last import and manually calculated should match')
         .to.be.equal(calculatedRootHash);
     expect(this.state.lastImport.data.dataset_id, 'Dataset ID and manually calculated ID should match')
         .to.be.equal(calculatedDataSetId);
+
+    for (const fingerprint of fingerprints) {
+        expect(fingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+        expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+        expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
+            .to.be.equal(calculatedRootHash);
+    }
 });
 
 Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|rd|th]+ node ([should|should not]+) have the same hashes$/, async function (nodeIndex1, nodeIndex2, condition) {
