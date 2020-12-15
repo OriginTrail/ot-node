@@ -68,7 +68,7 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
-            await this._replicateDataset(req, res);
+            await this.dcController.handleReplicateRequest(req, res);
         });
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
@@ -706,12 +706,6 @@ class RestAPIServiceV2 {
                 message: 'No import data provided',
             });
         }
-    }
-
-    async _replicateDataset(req, res) {
-        this.logger.api('POST: Replication of imported data request received.');
-
-        this.dcController.handleReplicateRequest(req, res);
     }
 
     /**

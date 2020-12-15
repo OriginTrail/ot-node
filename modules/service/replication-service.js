@@ -4,8 +4,8 @@ const fs = require('fs');
 
 const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
-const Models = require('../../models/index');
 const Utilities = require('../Utilities');
+const Models = require('../../models/index');
 const OtJsonUtilities = require('../OtJsonUtilities');
 
 /**
@@ -44,9 +44,9 @@ class ReplicationService {
         if (!offer) {
             throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
         }
-
+        this.logger.info('getImport');
         const otJson = await this.importService.getImport(offer.data_set_id);
-
+        this.logger.info('getImport finalized');
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,
             this.config.erc725Identity,
@@ -54,37 +54,40 @@ class ReplicationService {
             this.config.identity,
             otJson['@graph'],
         );
-
+        this.logger.info('addDataSellerForPermissionedData');
         ImportUtilities.removeGraphPermissionedData(otJson['@graph']);
-
+        this.logger.info('removeGraphPermissionedData');
         const hashes = {};
 
         const writeFilePromises = [];
         this.replicationCache[internalOfferId] = {};
         for (let i = 0; i < 3; i += 1) {
             const color = this.castNumberToColor(i);
-
+            this.logger.info('generateKeyPair');
             const litigationKeyPair = Encryption.generateKeyPair(2048);
             const distributionKeyPair = Encryption.generateKeyPair(512);
 
             // TODO Optimize encryption to reduce memory usage
+            this.logger.info('encryptDataset');
             let encryptedDataset =
                 ImportUtilities.encryptDataset(otJson, distributionKeyPair.privateKey);
-
+            this.logger.info('calculateDatasetRootHash');
             const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset);
-
+            this.logger.info('encryptDataset');
             encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
-
+            this.logger.info('prepareDatasetForGeneratingLitigationProof');
             let sortedDataset =
                 OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
             if (!sortedDataset) {
                 sortedDataset = encryptedDataset;
             }
+            this.logger.info('getLitigationRootHash');
             const litRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
-
+            this.logger.info('packEPK');
             const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
             // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
             // TODO Why are there zeroes here
+            this.logger.info('calculateDataChecksum');
             const distributionEpkChecksum =
                 Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
@@ -182,7 +185,8 @@ class ReplicationService {
      * @return {Promise<*>}
      */
     async loadReplication(internalOfferId, color) {
-        if (this.replicationCache[internalOfferId]) {
+        if (this.replicationCache[internalOfferId]
+            && this.replicationCache[internalOfferId][color]) {
             this.logger.trace(`Loaded replication from cache for offer internal ID ${internalOfferId} and color ${color}`);
             return this.replicationCache[internalOfferId][color];
         }
@@ -190,6 +194,10 @@ class ReplicationService {
         const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
         const data = JSON.parse(await Utilities.fileContents(colorFilePath));
+        if (!this.replicationCache[internalOfferId]) {
+            this.replicationCache[internalOfferId] = {};
+        }
+        this.replicationCache[internalOfferId][color] = data;
         this.logger.trace(`Loaded replication from file for offer internal ID ${internalOfferId} and color ${color}`);
 
         return data;
