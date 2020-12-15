@@ -825,9 +825,25 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
         expect(chosenCount).to.equal(3);
     }
 
+    const replication_info_keys = [
+        'offer_id',
+        'blockchain_id',
+        'offer_creation_transaction_hash',
+        'token_amount_per_holder',
+        'holding_time_in_minutes',
+    ];
+
     // Get original import info.
     const dcImportInfo =
         await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
+
+    for (const replication of dcImportInfo.replication_info) {
+        for (const key in replication) {
+            if (!replication_info_keys.includes(key)) {
+                delete replication[key];
+            }
+        }
+    }
 
     const promises = [];
     dc.state.replications.forEach(({ offer_id, dhId }) => {
@@ -846,7 +862,16 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                         node.state.node_rpc_url,
                         this.state.lastImport.data.dataset_id,
                     );
-                expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
+                expect(dhImportInfo.replication_info, 'DH replication info should be defined').to.not.be.undefined;
+
+                for (const replication of dhImportInfo.replication_info) {
+                    for (const key in replication) {
+                        if (!replication_info_keys.includes(key)) {
+                            delete replication[key];
+                        }
+                    }
+                }
+
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
                     accept();
                 } else {

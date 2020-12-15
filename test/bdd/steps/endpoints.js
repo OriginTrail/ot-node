@@ -432,7 +432,7 @@ Given(/^([DC|DH|DV]+) gets the list of available datasets for trading$/, async f
 
     const availableResponse = await httpApiHelper.apiPermissionedDataAvailable(host);
     expect(availableResponse[0], 'Should have keys called dataset, ot_objects, seller_erc_id, seller_node_id, timestamp')
-        .to.have.all.keys('dataset', 'ot_objects', 'seller_erc_id', 'seller_node_id', 'timestamp');
+        .to.have.all.keys('dataset', 'ot_objects', 'seller_identities', 'seller_node_id', 'timestamp');
 
     const { dataset, ot_objects, seller_node_id } = availableResponse[0];
     expect(this.state.lastImport.data.dataset_id).to.be.equal(dataset.id);

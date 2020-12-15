@@ -186,6 +186,7 @@ class DcOfferFinalizedCommand extends Command {
                     expected_answer: challenge.answer,
                     start_time: challenge.time,
                     offer_id: offer.offer_id,
+                    blockchain_id: offer.blockchain_id,
                     status: 'PENDING',
                 }));
         });
