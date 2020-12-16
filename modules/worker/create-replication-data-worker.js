@@ -31,6 +31,8 @@ process.on('message', async (data) => {
 
         const otJson = OtJsonUtilities.prepareDatasetForDatabaseRead(document);
 
+        await Utilities.writeContentsToFile(cacheDirectoryPath, handler_id, JSON.stringify(otJson));
+
         const writeFilePromises = [];
         const hashes = {};
         const colors = ['red', 'blue', 'green'];
