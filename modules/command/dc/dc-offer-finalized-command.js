@@ -21,6 +21,7 @@ class DcOfferFinalizedCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**

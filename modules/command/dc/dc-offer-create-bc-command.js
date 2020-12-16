@@ -15,6 +15,7 @@ class DCOfferCreateBcCommand extends Command {
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
         this.profileService = ctx.profileService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**

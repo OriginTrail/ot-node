@@ -576,6 +576,17 @@ class ImportService {
         const metadata = await this.db.findMultipleMetadataByDatasetIds(datasetIds);
         return metadata;
     }
+
+    /**
+     * Retrieves dataset metadata of multiple datasets by their ids
+     * @param datasetId - Dataset id
+     * @return {Promise<*>}
+     */
+    async getDatasetMetadata(datasetId) {
+        const metadata = await this.db.findMetadataByImportId(datasetId);
+        return metadata;
+    }
+
     /**
      * @param objectIdsArray id values of objects for which the proofs need to be generated
      * @param datasetId The dataset id to which the objects belong to
@@ -772,10 +783,10 @@ class ImportService {
     /**
      * Validates the OT-JSON document's metadata to be in valid OT-JSON format.
      * @param document OT-JSON document.
-     * @param blockchain_id {String} Blockchain implementation to use
+     * @param blockchain_ids {Array<String>} Blockchain implementations to use
      * @private
      */
-    async validateDocument(document, blockchain_id) {
+    async validateDocument(document, blockchain_ids) {
         if (document == null) {
             throw Error('[Validation Error] Document cannot be null.');
         }
@@ -834,19 +845,29 @@ class ImportService {
         }
 
         // Data creator identifier must contain ERC725 and the proper schema
-        const ERCIdentifier = identifiers.find(identifierObject => (
-            identifierObject.identifierType === 'ERC725' &&
-            identifierObject.validationSchema.includes(blockchain_id)
-        ));
-        if (ERCIdentifier == null || typeof ERCIdentifier !== 'object' ||
-            !ERCIdentifier.validationSchema.includes('/schemas/erc725-main') ||
-            !Utilities.isHexStrict(ERCIdentifier.identifierValue)) {
+        const ERCIdentifier = identifiers.find((identifierObject) => {
+            let validationSchemaSupported = false;
+            for (const blockchain_id of blockchain_ids) {
+                if (identifierObject.validationSchema.includes(blockchain_id)) {
+                    validationSchemaSupported = true;
+                }
+            }
+
+            return identifierObject.identifierType === 'ERC725' && validationSchemaSupported;
+        });
+
+        if (!ERCIdentifier) {
+            throw Error('[Validation error] Cannot find a valid data creator');
+        }
+
+        if (typeof ERCIdentifier !== 'object'
+            || !Utilities.isHexStrict(ERCIdentifier.identifierValue)
+            || !ERCIdentifier.validationSchema.includes('/schemas/erc725-main')) {
             throw Error('[Validation Error] Wrong format of data creator.');
         }
         await this.schemaValidator.validateSchema({
             document,
             schemaName: ERCIdentifier.validationSchema,
-            network_id: blockchain_id,
         });
 
         this._validateRelatedEntities(graph);

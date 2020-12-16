@@ -47,9 +47,9 @@ class DvPurchaseRequestCommand extends Command {
         const dataSeller = await Models.data_sellers.findAll({ where: seller_filter });
 
         if (!dataSeller || !Array.isArray(dataSeller) || dataSeller.length === 0) {
-            const error = `Unable to find data seller info with params: ${data_set_id}, ${ot_object_id}, ${seller_node_id}`;
+            let error = `Unable to find data seller info with params: ${data_set_id}, ${ot_object_id}, ${seller_node_id}`;
             if (blockchain_id) {
-                error.concat(`, blockchain ${blockchain_id}`);
+                error += `, blockchain ${blockchain_id}`;
             }
             this.logger.error(error);
             await Models.handler_ids.update(
@@ -99,6 +99,23 @@ class DvPurchaseRequestCommand extends Command {
             }
         }
         selected_price = selected_price.toString(10);
+
+        await Models.handler_ids.update(
+            {
+                data: JSON.stringify({
+                    data_set_id,
+                    seller_node_id,
+                    ot_object_id,
+                    blockchain_id: selected_blockchain_id,
+                    selected_price,
+                }),
+            },
+            {
+                where: {
+                    handler_id,
+                },
+            },
+        );
 
         const { node_wallet, node_private_key } =
             this.blockchain.getWallet(selected_blockchain_id).response;

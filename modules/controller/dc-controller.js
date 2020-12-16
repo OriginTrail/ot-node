@@ -1,6 +1,7 @@
 const utilities = require('../Utilities');
 const Models = require('../../models');
 const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 const constants = require('../constants');
 const { QueryTypes } = require('sequelize');
 const BN = require('bn.js');
@@ -24,6 +25,7 @@ class DCController {
         this.profileService = ctx.profileService;
         this.blockchain = ctx.blockchain;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -52,10 +54,27 @@ class DCController {
                     });
                     return;
                 }
+
+                const datasetMetadata = await this.importService
+                    .getDatasetMetadata(req.body.dataset_id);
+
+                const signatures = ImportUtilities
+                    .extractDatasetIdentities(datasetMetadata.datasetHeader);
+
                 let blockchain_id;
                 if (req.body.blockchain_id) {
                     // eslint-disable-next-line prefer-destructuring
                     blockchain_id = req.body.blockchain_id;
+
+                    if (!signatures.find(e => e.blockchain_id === blockchain_id)) {
+                        this.logger.info(`Invalid request. There is no dataset signature for blockchain_id ${req.body.blockchain_id}`);
+                        res.status(400);
+                        res.send({
+                            message: `There is no dataset signature for blockchain_id ${req.body.blockchain_id}`,
+                        });
+                        return;
+                    }
+
                     try {
                         this.blockchain._getImplementationFromId(blockchain_id);
                     } catch (error) {
@@ -64,9 +83,32 @@ class DCController {
                         res.send({
                             message: `Invalid blockchain_id ${blockchain_id}`,
                         });
+                        return;
                     }
                 } else {
-                    blockchain_id = this.blockchain.getDefaultBlockchainId();
+                    const defaultBlockchainId = this.blockchain.getDefaultBlockchainId();
+
+                    if (signatures.find(e => e.blockchain_id === defaultBlockchainId)) {
+                        blockchain_id = defaultBlockchainId;
+                    } else {
+                        const allMyBlockchainIds = this.blockchain.getAllBlockchainIds();
+
+                        for (const my_blockchain_id of allMyBlockchainIds) {
+                            if (signatures.find(e => e.blockchain_id === my_blockchain_id)) {
+                                blockchain_id = my_blockchain_id;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!blockchain_id) {
+                        this.logger.info('Invalid request. Cannot choose valid blockchain_id for replication');
+                        res.status(400);
+                        res.send({
+                            message: 'Cannot choose valid blockchain_id for replication',
+                        });
+                        return;
+                    }
                 }
 
                 const inserted_object = await Models.handler_ids.create({

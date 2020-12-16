@@ -914,17 +914,18 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
 
     const { dc } = this.state;
 
-    const myFingerprint =
+    const myFingerprints =
         await httpApiHelper.apiFingerprint(
             dc.state.node_rpc_url,
             this.state.lastImport.data.dataset_id,
         );
-    expect(myFingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    for (const myFingerprint of myFingerprints) {
+        expect(myFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+        expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    }
 
-    // TODO need better namings
-    this.state.lastMinusOneImportFingerprint = myFingerprint;
-    this.state.lastMinusOneImport = this.state.lastImport;
+    this.state.secondLastFingerprint = myFingerprints;
+    this.state.secondLastImport = this.state.lastImport;
 });
 
 Then(/^checking again first import's root hash should point to remembered value$/, async function () {
@@ -934,18 +935,24 @@ Then(/^checking again first import's root hash should point to remembered value$
 
     const { dc } = this.state;
 
-    const firstImportFingerprint =
+    const firstImportFingerprints =
         await httpApiHelper.apiFingerprint(
             dc.state.node_rpc_url,
-            this.state.lastMinusOneImport.data.dataset_id,
+            this.state.secondLastImport.data.dataset_id,
         );
-    expect(firstImportFingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-    expect(firstImportFingerprint.root_hash)
-        .to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
+    for (const firstImportFingerprint of firstImportFingerprints) {
+        expect(firstImportFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+        expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+        const secondLastFingerprint = this.state.secondLastFingerprint
+            .find(e => e.blockchain_id === firstImportFingerprint.blockchain_id);
+
+        expect(firstImportFingerprint.root_hash).to.be.equal(secondLastFingerprint.root_hash);
+    }
+
     expect(
-        deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint),
+        deepEqual(firstImportFingerprints, this.state.secondLastFingerprint),
         'import and root has in both scenario should be indentical',
     ).to.be.equal(true);
 });

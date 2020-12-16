@@ -341,7 +341,9 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
             const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);
 
             const myFingerprint = await httpApiHelper.apiFingerprint(host, dataset);
-            expect(`0x${rootHash}`).to.be.equal(myFingerprint.root_hash);
+            for (const fingerprint of myFingerprint) {
+                expect(`0x${rootHash}`).to.be.equal(fingerprint.root_hash);
+            }
         }
     }
 });

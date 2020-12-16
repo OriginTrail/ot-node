@@ -14,6 +14,7 @@ class DHLitigationInitiatedCommand extends Command {
         this.commandExecutor = ctx.commandExecutor;
         this.blockchain = ctx.blockchain;
         this.profileService = ctx.profileService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
