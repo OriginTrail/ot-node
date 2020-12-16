@@ -3,10 +3,12 @@ const request = require('request');
 class OtNodeClient {
     constructor(ctx) {
         this.logger = ctx.logger;
+        this.config = ctx.config;
     }
 
-    async getNodeData(remoteHostname, body) {
-        this.baseUrl = `https://${remoteHostname}:8900/api/latest`;
+    async getNodeData(remoteHostname, body, useSsl = true) {
+        this.useSsl = useSsl ? 'https' : 'http';
+        this.baseUrl = `${this.useSsl}://${remoteHostname}:8900/api/latest`;
         return new Promise((accept, reject) => {
             request({
                 method: 'POST',
@@ -24,8 +26,9 @@ class OtNodeClient {
         });
     }
 
-    async healthCheck(remoteHostname, timeout = 60000) {
-        this.baseUrl = `https://${remoteHostname}:8900/api/latest`;
+    async healthCheck(remoteHostname, timeout = 60000, useSsl = true) {
+        this.useSsl = useSsl ? 'https' : 'http';
+        this.baseUrl = `${this.useSsl}://${remoteHostname}:8900/api/latest`;
         return new Promise((accept, reject) => {
             request({
                 timeout,

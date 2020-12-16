@@ -125,6 +125,7 @@
       "fallback_sync_attempts_number": 3,
       "fallback_sync_attempts_delay": 60000,
       "active_node_data_sync_interval": 3600000,
+      "active_node_data_sync_use_ssl": false,
       "is_remote_node_available_attempts_number": 3,
       "is_remote_node_available_attempts_delay": 2000,
       "is_remote_node_available_attempts_timeout": 3000
@@ -260,6 +261,7 @@
       "fallback_sync_attempts_number": 3,
       "fallback_sync_attempts_delay": 60000,
       "active_node_data_sync_interval": 3600000,
+      "active_node_data_sync_use_ssl": true,
       "is_remote_node_available_attempts_number": 3,
       "is_remote_node_available_attempts_delay": 2000,
       "is_remote_node_available_attempts_timeout": 3000
@@ -397,6 +399,7 @@
       "fallback_sync_attempts_number": 3,
       "fallback_sync_attempts_delay": 60000,
       "active_node_data_sync_interval": 3600000,
+      "active_node_data_sync_use_ssl": true,
       "is_remote_node_available_attempts_number": 3,
       "is_remote_node_available_attempts_delay": 2000,
       "is_remote_node_available_attempts_timeout": 3000

@@ -26,7 +26,7 @@ class HighAvailabilityService {
                 } catch (error) {
                     this.logger.error('Unable to start fallback node. Error: ', error);
                     if (i + 1 === fallback_sync_attempts_number) {
-                        // todo add some kind of notification - add log, connect to papertrail
+                        this.logger.important(`Unable to start node as fallback. Active node ip: ${this.config.high_availability.remote_ip_address}`);
                         process.exit(1);
                     }
                     // eslint-disable-next-line no-await-in-loop
@@ -48,7 +48,7 @@ class HighAvailabilityService {
     async updateActiveAndFallbackNodeState() {
         const nodeStatuses = await Models.node_status.findAll();
 
-        const activeNode = nodeStatuses.filter(nodeStatus =>
+        const activeNode = nodeStatuses.find(nodeStatus =>
             nodeStatus.hostname === this.config.high_availability.private_hostname);
 
         await this.updateOrCreateNodeState(
@@ -113,7 +113,7 @@ class HighAvailabilityService {
             // eslint-disable-next-line no-await-in-loop
             remoteNodeAvailable = await this.isRemoteNodeAvailable();
         } while (remoteNodeAvailable);
-        this.logger.notify('Remote node not available taking over');
+        this.logger.important('Master node is unresponsive. I am taking over.');
         clearInterval(refreshIntervalId);
         this.restartRemoteNode(this.config.high_availability.remote_ip_address);
     }
@@ -128,11 +128,11 @@ class HighAvailabilityService {
 
         exec(`ssh root@${remoteNodeHostname} "docker restart otnode"`, (error, stdout, stderr) => {
             if (error) {
-                console.log(`Unable to restart remote node error: ${error.message}`);
+                this.logger.error(`Unable to restart remote node error: ${error.message}`);
                 return;
             }
             if (stderr) {
-                console.log(`Unable to restart remote node error: ${stderr}`);
+                this.logger.error(`Unable to restart remote node error: ${stderr}`);
                 return;
             }
             this.logger.trace('Remote node restarted');
@@ -190,7 +190,11 @@ class HighAvailabilityService {
         request.bootstraps = true;
         request.routingTable = true;
 
-        const masterNodeData = await this.otNodeClient.getNodeData(masterHostname, request);
+        const masterNodeData = await this.otNodeClient.getNodeData(
+            masterHostname,
+            request,
+            this.config.high_availability.active_node_data_sync_use_ssl,
+        );
 
         if (masterNodeData.erc725Identity) {
             fs.writeFileSync(path.join(
@@ -263,6 +267,7 @@ class HighAvailabilityService {
                 const response = await this.otNodeClient.healthCheck(
                     remote_hostname,
                     is_remote_node_available_attempts_timeout,
+                    this.config.high_availability.active_node_data_sync_use_ssl,
                 );
                 if (response.statusCode === 200) {
                     return true;
