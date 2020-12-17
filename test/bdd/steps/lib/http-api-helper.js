@@ -448,6 +448,33 @@ async function apiQueryNetwork(nodeRpcUrl, jsonQuery) {
 }
 
 /**
+ * Fetch api/permissioned_data/remove
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {json} jsonQuery
+ * @return {Promise.<status>}
+ */
+async function apiRemovePermissionedData(nodeRpcUrl, jsonQuery) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                uri: `${nodeRpcUrl}/api/latest/permissioned_data/remove`,
+                json: true,
+                body: jsonQuery,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
  * Fetch api/query/read_export response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
@@ -905,4 +932,5 @@ module.exports = {
     apiPermissionedDataGetPrice,
     apiPermissionedDataGetPriceResult,
     apiPermissionedDataPurchase,
+    apiRemovePermissionedData,
 };

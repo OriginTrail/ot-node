@@ -371,7 +371,7 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
 
     expect(response, 'response should contain root_hash, dataSetId, document, transaction and data_provider_wallets keys').to.have.keys([
         'dataSetId', 'root_hash', 'document',
-        'transaction', 'data_provider_wallets',
+        'replication_info', 'data_provider_wallets',
     ]);
 
     expect(response.document, 'response.document should be in OT JSON format')
@@ -441,6 +441,25 @@ Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, a
         .to.be.equal(ot_logo);
 });
 
+
+Then(/^the last exported dataset should not contain permissioned data as "([^"]*)"$/, async function (objectId) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const { lastExport } = this.state;
+
+    expect(lastExport.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
+    expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    expect(lastExport.data.formatted_dataset['@graph']
+        .find(x => x['@id'] === objectId).properties.permissioned_data.data)
+        .to.be.equal(undefined);
+});
+
 Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async function (importedFilePath) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -451,7 +470,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
-    let keys = ['formatted_dataset', 'data_creator', 'dc_node_wallets', 'transaction_hash'];
+    let keys = ['formatted_dataset', 'dc_node_wallets', 'replication_info'];
     if (lastExport.data.export_status) {
         expect(lastExport.data.export_status, 'response.data.export_status should be "COMPLETED"')
             .to.be.equal('COMPLETED');
@@ -505,9 +524,9 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const { dc } = this.state;
 
-    const fingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
-    expect(fingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    const fingerprints = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
+    expect(Array.isArray(fingerprints), 'fingerprints response should be an array');
+    expect(fingerprints.length > 0, 'fingerprint response should not be empty');
 
 
     const importInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
@@ -516,12 +535,18 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     const calculatedDataSetId = ImportUtilities.calculateGraphPublicHash(importInfo.document);
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(importInfo.document);
 
-    expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
-        .to.be.equal(calculatedRootHash);
     expect(this.state.lastImport.data.root_hash, 'Root hash from last import and manually calculated should match')
         .to.be.equal(calculatedRootHash);
     expect(this.state.lastImport.data.dataset_id, 'Dataset ID and manually calculated ID should match')
         .to.be.equal(calculatedDataSetId);
+
+    for (const fingerprint of fingerprints) {
+        expect(fingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+        expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+        expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
+            .to.be.equal(calculatedRootHash);
+    }
 });
 
 Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|rd|th]+ node ([should|should not]+) have the same hashes$/, async function (nodeIndex1, nodeIndex2, condition) {
@@ -800,13 +825,29 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
         expect(chosenCount).to.equal(3);
     }
 
+    const replication_info_keys = [
+        'offer_id',
+        'blockchain_id',
+        'offer_creation_transaction_hash',
+        'token_amount_per_holder',
+        'holding_time_in_minutes',
+    ];
+
     // Get original import info.
     const dcImportInfo =
         await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data.dataset_id);
 
+    for (const replication of dcImportInfo.replication_info) {
+        for (const key in replication) {
+            if (!replication_info_keys.includes(key)) {
+                delete replication[key];
+            }
+        }
+    }
+
     const promises = [];
-    dc.state.replications.forEach(({ internalOfferId, dhId }) => {
-        if (dc.state.offers.internalIDs[internalOfferId].dataSetId ===
+    dc.state.replications.forEach(({ offer_id, dhId }) => {
+        if (dc.state.offers.offerIDs[offer_id].dataSetId ===
             this.state.lastImport.data.dataset_id) {
             const node =
                 this.state.nodes.find(node => node.state.identity === dhId);
@@ -821,7 +862,16 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                         node.state.node_rpc_url,
                         this.state.lastImport.data.dataset_id,
                     );
-                expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
+                expect(dhImportInfo.replication_info, 'DH replication info should be defined').to.not.be.undefined;
+
+                for (const replication of dhImportInfo.replication_info) {
+                    for (const key in replication) {
+                        if (!replication_info_keys.includes(key)) {
+                            delete replication[key];
+                        }
+                    }
+                }
+
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
                     accept();
                 } else {
@@ -864,17 +914,18 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
 
     const { dc } = this.state;
 
-    const myFingerprint =
+    const myFingerprints =
         await httpApiHelper.apiFingerprint(
             dc.state.node_rpc_url,
             this.state.lastImport.data.dataset_id,
         );
-    expect(myFingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    for (const myFingerprint of myFingerprints) {
+        expect(myFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+        expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    }
 
-    // TODO need better namings
-    this.state.lastMinusOneImportFingerprint = myFingerprint;
-    this.state.lastMinusOneImport = this.state.lastImport;
+    this.state.secondLastFingerprint = myFingerprints;
+    this.state.secondLastImport = this.state.lastImport;
 });
 
 Then(/^checking again first import's root hash should point to remembered value$/, async function () {
@@ -884,18 +935,24 @@ Then(/^checking again first import's root hash should point to remembered value$
 
     const { dc } = this.state;
 
-    const firstImportFingerprint =
+    const firstImportFingerprints =
         await httpApiHelper.apiFingerprint(
             dc.state.node_rpc_url,
-            this.state.lastMinusOneImport.data.dataset_id,
+            this.state.secondLastImport.data.dataset_id,
         );
-    expect(firstImportFingerprint).to.have.keys(['root_hash']);
-    expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-    expect(firstImportFingerprint.root_hash)
-        .to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
+    for (const firstImportFingerprint of firstImportFingerprints) {
+        expect(firstImportFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+        expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+        const secondLastFingerprint = this.state.secondLastFingerprint
+            .find(e => e.blockchain_id === firstImportFingerprint.blockchain_id);
+
+        expect(firstImportFingerprint.root_hash).to.be.equal(secondLastFingerprint.root_hash);
+    }
+
     expect(
-        deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint),
+        deepEqual(firstImportFingerprints, this.state.secondLastFingerprint),
         'import and root has in both scenario should be indentical',
     ).to.be.equal(true);
 });

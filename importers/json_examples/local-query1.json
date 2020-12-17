@@ -1,0 +1,33 @@
+{
+  "@graph": [
+    {
+      "@id": "test1",
+      "@type": "otObject",
+      "identifiers": [
+        {
+          "@type": "id",
+          "@value": "test1"
+        }
+      ],
+      "properties": {
+        "key1": "test1"
+      },
+      "relations": []
+    },
+
+    {
+      "@id": "test2",
+      "@type": "otObject",
+      "identifiers": [
+        {
+          "@type": "id",
+          "@value": "test2"
+        }
+      ],
+      "properties": {
+        "key1": "test2"
+      },
+      "relations": []
+    }
+  ]
+}

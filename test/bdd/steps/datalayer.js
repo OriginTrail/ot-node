@@ -90,20 +90,22 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
     for (const i in Array.from({ length: myApiImportsInfo.length })) {
         const myDataSetId = myApiImportsInfo[i].data_set_id;
-        const myFingerprint = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
-        expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+        const myFingerprints = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
+        for (const fingerprint of myFingerprints) {
+            expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+        }
 
         const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
         const calculatedImportHash = ImportUtilities.calculateGraphPublicHash(dataset);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
-        const dataCreator = {
-            identifiers: ImportUtilities.getDataCreatorIdentifiers(dataset.datasetHeader),
-        };
         const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset);
 
-        expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
+        for (const fingerprint of myFingerprints) {
+            expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
+        }
     }
 });
 
@@ -339,7 +341,9 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
             const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);
 
             const myFingerprint = await httpApiHelper.apiFingerprint(host, dataset);
-            expect(`0x${rootHash}`).to.be.equal(myFingerprint.root_hash);
+            for (const fingerprint of myFingerprint) {
+                expect(`0x${rootHash}`).to.be.equal(fingerprint.root_hash);
+            }
         }
     }
 });

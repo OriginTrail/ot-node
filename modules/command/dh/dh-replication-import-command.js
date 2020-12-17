@@ -105,7 +105,6 @@ class DhReplicationImportCommand extends Command {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from document root hash ${originalRootHash}`);
         }
 
-
         // TODO: Verify EPK checksum
         // TODO: Verify distribution keys and hashes
         // TODO: Verify data creator id
@@ -187,7 +186,7 @@ class DhReplicationImportCommand extends Command {
                 origin: 'HOLDING',
             });
         }
-        this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
+        this.logger.important(`[DH] Replication finished for offer_id ${offerId}`);
 
         const toSign = [
             Utilities.denormalizeHex(offerId),
@@ -207,7 +206,11 @@ class DhReplicationImportCommand extends Command {
         };
 
         await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);
-        this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
+        const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+        bid.status = 'REPLICATED';
+        await bid.save({ fields: ['status'] });
+
+        this.logger.info(`Sent replication finished message for offer_id ${offerId} to node ${dcNodeId}`);
         return {
             commands: [
                 {

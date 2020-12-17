@@ -19,17 +19,6 @@ class Product {
      * @returns {Promise}
      */
     getVertices(queryObject) {
-        return new Promise((resolve, reject) => {
-            const validationError = ObjectValidator.validateSearchQueryObject(queryObject);
-            if (validationError) {
-                reject(validationError);
-            }
-            this.graphStorage.findImportIds(queryObject).then((vertices) => {
-                resolve(vertices);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
     }
 
 

@@ -21,6 +21,7 @@ class DcOfferFinalizedCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -186,6 +187,7 @@ class DcOfferFinalizedCommand extends Command {
                     expected_answer: challenge.answer,
                     start_time: challenge.time,
                     offer_id: offer.offer_id,
+                    blockchain_id: offer.blockchain_id,
                     status: 'PENDING',
                 }));
         });

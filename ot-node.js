@@ -480,6 +480,7 @@ class OTNode {
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
+            dvService: awilix.asClass(DVService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             remoteControl: awilix.asClass(RemoteControl).singleton(),

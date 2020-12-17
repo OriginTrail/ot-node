@@ -29,6 +29,7 @@ class DCLitigationInitiateCommand extends Command {
     async execute(command, transaction) {
         const {
             offerId,
+            blockchain_id,
             dhIdentity,
             objectIndex,
             blockIndex,
@@ -70,7 +71,7 @@ class DCLitigationInitiateCommand extends Command {
         await replicatedData.save({ fields: ['status'] });
 
         // todo pass blockchain identity
-        const dcIdentity = this.profileService.getIdentity();
+        const dcIdentity = this.profileService.getIdentity(blockchain_id);
         const otJson = await this.importService.getImport(offer.data_set_id);
 
         const encryptedDataset = importUtilities.encryptDataset(
@@ -91,7 +92,7 @@ class DCLitigationInitiateCommand extends Command {
 
         await this.blockchain.initiateLitigation(
             offerId, dhIdentity, dcIdentity, objectIndex, blockIndex,
-            merkleProof,
+            merkleProof, blockchain_id,
         ).response;
         return {
             commands: [{
@@ -100,6 +101,7 @@ class DCLitigationInitiateCommand extends Command {
                     objectIndex,
                     blockIndex,
                     offerId,
+                    blockchain_id,
                     dhIdentity,
                 },
                 period: 5000,

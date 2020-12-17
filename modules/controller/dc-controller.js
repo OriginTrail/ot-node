@@ -1,9 +1,11 @@
 const utilities = require('../Utilities');
 const Models = require('../../models');
 const Utilities = require('../Utilities');
+const ImportUtilities = require('../ImportUtilities');
 const constants = require('../constants');
 const { QueryTypes } = require('sequelize');
 const BN = require('bn.js');
+const ObjectValidator = require('../validator/object-validator');
 
 /**
  * DC related API controller
@@ -22,6 +24,8 @@ class DCController {
         this.commandExecutor = ctx.commandExecutor;
         this.profileService = ctx.profileService;
         this.blockchain = ctx.blockchain;
+        this.permissionedDataService = ctx.permissionedDataService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -50,10 +54,27 @@ class DCController {
                     });
                     return;
                 }
+
+                const datasetMetadata = await this.importService
+                    .getDatasetMetadata(req.body.dataset_id);
+
+                const signatures = ImportUtilities
+                    .extractDatasetIdentities(datasetMetadata.datasetHeader);
+
                 let blockchain_id;
                 if (req.body.blockchain_id) {
                     // eslint-disable-next-line prefer-destructuring
                     blockchain_id = req.body.blockchain_id;
+
+                    if (!signatures.find(e => e.blockchain_id === blockchain_id)) {
+                        this.logger.info(`Invalid request. There is no dataset signature for blockchain_id ${req.body.blockchain_id}`);
+                        res.status(400);
+                        res.send({
+                            message: `There is no dataset signature for blockchain_id ${req.body.blockchain_id}`,
+                        });
+                        return;
+                    }
+
                     try {
                         this.blockchain._getImplementationFromId(blockchain_id);
                     } catch (error) {
@@ -62,9 +83,32 @@ class DCController {
                         res.send({
                             message: `Invalid blockchain_id ${blockchain_id}`,
                         });
+                        return;
                     }
                 } else {
-                    blockchain_id = this.blockchain.getDefaultBlockchainId();
+                    const defaultBlockchainId = this.blockchain.getDefaultBlockchainId();
+
+                    if (signatures.find(e => e.blockchain_id === defaultBlockchainId)) {
+                        blockchain_id = defaultBlockchainId;
+                    } else {
+                        const allMyBlockchainIds = this.blockchain.getAllBlockchainIds();
+
+                        for (const my_blockchain_id of allMyBlockchainIds) {
+                            if (signatures.find(e => e.blockchain_id === my_blockchain_id)) {
+                                blockchain_id = my_blockchain_id;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!blockchain_id) {
+                        this.logger.info('Invalid request. Cannot choose valid blockchain_id for replication');
+                        res.status(400);
+                        res.send({
+                            message: 'Cannot choose valid blockchain_id for replication',
+                        });
+                        return;
+                    }
                 }
 
                 const inserted_object = await Models.handler_ids.create({
@@ -435,6 +479,107 @@ class DCController {
             dataPriceResponseObject,
             dv_node_id,
         );
+    }
+
+
+    async removePermissionedData(req, res) {
+        if (req.body === undefined ||
+            req.body.dataset_id === undefined ||
+            req.body.identifier_value === undefined ||
+            req.body.identifier_type === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { dataset_id, identifier_value } = req.body;
+
+        let status = await this.permissionedDataService.removePermissionedDataInDb(
+            dataset_id,
+            identifier_value,
+        );
+
+        const allMyIdentities = this.blockchain.getAllBlockchainIds()
+            .map(id => this.profileService.getIdentity(id));
+
+        await Models.data_sellers.destroy({
+            where: {
+                data_set_id: dataset_id,
+                seller_erc_id: {
+                    [Models.Sequelize.Op.in]: allMyIdentities,
+                },
+                ot_json_object_id: identifier_value,
+            },
+        });
+
+        if (status) { status = 'COMPLETED'; } else { status = 'FAILED'; }
+        res.status(200);
+        res.send({ status });
+    }
+
+    /**
+     * Query local data
+     * @param query Query
+     * @returns {Promise<*>}
+     */
+    async queryLocal(req, res) {
+        this.logger.api('POST: Query local request received.');
+        if (!req.body) {
+            res.status(400);
+            res.send({
+                message: 'Body is missing',
+            });
+            return;
+        }
+
+        const { query } = req.body;
+
+        this.logger.info(`Local query handling triggered with ${JSON.stringify(query)}.`);
+        const validationError = ObjectValidator.validateSearchQueryObject(query);
+        if (validationError) {
+            throw validationError;
+        }
+
+        const { path } = query[0];
+        const valuesArray = Utilities.arrayze(query[0].value);
+
+        const result = await this.graphStorage.findLocalQuery({
+            idType: path,
+            identifierKey: valuesArray,
+        });
+        const response = this.importService.packLocalQueryData(result);
+        for (let i = 0; i < response.length; i += 1) {
+            let offer_id = null;
+
+            // eslint-disable-next-line no-await-in-loop
+            const offer = await Models.offers.findOne({
+                where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+            });
+
+            if (offer) {
+                // eslint-disable-next-line prefer-destructuring
+                offer_id = offer.offer_id;
+            } else {
+                // eslint-disable-next-line no-await-in-loop
+                const bid = await Models.bids.findOne({
+                    where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+                });
+
+                    // eslint-disable-next-line prefer-destructuring
+                if (bid) { offer_id = bid.offer_id; }
+            }
+
+            // eslint-disable-next-line prefer-destructuring
+            response[i].dataset_id = response[i].datasets[0];
+            response[i].offer_id = offer_id;
+            delete response[i].datasets;
+        }
+
+        res.status(200);
+        res.send(response);
     }
 }
 

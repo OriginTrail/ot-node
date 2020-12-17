@@ -580,7 +580,7 @@ contract('Offer testing', async (accounts) => {
         res = await holdingStorage.getDifficultyOverride.call();
         assert(
             difficultyToSet.eq(res),
-            `Initial difficulty ovverride incorrect, got ${res.toString()} instead of ${difficultyToSet.toString()}!`,
+            `Initial difficulty override incorrect, got ${res.toString()} instead of ${difficultyToSet.toString()}!`,
         );
 
         // Create offer to check difficulty to be written

@@ -87,6 +87,7 @@ class DCChallengeCheckCommand extends Command {
                     period: 5000,
                     data: {
                         offerId,
+                        blockchain_id: challenge.blockchain_id,
                         objectIndex: challenge.object_index,
                         blockIndex: challenge.block_index,
                         dhIdentity,
