@@ -16,6 +16,7 @@ function printUsage {
 ENVIRONMENT="mainnet"
 BACKUPDIR="none"
 CONFIGDIR="none"
+CONTAINER_NAME="otnode"
 
 for i in "$@"
 do
@@ -36,6 +37,10 @@ case $i in
     ;;
     --backupDir=*)
     BACKUPDIR="${i#*=}"
+    shift # past argument with no value
+    ;;
+    --containerName=*)
+    CONTAINER_NAME="${i#*=}"
     shift # past argument with no value
     ;;
     *)
@@ -94,14 +99,14 @@ else
 	echo ""
 fi
 
-configFiles=(erc725_identity.json houston.txt identity.json kademlia.crt kademlia.key system.db)
+configFiles=(houston.txt identity.json kademlia.crt kademlia.key system.db)
 
 temp_folder=temp_ot_node_files_8092
 mkdir $temp_folder
 
 for file in ${configFiles[@]}; do
   sourcePath="${BACKUPDIR}/${file}"
-  destinationPath="otnode:${CONFIGDIR}/"
+  destinationPath="${CONTAINER_NAME}:${CONFIGDIR}/"
 
   echo "cp ${sourcePath} ${temp_folder}"
   cp ${sourcePath} ${temp_folder}/
@@ -113,7 +118,7 @@ done
 
 
 sourcePath="${BACKUPDIR}/.origintrail_noderc"
-destinationPath="otnode:/ot-node/current/"
+destinationPath="${CONTAINER_NAME}:/ot-node/current/"
 
 echo "cp ${sourcePath} ${temp_folder}"
 cp ${sourcePath} ${temp_folder}/
@@ -122,8 +127,21 @@ sourcePath=./${temp_folder}/.origintrail_noderc
 echo "docker cp ${sourcePath} ${destinationPath}"
 docker cp ${sourcePath} ${destinationPath}
 
-certFiles=(fullchain.pub privkey.pem)
+identitiesDir="${BACKUPDIR}/identities"
+if [ -d ${identitiesDir} ]
+then
+  sourcePath="${BACKUPDIR}/identities"
+  destinationPath="${CONTAINER_NAME}:${CONFIGDIR}/"
 
+  echo "cp -r ${sourcePath} ${temp_folder}/"
+  cp -r ${sourcePath} ${temp_folder}/
+
+  sourcePath=./${temp_folder}/identities
+  echo "docker cp ${sourcePath} ${destinationPath}"
+  docker cp ${sourcePath} ${destinationPath}
+fi
+
+certFiles=(fullchain.pub privkey.pem)
 if [ -e "${BACKUPDIR}/fullchain.pem" ] && [ -e "${BACKUPDIR}/privkey.pem" ]
 then
 	echo "mkdir ${temp_folder}/certs"
@@ -135,7 +153,7 @@ then
 	echo "cp ${BACKUPDIR}/privkey.pem ./${temp_folder}/certs/"
 	cp ${BACKUPDIR}/privkey.pem ./${temp_folder}/certs
 
-	echo "docker cp ${temp_folder}/certs otnode:/ot-node/"
+	echo "docker cp ${temp_folder}/certs ${CONTAINER_NAME}:/ot-node/"
 	docker cp ${temp_folder}/certs otnode:/ot-node/
 else
 	echo "Cert files do not exits, skipping..."
@@ -145,7 +163,7 @@ migrationDir="${BACKUPDIR}/migrations"
 if [ -d ${migrationDir} ]
 then
   sourcePath="${BACKUPDIR}/migrations"
-  destinationPath="otnode:${CONFIGDIR}/"
+  destinationPath="${CONTAINER_NAME}:${CONFIGDIR}/"
 
   echo "cp -r ${sourcePath} ${temp_folder}/"
   cp -r ${sourcePath} ${temp_folder}/
@@ -155,9 +173,8 @@ then
   docker cp ${sourcePath} ${destinationPath}
 fi
 
-
-echo docker cp otnode:/ot-node/current/config/config.json ./
-docker cp otnode:/ot-node/current/config/config.json ./
+echo docker cp ${CONTAINER_NAME}:/ot-node/current/config/config.json ./
+docker cp ${CONTAINER_NAME}:/ot-node/current/config/config.json ./
 # cp ~/ot-node/config/config.json ./
 
 databaseName=($(cat config.json | grep "\"database\": \"" | sed -r "s_([[:blank:]]+)\"database\":[[:blank:]]\"__" | sed "s/\",$//"))
@@ -177,23 +194,23 @@ rm config.json
 echo "cp -r ${BACKUPDIR}/arangodb ${temp_folder}/"
 cp -r ${BACKUPDIR}/arangodb ${temp_folder}/
 
-echo "docker cp ${temp_folder}/arangodb otnode:${CONFIGDIR}/"
-docker cp "${temp_folder}/arangodb" otnode:${CONFIGDIR}/
+echo "docker cp ${temp_folder}/arangodb ${CONTAINER_NAME}:${CONFIGDIR}/"
+docker cp "${temp_folder}/arangodb" ${CONTAINER_NAME}:${CONFIGDIR}/
 
 
 echo rm -rf ${temp_folder}
 rm -rf ${temp_folder}
 
-echo docker start otnode
-docker start otnode
+echo docker start ${CONTAINER_NAME}
+docker start ${CONTAINER_NAME}
 
 echo sleep 20
 sleep 20
 
-echo "docker exec otnode arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true"
-docker exec otnode arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true
+echo "docker exec ${CONTAINER_NAME} arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true"
+docker exec ${CONTAINER_NAME} arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true
 
-echo docker restart otnode
-docker restart otnode
+echo docker restart ${CONTAINER_NAME}
+docker restart ${CONTAINER_NAME}
 
 
