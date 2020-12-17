@@ -28,7 +28,7 @@ class Blockchain {
 
         this.blockchain = [];
 
-        this.config = this.attachDefaultConfig(this.config, defaultBlockchainConfig);
+        this.config = Blockchain.attachDefaultConfig(this.config, defaultBlockchainConfig);
 
         for (let i = 0; i < this.config.implementations.length; i += 1) {
             const implementation_configuration = this.config.implementations[i];
@@ -89,7 +89,7 @@ class Blockchain {
      * @param defaultConfig {Object} - The default blockchain configuration for current environment
      * @returns {Object} - The new blockchain configuration
      */
-    attachDefaultConfig(config, defaultConfig) {
+    static attachDefaultConfig(config, defaultConfig) {
         const result = Object.assign({}, config);
 
         if (config.implementations && defaultConfig.implementations
