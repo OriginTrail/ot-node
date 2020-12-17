@@ -4,6 +4,7 @@ const path = require('path');
 const Models = require('../../models');
 const constants = require('../constants');
 const { Pool } = require('pg');
+const Utilities = require('../Utilities');
 
 class HighAvailabilityService {
     constructor(ctx) {
@@ -11,6 +12,7 @@ class HighAvailabilityService {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.otNodeClient = ctx.otNodeClient;
+        this.web3 = ctx.web3;
     }
 
     async startHighAvailabilityNode() {
@@ -49,12 +51,12 @@ class HighAvailabilityService {
         const nodeStatuses = await Models.node_status.findAll();
 
         const activeNode = nodeStatuses.find(nodeStatus =>
-            nodeStatus.hostname === this.config.high_availability.private_hostname);
+            nodeStatus.hostname === this.config.high_availability.private_ip_address);
 
         await this.updateOrCreateNodeState(
             activeNode,
             constants.NODE_STATUS.active,
-            this.config.high_availability.private_hostname,
+            this.config.high_availability.private_ip_address,
         );
 
         const fallbackNode = nodeStatuses.filter(nodeStatus =>
@@ -91,7 +93,7 @@ class HighAvailabilityService {
     async startFallbackSync() {
         this.logger.notify('Entering busy wait loop');
         const {
-            active_node_data_sync_interval,
+            active_node_data_sync_interval_in_hours,
             is_remote_node_available_attempts_delay,
         } = this.config.high_availability;
         await this.getMasterNodeData(this.config.high_availability.remote_hostname);
@@ -105,7 +107,7 @@ class HighAvailabilityService {
                     await this.getMasterNodeData(this.config.high_availability.remote_hostname);
                 }
             },
-            active_node_data_sync_interval, // read from configuration set 12h
+            active_node_data_sync_interval_in_hours * 60 * 60 * 1000,
         );
         do {
             // eslint-disable-next-line no-await-in-loop
@@ -164,31 +166,48 @@ class HighAvailabilityService {
 
     async getMasterNodeData(masterHostname) {
         this.logger.trace('Synchronizing with master node....');
-        const request = {};
+        const message = {};
         // fetch identities if missing
         const identityFilePath = path.join(
             this.config.appDataPath,
             this.config.erc725_identity_filepath,
         );
         if (!fs.existsSync(identityFilePath)) {
-            request.erc725Identity = true;
+            message.erc725Identity = true;
+        }
+        const networkIdentity = path.join(
+            this.config.appDataPath,
+            this.config.identity_filepath,
+        );
+        if (!fs.existsSync(networkIdentity)) {
+            message.networkIdentity = true;
         }
         const kademliaCertFilePath = path.join(
             this.config.appDataPath,
             this.config.ssl_certificate_path,
         );
         if (!fs.existsSync(kademliaCertFilePath)) {
-            request.kademliaCert = true;
+            message.kademliaCert = true;
         }
         const kademliaKeyFilePath = path.join(
             this.config.appDataPath,
             this.config.ssl_keypath,
         );
         if (!fs.existsSync(kademliaKeyFilePath)) {
-            request.kademliaKey = true;
+            message.kademliaKey = true;
         }
-        request.bootstraps = true;
-        request.routingTable = true;
+        message.bootstraps = true;
+        message.routingTable = true;
+
+        message.wallet = this.config.node_wallet;
+        const request = {
+            message,
+            messageSignature: Utilities.generateRsvSignature(
+                message,
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
 
         const masterNodeData = await this.otNodeClient.getNodeData(
             masterHostname,
@@ -201,6 +220,12 @@ class HighAvailabilityService {
                 this.config.appDataPath,
                 this.config.erc725_identity_filepath,
             ), masterNodeData.erc725Identity);
+        }
+        if (masterNodeData.networkIdentity) {
+            fs.writeFileSync(path.join(
+                this.config.appDataPath,
+                this.config.identity_filepath,
+            ), masterNodeData.networkIdentity);
         }
         if (masterNodeData.kademliaCert) {
             fs.writeFileSync(path.join(

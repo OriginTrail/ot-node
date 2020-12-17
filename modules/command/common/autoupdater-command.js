@@ -68,12 +68,12 @@ class AutoupdaterCommand extends Command {
 
             if (this.config.high_availability_setup) {
                 const activeNode = await Models.node_status.findOne({
-                    where: { hostname: this.config.high_availability.private_hostname },
+                    where: { hostname: this.config.high_availability.private_ip_address },
                 });
                 await this.highAvailabilityService.updateOrCreateNodeState(
                     activeNode,
                     constants.NODE_STATUS.updating,
-                    this.config.high_availability.private_hostname,
+                    this.config.high_availability.private_ip_address,
                 );
             }
 

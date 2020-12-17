@@ -3,6 +3,7 @@ const Models = require('../../models/index');
 const ImportUtilities = require('../ImportUtilities');
 const fs = require('fs');
 const path = require('path');
+const Utilities = require('../Utilities');
 
 class InfoController {
     constructor(ctx) {
@@ -10,6 +11,7 @@ class InfoController {
         this.transport = ctx.transport;
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
+        this.web3 = ctx.web3;
     }
 
     async getNodeInfo(req, res) {
@@ -51,38 +53,53 @@ class InfoController {
 
     async getNodeData(req, res) {
         this.logger.api('GET: Node data request received.');
-        // todo we should allow this call only for nodes that are part of ha setup
-        // todo add encryption we can use wallet since both nodes in ha
-        //  setup should have the same wallet
         try {
+            const { message, messageSignature } = req.body;
+            if (
+                message.wallet !== this.config.node_wallet ||
+                !Utilities.isMessageSigned(this.web3, message, messageSignature)
+            ) {
+                this.logger.error('Unauthorized node data request');
+                res.status(500);
+                res.send({
+                    message: 'Unauthorized node data request',
+                });
+            }
+
             await this.transport.dumpNetworkInfo();
             const response = {};
 
-            if (req.body.erc725Identity) {
+            if (message.erc725Identity) {
                 response.erc725Identity = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     this.config.erc725_identity_filepath,
                 )).toString();
             }
-            if (req.body.kademliaCert) {
+            if (message.networkIdentity) {
+                response.networkIdentity = fs.readFileSync(path.join(
+                    this.config.appDataPath,
+                    this.config.identity_filepath,
+                )).toString();
+            }
+            if (message.kademliaCert) {
                 response.kademliaCert = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     this.config.ssl_certificate_path,
                 )).toString();
             }
-            if (req.body.kademliaKey) {
+            if (message.kademliaKey) {
                 response.kademliaKey = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     this.config.ssl_keypath,
                 )).toString();
             }
-            if (req.body.bootstraps) {
+            if (message.bootstraps) {
                 response.bootstraps = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     'bootstraps.json',
                 )).toString();
             }
-            if (req.body.routingTable) {
+            if (message.routingTable) {
                 response.routingTable = fs.readFileSync(path.join(
                     this.config.appDataPath,
                     'router.json',
