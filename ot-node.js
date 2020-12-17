@@ -50,6 +50,7 @@ const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
 const GasStationService = require('./modules/service/gas-station-service');
+const RestoreService = require('./scripts/restore');
 
 const semver = require('semver');
 
@@ -220,6 +221,8 @@ class OTNode {
                 process.exit(1);
             }
         }
+
+        this._checkRestoreRequestStatus(config);
 
         Object.seal(config);
 
@@ -458,6 +461,46 @@ class OTNode {
         }
     }
 
+    _checkRestoreRequestStatus(config) {
+        const restoreFile = path.join(config.appDataPath, 'restore_request_status.txt');
+
+        if (fs.existsSync(restoreFile)) {
+            log.info('Detected restore request file, checking status.');
+            const restoreStatus = fs.readFileSync(restoreFile).toString();
+
+            switch (restoreStatus) {
+            case 'COMPLETED':
+                log.info('Restore status is completed, continuing with node startup.');
+                break;
+            case 'FAILED':
+                log.warn('Restore status is failed, cancelling node startup');
+                if (fs.existsSync(path.join(config.appDataPath, 'restore_error_message.txt'))) {
+                    log.warn(`Found error during restore procedure: \n${fs.readFileSync(path
+                        .join(config.appDataPath, 'restore_error_message.txt')).toString()}`);
+                }
+                log.important('To start your node please fix the restoration error(s) or skip the restore process by deleting the restore request file.');
+                process.exit(1);
+                break;
+            case 'REQUESTED':
+            default:
+                log.info('Restore status is requested, starting restore process');
+                try {
+                    const restorer = new RestoreService(log);
+                    restorer.restore();
+                    log.info('Successfully completed node restore, restarting to read restored files.');
+                    fs.writeFileSync(restoreFile, 'COMPLETED');
+                    // Exit with unexpected code, so that the node restarts
+                    process.exit(2);
+                } catch (e) {
+                    log.error(`Failed to execute node restore. Error: ${e.toString()}`);
+                    fs.writeFileSync(path.join(config.appDataPath, 'restore_error_message.txt'), e.toString());
+                    fs.writeFileSync(restoreFile, 'FAILED');
+                    process.exit(1);
+                }
+                break;
+            }
+        }
+    }
     /**
      * Starts bootstrap node
      * @return {Promise<void>}

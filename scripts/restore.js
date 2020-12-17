@@ -1,154 +1,249 @@
-const mkdirp = require('mkdirp');
 const fs = require('fs');
+const rc = require('rc');
 const argv = require('minimist')(process.argv.slice(2));
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 const path = require('path');
 require('dotenv').config();
 
-if (!process.env.NODE_ENV) {
-    // Environment not set. Use the production.
-    process.env.NODE_ENV = 'testnet';
-} else if (['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) < 0) {
-    console.error(`Unsupported environment '${process.env.NODE_ENV}'`);
-    return 1;
-}
+const Blockchain = require('../modules/Blockchain');
+const Utilities = require('../modules/Utilities');
 
-const configjson = require('../config/config.json');
+const pjson = require('../package.json');
+const defaultConfigFile = require('../config/config.json');
 
-const defaultConfig = configjson[process.env.NODE_ENV];
+class RestoreService {
+    constructor(logger) {
+        this.logger = logger;
 
-if (!argv.config) {
-    argv.config = '.origintrail_noderc';
-}
-
-if (!argv.configDir) {
-    argv.configDir = '../data/';
-}
-
-if (!argv.certs) {
-    argv.certs = '../certs/';
-}
-
-if (!argv.identities) {
-    argv.identities = '../identities/';
-}
-
-if (!argv.restore_directory) {
-    argv.restore_directory = '../backup/';
-}
-
-console.log('Restore OT node...');
-
-const configPath = argv.config.lastIndexOf('/') === -1 ? '' : argv.config.slice(0, argv.config.lastIndexOf('/'));
-const configName = argv.config.slice(argv.config.lastIndexOf('/') + 1);
-const configDirectory = argv.configDir.replace(/\/$/, '');
-const certsDirectory = argv.certs.replace(/\/$/, '');
-const restorePath = argv.restore_directory.replace(/\/$/, '');
-const identitiesDirectory = argv.identities.replace(/\/$/, '');
-
-console.log('Setup path variables...');
-
-const files = ['identity.json', 'kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db', 'erc725_identity.json', configName];
-const certs = ['fullchain.pem', 'privkey.pem'];
-
-const configFile = JSON.parse(fs.readFileSync(`${restorePath}/.origintrail_noderc`));
-
-if (!fs.existsSync(`${configPath}`)) {
-    console.log(`Directory ${configPath} does not exist. Creating...`);
-    mkdirp.sync(`${configPath}`);
-}
-
-if (!fs.existsSync(`${configDirectory}`)) {
-    console.log(`Directory ${configDirectory} does not exist. Creating...`);
-    mkdirp.sync(`${configDirectory}`);
-}
-
-if (!fs.existsSync(`${certsDirectory}`)) {
-    console.log(`Directory ${certsDirectory} does not exist. Creating...`);
-    mkdirp.sync(`${certsDirectory}`);
-}
-
-if (!fs.existsSync(`${identitiesDirectory}`)) {
-    console.log(`Directory ${identitiesDirectory} does not exist. Creating...`);
-    mkdirp.sync(`${identitiesDirectory}`);
-}
-
-for (const file of files) {
-    const src = `${restorePath}/${file}`;
-    let dest = `${configDirectory}/${file}`;
-    if (file === '.origintrail_noderc') {
-        if (configPath !== '') {
-            dest = `${configPath}/${configName}`;
+        // Get the environment name
+        if (!process.env.NODE_ENV) {
+            // Environment not set. Use the production.
+            this.environment = 'testnet';
+        } else if (['development', 'testnet', 'mainnet', 'mariner'].indexOf(process.env.NODE_ENV) < 0) {
+            const message = `Unsupported environment '${process.env.NODE_ENV}'`;
+            this.logger.error(message);
+            throw Error(message);
+        } else if (process.env.NODE_ENV === 'mariner') {
+            this.environment = 'mainnet';
         } else {
-            dest = `${configName}`;
+            this.environment = process.env.NODE_ENV;
+        }
+
+        if (!argv.restore_directory) {
+            this.restore_directory = this._getLatestBackup();
+        } else {
+            this.restore_directory = argv.restore_directory;
+        }
+        if (!fs.existsSync(this.restore_directory)) {
+            const message = `Could not find backup directory ${this.restore_directory}`;
+            this.logger.error(message);
+            throw Error(message);
+        }
+
+        // Get user specified config file
+        if (!argv.config) {
+            this.config_location = '/ot-node/';
+            this.config_name = '.origintrail_noderc';
+            argv.config = path.join(this.config_location, this.config_name);
+        } else {
+            this.config_location = path.dirname(argv.config);
+            this.config_name = path.basename(argv.config);
+        }
+
+        // Get location of node data storage
+        if (!argv.configDir) {
+            this.configDir = '/ot-node/data/';
+        } else {
+            this.configDir = argv.configDir;
+        }
+
+        // [Optional] Get location of node SSL certificates
+        if (!argv.certs) {
+            this.certs = '/ot-node/certs/';
+        } else {
+            this.certs = argv.certs;
+        }
+
+        this.config = this._loadConfiguration();
+    }
+
+    restore() {
+        const identityFiles = this._getIdentityFileNames();
+        const certs = this._getCertificateFileNames();
+        const dataFiles = this._getDataFileNames();
+
+        const res = this._moveFileFromBackupToNode(
+            this.config_name,
+            this.restore_directory, this.config_location,
+        );
+        if (!res) {
+            throw Error(`Cannot restore file ${this.config_name}`);
+        }
+
+        for (const file of identityFiles) {
+            const res = this
+                ._moveFileFromBackupToNode(file, this.restore_directory, this.config.appDataPath);
+            if (!res) {
+                throw Error(`Cannot restore file ${file}`);
+            }
+        }
+
+        for (const file of dataFiles) {
+            const res = this
+                ._moveFileFromBackupToNode(file, this.restore_directory, this.config.appDataPath);
+            if (!res) {
+                throw Error(`Cannot restore file ${file}`);
+            }
+        }
+
+        for (const file of certs) {
+            this._moveFileFromBackupToNode(file, this.restore_directory, this.certs, false);
+        }
+
+        this._moveDatabaseFromBackupToNode();
+
+        this.logger.log('***********************************************');
+        this.logger.log('*****                                     *****');
+        this.logger.log('***        Restore process complete!        ***');
+        this.logger.log('*****                                     *****');
+        this.logger.log('***********************************************');
+    }
+
+    _getLatestBackup() {
+        const backupRepository = '/ot-node/backup/';
+
+        if (!fs.existsSync(backupRepository)) {
+            throw Error('Could not find backup directory /ot-node/backup/');
+        }
+
+        const backupContents = fs.readdirSync(backupRepository);
+
+        const out = [];
+        backupContents.forEach((directory) => {
+            const stats = fs.statSync(path.join(backupRepository, directory));
+            if (stats.isDirectory()) {
+                out.push({ directory, mtime: stats.mtime.getTime() });
+            }
+        });
+
+        if (out.length === 0) {
+            throw Error('Could not find latest backup directory');
+        }
+        out.sort((a, b) => b.mtime - a.mtime);
+
+        return path.join(backupRepository, out[0].directory);
+    }
+
+    _loadConfiguration() {
+        try {
+            const defaultConfig = Utilities.copyObject(defaultConfigFile[this.environment]);
+            const defaultBlockchainConfig = Utilities.copyObject(defaultConfig.blockchain);
+
+            // Load config.
+            const config = rc(pjson.name, defaultConfig);
+
+            config.appDataPath = this.configDir;
+            config.blockchain =
+                Blockchain.attachDefaultConfig(config.blockchain, defaultBlockchainConfig);
+
+            return config;
+        } catch (error) {
+            throw Error(`Failed to read configuration. ${error}.`);
         }
     }
-    if (fs.existsSync(src)) {
-        console.log(`Restore: ${src} -> ${dest}`);
-        fs.copyFileSync(src, dest, (err) => {
-            if (err) {
-                console.error(err);
-                return 1;
+
+    _getIdentityFileNames() {
+        const identityFileNames = [];
+
+        for (const blockchain of this.config.blockchain.implementations) {
+            const { node_wallet_path, identity_filepath } = blockchain;
+            identityFileNames.push(node_wallet_path);
+            identityFileNames.push(identity_filepath);
+        }
+
+        const { identity_filepath } = this.config;
+        identityFileNames.push(identity_filepath);
+
+        return identityFileNames;
+    }
+
+    _getCertificateFileNames() {
+        const certificateFileNames = [];
+
+        certificateFileNames.push('fullchain.pem');
+        certificateFileNames.push('privkey.pem');
+
+        return certificateFileNames;
+    }
+
+    _getDataFileNames() {
+        const dataFileNames = [];
+
+        const dataFiles = ['kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db'];
+        for (const dataFile of dataFiles) {
+            dataFileNames.push(dataFile);
+        }
+
+        return dataFileNames;
+    }
+
+    _moveFileFromBackupToNode(fileName, backupDir, restoreDir, showErrors = true) {
+        try {
+            const source = path.join(backupDir, fileName);
+            if (!fs.existsSync(source)) {
+                return false;
             }
-        });
+
+            const destination = path.join(restoreDir, fileName);
+            const destinationDir = path.dirname(destination);
+            if (!fs.existsSync(destinationDir)) {
+                execSync(`mkdir -p ${destinationDir}`);
+            }
+
+            this.logger.log(`Restore: ${source} -> ${destination}`);
+            fs.copyFileSync(source, destination);
+            return true;
+        } catch (e) {
+            if (showErrors) {
+                this.logger.error(e.toString());
+            }
+            return false;
+        }
+    }
+
+    _moveDatabaseFromBackupToNode() {
+        console.log('Database import...');
+
+        if (this.config.database.password_file_name) {
+            const databasePasswordFilePath =
+                path.join(this.config.appDataPath, this.config.database.password_file_name);
+            if (fs.existsSync(databasePasswordFilePath)) {
+                this.logger.log('Using existing graph database password.');
+                this.config.database.password =
+                    fs.readFileSync(databasePasswordFilePath).toString();
+            } else {
+                this.logger.log('================================================================');
+                this.logger.log('          Using default database password for access            ');
+                this.logger.log('================================================================');
+            }
+        }
+
+        switch (this.config.database.provider) {
+        case 'arangodb':
+            execSync(
+                `arangorestore --server.database ${this.config.database.database} --server.username ${this.config.database.username} --server.password ${this.config.database.password === '' ? '\'\'' : `'${this.config.database.password}'`} --input-directory '${this.restore_directory}/arangodb/' --overwrite true`,
+                (error, stdout, stderr) => {
+                    this.logger.log(`${stdout}`);
+                    if (error !== null) {
+                        throw Error(error);
+                    }
+                    this.logger.log('Database restore finished.');
+                },
+            );
+            break;
+        default:
+        }
     }
 }
 
-for (const cert of certs) {
-    const src = `${restorePath}/${cert}`;
-    const dest = `${certsDirectory}/${cert}`;
-
-    if (fs.existsSync(src)) {
-        console.log(`Restore: ${src} -> ${dest}`);
-        fs.copyFileSync(src, dest, (err) => {
-            if (err) {
-                console.error(err);
-                return 1;
-            }
-        });
-    }
-}
-
-console.log('Database import...');
-
-if (!configFile.database) {
-    configFile.database = defaultConfig.database;
-}
-if (!configFile.database.provider) {
-    configFile.database.provider = defaultConfig.database.provider;
-}
-if (!configFile.database.username) {
-    configFile.database.username = defaultConfig.database.username;
-}
-
-if (configFile.database.password_file_name) {
-// eslint-disable-next-line max-len
-    const databasePasswordFilePath = path.join(configDirectory, configFile.database.password_file_name);
-    if (fs.existsSync(databasePasswordFilePath)) {
-        console.log('Using existing graph database password.');
-        configFile.database.password = fs.readFileSync(databasePasswordFilePath).toString();
-    } else {
-        console.log('================================================================');
-        console.log('          Using default database password for access            ');
-        console.log('================================================================');
-    }
-}
-
-switch (configFile.database.provider) {
-case 'arangodb':
-    exec(
-        `arangorestore --server.database ${configFile.database.database} --server.username ${configFile.database.username} --server.password ${configFile.database.password === '' ? '\'\'' : configFile.database.password} --input-directory '${restorePath}/arangodb/' --overwrite true`,
-        (error, stdout, stderr) => {
-            console.log(`${stdout}`);
-            if (error !== null) {
-                console.error(`${error}`);
-                return 1;
-            }
-            console.log('Restore finished.');
-        },
-    );
-    break;
-default:
-}
-
-return 0;
+module.exports = RestoreService;
