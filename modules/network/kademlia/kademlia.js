@@ -326,8 +326,7 @@ class Kademlia {
             });
 
             callback(null, null);
-        } else if (this.kademliaUtilities.checkBootstraps(peers)
-            && this.kademliaUtilities.getRoutingTable(this.node.router)) {
+        } else if (this.kademliaUtilities.getRoutingTable(this.node.router)) {
             this.log.info(`Skipping network join, using existing ${peers.length} seeds`);
 
             // todo experimental - should be removed
