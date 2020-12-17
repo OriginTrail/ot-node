@@ -4,6 +4,7 @@ const Utilities = require('../Utilities');
 const constants = require('../constants');
 const { QueryTypes } = require('sequelize');
 const BN = require('bn.js');
+const ObjectValidator = require('../validator/object-validator');
 
 /**
  * DC related API controller
@@ -21,6 +22,7 @@ class DCController {
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
         this.commandExecutor = ctx.commandExecutor;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -30,6 +32,7 @@ class DCController {
      * @param res   HTTP response
      */
     async handleReplicateRequest(req, res) {
+        this.logger.api('POST: Replicate request received.');
         if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
             utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&
@@ -50,30 +53,38 @@ class DCController {
                 }
 
                 const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
+                    status: 'INITIALIZED',
 
                 });
                 handlerId = inserted_object.dataValues.handler_id;
-                offerId = await this.dcService.createOffer(
-                    req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
-                    req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
-                    req.body.litigation_interval_in_minutes, handlerId,
-                    req.body.urgent,
-                );
-                const handler_data = {
-                    status: 'PUBLISHING_TO_BLOCKCHAIN',
-                    offer_id: offerId,
-                };
-                await Models.handler_ids.update({
-                    data: JSON.stringify(handler_data),
-                }, {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                });
+
                 res.status(200);
                 res.send({
                     handler_id: handlerId,
+                });
+                const commandData = {
+                    dataSetId: req.body.dataset_id,
+                    dataRootHash: dataset.root_hash,
+                    holdingTimeInMinutes: req.body.holding_time_in_minutes,
+                    tokenAmountPerHolder: req.body.token_amount_per_holder,
+                    dataSizeInBytes: dataset.otjson_size_in_bytes,
+                    litigationIntervalInMinutes: req.body.litigation_interval_in_minutes,
+                    handler_id: handlerId,
+                    urgent: req.body.urgent,
+                };
+                const commandSequence = [
+                    'dcOfferPrepareCommand',
+                    'dcOfferCreateDbCommand',
+                    'dcOfferCreateBcCommand',
+                    'dcOfferTaskCommand',
+                    'dcOfferChooseCommand'];
+
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
                 });
             } catch (error) {
                 this.logger.error(`Failed to create offer. ${error}.`);
@@ -364,6 +375,102 @@ class DCController {
             dataPriceResponseObject,
             dv_node_id,
         );
+    }
+
+
+    async removePermissionedData(req, res) {
+        if (req.body === undefined ||
+            req.body.dataset_id === undefined ||
+            req.body.identifier_value === undefined ||
+            req.body.identifier_type === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { dataset_id, identifier_value } = req.body;
+
+        let status = await this.permissionedDataService.removePermissionedDataInDb(
+            dataset_id,
+            identifier_value,
+        );
+
+        await Models.data_sellers.destroy({
+            where: {
+                data_set_id: dataset_id,
+                seller_erc_id: this.config.erc725Identity,
+                ot_json_object_id: identifier_value,
+            },
+        });
+
+        if (status) { status = 'COMPLETED'; } else { status = 'FAILED'; }
+        res.status(200);
+        res.send({ status });
+    }
+
+    /**
+     * Query local data
+     * @param query Query
+     * @returns {Promise<*>}
+     */
+    async queryLocal(req, res) {
+        this.logger.api('POST: Query local request received.');
+        if (!req.body) {
+            res.status(400);
+            res.send({
+                message: 'Body is missing',
+            });
+            return;
+        }
+
+        const { query } = req.body;
+
+        this.logger.info(`Local query handling triggered with ${JSON.stringify(query)}.`);
+        const validationError = ObjectValidator.validateSearchQueryObject(query);
+        if (validationError) {
+            throw validationError;
+        }
+
+        const { path } = query[0];
+        const valuesArray = Utilities.arrayze(query[0].value);
+
+        const result = await this.graphStorage.findLocalQuery({
+            idType: path,
+            identifierKey: valuesArray,
+        });
+        const response = this.importService.packLocalQueryData(result);
+        for (let i = 0; i < response.length; i += 1) {
+            let offer_id = null;
+
+            // eslint-disable-next-line no-await-in-loop
+            const offer = await Models.offers.findOne({
+                where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+            });
+
+            if (offer) {
+                // eslint-disable-next-line prefer-destructuring
+                offer_id = offer.offer_id;
+            } else {
+                // eslint-disable-next-line no-await-in-loop
+                const bid = await Models.bids.findOne({
+                    where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+                });
+
+                    // eslint-disable-next-line prefer-destructuring
+                if (bid) { offer_id = bid.offer_id; }
+            }
+
+            // eslint-disable-next-line prefer-destructuring
+            response[i].dataset_id = response[i].datasets[0];
+            response[i].offer_id = offer_id;
+            delete response[i].datasets;
+        }
+
+        res.status(200);
+        res.send(response);
     }
 }
 

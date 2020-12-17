@@ -3,12 +3,7 @@ const importUtilities = require('../ImportUtilities');
 const Merkle = require('../Merkle');
 const utilities = require('../Utilities');
 
-
 class ChallengeService {
-    constructor(ctx) {
-        this.logger = ctx.logger;
-    }
-
     /**
      * Generate test challenges for Data Holder
      * @param encryptedGraphData Input vertex data.
@@ -80,7 +75,8 @@ class ChallengeService {
         blockIndex, encryptedObject,
         blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-        const answer = this.getBlockFromObject(encryptedObject, blockIndex, blockSizeInBytes);
+        const sortedObject = utilities.sortedStringify(encryptedObject, true);
+        const answer = this.getBlockFromObject(sortedObject, blockIndex, blockSizeInBytes);
         return answer;
     }
 
@@ -97,10 +93,10 @@ class ChallengeService {
         for (let objectIndex = 0; objectIndex < graphObjects.length; objectIndex += 1) {
             const numberOfBlocksInObject =
                 Math.ceil(Buffer.byteLength(JSON.stringify(graphObjects[objectIndex]), 'utf-8') / blockSizeInBytes);
-
+            const sortedObject = utilities.sortedStringify(graphObjects[objectIndex], true);
             for (let blockIndex = 0; blockIndex < numberOfBlocksInObject; blockIndex += 1) {
                 const block = this.getBlockFromObject(
-                    graphObjects[objectIndex],
+                    sortedObject,
                     blockIndex,
                     blockSizeInBytes,
                 );
@@ -120,8 +116,7 @@ class ChallengeService {
         index,
         blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
-        const sortedObject = utilities.sortedStringify(object, true);
-        const rawObject = Buffer.from(sortedObject, 'utf-8');
+        const rawObject = Buffer.from(object, 'utf-8');
 
         const rawBlock = Buffer.alloc(blockSizeInBytes);
 
@@ -147,9 +142,7 @@ class ChallengeService {
         blockSizeInBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
     ) {
         const blocks = this.getBlocks(encryptedGraphData, blockSizeInBytes);
-
         const litigationMerkleTree = new Merkle(blocks, 'litigation');
-
         return litigationMerkleTree.getRoot();
     }
 
