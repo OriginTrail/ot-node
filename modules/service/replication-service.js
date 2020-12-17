@@ -33,6 +33,26 @@ class ReplicationService {
             fs.mkdirSync(replicationPath);
         }
     }
+    /**
+     * Cast number to color
+     * @param colorNumber: allowed numbers:
+     * 0 - RED
+     * 1 - GREEN
+     * 2 - BLUE
+     * @returns {string}
+     */
+    castNumberToColor(colorNumber) {
+        switch (colorNumber) {
+        case 0:
+            return COLOR.RED;
+        case 1:
+            return COLOR.GREEN;
+        case 2:
+            return COLOR.BLUE;
+        default:
+            throw new Error(`Failed to cast number to color ${colorNumber}, allowed number 0, 1, 2`);
+        }
+    }
 
     /**
      * Replications cleanup (delete dir, purge cache)
@@ -57,6 +77,7 @@ class ReplicationService {
         const offerDirPath = this._getOfferDirPath(internalOfferId);
         await Utilities.writeContentsToFile(offerDirPath, `${color}.json`, JSON.stringify(data));
     }
+
 
     /**
      * Load replication from cache or file
