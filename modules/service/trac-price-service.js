@@ -10,7 +10,7 @@ class TracPriceService {
     }
 
     async getTracPriceInEth() {
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV !== 'mainnet') {
             this.logger.trace(`Using default trac price in eth from configuration: ${this.config.blockchain.trac_price_in_eth}`);
             return this.config.blockchain.trac_price_in_eth;
         }
