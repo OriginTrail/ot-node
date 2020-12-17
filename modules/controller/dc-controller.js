@@ -32,6 +32,7 @@ class DCController {
      * @param res   HTTP response
      */
     async handleReplicateRequest(req, res) {
+        this.logger.api('POST: Replicate request received.');
         if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
             utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&
@@ -52,30 +53,38 @@ class DCController {
                 }
 
                 const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
+                    status: 'INITIALIZED',
 
                 });
                 handlerId = inserted_object.dataValues.handler_id;
-                offerId = await this.dcService.createOffer(
-                    req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
-                    req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
-                    req.body.litigation_interval_in_minutes, handlerId,
-                    req.body.urgent,
-                );
-                const handler_data = {
-                    status: 'PUBLISHING_TO_BLOCKCHAIN',
-                    offer_id: offerId,
-                };
-                await Models.handler_ids.update({
-                    data: JSON.stringify(handler_data),
-                }, {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                });
+
                 res.status(200);
                 res.send({
                     handler_id: handlerId,
+                });
+                const commandData = {
+                    dataSetId: req.body.dataset_id,
+                    dataRootHash: dataset.root_hash,
+                    holdingTimeInMinutes: req.body.holding_time_in_minutes,
+                    tokenAmountPerHolder: req.body.token_amount_per_holder,
+                    dataSizeInBytes: dataset.otjson_size_in_bytes,
+                    litigationIntervalInMinutes: req.body.litigation_interval_in_minutes,
+                    handler_id: handlerId,
+                    urgent: req.body.urgent,
+                };
+                const commandSequence = [
+                    'dcOfferPrepareCommand',
+                    'dcOfferCreateDbCommand',
+                    'dcOfferCreateBcCommand',
+                    'dcOfferTaskCommand',
+                    'dcOfferChooseCommand'];
+
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
                 });
             } catch (error) {
                 this.logger.error(`Failed to create offer. ${error}.`);
