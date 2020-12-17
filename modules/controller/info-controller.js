@@ -56,6 +56,8 @@ class InfoController {
         try {
             const { message, messageSignature } = req.body;
             if (
+                !message ||
+                !messageSignature ||
                 message.wallet !== this.config.node_wallet ||
                 !Utilities.isMessageSigned(this.web3, message, messageSignature)
             ) {
