@@ -62,7 +62,7 @@ class InfoController {
                 !Utilities.isMessageSigned(this.web3, message, messageSignature)
             ) {
                 this.logger.error('Unauthorized node data request');
-                res.status(500);
+                res.status(403);
                 res.send({
                     message: 'Unauthorized node data request',
                 });
