@@ -70,9 +70,9 @@ class DCLitigationInitiateCommand extends Command {
         replicatedData.status = 'LITIGATION_STARTED';
         await replicatedData.save({ fields: ['status'] });
 
-        // todo pass blockchain identity
         const dcIdentity = this.profileService.getIdentity(blockchain_id);
         const otJson = await this.importService.getImport(offer.data_set_id);
+        importUtilities.removeGraphPermissionedData(otJson['@graph']);
 
         const encryptedDataset = importUtilities.encryptDataset(
             otJson,

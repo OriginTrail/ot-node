@@ -45,7 +45,6 @@ class DCLitigationCompleteCommand extends Command {
             return Command.empty();
         }
 
-        // todo pass blockchain identity
         const dcIdentity = this.profileService.getIdentity(blockchain_id);
 
         const challenge = await models.challenges.findOne({

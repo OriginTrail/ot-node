@@ -175,7 +175,6 @@ class DcOfferFinalizedCommand extends Command {
                 endTime, this.config.numberOfChallenges,
             );
 
-            // TODO: Add blockchain_id to challenges
             await forEach(challenges, async challenge =>
                 Models.challenges.create({
                     dh_id: replicatedData.dh_id,
