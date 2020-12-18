@@ -242,29 +242,14 @@ class ArangoJS {
 
     async findLocalQuery(queryObject) {
         const {
-            identifierKey,
-            idType,
+            identifierKeys,
         } = queryObject;
 
         const queryParams = {
-            identifierKey,
-            idType,
+            identifierKeys,
         };
 
-        let operator = '';
-        if (typeof identifierKey === 'object') {
-            operator = 'IN';
-        } else {
-            operator = '==';
-        }
-
-        const queryString = `LET identifierObjects = (
-                                FOR v IN ot_vertices
-                                FILTER v.vertexType == "Identifier"
-                                AND v.identifierType == @idType
-                                and v.identifierValue ${operator} @identifierKey
-                                RETURN v
-                            )
+        const queryString = `LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
                             
                             let latestIdentifierObjects = (
                             FOR identifierObject in identifierObjects
@@ -1160,16 +1145,11 @@ class ArangoJS {
      */
     async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
         const queryString = `LET rootObject = (
-                                FOR v IN ot_vertices
-                                
-                                FILTER v.uid == @objectId
-                                    AND v.datasets != null
-                                    AND POSITION(v.datasets, @importId, false) != false
-                                RETURN v
+                                RETURN document('ot_vertices', @objectId)
                             )    
                             
                             LET relatedObjects = (
-                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FOR v, e IN 2 OUTBOUND rootObject[0] ot_edges
                                 FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
                                     AND e.datasets != null
                                     AND v.datasets != null

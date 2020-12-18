@@ -348,7 +348,7 @@ class PermissionedDataService {
             if (relatedObject.vertex.vertexType === 'Data') {
                 const vertexData = relatedObject.vertex.data;
                 const permissionedObject = vertexData.permissioned_data;
-                if (permissionedObject) {
+                if (permissionedObject && permissionedObject.data) {
                     delete permissionedObject.data;
                     documentsToBeReplaced.push(relatedObject.vertex);
                     status = true;
