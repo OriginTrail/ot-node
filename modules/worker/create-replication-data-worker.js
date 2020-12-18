@@ -30,6 +30,7 @@ process.on('message', async (data) => {
         document.signature = metadata.signature;
 
         const otJson = OtJsonUtilities.prepareDatasetForDatabaseRead(document);
+        ImportUtilities.removeGraphPermissionedData(otJson['@graph']);
 
         await Utilities.writeContentsToFile(cacheDirectoryPath, handler_id, JSON.stringify(otJson));
 
