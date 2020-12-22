@@ -143,11 +143,11 @@ class HighAvailabilityService {
 
     async fetchNodeStatus(hostname) {
         const pool = new Pool({
-            user: 'ot_node',
-            host: 'localhost',
-            database: 'ot_node_db',
-            password: 'origintrail',
-            port: 5432,
+            user: this.config.operational_db.username,
+            host: this.config.operational_db.host,
+            database: this.config.operational_db.database,
+            password: this.config.operational_db.password,
+            port: this.config.operational_db.port,
         });
         const client = await pool.connect();
 

@@ -129,6 +129,14 @@
       "is_remote_node_available_attempts_number": 3,
       "is_remote_node_available_attempts_delay": 2000,
       "is_remote_node_available_attempts_timeout": 3000
+    },
+    "operational_db": {
+      "database": "ot_node_db",
+      "host": "localhost",
+      "port": 5432,
+      "username": "ot_node",
+      "password": "origintrail",
+      "root_user_password": "origintrail"
     }
   },
   "testnet": {
@@ -265,6 +273,14 @@
       "is_remote_node_available_attempts_number": 3,
       "is_remote_node_available_attempts_delay": 2000,
       "is_remote_node_available_attempts_timeout": 3000
+    },
+    "operational_db": {
+      "database": "ot_node_db",
+      "host": "localhost",
+      "port": 5432,
+      "username": "ot_node",
+      "password": "origintrail",
+      "root_user_password": "origintrail"
     }
   },
   "mainnet": {
@@ -403,6 +419,14 @@
       "is_remote_node_available_attempts_number": 3,
       "is_remote_node_available_attempts_delay": 2000,
       "is_remote_node_available_attempts_timeout": 3000
+    },
+    "operational_db": {
+      "database": "ot_node_db",
+      "host": "localhost",
+      "port": 5432,
+      "username": "ot_node",
+      "password": "origintrail",
+      "root_user_password": "origintrail"
     }
   }
 }

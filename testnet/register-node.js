@@ -18,11 +18,15 @@ const { execSync, spawn } = require('child_process');
 
 const logger = require('../modules/logger');
 const configjson = require('../config/config.json');
+const Utilities = require('../modules/Utilities');
 
 const defaultConfig = configjson[process.env.NODE_ENV];
 const localConfiguration = rc(pjson.name, defaultConfig);
 const web3 = new Web3();
+const constants = require('../modules/constants');
+
 const otNodeRootPath = path.resolve(__dirname, '..');
+const M6OperationalDBMigration = require('../modules/migration/m6-operational-db-migration');
 
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
@@ -37,7 +41,11 @@ if (argv.configDir) {
 
 function checkForUpdate() {
     try {
-        execSync('/etc/init.d/postgresql start');
+        // da li treba i izvrsi migraciju samo ako je postgres
+        if (process.env.DB_TYPE === constants.DB_TYPE.psql && process.env.NODE_ENV !== 'development') {
+            execSync('/etc/init.d/postgresql start');
+            this.runOperationDbMigration();
+        }
         execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:migrate');
         // Important: this file is running in the context of older version so
         // all the migrations has to be run in the context of updated version
@@ -75,9 +83,11 @@ function checkForUpdate() {
         const appMigrationDirPath = path.join(updateInfo.path, appMigrationDirName);
         execSync(`mkdir -p ${appMigrationDirPath} && cp -a ${configDir}/. ${appMigrationDirPath}`);
 
-        // Point Sequelize to the right path.
-        process.env.SEQUELIZEDB = path.join(appMigrationDirPath, 'system.db');
-        execSync('/etc/init.d/postgresql start');
+        if (process.env.DB_TYPE === constants.DB_TYPE.psql && process.env.NODE_ENV !== 'development') {
+            execSync('/etc/init.d/postgresql start');
+        } else {
+            process.env.SEQUELIZEDB = path.join(appMigrationDirPath, 'system.db');
+        }
         // Run migrations
         let output = execSync(
             './node_modules/.bin/sequelize db:migrate --config config/sequelizeConfig.js',
@@ -262,6 +272,31 @@ function main() {
 
     // eslint-disable-next-line
     require('../ot-node');
+}
+
+async function runOperationDbMigration() {
+    const migrationsStartedMills = Date.now();
+
+    const m6OperationalDBMigrationFilename = '6_m6OperationalDBMigrationFile';
+    const migrationDir = path.join(localConfiguration.appDataPath, 'migrations');
+    const migrationFilePath = path.join(migrationDir, m6OperationalDBMigrationFilename);
+    if (!fs.existsSync(migrationFilePath)) {
+        const migration = new M6OperationalDBMigration(logger, localConfiguration);
+        try {
+            logger.info('Initializing operational db migration...');
+            const result = await migration.run();
+            if (result === 0) {
+                logger.notify(`One-time operational db migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                await Utilities.writeContentsToFile(migrationDir, m6OperationalDBMigrationFilename, 'PROCESSED');
+            } else {
+                logger.error('Operational db migration failed. Defaulting to previous implementation');
+            }
+        } catch (e) {
+            logger.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+            console.log(e);
+            process.exit(1);
+        }
+    }
 }
 
 if (upgradeContainer()) {

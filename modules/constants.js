@@ -156,3 +156,7 @@ exports.NODE_STATUS = {
     fallback: 'FALLBACK',
     updating: 'UPDATING',
 };
+
+exports.DB_TYPE = {
+    psql: 'psql',
+};

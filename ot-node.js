@@ -29,7 +29,7 @@ const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
-
+const constants = require('./modules/constants');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
@@ -608,6 +608,8 @@ function main() {
 }
 
 // Make sure the Sequelize meta table is migrated before running main.
-execSync('/etc/init.d/postgresql start');
+if (process.env.DB_TYPE === constants.DB_TYPE.psql && process.env.NODE_ENV !== 'development') {
+    execSync('/etc/init.d/postgresql start');
+}
 const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
 migrationSequelizeMeta.run().then(main);
