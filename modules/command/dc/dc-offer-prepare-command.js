@@ -45,6 +45,7 @@ class DCOfferPrepareCommand extends Command {
                     dataSizeInBytes,
                     command.data.holdingTimeInMinutes,
                     this.config.blockchain.dc_price_factor,
+                    blockchain_id,
                 );
             command.data.tokenAmountPerHolder = offerPrice.finalPrice;
         }
@@ -82,7 +83,7 @@ class DCOfferPrepareCommand extends Command {
             }
         } else {
             const hasFunds = await this.dcService
-                .hasProfileBalanceForOffer(command.data.tokenAmountPerHolder);
+                .hasProfileBalanceForOffer(command.data.tokenAmountPerHolder, blockchain_id);
             if (!hasFunds) {
                 const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
                 this.logger.warn(message);
