@@ -338,9 +338,10 @@ class PermissionedDataService {
     }
 
     async removePermissionedDataInDb(dataSetId, otObjectId) {
-        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectKey(
             dataSetId,
             otObjectId,
+            2,
         );
         const documentsToBeReplaced = [];
         let status = false;

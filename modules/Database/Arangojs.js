@@ -1106,13 +1106,13 @@ class ArangoJS {
      * @param objectKey
      * @returns {Promise<any>}
      */
-    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey, range) {
         const queryString = `LET rootObject = (
                                 RETURN document('ot_vertices', @objectKey)
                             )
                             
                             LET relatedObjects = (
-                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FOR v, e IN 1..${range} OUTBOUND rootObject[0] ot_edges
                                 FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
                                     AND e.datasets != null
                                     AND v.datasets != null
@@ -1145,11 +1145,16 @@ class ArangoJS {
      */
     async findDocumentsByImportIdAndOtObjectId(importId, objectId) {
         const queryString = `LET rootObject = (
-                                RETURN document('ot_vertices', @objectId)
+                                FOR v IN ot_vertices
+                                
+                                FILTER v.uid == @objectId
+                                    AND v.datasets != null
+                                    AND POSITION(v.datasets, @importId, false) != false
+                                RETURN v
                             )    
                             
                             LET relatedObjects = (
-                                FOR v, e IN 2 OUTBOUND rootObject[0] ot_edges
+                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
                                 FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
                                     AND e.datasets != null
                                     AND v.datasets != null
