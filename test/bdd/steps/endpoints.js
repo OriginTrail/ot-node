@@ -80,7 +80,7 @@ Given(/^(DC|DV|DV2) waits for import to finish$/, { timeout: 1200000 }, async fu
 
 Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, async function (targetNode, exportType) {
     expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, WOT, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
-    expect(targetNode, 'Node type can only be DC, DV2 or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV' || val === 'DH'));
+    expect(targetNode, 'Node type can only be DC, DV2, DV, or DH.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV' || val === 'DH'));
     expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Last import data not defined. Use other step to define it.').to.be.equal(true);
 
@@ -118,7 +118,7 @@ Then(/^the consensus check should pass for the two last imports$/, function () {
 });
 
 Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async function (targetNode) {
-    expect(targetNode, 'Node type can only be DC, DV2 or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV' || val === 'DH'));
+    expect(targetNode, 'Node type can only be DC, DV2, DV, or DH.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV' || val === 'DH'));
     expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
 
@@ -549,6 +549,7 @@ Then(/^The last export doesn't have permissioned data$/, async function () {
     for (const p of properties) {
         if (p.permissioned_data) {
             expect(p.permissioned_data).to.have.keys(['permissioned_data_hash']);
+            expect(p.permissioned_data).to.not.have.keys(['data']);
         }
     }
 });
