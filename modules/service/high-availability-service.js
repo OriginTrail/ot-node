@@ -99,16 +99,19 @@ class HighAvailabilityService {
         const {
             active_node_data_sync_interval_in_hours,
             is_remote_node_available_attempts_delay,
+            remote_operational_db_username,
+            remote_hostname,
+            remote_ip_address,
         } = this.config.high_availability;
-        await this.getMasterNodeData(this.config.high_availability.remote_hostname);
+        await this.getMasterNodeData(remote_hostname);
 
         await this.graphStorage.startReplication();
-        this.startPostgresReplication(this.config.high_availability.remote_ip_address);
+        this.startPostgresReplication(remote_ip_address, remote_operational_db_username);
         let remoteNodeAvailable = true;
         const refreshIntervalId = setInterval(
             async () => {
                 if (remoteNodeAvailable) {
-                    await this.getMasterNodeData(this.config.high_availability.remote_hostname);
+                    await this.getMasterNodeData(remote_hostname);
                 }
             },
             active_node_data_sync_interval_in_hours * 60 * 60 * 1000,
@@ -121,7 +124,7 @@ class HighAvailabilityService {
         } while (remoteNodeAvailable);
         this.logger.important('Master node is unresponsive. I am taking over.');
         clearInterval(refreshIntervalId);
-        this.restartRemoteNode(this.config.high_availability.remote_ip_address);
+        this.restartRemoteNode(remote_ip_address);
     }
 
     async restartRemoteNode(remoteNodeHostname) {
@@ -258,13 +261,13 @@ class HighAvailabilityService {
         this.logger.trace('Synchronizing with master node completed.');
     }
 
-    startPostgresReplication(remoteHostname) {
+    startPostgresReplication(remoteHostname, remoteOpDbUsername) {
         this.logger.trace('Starting postgres replication');
         execSync('/etc/init.d/postgresql stop');
         if (fs.existsSync('/var/lib/postgresql/12/main')) {
             execSync('rm -rfv /var/lib/postgresql/12/main/*');
         }
-        execSync(`su -c "pg_basebackup -h ${remoteHostname} -U ot_node -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres`);
+        execSync(`su -c "pg_basebackup -h ${remoteHostname} -U ${remoteOpDbUsername} -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres`);
         execSync('/etc/init.d/postgresql start');
         this.logger.trace('Postgres replication started successfully');
     }
