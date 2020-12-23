@@ -338,9 +338,10 @@ class PermissionedDataService {
     }
 
     async removePermissionedDataInDb(dataSetId, otObjectId) {
-        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectId(
+        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectKey(
             dataSetId,
             otObjectId,
+            2,
         );
         const documentsToBeReplaced = [];
         let status = false;
@@ -348,7 +349,7 @@ class PermissionedDataService {
             if (relatedObject.vertex.vertexType === 'Data') {
                 const vertexData = relatedObject.vertex.data;
                 const permissionedObject = vertexData.permissioned_data;
-                if (permissionedObject) {
+                if (permissionedObject && permissionedObject.data) {
                     delete permissionedObject.data;
                     documentsToBeReplaced.push(relatedObject.vertex);
                     status = true;
