@@ -16,6 +16,10 @@ class HighAvailabilityService {
     }
 
     async startHighAvailabilityNode() {
+        if (process.env.DB_TYPE !== constants.DB_TYPE.psql) {
+            this.logger.notify('Not able to start as high availability node. Postgres database needs to be used.');
+            return;
+        }
         const { fallback_sync_attempts_number, fallback_sync_attempts_delay } =
             this.config.high_availability;
         const remoteNodeAvailable = await this.isRemoteNodeAvailable();
