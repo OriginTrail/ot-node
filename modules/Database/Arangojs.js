@@ -290,29 +290,14 @@ class ArangoJS {
 
     async findLocalQuery(queryObject) {
         const {
-            identifierKey,
-            idType,
+            identifierKeys,
         } = queryObject;
 
         const queryParams = {
-            identifierKey,
-            idType,
+            identifierKeys,
         };
 
-        let operator = '';
-        if (typeof identifierKey === 'object') {
-            operator = 'IN';
-        } else {
-            operator = '==';
-        }
-
-        const queryString = `LET identifierObjects = (
-                                FOR v IN ot_vertices
-                                FILTER v.vertexType == "Identifier"
-                                AND v.identifierType == @idType
-                                and v.identifierValue ${operator} @identifierKey
-                                RETURN v
-                            )
+        const queryString = `LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
                             
                             let latestIdentifierObjects = (
                             FOR identifierObject in identifierObjects
@@ -1169,13 +1154,13 @@ class ArangoJS {
      * @param objectKey
      * @returns {Promise<any>}
      */
-    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey, range) {
         const queryString = `LET rootObject = (
                                 RETURN document('ot_vertices', @objectKey)
                             )
                             
                             LET relatedObjects = (
-                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FOR v, e IN 1..${range} OUTBOUND rootObject[0] ot_edges
                                 FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
                                     AND e.datasets != null
                                     AND v.datasets != null
