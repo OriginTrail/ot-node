@@ -1,6 +1,6 @@
 
 module.exports = {
-    up: (queryInterface, Sequelize) => queryInterface.createTable('interaction_log', {
+    up: (queryInterface, Sequelize) => queryInterface.createTable('interaction_logs', {
         id: {
             allowNull: false,
             autoIncrement: true,
@@ -20,5 +20,5 @@ module.exports = {
             type: Sequelize.STRING,
         },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('interaction_log'),
+    down: (queryInterface, Sequelize) => queryInterface.dropTable('interaction_logs'),
 };
