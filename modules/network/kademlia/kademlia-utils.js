@@ -153,9 +153,9 @@ class KademliaUtils {
         if (!fs.existsSync(filePath)) {
             return false;
         }
-        const obj = JSON.parse(fs.readFileSync(filePath));
-        const { routingTable } = obj;
         try {
+            const obj = JSON.parse(fs.readFileSync(filePath));
+            const { routingTable } = obj;
             const lastTimestamp = new Date(obj.timestamp);
             const currentTimestamp = new Date() - routinTableValidityPeriod;
 
@@ -170,9 +170,8 @@ class KademliaUtils {
                 });
                 return true;
             }
-            // eslint-disable-next-line no-empty
         } catch (e) {
-            console.log(e);
+            this.log.error('Error while getting cached routing table. Error message: ', e.message);
         }
 
         return false;

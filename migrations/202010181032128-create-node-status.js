@@ -3,9 +3,8 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('node_status', {
         id: {
             allowNull: false,
-            autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         hostname: {
             allowNull: false,

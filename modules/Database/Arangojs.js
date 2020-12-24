@@ -2,8 +2,6 @@ const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
 const { normalizeGraph } = require('./graph-converter');
-const constants = require('../constants');
-const { execSync, spawn } = require('child_process');
 const ArangoClient = require('./arango-client');
 
 const IGNORE_DOUBLE_INSERT = true;
@@ -48,18 +46,12 @@ class ArangoJS {
             this.log.trace('Starting applier replication...');
             await this.arangoClient.startReplicationApplier();
             // in order to get right message we need to wait 2 sec
-            await this.sleepForMiliseconds(2000);
+            await Utilities.sleepForMilliseconds(2000);
             stateResponse = await this.arangoClient.getReplicationApplierState();
             this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
         } else {
             this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
         }
-    }
-
-    async sleepForMiliseconds(timeout) {
-        await new Promise((resolve, reject) => {
-            setTimeout(() => resolve(), timeout);
-        });
     }
 
     async stopReplication() {

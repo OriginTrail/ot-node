@@ -168,19 +168,6 @@ class OTNode {
 
         log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
-        // sync models
-        // try {
-        //     Storage.models = (await models.sequelize.sync()).models;
-        //     Storage.db = models.sequelize;
-        // } catch (error) {
-        //     if (error.constructor.name === 'ConnectionError') {
-        //         console.error('Failed to open database. Did you forget to run "npm run setup"?');
-        //         process.abort();
-        //     }
-        //     console.error(error);
-        //     process.abort();
-        // }
-
         await this._runNetworkIdentityMigration(config);
 
         // Seal config in order to prevent adding properties.
@@ -252,6 +239,7 @@ class OTNode {
             process.exit(1);
         }
 
+        Object.seal(config);
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
@@ -346,7 +334,6 @@ class OTNode {
             await highAvailabilityService.startHighAvailabilityNode();
         }
 
-        Object.seal(config);
         // Starting the kademlia
         const transport = container.resolve('transport');
         await transport.init(container.cradle);

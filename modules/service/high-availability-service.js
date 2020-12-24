@@ -36,7 +36,7 @@ class HighAvailabilityService {
                         process.exit(1);
                     }
                     // eslint-disable-next-line no-await-in-loop
-                    await this.sleepForMiliseconds(fallback_sync_attempts_delay);
+                    await Utilities.sleepForMiliseconds(fallback_sync_attempts_delay);
                 }
             }
         }
@@ -118,7 +118,7 @@ class HighAvailabilityService {
         );
         do {
             // eslint-disable-next-line no-await-in-loop
-            await this.sleepForMiliseconds(is_remote_node_available_attempts_delay);
+            await Utilities.sleepForMiliseconds(is_remote_node_available_attempts_delay);
             // eslint-disable-next-line no-await-in-loop
             remoteNodeAvailable = await this.isRemoteNodeAvailable();
         } while (remoteNodeAvailable);
@@ -291,6 +291,7 @@ class HighAvailabilityService {
             is_remote_node_available_attempts_number,
             is_remote_node_available_attempts_delay,
             is_remote_node_available_attempts_timeout,
+            active_node_data_sync_use_ssl,
         } = this.config.high_availability;
 
         for (let i = 0; i < is_remote_node_available_attempts_number; i += 1) {
@@ -299,7 +300,7 @@ class HighAvailabilityService {
                 const response = await this.otNodeClient.healthCheck(
                     remote_hostname,
                     is_remote_node_available_attempts_timeout,
-                    this.config.high_availability.active_node_data_sync_use_ssl,
+                    active_node_data_sync_use_ssl,
                 );
                 if (response.statusCode === 200) {
                     return true;
@@ -310,17 +311,11 @@ class HighAvailabilityService {
             }
             if (i + 1 < is_remote_node_available_attempts_number) {
                 // eslint-disable-next-line no-await-in-loop
-                await this.sleepForMiliseconds(is_remote_node_available_attempts_delay);
+                await Utilities.sleepForMiliseconds(is_remote_node_available_attempts_delay);
             }
         }
         this.logger.info('Remote node is not in active state.');
         return false;
-    }
-
-    async sleepForMiliseconds(timeout) {
-        await new Promise((resolve, reject) => {
-            setTimeout(() => resolve(), timeout); // todo move to configuration
-        });
     }
 }
 

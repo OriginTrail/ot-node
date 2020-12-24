@@ -7,8 +7,8 @@ class OtNodeClient {
     }
 
     async getNodeData(remoteHostname, body, useSsl = true) {
-        this.useSsl = useSsl ? 'https' : 'http';
-        this.baseUrl = `${this.useSsl}://${remoteHostname}:8900/api/latest`;
+        this.protocol = useSsl ? 'https' : 'http';
+        this.baseUrl = `${this.protocol}://${remoteHostname}:8900/api/latest`;
         return new Promise((accept, reject) => {
             request({
                 method: 'POST',
@@ -27,8 +27,8 @@ class OtNodeClient {
     }
 
     async healthCheck(remoteHostname, timeout = 60000, useSsl = true) {
-        this.useSsl = useSsl ? 'https' : 'http';
-        this.baseUrl = `${this.useSsl}://${remoteHostname}:8900/api/latest`;
+        this.protocol = useSsl ? 'https' : 'http';
+        this.baseUrl = `${this.protocol}://${remoteHostname}:8900/api/latest`;
         return new Promise((accept, reject) => {
             request({
                 timeout,
