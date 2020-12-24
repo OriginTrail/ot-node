@@ -40,7 +40,7 @@ class TrailService {
         includedConnectionTypes,
         excludedConnectionTypes,
     ) {
-        if (includedConnectionTypes.find(x => excludedConnectionTypes.includes(x))) {
+        if (includedConnectionTypes && excludedConnectionTypes && includedConnectionTypes.find(x => excludedConnectionTypes.includes(x))) {
             throw Error('Included and excluded connection types contain same types');
         }
 

@@ -46,6 +46,9 @@ class DHFindTrailCommand extends Command {
             },
         );
 
+
+        this.logger.info(`Trail completed for handler_id: ${handler_id}`);
+
         return Command.empty();
     }
 

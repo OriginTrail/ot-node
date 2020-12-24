@@ -244,8 +244,8 @@ class ArangoJS {
             identifierKeys,
         };
 
-        let queryString = `LET identifierObjects = FLATTEN([DOCUMENT('ot_vertices', @identifierKeys)])
-                            `;
+        let queryString = `LET identifierObjects = UNIQUE(FLATTEN([DOCUMENT('ot_vertices', @identifierKeys)]))
+                            RETURN UNIQUE(FLATTEN(`;
         if (opcode === 'EQ') {
             queryString += `
                             LET allIdentifiers = (FOR identifierObject IN identifierObjects
@@ -276,10 +276,10 @@ class ArangoJS {
 
         queryString += `
          RETURN {unique_identifier: v._key, datasets: datasets, identifiers: identifiers}
-         `;
+         ))`;
 
         const result = await this.runQuery(queryString, queryParams);
-        return result;
+        return result[0];
     }
 
     /**
