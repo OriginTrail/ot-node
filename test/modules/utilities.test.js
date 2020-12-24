@@ -45,7 +45,7 @@ describe('Utilities module', () => {
                 config.network, [
                     'id', 'hostname', 'bootstraps', 'churnPlugin',
                     'remoteWhitelist', 'identityDifficulty', 'bucket_size',
-                    'solutionDifficulty',
+                    'solutionDifficulty', 'routing_table_validity_period_in_hours',
                 ],
                 `Some config items are missing in config.network for environment '${environment}'`,
             );

@@ -147,7 +147,8 @@ class KademliaUtils {
      * Load routing table
      */
     getRoutingTable(router) {
-        const HOUR = 1000 * 60 * 60 * 24;
+        const routinTableValidityPeriod =
+            1000 * 60 * 60 * this.config.network.routing_table_validity_period_in_hours;
         const filePath = path.join(this.config.appDataPath, 'router.json');
         if (!fs.existsSync(filePath)) {
             return false;
@@ -156,7 +157,7 @@ class KademliaUtils {
         const { routingTable } = obj;
         try {
             const lastTimestamp = new Date(obj.timestamp);
-            const currentTimestamp = new Date() - HOUR;
+            const currentTimestamp = new Date() - routinTableValidityPeriod;
 
             if (lastTimestamp > currentTimestamp) {
                 Object.keys(routingTable).forEach((key) => {
