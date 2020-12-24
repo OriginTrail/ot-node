@@ -1,6 +1,10 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
+const BN = require('bn.js');
+const path = require('path');
+const Utilities = require('../../Utilities');
+const { fork } = require('child_process');
 
 /**
  * Prepare offer parameters (litigation/distribution hashes, etc.)
@@ -9,10 +13,16 @@ class DCOfferPrepareCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
+        this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.importService = ctx.importService;
+        this.pricingService = ctx.pricingService;
+        this.profileService = ctx.profileService;
+        this.dcService = ctx.dcService;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -22,14 +32,120 @@ class DCOfferPrepareCommand extends Command {
      */
     async execute(command) {
         const {
-            internalOfferId,
+            dataSetId, dataSizeInBytes, handler_id,
         } = command.data;
 
-        const distLitRootHashes = await this.replicationService.createReplications(internalOfferId);
+        if (!command.data.holdingTimeInMinutes) {
+            command.data.holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
+        }
+        let offerPrice = {};
+        if (!command.data.tokenAmountPerHolder) {
+            offerPrice = await this.pricingService
+                .calculateOfferPriceinTrac(
+                    dataSizeInBytes,
+                    command.data.holdingTimeInMinutes,
+                    this.config.blockchain.dc_price_factor,
+                );
+            command.data.tokenAmountPerHolder = offerPrice.finalPrice;
+        }
 
-        const { data } = command;
-        Object.assign(data, distLitRootHashes);
-        return this.continueSequence(data, command.sequence);
+        const offer = await Models.offers.create({
+            data_set_id: dataSetId,
+            message: 'Offer is pending',
+            status: 'PENDING',
+            global_status: 'PENDING',
+            trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
+            gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
+            price_factor_used_for_price_calculation: this.config.blockchain.dc_price_factor,
+        });
+
+        if (!command.data.litigationIntervalInMinutes) {
+            command.data.litigationIntervalInMinutes =
+                new BN(this.config.dc_litigation_interval_in_minutes, 10);
+        }
+
+        if (this.config.parentIdentity) {
+            const hasPermission = await this.profileService.hasParentPermission();
+            if (!hasPermission) {
+                const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';
+                this.logger.warn(message);
+                throw new Error(message);
+            }
+
+            const hasFunds = await this.dcService
+                .parentHasProfileBalanceForOffer(command.data.tokenAmountPerHolder);
+            if (!hasFunds) {
+                const message = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
+                this.logger.warn(message);
+                throw new Error(message);
+            }
+        } else {
+            const hasFunds = await this.dcService
+                .hasProfileBalanceForOffer(command.data.tokenAmountPerHolder);
+            if (!hasFunds) {
+                const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+                this.logger.warn(message);
+                throw new Error(message);
+            }
+        }
+
+        const handler_data = {
+            status: 'PREPARING_OFFER',
+            offer_id: offer.id,
+        };
+        await Models.handler_ids.update({
+            data: JSON.stringify(handler_data),
+        }, {
+            where: {
+                handler_id,
+            },
+        });
+        command.data.internalOfferId = offer.id;
+
+        // export dataset from db
+        this.logger.info(`Exporting dataset: ${dataSetId}. For internal offer id: ${offer.id}.`);
+        const fileContent = await this.importService.getImportDbData(dataSetId);
+        const cacheDirectoryPath = path.join(
+            this.config.appDataPath,
+            this.config.dataSetStorage, offer.id,
+        );
+
+        await Utilities.writeContentsToFile(
+            cacheDirectoryPath,
+            handler_id,
+            JSON.stringify(fileContent),
+        );
+
+        const forked = fork('modules/worker/create-replication-data-worker.js');
+        this.logger.info(`Preparing data for offer with internal id: ${offer.id}, started.`);
+        forked.send(JSON.stringify({
+            internalOfferId: offer.id,
+            handler_id,
+            cacheDirectoryPath,
+            config: this.config,
+            dataSetId,
+        }));
+
+        forked.on('message', async (response) => {
+            if (response.error) {
+                throw new Error(response.error);
+            } else {
+                this.logger.info(`Preparing data for offer with internal id: ${offer.id}, completed successfully.`);
+                const distLitRootHashes = response.hashes;
+                const { data } = command;
+                Object.assign(data, distLitRootHashes);
+                await this.commandExecutor.add({
+                    name: command.sequence[0],
+                    sequence: command.sequence.slice(1),
+                    delay: 0,
+                    data,
+                    transactional: false,
+                });
+            }
+            forked.kill();
+        });
+
+        return Command.empty();
     }
 
     /**

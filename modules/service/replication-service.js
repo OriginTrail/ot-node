@@ -4,8 +4,8 @@ const fs = require('fs');
 
 const Encryption = require('../RSAEncryption');
 const ImportUtilities = require('../ImportUtilities');
-const Models = require('../../models/index');
 const Utilities = require('../Utilities');
+const Models = require('../../models/index');
 const OtJsonUtilities = require('../OtJsonUtilities');
 
 /**
@@ -31,102 +31,6 @@ class ReplicationService {
 
         if (!fs.existsSync(replicationPath)) {
             fs.mkdirSync(replicationPath);
-        }
-    }
-
-    /**
-     * Creates replications for one Offer
-     * @param internalOfferId   - Internal Offer ID
-     * @returns {Promise<void>}
-     */
-    async createReplications(internalOfferId) {
-        const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
-        if (!offer) {
-            throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
-        }
-
-        const otJson = await this.importService.getImport(offer.data_set_id);
-
-        await this.permissionedDataService.addDataSellerForPermissionedData(
-            offer.data_set_id,
-            this.config.erc725Identity,
-            this.config.default_data_price,
-            this.config.identity,
-            otJson['@graph'],
-        );
-
-        ImportUtilities.removeGraphPermissionedData(otJson['@graph']);
-
-        const hashes = {};
-
-        const writeFilePromises = [];
-        this.replicationCache[internalOfferId] = {};
-        for (let i = 0; i < 3; i += 1) {
-            const color = this.castNumberToColor(i);
-
-            const litigationKeyPair = Encryption.generateKeyPair(2048);
-            const distributionKeyPair = Encryption.generateKeyPair(512);
-
-            // TODO Optimize encryption to reduce memory usage
-            let encryptedDataset =
-                ImportUtilities.encryptDataset(otJson, distributionKeyPair.privateKey);
-
-            const distRootHash = ImportUtilities.calculateDatasetRootHash(encryptedDataset);
-
-            encryptedDataset = ImportUtilities.encryptDataset(otJson, litigationKeyPair.privateKey);
-
-            let sortedDataset =
-                OtJsonUtilities.prepareDatasetForGeneratingLitigationProof(encryptedDataset);
-            if (!sortedDataset) {
-                sortedDataset = encryptedDataset;
-            }
-            const litRootHash = this.challengeService.getLitigationRootHash(sortedDataset['@graph']);
-
-            const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-            // const litigationEpk = Encryption.packEPK(distributionKeyPair.publicKey);
-            // TODO Why are there zeroes here
-            const distributionEpkChecksum =
-                Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
-
-            const replication = {
-                color,
-                otJson: encryptedDataset,
-                litigationPublicKey: litigationKeyPair.publicKey,
-                litigationPrivateKey: litigationKeyPair.privateKey,
-                distributionPublicKey: distributionKeyPair.publicKey,
-                distributionPrivateKey: distributionKeyPair.privateKey,
-                distributionEpkChecksum,
-                litigationRootHash: litRootHash,
-                distributionRootHash: distRootHash,
-                distributionEpk: distEpk,
-            };
-
-            this.replicationCache[internalOfferId][color] = replication;
-            writeFilePromises.push(this.saveReplication(internalOfferId, color, replication));
-
-            hashes[`${color}LitigationHash`] = litRootHash;
-            hashes[`${color}DistributionHash`] = distRootHash;
-        }
-
-        await Promise.all(writeFilePromises);
-
-        return hashes;
-    }
-
-    /**
-     * Casts color to number
-     * @param color
-     */
-    castColorToNumber(color) {
-        switch (color.toLowerCase()) {
-        case COLOR.RED:
-            return new BN(0, 10);
-        case COLOR.GREEN:
-            return new BN(1, 10);
-        case COLOR.BLUE:
-            return new BN(2, 10);
-        default:
-            throw new Error(`Failed to cast color ${color}`);
         }
     }
 
@@ -182,7 +86,8 @@ class ReplicationService {
      * @return {Promise<*>}
      */
     async loadReplication(internalOfferId, color) {
-        if (this.replicationCache[internalOfferId]) {
+        if (this.replicationCache[internalOfferId]
+            && this.replicationCache[internalOfferId][color]) {
             this.logger.trace(`Loaded replication from cache for offer internal ID ${internalOfferId} and color ${color}`);
             return this.replicationCache[internalOfferId][color];
         }
@@ -190,6 +95,10 @@ class ReplicationService {
         const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
         const data = JSON.parse(await Utilities.fileContents(colorFilePath));
+        if (!this.replicationCache[internalOfferId]) {
+            this.replicationCache[internalOfferId] = {};
+        }
+        this.replicationCache[internalOfferId][color] = data;
         this.logger.trace(`Loaded replication from file for offer internal ID ${internalOfferId} and color ${color}`);
 
         return data;

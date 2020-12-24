@@ -336,6 +336,34 @@ class PermissionedDataService {
         });
         await Promise.all(promises);
     }
+
+    async removePermissionedDataInDb(dataSetId, otObjectId) {
+        const otObject = await this.graphStorage.findDocumentsByImportIdAndOtObjectKey(
+            dataSetId,
+            otObjectId,
+            2,
+        );
+        const documentsToBeReplaced = [];
+        let status = false;
+        otObject.relatedObjects.forEach((relatedObject) => {
+            if (relatedObject.vertex.vertexType === 'Data') {
+                const vertexData = relatedObject.vertex.data;
+                const permissionedObject = vertexData.permissioned_data;
+                if (permissionedObject && permissionedObject.data) {
+                    delete permissionedObject.data;
+                    documentsToBeReplaced.push(relatedObject.vertex);
+                    status = true;
+                }
+            }
+        });
+
+        const promises = [];
+        documentsToBeReplaced.forEach((document) => {
+            promises.push(this.graphStorage.replaceDocument('ot_vertices', document));
+        });
+        await Promise.all(promises);
+        return status;
+    }
 }
 
 module.exports = PermissionedDataService;
