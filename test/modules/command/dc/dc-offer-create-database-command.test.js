@@ -85,12 +85,17 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             notifyError: () => {},
         };
 
+        const mockProfileService = {
+            getIdentity: () => '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1',
+        };
+
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
             config: awilix.asValue(config),
             remoteControl: awilix.asValue(mockRemoteControl),
             commandResolver: awilix.asClass(CommandResolver),
+            profileService: awilix.asValue(mockProfileService),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
             dcOfferCreateDatabaseCommand: awilix.asClass(DCOfferCreateDatabaseCommand),
             errorNotificationService: awilix.asValue(mockErrorNotificationService),
