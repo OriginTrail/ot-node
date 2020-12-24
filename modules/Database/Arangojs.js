@@ -127,11 +127,22 @@ class ArangoJS {
             connectionTypes,
         } = queryObject;
 
+        const {
+            uniqueIdentifiers,
+            includedConnectionTypes,
+            excludedConnectionTypes,
+        } = queryObject;
+
         const queryParams = {
-            identifierKeys,
             depth,
         };
-        let queryString = `// Get identifier
+
+        let includedEdgeTypes;
+        const excludedEdgeTypes = excludedConnectionTypes;
+
+        let queryString = '';
+        if (identifierKeys) {
+            queryString = `// Get identifier
                             LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
                             
                             // Fetch the start entity for trail
@@ -149,7 +160,21 @@ class ArangoJS {
                             LET trailObjects = (
                                 FILTER startObjects[0] != null
                                 FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
-        if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
+            queryParams.identifierKeys = identifierKeys;
+            includedEdgeTypes = connectionTypes;
+        } else {
+            queryString = `// Get identifier
+                            LET startObjects = FLATTEN([DOCUMENT('ot_vertices', @uniqueIdentifiers)])
+                             
+                            LET trailObjects = FLATTEN(
+                                FOR startObject in startObjects
+                                    FILTER startObject != null
+                                    FOR v, e, p IN 0..@depth ANY startObject ot_edges`;
+            queryParams.uniqueIdentifiers = uniqueIdentifiers;
+            includedEdgeTypes = includedConnectionTypes;
+        }
+        if ((Array.isArray(includedEdgeTypes) && includedEdgeTypes.length > 0) ||
+            (Array.isArray(excludedEdgeTypes) && excludedEdgeTypes.length > 0)) {
             queryString += `
                                     PRUNE (LENGTH(p.edges) == 2 && p.edges[-1].relationType == p.edges[-2].relationType) || (LENGTH(p.edges) > 2 && p.edges[-1].relationType == p.edges[-2].relationType && p.edges[-3].relationType != 'CONNECTOR_FOR')
                                     OPTIONS {
@@ -161,9 +186,20 @@ class ArangoJS {
                                         ((LENGTH(p.edges) < 2) == true) ||
                                         ((p.edges[-1].relationType != p.edges[-2].relationType) == true) ||
                                         ((p.edges[-3].relationType == 'CONNECTOR_FOR') == true)
-                                        ) == true
-                                    FILTER p.edges[*].relationType ALL in @connectionTypes`;
-            queryParams.connectionTypes = connectionTypes;
+                                        ) == true`;
+
+            if (Array.isArray(includedEdgeTypes) && includedEdgeTypes.length > 0) {
+                queryString += `
+                FILTER p.edges[*].relationType ALL in @includedEdgeTypes
+                `;
+                queryParams.includedEdgeTypes = includedEdgeTypes;
+            }
+            if (Array.isArray(excludedEdgeTypes) && excludedEdgeTypes.length > 0) {
+                queryString += `
+                FILTER p.edges[*].relationType ALL not in @excludedEdgeTypes
+                `;
+                queryParams.excludedEdgeTypes = excludedEdgeTypes;
+            }
         } else {
             queryString += `
                                 OPTIONS {
@@ -193,6 +229,54 @@ class ArangoJS {
                                     "rootObject": trailObject,
                                     "relatedObjects": objectsRelated
                                 }`;
+
+        const result = await this.runQuery(queryString, queryParams);
+        return result;
+    }
+
+    async lookupTrail(queryObject) {
+        const {
+            identifierKeys,
+            opcode,
+        } = queryObject;
+
+        const queryParams = {
+            identifierKeys,
+        };
+
+        let queryString = `LET identifierObjects = FLATTEN([DOCUMENT('ot_vertices', @identifierKeys)])
+                            `;
+        if (opcode === 'EQ') {
+            queryString += `
+                            LET allIdentifiers = (FOR identifierObject IN identifierObjects
+                                return {identifierType: identifierObject.identifierType, identifierValue: identifierObject.identifierValue }
+                            )
+                           `;
+        }
+        queryString += `
+                            FOR identifierObject IN identifierObjects
+                                FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    let datasets = (
+                                        let datasets = DOCUMENT('ot_datasets', v.datasets)
+                                        for dataset in datasets
+                                            return { dataset_id: dataset._key, metadata: {dataCreator: dataset.datasetHeader.dataCreator.identifiers, timestamp: dataset.datasetHeader.datasetCreationTimestamp}}
+                                    )
+                                    let identifiers = (
+                                        FOR identifierVertex, identifierEdge IN 1..1 OUTBOUND v ot_edges
+                                            FILTER identifierEdge.edgeType == 'IdentifierRelation'
+                                            return {identifierType: identifierVertex.identifierType, identifierValue: identifierVertex.identifierValue }
+                                    )
+                                    `;
+        if (opcode === 'EQ') {
+            queryString += `
+                            FILTER LENGTH(INTERSECTION(identifiers, allIdentifiers)) == LENGTH(@identifierKeys)
+         `;
+        }
+
+        queryString += `
+         RETURN {unique_identifier: v._key, datasets: datasets, identifiers: identifiers}
+         `;
 
         const result = await this.runQuery(queryString, queryParams);
         return result;

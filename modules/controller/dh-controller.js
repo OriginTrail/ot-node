@@ -16,6 +16,7 @@ class DHController {
         this.importService = ctx.importService;
         this.transport = ctx.transport;
         this.commandExecutor = ctx.commandExecutor;
+        this.trailService = ctx.trailService;
     }
 
     isParameterProvided(request, response, parameter_name) {
@@ -132,6 +133,8 @@ class DHController {
     }
 
     async getTrail(req, res) {
+        this.logger.api('POST: Trail request received.');
+
         if (req.body === undefined ||
             req.body.identifier_types === undefined ||
             req.body.identifier_values === undefined
@@ -192,6 +195,93 @@ class DHController {
             res.status(400);
             res.send(e);
         }
+    }
+
+    async lookupTrail(req, res) {
+        this.logger.api('POST: Trail lookup request received.');
+
+        if (req.body === undefined ||
+            req.body.identifier_types === undefined ||
+            req.body.identifier_values === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const { identifier_types, identifier_values, opcode } = req.body;
+
+
+        try {
+            const response = await this.trailService.lookupTrail(
+                identifier_types,
+                identifier_values,
+                opcode,
+            );
+
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            res.status(400);
+            res.send(e);
+        }
+    }
+
+    async findTrail(req, res) {
+        this.logger.api('POST: Trail find request received.');
+
+        if (req.body === undefined ||
+            req.body.unique_identifiers === undefined
+        ) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        const {
+            unique_identifiers, included_connection_types, excluded_connection_types,
+        } = req.body;
+
+        let { depth, reach } = req.body;
+
+        depth = depth === undefined ?
+            this.graphStorage.getDatabaseInfo().max_path_length :
+            parseInt(depth, 10);
+
+        reach = reach === undefined ?
+            constants.TRAIL_REACH_PARAMETERS.narrow : reach.toLowerCase();
+
+        const inserted_object = await Models.handler_ids.create({
+            status: 'PENDING',
+        });
+
+        const commandData = {
+            handler_id: inserted_object.dataValues.handler_id,
+            unique_identifiers,
+            depth,
+            reach,
+            included_connection_types,
+            excluded_connection_types,
+        };
+        const commandSequence = [
+            'dhFindTrailCommand',
+        ];
+
+        await this.commandExecutor.add({
+            name: commandSequence[0],
+            sequence: commandSequence.slice(1),
+            delay: 0,
+            data: commandData,
+            transactional: false,
+        });
+        res.status(200);
+        res.send({
+            handler_id: inserted_object.dataValues.handler_id,
+        });
     }
 
     async _extendResponse(response) {

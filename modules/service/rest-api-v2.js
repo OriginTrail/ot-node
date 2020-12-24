@@ -90,7 +90,19 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/trail`, async (req, res) => {
-            await this._getTrail(req, res);
+            await this.dhController.getTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/trail/lookup`, async (req, res) => {
+            await this.dhController.lookupTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/trail/find`, async (req, res) => {
+            await this.dhController.findTrail(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/trail/find/result/:handler_id`, async (req, res) => {
+            await this._checkForHandlerStatus(req, res);
         });
 
         server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res) => {
@@ -356,12 +368,6 @@ class RestAPIServiceV2 {
                 message,
             });
         });
-    }
-
-    async _getTrail(req, res) {
-        this.logger.api('POST: Trail request received.');
-
-        await this.dhController.getTrail(req, res);
     }
 
     async _getMerkleProofs(req, res) {
