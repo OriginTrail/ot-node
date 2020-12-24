@@ -14,15 +14,18 @@ class DCOfferPrepareCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
-        this.graphStorage = ctx.graphStorage;
-        this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
-        this.errorNotificationService = ctx.errorNotificationService;
+        this.commandExecutor = ctx.commandExecutor;
+
+        this.dcService = ctx.dcService;
         this.importService = ctx.importService;
         this.pricingService = ctx.pricingService;
         this.profileService = ctx.profileService;
-        this.dcService = ctx.dcService;
-        this.commandExecutor = ctx.commandExecutor;
+        this.errorNotificationService = ctx.errorNotificationService;
+
+        this.blockchain = ctx.blockchain;
+        this.graphStorage = ctx.graphStorage;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -38,13 +41,16 @@ class DCOfferPrepareCommand extends Command {
         if (!command.data.holdingTimeInMinutes) {
             command.data.holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
         }
+
+        const { dc_price_factor } = this.blockchain.getPriceFactors(blockchain_id).response;
+
         let offerPrice = {};
         if (!command.data.tokenAmountPerHolder) {
             offerPrice = await this.pricingService
                 .calculateOfferPriceinTrac(
                     dataSizeInBytes,
                     command.data.holdingTimeInMinutes,
-                    this.config.blockchain.dc_price_factor,
+                    dc_price_factor,
                     blockchain_id,
                 );
             command.data.tokenAmountPerHolder = offerPrice.finalPrice;
@@ -58,7 +64,7 @@ class DCOfferPrepareCommand extends Command {
             global_status: 'PENDING',
             trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
             gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
-            price_factor_used_for_price_calculation: this.config.blockchain.dc_price_factor,
+            price_factor_used_for_price_calculation: dc_price_factor,
         });
 
         if (!command.data.litigationIntervalInMinutes) {
