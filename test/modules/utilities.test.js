@@ -17,12 +17,12 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config, ['node_rpc_ip', 'node_port', 'blockchain', 'database', 'identity', 'logs_level_debug',
                     'request_timeout', 'ssl_keypath', 'node_remote_control_port', 'send_logs',
-                    'ssl_certificate_path', 'identity_filepath', 'cpus',
+                    'ssl_certificate_path', 'identity_filepath', 'cpus', 'high_availability',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled',
-                    'ssl_authority_paths', 'node_rpc_port', 'default_data_price',
+                    'ssl_authority_paths', 'node_rpc_port', 'default_data_price', 'operational_db',
                     'remote_control_enabled', 'dc_challenge_retry_delay_in_millis', 'dh_challenge_retry_delay_in_millis',
-                    'read_stake_factor', 'send_logs_to_origintrail',
+                    'read_stake_factor', 'send_logs_to_origintrail', 'high_availability_setup',
                     'dh_min_reputation', 'dh_min_stake_amount', 'houston_password_file_name',
                     'is_bootstrap_node', 'houston_password', 'reverse_tunnel_address', 'reverse_tunnel_port',
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
@@ -32,7 +32,7 @@ describe('Utilities module', () => {
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
-                config.database, ['provider', 'username', 'password', 'password_file_name', 'database', 'port', 'host', 'max_path_length'],
+                config.database, ['provider', 'username', 'password', 'password_file_name', 'database', 'port', 'host', 'max_path_length', 'replication_info'],
                 `Some config items are missing in config.database for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -154,8 +154,9 @@ describe('Utilities module', () => {
     it('database settings', async () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
-            assert.hasAllKeys(config.database, ['provider', 'username', 'password',
+            assert.hasAllKeys(config.database, ['provider', 'username', 'password', 'replication_info',
                 'host', 'port', 'password_file_name', 'database', 'max_path_length']);
+            assert.hasAllKeys(config.database.replication_info, ['endpoint', 'username', 'password', 'port']);
             assert.equal(config.database.provider, 'arangodb');
         });
     });
