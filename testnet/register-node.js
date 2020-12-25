@@ -53,8 +53,8 @@ class RegisterNode {
             if (process.env.DB_TYPE === constants.DB_TYPE.psql && process.env.NODE_ENV !== 'development') {
                 execSync('/etc/init.d/postgresql start');
                 await this.runOperationDbMigration();
+                execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:migrate');
             }
-            execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:migrate');
             // Important: this file is running in the context of older version so
             // all the migrations has to be run in the context of updated version
             // of the node. This particularly means that newer version may have

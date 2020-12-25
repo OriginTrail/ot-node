@@ -18,7 +18,7 @@ RUN ["chmod", "+x", "/install-arango.sh"]
 RUN /install-arango.sh
 
 RUN export LC_ALL=C
-RUN apt-get install -y libpq-dev
+
 RUN apt-get update && apt install -y -qq supervisor
 RUN mkdir -p /var/log/supervisor
 COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
