@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Models = require('../../models');
 const constants = require('../constants');
+// eslint-disable-next-line import/no-extraneous-dependencies
 const { Pool } = require('pg');
 const Utilities = require('../Utilities');
 
