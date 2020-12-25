@@ -102,7 +102,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/trail/find/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
+            await this.dhController.findTrailResult(req, res);
         });
 
         server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res) => {

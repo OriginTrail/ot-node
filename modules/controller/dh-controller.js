@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 
 const Utilities = require('../Utilities');
 const Models = require('../../models');
@@ -186,7 +187,7 @@ class DHController {
             let response = this.importService.packTrailData(trail);
 
             if (reach === constants.TRAIL_REACH_PARAMETERS.extended) {
-                response = await this._extendResponse(response);
+                response = await this.trailService._extendResponse(response);
             }
 
             res.status(200);
@@ -224,8 +225,9 @@ class DHController {
             res.status(200);
             res.send(response);
         } catch (e) {
-            res.status(400);
-            res.send(e);
+            this.logger.error(e.message);
+            res.status(501);
+            res.send({ errorMessage: 'Internal error' });
         }
     }
 
@@ -267,62 +269,51 @@ class DHController {
             included_connection_types,
             excluded_connection_types,
         };
-        const commandSequence = [
-            'dhFindTrailCommand',
-        ];
 
         await this.commandExecutor.add({
-            name: commandSequence[0],
-            sequence: commandSequence.slice(1),
+            name: 'dhFindTrailCommand',
             delay: 0,
-            data: commandData,
             transactional: false,
+            data: commandData,
         });
+
         res.status(200);
         res.send({
             handler_id: inserted_object.dataValues.handler_id,
         });
     }
 
-    async _extendResponse(response) {
-        const missingObjects = {};
-        for (const trailElement of response) {
-            const object = trailElement.otObject;
+    async findTrailResult(req, res) {
+        const handlerId = req.params.handler_id;
+        this.logger.api(`POST: Trail result request received with handler id: ${handlerId}`);
+        const handler_object = await Models.handler_ids.findOne({
+            where: {
+                handler_id: handlerId,
+            },
+        });
 
-            const elementIsMissing =
-                (array, element) => !array.find(e => e.otObject['@id'] === element['@id']);
-
-            for (const relation of object.relations) {
-                if (elementIsMissing(response, relation.linkedObject)) {
-                    if (!missingObjects[relation.linkedObject['@id']]) {
-                        missingObjects[relation.linkedObject['@id']] = trailElement.datasets;
-                    } else {
-                        missingObjects[relation.linkedObject['@id']] =
-                            [...new Set(missingObjects[relation.linkedObject['@id']], trailElement.datasets)];
-                    }
-                }
-            }
+        if (!handler_object) {
+            this.logger.info('Invalid request');
+            res.status(404);
+            res.send({
+                message: 'Unable to find data with given parameters! handler_id is required!',
+            });
+            return;
         }
 
-        if (Object.keys(missingObjects).length > 0) {
-            /*
-              missingObjects: {
-                id1: [  dataset 1,  dataset 2, ... ],
-                id2: [  dataset 2,  dataset x, ... ],
-                ...
-              }
-             */
+        if (handler_object.status === 'COMPLETED') {
+            const cacheDirectory = path.join(this.config.appDataPath, 'trail_cache');
+            const filePath = path.join(cacheDirectory, handlerId);
 
-            const missingIds = Object.keys(missingObjects);
-            const missingElements =
-                await this.graphStorage.findTrailExtension(missingIds, missingObjects);
-
-            const trailExtension = this.importService.packTrailData(missingElements);
-
-            return response.concat(trailExtension);
+            const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
+            handler_object.data = JSON.parse(fileContent);
         }
 
-        return response;
+        res.status(200);
+        res.send({
+            data: handler_object.data,
+            status: handler_object.status,
+        });
     }
 
     /**

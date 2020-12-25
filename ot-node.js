@@ -49,7 +49,6 @@ const ImportWorkerController = require('./modules/worker/import-worker-controlle
 const ImportService = require('./modules/service/import-service');
 const OtJsonUtilities = require('./modules/OtJsonUtilities');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
-const TrailService = require('./modules/service/trail-service');
 
 const semver = require('semver');
 
@@ -299,7 +298,6 @@ class OTNode {
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
-            trailService: awilix.asClass(TrailService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();

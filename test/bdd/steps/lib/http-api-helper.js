@@ -694,7 +694,6 @@ async function apiTrail(nodeRpcUrl, params) {
 }
 
 
-
 async function apiTrailLookup(nodeRpcUrl, params) {
     return new Promise((accept, reject) => {
         request(
@@ -758,8 +757,6 @@ async function apiTrailFindResult(nodeRpcUrl, handler_id) {
         );
     });
 }
-
-
 
 
 /**

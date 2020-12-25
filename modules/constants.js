@@ -36,6 +36,12 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 exports.EXPORT_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
+ * @constant {number} TRAIL_COMMAND_CLEANUP_TIME_MILLS -
+ * Trail command cleanup interval time 1h
+ */
+exports.TRAIL_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
+
+/**
  * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 1h
  */
@@ -47,7 +53,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
     'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
-    'handlerIdsCleanerCommand',
+    'trailCleanerCommand', 'handlerIdsCleanerCommand',
 ];
 
 /**

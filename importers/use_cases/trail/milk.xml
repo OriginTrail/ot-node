@@ -21,59 +21,59 @@
         <extension>
             <EPCISMasterData>
                 <VocabularyList>
-                    <Vocabulary type="urn:ot:object:location">
+                    <Vocabulary type="location">
                         <VocabularyElementList>
                             <VocabularyElement id="urn:epc:id:sgln:100100">
-                                <attribute id="urn:ot:object:location:type">farm</attribute>
-                                <attribute id="urn:ot:object:location:internal_facility_id">100100</attribute>
-                                <attribute id="urn:ot:object:location:actorId">Farm1 </attribute>
+                                <attribute id="location:type">farm</attribute>
+                                <attribute id="location:internal_facility_id">100100</attribute>
+                                <attribute id="location:actorId">Farm1 </attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgln:100200">
-                                <attribute id="urn:ot:object:location:type">farm</attribute>
-                                <attribute id="urn:ot:object:location:internal_facility_id">100200</attribute>
-                                <attribute id="urn:ot:object:location:actorId">Farm2 </attribute>
+                                <attribute id="location:type">farm</attribute>
+                                <attribute id="location:internal_facility_id">100200</attribute>
+                                <attribute id="location:actorId">Farm2 </attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
-                    <Vocabulary type="urn:ot:object:product">
+                    <Vocabulary type="product">
                         <VocabularyElementList>
                             <VocabularyElement id="urn:epc:id:sgtin:100100.01">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100100.01</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.01</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:100100.02">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100100.02</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.02</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:100100.03">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100100.03</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.03</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:100100.04">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100100.04</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.04</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:class:sgtin:100100.000.311220">
-                                <attribute id="urn:ot:object:product:internalProductId">28</attribute>
-                                <attribute id="urn:ot:object:product:name">Milk 10 L 3,5% m.m.</attribute>
-                                <attribute id="urn:ot:object:product:ean13">3831051004078</attribute>
-                                <attribute id="urn:ot:object:product:batch">311220</attribute>
-                                <attribute id="urn:ot:object:product:date">2020-12-31T00:00:00+01:00</attribute>
+                                <attribute id="product:internalProductId">28</attribute>
+                                <attribute id="product:name">Milk 10 L 3,5% m.m.</attribute>
+                                <attribute id="product:ean13">3831051004078</attribute>
+                                <attribute id="product:batch">311220</attribute>
+                                <attribute id="product:date">2020-12-31T00:00:00+01:00</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:100200.01">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100200.01</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.01</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:100200.02">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100200.02</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.02</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:100200.03">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100200.03</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.03</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:100200.04">
-                                <attribute id="urn:ot:object:product:id">urn:epc:id:sgtin:100200.04</attribute>
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.04</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:class:sgtin:100200.000.311220">
-                                <attribute id="urn:ot:object:product:internalProductId">29</attribute>
-                                <attribute id="urn:ot:object:product:name">Milk 10 L 1,5% m.m.</attribute>
-                                <attribute id="urn:ot:object:product:ean13">3831051004085</attribute>
-                                <attribute id="urn:ot:object:product:batch">311220</attribute>
-                                <attribute id="urn:ot:object:product:date">2020-12-31T00:00:00+01:00</attribute>
+                                <attribute id="product:internalProductId">29</attribute>
+                                <attribute id="product:name">Milk 10 L 1,5% m.m.</attribute>
+                                <attribute id="product:ean13">3831051004085</attribute>
+                                <attribute id="product:batch">311220</attribute>
+                                <attribute id="product:date">2020-12-31T00:00:00+01:00</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>

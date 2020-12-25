@@ -9,8 +9,10 @@ class TrailService {
     }
 
     async lookupTrail(identifierTypes, identifierValues, opcode) {
-        if (Utilities.arrayze(identifierTypes).length !==
-            Utilities.arrayze(identifierValues).length) {
+        const typesArray = Utilities.arrayze(identifierTypes);
+        const valuesArray = Utilities.arrayze(identifierValues);
+
+        if (identifierTypes.length !== identifierValues.length) {
             throw Error('Identifier array length mismatch');
         }
 
@@ -19,9 +21,6 @@ class TrailService {
         }
 
         const identifierKeys = [];
-
-        const typesArray = Utilities.arrayze(identifierTypes);
-        const valuesArray = Utilities.arrayze(identifierValues);
 
         for (let i = 0; i < typesArray.length; i += 1) {
             identifierKeys.push(Utilities.keyFrom(typesArray[i], valuesArray[i]));
@@ -40,7 +39,9 @@ class TrailService {
         includedConnectionTypes,
         excludedConnectionTypes,
     ) {
-        if (includedConnectionTypes && excludedConnectionTypes && includedConnectionTypes.find(x => excludedConnectionTypes.includes(x))) {
+        if (includedConnectionTypes &&
+            excludedConnectionTypes &&
+            includedConnectionTypes.find(x => excludedConnectionTypes.includes(x))) {
             throw Error('Included and excluded connection types contain same types');
         }
 
@@ -70,7 +71,7 @@ class TrailService {
                 (array, element) => !array.find(e => e.otObject['@id'] === element['@id']);
 
             for (const relation of object.relations) {
-                if (elementIsMissing(response, relation.linkedObject)) {
+                if (missingObjects[relation.linkedObject['@id']] || elementIsMissing(response, relation.linkedObject)) {
                     if (!missingObjects[relation.linkedObject['@id']]) {
                         missingObjects[relation.linkedObject['@id']] = trailElement.datasets;
                     } else {

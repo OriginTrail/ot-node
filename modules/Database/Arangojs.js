@@ -244,42 +244,44 @@ class ArangoJS {
             identifierKeys,
         };
 
-        let queryString = `LET identifierObjects = UNIQUE(FLATTEN([DOCUMENT('ot_vertices', @identifierKeys)]))
-                            RETURN UNIQUE(FLATTEN(`;
+        let queryString = 'LET identifierObjects = UNIQUE(FLATTEN([DOCUMENT(\'ot_vertices\', @identifierKeys)]))';
         if (opcode === 'EQ') {
             queryString += `
-                            LET allIdentifiers = (FOR identifierObject IN identifierObjects
-                                return {identifierType: identifierObject.identifierType, identifierValue: identifierObject.identifierValue }
+                            let startObjects = UNIQUE(APPLY("INTERSECTION",(FOR identifierObject IN identifierObjects
+                                let identifiedObjects = 
+                                    (FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                        FILTER e.edgeType == 'IdentifierRelation'
+                                        return v)
+                                return identifiedObjects
+                            )))
+                           `;
+        } else {
+            queryString += `
+                            let startObjects = UNIQUE(FOR identifierObject IN identifierObjects
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                        FILTER e.edgeType == 'IdentifierRelation'
+                                        return v
                             )
                            `;
         }
         queryString += `
-                            FOR identifierObject IN identifierObjects
-                                FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
-                                    FILTER e.edgeType == 'IdentifierRelation'
-                                    let datasets = (
-                                        let datasets = DOCUMENT('ot_datasets', v.datasets)
-                                        for dataset in datasets
-                                            return { dataset_id: dataset._key, metadata: {dataCreator: dataset.datasetHeader.dataCreator.identifiers, timestamp: dataset.datasetHeader.datasetCreationTimestamp}}
-                                    )
-                                    let identifiers = (
-                                        FOR identifierVertex, identifierEdge IN 1..1 OUTBOUND v ot_edges
-                                            FILTER identifierEdge.edgeType == 'IdentifierRelation'
-                                            return {identifierType: identifierVertex.identifierType, identifierValue: identifierVertex.identifierValue }
-                                    )
-                                    `;
-        if (opcode === 'EQ') {
-            queryString += `
-                            FILTER LENGTH(INTERSECTION(identifiers, allIdentifiers)) == LENGTH(@identifierKeys)
-         `;
-        }
-
-        queryString += `
-         RETURN {unique_identifier: v._key, datasets: datasets, identifiers: identifiers}
-         ))`;
+                        for startObject in startObjects
+                            let identifiers = (
+                                FOR identifierVertex, identifierEdge IN 1..1 OUTBOUND startObject ot_edges
+                                    FILTER identifierEdge.edgeType == 'IdentifierRelation'
+                                    return {identifierType: identifierVertex.identifierType, identifierValue: identifierVertex.identifierValue }
+                            )
+                            let datasets = (
+                                let datasets = DOCUMENT('ot_datasets', startObject.datasets)
+                                for dataset in datasets
+                                    return { dataset_id: dataset._key, metadata: {dataCreator: dataset.datasetHeader.dataCreator.identifiers, timestamp: dataset.datasetHeader.datasetCreationTimestamp}}
+                            )
+                            
+                            RETURN {unique_identifier: startObject._key, datasets: datasets, identifiers: identifiers}
+                            `;
 
         const result = await this.runQuery(queryString, queryParams);
-        return result[0];
+        return result;
     }
 
     /**
