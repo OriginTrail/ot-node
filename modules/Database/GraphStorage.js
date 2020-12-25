@@ -79,6 +79,20 @@ class GraphStorage {
         });
     }
 
+    findLocalQuery(queryObject) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.findLocalQuery(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     /**
      * Finds objects based on ids and datasets which contain them
      *
@@ -340,6 +354,16 @@ class GraphStorage {
     }
 
     /**
+     * Replace document in graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async replaceDocument(collectionName, document) {
+        return this.db.replaceDocument(collectionName, document);
+    }
+
+    /**
      * Updates document with the import ID
      * @param collectionName
      * @param document
@@ -395,14 +419,15 @@ class GraphStorage {
      * Returns vertices and edges with specific parameters
      * @param importId
      * @param objectKey
+     * @param range
      * @returns {Promise<any>}
      */
-    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey, range = 1) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findDocumentsByImportIdAndOtObjectKey(importId, objectKey)
+                this.db.findDocumentsByImportIdAndOtObjectKey(importId, objectKey, range)
                     .then((result) => { resolve(result); }).catch((err) => {
                         reject(err);
                     });
