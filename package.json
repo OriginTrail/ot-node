@@ -146,8 +146,6 @@
     "os": "^0.1.1",
     "p-iteration": "^1.1.7",
     "pem": "^1.12.3",
-    "pg": "^8.2.1",
-    "pg-native": "^3.0.0",
     "python-shell": "^0.5.0",
     "randomstring": "^1.1.5",
     "rc": "^1.2.8",
@@ -187,5 +185,9 @@
     "winston-papertrail": "^1.0.5",
     "xml-js": "^1.6.11",
     "xml2js": "^0.4.19"
+  },
+  "optionalDependencies": {
+    "pg": "^8.2.1",
+    "pg-native": "^3.0.0"
   }
 }
