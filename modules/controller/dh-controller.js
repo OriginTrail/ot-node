@@ -205,9 +205,11 @@ class DHController {
             req.body.identifier_types === undefined ||
             req.body.identifier_values === undefined
         ) {
+            const message = 'Unable to find data with given parameters! identifier_types, identifier_values, and opcode are required!';
+            this.logger.info(message);
             res.status(400);
             res.send({
-                message: 'Bad request',
+                message,
             });
             return;
         }
@@ -237,9 +239,11 @@ class DHController {
         if (req.body === undefined ||
             req.body.unique_identifiers === undefined
         ) {
+            const message = 'Unable to find data with given parameters! unique_identifiers is required!';
+            this.logger.info(message);
             res.status(400);
             res.send({
-                message: 'Bad request',
+                message,
             });
             return;
         }
@@ -293,10 +297,11 @@ class DHController {
         });
 
         if (!handler_object) {
-            this.logger.info('Invalid request');
+            const message = 'Unable to find data with given parameters! handler_id is required!';
+            this.logger.info(message);
             res.status(404);
             res.send({
-                message: 'Unable to find data with given parameters! handler_id is required!',
+                message,
             });
             return;
         }

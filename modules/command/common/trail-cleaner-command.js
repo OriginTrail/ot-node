@@ -28,7 +28,7 @@ class TrailCleanerCommand extends Command {
             const filePath = path.join(cacheDirectoryPath, fileName);
             const now = new Date();
             const createdDate = fs.lstatSync(filePath).mtime;
-            if (createdDate.getTime() + constants.EXPORT_COMMAND_CLEANUP_TIME_MILLS <
+            if (createdDate.getTime() + constants.TRAIL_COMMAND_CLEANUP_TIME_MILLS <
                 now.getTime()) {
                 fs.unlinkSync(filePath);
                 this.logger.trace(`Successfully removed trail cache file: ${filePath}`);
