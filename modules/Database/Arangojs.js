@@ -245,15 +245,19 @@ class ArangoJS {
         };
 
         let queryString = 'LET identifierObjects = UNIQUE(FLATTEN([DOCUMENT(\'ot_vertices\', @identifierKeys)]))';
-        if (opcode === 'EQ') {
+        if (opcode === 'EQ' && identifierKeys.length > 1) {
             queryString += `
-                            let startObjects = UNIQUE(APPLY("INTERSECTION",(FOR identifierObject IN identifierObjects
+                            let candidates = (FOR identifierObject IN identifierObjects
                                 let identifiedObjects = 
                                     (FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
                                         FILTER e.edgeType == 'IdentifierRelation'
                                         return v)
                                 return identifiedObjects
-                            )))
+                            )
+                            
+                            filter LENGTH(candidates) > 1
+                            
+                            let startObjects = UNIQUE(APPLY("INTERSECTION",candidates))
                            `;
         } else {
             queryString += `

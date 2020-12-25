@@ -172,12 +172,12 @@ Given(
 Given(
     /^I call traversal lookup from "(\S+)" "(\S+)" with opcode "(\S+)"/,
     { timeout: 120000 },
-    async function (typesArrayString, ValuesArrayString, opCode) {
+    async function (typesArrayString, valuesArrayString, opCode) {
         expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
         const { dc } = this.state;
 
-        const typesArray = typesArrayString.toLowerCase().split(',');
-        const valuesArray = ValuesArrayString.split(',');
+        const typesArray = typesArrayString.split(',');
+        const valuesArray = valuesArrayString.split(',');
 
         const host = dc.state.node_rpc_url;
         const trailParams = {
@@ -366,7 +366,7 @@ Then(
         expect(!!this.state.lastTrailLookup, 'Last traversal lookup not defined. Use other step to define it.').to.be.equal(true);
         const { lastTrailLookup } = this.state;
 
-        const typesArray = typesArrayString.toLowerCase().split(',');
+        const typesArray = typesArrayString.split(',');
         const valuesArray = valuesArrayString.split(',');
 
         const filteredTrailLookup = lastTrailLookup.filter((trailLookupElement) => {
