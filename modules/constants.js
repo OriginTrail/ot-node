@@ -150,3 +150,13 @@ exports.PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE = 'permissioned.show_attribu
  * visibility option for storing attribute to permissioned data
  */
 exports.PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE = 'permissioned.hide_attribute';
+
+exports.NODE_STATUS = {
+    active: 'ACTIVE',
+    fallback: 'FALLBACK',
+    updating: 'UPDATING',
+};
+
+exports.DB_TYPE = {
+    psql: 'psql',
+};

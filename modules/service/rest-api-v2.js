@@ -45,8 +45,18 @@ class RestAPIServiceV2 {
             transport, emitter, blockchain, web3, config,
         } = this.ctx;
 
+        server.get(`/api/${this.version_id}/health_check`, (req, res) => {
+            res.status(200);
+            res.send({
+            });
+        });
+
         server.get(`/api/${this.version_id}/info`, async (req, res) => {
             await this.infoController.getNodeInfo(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/node_data`, async (req, res) => {
+            await this.infoController.getNodeData(req, res);
         });
 
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
