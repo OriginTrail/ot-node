@@ -117,6 +117,20 @@ class GraphStorage {
         });
     }
 
+    lookupTrail(queryObject) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.lookupTrail(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     findLocalQuery(queryObject) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
