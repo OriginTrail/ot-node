@@ -172,23 +172,51 @@ class InfoController {
             },
 
         };
-        const offer = await Models.offers.findOne({ where: { data_set_id: datasetId } });
-        if (offer) {
-            const replication_info = {
-                offer_id: offer.offer_id,
-                number_of_replications: offer.number_of_replications,
-                number_of_verified_replications: offer.number_of_verified_replications,
-                gas_price_used_for_price_calculation: offer.gas_price_used_for_price_calculation,
-                holding_time_in_minutes: offer.holding_time_in_minutes,
-                offer_finalize_transaction_hash: offer.offer_finalize_transaction_hash,
-                price_factor_used_for_price_calculation:
-                offer.price_factor_used_for_price_calculation,
-                status: offer.status,
-                token_amount_per_holder: offer.token_amount_per_holder,
-                trac_in_eth_used_for_price_calculation:
-                offer.trac_in_eth_used_for_price_calculation,
-            };
-            result.replication_info = replication_info;
+        const offers = await Models.offers.findAll({
+            where: {
+                data_set_id: datasetId,
+                status: 'FINALIZED',
+            },
+        });
+        if (offers.length > 0) {
+            let offer;
+            if (offers.length === 1) {
+                // eslint-disable-next-line prefer-destructuring
+                offer = offers[0];
+            } else {
+                const offerIds = offers.map(offer => offer.offer_id);
+                const replicatedData = await Models.replicated_data.findOne({
+                    where: {
+                        offer_id: {
+                            [Models.sequelize.Op.in]: offerIds,
+                        },
+                    },
+                    order: [
+                        ['id', 'DESC'],
+                    ],
+                });
+                if (replicatedData) {
+                    offer = offers.find(element => element.offer_id === replicatedData.offer_id);
+                }
+            }
+            if (offer) {
+                const replication_info = {
+                    offer_id: offer.offer_id,
+                    number_of_replications: offer.number_of_replications,
+                    number_of_verified_replications: offer.number_of_verified_replications,
+                    gas_price_used_for_price_calculation:
+                    offer.gas_price_used_for_price_calculation,
+                    holding_time_in_minutes: offer.holding_time_in_minutes,
+                    offer_finalize_transaction_hash: offer.offer_finalize_transaction_hash,
+                    price_factor_used_for_price_calculation:
+                    offer.price_factor_used_for_price_calculation,
+                    status: offer.status,
+                    token_amount_per_holder: offer.token_amount_per_holder,
+                    trac_in_eth_used_for_price_calculation:
+                    offer.trac_in_eth_used_for_price_calculation,
+                };
+                result.replication_info = replication_info;
+            }
         }
         response.status(200);
         response.send(result);
