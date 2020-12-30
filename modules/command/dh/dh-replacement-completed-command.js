@@ -39,7 +39,7 @@ class DHReplacementCompleted extends Command {
                 !Utilities.compareHexStrings(challengerIdentity, this.profileService.getIdentity());
             });
             if (event) {
-                event.finished = true;
+                event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
                 const {

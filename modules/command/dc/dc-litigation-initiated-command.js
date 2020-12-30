@@ -46,7 +46,7 @@ class DcLitigationInitiatedCommand extends Command {
                     && blockIndex === parseInt(requestedBlockIndex, 10);
             });
             if (event) {
-                event.finished = true;
+                event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Litigation initiated for DH ${dhIdentity} and offer ${offerId}.`);

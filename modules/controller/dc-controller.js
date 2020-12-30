@@ -492,6 +492,7 @@ class DCController {
 
 
     async removePermissionedData(req, res) {
+        this.logger.api('POST: Remove permissioned data request received.');
         if (req.body === undefined ||
             req.body.dataset_id === undefined ||
             req.body.identifier_value === undefined ||
@@ -504,11 +505,11 @@ class DCController {
             return;
         }
 
-        const { dataset_id, identifier_value } = req.body;
+        const { dataset_id, identifier_value, identifier_type } = req.body;
 
         let status = await this.permissionedDataService.removePermissionedDataInDb(
             dataset_id,
-            identifier_value,
+            Utilities.keyFrom(identifier_type, identifier_value),
         );
 
         const allMyIdentities = this.blockchain.getAllBlockchainIds()
@@ -524,9 +525,16 @@ class DCController {
             },
         });
 
-        if (status) { status = 'COMPLETED'; } else { status = 'FAILED'; }
+        let message;
+        if (status) {
+            status = 'COMPLETED';
+            message = 'Permissioned data successfully removed';
+        } else {
+            status = 'FAILED';
+            message = 'Permissioned data doesn\'t exist';
+        }
         res.status(200);
-        res.send({ status });
+        res.send({ status, message });
     }
 
     /**
@@ -552,12 +560,17 @@ class DCController {
             throw validationError;
         }
 
-        const { path } = query[0];
-        const valuesArray = Utilities.arrayze(query[0].value);
+        const { path, value } = query[0];
+        const valuesArray = Utilities.arrayze(value);
+
+        const keys = [];
+
+        for (let i = 0; i < valuesArray.length; i += 1) {
+            keys.push(Utilities.keyFrom(path, valuesArray[i]));
+        }
 
         const result = await this.graphStorage.findLocalQuery({
-            idType: path,
-            identifierKey: valuesArray,
+            identifierKeys: keys,
         });
         const response = this.importService.packLocalQueryData(result);
         for (let i = 0; i < response.length; i += 1) {

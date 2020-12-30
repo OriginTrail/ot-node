@@ -17,8 +17,8 @@ module.exports = (sequelize, DataTypes) => {
         answer: DataTypes.STRING,
         expected_answer: DataTypes.STRING,
         data_set_id: DataTypes.STRING,
-        start_time: DataTypes.INTEGER,
-        end_time: DataTypes.INTEGER,
+        start_time: DataTypes.BIGINT,
+        end_time: DataTypes.BIGINT,
         status: DataTypes.STRING,
     }, {});
     challenges.associate = (models) => {

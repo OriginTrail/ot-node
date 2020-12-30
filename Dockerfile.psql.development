@@ -1,0 +1,62 @@
+#base image
+FROM ubuntu:16.04
+MAINTAINER OriginTrail
+LABEL maintainer="OriginTrail"
+ARG targetEnvironment=development
+
+ENV NODE_ENV=$targetEnvironment
+ENV GRANAX_USE_SYSTEM_TOR=1
+ENV OT_NODE_DISTRIBUTION=docker
+ENV DB_TYPE=psql
+
+RUN apt-get -qq update && apt-get -qq -y install curl
+RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
+RUN apt-get -qq update && apt-get -qq -y install wget apt-transport-https software-properties-common build-essential git nodejs sqlite unzip nano
+RUN add-apt-repository -y ppa:ethereum/ethereum && apt-get -qq update && apt-get install -y -qq ethereum geth
+#ArangoDB
+ADD testnet/install-arango.sh /install-arango.sh
+RUN ["chmod", "+x", "/install-arango.sh"]
+RUN /install-arango.sh
+
+RUN export LC_ALL=C
+RUN apt-get install -y libpq-dev
+RUN apt-get update && apt install -y -qq supervisor
+RUN mkdir -p /var/log/supervisor
+COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN apt-get -y install nano wget
+
+#PostgresDB
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |tee  /etc/apt/sources.list.d/pgdg.list
+RUN apt-get update && apt-get install -y python-software-properties software-properties-common postgresql-12 postgresql-client-12 postgresql-contrib-12
+USER postgres
+RUN    /etc/init.d/postgresql start &&\
+    psql --command "CREATE USER root WITH SUPERUSER PASSWORD 'origintrail'" &&\
+    createdb -O root ot_node_db
+USER root
+RUN echo "host replication  all    0.0.0.0/0  trust" >> /etc/postgresql/12/main/pg_hba.conf
+RUN echo "listen_addresses='*'" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "wal_level = replica" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "max_wal_senders = 10" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "wal_keep_segments = 64" >> /etc/postgresql/12/main/postgresql.conf
+RUN echo "hot_standby = on" >> /etc/postgresql/12/main/postgresql.conf
+EXPOSE 5432
+VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
+CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
+
+# Creating link
+RUN mkdir -p /ot-node/init
+RUN ln -s /ot-node/init /ot-node/current
+
+# Add files
+COPY . /ot-node/current
+RUN /etc/init.d/postgresql start && service arangodb3 start && cd /ot-node/current && npm install
+
+RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
+RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
+ADD testnet/papertrail.yml /etc/log_files.yml
+
+WORKDIR /ot-node/current
+
+EXPOSE 5278 8900 3000 3010
+CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/testnet/supervisord.conf"]

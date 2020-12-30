@@ -976,6 +976,17 @@ class Utilities {
     static length(a) {
         return (a.length - 2) / 2;
     }
+
+    /**
+     * Sleeps for provided time
+     * @param timeout - Timeout in milliseconds
+     * @return Promise
+     */
+    static async sleepForMilliseconds(timeout) {
+        await new Promise((resolve, reject) => {
+            setTimeout(() => resolve(), timeout);
+        });
+    }
 }
 
 module.exports = Utilities;

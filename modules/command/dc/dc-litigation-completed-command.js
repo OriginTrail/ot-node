@@ -37,7 +37,7 @@ class DCLitigationCompletedCommand extends Command {
                     && utilities.compareHexStrings(dhIdentity, holderIdentity);
             });
             if (event) {
-                event.finished = true;
+                event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
                 const {

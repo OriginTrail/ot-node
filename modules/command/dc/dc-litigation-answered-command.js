@@ -42,7 +42,7 @@ class DCLitigationAnsweredCommand extends Command {
                     && utilities.compareHexStrings(dhIdentity, holderIdentity);
             });
             if (event) {
-                event.finished = true;
+                event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Litigation answered for DH ${dhIdentity} and offer ${offerId}.`);
