@@ -14,6 +14,7 @@ const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
 const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-db-command');
 const ErrorNotificationService = require('../.././../../modules/service/error-notification-service');
+const PermissionedDataService = require('../.././../../modules/service/permissioned-data-service');
 
 const defaultConfig = require('../../../../config/config.json').development;
 const pjson = require('../../../../package.json');
@@ -84,12 +85,18 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
             notifyError: () => {},
         };
 
+        const mockProfileService = {
+            getIdentity: () => '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1',
+        };
+
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
             config: awilix.asValue(config),
             remoteControl: awilix.asValue(mockRemoteControl),
             commandResolver: awilix.asClass(CommandResolver),
+            profileService: awilix.asValue(mockProfileService),
+            permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
             dcOfferCreateDatabaseCommand: awilix.asClass(DCOfferCreateDatabaseCommand),
             errorNotificationService: awilix.asValue(mockErrorNotificationService),
         });

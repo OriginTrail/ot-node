@@ -4,6 +4,8 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const models = require('../../../models/index');
 const constants = require('../../constants');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * Creates offer in the database
@@ -12,8 +14,12 @@ class DCOfferCreateDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
+
+        this.profileService = ctx.profileService;
+
         this.remoteControl = ctx.remoteControl;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.permissionedDataService = ctx.permissionedDataService;
     }
 
     /**
@@ -31,6 +37,8 @@ class DCOfferCreateDbCommand extends Command {
             tokenAmountPerHolder,
             litigationIntervalInMinutes,
             urgent,
+            handler_id,
+            blockchain_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -53,6 +61,22 @@ class DCOfferCreateDbCommand extends Command {
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });
+        const cacheDirectoryPath = path.join(
+            this.config.appDataPath,
+            this.config.dataSetStorage, internalOfferId,
+        );
+
+        const documentPath = path.join(cacheDirectoryPath, handler_id);
+
+        const otJson = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
+        await this.permissionedDataService.addDataSellerForPermissionedData(
+            offer.data_set_id,
+            this.profileService.getIdentity(blockchain_id),
+            blockchain_id,
+            this.config.default_data_price,
+            this.config.identity,
+            otJson['@graph'],
+        );
 
         const { data } = command;
         return this.continueSequence(this.pack(data), command.sequence);
