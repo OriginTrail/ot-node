@@ -37,7 +37,7 @@ class HighAvailabilityService {
                         process.exit(1);
                     }
                     // eslint-disable-next-line no-await-in-loop
-                    await Utilities.sleepForMiliseconds(fallback_sync_attempts_delay);
+                    await Utilities.sleepForMilliseconds(fallback_sync_attempts_delay);
                 }
             }
         }
@@ -119,7 +119,7 @@ class HighAvailabilityService {
         );
         do {
             // eslint-disable-next-line no-await-in-loop
-            await Utilities.sleepForMiliseconds(is_remote_node_available_attempts_delay);
+            await Utilities.sleepForMilliseconds(is_remote_node_available_attempts_delay);
             // eslint-disable-next-line no-await-in-loop
             remoteNodeAvailable = await this.isRemoteNodeAvailable();
         } while (remoteNodeAvailable);
@@ -312,7 +312,7 @@ class HighAvailabilityService {
             }
             if (i + 1 < is_remote_node_available_attempts_number) {
                 // eslint-disable-next-line no-await-in-loop
-                await Utilities.sleepForMiliseconds(is_remote_node_available_attempts_delay);
+                await Utilities.sleepForMilliseconds(is_remote_node_available_attempts_delay);
             }
         }
         this.logger.info('Remote node is not in active state.');
