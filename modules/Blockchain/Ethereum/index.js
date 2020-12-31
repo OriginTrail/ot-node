@@ -1486,7 +1486,7 @@ class Ethereum {
     }
 
     async getTracPrice() {
-        if (process.env.NODE_ENV !== 'development') {
+        if (process.env.NODE_ENV !== 'mainnet') {
             this.logger.trace(`[${this.getBlockchainId()}] Using default trac price in eth from configuration: ${this.config.trac_price_in_eth}`);
             return this.config.trac_price_in_eth;
         }

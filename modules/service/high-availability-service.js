@@ -13,7 +13,6 @@ class HighAvailabilityService {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.otNodeClient = ctx.otNodeClient;
-        this.web3 = ctx.web3;
     }
 
     async startHighAvailabilityNode() {
@@ -212,7 +211,6 @@ class HighAvailabilityService {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
                 this.config.node_private_key,
             ),
         };

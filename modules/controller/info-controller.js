@@ -102,11 +102,13 @@ class InfoController {
         this.logger.api('GET: Node data request received.');
         try {
             const { message, messageSignature } = req.body;
+            const wallets = this.blockchain.getAllWallets()
+                .map(e => Utilities.normalizeHex(e.response.node_wallet));
             if (
                 !message ||
                 !messageSignature ||
-                message.wallet !== this.config.node_wallet ||
-                !Utilities.isMessageSigned(this.web3, message, messageSignature)
+                !wallets.includes(Utilities.normalizeHex(message.wallet)) ||
+                !Utilities.isMessageSigned(message, messageSignature)
             ) {
                 this.logger.error('Unauthorized node data request');
                 res.status(403);
@@ -118,11 +120,8 @@ class InfoController {
             await this.transport.dumpNetworkInfo();
             const response = {};
 
-            if (message.erc725Identity) {
-                response.erc725Identity = fs.readFileSync(path.join(
-                    this.config.appDataPath,
-                    this.config.erc725_identity_filepath,
-                )).toString();
+            if (message.blockchain_identities) {
+                response.blockchain_identities = this.blockchain.getAllIdentities();
             }
             if (message.networkIdentity) {
                 response.networkIdentity = fs.readFileSync(path.join(

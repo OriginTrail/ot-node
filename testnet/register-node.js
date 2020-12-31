@@ -256,22 +256,22 @@ exec /usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf
             externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
         }
 
-    if (externalConfig.node_wallet
-        && externalConfig.node_private_key
-        && externalConfig.management_wallet) {
-        fs.writeFileSync(
-            path.join(localConfiguration.appDataPath, 'wallet.json'),
-            JSON.stringify({
-                node_wallet: externalConfig.node_wallet,
-                node_private_key: externalConfig.node_private_key,
-                management_wallet: externalConfig.management_wallet,
-            }),
-        );
+        if (externalConfig.node_wallet
+            && externalConfig.node_private_key
+            && externalConfig.management_wallet) {
+            fs.writeFileSync(
+                path.join(localConfiguration.appDataPath, 'wallet.json'),
+                JSON.stringify({
+                    node_wallet: externalConfig.node_wallet,
+                    node_private_key: externalConfig.node_private_key,
+                    management_wallet: externalConfig.management_wallet,
+                }),
+            );
 
-        delete externalConfig.node_wallet;
-        delete externalConfig.node_private_key;
-        delete externalConfig.management_wallet;
-    }
+            delete externalConfig.node_wallet;
+            delete externalConfig.node_private_key;
+            delete externalConfig.management_wallet;
+        }
 
         if (process.env.ERC_725_IDENTITY) {
             const erc725IdentityFilePath = path.join(

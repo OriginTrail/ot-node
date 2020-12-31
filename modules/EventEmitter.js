@@ -528,7 +528,7 @@ class EventEmitter {
                 const { message, messageSignature } = kadReplicationRequest;
                 replicationMessage = message;
 
-                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                if (!Utilities.isMessageSigned(message, messageSignature)) {
                     logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                     return;
                 }
