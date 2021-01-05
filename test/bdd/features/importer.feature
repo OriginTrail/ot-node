@@ -48,7 +48,7 @@ Feature: Test basic importer features
     And DC waits for export to finish
     Then the last exported dataset data should be the same as "importers/json_examples/kakaxi.wot"
 
-  @first
+  @skip
   Scenario: Fetching entity by different identifiers
     Given I setup 1 node
     And I start the node

@@ -258,6 +258,7 @@ contract('Holding storage testing', async (accounts) => {
             await holdingStorage.offer.call(offerId);
 
         assert.equal(initialOffer.creator, DC_wallet, 'Incorrect offer creator written in Holding storage!');
+        assert.equal(initialOffer.dataSetId, dataSetId, 'Incorrect dataSet ID written in Holding storage!');
         assert(initialOffer.holdingTimeInMinutes.eq(holdingTimeInMinutes), 'Incorrect holding time written in Holding storage!');
         assert(
             initialOffer.tokenAmountPerHolder.eq(tokenAmountPerHolder),
@@ -284,6 +285,7 @@ contract('Holding storage testing', async (accounts) => {
         await holdingStorage.setOfferParameters(
             offerId,
             emptyAddress, // offerCreator
+            emptyHash, // dataSetId
             new BN(0), // holdingTimeInMinutes
             new BN(0), // tokenAmountPerHolder
             new BN(0), // litigationIntervalInMinutes
@@ -305,6 +307,7 @@ contract('Holding storage testing', async (accounts) => {
             await holdingStorage.offer.call(offerId);
 
         assert.equal(finalOffer.creator, emptyAddress, 'Final offer creator in Holding storage must be 0!');
+        assert.equal(finalOffer.dataSetId, emptyHash, 'Final dataSetId in Holding storage must be 0!');
         assert(finalOffer.holdingTimeInMinutes.isZero(), 'Final holdingTimeInMinutes in Holding storage must be 0!');
         assert(finalOffer.tokenAmountPerHolder.isZero(), 'Final tokenAmountPerHolder in Holding storage must be 0!');
         assert.equal(finalOffer.task, emptyHash, 'Final task in Holding storage must be 0!');

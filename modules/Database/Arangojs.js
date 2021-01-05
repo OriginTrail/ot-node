@@ -240,6 +240,68 @@ class ArangoJS {
         return result;
     }
 
+    async findLocalQuery(queryObject) {
+        const {
+            identifierKeys,
+        } = queryObject;
+
+        const queryParams = {
+            identifierKeys,
+        };
+
+        const queryString = `LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
+                            
+                            let latestIdentifierObjects = (
+                            FOR identifierObject in identifierObjects
+                                FILTER identifierObject != null
+                                let datasets = (
+                                FOR dataset in identifierObject.datasets
+                                    let d = DOCUMENT('ot_datasets', dataset)
+                                    return { dataset, timestamp: d.datasetHeader.datasetCreationTimestamp}
+                                )
+                                
+                                let latestDataset = (
+                                FOR d IN datasets  
+                                SORT d.timestamp DESC
+                                LIMIT 1
+                                RETURN d.dataset
+                                )
+                                
+                                return {vertex: identifierObject, latestDataset: latestDataset[0] })
+                            
+                            // Fetch the start entity for trail
+                            LET startObjects = UNIQUE(FLATTEN(
+                                FOR identifierObject IN latestIdentifierObjects
+                                    FILTER identifierObject.vertex != null
+                                    LET identifiedObject = (
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject.vertex ot_edges
+                                    FILTER e.edgeType == 'IdentifierRelation'
+                                    and identifierObject.latestDataset in v.datasets
+                                    RETURN v
+                                    )
+                                RETURN {vertex: identifiedObject[0], latestDataset: identifierObject.latestDataset }
+                            ))
+                            
+                            FOR startObject in startObjects
+                            FILTER startObject.vertex != null
+                            let p = (FOR v, e in 1..1 OUTBOUND startObject.vertex ot_edges
+                                FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
+                                AND e.datasets != null
+                                AND v.datasets != null
+                                AND LENGTH(INTERSECTION(e.datasets, v.datasets, startObject.vertex.datasets)) > 0
+                                RETURN  {
+                                    "vertex": v,
+                                    "edge": e
+                                    })
+                            return {
+                                "rootObject": startObject,
+                                "relatedObjects": p
+                                }`;
+
+        const result = await this.runQuery(queryString, queryParams);
+        return result;
+    }
+
 
     async getConsensusEvents(sender_id) {
         const query = `FOR v IN ot_vertices
@@ -846,6 +908,20 @@ class ArangoJS {
         return ArangoJS._normalize(response);
     }
 
+
+    /**
+     * Update document in ArangoDB graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    async replaceDocument(collectionName, document) {
+        ArangoJS._deNormalizeConnection(document);
+        const collection = this.db.collection(collectionName);
+        const response = await collection.replace(document._key, document);
+        return ArangoJS._normalize(response);
+    }
+
     /**
      * Get document from ArangoDB graph database
      * @param {string} - collectionName
@@ -1030,13 +1106,13 @@ class ArangoJS {
      * @param objectKey
      * @returns {Promise<any>}
      */
-    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey) {
+    async findDocumentsByImportIdAndOtObjectKey(importId, objectKey, range) {
         const queryString = `LET rootObject = (
                                 RETURN document('ot_vertices', @objectKey)
                             )
                             
                             LET relatedObjects = (
-                                FOR v, e IN 1..1 OUTBOUND rootObject[0] ot_edges
+                                FOR v, e IN 1..${range} OUTBOUND rootObject[0] ot_edges
                                 FILTER e.edgeType IN ['IdentifierRelation','dataRelation','otRelation']
                                     AND e.datasets != null
                                     AND v.datasets != null

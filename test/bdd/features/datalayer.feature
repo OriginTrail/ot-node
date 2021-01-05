@@ -20,7 +20,7 @@ Feature: Data layer related features
     And DC waits for last offer to get written to blockchain
     Then checking again first import's root hash should point to remembered value
 
-  @fourth
+  @skip
   Scenario: Smoke check data-layer basic endpoints
     Given I setup 2 nodes
     And I start the nodes
@@ -132,7 +132,7 @@ Feature: Data layer related features
 #    And DV calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
 #    Then last consensus response should have 1 event with 1 match
 
-  @first
+  @skip
   Scenario: Latest datalayer import and data read query
     Given I setup 1 node
     And I start the node
@@ -163,7 +163,7 @@ Feature: Data layer related features
     And DV waits for export to finish
     Then the last exported dataset data should be the same as "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
 
-  @second
+  @skip
   Scenario: Data location with multiple identifiers
     Given I setup 1 node
     And I start the node
@@ -314,3 +314,15 @@ Feature: Data layer related features
     Given DC initiates the replication for last imported dataset
     And DC waits for public key request
     And I wait for replications to finish
+
+  @fourth
+  Scenario: Check that local query returns valid object
+    And I setup 1 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/json_examples/local-query1.json" as GRAPH
+    And DC waits for import to finish
+    And DC imports "importers/json_examples/local-query2.json" as GRAPH
+    And DC waits for import to finish
+    Given DC runs local query consisting of path: "id", value: "test1" and opcode: "EQ"
+    Then  The last local query should return otObject from the last imported dataset

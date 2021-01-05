@@ -38,6 +38,10 @@ Feature: Permissioned data features
     And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
+    And I use 2nd node as DH
+    When DH exports the last imported dataset as OT-JSON
+    And DH waits for export to finish
+    Then The last export doesn't have permissioned data
     Given I use 2nd node as DV
     And DV gets the list of available datasets for trading
     And DV gets the price for the last imported dataset
@@ -49,3 +53,22 @@ Feature: Permissioned data features
     When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
     Then the last import should be the same on DC and DV nodes
+
+  @second
+  Scenario: Remove permissioned data and initiates purchase request
+    Given the replication difficulty is 1
+    And I setup 4 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/marketplace/permissioned_data_simple_sample.json" as OT-JSON
+    And DC waits for import to finish
+    Given DC initiates the replication for last imported dataset
+    And I wait for replications to finish
+    Given I use 2nd node as DV
+    And DV gets the list of available datasets for trading
+    Given DC removes permissioned data from the last imported dataset consisting of path: "id", value: "urn:ot:object:actor:id:company-red"
+    When DC exports the last imported dataset as OT-JSON
+    And DC waits for export to finish
+    Then the last exported dataset should not contain permissioned data as "urn:ot:object:actor:id:company-red"
+    And DV unsuccessfully gets the price for the last imported dataset
+    Then DV unsuccessfully initiates purchase for the last imported dataset

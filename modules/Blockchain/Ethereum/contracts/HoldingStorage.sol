@@ -11,7 +11,7 @@ contract HoldingStorage {
 
     modifier onlyContracts() {
         require(hub.isContract(msg.sender),
-        "Function can only be called by contracts!");
+            "Function can only be called by contracts!");
         _;
     }
 
@@ -143,6 +143,7 @@ contract HoldingStorage {
     function setOfferParameters (
         bytes32 offerId,
         address creator,
+        bytes32 dataSetId,
         uint256 holdingTimeInMinutes,
         uint256 tokenAmountPerHolder,
         uint256 litigationIntervalInMinutes,
@@ -150,6 +151,7 @@ contract HoldingStorage {
         uint256 difficulty)
     public onlyContracts {
         offer[offerId].creator = creator;
+        offer[offerId].dataSetId = dataSetId;
         offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
         offer[offerId].litigationIntervalInMinutes = litigationIntervalInMinutes;
@@ -182,6 +184,7 @@ contract HoldingStorage {
         address[] identities,
         uint8[] litigationEncryptionTypes)
     public onlyContracts {
+        offer[offerId].startTime = block.timestamp;
 
         holder[offerId][identities[0]].stakedAmount = offer[offerId].tokenAmountPerHolder;
         if(holder[offerId][identities[0]].litigationEncryptionType != litigationEncryptionTypes[0])
