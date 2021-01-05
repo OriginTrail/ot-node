@@ -53,6 +53,20 @@ class DocumentStorage {
         });
     }
 
+    findStagingData() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to document database.'));
+            } else {
+                this.db.findStagingData().then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     findAndRemoveStagingData() {
         return new Promise((resolve, reject) => {
             if (!this.db) {

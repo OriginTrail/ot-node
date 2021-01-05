@@ -562,6 +562,15 @@ class DCController {
         res.send(response);
     }
 
+    async handleStagingDataGet(req, res) {
+        this.logger.api('GET: Staging data get request received.');
+
+        const data = await this.documentStorage.findStagingData();
+
+        res.status(200);
+        res.send({ data, status: 'COMPLETED' });
+    }
+
     async handleStagingDataCreate(req, res) {
         this.logger.api('POST: Staging data create request received.');
         if (!req.body) {

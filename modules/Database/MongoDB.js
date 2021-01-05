@@ -85,6 +85,30 @@ class MongoDB {
         await client.close();
     }
 
+    /**
+     * Find in MongoDB
+     * @returns {Promise<any>}
+     */
+
+    async findStagingData() {
+        const client = await MongoClient.connect(this.url, {
+            useUnifiedTopology: true,
+            useNewUrlParser: true,
+        });
+
+        const db = client.db(this.database);
+        let results = [];
+
+        try {
+            results = await db.collection(this.collection).find({}).toArray();
+        } catch (error) {
+            throw error;
+        }
+
+        await client.close();
+
+        return results;
+    }
 
     /**
      * Find and remove in MongoDB

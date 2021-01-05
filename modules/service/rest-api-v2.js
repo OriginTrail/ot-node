@@ -194,6 +194,10 @@ class RestAPIServiceV2 {
             });
         }
 
+        server.get(`/api/${this.version_id}/staging_data/get`, async (req, res) => {
+            await this.dcController.handleStagingDataGet(req, res);
+        });
+
         server.post(`/api/${this.version_id}/staging_data/create`, async (req, res) => {
             await this.dcController.handleStagingDataCreate(req, res);
         });
