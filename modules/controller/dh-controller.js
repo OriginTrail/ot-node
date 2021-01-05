@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 
 const Utilities = require('../Utilities');
 const Models = require('../../models');
@@ -16,6 +17,7 @@ class DHController {
         this.importService = ctx.importService;
         this.transport = ctx.transport;
         this.commandExecutor = ctx.commandExecutor;
+        this.trailService = ctx.trailService;
     }
 
     isParameterProvided(request, response, parameter_name) {
@@ -132,6 +134,8 @@ class DHController {
     }
 
     async getTrail(req, res) {
+        this.logger.api('POST: Trail request received.');
+
         if (req.body === undefined ||
             req.body.identifier_types === undefined ||
             req.body.identifier_values === undefined
@@ -183,7 +187,7 @@ class DHController {
             let response = this.importService.packTrailData(trail);
 
             if (reach === constants.TRAIL_REACH_PARAMETERS.extended) {
-                response = await this._extendResponse(response);
+                response = await this.trailService._extendResponse(response);
             }
 
             res.status(200);
@@ -194,45 +198,127 @@ class DHController {
         }
     }
 
-    async _extendResponse(response) {
-        const missingObjects = {};
-        for (const trailElement of response) {
-            const object = trailElement.otObject;
+    async lookupTrail(req, res) {
+        this.logger.api('POST: Trail lookup request received.');
 
-            const elementIsMissing =
-                (array, element) => !array.find(e => e.otObject['@id'] === element['@id']);
-
-            for (const relation of object.relations) {
-                if (elementIsMissing(response, relation.linkedObject)) {
-                    if (!missingObjects[relation.linkedObject['@id']]) {
-                        missingObjects[relation.linkedObject['@id']] = trailElement.datasets;
-                    } else {
-                        missingObjects[relation.linkedObject['@id']] =
-                            [...new Set(missingObjects[relation.linkedObject['@id']], trailElement.datasets)];
-                    }
-                }
-            }
+        if (req.body === undefined ||
+            req.body.identifier_types === undefined ||
+            req.body.identifier_values === undefined
+        ) {
+            const message = 'Unable to find data with given parameters! identifier_types, identifier_values, and opcode are required!';
+            this.logger.info(message);
+            res.status(400);
+            res.send({
+                message,
+            });
+            return;
         }
 
-        if (Object.keys(missingObjects).length > 0) {
-            /*
-              missingObjects: {
-                id1: [  dataset 1,  dataset 2, ... ],
-                id2: [  dataset 2,  dataset x, ... ],
-                ...
-              }
-             */
+        const { identifier_types, identifier_values, opcode } = req.body;
 
-            const missingIds = Object.keys(missingObjects);
-            const missingElements =
-                await this.graphStorage.findTrailExtension(missingIds, missingObjects);
 
-            const trailExtension = this.importService.packTrailData(missingElements);
+        try {
+            const response = await this.trailService.lookupTrail(
+                identifier_types,
+                identifier_values,
+                opcode,
+            );
 
-            return response.concat(trailExtension);
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            this.logger.error(e.message);
+            res.status(501);
+            res.send({ errorMessage: 'Internal error' });
+        }
+    }
+
+    async findTrail(req, res) {
+        this.logger.api('POST: Trail find request received.');
+
+        if (req.body === undefined ||
+            req.body.unique_identifiers === undefined
+        ) {
+            const message = 'Unable to find data with given parameters! unique_identifiers is required!';
+            this.logger.info(message);
+            res.status(400);
+            res.send({
+                message,
+            });
+            return;
         }
 
-        return response;
+        const {
+            unique_identifiers, included_connection_types, excluded_connection_types,
+        } = req.body;
+
+        let { depth, reach } = req.body;
+
+        depth = depth === undefined ?
+            this.graphStorage.getDatabaseInfo().max_path_length :
+            parseInt(depth, 10);
+
+        reach = reach === undefined ?
+            constants.TRAIL_REACH_PARAMETERS.narrow : reach.toLowerCase();
+
+        const inserted_object = await Models.handler_ids.create({
+            status: 'PENDING',
+        });
+
+        const commandData = {
+            handler_id: inserted_object.dataValues.handler_id,
+            unique_identifiers,
+            depth,
+            reach,
+            included_connection_types,
+            excluded_connection_types,
+        };
+
+        await this.commandExecutor.add({
+            name: 'dhFindTrailCommand',
+            delay: 0,
+            transactional: false,
+            data: commandData,
+        });
+
+        res.status(200);
+        res.send({
+            handler_id: inserted_object.dataValues.handler_id,
+        });
+    }
+
+    async findTrailResult(req, res) {
+        const handlerId = req.params.handler_id;
+        this.logger.api(`POST: Trail result request received with handler id: ${handlerId}`);
+        const handler_object = await Models.handler_ids.findOne({
+            where: {
+                handler_id: handlerId,
+            },
+        });
+
+        if (!handler_object) {
+            const message = 'Unable to find data with given parameters! handler_id is required!';
+            this.logger.info(message);
+            res.status(404);
+            res.send({
+                message,
+            });
+            return;
+        }
+
+        if (handler_object.status === 'COMPLETED') {
+            const cacheDirectory = path.join(this.config.appDataPath, 'trail_cache');
+            const filePath = path.join(cacheDirectory, handlerId);
+
+            const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
+            handler_object.data = JSON.parse(fileContent);
+        }
+
+        res.status(200);
+        res.send({
+            data: handler_object.data,
+            status: handler_object.status,
+        });
     }
 
     /**

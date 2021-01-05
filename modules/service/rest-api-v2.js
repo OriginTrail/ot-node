@@ -38,8 +38,18 @@ class RestAPIServiceV2 {
             transport, emitter, blockchain, web3, config,
         } = this.ctx;
 
+        server.get(`/api/${this.version_id}/health_check`, (req, res) => {
+            res.status(200);
+            res.send({
+            });
+        });
+
         server.get(`/api/${this.version_id}/info`, async (req, res) => {
             await this.infoController.getNodeInfo(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/node_data`, async (req, res) => {
+            await this.infoController.getNodeData(req, res);
         });
 
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
@@ -51,7 +61,7 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/replicate`, async (req, res) => {
-            await this._replicateDataset(req, res);
+            await this.dcController.handleReplicateRequest(req, res);
         });
 
         server.get(`/api/${this.version_id}/replicate/result/:handler_id`, async (req, res) => {
@@ -83,7 +93,19 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/trail`, async (req, res) => {
-            await this._getTrail(req, res);
+            await this.dhController.getTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/trail/lookup`, async (req, res) => {
+            await this.dhController.lookupTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/trail/find`, async (req, res) => {
+            await this.dhController.findTrail(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/trail/find/result/:handler_id`, async (req, res) => {
+            await this.dhController.findTrailResult(req, res);
         });
 
         server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res) => {
@@ -371,12 +393,6 @@ class RestAPIServiceV2 {
         });
     }
 
-    async _getTrail(req, res) {
-        this.logger.api('POST: Trail request received.');
-
-        await this.dhController.getTrail(req, res);
-    }
-
     async _getMerkleProofs(req, res) {
         this.logger.api('POST: Get Merkle proofs request received.');
 
@@ -611,12 +627,6 @@ class RestAPIServiceV2 {
 
         res.status(200);
         res.send(returnChallenges);
-    }
-
-    async _replicateDataset(req, res) {
-        this.logger.api('POST: Replication of imported data request received.');
-
-        this.dcController.handleReplicateRequest(req, res);
     }
 
     _getConnectionTypes(req, res) {

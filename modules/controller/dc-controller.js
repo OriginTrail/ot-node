@@ -108,6 +108,7 @@ class DCController {
      * @param res   HTTP response
      */
     async handleReplicateRequest(req, res) {
+        this.logger.api('POST: Replicate request received.');
         if (req.body !== undefined && req.body.dataset_id !== undefined && typeof req.body.dataset_id === 'string' &&
             utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&
@@ -128,30 +129,38 @@ class DCController {
                 }
 
                 const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
+                    status: 'INITIALIZED',
 
                 });
                 handlerId = inserted_object.dataValues.handler_id;
-                offerId = await this.dcService.createOffer(
-                    req.body.dataset_id, dataset.root_hash, req.body.holding_time_in_minutes,
-                    req.body.token_amount_per_holder, dataset.otjson_size_in_bytes,
-                    req.body.litigation_interval_in_minutes, handlerId,
-                    req.body.urgent,
-                );
-                const handler_data = {
-                    status: 'PUBLISHING_TO_BLOCKCHAIN',
-                    offer_id: offerId,
-                };
-                await Models.handler_ids.update({
-                    data: JSON.stringify(handler_data),
-                }, {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                });
+
                 res.status(200);
                 res.send({
                     handler_id: handlerId,
+                });
+                const commandData = {
+                    dataSetId: req.body.dataset_id,
+                    dataRootHash: dataset.root_hash,
+                    holdingTimeInMinutes: req.body.holding_time_in_minutes,
+                    tokenAmountPerHolder: req.body.token_amount_per_holder,
+                    dataSizeInBytes: dataset.otjson_size_in_bytes,
+                    litigationIntervalInMinutes: req.body.litigation_interval_in_minutes,
+                    handler_id: handlerId,
+                    urgent: req.body.urgent,
+                };
+                const commandSequence = [
+                    'dcOfferPrepareCommand',
+                    'dcOfferCreateDbCommand',
+                    'dcOfferCreateBcCommand',
+                    'dcOfferTaskCommand',
+                    'dcOfferChooseCommand'];
+
+                await this.commandExecutor.add({
+                    name: commandSequence[0],
+                    sequence: commandSequence.slice(1),
+                    delay: 0,
+                    data: commandData,
+                    transactional: false,
                 });
             } catch (error) {
                 this.logger.error(`Failed to create offer. ${error}.`);
@@ -446,7 +455,7 @@ class DCController {
 
 
     async removePermissionedData(req, res) {
-        this.logger.api('GET: Remove permissioned data request recieved.');
+        this.logger.api('POST: Remove permissioned data request received.');
         if (req.body === undefined ||
             req.body.dataset_id === undefined ||
             req.body.identifier_value === undefined ||
@@ -459,11 +468,11 @@ class DCController {
             return;
         }
 
-        const { dataset_id, identifier_value } = req.body;
+        const { dataset_id, identifier_value, identifier_type } = req.body;
 
         let status = await this.permissionedDataService.removePermissionedDataInDb(
             dataset_id,
-            identifier_value,
+            Utilities.keyFrom(identifier_type, identifier_value),
         );
 
         await Models.data_sellers.destroy({
@@ -474,9 +483,16 @@ class DCController {
             },
         });
 
-        if (status) { status = 'COMPLETED'; } else { status = 'FAILED'; }
+        let message;
+        if (status) {
+            status = 'COMPLETED';
+            message = 'Permissioned data successfully removed';
+        } else {
+            status = 'FAILED';
+            message = 'Permissioned data doesn\'t exist';
+        }
         res.status(200);
-        res.send({ status });
+        res.send({ status, message });
     }
 
     /**
@@ -502,16 +518,20 @@ class DCController {
             throw validationError;
         }
 
-        const { path } = query[0];
-        const valuesArray = Utilities.arrayze(query[0].value);
+        const { path, value } = query[0];
+        const valuesArray = Utilities.arrayze(value);
+
+        const keys = [];
+
+        for (let i = 0; i < valuesArray.length; i += 1) {
+            keys.push(Utilities.keyFrom(path, valuesArray[i]));
+        }
 
         const result = await this.graphStorage.findLocalQuery({
-            idType: path,
-            identifierKey: valuesArray,
+            identifierKeys: keys,
         });
         const response = this.importService.packLocalQueryData(result);
         for (let i = 0; i < response.length; i += 1) {
-            const datasets = [];
             let offer_id = null;
 
             // eslint-disable-next-line no-await-in-loop
@@ -534,7 +554,7 @@ class DCController {
 
             // eslint-disable-next-line prefer-destructuring
             response[i].dataset_id = response[i].datasets[0];
-            response[i].offer_id = datasets;
+            response[i].offer_id = offer_id;
             delete response[i].datasets;
         }
 

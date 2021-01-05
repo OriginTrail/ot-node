@@ -243,6 +243,10 @@ class Logger {
         if (msg.includes('ssl23_get_server_hello')) {
             return null;
         }
+        if (msg.includes('could not connect to server')) {
+            return null;
+        }
+
         return {
             level,
             msg,

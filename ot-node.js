@@ -17,7 +17,6 @@ const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-
 const fs = require('fs');
 const path = require('path');
 const models = require('./models');
-const Storage = require('./modules/Storage');
 const SchemaValidator = require('./modules/validator/schema-validator');
 const GS1Utilities = require('./modules/importer/gs1-utilities');
 const WOTImporter = require('./modules/importer/wot-importer');
@@ -31,7 +30,7 @@ const homedir = require('os').homedir();
 const argv = require('minimist')(process.argv.slice(2));
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
-
+const constants = require('./modules/constants');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
@@ -48,8 +47,9 @@ const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
-const OtJsonUtilities = require('./modules/OtJsonUtilities');
+const OtNodeClient = require('./modules/service/ot-node-client');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
+const { execSync } = require('child_process');
 
 const semver = require('semver');
 
@@ -141,6 +141,8 @@ process.on('exit', (code) => {
 
 process.on('SIGINT', () => {
     log.important('SIGINT caught. Exiting...');
+
+
     process.exit(0);
 });
 
@@ -166,19 +168,6 @@ class OTNode {
         }
 
         log.important(`Running in ${process.env.NODE_ENV} environment.`);
-
-        // sync models
-        try {
-            Storage.models = (await models.sequelize.sync()).models;
-            Storage.db = models.sequelize;
-        } catch (error) {
-            if (error.constructor.name === 'ConnectionError') {
-                console.error('Failed to open database. Did you forget to run "npm run setup"?');
-                process.abort();
-            }
-            console.error(error);
-            process.abort();
-        }
 
         await this._runNetworkIdentityMigration(config);
 
@@ -241,7 +230,6 @@ class OTNode {
             }
         }
 
-        Object.seal(config);
 
         // Checking if selected graph database exists
         try {
@@ -252,6 +240,7 @@ class OTNode {
             process.exit(1);
         }
 
+        Object.seal(config);
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
@@ -300,6 +289,7 @@ class OTNode {
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
+            otNodeClient: awilix.asClass(OtNodeClient).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -349,6 +339,12 @@ class OTNode {
             log.notify('================================================================');
             log.notify('        Houston password generated and stored in file           ');
             log.notify('================================================================');
+        }
+
+        if (config.high_availability_setup) {
+            const highAvailabilityService = container.resolve('highAvailabilityService');
+
+            await highAvailabilityService.startHighAvailabilityNode();
         }
 
         // Starting the kademlia
@@ -613,5 +609,8 @@ function main() {
 }
 
 // Make sure the Sequelize meta table is migrated before running main.
+if (process.env.DB_TYPE === constants.DB_TYPE.psql && process.env.NODE_ENV !== 'development') {
+    execSync('/etc/init.d/postgresql start');
+}
 const migrationSequelizeMeta = new M2SequelizeMetaMigration({ logger: log });
 migrationSequelizeMeta.run().then(main);

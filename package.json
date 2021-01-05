@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "4.1.14",
+  "version": "4.1.15",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -189,5 +189,9 @@
     "winston-papertrail": "^1.0.5",
     "xml-js": "^1.6.11",
     "xml2js": "^0.4.19"
+  },
+  "optionalDependencies": {
+    "pg": "^8.2.1",
+    "pg-native": "^3.0.0"
   }
 }
