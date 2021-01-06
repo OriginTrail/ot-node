@@ -608,6 +608,7 @@ class DCController {
         this.logger.api('POST: Staging data publish request received.');
 
         const data = await this.documentStorage.findAndRemoveStagingData();
+        data.forEach((v) => { delete v._id; });
         const handler_id = await this.importService.importDataset(JSON.stringify({ '@graph': data }), 'ot-json');
 
         res.status(200);
