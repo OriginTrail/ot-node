@@ -77,6 +77,7 @@ class ArangoJS {
         await this.createCollection('ot_datasets');
         await this.createCollection('ot_vertices');
         await this.createEdgeCollection('ot_edges');
+        await this.createCollection('staging_data');
     }
 
     /**
@@ -1441,6 +1442,58 @@ class ArangoJS {
         await this.runQuery(queryString);
         queryString = 'FOR e IN ot_edges FILTER e.inTransaction == true REMOVE e IN ot_edges';
         await this.runQuery(queryString);
+    }
+
+    /**
+     * Create document in Arangojs
+     * @param documents
+     * @returns {Promise<any>}
+     */
+
+    async createStagingData(documents) {
+        const collection = this.db.collection('staging_data');
+        await collection.save(documents);
+    }
+
+
+    /**
+     * Remove document in ArangoDB
+     * @param documentsIDs
+     * @returns {Promise<any>}
+     */
+
+    async removeStagingData(documentsIDs) {
+        const queryString = `FOR s IN staging_data
+                                FILTER s['@id'] in @documentsIDs
+                                REMOVE s IN staging_data`;
+        const params = { documentsIDs };
+        return this.runQuery(queryString, params);
+    }
+
+    /**
+     * Find in ArangoDB
+     * @returns {Promise<any>}
+     */
+
+    async findStagingData() {
+        const collection = this.db.collection('staging_data');
+        // eslint-disable-next-line no-return-await
+        return (await collection.all())._result;
+    }
+
+    /**
+     * Find and remove in ArangoDB
+     * @returns {Promise<any>}
+     */
+
+    async findAndRemoveStagingData() {
+        const queryString = `let result = (FOR s IN staging_data RETURN s)
+        
+                                let temp = (FOR s IN staging_data
+                                REMOVE s IN staging_data)
+                                
+                             return result`;
+        return this.runQuery(queryString);
     }
 
     /**

@@ -18,7 +18,6 @@ class DCController {
         this.dcService = ctx.dcService;
         this.remoteControl = ctx.remoteControl;
         this.graphStorage = ctx.graphStorage;
-        this.documentStorage = ctx.documentStorage;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.web3 = ctx.web3;
@@ -565,7 +564,8 @@ class DCController {
     async handleStagingDataGet(req, res) {
         this.logger.api('GET: Staging data get request received.');
 
-        const data = await this.documentStorage.findStagingData();
+        const data = await this.graphStorage.findStagingData();
+        data.forEach((v) => { delete v._id; delete v._key; delete v._rev; });
 
         res.status(200);
         res.send({ data, status: 'COMPLETED' });
@@ -581,7 +581,7 @@ class DCController {
             return;
         }
 
-        await this.documentStorage.createStagingData(req.body);
+        await this.graphStorage.createStagingData(req.body);
 
         res.status(200);
         res.send({ status: 'COMPLETED' });
@@ -597,7 +597,7 @@ class DCController {
             return;
         }
 
-        await this.documentStorage.removeStagingData(req.body);
+        await this.graphStorage.removeStagingData(req.body);
 
         res.status(200);
         res.send({ status: 'COMPLETED' });
@@ -607,8 +607,8 @@ class DCController {
     async handleStagingDataPublish(req, res) {
         this.logger.api('POST: Staging data publish request received.');
 
-        const data = await this.documentStorage.findAndRemoveStagingData();
-        data.forEach((v) => { delete v._id; });
+        const data = (await this.graphStorage.findAndRemoveStagingData())[0];
+        data.forEach((v) => { delete v._id; delete v._key; delete v._rev; });
         const handler_id = await this.importService.importDataset(JSON.stringify({ '@graph': data }), 'ot-json');
 
         res.status(200);
