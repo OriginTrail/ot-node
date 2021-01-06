@@ -147,5 +147,3 @@ arangoDbs.forEach((database) => {
         process.abort();
     });
 });
-
-db.reinitialize();
