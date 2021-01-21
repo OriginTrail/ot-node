@@ -11,10 +11,7 @@ class DIDService {
     async resolve(didUrl) {
         const providerConfig = {
             networks: [
-                // { rpcUrl: 'https://mainnet.infura.io/v3/f8c3858f892d4199840f5354cc954713' },
-                // { name: 'mainnet', rpcUrl: 'https://mainnet.infura.io/v3/f8c3858f892d4199840f5354cc954713' },
-                // { name: 'testnet', rpcUrl: 'https://rinkeby.infura.io/v3/cd1922142cd94f3ca09289f67899f902' },
-                { name: 'development', rpcUrl: this.config.blockchain.rpc_server_url },
+                { name: 'mainnet', rpcUrl: this.config.blockchain.rpc_server_url },
             ],
         };
 
