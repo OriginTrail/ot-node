@@ -175,13 +175,6 @@ class HighAvailabilityService {
         this.logger.trace('Synchronizing with master node....');
         const message = {};
         // fetch identities if missing
-        const identityFilePath = path.join(
-            this.config.appDataPath,
-            this.config.erc725_identity_filepath,
-        );
-        if (!fs.existsSync(identityFilePath)) {
-            message.erc725Identity = true;
-        }
         const networkIdentity = path.join(
             this.config.appDataPath,
             this.config.identity_filepath,
@@ -203,6 +196,35 @@ class HighAvailabilityService {
         if (!fs.existsSync(kademliaKeyFilePath)) {
             message.kademliaKey = true;
         }
+
+        message.blockchain = [];
+
+        for (const implementation of this.config.blockchain.implementations) {
+            const missingParameters = {};
+
+            const identityFilePath = path.join(
+                this.config.appDataPath,
+                implementation.identity_filepath,
+            );
+            if (!fs.existsSync(identityFilePath)) {
+                missingParameters.identity = true;
+            }
+
+            const nodeWalletFilePath = path.join(
+                this.config.appDataPath,
+                implementation.node_wallet_filepath,
+            );
+            if (!fs.existsSync(nodeWalletFilePath)) {
+                missingParameters.wallet = true;
+            }
+
+            if (Object.keys(missingParameters).length !== 0) {
+                missingParameters.network_id = implementation.network_id;
+                message.blockchain.push(missingParameters);
+            }
+        }
+        if (message.blockchain.length === 0) message.blockchain = false;
+
         message.bootstraps = true;
         message.routingTable = true;
 
@@ -221,12 +243,6 @@ class HighAvailabilityService {
             this.config.high_availability.active_node_data_sync_use_ssl,
         );
 
-        if (masterNodeData.erc725Identity) {
-            fs.writeFileSync(path.join(
-                this.config.appDataPath,
-                this.config.erc725_identity_filepath,
-            ), masterNodeData.erc725Identity);
-        }
         if (masterNodeData.networkIdentity) {
             fs.writeFileSync(path.join(
                 this.config.appDataPath,
@@ -257,6 +273,27 @@ class HighAvailabilityService {
                 'router.json',
             ), masterNodeData.routingTable);
         }
+        if (masterNodeData.blockchain) {
+            for (const response of masterNodeData.blockchain) {
+                const { network_id, wallet, identity } = response;
+                const { node_wallet_path, identity_filepath } =
+                    this.config.blockchain.implementations.find(e => e.network_id === network_id);
+
+                if (identity) {
+                    fs.writeFileSync(path.join(
+                        this.config.appDataPath,
+                        identity_filepath,
+                    ), JSON.stringify({ identity }));
+                }
+                if (wallet) {
+                    fs.writeFileSync(path.join(
+                        this.config.appDataPath,
+                        node_wallet_path,
+                    ), JSON.stringify(wallet));
+                }
+            }
+        }
+
         this.logger.trace('Synchronizing with master node completed.');
     }
 
