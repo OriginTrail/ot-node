@@ -13,8 +13,8 @@ module.exports = (sequelize, DataTypes) => {
         data: DataTypes.TEXT,
         data_set_id: DataTypes.STRING,
         block: DataTypes.INTEGER,
-        finished: DataTypes.BOOLEAN,
-        timestamp: DataTypes.INTEGER,
+        finished: DataTypes.INTEGER,
+        timestamp: DataTypes.BIGINT,
     }, {});
     Event.associate = function (models) {
     // associations can be defined here

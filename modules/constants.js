@@ -36,6 +36,12 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 exports.EXPORT_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
+ * @constant {number} TRAIL_COMMAND_CLEANUP_TIME_MILLS -
+ * Trail command cleanup interval time 1h
+ */
+exports.TRAIL_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
+
+/**
  * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 1h
  */
@@ -47,7 +53,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
     'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
-    'handlerIdsCleanerCommand',
+    'trailCleanerCommand', 'handlerIdsCleanerCommand',
 ];
 
 /**
@@ -157,3 +163,13 @@ exports.PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE = 'permissioned.hide_attribu
  * The delay for a reinitialize attempt if a profile initialization failed
  */
 exports.REINITIALIZE_DELAY_IN_MILLS = 15 * 60 * 1000;
+
+exports.NODE_STATUS = {
+    active: 'ACTIVE',
+    fallback: 'FALLBACK',
+    updating: 'UPDATING',
+};
+
+exports.DB_TYPE = {
+    psql: 'psql',
+};
