@@ -59,6 +59,8 @@ class DCOfferPrepareCommand extends Command {
             price_factor_used_for_price_calculation: this.config.blockchain.dc_price_factor,
         });
 
+        command.data.internalOfferId = offer.id;
+
         if (!command.data.litigationIntervalInMinutes) {
             command.data.litigationIntervalInMinutes =
                 new BN(this.config.dc_litigation_interval_in_minutes, 10);
@@ -100,7 +102,6 @@ class DCOfferPrepareCommand extends Command {
                 handler_id,
             },
         });
-        command.data.internalOfferId = offer.id;
 
         // export dataset from db
         this.logger.info(`Exporting dataset: ${dataSetId}. For internal offer id: ${offer.id}.`);
@@ -163,7 +164,7 @@ class DCOfferPrepareCommand extends Command {
         this.remoteControl.offerUpdate({
             id: internalOfferId,
         });
-        Models.handler_ids.update({
+        await Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
 
