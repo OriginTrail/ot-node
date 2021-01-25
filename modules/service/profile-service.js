@@ -150,7 +150,6 @@ class ProfileService {
                 null,
                 eventData =>
                     Utilities.compareHexStrings(eventData.profile, node_wallet),
-                null,
                 blockchainId,
             );
 
@@ -171,7 +170,6 @@ class ProfileService {
             null,
             eventData =>
                 Utilities.compareHexStrings(eventData.profile, identity),
-            null,
             blockchainId,
         );
         if (event) {
