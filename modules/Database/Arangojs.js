@@ -2,7 +2,7 @@ const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
 const { normalizeGraph } = require('./graph-converter');
-const constants = require('../constants');
+const ArangoClient = require('./arango-client');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -17,15 +17,55 @@ class ArangoJS {
      * @param {string} - host
      * @param {number} - port
      */
-    constructor(username, password, database, host, port, log) {
+    constructor(selectedDatabase, log) {
         this.log = log;
-        this.db = new Database(`http://${host}:${port}`);
-        this.db.useDatabase(database);
-        this.db.useBasicAuth(username, password);
+        this.db = new Database(`http://${selectedDatabase.host}:${selectedDatabase.port}`);
+        this.db.useDatabase(selectedDatabase.database);
+        this.db.useBasicAuth(selectedDatabase.username, selectedDatabase.password);
 
         this.dbInfo = {
-            username, password, database, host, port,
+            username: selectedDatabase.username,
+            password: selectedDatabase.password,
+            database: selectedDatabase.database,
+            host: selectedDatabase.host,
+            port: selectedDatabase.port,
         };
+
+        this.arangoClient = new ArangoClient(selectedDatabase, log);
+    }
+
+    async startReplication() {
+        // get replication state
+        let stateResponse = await this.arangoClient.getReplicationApplierState();
+
+        if (!stateResponse.state.running) {
+            this.log.trace('Applier is not running state.');
+            this.log.trace('Setting applier configuration.');
+            await this.arangoClient.setupReplicationApplierConfiguration();
+            this.log.trace('Setting applier configuration finalized successfully.');
+            this.log.trace('Starting applier replication...');
+            await this.arangoClient.startReplicationApplier();
+            // in order to get right message we need to wait 2 sec
+            await Utilities.sleepForMilliseconds(2000);
+            stateResponse = await this.arangoClient.getReplicationApplierState();
+            this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
+        } else {
+            this.log.trace(`Applier in running state message: ${stateResponse.state.progress.message}`);
+        }
+    }
+
+    async stopReplication() {
+        const applierResponse = await this.arangoClient.stopReplicationApplier();
+        if (!applierResponse.state.running) {
+            this.log.trace(`Applier successfully stopped: ${applierResponse.state.progress.message}`);
+        } else {
+            this.log.error('Something went wrong. Unable to stop applier');
+        }
+    }
+
+    async getReplicationApplierState() {
+        const response = await this.arangoClient.getReplicationApplierState();
+        return response;
     }
 
     /**
@@ -127,11 +167,22 @@ class ArangoJS {
             connectionTypes,
         } = queryObject;
 
+        const {
+            uniqueIdentifiers,
+            includedConnectionTypes,
+            excludedConnectionTypes,
+        } = queryObject;
+
         const queryParams = {
-            identifierKeys,
             depth,
         };
-        let queryString = `// Get identifier
+
+        let includedEdgeTypes;
+        const excludedEdgeTypes = excludedConnectionTypes;
+
+        let queryString = '';
+        if (identifierKeys) {
+            queryString = `// Get identifier
                             LET identifierObjects = TO_ARRAY(DOCUMENT('ot_vertices', @identifierKeys))
                             
                             // Fetch the start entity for trail
@@ -149,7 +200,21 @@ class ArangoJS {
                             LET trailObjects = (
                                 FILTER startObjects[0] != null
                                 FOR v, e, p IN 0..@depth ANY startObjects[0] ot_edges`;
-        if (Array.isArray(connectionTypes) && connectionTypes.length > 0) {
+            queryParams.identifierKeys = identifierKeys;
+            includedEdgeTypes = connectionTypes;
+        } else {
+            queryString = `// Get identifier
+                            LET startObjects = FLATTEN([DOCUMENT('ot_vertices', @uniqueIdentifiers)])
+                             
+                            LET trailObjects = FLATTEN(
+                                FOR startObject in startObjects
+                                    FILTER startObject != null
+                                    FOR v, e, p IN 0..@depth ANY startObject ot_edges`;
+            queryParams.uniqueIdentifiers = uniqueIdentifiers;
+            includedEdgeTypes = includedConnectionTypes;
+        }
+        if ((Array.isArray(includedEdgeTypes) && includedEdgeTypes.length > 0) ||
+            (Array.isArray(excludedEdgeTypes) && excludedEdgeTypes.length > 0)) {
             queryString += `
                                     PRUNE (LENGTH(p.edges) == 2 && p.edges[-1].relationType == p.edges[-2].relationType) || (LENGTH(p.edges) > 2 && p.edges[-1].relationType == p.edges[-2].relationType && p.edges[-3].relationType != 'CONNECTOR_FOR')
                                     OPTIONS {
@@ -161,9 +226,20 @@ class ArangoJS {
                                         ((LENGTH(p.edges) < 2) == true) ||
                                         ((p.edges[-1].relationType != p.edges[-2].relationType) == true) ||
                                         ((p.edges[-3].relationType == 'CONNECTOR_FOR') == true)
-                                        ) == true
-                                    FILTER p.edges[*].relationType ALL in @connectionTypes`;
-            queryParams.connectionTypes = connectionTypes;
+                                        ) == true`;
+
+            if (Array.isArray(includedEdgeTypes) && includedEdgeTypes.length > 0) {
+                queryString += `
+                FILTER p.edges[*].relationType ALL in @includedEdgeTypes
+                `;
+                queryParams.includedEdgeTypes = includedEdgeTypes;
+            }
+            if (Array.isArray(excludedEdgeTypes) && excludedEdgeTypes.length > 0) {
+                queryString += `
+                FILTER p.edges[*].relationType ALL not in @excludedEdgeTypes
+                `;
+                queryParams.excludedEdgeTypes = excludedEdgeTypes;
+            }
         } else {
             queryString += `
                                 OPTIONS {
@@ -193,6 +269,60 @@ class ArangoJS {
                                     "rootObject": trailObject,
                                     "relatedObjects": objectsRelated
                                 }`;
+
+        const result = await this.runQuery(queryString, queryParams);
+        return result;
+    }
+
+    async lookupTrail(queryObject) {
+        const {
+            identifierKeys,
+            opcode,
+        } = queryObject;
+
+        const queryParams = {
+            identifierKeys,
+        };
+
+        let queryString = 'LET identifierObjects = UNIQUE(FLATTEN([DOCUMENT(\'ot_vertices\', @identifierKeys)]))';
+        if (opcode === 'EQ' && identifierKeys.length > 1) {
+            queryString += `
+                            let candidates = (FOR identifierObject IN identifierObjects
+                                let identifiedObjects = 
+                                    (FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                        FILTER e.edgeType == 'IdentifierRelation'
+                                        return v)
+                                return identifiedObjects
+                            )
+                            
+                            filter LENGTH(candidates) > 1
+                            
+                            let startObjects = UNIQUE(APPLY("INTERSECTION",candidates))
+                           `;
+        } else {
+            queryString += `
+                            let startObjects = UNIQUE(FOR identifierObject IN identifierObjects
+                                    FOR v, e IN 1..1 OUTBOUND identifierObject ot_edges
+                                        FILTER e.edgeType == 'IdentifierRelation'
+                                        return v
+                            )
+                           `;
+        }
+        queryString += `
+                        for startObject in startObjects
+                            let identifiers = (
+                                FOR identifierVertex, identifierEdge IN 1..1 OUTBOUND startObject ot_edges
+                                    FILTER identifierEdge.edgeType == 'IdentifierRelation'
+                                    return {identifierType: identifierVertex.identifierType, identifierValue: identifierVertex.identifierValue }
+                            )
+                            let datasets = (
+                                let datasets = DOCUMENT('ot_datasets', startObject.datasets)
+                                for dataset in datasets
+                                    return { dataset_id: dataset._key, metadata: {dataCreator: dataset.datasetHeader.dataCreator.identifiers, timestamp: dataset.datasetHeader.datasetCreationTimestamp}}
+                            )
+                            
+                            RETURN {unique_identifier: startObject._key, datasets: datasets, identifiers: identifiers}
+                            `;
 
         const result = await this.runQuery(queryString, queryParams);
         return result;

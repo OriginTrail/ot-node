@@ -7,6 +7,7 @@ const Op = require('sequelize/lib/operators');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
+const constants = require('../../constants');
 
 class Ethereum {
     /**
@@ -527,7 +528,7 @@ class Ethereum {
     async answerLitigation(offerId, holderIdentity, answer, urgent) {
         const gasPrice = await this.getGasPrice(urgent);
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasLimit: this.web3.utils.toHex(constants.ANSWER_LITIGATION_GAS_LIMIT),
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.litigationContractAddress,
         };
@@ -845,7 +846,7 @@ class Ethereum {
                             // eslint-disable-next-line
                             continue;
                         }
-                        eventData.finished = true;
+                        eventData.finished = 1;
                         // eslint-disable-next-line no-loop-func
                         eventData.save().then(() => {
                             clearTimeout(clearToken);
@@ -895,7 +896,7 @@ class Ethereum {
             if (eventData) {
                 eventData.forEach(async (data) => {
                     this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
-                    data.finished = true;
+                    data.finished = 1;
                     await data.save();
                 });
             }
@@ -930,7 +931,7 @@ class Ethereum {
                             name: `eth-${data.event}`,
                             value: JSON.parse(data.dataValues.data),
                         });
-                        data.finished = true;
+                        data.finished = 1;
                         await data.save();
                     } catch (error) {
                         this.logger.error(error);

@@ -78,6 +78,33 @@ Given(/^(DC|DV|DV2) waits for import to finish$/, { timeout: 1200000 }, async fu
     return promise;
 });
 
+
+Given(/^I wait for trail to finish$/, { timeout: 1200000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastTrailHandlerId, 'Trail request not defined.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const target = this.state.dc;
+    const host = this.state.dc.state.node_rpc_url;
+
+    const promise = new Promise((acc) => {
+        target.once('trail-complete', async () => {
+            if (this.state.lastTrail) {
+                this.state.secondLastTrail = this.state.lastTrail;
+            }
+
+            const response = await httpApiHelper.apiTrailFindResult(host, this.state.lastTrailHandlerId);
+            this.state.lastTrail = response.data;
+
+            acc();
+        });
+    });
+
+
+    return promise;
+});
+
 Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, async function (targetNode, exportType) {
     expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, WOT, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(targetNode, 'Node type can only be DC, DV2, DV, or DH.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV' || val === 'DH'));
