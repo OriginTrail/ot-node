@@ -70,30 +70,33 @@ class Transactions {
      * @param newTransaction
      */
     async _sendTransaction(newTransaction) {
+        //  const data = util.methods.moveTheBlock().encodeABI()
+        //  createTransaction = await web3.eth.accounts.signTransaction({
+        //       from: wallet,
+        //       to: testingUtilitiesContractAddress,
+        //       data,
+        //       value: "0x00",
+        //       gasPrice: "0x01",
+        //       gas: "0x2000000",
+        //    }, privateKey);
+        //    console.log(createTransaction);
+        //  createReceipt = await web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);
+        //    console.log(createReceipt);
         if (!Utilities.isHexStrict(newTransaction.options.gasPrice)) {
             throw Error('Gas price has to be in hex format.');
         }
 
-        if (!Utilities.isHexStrict(newTransaction.options.gasLimit)) {
+        if (!Utilities.isHexStrict(newTransaction.options.gas)) {
             throw Error('Gas limit has to be in hex format.');
         }
 
-        await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
-            newTransaction.options.nonce = nonce;
-        });
+        // await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
+        //     console.log(`Using nonce ${nonce}`);
+        //     newTransaction.options.nonce = nonce;
+        // });
 
-        const rawTx = txutils.functionTx(
-            newTransaction.contractAbi,
-            newTransaction.method,
-            newTransaction.args,
-            newTransaction.options,
-        );
-
-        const transaction = new Tx(rawTx);
-
-        transaction.sign(this.privateKey);
-
-        const serializedTx = transaction.serialize().toString('hex');
+        const createdTransaction = await this.web3.eth.accounts
+            .signTransaction(newTransaction.options, this.privateKey.toString('hex'));
 
         const balance = await this.web3.eth.getBalance(this.walletAddress);
         const currentBalance = new BN(balance, 10);
@@ -102,7 +105,7 @@ class Transactions {
                 .imul(new BN(Utilities.denormalizeHex(newTransaction.options.gasPrice), 16));
         const totalPriceBN =
             new BN(Utilities.denormalizeHex(newTransaction.options.gasPrice), 16)
-                .imul(new BN(Utilities.denormalizeHex(newTransaction.options.gasLimit), 16));
+                .imul(new BN(Utilities.denormalizeHex(newTransaction.options.gas), 16));
 
         if (currentBalance.lt(totalPriceBN)) {
             throw Error(`ETH balance lower (${currentBalance.toString()}) than transaction cost (${totalPriceBN.toString()}).`);
@@ -113,7 +116,7 @@ class Transactions {
         }
 
         this.logger.trace(`Sending transaction to blockchain, nonce ${newTransaction.options.nonce}, balance is ${currentBalance.toString()}`);
-        return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
+        return this.web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);
     }
 
     /**

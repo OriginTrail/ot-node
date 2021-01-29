@@ -698,18 +698,26 @@ class Blockchain {
             if (event.returnValues.DH_wallet) {
                 event.returnValues.DH_wallet = event.returnValues.DH_wallet.toLowerCase();
             }
-            /* eslint-disable-next-line */
-            await Models.events.create({
-                id: uuidv4(),
-                contract: contractName,
-                event: event.event,
-                data: JSON.stringify(event.returnValues),
-                data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
-                block: event.blockNumber,
-                blockchain_id,
-                timestamp,
-                finished: 0,
-            });
+            if (event.event) {
+                /* eslint-disable-next-line */
+                await Models.events.create({
+                    id: uuidv4(),
+                    contract: contractName,
+                    event: event.event,
+                    data: JSON.stringify(event.returnValues),
+                    data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
+                    block: event.blockNumber,
+                    blockchain_id,
+                    timestamp,
+                    finished: 0,
+                });
+            } else {
+                console.log('***********************************');
+                console.log('***********************************');
+                console.log(JSON.stringify(event));
+                console.log('***********************************');
+                console.log('***********************************');
+            }
         }
 
 

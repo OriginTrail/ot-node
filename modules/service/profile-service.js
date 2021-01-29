@@ -97,7 +97,7 @@ class ProfileService {
         } while (approvalIncreased === false);
 
         // set empty identity if there is none
-        let identity = identityExists ? profileIdentity : new BN(0, 16);
+        let identity = identityExists ? profileIdentity : '0x0000000000000000000000000000000000000000';
 
         const { node_wallet, management_wallet } =
             this.blockchain.getWallet(blockchainId, true).response;
