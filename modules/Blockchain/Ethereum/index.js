@@ -520,14 +520,13 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             gas: '0x2000000',
         };
+
         this.logger.trace(`[${this.getBlockchainId()}] CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
         return this.transactions.queueTransaction(
-            this.profileContractAbi, 'createProfile',
-            [
-                managementWallet,
-                Utilities.normalizeHex(profileNodeId),
-                initialBalance, isSender725, blockchainIdentity,
-            ], options,
+            this.profileContractAbi,
+            'createProfile',
+            null,
+            options,
         );
     }
 
@@ -542,7 +541,6 @@ class Ethereum {
             this.profileContractAddress,
             tokenAmountIncrease.toString(10),
         ).encodeABI();
-
         const options = {
             from: this.config.node_wallet,
             to: this.tokenContractAddress,
@@ -553,7 +551,12 @@ class Ethereum {
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] increaseProfileApproval(amount=${tokenAmountIncrease})`);
-        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', null, options);
+        return this.transactions.queueTransaction(
+            this.tokenContractAbi,
+            'increaseApproval',
+            null,
+            options,
+        );
     }
 
     /**
@@ -564,13 +567,26 @@ class Ethereum {
      */
     async startTokenWithdrawal(blockchainIdentity, amount) {
         const gasPrice = await this.getGasPrice();
+        const data = this.tokenContract.methods.startTokenWithdrawal(
+            blockchainIdentity,
+            amount,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.profileContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
+
         this.logger.trace(`[${this.getBlockchainId()}] startTokenWithdrawal(blockchainIdentity=${blockchainIdentity}, amount=${amount}`);
-        return this.transactions.queueTransaction(this.profileContractAbi, 'startTokenWithdrawal', [blockchainIdentity, amount], options);
+        return this.transactions.queueTransaction(
+            this.profileContractAbi,
+            'startTokenWithdrawal',
+            null,
+            options,
+        );
     }
 
     /**
@@ -580,13 +596,23 @@ class Ethereum {
      */
     async withdrawTokens(blockchainIdentity) {
         const gasPrice = await this.getGasPrice();
+        const data = this.profileContract.methods.withdrawTokens(blockchainIdentity).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.profileContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
+
         this.logger.trace(`[${this.getBlockchainId()}] withdrawTokens(blockchainIdentity=${blockchainIdentity}`);
-        return this.transactions.queueTransaction(this.profileContractAbi, 'withdrawTokens', [blockchainIdentity], options);
+        return this.transactions.queueTransaction(
+            this.profileContractAbi,
+            'withdrawTokens',
+            null,
+            options,
+        );
     }
 
     /**
@@ -599,20 +625,25 @@ class Ethereum {
      */
     async answerLitigation(offerId, holderIdentity, answer, urgent) {
         const gasPrice = await this.getGasPrice(urgent);
+        const data = this.litigationContract.methods.answerLitigation(
+            offerId,
+            holderIdentity,
+            answer,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.litigationContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
+
         this.logger.trace(`[${this.getBlockchainId()}] answerLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, answer=${answer})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi,
             'answerLitigation',
-            [
-                offerId,
-                holderIdentity,
-                answer,
-            ],
+            null,
             options,
         );
     }
@@ -631,10 +662,8 @@ class Ethereum {
         if (Utilities.isZeroHash(offer['0']) && this.oldHoldingContract) {
             contractAddress = this.oldHoldingContractAddress;
         }
-
-        const data = this.holdingContract.methods.payOut(blockchainIdentity, offerId).encodeABI();
-
         const gasPrice = await this.getGasPrice(urgent);
+        const data = this.holdingContract.methods.payOut(blockchainIdentity, offerId).encodeABI();
         const options = {
             from: this.config.node_wallet,
             to: contractAddress,
@@ -645,7 +674,12 @@ class Ethereum {
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
-        return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', null, options);
+        return this.transactions.queueTransaction(
+            this.holdingContractAbi,
+            'payOut',
+            null,
+            options,
+        );
     }
 
     /**
@@ -657,19 +691,25 @@ class Ethereum {
         offerIds,
     ) {
         const gasLimit = offerIds.length * 200000;
+        const data = this.holdingContract.methods.payOutMultiple(
+            blockchainIdentity,
+            offerIds,
+        ).encodeABI();
         const gasPrice = await this.getGasPrice(true);
         const options = {
-            gasLimit: this.web3.utils.toHex(gasLimit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.oldHoldingContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(gasLimit),
         };
+
         this.logger.trace(`[${this.getBlockchainId()}] payOutMultiple (identity=${blockchainIdentity}, offerIds=${offerIds}`);
         return this.transactions.queueTransaction(
-            this.oldHoldingContractAbi, 'payOutMultiple',
-            [
-                blockchainIdentity,
-                offerIds,
-            ],
+            this.oldHoldingContractAbi,
+            'payOutMultiple',
+            null,
             options,
         );
     }
@@ -706,7 +746,6 @@ class Ethereum {
             dataSizeInBytes,
             litigationIntervalInMinutes,
         ).encodeABI();
-
         const options = {
             from: this.config.node_wallet,
             to: this.holdingContractAddress,
@@ -715,9 +754,11 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(gasPrice),
             gas: this.web3.utils.toHex(this.config.gas_limit),
         };
+
         this.logger.trace(`[${this.getBlockchainId()}] createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
         return this.transactions.queueTransaction(
-            this.holdingContractAbi, 'createOffer',
+            this.holdingContractAbi,
+            'createOffer',
             null,
             options,
         );
@@ -745,6 +786,7 @@ class Ethereum {
         if (Utilities.isZeroHash(offer['0'])) {
             contractAddress = this.oldHoldingContractAddress;
         }
+        const gasPrice = await this.getGasPrice(urgent);
         const data = this.holdingContract.methods.finalizeOffer(
             blockchainIdentity,
             offerId,
@@ -755,10 +797,7 @@ class Ethereum {
             encryptionType,
             holders,
             parentIdentity,
-            urgent,
         ).encodeABI();
-
-        const gasPrice = await this.getGasPrice(urgent);
         const options = {
             from: this.config.node_wallet,
             to: contractAddress,
@@ -791,25 +830,29 @@ class Ethereum {
         holders,
     ) {
         const gasPrice = await this.getGasPrice();
+        const data = this.replacementContract.methods.replaceHolder(
+            offerId,
+            holderIdentity,
+            litigatorIdentity,
+            shift,
+            confirmation1,
+            confirmation2,
+            confirmation3,
+            holders,
+        );
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.replacementContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] replaceHolder (${offerId}, ${holderIdentity}, ${litigatorIdentity}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${holders})`);
         return this.transactions.queueTransaction(
             this.replacementContractAbi, 'replaceHolder',
-            [
-                offerId,
-                holderIdentity,
-                litigatorIdentity,
-                shift,
-                confirmation1,
-                confirmation2,
-                confirmation3,
-                holders,
-            ],
+            null,
             options,
         );
     }
@@ -920,16 +963,22 @@ class Ethereum {
      */
     async depositTokens(blockchainIdentity, amount) {
         const gasPrice = await this.getGasPrice();
+        const data = this.profileContract.depositTokens(blockchainIdentity, amount).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.profileContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] Calling - depositToken(${amount.toString()})`);
         return this.transactions.queueTransaction(
-            this.profileContractAbi, 'depositTokens',
-            [blockchainIdentity, amount], options,
+            this.profileContractAbi,
+            'depositTokens',
+            null,
+            options,
         );
     }
 
@@ -950,27 +999,35 @@ class Ethereum {
 
 
     async initiatePurchase(
-        sellerIdentity, buyerIdentity,
+        sellerIdentity,
+        buyerIdentity,
         tokenAmount,
-        originalDataRootHash, encodedDataRootHash,
+        originalDataRootHash,
+        encodedDataRootHash,
     ) {
         const gasPrice = await this.getGasPrice();
+        const data = this.marketplaceContract.methods.initiatePurchase(
+            sellerIdentity,
+            buyerIdentity,
+            tokenAmount,
+            originalDataRootHash,
+            encodedDataRootHash,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.marketplaceContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] initiatePurchase (${sellerIdentity}, ${buyerIdentity}, ${tokenAmount}, ${originalDataRootHash}, ${encodedDataRootHash})`);
         return this.transactions.queueTransaction(
-            this.marketplaceContractAbi, 'initiatePurchase',
-            [
-                sellerIdentity,
-                buyerIdentity,
-                tokenAmount,
-                originalDataRootHash,
-                encodedDataRootHash,
-            ], options,
+            this.marketplaceContractAbi,
+            'initiatePurchase',
+            null,
+            options,
         );
     }
 
@@ -997,69 +1054,114 @@ class Ethereum {
 
     async depositKey(purchaseId, key) {
         const gasPrice = await this.getGasPrice();
+        const data = this.marketplaceContract.methods.depositKey(purchaseId, key).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.marketplaceContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] depositKey(${purchaseId}, ${key})`);
         return this.transactions.queueTransaction(
-            this.marketplaceContractAbi, 'depositKey',
-            [purchaseId, key], options,
+            this.marketplaceContractAbi,
+            'depositKey',
+            null,
+            options,
         );
     }
 
     async takePayment(purchaseId) {
         const gasPrice = await this.getGasPrice();
+        const data = this.marketplaceContract.methods.takePayment(purchaseId).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.marketplaceContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] takePayment(${purchaseId})`);
         return this.transactions.queueTransaction(
-            this.marketplaceContractAbi, 'takePayment',
-            [purchaseId], options,
+            this.marketplaceContractAbi,
+            'takePayment',
+            null,
+            options,
         );
     }
 
     async complainAboutNode(
-        purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
-        proofOfEncodedOutput, proofOfEncodedInputLeft, urgent,
+        purchaseId,
+        outputIndex,
+        inputIndexLeft,
+        encodedOutput,
+        encodedInputLeft,
+        proofOfEncodedOutput,
+        proofOfEncodedInputLeft,
+        urgent,
     ) {
         const gasPrice = await this.getGasPrice(urgent);
+        const data = this.marketplaceContract.methods.complainAboutNode(
+            purchaseId,
+            outputIndex,
+            inputIndexLeft,
+            encodedOutput,
+            encodedInputLeft,
+            proofOfEncodedOutput,
+            proofOfEncodedInputLeft,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.marketplaceContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] complainAboutNode(${purchaseId},${outputIndex},${inputIndexLeft},` +
             `${encodedOutput},${encodedInputLeft},${proofOfEncodedOutput},${proofOfEncodedInputLeft})`);
         return this.transactions.queueTransaction(
-            this.marketplaceContractAbi, 'complainAboutNode',
-            [purchaseId, outputIndex, inputIndexLeft, encodedOutput, encodedInputLeft,
-                proofOfEncodedOutput, proofOfEncodedInputLeft], options,
+            this.marketplaceContractAbi,
+            'complainAboutNode',
+            null,
+            options,
         );
     }
 
     async complainAboutRoot(
-        purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex,
+        purchaseId,
+        encodedRootHash,
+        proofOfEncodedRootHash,
+        rootHashIndex,
         urgent,
     ) {
         const gasPrice = await this.getGasPrice(urgent);
+        const data = this.marketplaceContract.methods.complainAboutRoot(
+            purchaseId,
+            encodedRootHash,
+            proofOfEncodedRootHash,
+            rootHashIndex,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.marketplaceContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] complainAboutRoot(${purchaseId},${encodedRootHash},${proofOfEncodedRootHash},${rootHashIndex})`);
         return this.transactions.queueTransaction(
-            this.marketplaceContractAbi, 'complainAboutRoot',
-            [purchaseId, encodedRootHash, proofOfEncodedRootHash, rootHashIndex], options,
+            this.marketplaceContractAbi,
+            'complainAboutRoot',
+            null,
+            options,
         );
     }
 
@@ -1102,16 +1204,22 @@ class Ethereum {
      */
     async setNodeId(identity, nodeId) {
         const gasPrice = await this.getGasPrice();
+        const data = this.profileContract.methods.setNodeId(identity, nodeId).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.profileContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] Calling - setNodeId(${identity}, ${nodeId})`);
         return this.transactions.queueTransaction(
-            this.profileContractAbi, 'setNodeId',
-            [identity, nodeId], options,
+            this.profileContractAbi,
+            'setNodeId',
+            null,
+            options,
         );
     }
 
@@ -1157,16 +1265,25 @@ class Ethereum {
      */
     async transferProfile(erc725identity, managementWallet) {
         const gasPrice = await this.getGasPrice();
+        const data = this.profileContract.methods.transferProfile(
+            erc725identity,
+            managementWallet,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.profileContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] transferProfile (${erc725identity}, ${managementWallet})`);
         return this.transactions.queueTransaction(
-            this.profileContractAbi, 'transferProfile',
-            [erc725identity, managementWallet], options,
+            this.profileContractAbi,
+            'transferProfile',
+            null,
+            options,
         );
     }
 
@@ -1228,27 +1345,37 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async initiateLitigation(
-        offerId, holderIdentity, litigatorIdentity,
-        requestedObjectIndex, requestedBlockIndex, hashArray,
+        offerId,
+        holderIdentity,
+        litigatorIdentity,
+        requestedObjectIndex,
+        requestedBlockIndex,
+        hashArray,
     ) {
         const gasPrice = await this.getGasPrice();
+        const data = this.litigationContract.methods.initiateLitigation(
+            offerId,
+            holderIdentity,
+            litigatorIdentity,
+            requestedObjectIndex,
+            requestedBlockIndex,
+            hashArray,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.litigationContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedObjectIndex=${requestedObjectIndex}, requestedBlockIndex=${requestedBlockIndex}, hashArray=${hashArray})`);
         return this.transactions.queueTransaction(
-            this.litigationContractAbi, 'initiateLitigation',
-            [
-                offerId,
-                holderIdentity,
-                litigatorIdentity,
-                requestedObjectIndex,
-                requestedBlockIndex,
-                hashArray,
-            ], options,
+            this.litigationContractAbi,
+            'initiateLitigation',
+            null,
+            options,
         );
     }
 
@@ -1271,16 +1398,28 @@ class Ethereum {
         urgent,
     ) {
         const gasPrice = await this.getGasPrice(urgent);
+        const data = this.litigationContract.methods.completeLitigation(
+            offerId,
+            holderIdentity,
+            challengerIdentity,
+            proofData,
+            leafIndex,
+        ).encodeABI();
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.litigationContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] completeLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, challengerIdentity=${challengerIdentity}, proofData=${proofData}, leafIndex=${leafIndex})`);
         return this.transactions.queueTransaction(
-            this.litigationContractAbi, 'completeLitigation',
-            [offerId, holderIdentity, challengerIdentity, proofData, leafIndex], options,
+            this.litigationContractAbi,
+            'completeLitigation',
+            null,
+            options,
         );
     }
 
