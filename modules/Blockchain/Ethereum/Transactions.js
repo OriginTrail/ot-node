@@ -70,18 +70,6 @@ class Transactions {
      * @param newTransaction
      */
     async _sendTransaction(newTransaction) {
-        //  const data = util.methods.moveTheBlock().encodeABI()
-        //  createTransaction = await web3.eth.accounts.signTransaction({
-        //       from: wallet,
-        //       to: testingUtilitiesContractAddress,
-        //       data,
-        //       value: "0x00",
-        //       gasPrice: "0x01",
-        //       gas: "0x2000000",
-        //    }, privateKey);
-        //    console.log(createTransaction);
-        //  createReceipt = await web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);
-        //    console.log(createReceipt);
         if (!Utilities.isHexStrict(newTransaction.options.gasPrice)) {
             throw Error('Gas price has to be in hex format.');
         }
@@ -89,11 +77,6 @@ class Transactions {
         if (!Utilities.isHexStrict(newTransaction.options.gas)) {
             throw Error('Gas limit has to be in hex format.');
         }
-
-        // await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
-        //     console.log(`Using nonce ${nonce}`);
-        //     newTransaction.options.nonce = nonce;
-        // });
 
         const createdTransaction = await this.web3.eth.accounts
             .signTransaction(newTransaction.options, this.privateKey.toString('hex'));

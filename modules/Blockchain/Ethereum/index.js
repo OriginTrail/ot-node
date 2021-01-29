@@ -92,7 +92,6 @@ class Ethereum {
         const hubAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/hub.json');
         this.hubContractAbi = JSON.parse(hubAbiFile);
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
-        this.hubContract.eventMap = this._loadEventMap(this.hubContractAbi);
 
         this.logger.info(`[${this.getBlockchainId()}] Selected blockchain: Ethereum`);
     }
@@ -108,18 +107,14 @@ class Ethereum {
         this.holdingContractAbi = JSON.parse(holdingAbiFile);
         this.holdingContract = new this.web3.eth
             .Contract(this.holdingContractAbi, this.holdingContractAddress);
-        this.holdingContract.eventMap = this._loadEventMap(this.holdingContractAbi);
 
         // Old Holding contract data
         const oldHoldingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/old-holding.json');
         this.oldHoldingContractAddress = await this._getOldHoldingContractAddress();
         if (!Utilities.isZeroHash(this.oldHoldingContractAddress)) {
             this.oldHoldingContractAbi = JSON.parse(oldHoldingAbiFile);
-            this.oldHoldingContract = new this.web3.eth.Contract(
-                this.oldHoldingContractAbi,
-                this.oldHoldingContractAddress,
-            );
-            this.oldHoldingContract.eventMap = this._loadEventMap(this.oldHoldingContractAbi);
+            this.oldHoldingContract = new this.web3.eth
+                .Contract(this.oldHoldingContractAbi, this.oldHoldingContractAddress);
         }
 
         // Token contract data
@@ -130,7 +125,6 @@ class Ethereum {
             this.tokenContractAbi,
             this.tokenContractAddress,
         );
-        this.tokenContract.eventMap = this._loadEventMap(this.tokenContractAbi);
 
         // Profile contract data
         const profileAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile.json');
@@ -140,7 +134,6 @@ class Ethereum {
             this.profileContractAbi,
             this.profileContractAddress,
         );
-        this.profileContract.eventMap = this._loadEventMap(this.profileContractAbi);
 
         // Approval contract data
         const approvalAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/approval.json');
@@ -150,7 +143,6 @@ class Ethereum {
             this.approvalContractAbi,
             this.approvalContractAddress,
         );
-        this.approvalContract.eventMap = this._loadEventMap(this.approvalContractAbi);
 
         // Profile storage contract data
         const profileStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile-storage.json');
@@ -160,7 +152,6 @@ class Ethereum {
             this.profileStorageContractAbi,
             this.profileStorageContractAddress,
         );
-        this.profileStorageContract.eventMap = this._loadEventMap(this.profileStorageContractAbi);
 
         // Holding storage contract data
         const holdingStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding-storage.json');
@@ -170,7 +161,6 @@ class Ethereum {
             this.holdingStorageContractAbi,
             this.holdingStorageContractAddress,
         );
-        this.holdingStorageContract.eventMap = this._loadEventMap(this.holdingStorageContractAbi);
 
         // Old Holding storage contract data
         const oldHoldingStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding-storage.json');
@@ -181,8 +171,6 @@ class Ethereum {
                 this.oldHoldingStorageContractAbi,
                 this.oldHoldingStorageContractAddress,
             );
-            this.oldHoldingStorageContract.eventMap =
-                this._loadEventMap(this.oldHoldingStorageContractAbi);
         }
 
         // Litigation contract data
@@ -193,7 +181,6 @@ class Ethereum {
             this.litigationContractAbi,
             this.litigationContractAddress,
         );
-        this.litigationContract.eventMap = this._loadEventMap(this.litigationContractAbi);
 
         // Litigation storage contract data
         const litigationStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/litigation-storage.json');
@@ -203,8 +190,6 @@ class Ethereum {
             this.litigationStorageContractAbi,
             this.litigationStorageContractAddress,
         );
-        this.litigationStorageContract.eventMap =
-            this._loadEventMap(this.litigationStorageContractAbi);
 
         // Marketplace contract data
         const marketplaceAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/marketplace.json');
@@ -214,7 +199,6 @@ class Ethereum {
             this.marketplaceContractAbi,
             this.marketplaceContractAddress,
         );
-        this.marketplaceContract.eventMap = this._loadEventMap(this.marketplaceContractAbi);
 
         // Marketplace storage contract data
         const marketplaceStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/marketplace-storage.json');
@@ -224,8 +208,6 @@ class Ethereum {
             this.marketplaceStorageContractAbi,
             this.marketplaceStorageContractAddress,
         );
-        this.marketplaceStorageContract.eventMap =
-            this._loadEventMap(this.marketplaceStorageContractAbi);
 
         // Litigation contract data
         const replacementAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/replacement.json');
@@ -235,17 +217,6 @@ class Ethereum {
             this.replacementContractAbi,
             this.replacementContractAddress,
         );
-        this.replacementContract.eventMap = this._loadEventMap(this.replacementContractAbi);
-
-        // Utilities contract data
-        const utilitiesAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/utilities.json');
-        this.utilitiesContractAddress = await this._getUtilitiesContractAddress();
-        this.utilitiesContractAbi = JSON.parse(utilitiesAbiFile);
-        this.utilitiesContract = new this.web3.eth.Contract(
-            this.utilitiesContractAbi,
-            this.utilitiesContractAddress,
-        );
-        this.utilitiesContract.eventMap = this._loadEventMap(this.utilitiesContractAbi);
 
         // ERC725 identity contract data. Every user has own instance.
         const erc725IdentityAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/erc725.json');
@@ -273,56 +244,6 @@ class Ethereum {
 
     initialize() {
         this.initialized = true;
-    }
-
-    /**
-     * Gets event map for contract
-     * @returns {Object}
-     * @private
-     */
-    _loadEventMap(contractAbi) {
-        const events = contractAbi.filter(e => e.type === 'event');
-
-        const eventMap = {};
-        for (const event of events) {
-            let eventSignature = `${event.name}(`;
-            for (let i = 0; i < event.inputs.length; i += 1) {
-                if (i !== 0) {
-                    eventSignature += ',';
-                }
-                eventSignature += event.inputs[i].type;
-            }
-            eventSignature += ')';
-
-            const eventKey = Utilities.soliditySHA3(eventSignature);
-
-            this.logger.important(`Loaded key ${eventKey} for event ${eventSignature}`);
-
-            eventMap[eventKey] = {
-                name: event.name,
-                inputs: event.inputs,
-            };
-        }
-
-        return eventMap;
-    }
-
-    _decodeEventFromMap(event, contractEventMap) {
-        if (!event || !event.raw || !Array.isArray(event.raw.topics)
-            || event.raw.topics.length < 1) {
-            throw Error(`Insufficient data for decoding of event. Event received: \n${JSON.stringify(event)}`);
-        }
-        const eventKey = event.raw.topics[0];
-        const eventMap = contractEventMap[eventKey];
-        if (!eventMap) {
-            throw Error(`Input map not found for event with key ${eventKey}`);
-        }
-
-        event.name = eventMap.name;
-        event.returnValues =
-            this.web3.eth.abi.decodeLog(eventMap.inputs, event.raw.data, event.raw.topics);
-
-        return event;
     }
 
     /**
@@ -494,20 +415,6 @@ class Ethereum {
     }
 
     /**
-     * Gets Utilities contract address from Hub
-     * @returns {Promise<any>}
-     * @private
-     */
-    async _getUtilitiesContractAddress() {
-        this.logger.trace(`[${this.getBlockchainId()}] Asking Hub for Utilities contract address...`);
-        const address = await this.hubContract.methods.getContractAddress('Utilities').call({
-            from: this.config.wallet_address,
-        });
-        this.logger.trace(`[${this.getBlockchainId()}] Utilities contract address is ${address}`);
-        return address;
-    }
-
-    /**
      * Gets Litigation storage contract address from Hub
      * @returns {Promise<any>}
      * @private
@@ -610,7 +517,7 @@ class Ethereum {
             to: this.profileContractAddress,
             data,
             value: '0x00',
-            gasPrice: '0x01',
+            gasPrice: this.web3.utils.toHex(gasPrice),
             gas: '0x2000000',
         };
         this.logger.trace(`[${this.getBlockchainId()}] CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
@@ -641,23 +548,11 @@ class Ethereum {
             to: this.tokenContractAddress,
             data,
             value: '0x00',
-            gasPrice: '0x01',
+            gasPrice: this.web3.utils.toHex(gasPrice),
             gas: '0x2000000',
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] increaseProfileApproval(amount=${tokenAmountIncrease})`);
-        // return this.web3.eth.sendSignedTransaction(createdTransaction.rawTransaction);
-        //  let createTransaction = await web3.eth.accounts.signTransaction({
-        //         from: wallet,
-        //         to: testingUtilitiesContractAddress,
-        //         data,
-        //         value: "0x00",
-        //         gasPrice: "0x01",
-        //         gas: "0x2000000",
-        //     }, privateKey);
-        //
-        // let createReceipt =
-        //      await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', null, options);
     }
 
@@ -736,14 +631,21 @@ class Ethereum {
         if (Utilities.isZeroHash(offer['0']) && this.oldHoldingContract) {
             contractAddress = this.oldHoldingContractAddress;
         }
+
+        const data = this.holdingContract.methods.payOut(blockchainIdentity, offerId).encodeABI();
+
         const gasPrice = await this.getGasPrice(urgent);
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: contractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
+
         this.logger.trace(`[${this.getBlockchainId()}] payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
-        return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', [blockchainIdentity, offerId], options);
+        return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', null, options);
     }
 
     /**
@@ -791,27 +693,32 @@ class Ethereum {
         urgent,
     ) {
         const gasPrice = await this.getGasPrice(urgent);
+        const data = this.holdingContract.methods.createOffer(
+            blockchainIdentity,
+            dataSetId,
+            dataRootHash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
+            dcNodeId,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSizeInBytes,
+            litigationIntervalInMinutes,
+        ).encodeABI();
+
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: this.holdingContractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
         this.logger.trace(`[${this.getBlockchainId()}] createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'createOffer',
-            [
-                blockchainIdentity,
-                dataSetId,
-                dataRootHash,
-                redLitigationHash,
-                greenLitigationHash,
-                blueLitigationHash,
-                dcNodeId,
-                holdingTimeInMinutes,
-                tokenAmountPerHolder,
-                dataSizeInBytes,
-                litigationIntervalInMinutes,
-            ],
+            null,
             options,
         );
     }
@@ -838,27 +745,33 @@ class Ethereum {
         if (Utilities.isZeroHash(offer['0'])) {
             contractAddress = this.oldHoldingContractAddress;
         }
+        const data = this.holdingContract.methods.finalizeOffer(
+            blockchainIdentity,
+            offerId,
+            shift,
+            confirmation1,
+            confirmation2,
+            confirmation3,
+            encryptionType,
+            holders,
+            parentIdentity,
+            urgent,
+        ).encodeABI();
+
         const gasPrice = await this.getGasPrice(urgent);
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(gasPrice),
+            from: this.config.node_wallet,
             to: contractAddress,
+            data,
+            value: '0x00',
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders}), ${parentIdentity}`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'finalizeOffer',
-            [
-                blockchainIdentity,
-                offerId,
-                shift,
-                confirmation1,
-                confirmation2,
-                confirmation3,
-                encryptionType,
-                holders,
-                parentIdentity,
-            ],
+            null,
             options,
         );
     }
@@ -927,17 +840,10 @@ class Ethereum {
                 return;
             }
 
-            let events = await contract.getPastEvents('allEvents', {
+            const events = await contract.getPastEvents('allEvents', {
                 fromBlock,
                 toBlock: 'latest',
             });
-
-            // events = events.filter(event =>
-            //     event.address.toLowerCase() === contract._address.toLowerCase());
-            //
-            // for (let event of events) {
-            //     event = this._decodeEventFromMap(event, contract.eventMap);
-            // }
 
             return events;
         } catch (error) {
