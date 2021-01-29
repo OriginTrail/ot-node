@@ -35,7 +35,7 @@ class DCLitigationReplacementStartedCommand extends Command {
                     && utilities.compareHexStrings(this.config.erc725Identity, challengerIdentity);
             });
             if (event) {
-                event.finished = true;
+                event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);

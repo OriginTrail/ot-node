@@ -34,7 +34,7 @@ class DHLitigationInitiatedCommand extends Command {
                     return Utilities.compareHexStrings(holderIdentity, this.config.erc725Identity);
                 });
                 if (event) {
-                    event.finished = true;
+                    event.finished = 1;
                     await event.save({ fields: ['finished'] });
 
                     const {

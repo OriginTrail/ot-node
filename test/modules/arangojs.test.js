@@ -48,13 +48,8 @@ describe('Arangojs module ', async () => {
                 active: true,
             }],
         );
-        testDb = new ArangoJs(
-            config.database.username,
-            config.database.password,
-            myDatabaseName,
-            config.database.host,
-            config.database.port,
-        );
+        config.database.database = myDatabaseName;
+        testDb = new ArangoJs(config.database);
     });
 
     afterEach('drop ot_vertices and ot_edges collections', async () => {

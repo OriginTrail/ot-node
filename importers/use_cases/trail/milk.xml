@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:p="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+    <EPCISHeader>
+        <p:StandardBusinessDocumentHeader>
+            <p:HeaderVersion>1.2</p:HeaderVersion>
+            <p:Sender>
+                <p:Identifier>p:Identifier</p:Identifier>
+            </p:Sender>
+            <p:Receiver>
+                <p:Identifier>p:Identifier</p:Identifier>
+            </p:Receiver>
+            <p:DocumentIdentification>
+                <p:Standard>EPCglobal</p:Standard>
+                <p:TypeVersion>1.2</p:TypeVersion>
+                <p:InstanceIdentifier>p:InstanceIdentifier</p:InstanceIdentifier>
+                <p:Type>MasterData</p:Type>
+                <p:MultipleType>true</p:MultipleType>
+                <p:CreationDateAndTime>2018-01-01T00:31:52Z</p:CreationDateAndTime>
+            </p:DocumentIdentification>
+        </p:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="location">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgln:100100">
+                                <attribute id="location:type">farm</attribute>
+                                <attribute id="location:internal_facility_id">100100</attribute>
+                                <attribute id="location:actorId">Farm1 </attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:100200">
+                                <attribute id="location:type">farm</attribute>
+                                <attribute id="location:internal_facility_id">100200</attribute>
+                                <attribute id="location:actorId">Farm2 </attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    <Vocabulary type="product">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgtin:100100.01">
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.01</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:100100.02">
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.02</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:100100.03">
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.03</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:100100.04">
+                                <attribute id="product:id">urn:epc:id:sgtin:100100.04</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:class:sgtin:100100.000.311220">
+                                <attribute id="product:internalProductId">28</attribute>
+                                <attribute id="product:name">Milk 10 L 3,5% m.m.</attribute>
+                                <attribute id="product:ean13">3831051004078</attribute>
+                                <attribute id="product:batch">311220</attribute>
+                                <attribute id="product:date">2020-12-31T00:00:00+01:00</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:100200.01">
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.01</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:100200.02">
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.02</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:100200.03">
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.03</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:100200.04">
+                                <attribute id="product:id">urn:epc:id:sgtin:100200.04</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:class:sgtin:100200.000.311220">
+                                <attribute id="product:internalProductId">29</attribute>
+                                <attribute id="product:name">Milk 10 L 1,5% m.m.</attribute>
+                                <attribute id="product:ean13">3831051004085</attribute>
+                                <attribute id="product:batch">311220</attribute>
+                                <attribute id="product:date">2020-12-31T00:00:00+01:00</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                </VocabularyList>
+            </EPCISMasterData>
+        </extension>
+    </EPCISHeader>
+    <EPCISBody>
+        <EventList>
+            <ObjectEvent>
+                <eventTime>2019-11-27T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100100.01</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100100</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100100</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-11-27T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100100.02</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100100</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100100</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-11-27T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100100.03</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100100</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100100</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-11-27T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100100.04</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100100</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100100</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-11-30T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100200.01</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100200</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100200</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-11-30T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100200.02</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100200</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100200</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-11-30T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100200.03</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100200</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100200</id>
+                </bizLocation>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2019-11-30T00:00:00+01:00</eventTime>
+                <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:100200.04</epc>
+                </epcList>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:commissioning</bizStep>
+                <disposition>urn:epcglobal:cbv:disposition:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:100200</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:100200</id>
+                </bizLocation>
+            </ObjectEvent>
+            <extension>
+                <TransformationEvent>
+                    <eventTime>2019-11-27T00:00:00+01:00</eventTime>
+                    <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                    <inputEPCList>
+                        <epc>urn:epc:id:sgtin:100100.01</epc>
+                        <epc>urn:epc:id:sgtin:100100.02</epc>
+                        <epc>urn:epc:id:sgtin:100100.03</epc>
+                        <epc>urn:epc:id:sgtin:100100.04</epc>
+                    </inputEPCList>
+                    <outputEPCList>
+                        <epc>urn:epc:class:sgtin:100100.000.311220</epc>
+                    </outputEPCList>
+                    <bizStep>urn:epcglobal:cbv:bizstep:transforming</bizStep>
+                    <disposition>urn:epcglobal:cbv:disposition:in_progress</disposition>
+                    <readPoint>
+                        <id>urn:epc:id:sgln:000000000</id>
+                    </readPoint>
+                    <bizLocation>
+                        <id>urn:epc:id:sgln:000000000</id>
+                    </bizLocation>
+                </TransformationEvent>
+            </extension>
+            <extension>
+                <TransformationEvent>
+                    <eventTime>2019-11-30T00:00:00+01:00</eventTime>
+                    <eventTimeZoneOffset>-1</eventTimeZoneOffset>
+                    <inputEPCList>
+                        <epc>urn:epc:id:sgtin:100200.01</epc>
+                        <epc>urn:epc:id:sgtin:100200.02</epc>
+                        <epc>urn:epc:id:sgtin:100200.03</epc>
+                        <epc>urn:epc:id:sgtin:100200.04</epc>
+                    </inputEPCList>
+                    <outputEPCList>
+                        <epc>urn:epc:class:sgtin:100200.000.311220</epc>
+                    </outputEPCList>
+                    <bizStep>urn:epcglobal:cbv:bizstep:transforming</bizStep>
+                    <disposition>urn:epcglobal:cbv:disposition:in_progress</disposition>
+                    <readPoint>
+                        <id>urn:epc:id:sgln:000000000</id>
+                    </readPoint>
+                    <bizLocation>
+                        <id>urn:epc:id:sgln:000000000</id>
+                    </bizLocation>
+                </TransformationEvent>
+            </extension>
+        </EventList>
+    </EPCISBody></epcis:EPCISDocument>

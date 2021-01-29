@@ -45,8 +45,18 @@ class RestAPIServiceV2 {
             transport, emitter, blockchain, web3, config,
         } = this.ctx;
 
+        server.get(`/api/${this.version_id}/health_check`, (req, res) => {
+            res.status(200);
+            res.send({
+            });
+        });
+
         server.get(`/api/${this.version_id}/info`, async (req, res) => {
             await this.infoController.getNodeInfo(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/node_data`, async (req, res) => {
+            await this.infoController.getNodeData(req, res);
         });
 
         server.post(`/api/${this.version_id}/import`, async (req, res) => {
@@ -90,7 +100,19 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/trail`, async (req, res) => {
-            await this._getTrail(req, res);
+            await this.dhController.getTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/trail/lookup`, async (req, res) => {
+            await this.dhController.lookupTrail(req, res);
+        });
+
+        server.post(`/api/${this.version_id}/trail/find`, async (req, res) => {
+            await this.dhController.findTrail(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/trail/find/result/:handler_id`, async (req, res) => {
+            await this.dhController.findTrailResult(req, res);
         });
 
         server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res) => {
@@ -358,12 +380,6 @@ class RestAPIServiceV2 {
         });
     }
 
-    async _getTrail(req, res) {
-        this.logger.api('POST: Trail request received.');
-
-        await this.dhController.getTrail(req, res);
-    }
-
     async _getMerkleProofs(req, res) {
         this.logger.api('POST: Get Merkle proofs request received.');
 
@@ -485,40 +501,45 @@ class RestAPIServiceV2 {
             return;
         }
         const handlerData = JSON.parse(handler_object.data);
-
-        const offerData = {
-            status: handlerData.status,
-            holders: handlerData.holders,
-        };
-        const offer = await Models.offers.findOne({
-            where: {
-                [Models.Sequelize.Op.or]: [
-                    {
-                        offer_id: handlerData.offer_id,
-                    },
-                    {
-                        id: handlerData.offer_id,
-                    },
-                ],
-            },
-        });
-        if (offer) {
-            offerData.number_of_replications = offer.number_of_replications;
-            offerData.number_of_verified_replications = offer.number_of_verified_replications;
-            offerData.trac_in_eth_used_for_price_calculation =
-                offer.trac_in_eth_used_for_price_calculation;
-            offerData.gas_price_used_for_price_calculation =
-                offer.gas_price_used_for_price_calculation;
-            offerData.price_factor_used_for_price_calculation =
-                offer.price_factor_used_for_price_calculation;
-            offerData.offer_create_transaction_hash = offer.transaction_hash;
-            offerData.offer_finalize_transaction_hash = offer.offer_finalize_transaction_hash;
-            offerData.offer_id = offer.offer_id;
-            offerData.holding_time_in_minutes = offer.holding_time_in_minutes;
-            offerData.token_amount_per_holder = offer.token_amount_per_holder;
-            offerData.message = offer.message;
+        let offerData;
+        if (handlerData) {
+            offerData = {
+                status: handlerData.status,
+                holders: handlerData.holders,
+            };
+            const offer = await Models.offers.findOne({
+                where: {
+                    [Models.Sequelize.Op.or]: [
+                        {
+                            offer_id: handlerData.offer_id,
+                        },
+                        {
+                            id: handlerData.offer_id,
+                        },
+                    ],
+                },
+            });
+            if (offer) {
+                offerData.number_of_replications = offer.number_of_replications;
+                offerData.number_of_verified_replications = offer.number_of_verified_replications;
+                offerData.trac_in_eth_used_for_price_calculation =
+                    offer.trac_in_eth_used_for_price_calculation;
+                offerData.gas_price_used_for_price_calculation =
+                    offer.gas_price_used_for_price_calculation;
+                offerData.price_factor_used_for_price_calculation =
+                    offer.price_factor_used_for_price_calculation;
+                offerData.offer_create_transaction_hash = offer.transaction_hash;
+                offerData.offer_finalize_transaction_hash = offer.offer_finalize_transaction_hash;
+                offerData.offer_id = offer.offer_id;
+                offerData.holding_time_in_minutes = offer.holding_time_in_minutes;
+                offerData.token_amount_per_holder = offer.token_amount_per_holder;
+                offerData.message = offer.message;
+            }
+            Object.keys(offerData).forEach(key =>
+                (offerData[key] == null) && delete offerData[key]);
+        } else {
+            offerData = {};
         }
-        Object.keys(offerData).forEach(key => (offerData[key] == null) && delete offerData[key]);
         res.status(200);
         res.send({
             data: offerData,
