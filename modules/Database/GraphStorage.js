@@ -28,11 +28,7 @@ class GraphStorage {
                 case 'arangodb':
                     try {
                         this.db = new ArangoJS(
-                            this.selectedDatabase.username,
-                            this.selectedDatabase.password,
-                            this.selectedDatabase.database,
-                            this.selectedDatabase.host,
-                            this.selectedDatabase.port,
+                            this.selectedDatabase,
                             this.logger,
                         );
                         await this.__initDatabase__();
@@ -65,12 +61,68 @@ class GraphStorage {
         });
     }
 
+    startReplication() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.startReplication().then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    stopReplication() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.stopReplication().then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    getReplicationApplierState() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.getReplicationApplierState().then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
     findTrail(queryObject) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database.'));
             } else {
                 this.db.findTrail(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    lookupTrail(queryObject) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database.'));
+            } else {
+                this.db.lookupTrail(queryObject).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

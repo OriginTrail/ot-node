@@ -168,6 +168,67 @@ Given(
     },
 );
 
+
+Given(
+    /^I call traversal lookup from "(\S+)" "(\S+)" with opcode "(\S+)"/,
+    { timeout: 120000 },
+    async function (typesArrayString, valuesArrayString, opCode) {
+        expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+        const { dc } = this.state;
+
+        const typesArray = typesArrayString.split(',');
+        const valuesArray = valuesArrayString.split(',');
+
+        const host = dc.state.node_rpc_url;
+        const trailParams = {
+            identifier_types: typesArray,
+            identifier_values: valuesArray,
+            opcode: opCode,
+        };
+
+        const trail = await httpApiHelper.apiTrailLookup(host, trailParams);
+
+        if (this.state.lastTrailLookup) {
+            this.state.secondLastTrailLookup = this.state.lastTrailLookup;
+        }
+        this.state.lastTrailLookup = trail;
+    },
+);
+
+
+Given(
+    /^I send (extended\s|narrow\s|)traversal request with included connection types "(\S+)"( and excluded connection types "(\S+)"|) for the last trail lookup request/,
+    { timeout: 120000 },
+    async function (reach, includedConnectionTypes, excludedConnectionTypes) {
+        expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+        expect(!!this.state.lastTrailLookup, 'Trail lookup request not defined. Use other step to define it.').to.be.equal(true);
+        const { dc } = this.state;
+
+        const host = dc.state.node_rpc_url;
+        const trailParams = {
+            unique_identifiers: this.state.lastTrailLookup.map(x => x.unique_identifier),
+            depth: 50,
+        };
+
+        if (includedConnectionTypes) { trailParams.included_connection_types = includedConnectionTypes.split(','); }
+        if (excludedConnectionTypes) { trailParams.excluded_connection_types = excludedConnectionTypes.split(','); }
+
+        if (reach.includes(constants.TRAIL_REACH_PARAMETERS.narrow)) {
+            trailParams.reach = constants.TRAIL_REACH_PARAMETERS.narrow;
+        } else if (reach.includes(constants.TRAIL_REACH_PARAMETERS.extended)) {
+            trailParams.reach = constants.TRAIL_REACH_PARAMETERS.extended;
+        }
+
+        const trail = await httpApiHelper.apiTrailFind(host, trailParams);
+
+        if (this.state.lastTrailHandlerId) {
+            this.state.secondLastTrailHandlerId = this.state.lastTrailHandlerId;
+        }
+        this.state.lastTrailHandlerId = trail.handler_id;
+    },
+);
+
+
 Then(
     /^the custom traversal from "(\S+)" "(\S+)" with connection types "(\S+)" should contain (\d+) objects/,
     { timeout: 120000 },
@@ -293,6 +354,47 @@ Then(
 
         expect(
             lastTrail.length,
+            `Traversal should contain ${expectedNumberOfObjects} objects`,
+        ).to.be.equal(expectedNumberOfObjects);
+    },
+);
+
+
+Then(
+    /^the last traversal lookup should contain (\d+) objects with types "(\S+)" and values "(\S+)"/,
+    async function (expectedNumberOfObjects, typesArrayString, valuesArrayString) {
+        expect(!!this.state.lastTrailLookup, 'Last traversal lookup not defined. Use other step to define it.').to.be.equal(true);
+        const { lastTrailLookup } = this.state;
+
+        const typesArray = typesArrayString.split(',');
+        const valuesArray = valuesArrayString.split(',');
+
+        const filteredTrailLookup = lastTrailLookup.filter((trailLookupElement) => {
+            for (let i = 0; i < typesArray.length; i += 1) {
+                if (!trailLookupElement.identifiers.find(x => x.identifierType === typesArray[i] && x.identifierValue === valuesArray[i])) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        expect(filteredTrailLookup, 'should be an Array').to.be.an.instanceof(Array);
+        expect(
+            filteredTrailLookup.length,
+            `Traversal lookup should contain ${expectedNumberOfObjects} of selected objects`,
+        ).to.be.equal(expectedNumberOfObjects);
+    },
+);
+
+
+Then(
+    /^the last traversal lookup should contain (\d+) objects in total/,
+    async function (expectedNumberOfObjects) {
+        expect(!!this.state.lastTrailLookup, 'Last traversal not defined. Use other step to define it.').to.be.equal(true);
+        const { lastTrailLookup } = this.state;
+
+        expect(
+            lastTrailLookup.length,
             `Traversal should contain ${expectedNumberOfObjects} objects`,
         ).to.be.equal(expectedNumberOfObjects);
     },

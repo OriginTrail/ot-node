@@ -1008,6 +1008,17 @@ class Utilities {
         }
         return [obj];
     }
+
+    /**
+     * Sleeps for provided time
+     * @param timeout - Timeout in milliseconds
+     * @return Promise
+     */
+    static async sleepForMilliseconds(timeout) {
+        await new Promise((resolve, reject) => {
+            setTimeout(() => resolve(), timeout);
+        });
+    }
 }
 
 module.exports = Utilities;

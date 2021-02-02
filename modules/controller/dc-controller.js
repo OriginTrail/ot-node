@@ -53,7 +53,7 @@ class DCController {
                 }
 
                 const inserted_object = await Models.handler_ids.create({
-                    status: 'INITIALIZED',
+                    status: 'PENDING',
 
                 });
                 handlerId = inserted_object.dataValues.handler_id;

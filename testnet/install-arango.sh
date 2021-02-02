@@ -17,5 +17,6 @@ echo arangodb3 arangodb3/upgrade boolean false | debconf-set-selections
 echo arangodb3 arangodb3/storage_engine select auto | debconf-set-selections
 apt-get install arangodb3=3.5.3-1 -y --allow-unauthenticated
 sed -i 's/authentication = true/authentication = false/g' /etc/arangodb3/arangod.conf
+sed -i 's/endpoint = tcp:\/\/127.0.0.1:8529/endpoint = tcp:\/\/0.0.0.0:8529/g' /etc/arangodb3/arangod.conf
 
 arango_password=""
