@@ -305,6 +305,7 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes
      */
     async joinNetwork(callback) {
+        const start = Date.now();
         const peers = Array.from(new Set(this.config.network.bootstraps
             .concat(await this.node.rolodex.getBootstrapCandidates())));
 
@@ -323,6 +324,13 @@ class Kademlia {
             });
 
             callback(null, null);
+        } else if (this.kademliaUtilities.getRoutingTable(this.node.router)) {
+            this.log.info(`Skipping network join, using existing ${peers.length} seeds`);
+
+            const end = Date.now();
+            this.log.info(`Network join lasted ${end - start} ms`);
+
+            callback(null, peers);
         } else {
             this.log.info(`Joining network from ${peers.length} seeds`);
             async.detectSeries(peers, (url, done) => {
@@ -335,10 +343,25 @@ class Kademlia {
                     this.log.error('Failed to join network, will retry in 1 minute');
                     callback(new Error('Failed to join network'));
                 } else {
+                    this.kademliaUtilities.setBootstraps(peers);
+                    this.kademliaUtilities.setRoutingTable(this.node.router);
+
+                    const end = Date.now();
+                    this.log.info(`Network join lasted ${end - start} ms`);
+
                     callback(null, result);
                 }
             });
         }
+    }
+
+    async dumpNetworkInfo() {
+        const peers = Array.from(new Set(this.config.network.bootstraps
+            .concat(await this.node.rolodex.getBootstrapCandidates())));
+
+
+        this.kademliaUtilities.setBootstraps(peers);
+        this.kademliaUtilities.setRoutingTable(this.node.router);
     }
 
     /**

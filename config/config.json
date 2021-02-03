@@ -45,7 +45,13 @@
       "port": 8529,
       "database": "origintrail-develop",
       "host": "localhost",
-      "max_path_length": 1000
+      "max_path_length": 1000,
+      "replication_info": {
+        "endpoint": "",
+        "username": "",
+        "password": "",
+        "port": "8529"
+      }
     },
     "blockchain": {
       "implementations": [
@@ -85,6 +91,7 @@
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
       "identityDifficulty": 8,
+      "routing_table_validity_period_in_hours": 24,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
@@ -115,7 +122,31 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600
+    "reputationWindowInMinutes": 129600,
+    "high_availability": {
+      "enabled": false,
+      "hostnames": ["10.1.0.4","10.1.0.5"],
+      "private_ip_address": "",
+      "remote_hostname": "",
+      "remote_ip_address": "",
+      "remote_operational_db_username": "ot_node",
+      "remote_operational_db_password": "origintrail",
+      "fallback_sync_attempts_number": 3,
+      "fallback_sync_attempts_delay": 60000,
+      "active_node_data_sync_interval_in_hours": 12,
+      "active_node_data_sync_use_ssl": false,
+      "is_remote_node_available_attempts_number": 3,
+      "is_remote_node_available_attempts_delay": 2000,
+      "is_remote_node_available_attempts_timeout": 3000
+    },
+    "operational_db": {
+      "database": "ot_node_db",
+      "host": "localhost",
+      "port": 5432,
+      "username": "ot_node",
+      "password": "origintrail",
+      "root_user_password": "origintrail"
+    }
   },
   "testnet": {
     "identity": null,
@@ -163,7 +194,13 @@
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",
-      "max_path_length": 1000
+      "max_path_length": 1000,
+      "replication_info": {
+        "endpoint": "",
+        "username": "",
+        "password": "",
+        "port": "8529"
+      }
     },
     "blockchain": {
       "implementations": [
@@ -207,6 +244,7 @@
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
       "identityDifficulty": 12,
+      "routing_table_validity_period_in_hours": 24,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
@@ -237,7 +275,31 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600
+    "reputationWindowInMinutes": 129600,
+    "high_availability": {
+      "enabled": false,
+      "hostnames": ["10.1.0.4","10.1.0.5"],
+      "private_ip_address": "",
+      "remote_hostname": "",
+      "remote_ip_address": "",
+      "remote_operational_db_username": "ot_node",
+      "remote_operational_db_password": "origintrail",
+      "fallback_sync_attempts_number": 3,
+      "fallback_sync_attempts_delay": 60000,
+      "active_node_data_sync_interval_in_hours": 12,
+      "active_node_data_sync_use_ssl": true,
+      "is_remote_node_available_attempts_number": 3,
+      "is_remote_node_available_attempts_delay": 2000,
+      "is_remote_node_available_attempts_timeout": 3000
+    },
+    "operational_db": {
+      "database": "ot_node_db",
+      "host": "localhost",
+      "port": 5432,
+      "username": "ot_node",
+      "password": "origintrail",
+      "root_user_password": "origintrail"
+    }
   },
   "mainnet": {
     "identity": null,
@@ -285,7 +347,13 @@
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",
-      "max_path_length": 1000
+      "max_path_length": 1000,
+      "replication_info": {
+        "endpoint": "10.1.0.5",
+        "username": "root",
+        "password": "",
+        "port": "8529"
+      }
     },
     "blockchain": {
       "implementations": [
@@ -331,6 +399,7 @@
       "remoteWhitelist": ["127.0.0.1"],
       "solutionDifficulty": 14,
       "identityDifficulty": 12,
+      "routing_table_validity_period_in_hours": 24,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
@@ -361,6 +430,30 @@
     "requireApproval": false,
     "litigationEnabled": true,
     "commandExecutorVerboseLoggingEnabled": false,
-    "reputationWindowInMinutes": 129600
+    "reputationWindowInMinutes": 129600,
+    "high_availability": {
+      "enabled": false,
+      "hostnames": ["10.1.0.4","10.1.0.5"],
+      "private_ip_address": "",
+      "remote_hostname": "",
+      "remote_ip_address": "",
+      "remote_operational_db_username": "ot_node",
+      "remote_operational_db_password": "origintrail",
+      "fallback_sync_attempts_number": 3,
+      "fallback_sync_attempts_delay": 60000,
+      "active_node_data_sync_interval_in_hours": 12,
+      "active_node_data_sync_use_ssl": true,
+      "is_remote_node_available_attempts_number": 3,
+      "is_remote_node_available_attempts_delay": 2000,
+      "is_remote_node_available_attempts_timeout": 3000
+    },
+    "operational_db": {
+      "database": "ot_node_db",
+      "host": "localhost",
+      "port": 5432,
+      "username": "ot_node",
+      "password": "origintrail",
+      "root_user_password": "origintrail"
+    }
   }
 }

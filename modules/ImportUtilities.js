@@ -621,6 +621,39 @@ class ImportUtilities {
             });
 
             if (offers && Array.isArray(offers) && offers.length > 0) {
+                if (offers.length > 1) {
+                    const offerIds = offers.map(e => e.dataValues.offer_id);
+                    const replicatedData = await Models.replicated_data.findAll({
+                        where: {
+                            offer_id: {
+                                [Models.sequelize.Op.in]: offerIds,
+                            },
+                        },
+                        order: [
+                            ['id', 'DESC'],
+                        ],
+                    });
+                    if (replicatedData
+                        && Array.isArray(replicatedData)
+                        && replicatedData.length > 1) {
+                        offers.sort((a, b) => {
+                            const index_a = replicatedData.findIndex(e =>
+                                e.dataValues.offer_id === a.dataValues.offer_id);
+                            const index_b = replicatedData.findIndex(e =>
+                                e.dataValues.offer_id === b.dataValues.offer_id);
+
+                            if (index_a === -1 && index_b === -1) {
+                                return 0;
+                            } else if (index_a === -1) {
+                                return 1;
+                            } else if (index_b === -1) {
+                                return -1;
+                            }
+                            return index_a - index_b;
+                        });
+                    }
+                }
+
                 replicationInfo = offers.map(e => ({
                     origin,
                     offer_id: e.dataValues.offer_id,
