@@ -80,7 +80,7 @@ describe('Transactions class object tests', () => {
         expect(balance).to.equal('5999999999999999');
 
         const options = {
-            gasLimit: web3.utils.toHex(gasLimit),
+            gas: web3.utils.toHex(gasLimit),
             gasPrice: web3.utils.toHex(gasPrice),
             to: this.tokenContractAddress,
             value: '1',
@@ -134,11 +134,12 @@ describe('Transactions class object tests', () => {
             gas: 21000,
             gasPrice,
         });
+
         balance = await web3.eth.getBalance(testWallet);
         expect(balance).to.equal('5999999999999999');
 
         const options = {
-            gasLimit: web3.utils.toHex(gasLimit),
+            gas: web3.utils.toHex(gasLimit),
             gasPrice: web3.utils.toHex(gasPrice),
             to: this.tokenContractAddress,
             value: '1',

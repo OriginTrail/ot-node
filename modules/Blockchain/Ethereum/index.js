@@ -21,20 +21,6 @@ class Ethereum {
         this.contractsLoaded = false;
         this.initialized = false;
 
-
-        if (process.env.RPC_SERVER_URL) {
-            configuration.rpc_server_url = process.env.RPC_SERVER_URL;
-        }
-
-        if (!configuration.rpc_server_url) {
-            console.error('Please provide a valid RPC server URL.\n' +
-                'Add it to the blockchain section. For example:\n' +
-                '   "blockchain": {\n' +
-                '       "rpc_server_url": "http://your.server.url/"\n' +
-                '   }');
-            return;
-        }
-
         // Loading Web3
         this.emitter = emitter;
         this.web3 = new Web3(configuration.rpc_server_url);
@@ -44,6 +30,20 @@ class Ethereum {
 
         this.config = configuration;
         this.config.appDataPath = config.appDataPath;
+
+        if (process.env.RPC_SERVER_URL) {
+            configuration.rpc_server_url = process.env.RPC_SERVER_URL;
+        }
+
+        if (!configuration.rpc_server_url) {
+            this.logger.error('Please provide a valid RPC server URL.\n' +
+                'Add it to the blockchain section. For example:\n' +
+                '   "blockchain": {\n' +
+                '       "rpc_server_url": "http://your.server.url/"\n' +
+                '   }');
+            return;
+        }
+
         const walletObject = Utilities.loadJsonFromFile(
             this.config.appDataPath,
             configuration.node_wallet_path,
