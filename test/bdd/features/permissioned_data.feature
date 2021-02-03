@@ -38,10 +38,6 @@ Feature: Permissioned data features
     And DC waits for import to finish
     Given DC initiates the replication for last imported dataset
     And I wait for replications to finish
-    And I use 2nd node as DH
-    When DH exports the last imported dataset as OT-JSON
-    And DH waits for export to finish
-    Then The last export doesn't have permissioned data
     Given I use 2nd node as DV
     And DV gets the list of available datasets for trading
     And DV gets the price for the last imported dataset

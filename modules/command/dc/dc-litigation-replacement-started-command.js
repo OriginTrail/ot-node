@@ -40,7 +40,7 @@ class DCLitigationReplacementStartedCommand extends Command {
                     );
             });
             if (event) {
-                event.finished = 1;
+                event.finished = true;
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Replacement for DH ${dhIdentity} and offer ${offerId} has been successfully started. Waiting for DHs...`);

@@ -37,7 +37,7 @@ class DhOfferFinalizedCommand extends Command {
                 return Utilities.compareHexStrings(offerId, eventOfferId);
             });
             if (event) {
-                event.finished = 1;
+                event.finished = true;
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Offer ${offerId} finalized on blockchain ${blockchain_id}`);

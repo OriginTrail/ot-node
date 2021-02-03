@@ -60,7 +60,7 @@ class DhPurchaseInitiatedCommand extends Command {
                     price === dataTrade.price;
             });
             if (event) {
-                event.finished = 1;
+                event.finished = true;
                 await event.save({ fields: ['finished'] });
 
                 const { purchaseId } = JSON.parse(event.data);

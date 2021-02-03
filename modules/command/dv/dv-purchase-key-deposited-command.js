@@ -50,7 +50,7 @@ class DvPurchaseKeyDepositedCommand extends Command {
                 return purchaseId === purchase_id;
             });
             if (event) {
-                event.finished = 1;
+                event.finished = true;
                 await event.save({ fields: ['finished'] });
                 this.logger.important(`Purchase ${purchase_id} confirmed by seller. Decoding data from submitted key.`);
                 this.remoteControl.purchaseStatus('Purchase confirmed', 'Validating and storing data on your local node.');

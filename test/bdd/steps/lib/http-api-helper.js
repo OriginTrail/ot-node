@@ -693,72 +693,6 @@ async function apiTrail(nodeRpcUrl, params) {
     });
 }
 
-
-async function apiTrailLookup(nodeRpcUrl, params) {
-    return new Promise((accept, reject) => {
-        request(
-            {
-                method: 'POST',
-                body: params,
-                headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/latest/trail/lookup`,
-                json: true,
-            },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            },
-        );
-    });
-}
-
-
-async function apiTrailFind(nodeRpcUrl, params) {
-    return new Promise((accept, reject) => {
-        request(
-            {
-                method: 'POST',
-                body: params,
-                headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/latest/trail/find`,
-                json: true,
-            },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            },
-        );
-    });
-}
-
-
-async function apiTrailFindResult(nodeRpcUrl, handler_id) {
-    return new Promise((accept, reject) => {
-        request(
-            {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/latest/trail/find/result/${handler_id}`,
-                json: true,
-            },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            },
-        );
-    });
-}
-
-
 /**
  * Fetch /api/latest/get_merkle_proofs/
  *
@@ -999,7 +933,4 @@ module.exports = {
     apiPermissionedDataGetPriceResult,
     apiPermissionedDataPurchase,
     apiRemovePermissionedData,
-    apiTrailLookup,
-    apiTrailFind,
-    apiTrailFindResult,
 };
