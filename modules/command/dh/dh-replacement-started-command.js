@@ -45,7 +45,7 @@ class DHReplacementStartedCommand extends Command {
 
                 this.logger.info(`Replacement triggered for offer ${offerId}. Litigator ${challengerIdentity}.`);
 
-                event.finished = 1;
+                event.finished = true;
                 await event.save({ fields: ['finished'] });
 
                 const mine = await this._checkIfMineReplacement(offerId);
@@ -94,7 +94,7 @@ class DHReplacementStartedCommand extends Command {
             });
 
             if (event != null) {
-                event.finished = 1;
+                event.finished = true;
                 await event.save({ fields: ['finished'] });
 
                 const {

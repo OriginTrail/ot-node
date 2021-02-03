@@ -33,6 +33,7 @@ class ReplicationService {
             fs.mkdirSync(replicationPath);
         }
     }
+
     /**
      * Cast number to color
      * @param colorNumber: allowed numbers:
@@ -77,7 +78,6 @@ class ReplicationService {
         const offerDirPath = this._getOfferDirPath(internalOfferId);
         await Utilities.writeContentsToFile(offerDirPath, `${color}.json`, JSON.stringify(data));
     }
-
 
     /**
      * Load replication from cache or file

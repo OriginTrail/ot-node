@@ -853,7 +853,7 @@ class Ethereum {
                             // eslint-disable-next-line
                             continue;
                         }
-                        eventData.finished = 1;
+                        eventData.finished = true;
                         // eslint-disable-next-line no-loop-func
                         eventData.save().then(() => {
                             clearTimeout(clearToken);
@@ -1486,7 +1486,7 @@ class Ethereum {
     }
 
     async getTracPrice() {
-        if (process.env.NODE_ENV !== 'mainnet') {
+        if (process.env.NODE_ENV !== 'development') {
             this.logger.trace(`[${this.getBlockchainId()}] Using default trac price in eth from configuration: ${this.config.trac_price_in_eth}`);
             return this.config.trac_price_in_eth;
         }

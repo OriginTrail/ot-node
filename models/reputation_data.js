@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
         dh_identity: DataTypes.STRING,
         offer_id: DataTypes.STRING,
         reputation_delta: DataTypes.STRING,
-        timestamp: DataTypes.BIGINT,
+        timestamp: DataTypes.INTEGER,
     }, {
         tableName: 'reputation_data',
     });

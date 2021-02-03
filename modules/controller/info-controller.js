@@ -1,9 +1,6 @@
 const pjson = require('../../package.json');
 const Models = require('../../models/index');
 const ImportUtilities = require('../ImportUtilities');
-const fs = require('fs');
-const path = require('path');
-const Utilities = require('../Utilities');
 
 class InfoController {
     constructor(ctx) {
@@ -96,86 +93,6 @@ class InfoController {
         }
 
         return blockchain_info;
-    }
-
-    async getNodeData(req, res) {
-        this.logger.api('GET: Node data request received.');
-        try {
-            const { message, messageSignature } = req.body;
-            const wallets = this.blockchain.getAllWallets()
-                .map(e => Utilities.normalizeHex(e.response.node_wallet));
-            if (
-                !message ||
-                !messageSignature ||
-                !wallets.includes(Utilities.normalizeHex(message.wallet)) ||
-                !Utilities.isMessageSigned(message, messageSignature)
-            ) {
-                this.logger.error('Unauthorized node data request');
-                res.status(403);
-                res.send({
-                    message: 'Unauthorized node data request',
-                });
-            }
-
-            await this.transport.dumpNetworkInfo();
-            const response = {};
-
-            if (message.blockchain) {
-                response.blockchain = [];
-                for (const implementation of message.blockchain) {
-                    const { network_id, identity, wallet } = implementation;
-                    const result = { network_id };
-                    if (identity) {
-                        result.identity = this.blockchain.getIdentity(network_id).response;
-                    }
-                    if (wallet) {
-                        result.wallet = this.blockchain.getWallet(network_id).response;
-                    }
-
-                    response.blockchain.push(result);
-                }
-            }
-
-            if (message.networkIdentity) {
-                response.networkIdentity = fs.readFileSync(path.join(
-                    this.config.appDataPath,
-                    this.config.identity_filepath,
-                )).toString();
-            }
-            if (message.kademliaCert) {
-                response.kademliaCert = fs.readFileSync(path.join(
-                    this.config.appDataPath,
-                    this.config.ssl_certificate_path,
-                )).toString();
-            }
-            if (message.kademliaKey) {
-                response.kademliaKey = fs.readFileSync(path.join(
-                    this.config.appDataPath,
-                    this.config.ssl_keypath,
-                )).toString();
-            }
-            if (message.bootstraps) {
-                response.bootstraps = fs.readFileSync(path.join(
-                    this.config.appDataPath,
-                    'bootstraps.json',
-                )).toString();
-            }
-            if (message.routingTable) {
-                response.routingTable = fs.readFileSync(path.join(
-                    this.config.appDataPath,
-                    'router.json',
-                )).toString();
-            }
-
-            res.status(200);
-            res.send(response);
-        } catch (error) {
-            this.logger.error(`Failed to process /api/node_data route. ${error}`);
-            res.status(500);
-            res.send({
-                message: error,
-            });
-        }
     }
 
     async getDatasetInfo(request, response) {

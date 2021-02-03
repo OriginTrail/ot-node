@@ -3,8 +3,6 @@ const semver = require('semver');
 const path = require('path');
 const request = require('superagent');
 const { fork } = require('child_process');
-const Models = require('../../../models');
-const constants = require('../../constants');
 
 const pjson = require('../../../package');
 const Command = require('../command');
@@ -32,7 +30,6 @@ class AutoupdaterCommand extends Command {
         this.process = options.process;
         this.updateFilepath = options.updateFilepath;
         this.destinationBasedir = options.destinationBasedir;
-        this.highAvailabilityService = ctx.highAvailabilityService;
     }
 
     /**
@@ -65,17 +62,6 @@ class AutoupdaterCommand extends Command {
 
         if (semver.lt(currentVersion, remoteVersion)) {
             this.logger.info('New version found');
-
-            if (this.config.high_availability_setup) {
-                const activeNode = await Models.node_status.findOne({
-                    where: { hostname: this.config.high_availability.private_ip_address },
-                });
-                await this.highAvailabilityService.updateOrCreateNodeState(
-                    activeNode,
-                    constants.NODE_STATUS.updating,
-                    this.config.high_availability.private_ip_address,
-                );
-            }
 
             const updater = fork(path.join(__dirname, '..', '..', '..', 'testnet', 'prepare-update.js'), [], {
                 stdio: [0, 1, 2, 'ipc'],

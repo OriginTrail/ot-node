@@ -18,8 +18,7 @@ describe('graph module ', () => {
         const config = rc(pjson.name, defaultConfig);
         Storage.models = (await models.sequelize.sync()).models;
         assert.hasAllKeys(config.database, ['provider', 'username', 'password',
-            'password_file_name', 'host', 'port', 'database', 'max_path_length', 'replication_info']);
-        assert.hasAllKeys(config.database.replication_info, ['endpoint', 'username', 'password', 'port']);
+            'password_file_name', 'host', 'port', 'database', 'max_path_length']);
     });
 
     after('drop myDatabaseName db', async () => {
