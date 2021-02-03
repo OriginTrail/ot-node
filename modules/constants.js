@@ -102,6 +102,11 @@ exports.BLOCKCHAIN_RETRY_DELAY_IN_MILLS = 20000;
 exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
 /**
  *
+ * @constant {number} ANSWER_LITIGATION_GAS_LIMIT - answerLitigation transaction gas limit
+ */
+exports.ANSWER_LITIGATION_GAS_LIMIT = 200000;
+/**
+ *
  * @constant {array} NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS -
  *  Minimal number of blocks which are used for creating permissioned data merkle tree
  */
