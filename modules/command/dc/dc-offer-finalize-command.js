@@ -56,7 +56,7 @@ class DCOfferFinalizeCommand extends Command {
         }
 
         const parentIdentity = this.config.parentIdentity ?
-            Utilities.normalizeHex(this.config.parentIdentity) : new BN(0, 16);
+            Utilities.normalizeHex(this.config.parentIdentity) : '0x0000000000000000000000000000000000000000';
 
         const handler = await Models.handler_ids.findOne({
             where: { handler_id },
