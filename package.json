@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "4.1.15",
+  "version": "4.1.16",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -89,6 +89,7 @@
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
+    "asn1.js": "latest",
     "async": "^2.6.0",
     "async-retry": "^1.2.1",
     "auto-updater": "git+https://github.com/OriginTrail/auto-updater.git#v1.1.0",
@@ -122,7 +123,7 @@
     "ethereumjs-tx": "^1.3.7",
     "ethereumjs-util": "^5.2.1",
     "ethereumjs-wallet": "^0.6.5",
-    "ganache-cli": "^6.2.5",
+    "ganache-cli": "^6.5.0",
     "github-release-notes": "^0.16.0",
     "hdkey": "^0.8.0",
     "ip": "^1.1.5",
@@ -184,14 +185,13 @@
     "utf8-length": "latest",
     "uuid": "^3.3.2",
     "validator": "^9.4.1",
-    "web3": "^1.0.0-beta.35",
+    "web3": "^1.3.4",
     "winston": "^2.4.3",
     "winston-daily-rotate-file": "^3.4.1",
     "winston-loggly-bulk": "^2.0.3",
     "winston-papertrail": "^1.0.5",
     "xml-js": "^1.6.11",
-    "xml2js": "^0.4.19",
-    "asn1.js": "latest"
+    "xml2js": "^0.4.19"
   },
   "optionalDependencies": {
     "pg": "^8.2.1",
