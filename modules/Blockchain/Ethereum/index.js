@@ -518,17 +518,10 @@ class Ethereum {
             data,
             value: '0x00',
             gasPrice: this.web3.utils.toHex(gasPrice),
-            gas: '0x2000000',
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
         this.logger.trace(`[${this.getBlockchainId()}] CreateProfile(${managementWallet}, ${profileNodeId}, ${initialBalance}, ${isSender725}, ${blockchainIdentity})`);
-        return this.transactions.queueTransaction(
-            this.profileContractAbi, 'createProfile',
-            [
-                managementWallet,
-                Utilities.normalizeHex(profileNodeId),
-                initialBalance, isSender725, blockchainIdentity,
-            ], options,
-        );
+        return this.transactions.queueTransaction(this.profileContractAbi, 'createProfile', null, options);
     }
 
     /**
@@ -549,7 +542,7 @@ class Ethereum {
             data,
             value: '0x00',
             gasPrice: this.web3.utils.toHex(gasPrice),
-            gas: '0x2000000',
+            gas: this.web3.utils.toHex(this.config.gas_limit),
         };
 
         this.logger.trace(`[${this.getBlockchainId()}] increaseProfileApproval(amount=${tokenAmountIncrease})`);

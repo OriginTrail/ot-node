@@ -60,7 +60,7 @@
     "eslint-plugin-import": "^2.11.0",
     "eslint-plugin-jsx-a11y": "^6.1.1",
     "eslint-plugin-react": "^7.9.1",
-    "ganache-core": "^2.13.2",
+    "ganache-core": "^2.1.5",
     "mocha": "^5.0.1",
     "nyc": "^11.9.0",
     "should": "^13.2.2",
