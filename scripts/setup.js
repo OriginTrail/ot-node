@@ -101,7 +101,8 @@ configDirs.forEach((configPath) => {
     fs.appendFileSync(dbPath, '');
     console.info(`Running migrations for '${dbPath}'...`);
     process.env.SEQUELIZEDB = dbPath; // Tell Sequelize to which db to generate.
-    execSync('sequelize --config=./config/sequelizeConfig.js db:migrate');
+    const data = execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:migrate');
+    console.log(data.toString());
     console.info(`Running seeders for '${dbPath}'...`);
     execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
 });

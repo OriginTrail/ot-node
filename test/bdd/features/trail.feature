@@ -108,3 +108,50 @@ Scenario: Check that trail returns the expected objects
     Then the last traversal should contain 26 objects in total
     When I call narrow traversal from "sgtin" "urn:epc:id:sgtin:111111111" with connection types "EPC,PARENT_EPC,CHILD_EPC,INPUT_EPC,OUTPUT_EPC,CONNECTOR_FOR,CONNECTION_DOWNSTREAM"
     Then the last traversal should contain 16 objects in total
+
+
+  @fifth
+  Scenario: Check that find trail and trail lookup API routes return expected objects
+    And I setup 1 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And DC imports "importers/use_cases/trail/milk.xml" as GS1-EPCIS
+    And DC waits for import to finish
+    When I call traversal lookup from "serial" "311220" with opcode "EQ"
+    Then the last traversal lookup should contain 2 objects with types "serial" and values "311220"
+    And the last traversal lookup should contain 1 objects with types "companyPrefix" and values "00100"
+    And the last traversal lookup should contain 1 objects with types "companyPrefix" and values "00200"
+    And the last traversal lookup should contain 2 objects in total
+    When I call traversal lookup from "serial,companyPrefix" "311220,00100" with opcode "IN"
+    Then the last traversal lookup should contain 1 objects with types "serial,companyPrefix" and values "311220,00100"
+    And the last traversal lookup should contain 1 objects with types "serial,companyPrefix" and values "311220,00200"
+    And the last traversal lookup should contain 6 objects in total
+    When I send traversal request with included connection types "EPC,PARENT_EPC,CHILD_EPC,INPUT_EPC,OUTPUT_EPC,CONNECTOR_FOR,CONNECTION_DOWNSTREAM" for the last trail lookup request
+    Given I wait for trail to finish
+    Then the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:class:sgtin:100100.000.311220"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.01"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.02"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.03"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.04"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:class:sgtin:100200.000.311220"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100200.01"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100200.02"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100200.03"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100200.04"
+    And the last traversal should contain 20 objects in total
+    When I call traversal lookup from "serial,companyPrefix" "311220,00100" with opcode "EQ"
+    Then the last traversal lookup should contain 1 objects with types "serial,companyPrefix" and values "311220,00100"
+    And the last traversal lookup should contain 1 objects in total
+    When I send traversal request with included connection types "EPC,PARENT_EPC,CHILD_EPC,INPUT_EPC,OUTPUT_EPC,CONNECTOR_FOR,CONNECTION_DOWNSTREAM" for the last trail lookup request
+    Given I wait for trail to finish
+    Then the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:class:sgtin:100100.000.311220"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.01"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.02"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.03"
+    And the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:id:sgtin:100100.04"
+    And the last traversal should contain 10 objects in total
+    When I send traversal request with included connection types "EPC" and excluded connection types "PARENT_EPC,CHILD_EPC,INPUT_EPC,OUTPUT_EPC,CONNECTOR_FOR,CONNECTION_DOWNSTREAM" for the last trail lookup request
+    Given I wait for trail to finish
+    Then the last traversal should contain 1 objects with type "otObject.@id" and value "urn:epc:class:sgtin:100100.000.311220"
+    And the last traversal should contain 1 objects in total
+

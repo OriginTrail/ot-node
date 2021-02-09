@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
         data: DataTypes.TEXT,
         status: DataTypes.STRING,
         timestamp: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             defaultValue: () => Date.now(),
         },
     }, {});

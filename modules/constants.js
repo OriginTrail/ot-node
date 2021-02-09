@@ -36,6 +36,12 @@ exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 exports.EXPORT_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
+ * @constant {number} TRAIL_COMMAND_CLEANUP_TIME_MILLS -
+ * Trail command cleanup interval time 1h
+ */
+exports.TRAIL_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
+
+/**
  * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
  * Export command cleanup interval time 1h
  */
@@ -47,7 +53,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
     'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
-    'handlerIdsCleanerCommand',
+    'trailCleanerCommand', 'handlerIdsCleanerCommand',
 ];
 
 /**
@@ -94,6 +100,11 @@ exports.BLOCKCHAIN_RETRY_DELAY_IN_MILLS = 20000;
  * @constant {number} ANSWER_LITIGATION_COMMAND_RETRIES - dhLitigationAnswerCommand retries
  */
 exports.ANSWER_LITIGATION_COMMAND_RETRIES = 2;
+/**
+ *
+ * @constant {number} ANSWER_LITIGATION_GAS_LIMIT - answerLitigation transaction gas limit
+ */
+exports.ANSWER_LITIGATION_GAS_LIMIT = 200000;
 /**
  *
  * @constant {array} NUMBER_OF_PERMISSIONED_DATA_FIRST_LEVEL_BLOCKS -
@@ -150,3 +161,13 @@ exports.PERMISSIONED_DATA_VISIBILITY_SHOW_ATTRIBUTE = 'permissioned.show_attribu
  * visibility option for storing attribute to permissioned data
  */
 exports.PERMISSIONED_DATA_VISIBILITY_HIDE_ATTRIBUTE = 'permissioned.hide_attribute';
+
+exports.NODE_STATUS = {
+    active: 'ACTIVE',
+    fallback: 'FALLBACK',
+    updating: 'UPDATING',
+};
+
+exports.DB_TYPE = {
+    psql: 'psql',
+};

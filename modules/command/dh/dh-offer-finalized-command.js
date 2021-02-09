@@ -35,7 +35,7 @@ class DhOfferFinalizedCommand extends Command {
                 return Utilities.compareHexStrings(offerId, eventOfferId);
             });
             if (event) {
-                event.finished = true;
+                event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
                 this.logger.important(`Offer ${offerId} finalized`);

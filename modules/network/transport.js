@@ -55,6 +55,15 @@ class Transport {
         return this.network.join(request);
     }
 
+
+    /**
+     * Dump network info
+     * @return {*}
+     */
+    dumpNetworkInfo() {
+        return this.network.dumpNetworkInfo();
+    }
+
     /**
      * Extracts message from native request
      * @param request
