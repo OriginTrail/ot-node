@@ -20,12 +20,6 @@ module.exports = {
             data_info_id: {
                 allowNull: false,
                 type: Sequelize.INTEGER,
-                references: {
-                    model: {
-                        tableName: 'data_info',
-                    },
-                    key: 'id',
-                },
             },
             blockchain_id: {
                 allowNull: false,
@@ -39,7 +33,7 @@ module.exports = {
 
         await queryInterface.sequelize.query(`
             INSERT INTO data_provider_wallets (data_info_id, wallet, blockchain_id) 
-            SELECT id, data_provider_wallet, '${blockchain_id}' FROM data_info`);
+            SELECT di.id, di.data_provider_wallet, '${blockchain_id}' FROM data_info di`);
 
         await queryInterface.removeColumn('data_info', 'data_provider_wallet');
     },
@@ -58,7 +52,7 @@ module.exports = {
             FROM
                 data_info di
                 INNER JOIN data_provider_wallets dpw 
-                ON dpw.data_info_id == di.id AND dpw.blockchain_id = '${blockchain_id}'
+                ON dpw.data_info_id = di.id AND dpw.blockchain_id = '${blockchain_id}'
         `);
 
         await queryInterface.changeColumn(
