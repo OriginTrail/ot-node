@@ -18,7 +18,7 @@ module.exports = {
             },
         );
 
-        await queryInterface.sequelize.query(`UPDATE bids SET SET blockchain_id = '${blockchain_id}'`);
+        await queryInterface.sequelize.query(`UPDATE bids SET blockchain_id = '${blockchain_id}'`);
 
         await queryInterface.changeColumn(
             'bids',
