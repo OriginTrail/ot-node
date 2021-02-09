@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-const Ganache = require('ganache-core');
+const Ganache = require('ganache-cli');
 const Web3 = require('web3');
 const solc = require('solc');
 const fs = require('fs');
