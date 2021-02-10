@@ -426,6 +426,12 @@ class DVController {
                         [Models.sequelize.Op.in]: allDatasets,
                     },
                 },
+                include: [
+                    {
+                        model: Models.data_provider_wallets,
+                        attributes: ['wallet', 'blockchain_id'],
+                    },
+                ],
             });
 
             allDatasets.forEach((datasetId) => {
@@ -437,7 +443,7 @@ class DVController {
                     datasetDescription: datasetHeader.datasetDescription,
                     timestamp: dataInfo.import_timestamp,
                     creator_identities: ImportUtilities.extractDatasetIdentities(datasetHeader),
-                    creator_wallets: JSON.parse(dataInfo.data_provider_wallets),
+                    creator_wallets: dataInfo.data_provider_wallets,
                 };
             });
 

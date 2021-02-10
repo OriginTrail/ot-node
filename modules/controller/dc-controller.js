@@ -404,6 +404,12 @@ class DCController {
                         [Models.sequelize.Op.in]: allDatasets,
                     },
                 },
+                include: [
+                    {
+                        model: Models.data_provider_wallets,
+                        attributes: ['wallet', 'blockchain_id'],
+                    },
+                ],
             });
 
             allDatasets.forEach((datasetId) => {

@@ -204,7 +204,14 @@ class EventEmitter {
         this._on('api-imports-info', async (data) => {
             logger.debug('Get import ids');
             try {
-                const dataimports = await Models.data_info.findAll();
+                const dataimports = await Models.data_info.findAll({
+                    include: [
+                        {
+                            model: Models.data_provider_wallets,
+                            attributes: ['wallet', 'blockchain_id'],
+                        },
+                    ],
+                });
                 data.response.status(200);
                 const promises = dataimports.map(async di => ({
                     data_set_id: di.data_set_id,
@@ -213,7 +220,7 @@ class EventEmitter {
                     data_size: di.data_size,
                     replication_info: await ImportUtilities
                         .getReplicationInfo(di.data_set_id, di.origin),
-                    data_provider_wallets: JSON.parse(di.data_provider_wallets),
+                    data_provider_wallets: di.data_provider_wallets,
                 }));
                 data.response.send(await Promise.all(promises));
             } catch (e) {
@@ -270,8 +277,15 @@ class EventEmitter {
             const { dataSetId, responseFormat } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
-                const dataInfo =
-                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
+                const dataInfo = await Models.data_info.findOne({
+                    where: { data_set_id: dataSetId },
+                    include: [
+                        {
+                            model: Models.data_provider_wallets,
+                            attributes: ['wallet', 'blockchain_id'],
+                        },
+                    ],
+                });
 
                 if (!dataInfo) {
                     logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
@@ -303,7 +317,7 @@ class EventEmitter {
                         dataSetId,
                         document: formattedDataset,
                         root_hash: dataInfo.root_hash,
-                        data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
+                        data_provider_wallets: dataInfo.data_provider_wallets,
                         replication_info: replicationInfo,
                     });
                 }

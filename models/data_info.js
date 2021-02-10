@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         tableName: 'data_info',
     });
     data_info.associate = function (models) {
-    // associations can be defined here
+        data_info.hasMany(models.data_provider_wallets, { foreignKey: 'data_info_id' });
     };
     return data_info;
 };

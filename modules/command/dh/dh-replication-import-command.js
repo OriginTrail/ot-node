@@ -132,9 +132,10 @@ class DhReplicationImportCommand extends Command {
                     throw Error(importResult.error);
                 }
 
+                const promises = [];
                 if (dataInfo == null) {
                     const dataSize = bytes(JSON.stringify(decryptedDataset));
-                    await Models.data_info.create({
+                    const dataInfo = await Models.data_info.create({
                         data_set_id: dataSetId,
                         total_documents: decryptedDataset['@graph'].length,
                         root_hash: decryptedGraphRootHash,
@@ -143,12 +144,21 @@ class DhReplicationImportCommand extends Command {
                         // TODO: add field data_provider_id_type: 'ERC725' || 'Unknown'
                         // TODO: add field data_creator_id: otjson.datasetHeader.dataCreator
                         // TODO: add field data_creator_id_type: 'ERC725' || 'Unknown'
-                        data_provider_wallets: JSON.stringify(data_provider_wallets),
                         import_timestamp: new Date(),
                         otjson_size_in_bytes: dataSize,
                         data_hash: dataHash,
                         origin: 'HOLDING',
                     });
+                    for (const provider_object of data_provider_wallets) {
+                        promises.push(Models.data_provider_wallets.create({
+                            data_info_id: dataInfo.id,
+                            wallet: provider_object.wallet,
+                            blockchain_id: provider_object.blockchain_id,
+                        }));
+                    }
+                }
+                if (promises.length > 0) {
+                    await Promise.all(promises);
                 }
                 this.logger.important(`[DH] Replication finished for offer_id ${offerId}`);
 

@@ -196,11 +196,17 @@ class RemoteControl {
      */
     getImports() {
         return new Promise((resolve, reject) => {
-            Models.data_info.findAll()
-                .then((rows) => {
-                    this.socket.emit('imports', rows);
-                    resolve();
-                });
+            Models.data_info.findAll({
+                include: [
+                    {
+                        model: Models.data_provider_wallets,
+                        attributes: ['wallet', 'blockchain_id'],
+                    },
+                ],
+            }).then((rows) => {
+                this.socket.emit('imports', rows);
+                resolve();
+            });
         });
     }
 
@@ -475,6 +481,12 @@ class RemoteControl {
             where: {
                 import_id: importId,
             },
+            include: [
+                {
+                    model: Models.data_provider_wallets,
+                    attributes: ['wallet', 'blockchain_id'],
+                },
+            ],
         })
             .then((rows) => {
                 this.socket.emit('localDataResponse', rows);
@@ -582,6 +594,12 @@ class RemoteControl {
             where: {
                 data_set_id: datasetId,
             },
+            include: [
+                {
+                    model: Models.data_provider_wallets,
+                    attributes: ['wallet', 'blockchain_id'],
+                },
+            ],
         })
             .then((rows) => {
                 this.socket.emit('localDataResponses', rows);

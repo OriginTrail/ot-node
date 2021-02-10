@@ -36,6 +36,17 @@ module.exports = {
             SELECT di.id, di.data_provider_wallet, '${blockchain_id}' FROM data_info di`);
 
         await queryInterface.removeColumn('data_info', 'data_provider_wallet');
+
+        await queryInterface.addConstraint('data_provider_wallets', ['data_info_id'], {
+            type: 'foreign key',
+            name: 'data_provider_wallet_fk_data_info_id',
+            references: {
+                table: 'data_info',
+                field: 'id',
+            },
+            onDelete: 'cascade',
+            onUpdate: 'cascade',
+        });
     },
     down: async (queryInterface, Sequelize) => {
         await queryInterface.addColumn(

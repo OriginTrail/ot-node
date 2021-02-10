@@ -138,9 +138,17 @@ class DvPurchaseKeyDepositedCommand extends Command {
 
                 const allBlockchainIds = this.blockchain.getAllBlockchainIds();
 
-                const data_info =
-                    await Models.data_info.findOne({ where: { data_set_id } });
-                const data_provier_wallets = JSON.parse(data_info.dataValues.data_provider_wallets);
+                const data_info = await Models.data_info.findOne({
+                    where: { data_set_id },
+                    include: [
+                        {
+                            model: Models.data_provider_wallets,
+                            attributes: ['wallet', 'blockchain_id'],
+                        },
+                    ],
+                });
+
+                const data_provier_wallets = data_info.dataValues.data_provider_wallets;
                 let promises = [];
                 for (const provider_element of data_provier_wallets) {
                     if (allBlockchainIds.includes(provider_element.blockchain_id)) {
