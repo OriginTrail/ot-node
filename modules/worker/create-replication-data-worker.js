@@ -70,14 +70,13 @@ process.on('message', async (data) => {
                 distributionEpk: distEpk,
             };
 
-            writeFilePromises.push(Utilities.writeContentsToFile(cacheDirectoryPath, `${color}.json`, JSON.stringify(replication)));
-
+            const fullPath = path.join(cacheDirectoryPath, `${color}.json`);
+            fs.writeFileSync(fullPath, JSON.stringify(replication));
 
             hashes[`${color}LitigationHash`] = litRootHash;
             hashes[`${color}DistributionHash`] = distRootHash;
         }
 
-        await Promise.all(writeFilePromises);
         process.send({ hashes });
     } catch (error) {
         process.send({ error: `${error.message}` });
