@@ -34,7 +34,6 @@ process.on('message', async (data) => {
 
         await Utilities.writeContentsToFile(cacheDirectoryPath, handler_id, JSON.stringify(otJson));
 
-        const writeFilePromises = [];
         const hashes = {};
         const colors = ['red', 'blue', 'green'];
         for (let i = 0; i < 3; i += 1) {
