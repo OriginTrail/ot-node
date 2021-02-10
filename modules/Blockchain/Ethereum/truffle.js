@@ -6,6 +6,7 @@ var mnemonic = process.env.TRUFFLE_MNEMONIC;
 module.exports = {
     compilers: {
         solc: {
+            version: '^0.4.24',
             settings: {
                 optimizer: {
                     enabled: true,
