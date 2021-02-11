@@ -913,11 +913,11 @@ class ImportUtilities {
 
             // Added to overwrite the previous ambiguous blockchain_id of Ethereum
             let blockchain_id = validationSchema.networkId === 'mainnet' ?
-                defaultConfig.blockchain.implementations[0].networkId : validationSchema.networkId;
+                defaultConfig.blockchain.implementations[0].network_id : validationSchema.networkId;
 
             // Added for testing the fix locally, remove when tested
             blockchain_id = validationSchema.networkId === 'ganache' ?
-                defaultConfig.blockchain.implementations[0].networkId : validationSchema.networkId;
+                defaultConfig.blockchain.implementations[0].network_id : validationSchema.networkId;
 
             identities.push({
                 blockchain_id,

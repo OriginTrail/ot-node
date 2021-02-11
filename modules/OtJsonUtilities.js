@@ -79,13 +79,13 @@ class OtJsonUtilities {
             let blockchain_id =
                 datasetHeader.validationSchemas[creatorId.validationSchema].networkId === 'mainnet'
                     ? defaultConfig.blockchain.implementations[0].networkId
-                    : datasetHeader.validationSchemas[creatorId.validationSchema].networkId;
+                    : datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
 
             // Added for testing the fix locally, remove when tested
             blockchain_id =
                 datasetHeader.validationSchemas[creatorId.validationSchema].networkId === 'ganache'
                     ? defaultConfig.blockchain.implementations[0].networkId
-                    : datasetHeader.validationSchemas[creatorId.validationSchema].networkId;
+                    : datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
 
             const schemaPostfix = creatorId.validationSchema.split('erc725-main').pop();
             const schemaEndpoint = `merkleRoot${schemaPostfix}`;
