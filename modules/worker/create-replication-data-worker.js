@@ -34,7 +34,6 @@ process.on('message', async (data) => {
 
         await Utilities.writeContentsToFile(cacheDirectoryPath, handler_id, JSON.stringify(otJson));
 
-        const writeFilePromises = [];
         const hashes = {};
         const colors = ['red', 'blue', 'green'];
         for (let i = 0; i < 3; i += 1) {
@@ -70,14 +69,13 @@ process.on('message', async (data) => {
                 distributionEpk: distEpk,
             };
 
-            writeFilePromises.push(Utilities.writeContentsToFile(cacheDirectoryPath, `${color}.json`, JSON.stringify(replication)));
-
+            const fullPath = path.join(cacheDirectoryPath, `${color}.json`);
+            fs.writeFileSync(fullPath, JSON.stringify(replication));
 
             hashes[`${color}LitigationHash`] = litRootHash;
             hashes[`${color}DistributionHash`] = distRootHash;
         }
 
-        await Promise.all(writeFilePromises);
         process.send({ hashes });
     } catch (error) {
         process.send({ error: `${error.message}` });
