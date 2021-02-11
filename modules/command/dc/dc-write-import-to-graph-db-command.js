@@ -48,8 +48,12 @@ class DcWriteImportToGraphDbCommand extends Command {
                             relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
                                 const expectedErc725 = this._value(expectedCreator);
 
-                                if (dataCreatorIdentifiers
-                                    .find(elem => elem.identifierValue === expectedErc725)) {
+                                if (dataCreatorIdentifiers.find(elem =>
+                                    Utilities.compareHexStrings(
+                                        elem.identifierValue,
+                                        expectedErc725,
+                                    ))
+                                ) {
                                     hasConnection1 = true;
                                 }
                             });
@@ -71,7 +75,10 @@ class DcWriteImportToGraphDbCommand extends Command {
 
                                                     if (metadata.datasetHeader.dataCreator
                                                         .identifiers.find(elem =>
-                                                            elem.identifierValue === expectedErc725)
+                                                            Utilities.compareHexStrings(
+                                                                elem.identifierValue,
+                                                                expectedErc725,
+                                                            ))
                                                     ) {
                                                         hasConnection2 = true;
                                                     }

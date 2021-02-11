@@ -486,8 +486,12 @@ class ImportService {
                         relatedVertex.expectedConnectionCreators.forEach((expectedCreator) => {
                             const expectedErc725 = _value(expectedCreator);
 
-                            if (dataCreatorIdentifiers
-                                .find(elem => elem.identifierValue === expectedErc725)) {
+                            if (dataCreatorIdentifiers.find(elem =>
+                                Utilities.compareHexStrings(
+                                    elem.identifierValue,
+                                    expectedErc725,
+                                ))
+                            ) {
                                 hasConnection1 = true;
                             }
                         });
@@ -508,7 +512,10 @@ class ImportService {
 
                                                 if (metadata.datasetHeader.dataCreator.identifiers
                                                     .find(elem =>
-                                                        elem.identifierValue === expectedErc725)
+                                                        Utilities.compareHexStrings(
+                                                            elem.identifierValue,
+                                                            expectedErc725,
+                                                        ))
                                                 ) {
                                                     hasConnection2 = true;
                                                 }
