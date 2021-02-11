@@ -852,16 +852,9 @@ class ImportService {
         }
 
         // Data creator identifier must contain ERC725 and the proper schema
-        const ERCIdentifier = identifiers.find((identifierObject) => {
-            let validationSchemaSupported = false;
-            for (const blockchain_id of blockchain_ids) {
-                if (identifierObject.validationSchema.includes(blockchain_id)) {
-                    validationSchemaSupported = true;
-                }
-            }
-
-            return identifierObject.identifierType === 'ERC725' && validationSchemaSupported;
-        });
+        const ERCIdentifier = identifiers.find(identifierObject => (
+            identifierObject.identifierType === 'ERC725'
+        ));
 
         if (!ERCIdentifier) {
             throw Error('[Validation error] Cannot find a valid data creator');
