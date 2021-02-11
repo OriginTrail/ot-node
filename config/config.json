@@ -359,7 +359,7 @@
       "implementations": [
         {
           "blockchain_title": "Ethereum",
-          "network_id": "mainnet",
+          "network_id": "eth_mainnet",
           "hub_contract_address": "0x89777F4D16F0a263F47EaD07cbCAb9497861aa79",
           "node_wallet_path": "wallet.json",
           "identity_filepath": "erc725_identity.json",

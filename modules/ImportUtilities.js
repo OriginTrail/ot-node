@@ -11,6 +11,7 @@ const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const OtJsonUtilities = require('./OtJsonUtilities');
 const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
+const defaultConfig = require('../config/config')[process.env.NODE_ENV];
 
 const data_constants = {
     vertexType: {
@@ -910,8 +911,16 @@ class ImportUtilities {
             const validationSchema =
                 datasetHeader.validationSchemas[validationSchemaName];
 
+            // Added to overwrite the previous ambiguous blockchain_id of Ethereum
+            let blockchain_id = validationSchema.networkId === 'mainnet' ?
+                defaultConfig.blockchain.implementations[0].networkId : validationSchema.networkId;
+
+            // Added for testing the fix locally, remove when tested
+            blockchain_id = validationSchema.networkId === 'ganache' ?
+                defaultConfig.blockchain.implementations[0].networkId : validationSchema.networkId;
+
             identities.push({
-                blockchain_id: validationSchema.networkId,
+                blockchain_id,
                 identity: identifierObject.identifierValue,
             });
         }
