@@ -76,7 +76,7 @@ class OtJsonUtilities {
                 datasetHeader.validationSchemas[creatorId.validationSchema].networkId;
 
             const schemaPostfix = creatorId.validationSchema.split('erc725-main').pop();
-            const schemaEndpoint = `/schemas/merkleRoot${schemaPostfix}`;
+            const schemaEndpoint = `merkleRoot${schemaPostfix}`;
             const hub_contract_address =
                 datasetHeader.validationSchemas[schemaEndpoint].hubContractAddress;
 

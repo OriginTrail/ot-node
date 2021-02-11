@@ -828,7 +828,7 @@ class ImportUtilities {
                 validationSchema: `/schemas/erc725-main/${implementation.blockchain_id}`,
                 // todo support other identifier types
             });
-            validationSchemas[`/schemas/erc725-main/${implementation.blockchain_id}`] = {
+            validationSchemas[`erc725-main/${implementation.blockchain_id}`] = {
                 schemaType: 'ethereum-725',
                 networkId: implementation.blockchain_id,
             };
@@ -838,7 +838,7 @@ class ImportUtilities {
                 proofType: 'merkleRootHash',
                 validationSchema: `/schemas/merkleRoot/${implementation.blockchain_id}`,
             });
-            validationSchemas[`/schemas/merkleRoot/${implementation.blockchain_id}`] = {
+            validationSchemas[`merkleRoot/${implementation.blockchain_id}`] = {
                 schemaType: 'merkle-root',
                 networkId: implementation.blockchain_id,
                 hubContractAddress: implementation.hub_contract_address,
@@ -905,8 +905,10 @@ class ImportUtilities {
         const identities = [];
 
         for (const identifierObject of datasetHeader.dataCreator.identifiers) {
+            const validationSchemaName = identifierObject.validationSchema.replace('/schemas/', '');
+
             const validationSchema =
-                datasetHeader.validationSchemas[identifierObject.validationSchema];
+                datasetHeader.validationSchemas[validationSchemaName];
 
             identities.push({
                 blockchain_id: validationSchema.networkId,
