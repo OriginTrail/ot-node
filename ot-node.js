@@ -44,6 +44,7 @@ const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-
 const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
+const M7ArangoDatasetSignatureMigration = require('./modules/migration/m7-arango-dataset-signature-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
@@ -288,9 +289,7 @@ class OTNode {
         try {
             await graphStorage.connect();
             log.info(`Connected to graph database: ${graphStorage.identify()}`);
-            // TODO https://www.pivotaltracker.com/story/show/157873617
-            // const myVersion = await graphStorage.version();
-            // log.info(`Database version: ${myVersion}`);
+            await this._runArangoDatasetSignatureMigration(config, graphStorage);
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             process.exit(1);
@@ -390,12 +389,37 @@ class OTNode {
             try {
                 log.info('Initializing Arango migration...');
                 await migration.run();
-                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                log.warn(`One-time Arango migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
                 await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    async _runArangoDatasetSignatureMigration(config, graphStorage) {
+        const migrationsStartedMills = Date.now();
+
+        const m7ArangoSignatureMigrationFilename = '7_m7ArangoDatasetSignatureMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m7ArangoSignatureMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M7ArangoDatasetSignatureMigration({
+                config,
+                graphStorage,
+            });
+
+            try {
+                log.info('Initializing Arango dataset signature migration...');
+                await migration.run();
+                log.warn(`One-time Arango dataset signature migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m7ArangoSignatureMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 process.exit(1);
             }
         }
