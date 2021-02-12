@@ -62,6 +62,6 @@ script:
   - jobs
   - kill -9 %1
 after_script:
-  - s3cmd --acl-public put --recursive $ARTIFACTS_DIR/* s3://ot-travis-ci/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/
-  - echo "Uploaded to s3://ot-travis-ci/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/"
+  - s3cmd --acl-public put --recursive $ARTIFACTS_DIR/* s3://origintrail-travis-ci/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/
+  - echo "Uploaded to s3://origintrail-travis-ci/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/"
   - kill -9 $(pgrep arangod)
