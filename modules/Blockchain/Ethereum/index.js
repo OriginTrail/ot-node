@@ -583,7 +583,7 @@ class Ethereum {
     async answerLitigation(offerId, holderIdentity, answer, urgent) {
         const gasPrice = await this.getGasPrice(urgent);
         const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasLimit: this.web3.utils.toHex(constants.ANSWER_LITIGATION_GAS_LIMIT),
             gasPrice: this.web3.utils.toHex(gasPrice),
             to: this.litigationContractAddress,
         };

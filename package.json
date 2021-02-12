@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "4.1.15",
+  "version": "4.1.16",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -94,7 +94,7 @@
     "auto-updater": "git+https://github.com/OriginTrail/auto-updater.git#v1.1.0",
     "awilix": "^3.0.9",
     "aws-sdk": "^2.711.0",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "barcoder": "^2.0.1",
     "better-queue": "^3.8.10",
     "bitcoin-ts": "^1.14.2",
