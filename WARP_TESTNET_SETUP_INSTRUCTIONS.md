@@ -232,7 +232,6 @@ This command will start your node as a background process.
 
     docker start otnode
 
-  
 
 This command will start your node in interactive mode and you will see the nodeâ€™s process written in the terminal, but this command will not run your node as a background process, which means your node will stop if you close your Terminal/Console.
 
@@ -241,7 +240,6 @@ This command will start your node in interactive mode and you will see the nodeâ
 Note: By using this command, you will be able to see your Houston password in the terminal.
 
   
-
 ## Stopping OT Node
 
 You can stop your node in the following two ways:
@@ -251,5 +249,4 @@ You can stop your node in the following two ways:
     docker stop otnode
 
   
-
 2 - If you started your node by using the docker start -i otnode command, you can stop it either by closing the Terminal or simply by pressing the ctrl + c.
