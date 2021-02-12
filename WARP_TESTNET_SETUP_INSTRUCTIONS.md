@@ -1,5 +1,11 @@
 # Warp testnet setup instructions
 
+## About Warp testnet
+
+The Warp testnet is the first deployment of the OriginTrail multi-chain network, utilized for beta testing of the ot-node v5 codebase. It operates with two distinct Ethereum testnet blockchains, Kovan and Rinkeby. The goal of Warp is to establish a relevant environment for testing the new implementation of ot-node blockchain services, reaching the ot-node technology readiness level 8 (TRL8) which indicates system completeness. The OriginTrail core development team invites all current node runners and anyone else interested to contribute to testing by running a Warp node and forwarding relevant logs to the OriginTrail team.
+
+Read more in the blogpost [here](https://medium.com/origintrail/staking-for-the-worlds-first-multi-chain-decentralized-knowledge-graph-828573a2ef95) and dedicated OT-RFC [here](https://github.com/OriginTrail/OT-RFC-repository/blob/main/RFCs/OT-RFC%2008%20-%20OT%20Node%20Blockchain%20Service%20Module%20specification%20V1.pdf).
+
 ## Read me first
 
 Please keep in mind that we will give our best to support you while setting up and testing the nodes. Some features are subject to change and we are aware that some defects may show up on different installations and usage scenarios.
