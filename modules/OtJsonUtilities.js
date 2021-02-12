@@ -76,14 +76,8 @@ class OtJsonUtilities {
             const identity = creatorId.identifierValue;
 
             // Added to overwrite the previous ambiguous blockchain_id of Ethereum
-            let blockchain_id =
+            const blockchain_id =
                 datasetHeader.validationSchemas[creatorId.validationSchema].networkId === 'mainnet'
-                    ? defaultConfig.blockchain.implementations[0].networkId
-                    : datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
-
-            // Added for testing the fix locally, remove when tested
-            blockchain_id =
-                datasetHeader.validationSchemas[creatorId.validationSchema].networkId === 'ganache'
                     ? defaultConfig.blockchain.implementations[0].networkId
                     : datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
 
