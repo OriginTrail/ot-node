@@ -515,6 +515,12 @@ class DHService {
                 where: {
                     import_id: importId,
                 },
+                include: [
+                    {
+                        model: Models.data_provider_wallets,
+                        attributes: ['wallet', 'blockchain_id'],
+                    },
+                ],
             });
 
             if (!dataInfo) {
@@ -527,7 +533,7 @@ class DHService {
                 id,
                 wallet: node_wallet,
                 nodeId: this.config.identity,
-                data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
+                data_provider_wallets: dataInfo.data_provider_wallets,
                 agreementStatus: 'CONFIRMED',
                 encryptedData: {
                     vertices,

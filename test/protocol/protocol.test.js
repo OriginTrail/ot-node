@@ -654,18 +654,20 @@ describe.skip('Protocol tests', () => {
                 normalized.edges,
             );
 
-            Models.data_info.create({
+            const dataInfo = await Models.data_info.create({
                 import_id: importId,
                 root_hash: rootHash,
                 import_hash: importHash,
-                data_provider_wallets: JSON.stringify([{
-                    wallet: Utilities.normalizeHex(testNode1.wallet),
-                    blockchain_id: 'testing',
-                }]),
                 import_timestamp: new Date(),
                 total_documents: vertices.length,
                 data_size: bytes(JSON.stringify(vertices)),
                 transaction_hash: null,
+            });
+
+            Models.data_provider_wallets.create({
+                data_info_id: dataInfo.id,
+                wallet: Utilities.normalizeHex(testNode1.wallet),
+                blockchain_id: 'testing',
             });
         });
 

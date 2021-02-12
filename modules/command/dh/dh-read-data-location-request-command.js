@@ -50,12 +50,18 @@ class DHReadDataLocationRequestCommand extends Command {
 
         // Filter imports not stored in local DB.
         const imports = await Models.data_info.findAll({
-            attributes: ['data_set_id', 'data_provider_wallets', 'root_hash', 'origin', 'otjson_size_in_bytes'],
+            attributes: ['data_set_id', 'root_hash', 'origin', 'otjson_size_in_bytes'],
             where: {
                 data_set_id: {
                     [Op.in]: graphImports,
                 },
             },
+            include: [
+                {
+                    model: Models.data_provider_wallets,
+                    attributes: ['wallet', 'blockchain_id'],
+                },
+            ],
         });
 
         if (!imports || imports.length === 0) {
@@ -67,9 +73,10 @@ class DHReadDataLocationRequestCommand extends Command {
         const validImports = [];
         const fingerprintData = {};
         for (let i = 0; i < imports.length; i += 1) {
-            const data_provider_wallets = JSON.parse(imports[i].data_provider_wallets);
-
-            const { data_set_id: dataset_id, root_hash, origin } = imports[i];
+            const {
+                data_set_id: dataset_id, root_hash,
+                origin, data_provider_wallets,
+            } = imports[i];
 
             // Check where did the dataset come from
             //  -> If it's imported make sure that it was replicated on the network

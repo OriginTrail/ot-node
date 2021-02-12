@@ -1,5 +1,7 @@
 const Utilities = require('./Utilities');
 const { sha3_256 } = require('js-sha3');
+const defaultConfig = require('../config/config')[process.env.NODE_ENV];
+
 
 class OtJsonUtilities {
     /**
@@ -72,11 +74,21 @@ class OtJsonUtilities {
         const result = [];
         for (const creatorId of datasetHeader.dataCreator.identifiers) {
             const identity = creatorId.identifierValue;
-            const blockchain_id =
-                datasetHeader.validationSchemas[creatorId.validationSchema].networkId;
+
+            // Added to overwrite the previous ambiguous blockchain_id of Ethereum
+            let blockchain_id =
+                datasetHeader.validationSchemas[creatorId.validationSchema].networkId === 'mainnet'
+                    ? defaultConfig.blockchain.implementations[0].networkId
+                    : datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
+
+            // Added for testing the fix locally, remove when tested
+            blockchain_id =
+                datasetHeader.validationSchemas[creatorId.validationSchema].networkId === 'ganache'
+                    ? defaultConfig.blockchain.implementations[0].networkId
+                    : datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
 
             const schemaPostfix = creatorId.validationSchema.split('erc725-main').pop();
-            const schemaEndpoint = `/schemas/merkleRoot${schemaPostfix}`;
+            const schemaEndpoint = `merkleRoot${schemaPostfix}`;
             const hub_contract_address =
                 datasetHeader.validationSchemas[schemaEndpoint].hubContractAddress;
 

@@ -11,6 +11,7 @@ const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const OtJsonUtilities = require('./OtJsonUtilities');
 const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
+const defaultConfig = require('../config/config')[process.env.NODE_ENV];
 
 const data_constants = {
     vertexType: {
@@ -828,7 +829,7 @@ class ImportUtilities {
                 validationSchema: `/schemas/erc725-main/${implementation.blockchain_id}`,
                 // todo support other identifier types
             });
-            validationSchemas[`/schemas/erc725-main/${implementation.blockchain_id}`] = {
+            validationSchemas[`erc725-main/${implementation.blockchain_id}`] = {
                 schemaType: 'ethereum-725',
                 networkId: implementation.blockchain_id,
             };
@@ -838,7 +839,7 @@ class ImportUtilities {
                 proofType: 'merkleRootHash',
                 validationSchema: `/schemas/merkleRoot/${implementation.blockchain_id}`,
             });
-            validationSchemas[`/schemas/merkleRoot/${implementation.blockchain_id}`] = {
+            validationSchemas[`merkleRoot/${implementation.blockchain_id}`] = {
                 schemaType: 'merkle-root',
                 networkId: implementation.blockchain_id,
                 hubContractAddress: implementation.hub_contract_address,
@@ -905,11 +906,21 @@ class ImportUtilities {
         const identities = [];
 
         for (const identifierObject of datasetHeader.dataCreator.identifiers) {
+            const validationSchemaName = identifierObject.validationSchema.replace('/schemas/', '');
+
             const validationSchema =
-                datasetHeader.validationSchemas[identifierObject.validationSchema];
+                datasetHeader.validationSchemas[validationSchemaName];
+
+            // Added to overwrite the previous ambiguous blockchain_id of Ethereum
+            let blockchain_id = validationSchema.networkId === 'mainnet' ?
+                defaultConfig.blockchain.implementations[0].network_id : validationSchema.networkId;
+
+            // Added for testing the fix locally, remove when tested
+            blockchain_id = validationSchema.networkId === 'ganache' ?
+                defaultConfig.blockchain.implementations[0].network_id : validationSchema.networkId;
 
             identities.push({
-                blockchain_id: validationSchema.networkId,
+                blockchain_id,
                 identity: identifierObject.identifierValue,
             });
         }

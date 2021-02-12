@@ -426,6 +426,16 @@ class GraphStorage {
     }
 
     /**
+     * Run query on graph database
+     * @param {string} - queryString
+     * @param {object} - params
+     * @returns {Promise<any>}
+     */
+    async runQuery(queryString, params) {
+        return this.db.runQuery(queryString, params);
+    }
+
+    /**
      * Updates edge imports by ID
      * @param senderId
      * @param uid

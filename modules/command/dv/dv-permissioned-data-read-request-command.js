@@ -13,6 +13,7 @@ class DVPermissionedDataReadRequestCommand extends Command {
         this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
         this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**

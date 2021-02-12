@@ -187,8 +187,15 @@ class InfoController {
             });
             return;
         }
-        const dataInfo =
-            await Models.data_info.findOne({ where: { data_set_id: datasetId } });
+        const dataInfo = await Models.data_info.findOne({
+            where: { data_set_id: datasetId },
+            include: [
+                {
+                    model: Models.data_provider_wallets,
+                    attributes: ['wallet', 'blockchain_id'],
+                },
+            ],
+        });
 
         if (!dataInfo) {
             this.logger.info(`Import data for data set ID ${datasetId} does not exist.`);
@@ -221,7 +228,7 @@ class InfoController {
             root_hash: dataInfo.root_hash,
             data_hash: dataInfo.data_hash,
             total_graph_entities: dataInfo.total_documents,
-            data_provider_wallets: JSON.parse(dataInfo.data_provider_wallets),
+            data_provider_wallets: dataInfo.data_provider_wallets,
             data_creator_identities: identities,
             replication_info: replicationInfo,
         };

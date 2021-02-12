@@ -31,7 +31,15 @@ class ExportDataCommand extends Command {
             JSON.stringify(fileContent),
         );
 
-        const dataInfo = await Models.data_info.findOne({ where: { data_set_id: datasetId } });
+        const dataInfo = await Models.data_info.findOne({
+            where: { data_set_id: datasetId },
+            include: [
+                {
+                    model: Models.data_provider_wallets,
+                    attributes: ['wallet', 'blockchain_id'],
+                },
+            ],
+        });
 
         const handler = await Models.handler_ids.findOne({
             where: { handler_id: handlerId },
