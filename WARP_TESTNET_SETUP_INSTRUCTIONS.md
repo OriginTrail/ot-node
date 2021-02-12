@@ -44,42 +44,38 @@ warp-testnet
 
 You can start your node to listen for jobs on Rinkeby, Kovan or both blockchain networks. Your operational wallet needs to have:
 
--   Rinkeby network - 5000 ATRAC:
+### Rinkeby network - 5000 ATRAC:
+
+-   3000 ATRAC as minimum stake + 2000 ATRAC for starting new jobs.
+    
+-   0.2 Rinkeby ETH
+    
+### Kovan network
+    
+-   3000 KTRAC as minimum stake + 2000 KTRAC for starting new jobs.
+    
+-   0.2 Kovan ETH
     
 
-	-   3000 ATRAC as minimum stake + 2000 ATRAC for starting new jobs.
+### ATRAC faucet
     
-	-   0.2 Rinkeby ETH
-    
-
--   Kovan network
+-   Please contact @Nikita_Abrashkin on Discord
     
 
-	-   3000 KTRAC as minimum stake + 2000 KTRAC for starting new jobs.
-    
-	-   0.2 Kovan ETH
+### KTRAC faucet
     
 
--   ATRAC faucet
+-   Please contact @Nikita_Abrashkin on Discord
     
 
-	-   Please contact Nikita_Abrashkin on Discord
-    
+### Rinkeby ETH faucet:
 
--   KTRAC faucet
-    
-
-	-   Please contact Nikita_Abrashkin on Discord
-    
-
--   Rinkeby ETH faucet:
-
-	-   [https://faucet.rinkeby.io/](https://faucet.rinkeby.io/)
+-   [https://faucet.rinkeby.io/](https://faucet.rinkeby.io/)
 	
--   Kovan ETH faucet:
+### Kovan ETH faucet:
     
 
-	-   https://faucet.kovan.network/
+-   https://faucet.kovan.network/
     
 
 ## Installation via Docker
@@ -109,7 +105,7 @@ Please note: port 8900 is used for REST API access which is not available until 
 
 ## Configuration
 
-There’s a minimum set of config parameters that need to be provided in order to run a node, without which the node will refuse to start. You can use node configuration template and just update necessary parameters.
+There’s a minimum set of config parameters that need to be provided in order to run a node, without which the node will refuse to start. You can use the node configuration template and just update necessary parameters.
 
 ### Node configuration template
 <pre>
@@ -159,22 +155,20 @@ There’s a minimum set of config parameters that need to be provided in order t
     }
 }
 </pre>
-### <btn> COPY TO CLIPBOARD or DOWNLOAD JSON
 
-### What needs to be provided in the template
+### What needs to be provided in the template:
 
-In the previously downloaded template please provide inputs for the following
+In the previously downloaded template please provide inputs for the following:
 
-1.  <node_hostname> - the public network address or hostname that will be used in P2P communication with other nodes for node’s self identification.
+1.  **<node_hostname>** - the public network address or hostname that will be used in P2P communication with other nodes for node’s self identification.
     
-2.  <remote_whitelist> - list of IPs or hosts of the machines (“host.domain.com”) that are allowed to communicate with REST API.
+2.  **<remote_whitelist>** - list of IPs or hosts of the machines (“host.domain.com”) that are allowed to communicate with REST API.
     
-3.  <rpc_server_url_rinkeby>, <rpc_server_url_kovan> - an URL to RPC host server, usually Infura or own hosted Geth server. For more see RPC server host
+3.  **<rpc_server_url_rinkeby>, <rpc_server_url_kovan>** - an URL to RPC host server, usually Infura or own hosted Geth server. For more see RPC server host
     
-4.  <node_wallet_path> - path to node wallet configuration file
+4.  **<node_wallet_path>** - path to node wallet configuration file
     
 
-  
 
 For each blockchain network you should provide a wallet configuration file.
 
