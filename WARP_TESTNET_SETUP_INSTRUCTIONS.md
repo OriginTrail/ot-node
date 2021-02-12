@@ -117,8 +117,8 @@ There’s a minimum set of config parameters that need to be provided in order t
     "network": {
         "id": "warp-testnet",
         "bootstraps": [
-            "https://[testnet-warp-do-bootstrap.origin-trail.network](https://rinkeby-warp-do-bootstrap.origin-trail.network:8900/):5278/#084f08a30e644db999334a71a7e8b3cc0c6476b0",
-            "[https://testnet-warp-aws-bootstrap.origintrail.network:5278/#7b11698231604f97c2555d2d9dd8d9f17d780973](https://testnet-aws-bootstrap.origintrail.netwrok)"
+            "https://testnet-warp-do-bootstrap.origin-trail.network:5278/#4ddb6dd5a161b8e1ac788d0b674d2a728fd74f68",
+            "https://testnet-warp-aws-bootstrap.origintrail.network:5278/#b78edd9458c2224925fbce09d5312e82267f57d7"
         ],
         "remoteWhitelist": [
            <remote_whitelist>
