@@ -66,6 +66,11 @@ class AutoupdaterCommand extends Command {
         if (semver.lt(currentVersion, remoteVersion)) {
             this.logger.info('New version found');
 
+            if (remoteVersion === '5.0.0') {
+                this.logger.trace('New version available is 5.0.0. Please run update process manually.');
+                return Command.empty();
+            }
+
             if (this.config.high_availability_setup) {
                 const activeNode = await Models.node_status.findOne({
                     where: { hostname: this.config.high_availability.private_ip_address },
