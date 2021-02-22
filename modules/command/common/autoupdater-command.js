@@ -68,7 +68,7 @@ class AutoupdaterCommand extends Command {
 
             if (remoteVersion === '5.0.0') {
                 this.logger.trace('New version available is 5.0.0. Please run update process manually.');
-                return Command.empty();
+                return Command.repeat();
             }
 
             if (this.config.high_availability_setup) {
