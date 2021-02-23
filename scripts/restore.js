@@ -156,9 +156,7 @@ class RestoreService {
         const identityFileNames = [];
 
         for (const blockchain of this.config.blockchain.implementations) {
-            const { node_wallet_path, identity_filepath } = blockchain;
-            identityFileNames.push(node_wallet_path);
-            identityFileNames.push(identity_filepath);
+            identityFileNames.push(blockchain.identity_filepath);
         }
 
         const { identity_filepath } = this.config;
