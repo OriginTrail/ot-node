@@ -2,8 +2,8 @@ const fs = require('fs');
 require('dotenv').config();
 const defaultConfigJson = require('../config/config.json');
 
-const nodercConfigPath = '../../.origintrail_noderc';
-const v5ConfigPath = '../../data/.v5_configuration';
+const nodercConfigPath = '/ot-node/.origintrail_noderc';
+const v5ConfigPath = '/ot-node/data/.v5_configuration';
 
 try {
     console.log('Starting configuration update');

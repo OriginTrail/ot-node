@@ -11,7 +11,7 @@ const defaultConfig = configjson[process.env.NODE_ENV];
 const config = rc(pjson.name, defaultConfig);
 
 const updateFilepath = '/ot-node/current/UPDATE';
-const destinationBasedir = '/ot-node/test/';
+const destinationBasedir = '/ot-node/';
 
 const updater = fork(path.join(__dirname, '..', 'testnet', 'prepare-update.js'), [], {
     stdio: [0, 1, 2, 'ipc'],

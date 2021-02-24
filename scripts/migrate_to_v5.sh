@@ -42,7 +42,7 @@ fi
 echo "Generating new version 5 configuration."
 docker exec otnode node /ot-node/current/scripts/generate_v5_configuration.js
 echo "Version 5 configuration generated."
-docker mv ${NODE_RC_PATH} origintrail_noderc_v4_backup
+cp ${NODE_RC_PATH} .origintrail_noderc_v4_backup
 echo "Old configuration saved as .origintrail_noderc_v4_backup."
 docker cp otnode:/ot-node/data/.v5_configuration ./${NODE_RC_PATH}
 echo "Starting manual node update to version 5. Please be patient this can take up to 10 minutes."
