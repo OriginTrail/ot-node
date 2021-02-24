@@ -25,7 +25,6 @@ updater.on('message', async (result) => {
     }
 
     console.log(`Update ready for version ${result.version}.`);
-    console.log(updateFilepath);
     fs.writeFileSync(updateFilepath, JSON.stringify({
         version: result.version,
         path: result.installDir,
