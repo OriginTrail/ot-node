@@ -81,6 +81,20 @@
               }
             }
           ]
+        },
+        {
+          "blockchain_title": "xDai",
+          "network_id": "xdai:testnet",
+          "rpc_server_url": "https://xdai.poanetwork.dev",
+          "hub_contract_address": "0x17324BdB37c607c0742e95eFc98973221E1eB9b4",
+          "node_wallet_path": "xdai_wallet.json",
+          "identity_filepath": "xdai_erc725_identity.json",
+          "gas_limit": "2000000",
+          "gas_price": "1000000000",
+          "max_allowed_gas_price" : 1000000000,
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_eth" : "0.00005"
         }
       ]
     },
@@ -230,6 +244,20 @@
               }
             }
           ]
+        },
+        {
+          "blockchain_title": "xDai",
+          "network_id": "xdai:testnet",
+          "rpc_server_url": "https://xdai.poanetwork.dev",
+          "hub_contract_address": "0x17324BdB37c607c0742e95eFc98973221E1eB9b4",
+          "node_wallet_path": "xdai_wallet.json",
+          "identity_filepath": "xdai_erc725_identity.json",
+          "gas_limit": "2000000",
+          "gas_price": "1000000000",
+          "max_allowed_gas_price" : 1000000000,
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_eth" : "0.00005"
         }
       ]
     },
