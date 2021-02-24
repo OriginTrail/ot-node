@@ -21,7 +21,7 @@ updater.on('message', async (result) => {
     if (result.status !== 'completed') {
         // Something went wrong.
         console.log(`Failed to prepare update. Status: ${result.status}.`);
-        return;
+        process.exit(1);
     }
 
     console.log(`Update ready for version ${result.version}.`);
@@ -32,6 +32,7 @@ updater.on('message', async (result) => {
     }));
 }).on('error', (error) => {
     console.log(`Failed to check prepare update. ${error}`);
+    process.exit(1);
 });
 
 

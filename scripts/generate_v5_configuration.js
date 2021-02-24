@@ -34,4 +34,5 @@ try {
     console.log('Configuration version 5 generated in data/.v5_configuration');
 } catch (error) {
     console.log('Failed to generate configuration version 5', error.message);
+    process.exit(1);
 }
