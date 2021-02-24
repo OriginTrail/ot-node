@@ -39,9 +39,7 @@ if [ ! "$(docker ps -a --filter status=running | grep $DOCKER_CONTAINER_NAME)" ]
     exit 0
 fi
 
-echo "Generating new version 5 configuration."
 docker exec otnode node /ot-node/current/scripts/generate_v5_configuration.js
-echo "Version 5 configuration generated."
 cp ${NODE_RC_PATH} .origintrail_noderc_v4_backup
 echo "Old configuration saved as .origintrail_noderc_v4_backup."
 docker cp otnode:/ot-node/data/.v5_configuration ./${NODE_RC_PATH}
