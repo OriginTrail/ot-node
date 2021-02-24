@@ -8,6 +8,7 @@ if (!process.env.NODE_ENV) {
     throw Error(`Unsupported environment '${process.env.NODE_ENV}'`);
 }
 
+const Utilities = require('../modules/Utilities');
 const { Database } = require('arangojs');
 const homedir = require('os').homedir();
 const path = require('path');
@@ -34,7 +35,7 @@ const sqliteDbName = 'system.db';
 const peerCacheName = 'peercache';
 
 // Load config.
-const defaultConfig = configjson[process.env.NODE_ENV];
+const defaultConfig = Utilities.copyObject(configjson[process.env.NODE_ENV]);
 const config = rc(pjson.name, defaultConfig);
 
 if (argv.configDir) {
