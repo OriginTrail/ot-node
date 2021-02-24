@@ -39,12 +39,12 @@ if [ ! "$(docker ps -a --filter status=running | grep $DOCKER_CONTAINER_NAME)" ]
     exit 0
 fi
 
-docker exec otnode node /ot-node/current/scripts/generate_v5_configuration.js
+docker exec ${DOCKER_CONTAINER_NAME} node /ot-node/current/scripts/generate_v5_configuration.js
 cp ${NODE_RC_PATH} .origintrail_noderc_v4_backup
 echo "Old configuration saved as .origintrail_noderc_v4_backup."
-docker cp otnode:/ot-node/data/.v5_configuration ./${NODE_RC_PATH}
+docker cp ${DOCKER_CONTAINER_NAME}:/ot-node/data/.v5_configuration ./${NODE_RC_PATH}
 echo "Starting manual node update to version 5. Please be patient this can take up to 10 minutes."
-docker exec otnode node /ot-node/current/scripts/start_v5_update.js
+docker exec ${DOCKER_CONTAINER_NAME} node /ot-node/current/scripts/start_v5_update.js
 echo "Manual update finalized. Restarting otnode node..."
 docker restart ${DOCKER_CONTAINER_NAME}
 echo "Update completed successfully!"
