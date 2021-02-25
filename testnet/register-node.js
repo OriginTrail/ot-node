@@ -20,7 +20,7 @@ const logger = require('../modules/logger');
 const configjson = require('../config/config.json');
 const Utilities = require('../modules/Utilities');
 
-const defaultConfig = configjson[process.env.NODE_ENV];
+const defaultConfig = Utilities.copyObject(configjson[process.env.NODE_ENV]);
 const localConfiguration = rc(pjson.name, defaultConfig);
 const web3 = new Web3();
 const constants = require('../modules/constants');
