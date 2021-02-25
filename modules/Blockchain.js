@@ -23,8 +23,6 @@ class Blockchain {
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
         this.pluginService = ctx.blockchainPluginService;
-        this.gasStationService = ctx.gasStationService;
-        this.tracPriceService = ctx.tracPriceService;
         this.appState = ctx.appState;
 
         this.blockchain = [];

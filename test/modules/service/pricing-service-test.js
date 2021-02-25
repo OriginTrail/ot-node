@@ -2,7 +2,6 @@ const {
     describe, before, beforeEach, it,
 } = require('mocha');
 const PricingService = require('../../../modules/service/pricing-service');
-const TracPriceService = require('../../../modules/service/trac-price-service');
 const awilix = require('awilix');
 const defaultConfig = require('../../../config/config.json').mainnet;
 const rc = require('rc');
@@ -15,7 +14,6 @@ const EventEmitter = require('../../../modules/EventEmitter');
 const Product = require('../../../modules/Product');
 const GraphStorage = require('../../../modules/Database/GraphStorage');
 const BlockchainPluginService = require('../../../modules/Blockchain/plugin/blockchain-plugin-service');
-const GasStationService = require('../../../modules/service/gas-station-service');
 
 const log = require('../../../modules/logger');
 
@@ -81,7 +79,6 @@ describe('Pricing service test', () => {
             config: awilix.asValue(config),
             gasStationService: awilix.asValue(gasStationService),
             web3: awilix.asValue(web3ServiceMock),
-            tracPriceService: awilix.asClass(TracPriceService),
             blockchain: awilix.asClass(Blockchain).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
             emitter: awilix.asValue({}),

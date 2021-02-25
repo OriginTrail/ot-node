@@ -7,7 +7,6 @@ class PricingService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.gasStationService = ctx.gasStationService;
         this.blockchain = ctx.blockchain;
     }
 
