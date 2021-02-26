@@ -123,13 +123,10 @@ class InfoController {
             if (message.blockchain) {
                 response.blockchain = [];
                 for (const implementation of message.blockchain) {
-                    const { network_id, identity, wallet } = implementation;
+                    const { network_id, identity } = implementation;
                     const result = { network_id };
                     if (identity) {
                         result.identity = this.blockchain.getIdentity(network_id).response;
-                    }
-                    if (wallet) {
-                        result.wallet = this.blockchain.getWallet(network_id).response;
                     }
 
                     response.blockchain.push(result);

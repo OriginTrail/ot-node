@@ -487,7 +487,7 @@ class Blockchain {
                             // eslint-disable-next-line
                             continue;
                         }
-                        eventData.finished = true;
+                        eventData.finished = 1;
                         // eslint-disable-next-line no-loop-func
                         eventData.save().then(() => {
                             clearTimeout(clearToken);
@@ -568,7 +568,7 @@ class Blockchain {
                     const dataToSend = JSON.parse(data.dataValues.data);
                     dataToSend.blockchain_id = data.dataValues.blockchain_id;
                     this.emitter.emit(`eth-${data.event}`, dataToSend);
-                    data.finished = true;
+                    data.finished = 1;
                     await data.save();
                 });
             }
@@ -633,7 +633,7 @@ class Blockchain {
                             value: JSON.parse(data.dataValues.data),
                             blockchain_id: data.blockchain_id,
                         });
-                        data.finished = true;
+                        data.finished = 1;
                         await data.save();
                     } catch (error) {
                         this.logger.error(error);

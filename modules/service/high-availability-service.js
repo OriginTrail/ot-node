@@ -6,6 +6,13 @@ const constants = require('../constants');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { Pool } = require('pg');
 const Utilities = require('../Utilities');
+const configjson = require('../../config/config.json');
+const Blockchain = require('../Blockchain');
+
+const defaultBlockchainConfig = Utilities.copyObject(configjson[
+    process.env.NODE_ENV &&
+    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+        process.env.NODE_ENV : 'development'].blockchain);
 
 class HighAvailabilityService {
     constructor(ctx) {
@@ -13,6 +20,8 @@ class HighAvailabilityService {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.otNodeClient = ctx.otNodeClient;
+        this.blockchain = ctx.blockchain;
+        this.config = Blockchain.attachDefaultConfig(this.config, defaultBlockchainConfig);
     }
 
     async startHighAvailabilityNode() {
@@ -210,14 +219,6 @@ class HighAvailabilityService {
                 missingParameters.identity = true;
             }
 
-            const nodeWalletFilePath = path.join(
-                this.config.appDataPath,
-                implementation.node_wallet_filepath,
-            );
-            if (!fs.existsSync(nodeWalletFilePath)) {
-                missingParameters.wallet = true;
-            }
-
             if (Object.keys(missingParameters).length !== 0) {
                 missingParameters.network_id = implementation.network_id;
                 message.blockchain.push(missingParameters);
@@ -227,13 +228,13 @@ class HighAvailabilityService {
 
         message.bootstraps = true;
         message.routingTable = true;
-
-        message.wallet = this.config.node_wallet;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(null, true).response;
+        message.wallet = node_wallet;
         const request = {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 
@@ -275,8 +276,8 @@ class HighAvailabilityService {
         }
         if (masterNodeData.blockchain) {
             for (const response of masterNodeData.blockchain) {
-                const { network_id, wallet, identity } = response;
-                const { node_wallet_path, identity_filepath } =
+                const { network_id, identity } = response;
+                const { identity_filepath } =
                     this.config.blockchain.implementations.find(e => e.network_id === network_id);
 
                 if (identity) {
@@ -284,12 +285,6 @@ class HighAvailabilityService {
                         this.config.appDataPath,
                         identity_filepath,
                     ), JSON.stringify({ identity }));
-                }
-                if (wallet) {
-                    fs.writeFileSync(path.join(
-                        this.config.appDataPath,
-                        node_wallet_path,
-                    ), JSON.stringify(wallet));
                 }
             }
         }
