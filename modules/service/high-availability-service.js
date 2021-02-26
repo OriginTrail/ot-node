@@ -21,7 +21,8 @@ class HighAvailabilityService {
         this.graphStorage = ctx.graphStorage;
         this.otNodeClient = ctx.otNodeClient;
         this.blockchain = ctx.blockchain;
-        this.config = Blockchain.attachDefaultConfig(this.config, defaultBlockchainConfig);
+        this.config.blockchain =
+            Blockchain.attachDefaultConfig(this.config.blockchain, defaultBlockchainConfig);
     }
 
     async startHighAvailabilityNode() {

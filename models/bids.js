@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         token_amount: DataTypes.STRING,
         status: DataTypes.STRING,
         deposit: DataTypes.STRING,
-        message: DataTypes.STRING,
+        message: DataTypes.TEXT,
     }, {});
     bids.associate = (models) => {
         // associations can be defined here

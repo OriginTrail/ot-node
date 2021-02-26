@@ -60,6 +60,10 @@ module.exports = {
                 type: Sequelize.TEXT,
             });
         await queryInterface
+            .changeColumn('bids', 'message', {
+                type: Sequelize.TEXT,
+            });
+        await queryInterface
             .changeColumn('challenges', 'start_time', {
                 type: Sequelize.BIGINT,
             });
