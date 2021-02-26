@@ -19,12 +19,16 @@ class XDai extends Web3Implementation {
         this.logger.info(`[${this.getBlockchainId()}] Selected blockchain: xDai`);
     }
 
-    static async getRelativeTracPrice() {
+    async getRelativeTracPrice() {
         const response = await axios.get(coinGeckoLink);
         if (response) {
             return response.data.origintrail.usd;
         }
         return undefined;
+    }
+
+    async calculateGasPrice() {
+        return this.config.gas_price;
     }
 
     async getGasPrice() {

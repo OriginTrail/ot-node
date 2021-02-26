@@ -1425,37 +1425,37 @@ class Web3Implementation {
 
     async getTracPrice() {
         if (process.env.NODE_ENV !== 'mainnet') {
-            this.logger.trace(`[${this.getBlockchainId()}] Using default trac price in eth from configuration: ${this.config.trac_price_in_eth}`);
-            return this.config.trac_price_in_eth;
+            this.logger.trace(`[${this.getBlockchainId()}] Using default trac price in base currency from configuration: ${this.config.trac_price_in_base_currency}`);
+            return this.config.trac_price_in_base_currency;
         }
 
         const now = new Date().getTime();
-        if (this.config.trac_price_in_eth_last_update_timestamp
+        if (this.config.trac_price_in_base_currency_last_update_timestamp
             + constants.TRAC_PRICE_IN_ETH_VALIDITY_TIME_IN_MILLS > now) {
-            this.logger.trace(`[${this.getBlockchainId()}] Using trac price in eth from configuration: ${this.config.trac_price_in_eth}`);
-            return this.config.trac_price_in_eth;
+            this.logger.trace(`[${this.getBlockchainId()}] Using trac price in base currency from configuration: ${this.config.trac_price_in_base_currency}`);
+            return this.config.trac_price_in_base_currency;
         }
 
-        let tracPriceInEth = this.config.trac_price_in_eth;
-        const response = await this.constructor.getRelativeTracPrice().catch((err) => {
+        let tracPriceInBaseCurrency = this.config.trac_price_in_base_currency;
+        const response = await this.getRelativeTracPrice().catch((err) => {
             this.logger.warn(err);
         });
         if (response) {
-            tracPriceInEth = response;
+            tracPriceInBaseCurrency = response;
         }
-        if (tracPriceInEth) {
-            this._saveNewTracPriceInEth(tracPriceInEth);
-            this.logger.trace(`[${this.getBlockchainId()}] Using trac price in eth from coingecko service: ${tracPriceInEth}`);
+        if (tracPriceInBaseCurrency) {
+            this._saveNewTracPriceInEth(tracPriceInBaseCurrency);
+            this.logger.trace(`[${this.getBlockchainId()}] Using trac price in base currency from coingecko service: ${tracPriceInBaseCurrency}`);
         } else {
-            tracPriceInEth = this.config.trac_price_in_eth;
-            this.logger.trace(`[${this.getBlockchainId()}] Using trac price in eth from configuration: ${tracPriceInEth}`);
+            tracPriceInBaseCurrency = this.config.trac_price_in_base_currency;
+            this.logger.trace(`[${this.getBlockchainId()}] Using trac price in base currency from configuration: ${tracPriceInBaseCurrency}`);
         }
-        return tracPriceInEth;
+        return tracPriceInBaseCurrency;
     }
 
     _saveNewTracPriceInEth(tracePrice) {
-        this.config.trac_price_in_eth = tracePrice;
-        this.config.trac_price_in_eth_last_update_timestamp = new Date().getTime();
+        this.config.trac_price_in_base_currency = tracePrice;
+        this.config.trac_price_in_base_currency_last_update_timestamp = new Date().getTime();
     }
 
     /**
