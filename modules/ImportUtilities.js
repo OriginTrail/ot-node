@@ -676,8 +676,8 @@ class ImportUtilities {
                         e.dataValues.gas_price_used_for_price_calculation,
                     price_factor_used_for_price_calculation:
                         e.dataValues.price_factor_used_for_price_calculation,
-                    trac_in_eth_used_for_price_calculation:
-                        e.dataValues.trac_in_eth_used_for_price_calculation,
+                    trac_in_base_currency_used_for_price_calculation:
+                        e.dataValues.trac_in_base_currency_used_for_price_calculation,
                 }));
             }
             break;

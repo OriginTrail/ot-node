@@ -22,7 +22,7 @@ class Ethereum extends Web3Implementation {
         this.logger.info(`[${this.getBlockchainId()}] Selected blockchain: Ethereum`);
     }
 
-    static async getRelativeTracPrice() {
+    async getRelativeTracPrice() {
         const response = await axios.get(coinGeckoLink);
         if (response) {
             return response.data.origintrail.eth;

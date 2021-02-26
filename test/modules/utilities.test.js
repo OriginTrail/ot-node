@@ -44,7 +44,7 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.blockchain.implementations[0], [
                     'blockchain_title', 'network_id', 'gas_limit', 'gas_price', 'max_allowed_gas_price',
-                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet', 'node_private_key', 'management_wallet'],
+                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_base_currency', 'identity_filepath', 'node_wallet', 'node_private_key', 'management_wallet'],
                 `Some config items are missing in config.blockchain.implementations for environment '${environment}'`,
             );
 
@@ -97,7 +97,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.blockchain.implementations[0], ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet', 'node_private_key', 'management_wallet']);
+                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_base_currency', 'identity_filepath', 'node_wallet', 'node_private_key', 'management_wallet']);
             assert.equal(config.blockchain.implementations[0].blockchain_title, 'Ethereum');
         });
     });
