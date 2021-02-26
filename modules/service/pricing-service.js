@@ -7,7 +7,6 @@ class PricingService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.gasStationService = ctx.gasStationService;
         this.blockchain = ctx.blockchain;
     }
 
@@ -26,7 +25,7 @@ class PricingService {
 
         const {
             basePayoutCostInTrac,
-            tracInEth,
+            tracInBaseCurrency,
             gasPriceInGwei,
         } = await this._calculateBasePayoutInTrac(blockchain_id);
 
@@ -38,17 +37,17 @@ class PricingService {
 
         const finalPrice = price * 1000000000000000000;
         this.logger.trace(`Calculated offer price for data size: ${dataSizeInMB}MB, and holding time: ${holdingTimeInDays} days, PRICE: ${finalPrice}[mTRAC]`);
-        return { finalPrice, tracInEth, gasPriceInGwei };
+        return { finalPrice, tracInBaseCurrency, gasPriceInGwei };
     }
 
     async _calculateBasePayoutInTrac(blockchain_id) {
-        const tracInEth = await this.blockchain.getTracPrice(blockchain_id).response;
+        const tracInBaseCurrency = await this.blockchain.getTracPrice(blockchain_id).response;
 
         const gasPriceInGwei = await this.blockchain.getGasPrice(blockchain_id)
             .response / 1000000000;
-        const basePayoutInEth = (constants.BASE_PAYOUT_GAS * gasPriceInGwei) / 1000000000;
-        const basePayoutCostInTrac = basePayoutInEth / tracInEth;
-        return { basePayoutCostInTrac, tracInEth, gasPriceInGwei };
+        const basePayoutInBaseCurrency = (constants.BASE_PAYOUT_GAS * gasPriceInGwei) / 1000000000;
+        const basePayoutCostInTrac = basePayoutInBaseCurrency / tracInBaseCurrency;
+        return { basePayoutCostInTrac, tracInBaseCurrency, gasPriceInGwei };
     }
 }
 

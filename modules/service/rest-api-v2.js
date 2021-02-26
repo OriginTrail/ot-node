@@ -549,8 +549,8 @@ class RestAPIServiceV2 {
             if (offer) {
                 offerData.number_of_replications = offer.number_of_replications;
                 offerData.number_of_verified_replications = offer.number_of_verified_replications;
-                offerData.trac_in_eth_used_for_price_calculation =
-                    offer.trac_in_eth_used_for_price_calculation;
+                offerData.trac_in_base_currency_used_for_price_calculation =
+                    offer.trac_in_base_currency_used_for_price_calculation;
                 offerData.gas_price_used_for_price_calculation =
                     offer.gas_price_used_for_price_calculation;
                 offerData.price_factor_used_for_price_calculation =

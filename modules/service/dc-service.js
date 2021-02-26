@@ -61,7 +61,7 @@ class DCService {
             message: 'Offer is pending',
             status: 'PENDING',
             global_status: 'PENDING',
-            trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
+            trac_in_base_currency_used_for_price_calculation: offerPrice.tracInBaseCurrency,
             gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
             price_factor_used_for_price_calculation: dc_price_factor,
             blockchain_id,

@@ -49,7 +49,6 @@ const ImportWorkerController = require('./modules/worker/import-worker-controlle
 const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
-const GasStationService = require('./modules/service/gas-station-service');
 const RestoreService = require('./scripts/restore');
 const { execSync } = require('child_process');
 
@@ -270,7 +269,6 @@ class OTNode {
             importWorkerController: awilix.asClass(ImportWorkerController).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
             permissionedDataService: awilix.asClass(PermissionedDataService).singleton(),
-            gasStationService: awilix.asClass(GasStationService).singleton(),
             otNodeClient: awilix.asClass(OtNodeClient).singleton(),
         });
         const blockchain = container.resolve('blockchain');

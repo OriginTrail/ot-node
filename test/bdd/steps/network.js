@@ -93,7 +93,7 @@ function loadBlockchainConfig(localBlockchain) {
         max_allowed_gas_price: 100000000000,
         dc_price_factor: '3',
         dh_price_factor: '2',
-        trac_price_in_eth: '0.00005',
+        trac_price_in_base_currency: '0.00005',
         plugins: [
             {
                 enabled: false,
@@ -1010,7 +1010,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                             max_allowed_gas_price: 100000000000,
                             dc_price_factor: '3',
                             dh_price_factor: '2',
-                            trac_price_in_eth: '0.00005',
+                            trac_price_in_base_currency: '0.00005',
                             plugins: [
                                 {
                                     enabled: false,

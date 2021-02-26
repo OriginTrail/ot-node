@@ -1,4 +1,5 @@
 const Ethereum = require('./Blockchain/Ethereum/index.js');
+const XDai = require('./Blockchain/XDai/index.js');
 const uuidv4 = require('uuid/v4');
 const Op = require('sequelize/lib/operators');
 const deepExtend = require('deep-extend');
@@ -22,8 +23,6 @@ class Blockchain {
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
         this.pluginService = ctx.blockchainPluginService;
-        this.gasStationService = ctx.gasStationService;
-        this.tracPriceService = ctx.tracPriceService;
         this.appState = ctx.appState;
 
         this.blockchain = [];
@@ -36,6 +35,9 @@ class Blockchain {
             switch (implementation_configuration.blockchain_title) {
             case 'Ethereum':
                 this.blockchain[i] = new Ethereum(ctx, implementation_configuration);
+                break;
+            case 'xDai':
+                this.blockchain[i] = new XDai(ctx, implementation_configuration);
                 break;
             default:
                 this.log.error('Unsupported blockchain', implementation_configuration.blockchain_title);
