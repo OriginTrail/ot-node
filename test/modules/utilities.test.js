@@ -27,7 +27,7 @@ describe('Utilities module', () => {
                     'is_bootstrap_node', 'houston_password', 'reverse_tunnel_address', 'reverse_tunnel_port',
                     'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
                     'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes',
-                    'erc725_identity_filepath', 'requireApproval', 'dh_maximum_dataset_filesize_in_mb', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled',
+                    'requireApproval', 'dh_maximum_dataset_filesize_in_mb', 'latest_api_version', 'litigationEnabled', 'commandExecutorVerboseLoggingEnabled',
                     'reputationWindowInMinutes', 'send_challenges_log', 'node_rpc_use_ssl', 'node_rpc_ssl_key_path', 'node_rpc_ssl_cert_path'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
@@ -44,7 +44,7 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.blockchain.implementations[0], [
                     'blockchain_title', 'network_id', 'gas_limit', 'gas_price', 'max_allowed_gas_price',
-                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet_path'],
+                    'hub_contract_address', 'plugins', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet', 'node_private_key', 'management_wallet'],
                 `Some config items are missing in config.blockchain.implementations for environment '${environment}'`,
             );
 
@@ -97,7 +97,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(config.blockchain.implementations[0], ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
-                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet_path']);
+                'gas_price', 'hub_contract_address', 'max_allowed_gas_price', 'dc_price_factor', 'dh_price_factor', 'trac_price_in_eth', 'identity_filepath', 'node_wallet', 'node_private_key', 'management_wallet']);
             assert.equal(config.blockchain.implementations[0].blockchain_title, 'Ethereum');
         });
     });

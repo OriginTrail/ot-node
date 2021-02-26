@@ -19,7 +19,7 @@ const Utilities = require('../../modules/Utilities');
 
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
-const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
+const Transactions = require('../../modules/Blockchain/Web3Implementation/Transactions');
 
 const sequelizeConfig = require('./../../config/sequelizeConfig').development;
 
