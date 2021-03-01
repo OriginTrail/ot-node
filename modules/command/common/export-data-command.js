@@ -32,7 +32,7 @@ class ExportDataCommand extends Command {
         );
 
         const dataInfo = await Models.data_info.findOne({ where: { data_set_id: datasetId } });
-        const offer = await Models.offers.findOne({ where: { data_set_id: datasetId } });
+        const offer = await Models.offers.findOne({ where: { data_set_id: datasetId, status: 'COMPLETED' } });
 
         const handler = await Models.handler_ids.findOne({
             where: { handler_id: handlerId },
