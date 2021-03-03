@@ -570,8 +570,7 @@ class Kademlia {
         // async
         this.node.use('kad-permissioned-data-read-request', (request, response, next) => {
             this.log.debug('kad-permissioned-data-read-request received');
-            this.emitter.emit('kad-permissioned-data-read-request', request);
-            response.send([]);
+            this.emitter.emit('kad-permissioned-data-read-request', request, response);
         });
 
         // async

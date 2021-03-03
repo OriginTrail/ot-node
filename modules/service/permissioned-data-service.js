@@ -66,7 +66,7 @@ class PermissionedDataService {
     async getAllowedPermissionedData(dataset, buyer_node_id) {
         const permissionedData = await this.getAllowedPermissionedDataMap(
             dataset['@id'],
-            buyer_node_id,
+            Utilities.denormalizeHex(buyer_node_id),
         );
 
         this.attachPermissionedDataToMap(permissionedData, dataset['@graph']);

@@ -136,6 +136,7 @@ class DHController {
                 message: `Could not find profile for buyer ${viewer_erc_id} on any blockchain`,
                 status: 'FAILED',
             });
+            return;
         }
         const buyerProfile = buyerProfiles.find((foundProfile) => {
             if (!foundProfile.profile.nodeId) {
@@ -151,6 +152,7 @@ class DHController {
                 message: `Could not find node id for buyer ${viewer_erc_id} on any blockchain`,
                 status: 'FAILED',
             });
+            return;
         }
 
         const buyer_node_id =

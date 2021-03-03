@@ -236,54 +236,65 @@ class DCController {
 
     async handlePermissionedDataReadRequest(message) {
         const {
-            data_set_id, dv_erc725_identity, ot_object_id, handler_id, nodeId,
+            data_set_id, dv_erc725_identities, ot_object_ids, handler_id, nodeId,
         } = message;
 
         const privateDataPermissions = await Models.data_trades.findAll({
             where: {
                 data_set_id,
-                ot_json_object_id: ot_object_id,
+                ot_json_object_id: {
+                    [Models.Sequelize.Op.in]: ot_object_ids,
+                },
                 buyer_node_id: nodeId,
                 status: 'COMPLETED',
             },
         });
         if (!privateDataPermissions || privateDataPermissions.length === 0) {
-            throw Error(`You don't have permission to view objectId:
-            ${ot_object_id} from dataset: ${data_set_id}`);
+            throw Error('You don\'t have permission to view objectId: '
+                + `${ot_object_ids} from dataset: ${data_set_id}`);
         }
 
         const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
 
-        const replayMessage = {
-            wallet: node_wallet,
-            handler_id,
-        };
-        const promises = [];
+        let promises = [];
         privateDataPermissions.forEach((privateDataPermisssion) => {
             promises.push(this.graphStorage.findDocumentsByImportIdAndOtObjectId(
                 data_set_id,
-                privateDataPermisssion.ot_json_object_id,
+                privateDataPermisssion.dataValues.ot_json_object_id,
             ));
         });
         const otObjects = await Promise.all(promises);
-        replayMessage.ot_objects = otObjects;
 
-        const normalized_dv_erc725_identity = Utilities.normalizeHex(dv_erc725_identity);
+        const supportedBlockchains = this.blockchain.getAllBlockchainIds();
+        const filteredDVIdentities = dv_erc725_identities.filter(identityObject =>
+            supportedBlockchains.includes(identityObject.blockchain_id));
 
-        privateDataPermissions.forEach(async (privateDataPermisssion) => {
-            await Models.data_sellers.create({
-                data_set_id,
-                ot_json_object_id: privateDataPermisssion.ot_json_object_id,
-                seller_node_id: nodeId.toLowerCase(),
-                seller_erc_id: normalized_dv_erc725_identity,
-                price: 0,
-            });
-        });
+        promises = [];
+        for (const dataPermission of privateDataPermissions) {
+            for (const blockchain_identity of filteredDVIdentities) {
+                promises.push(Models.data_sellers.create({
+                    data_set_id,
+                    ot_json_object_id: dataPermission.ot_json_object_id,
+                    seller_node_id: Utilities.denormalizeHex(nodeId),
+                    seller_erc_id: Utilities.normalizeHex(blockchain_identity.response),
+                    blockchain_id: blockchain_identity.blockchain_id,
+                    price: 0,
+                }));
+            }
+        }
+        await Promise.all(promises);
+
+        const replyMessage = {
+            wallet: node_wallet,
+            handler_id,
+            supported_identities: filteredDVIdentities,
+            ot_objects: otObjects,
+        };
 
         const privateDataReadResponseObject = {
-            message: replayMessage,
+            message: replyMessage,
             messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(replayMessage),
+                replyMessage,
                 node_private_key,
             ),
         };

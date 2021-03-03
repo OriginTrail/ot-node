@@ -809,7 +809,7 @@ class EventEmitter {
             }
         });
 
-        this._on('kad-permissioned-data-read-request', async (request) => {
+        this._on('kad-permissioned-data-read-request', async (request, response) => {
             logger.info('Request for permissioned data read received');
             const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
@@ -820,9 +820,15 @@ class EventEmitter {
             }
             try {
                 await dcController.handlePermissionedDataReadRequest(message);
+                await transport.sendResponse(response, {
+                    status: 'SUCCESS',
+                });
             } catch (error) {
                 logger.warn(`Failed to process permissioned data read request. ${error}.`);
-                // todo send error to dv
+                await transport.sendResponse(response, {
+                    status: 'FAIL',
+                    message: error.message,
+                });
             }
         });
 
