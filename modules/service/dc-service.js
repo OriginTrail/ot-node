@@ -480,7 +480,7 @@ class DCService {
         const distributionSignature = Encryption
             .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
-        const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+        const permissionedData = await this.permissionedDataService.getAllowedPermissionedDataMap(
             offer.data_set_id,
             identity,
         );

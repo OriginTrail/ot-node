@@ -254,14 +254,20 @@ class DVController {
 
         if (!request.body || !request.body.seller_node_id
             || !request.body.data_set_id
-            || !request.body.ot_object_id) {
-            request.status(400);
-            request.send({ message: 'Params data_set_id,ot_object_id and seller_node_id are required.' });
+            || !request.body.ot_object_ids) {
+            response.status(400);
+            response.send({ message: 'Params data_set_id,ot_object_ids and seller_node_id are required.' });
+            return;
         }
-        const { data_set_id, ot_object_id, seller_node_id } = request.body;
+        const { data_set_id, ot_object_ids, seller_node_id } = request.body;
+        if (!Array.isArray(ot_object_ids) || ot_object_ids.length === 0) {
+            response.status(400);
+            response.send({ message: 'Params ot_object_ids must be a non-empty array.' });
+            return;
+        }
         const handler_data = {
             data_set_id,
-            ot_object_id,
+            ot_object_ids,
             seller_node_id,
         };
         const inserted_object = await Models.handler_ids.create({
@@ -269,7 +275,7 @@ class DVController {
             data: JSON.stringify(handler_data),
         });
         const { handler_id } = inserted_object.dataValues;
-        this.logger.info(`Read private data with id ${ot_object_id} with handler id ${handler_id} initiated.`);
+        this.logger.info(`Read private data with ids ${ot_object_ids} with handler id ${handler_id} initiated.`);
 
         response.status(200);
         response.send({
@@ -281,7 +287,7 @@ class DVController {
             delay: 0,
             data: {
                 data_set_id,
-                ot_object_id,
+                ot_object_ids,
                 seller_node_id,
                 handler_id,
             },
@@ -291,20 +297,39 @@ class DVController {
 
     async handlePermissionedDataReadResponse(message) {
         const {
-            handler_id, ot_objects,
+            handler_id, ot_objects, supported_identities,
         } = message;
         const documentsToBeUpdated = [];
+
+        if (!Array.isArray(ot_objects) || ot_objects.length === 0) {
+            await Models.handler_ids.update({
+                status: 'FAILED',
+                data: {
+                    message: 'Did not receive any objects with permissioned data!',
+                },
+            }, { where: { handler_id } });
+            return;
+        }
+
         ot_objects.forEach((otObject) => {
             otObject.relatedObjects.forEach((relatedObject) => {
-                if (relatedObject.vertex.vertexType === 'Data') {
+                const { vertexType, data } = relatedObject.vertex;
+                if (vertexType === 'Data') {
+                    const { permissioned_data } = data;
                     const permissionedDataHash = ImportUtilities
-                        .calculatePermissionedDataHash(relatedObject.vertex.data.permissioned_data);
-                    if (permissionedDataHash !== relatedObject.vertex.data.permissioned_data.permissioned_data_hash) { throw new Error(`Calculated permissioned data hash ${permissionedDataHash} differs from DC permissioned data hash ${relatedObject.vertex.data.permissioned_data.permissioned_data_hash}`); }
+                        .calculatePermissionedDataHash(permissioned_data);
+
+                    if (permissionedDataHash !== permissioned_data.permissioned_data_hash) {
+                        throw Error(`Calculated permissioned data hash ${permissionedDataHash} ` +
+                            `differs from DC permissioned data hash ${permissioned_data.permissioned_data_hash}`);
+                    }
+
                     documentsToBeUpdated.push(relatedObject.vertex);
                 }
             });
         });
-        const promises = [];
+
+        let promises = [];
         documentsToBeUpdated.forEach((document) => {
             promises.push(this.graphStorage.updateDocument('ot_vertices', document));
         });
@@ -316,20 +341,47 @@ class DVController {
             },
         });
 
-        const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+        const { data_set_id, ot_object_ids, seller_node_id } = JSON.parse(handlerData.data);
+        if (ot_objects.length < ot_object_ids.length) {
+            const missedObjects = [];
+            for (const requested of ot_object_ids) {
+                if (!ot_objects.find(vertex => vertex.rootObject.uid === requested)) {
+                    missedObjects.push(requested);
+                }
+            }
+            this.logger.warn(`Failed to receive for the following objects: ${JSON.stringify(missedObjects)}`);
+        }
 
-        // todo pass blockchain identity
-        await Models.data_sellers.create({
+        promises = [];
+        const received_ot_object_ids = [];
+        for (const ot_object of ot_objects) {
+            const ot_object_id = ot_object.rootObject.uid;
+            received_ot_object_ids.push(ot_object_id);
+            for (const identityObject of supported_identities) {
+                const { response: blockchain_identity, blockchain_id } = identityObject;
+
+                promises.push(Models.data_sellers.create({
+                    data_set_id,
+                    ot_json_object_id: ot_object_id,
+                    seller_node_id: Utilities.denormalizeHex(this.config.identity),
+                    seller_erc_id: Utilities.normalizeHex(blockchain_identity),
+                    blockchain_id,
+                    price: this.config.default_data_price,
+                }));
+            }
+        }
+        await Promise.all(promises);
+
+        const result = {
+            seller_node_id,
             data_set_id,
-            ot_json_object_id: ot_object_id,
-            seller_node_id: this.config.identity.toLowerCase(),
-            seller_erc_id: Utilities.normalizeHex(this.profileService.getIdentity()),
-            price: this.config.default_data_price,
-        });
-
+            ot_object_ids,
+            received_ot_objects: received_ot_object_ids,
+        };
 
         await Models.handler_ids.update({
             status: 'COMPLETED',
+            data: JSON.stringify(result),
         }, { where: { handler_id } });
     }
 
