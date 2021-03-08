@@ -92,6 +92,9 @@ class RemoteControl {
 
             this.socket.on('config-update', async (data) => {
                 const configClean = Object.assign({}, data);
+                configClean.blockchain.implementations.forEach((implementation) => {
+                    implementation.node_private_key = '*** MASKED ***';
+                });
                 configClean.node_private_key = '*** MASKED ***';
                 configClean.houston_password = '*** MASKED ***';
                 configClean.database.password = '*** MASKED ***';
