@@ -12,6 +12,9 @@ class ErrorNotificationService {
 
     initialize() {
         const cleanConfig = Object.assign({}, this.config);
+        cleanConfig.blockchain.implementations.forEach((implementation) => {
+            delete implementation.node_private_key;
+        });
         delete cleanConfig.node_private_key;
         delete cleanConfig.houston_password;
         delete cleanConfig.database;
