@@ -2,10 +2,8 @@
 function printUsage {
 	echo ""
 	echo "Usage:"
-	echo "    restore.sh [--environment=(mainnet|testnet|development)] [--backupDir=<backup_directory_path>] [--configDir=<config_directory_path>]"
+	echo "    restore.sh [--backupDir=<backup_directory_path>] [--configDir=<config_directory_path>]"
 	echo "Options:"
-	echo "    --environment=(mainnet|testnet|development)
-	Specify which environment default parameters are to be used. Defaults to mainnet"
 	echo "    --backupDir=<backup_directory_path>\
 	Specify the path to the folder containing the backup data on your device. Defaults to the folder with the most recent timestamp inside the backup/ directory"
 	echo "    --backupDir=<config_directory_path>
@@ -13,7 +11,6 @@ function printUsage {
 	echo ""
 }
 
-ENVIRONMENT="mainnet"
 BACKUPDIR="none"
 CONFIGDIR="none"
 CONTAINER_NAME="otnode"
@@ -25,11 +22,6 @@ case $i in
 	printUsage
 	exit 0
 	# past argument=value
-    ;;
-    -e=*|--environment=*)
-    ENVIRONMENT="${i#*=}"
-    echo "Environment is ${ENVIRONMENT}"
-    shift
     ;;
     --configDir=*)
     CONFIGDIR="${i#*=}"
@@ -51,21 +43,6 @@ case $i in
 esac
 done
 
-# Load environment
-if [ ${ENVIRONMENT} == "mainnet" ]
-then
-	environmentIndex=2
-elif [ ${ENVIRONMENT} == "testnet" ]
-then
-	environmentIndex=1
-elif [ ${ENVIRONMENT} == "development" ]
-then
-	environmentIndex=0
-else
-	echo "Environment ${ENVIRONMENT} is not supported"
-	printUsage
-	exit 1
-fi
 
 # Load backup directory path
 if [ ${BACKUPDIR} == "none" ]
@@ -99,23 +76,23 @@ else
 	echo ""
 fi
 
-configFiles=(houston.txt identity.json kademlia.crt kademlia.key system.db)
-
 temp_folder=temp_ot_node_files_8092
 mkdir $temp_folder
 
-for file in ${configFiles[@]}; do
-  sourcePath="${BACKUPDIR}/${file}"
-  destinationPath="${CONTAINER_NAME}:${CONFIGDIR}/"
+for file in `ls ${BACKUPDIR}`; do
+    if [ ! ${file}] == "arangodb" ]
+    then
+      sourcePath="${BACKUPDIR}/${file}"
+      destinationPath="${CONTAINER_NAME}:${CONFIGDIR}/"
 
-  echo "cp ${sourcePath} ${temp_folder}"
-  cp ${sourcePath} ${temp_folder}/
+      echo "cp ${sourcePath} ${temp_folder}"
+      cp ${sourcePath} ${temp_folder}/
 
-  sourcePath=./${temp_folder}/${file}
-  echo "docker cp ${sourcePath} ${destinationPath}"
-  docker cp ${sourcePath} ${destinationPath}
+      sourcePath=./${temp_folder}/${file}
+      echo "docker cp ${sourcePath} ${destinationPath}"
+      docker cp ${sourcePath} ${destinationPath}
+    fi
 done
-
 
 sourcePath="${BACKUPDIR}/.origintrail_noderc"
 destinationPath="${CONTAINER_NAME}:/ot-node/current/"
@@ -175,24 +152,17 @@ fi
 
 echo docker cp ${CONTAINER_NAME}:/ot-node/current/config/config.json ./
 docker cp ${CONTAINER_NAME}:/ot-node/current/config/config.json ./
-# cp ~/ot-node/config/config.json ./
-
-databaseName=($(cat config.json | grep "\"database\": \"" | sed -r "s_([[:blank:]]+)\"database\":[[:blank:]]\"__" | sed "s/\",$//"))
-databaseName=${databaseName[@]:${environmentIndex}:1}
-echo "database name ${databaseName}"
-
-databaseUsername=($(cat config.json | grep "\"username\": \"" | sed -r "s_([[:blank:]]+)\"username\":[[:blank:]]\"__" | sed "s/\",$//"))
-databaseUsername=${databaseUsername[@]:${environmentIndex}:1}
-echo "database username ${databaseUsername}"
-
-databasePassword=($(cat config.json | grep "\"password\": \"" | sed -r "s_([[:blank:]]+)\"password\":[[:blank:]]\"__" | sed "s/\",$//"))
-databasePassword=${databasePassword[@]:${environmentIndex}:1}
-echo "database password read from configuration"
 
 rm config.json
 
 echo "cp -r ${BACKUPDIR}/arangodb ${temp_folder}/"
 cp -r ${BACKUPDIR}/arangodb ${temp_folder}/
+
+databaseName=$(cat ${BACKUPDIR}/arangodb/database.txt)
+echo "database name ${databaseName}"
+
+databaseUsername=$(cat ${BACKUPDIR}/arangodb/username.txt)
+echo "database username ${databaseUsername}"
 
 echo "docker cp ${temp_folder}/arangodb ${CONTAINER_NAME}:${CONFIGDIR}/"
 docker cp "${temp_folder}/arangodb" ${CONTAINER_NAME}:${CONFIGDIR}/
@@ -204,8 +174,12 @@ rm -rf ${temp_folder}
 echo docker start ${CONTAINER_NAME}
 docker start ${CONTAINER_NAME}
 
-echo sleep 20
-sleep 20
+echo sleep 30
+sleep 30
+
+docker cp ${CONTAINER_NAME}:${CONFIGDIR}/arango.txt arango.txt
+databasePassword=$(cat arango.txt)
+rm arango.txt
 
 echo "docker exec ${CONTAINER_NAME} arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true"
 docker exec ${CONTAINER_NAME} arangorestore --server.database ${databaseName} --server.username ${databaseUsername} --server.password ${databasePassword} --input-directory ${CONFIGDIR}/arangodb/ --overwrite true
