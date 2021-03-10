@@ -92,15 +92,7 @@ function getCertificateFileNames() {
 }
 
 function getDataFileNames() {
-    const dataFileNames = [];
-
-    const dataFiles = ['kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db'];
-    // const dataFiles = ['kademlia.crt', 'kademlia.key', 'houston.txt'];
-    for (const dataFile of dataFiles) {
-        dataFileNames.push(dataFile);
-    }
-
-    return dataFileNames;
+    return ['kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db'];
 }
 
 function moveFileFromNodeToBackup(fileName, nodeDir, backupDir, showErrors = true) {
@@ -220,6 +212,9 @@ function main() {
                     console.log('***        Backup process complete!         ***');
                     console.log('*****                                     *****');
                     console.log('***********************************************');
+
+                    fs.writeFileSync(`${backupDir}/arangodb/username.txt`, config.database.username);
+                    fs.writeFileSync(`${backupDir}/arangodb/database.txt`, config.database.database);
 
                     process.exit(0);
                 },
