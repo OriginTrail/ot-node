@@ -293,11 +293,13 @@ exec /usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf
         deepExtend(localConfiguration, externalConfig);
         logger.info('Configuration:');
         // Mask private key before printing it.
-        const externalConfigClean = Object.assign({}, externalConfig);
+        const externalConfigClean = Utilities.copyObject(externalConfig);
         externalConfigClean.blockchain.implementations.forEach((implementation) => {
             implementation.node_private_key = '*** MASKED ***';
         });
-        externalConfigClean.node_private_key = '*** MASKED ***';
+        if (externalConfigClean.node_private_key) {
+            externalConfigClean.node_private_key = '*** MASKED ***';
+        }
         logger.info(JSON.stringify(externalConfigClean, null, 4));
 
         fs.writeFileSync(`.${pjson.name}rc`, JSON.stringify(externalConfig, null, 4));
