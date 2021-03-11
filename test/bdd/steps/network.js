@@ -115,16 +115,20 @@ function loadBlockchainConfig(localBlockchain) {
     };
 
     if (Array.isArray(localBlockchain)) {
+        let i = 0;
         for (const blockchain of localBlockchain) {
             const new_config = Object.assign({}, blockchain_template);
 
             new_config.hub_contract_address = blockchain.hubContractAddress;
             new_config.network_id = blockchain.name;
-            new_config.node_wallet_path = `wallet_${blockchain.name}.json`;
+            new_config.node_wallet = LocalBlockchain.wallets()[i].address;
+            new_config.node_private_key = LocalBlockchain.wallets()[i].privateKey;
+            new_config.management_wallet = LocalBlockchain.wallets()[i].address;
             new_config.identity_filepath = `identity_${blockchain.name}.json`;
             new_config.rpc_server_url = `http://localhost:${blockchain.port}/`;
 
             blockchain_config.implementations.push(new_config);
+            i += 1;
         }
     } else {
         const new_config = Object.assign({}, blockchain_template);
@@ -145,14 +149,9 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
 
-    const walletCount = LocalBlockchain.wallets().length;
-
     // todo merge default config
     const bootstrapNode = new OtNode({
         nodeConfiguration: {
-            node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
-            node_private_key: LocalBlockchain.wallets()[walletCount - 1].privateKey,
-            management_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
@@ -185,9 +184,6 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
 
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeConfiguration = {
-            node_wallet: LocalBlockchain.wallets()[i].address,
-            node_private_key: LocalBlockchain.wallets()[i].privateKey,
-            management_wallet: LocalBlockchain.wallets()[i].address,
             node_port: 6000 + i,
             node_rpc_port: 9000 + i,
             node_remote_control_port: 4000 + i,
@@ -351,10 +347,15 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeInd
     this.logger.log(`Setting node '${nodeIndex}' as ${nodeType}.`);
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
 
-    if (this.state.lastIssuerIdentity) {
-        this.state.secondLastIssuerIdentity = this.state.lastIssuerIdentity;
+    if (this.state.lastIssuerIdentities) {
+        this.state.secondLastIssuerIdentities = this.state.lastIssuerIdentities;
     }
-    this.state.lastIssuerIdentity = JSON.parse(fs.readFileSync(`${this.state[nodeType.toLowerCase()].options.configDir}/${this.state[nodeType.toLowerCase()].options.nodeConfiguration.erc725_identity_filepath}`).toString());
+
+
+    this.state.lastIssuerIdentities = [];
+    for (const blockchain of this.state[nodeType.toLowerCase()].options.nodeConfiguration.blockchain.implementations) {
+        this.state.lastIssuerIdentities.push(JSON.parse(fs.readFileSync(`${this.state[nodeType.toLowerCase()].options.configDir}/${blockchain.identity_filepath}`).toString()).identity);
+    }
 });
 
 Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one manually calculated$/, async function (nodeType) {

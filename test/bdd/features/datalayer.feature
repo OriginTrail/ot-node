@@ -1,9 +1,9 @@
 Feature: Data layer related features
-  Background: Setup local blockchain and bootstraps
-    Given the blockchain is set up
+  Background: Setup local blockchains and bootstraps
+    Given the blockchains are set up
     And 1 bootstrap is running
 
-  @third
+  @dl5
   Scenario: Check that second gs1 import does not mess up first import's hash value
     Given I setup 4 nodes
     And I start the nodes
