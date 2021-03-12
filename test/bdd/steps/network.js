@@ -85,14 +85,11 @@ function unpackRawTable(rawTable) {
     return unpacked;
 }
 
-function loadBlockchainConfig(localBlockchain) {
+function loadBlockchainConfig(localBlockchain, nodeNumber) {
     const blockchain_template = {
         blockchain_title: 'Ethereum',
-        gas_limit: 2000000,
-        gas_price: 20000000000,
-        max_allowed_gas_price: 100000000000,
-        dc_price_factor: '3',
-        dh_price_factor: '2',
+        gas_limit: '2000000',
+        gas_price: '20000000000',
         trac_price_in_base_currency: '0.00005',
         plugins: [
             {
@@ -121,9 +118,9 @@ function loadBlockchainConfig(localBlockchain) {
 
             new_config.hub_contract_address = blockchain.hubContractAddress;
             new_config.network_id = blockchain.name;
-            new_config.node_wallet = LocalBlockchain.wallets()[i].address;
-            new_config.node_private_key = LocalBlockchain.wallets()[i].privateKey;
-            new_config.management_wallet = LocalBlockchain.wallets()[i].address;
+            new_config.node_wallet = LocalBlockchain.wallets()[nodeNumber + i].address;
+            new_config.node_private_key = LocalBlockchain.wallets()[nodeNumber + i].privateKey;
+            new_config.management_wallet = LocalBlockchain.wallets()[nodeNumber + i].address;
             new_config.identity_filepath = `identity_${blockchain.name}.json`;
             new_config.rpc_server_url = `http://localhost:${blockchain.port}/`;
 
@@ -157,7 +154,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             database: {
                 database: `origintrail-test-${uuidv4()}`,
             },
-            blockchain: loadBlockchainConfig(this.state.localBlockchain),
+            blockchain: loadBlockchainConfig(this.state.localBlockchain, 0),
             network: {
                 id: 'Devnet',
                 // TODO: Connect other if using multiple.
@@ -196,7 +193,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             database: {
                 database: `origintrail-test-${uuidv4()}`,
             },
-            blockchain: loadBlockchainConfig(this.state.localBlockchain),
+            blockchain: loadBlockchainConfig(this.state.localBlockchain, i),
             local_network_only: true,
             dc_choose_time: 90000, // 90 seconds
             initial_deposit_amount: '10000000000000000000000',
