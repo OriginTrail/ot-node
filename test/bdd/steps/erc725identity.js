@@ -59,29 +59,27 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid ERC725 identity/, async 
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    // Profile file should exist in app-data-path.
-    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
-    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
-    expect(erc725Profile).to.have.key('identity');
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const erc725ProfileJsonPath =
+            path.join(node.options.configDir, implementation.identity_filepath);
+        const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+        expect(erc725Profile).to.have.key('identity');
 
-    const erc725ProfileAddress = erc725Profile.identity;
-    const { web3 } = this.state.localBlockchain;
-    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
-    erc725Contract.options.address = erc725ProfileAddress;
+        const erc725ProfileAddress = erc725Profile.identity;
+        const { web3 } = this.state.localBlockchain[i];
+        const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+        erc725Contract.options.address = erc725ProfileAddress;
 
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
-    const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeWallet), 'hex'));
+        const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(implementation.node_wallet), 'hex'));
+        // eslint-disable-next-line no-await-in-loop,max-len
+        const result = await erc725Contract.methods.getKey(utilities.normalizeHex(hashedAddress)).call();
 
+        expect(result).to.have.keys(['0', '1', '2', 'purposes', 'keyType', 'key']);
+        expect(result.purposes).to.have.ordered.members(['1', '2', '3', '4']);
 
-    const result =
-        await erc725Contract.methods.getKey(utilities.normalizeHex(hashedAddress)).call();
-
-    expect(result).to.have.keys(['0', '1', '2', 'purposes', 'keyType', 'key']);
-    expect(result.purposes).to.have.ordered.members(['1', '2', '3', '4']);
+        i += 1;
+    }
 });
 
 Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid profile$/, async function (nodeIndex) {
@@ -92,17 +90,23 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid profile$/, async functio
     const node = this.state.nodes[nodeIndex - 1];
     const nodeId = node.state.identity;
     // Profile file should exist in app-data-path.
-    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
-    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
-    expect(erc725Profile).to.have.key('identity');
 
-    const erc725ProfileAddress = erc725Profile.identity;
-    const result =
-        await this.state.localBlockchain.contracts.ProfileStorage.instance
-            .methods.profile(erc725ProfileAddress).call();
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const erc725ProfileJsonPath =
+            path.join(node.options.configDir, implementation.identity_filepath);
+        const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+        expect(erc725Profile).to.have.key('identity');
 
-    expect(result.nodeId, `Got ${JSON.stringify(result)}`).to.equal(`0x${nodeId}000000000000000000000000`);
-    expect(new BN(result.stake).gt(new BN(0)), `Got ${JSON.stringify(result)}`).to.be.true;
+        const erc725ProfileAddress = erc725Profile.identity;
+        // eslint-disable-next-line no-await-in-loop,max-len
+        const result = await this.state.localBlockchain[i].contracts.ProfileStorage.instance.methods.profile(erc725ProfileAddress).call();
+
+        expect(result.nodeId, `Got ${JSON.stringify(result)}`).to.equal(`0x${nodeId}000000000000000000000000`);
+        expect(new BN(result.stake).gt(new BN(0)), `Got ${JSON.stringify(result)}`).to.be.true;
+
+        i += 1;
+    }
 });
 
 When(/^I set up the (\d+)[st|nd|rd|th]+ node as the parent of the (\d+)[st|nd|rd|th]+ node$/, async function (parentIndex, nodeIndex) {
