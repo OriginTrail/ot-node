@@ -996,38 +996,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                 database: {
                     database: `origintrail-test-${uuidv4()}`,
                 },
-                blockchain: {
-                    implementations: [
-                        {
-                            blockchain_title: 'Ethereum',
-                            network_id: 'development',
-                            hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                            rpc_server_url: 'http://localhost:7545/',
-                            node_wallet_path: 'wallet.json',
-                            identity_filepath: 'erc725_identity.json',
-                            gas_limit: 2000000,
-                            gas_price: 20000000000,
-                            max_allowed_gas_price: 100000000000,
-                            dc_price_factor: '3',
-                            dh_price_factor: '2',
-                            trac_price_in_base_currency: '0.00005',
-                            plugins: [
-                                {
-                                    enabled: false,
-                                    provider: 'Hyperledger',
-                                    name: 'fingerprint-plugin',
-                                    config: {
-                                        url: 'URL',
-                                        auth: {
-                                            user: 'USER',
-                                            pass: 'PASS',
-                                        },
-                                    },
-                                },
-                            ],
-                        },
-                    ],
-                },
+                blockchain: loadBlockchainConfig(this.state.localBlockchain, i),
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',
                 commandExecutorVerboseLoggingEnabled: true,
