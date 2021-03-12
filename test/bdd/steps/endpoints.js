@@ -141,7 +141,7 @@ Then(/^the consensus check should pass for the two last imports$/, function () {
         && objectEvent1.properties.bizStep !== objectEvent2.properties.bizStep, 'Invalid bizStep in consensus.').to.be.equal(true);
     expect(JSON.stringify(objectEvent1.properties.epcList) === JSON.stringify(objectEvent2.properties.epcList), 'Invalid epcList in consensus.').to.be.equal(true);
 
-    expect(this.state.lastIssuerIdentity.identity !== this.state.secondLastIssuerIdentity).to.be.equal(true);
+    expect(this.state.lastIssuerIdentities.toString() !== this.state.secondLastIssuerIdentities.toString()).to.be.equal(true);
 });
 
 Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async function (targetNode) {
