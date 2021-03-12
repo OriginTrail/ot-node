@@ -375,17 +375,12 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(response.document, 'response.document should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    const nodeWalletPath = path.join(
-        myNode.options.configDir,
-        myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
-
-    expect(ImportUtilities.extractDatasetSigners(response.document)[0].wallet.toLowerCase() === nodeWallet, 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigners(response.document).map(x => x.wallet.toLowerCase()).toString()
+        === myNode.options.nodeConfiguration.blockchain.implementations.map(x => x.node_wallet.toLowerCase()).toString(), 'Signature not valid!').to.be.true;
 
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document);
     const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(response.document);
-    expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
+    expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.data.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
     expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
 });
 
@@ -538,12 +533,19 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     expect(this.state.lastImport.data.dataset_id, 'Dataset ID and manually calculated ID should match')
         .to.be.equal(calculatedDataSetId);
 
+    let i = 0;
     for (const fingerprint of fingerprints) {
-        expect(fingerprint).to.have.keys(['root_hash', 'blockchain_id']);
-        expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+        if (i === 0) {
+            expect(fingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+            expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-        expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
-            .to.be.equal(calculatedRootHash);
+            expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
+                .to.be.equal(calculatedRootHash);
+        } else {
+            expect(fingerprint).to.have.keys(['message', 'blockchain_id']);
+        }
+
+        i += 1;
     }
 });
 
@@ -801,7 +803,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
-        await this.state.localBlockchain.contracts.Holding.instance.methods.difficultyOverride().call();
+        await this.state.localBlockchain[0].contracts.Holding.instance.methods.difficultyOverride().call();
 
     // TODO: Check how many actually was chosen.
     let chosenCount = 0;

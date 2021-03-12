@@ -401,7 +401,7 @@ Then(
     async function () {
         expect(!!this.state.corruptedNode, 'Corrupted node not defined. Use other step to define it.').to.be.equal(true);
 
-        const erc725 = JSON.parse(fs.readFileSync(`${this.state.corruptedNode.options.configDir}/${this.state.corruptedNode.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+        const erc725 = JSON.parse(fs.readFileSync(`${this.state.corruptedNode.options.configDir}/${this.state.corruptedNode.options.nodeConfiguration.blockchain.implementations[0].identity_filepath}`).toString());
         expect(
             erc725.identity.toUpperCase(),
             'Declined identity should be the one that db was corrupted.',
