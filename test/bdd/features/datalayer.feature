@@ -3,7 +3,7 @@ Feature: Data layer related features
     Given the blockchains are set up
     And 1 bootstrap is running
 
-  @dl5
+  @third
   Scenario: Check that second gs1 import does not mess up first import's hash value
     Given I setup 4 nodes
     And I start the nodes
