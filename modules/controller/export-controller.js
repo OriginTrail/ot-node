@@ -129,7 +129,7 @@ class ExportController {
                     root_hash: data.root_hash,
                     data_hash: data.data_hash,
                     replication_info: data.replication_info,
-                    data_creators: data.data_creators,
+                    data_creator: data.data_creator,
                     dc_node_wallets: data.dc_node_wallets,
                     offer_id: data.offer_id,
                     import_status: data.import_status,
