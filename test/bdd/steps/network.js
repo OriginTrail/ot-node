@@ -981,9 +981,6 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
     for (let i = nodeCountSoFar; i < nodeCountSoFar + nodeCount; i += 1) {
         const newNode = new OtNode({
             nodeConfiguration: {
-                node_wallet: LocalBlockchain.wallets()[i].address,
-                node_private_key: LocalBlockchain.wallets()[i].privateKey,
-                management_wallet: LocalBlockchain.wallets()[i].address,
                 node_port: 6000 + i,
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
@@ -1315,23 +1312,20 @@ Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then 
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const { node_wallet, management_wallet } = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8'));
-    const operationalWallet = node_wallet;
-    let managementWallet = management_wallet;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const operationalWallet = implementation.node_wallet;
+        let managementWallet = implementation.management_wallet;
 
-    let randomIndex;
-    expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
+        let randomIndex;
+        expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
 
-    while (managementWallet === operationalWallet) {
-        // position walletCount-1 is reserved for bootstrap node
-        randomIndex = _.random(0, walletCount - 2);
-        managementWallet = wallets[randomIndex].address;
+        while (managementWallet === operationalWallet) {
+            // position walletCount-1 is reserved for bootstrap node
+            randomIndex = _.random(0, walletCount - 2);
+            managementWallet = wallets[randomIndex].address;
+        }
+        expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
     }
-    expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
 });
 
 
