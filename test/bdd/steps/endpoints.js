@@ -629,6 +629,9 @@ Then(/^DC should be the issuer for the selected element$/, { timeout: 120000 }, 
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    const erc725 = JSON.parse(fs.readFileSync(`${dc.options.configDir}/${dc.options.nodeConfiguration.erc725_identity_filepath}`).toString());
-    expect(this.state.elementIssuer[0].identifiers[0].identifierValue.toUpperCase()).to.be.equal(erc725.identity.toUpperCase());
+
+    for (const implementation of dc.options.nodeConfiguration.blockchain.implementations) {
+        const erc725 = JSON.parse(fs.readFileSync(`${dc.options.configDir}/${implementation.identity_filepath}`).toString());
+        expect(this.state.elementIssuer[0].identifiers[0].identifierValue.toUpperCase()).to.be.equal(erc725.identity.toUpperCase());
+    }
 });
