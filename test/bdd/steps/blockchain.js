@@ -36,29 +36,33 @@ Given(/^the blockchains are set up$/, { timeout: 60000 }, async function () {
 
 Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
     this.logger.log(`The replication difficulty is ${difficulty}`);
-    expect(
-        this.state.localBlockchain && this.state.localBlockchain.isInitialized,
-        'localBlockchain not initialized',
-    ).to.be.equal(true);
+    expect(this.state.localBlockchain, 'localBlockchain is not an array').to.be.an('array');
+    expect(this.state.localBlockchain, 'localBlockchain is not an array').to.have.lengthOf(2);
 
-    let currentDifficulty =
-        await this.state.localBlockchain.contracts.HoldingStorage.instance.methods
-            .difficultyOverride().call();
+    for (const blockchain of this.state.localBlockchain) {
+        expect(blockchain.isInitialized, 'localBlockchain not initialized').to.be.equal(true);
 
-    if (currentDifficulty !== difficulty.toString()) {
-        this.logger.log(`Changing difficulty modifier to ${difficulty}.`);
-        await this.state.localBlockchain.contracts.HoldingStorage.instance.methods
-            .setDifficultyOverride(difficulty).send({
-                // TODO: Add access to original wallet.
-                from: (await this.state.localBlockchain.web3.eth.getAccounts())[7],
-                gas: 3000000,
-            }).on('error', (error) => { throw error; });
+        let currentDifficulty =
+            // eslint-disable-next-line no-await-in-loop
+            await blockchain.contracts.HoldingStorage.instance.methods.difficultyOverride().call();
 
-        currentDifficulty = await
-        this.state.localBlockchain.contracts.HoldingStorage.instance.methods
-            .difficultyOverride().call();
+        if (currentDifficulty !== difficulty.toString()) {
+            this.logger.log(`Changing difficulty modifier to ${difficulty}.`);
+            // eslint-disable-next-line no-await-in-loop
+            await blockchain.contracts.HoldingStorage.instance.methods
+                .setDifficultyOverride(difficulty).send({
+                    // TODO: Add access to original wallet.
+                    // eslint-disable-next-line no-await-in-loop
+                    from: (await blockchain.web3.eth.getAccounts())[7],
+                    gas: 3000000,
+                }).on('error', (error) => { throw error; });
 
-        expect(currentDifficulty).to.be.equal(difficulty.toString());
+            // eslint-disable-next-line no-await-in-loop
+            currentDifficulty = await blockchain.contracts.HoldingStorage.instance.methods
+                .difficultyOverride().call();
+
+            expect(currentDifficulty).to.be.equal(difficulty.toString());
+        }
     }
 });
 
