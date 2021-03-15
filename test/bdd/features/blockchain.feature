@@ -3,7 +3,7 @@ Feature: Data layer related features
     Given the blockchains are set up
     And 1 bootstrap is running
 
-  @third
+  @skip
   Scenario: Check that updating the Holding contract doesn't make payouts fail
     Given I setup 4 nodes
     And I override configuration for all nodes

@@ -61,25 +61,6 @@ class OtNode extends EventEmitter {
             );
         }
 
-        if (this.options.nodeConfiguration.node_wallet
-            && this.options.nodeConfiguration.node_private_key
-            && this.options.nodeConfiguration.management_wallet) {
-            for (const blockchain of this.options.nodeConfiguration.blockchain.implementations) {
-                fs.writeFileSync(
-                    path.join(this.options.configDir, blockchain.node_wallet_path),
-                    JSON.stringify({
-                        node_wallet: this.options.nodeConfiguration.node_wallet,
-                        node_private_key: this.options.nodeConfiguration.node_private_key,
-                        management_wallet: this.options.nodeConfiguration.management_wallet,
-                    }),
-                );
-            }
-
-            delete this.options.nodeConfiguration.node_wallet;
-            delete this.options.nodeConfiguration.node_private_key;
-            delete this.options.nodeConfiguration.management_wallet;
-        }
-
         this.state = {};
         this.state.addedBids = []; // List of offer IDs (DH side).
         this.state.takenBids = []; // List of offer IDs (DH side).
