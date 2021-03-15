@@ -41,7 +41,7 @@ process.on('message', async (data) => {
         }
 
         const dc_node_wallets = ImportUtilities.extractDatasetSigners(document);
-        const data_creator = document.datasetHeader.dataCreator;
+        const data_creator = Utilities.copyObject(document.datasetHeader.dataCreator);
 
         if (data_creator.identifiers && Array.isArray(data_creator.identifiers)
             && data_creator.identifiers.length > 0) {
