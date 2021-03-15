@@ -85,14 +85,11 @@ function unpackRawTable(rawTable) {
     return unpacked;
 }
 
-function loadBlockchainConfig(localBlockchain) {
+function loadBlockchainConfig(localBlockchain, nodeNumber) {
     const blockchain_template = {
         blockchain_title: 'Ethereum',
-        gas_limit: 2000000,
-        gas_price: 20000000000,
-        max_allowed_gas_price: 100000000000,
-        dc_price_factor: '3',
-        dh_price_factor: '2',
+        gas_limit: '2000000',
+        gas_price: '20000000000',
         trac_price_in_base_currency: '0.00005',
         plugins: [
             {
@@ -115,16 +112,20 @@ function loadBlockchainConfig(localBlockchain) {
     };
 
     if (Array.isArray(localBlockchain)) {
+        let i = 0;
         for (const blockchain of localBlockchain) {
             const new_config = Object.assign({}, blockchain_template);
 
             new_config.hub_contract_address = blockchain.hubContractAddress;
             new_config.network_id = blockchain.name;
-            new_config.node_wallet_path = `wallet_${blockchain.name}.json`;
+            new_config.node_wallet = LocalBlockchain.wallets()[nodeNumber + i].address;
+            new_config.node_private_key = LocalBlockchain.wallets()[nodeNumber + i].privateKey;
+            new_config.management_wallet = LocalBlockchain.wallets()[nodeNumber + i].address;
             new_config.identity_filepath = `identity_${blockchain.name}.json`;
             new_config.rpc_server_url = `http://localhost:${blockchain.port}/`;
 
             blockchain_config.implementations.push(new_config);
+            i += 1;
         }
     } else {
         const new_config = Object.assign({}, blockchain_template);
@@ -145,20 +146,15 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
 
-    const walletCount = LocalBlockchain.wallets().length;
-
     // todo merge default config
     const bootstrapNode = new OtNode({
         nodeConfiguration: {
-            node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
-            node_private_key: LocalBlockchain.wallets()[walletCount - 1].privateKey,
-            management_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
                 database: `origintrail-test-${uuidv4()}`,
             },
-            blockchain: loadBlockchainConfig(this.state.localBlockchain),
+            blockchain: loadBlockchainConfig(this.state.localBlockchain, 0),
             network: {
                 id: 'Devnet',
                 // TODO: Connect other if using multiple.
@@ -185,9 +181,6 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
 
     for (let i = 0; i < nodeCount; i += 1) {
         const nodeConfiguration = {
-            node_wallet: LocalBlockchain.wallets()[i].address,
-            node_private_key: LocalBlockchain.wallets()[i].privateKey,
-            management_wallet: LocalBlockchain.wallets()[i].address,
             node_port: 6000 + i,
             node_rpc_port: 9000 + i,
             node_remote_control_port: 4000 + i,
@@ -200,7 +193,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             database: {
                 database: `origintrail-test-${uuidv4()}`,
             },
-            blockchain: loadBlockchainConfig(this.state.localBlockchain),
+            blockchain: loadBlockchainConfig(this.state.localBlockchain, i),
             local_network_only: true,
             dc_choose_time: 90000, // 90 seconds
             initial_deposit_amount: '10000000000000000000000',
@@ -351,10 +344,15 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeInd
     this.logger.log(`Setting node '${nodeIndex}' as ${nodeType}.`);
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
 
-    if (this.state.lastIssuerIdentity) {
-        this.state.secondLastIssuerIdentity = this.state.lastIssuerIdentity;
+    if (this.state.lastIssuerIdentities) {
+        this.state.secondLastIssuerIdentities = this.state.lastIssuerIdentities;
     }
-    this.state.lastIssuerIdentity = JSON.parse(fs.readFileSync(`${this.state[nodeType.toLowerCase()].options.configDir}/${this.state[nodeType.toLowerCase()].options.nodeConfiguration.erc725_identity_filepath}`).toString());
+
+
+    this.state.lastIssuerIdentities = [];
+    for (const blockchain of this.state[nodeType.toLowerCase()].options.nodeConfiguration.blockchain.implementations) {
+        this.state.lastIssuerIdentities.push(JSON.parse(fs.readFileSync(`${this.state[nodeType.toLowerCase()].options.configDir}/${blockchain.identity_filepath}`).toString()).identity);
+    }
 });
 
 Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one manually calculated$/, async function (nodeType) {
@@ -377,17 +375,12 @@ Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one man
     expect(response.document, 'response.document should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    const nodeWalletPath = path.join(
-        myNode.options.configDir,
-        myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
-
-    expect(ImportUtilities.extractDatasetSigners(response.document)[0].wallet.toLowerCase() === nodeWallet, 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigners(response.document).map(x => x.wallet.toLowerCase()).toString()
+        === myNode.options.nodeConfiguration.blockchain.implementations.map(x => x.node_wallet.toLowerCase()).toString(), 'Signature not valid!').to.be.true;
 
     const calculatedRootHash = ImportUtilities.calculateDatasetRootHash(response.document);
     const calculateDatasetId = ImportUtilities.calculateGraphPublicHash(response.document);
-    expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
+    expect(calculatedRootHash, `Calculated hash differs: ${calculatedRootHash} !== ${this.state.lastImport.data.root_hash}.`).to.be.equal(this.state.lastImport.data.root_hash);
     expect(calculateDatasetId, `Calculated data-set ID differs: ${calculateDatasetId} !== ${this.state.lastImport.data.dataset_id}.`).to.be.equal(this.state.lastImport.data.dataset_id);
 });
 
@@ -412,13 +405,7 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    const nodeWalletPath = path.join(
-        myNode.options.configDir,
-        myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
-
-    expect(ImportUtilities.extractDatasetSigners(lastExport.data.formatted_dataset)[0].wallet.toLowerCase() === nodeWallet.toLowerCase(), 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigners(lastExport.data.formatted_dataset)[0].wallet.toLowerCase() === myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet.toLowerCase(), 'Signature not valid!').to.be.true;
 });
 
 Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
@@ -470,7 +457,7 @@ Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async f
     expect(lastExport, 'response should contain data and status keys').to.have.keys([
         'data', 'status',
     ]);
-    let keys = ['formatted_dataset', 'dc_node_wallets', 'replication_info'];
+    let keys = ['formatted_dataset', 'dc_node_wallets', 'replication_info', 'data_creator'];
     if (lastExport.data.export_status) {
         expect(lastExport.data.export_status, 'response.data.export_status should be "COMPLETED"')
             .to.be.equal('COMPLETED');
@@ -540,12 +527,19 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     expect(this.state.lastImport.data.dataset_id, 'Dataset ID and manually calculated ID should match')
         .to.be.equal(calculatedDataSetId);
 
+    let i = 0;
     for (const fingerprint of fingerprints) {
-        expect(fingerprint).to.have.keys(['root_hash', 'blockchain_id']);
-        expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+        if (i === 0) {
+            expect(fingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+            expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-        expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
-            .to.be.equal(calculatedRootHash);
+            expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
+                .to.be.equal(calculatedRootHash);
+        } else {
+            expect(fingerprint).to.have.keys(['message', 'blockchain_id']);
+        }
+
+        i += 1;
     }
 });
 
@@ -561,58 +555,22 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
 
     const dataset1 = JSON.parse(this.state.secondLastExport.data.formatted_dataset);
     const dataset2 = JSON.parse(this.state.lastExport.data.formatted_dataset);
-    const dc1 = this.state.nodes[nodeIndex1 - 1];
-    const dc2 = this.state.nodes[nodeIndex2 - 1];
-
-    const nodeWalletPath1 = path.join(
-        dc1.options.configDir,
-        dc1.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet1 = JSON.parse(fs.readFileSync(nodeWalletPath1, 'utf8')).node_wallet;
-
-    const nodeWalletPath2 = path.join(
-        dc2.options.configDir,
-        dc2.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet2 = JSON.parse(fs.readFileSync(nodeWalletPath2, 'utf8')).node_wallet;
 
     // check dataset_id
     const calculatedDatasetId1 = ImportUtilities.calculateGraphPublicHash(dataset1);
-    expect(this.state.secondLastImport.data.dataset_id, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(calculatedDatasetId1);
-
-    // check signature
-    const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigners(dataset1)[0].wallet;
-    expect(Utilities.normalizeHex(calcuatedDatasetSignature1), 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(Utilities.normalizeHex(nodeWallet1));
-
     // check root_hash
     const calculatedDatasetRootHash1 = ImportUtilities.calculateDatasetRootHash(dataset1);
-    expect(calculatedDatasetRootHash1, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(this.state.secondLastExport.data.root_hash);
 
     // check dataset_id
     const calculatedDatasetId2 = ImportUtilities.calculateGraphPublicHash(dataset2);
-    expect(this.state.lastImport.data.dataset_id, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(calculatedDatasetId2);
-
-    // check signature
-    const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigners(dataset2)[0].wallet;
-    expect(Utilities.normalizeHex(calcuatedDatasetSignature2), 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(Utilities.normalizeHex(nodeWallet2));
-
     // check root_hash
     const calculatedDatasetRootHash2 = ImportUtilities.calculateDatasetRootHash(dataset2);
-    expect(calculatedDatasetRootHash2, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(this.state.lastExport.data.root_hash);
 
     if (condition.includes('not')) {
         expect(calculatedDatasetId1).to.be.not.equal(calculatedDatasetId2);
-        expect(calcuatedDatasetSignature1).to.be.not.equal(calcuatedDatasetSignature2);
         expect(calculatedDatasetRootHash1).to.be.not.equal(calculatedDatasetRootHash2);
     } else {
         expect(calculatedDatasetId1).to.be.equal(calculatedDatasetId2);
-        expect(calcuatedDatasetSignature1).to.be.equal(calcuatedDatasetSignature2);
         expect(calculatedDatasetRootHash1).to.be.equal(calculatedDatasetRootHash2);
     }
 });
@@ -803,7 +761,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
-        await this.state.localBlockchain.contracts.Holding.instance.methods.difficultyOverride().call();
+        await this.state.localBlockchain[0].contracts.Holding.instance.methods.difficultyOverride().call();
 
     // TODO: Check how many actually was chosen.
     let chosenCount = 0;
@@ -919,11 +877,15 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
             dc.state.node_rpc_url,
             this.state.lastImport.data.dataset_id,
         );
+    let fingerprintFound = false;
     for (const myFingerprint of myFingerprints) {
-        expect(myFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
-        expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+        if (myFingerprint.root_hash) {
+            expect(myFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+            expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+            fingerprintFound = true;
+        }
     }
-
+    expect(fingerprintFound, 'Unable to remember previos import fingerprint value').to.be.equal(true);
     this.state.secondLastFingerprint = myFingerprints;
     this.state.secondLastImport = this.state.lastImport;
 });
@@ -941,19 +903,9 @@ Then(/^checking again first import's root hash should point to remembered value$
             this.state.secondLastImport.data.dataset_id,
         );
 
-    for (const firstImportFingerprint of firstImportFingerprints) {
-        expect(firstImportFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
-        expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
-
-        const secondLastFingerprint = this.state.secondLastFingerprint
-            .find(e => e.blockchain_id === firstImportFingerprint.blockchain_id);
-
-        expect(firstImportFingerprint.root_hash).to.be.equal(secondLastFingerprint.root_hash);
-    }
-
     expect(
         deepEqual(firstImportFingerprints, this.state.secondLastFingerprint),
-        'import and root has in both scenario should be indentical',
+        'import and root hash in both scenario should be indentical',
     ).to.be.equal(true);
 });
 
@@ -981,9 +933,6 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
     for (let i = nodeCountSoFar; i < nodeCountSoFar + nodeCount; i += 1) {
         const newNode = new OtNode({
             nodeConfiguration: {
-                node_wallet: LocalBlockchain.wallets()[i].address,
-                node_private_key: LocalBlockchain.wallets()[i].privateKey,
-                management_wallet: LocalBlockchain.wallets()[i].address,
                 node_port: 6000 + i,
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
@@ -996,38 +945,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 30000 }, function (nod
                 database: {
                     database: `origintrail-test-${uuidv4()}`,
                 },
-                blockchain: {
-                    implementations: [
-                        {
-                            blockchain_title: 'Ethereum',
-                            network_id: 'development',
-                            hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                            rpc_server_url: 'http://localhost:7545/',
-                            node_wallet_path: 'wallet.json',
-                            identity_filepath: 'erc725_identity.json',
-                            gas_limit: 2000000,
-                            gas_price: 20000000000,
-                            max_allowed_gas_price: 100000000000,
-                            dc_price_factor: '3',
-                            dh_price_factor: '2',
-                            trac_price_in_base_currency: '0.00005',
-                            plugins: [
-                                {
-                                    enabled: false,
-                                    provider: 'Hyperledger',
-                                    name: 'fingerprint-plugin',
-                                    config: {
-                                        url: 'URL',
-                                        auth: {
-                                            user: 'USER',
-                                            pass: 'PASS',
-                                        },
-                                    },
-                                },
-                            ],
-                        },
-                    ],
-                },
+                blockchain: loadBlockchainConfig(this.state.localBlockchain, i),
                 local_network_only: true,
                 initial_deposit_amount: '10000000000000000000000',
                 commandExecutorVerboseLoggingEnabled: true,
@@ -1346,23 +1264,20 @@ Given(/^I set (\d+)[st|nd|rd|th]+ node's management wallet to be different then 
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const { node_wallet, management_wallet } = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8'));
-    const operationalWallet = node_wallet;
-    let managementWallet = management_wallet;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const operationalWallet = implementation.node_wallet;
+        let managementWallet = implementation.management_wallet;
 
-    let randomIndex;
-    expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
+        let randomIndex;
+        expect(operationalWallet, 'At this point operational and management wallets should be identical').to.be.equal(managementWallet);
 
-    while (managementWallet === operationalWallet) {
-        // position walletCount-1 is reserved for bootstrap node
-        randomIndex = _.random(0, walletCount - 2);
-        managementWallet = wallets[randomIndex].address;
+        while (managementWallet === operationalWallet) {
+            // position walletCount-1 is reserved for bootstrap node
+            randomIndex = _.random(0, walletCount - 2);
+            managementWallet = wallets[randomIndex].address;
+        }
+        expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
     }
-    expect(operationalWallet, 'At this point operational and management wallets should not be identical').to.not.be.equal(managementWallet);
 });
 
 

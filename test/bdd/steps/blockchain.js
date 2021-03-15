@@ -36,29 +36,33 @@ Given(/^the blockchains are set up$/, { timeout: 60000 }, async function () {
 
 Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
     this.logger.log(`The replication difficulty is ${difficulty}`);
-    expect(
-        this.state.localBlockchain && this.state.localBlockchain.isInitialized,
-        'localBlockchain not initialized',
-    ).to.be.equal(true);
+    expect(this.state.localBlockchain, 'localBlockchain is not an array').to.be.an('array');
+    expect(this.state.localBlockchain, 'localBlockchain is not an array').to.have.lengthOf(2);
 
-    let currentDifficulty =
-        await this.state.localBlockchain.contracts.HoldingStorage.instance.methods
-            .difficultyOverride().call();
+    for (const blockchain of this.state.localBlockchain) {
+        expect(blockchain.isInitialized, 'localBlockchain not initialized').to.be.equal(true);
 
-    if (currentDifficulty !== difficulty.toString()) {
-        this.logger.log(`Changing difficulty modifier to ${difficulty}.`);
-        await this.state.localBlockchain.contracts.HoldingStorage.instance.methods
-            .setDifficultyOverride(difficulty).send({
-                // TODO: Add access to original wallet.
-                from: (await this.state.localBlockchain.web3.eth.getAccounts())[7],
-                gas: 3000000,
-            }).on('error', (error) => { throw error; });
+        let currentDifficulty =
+            // eslint-disable-next-line no-await-in-loop
+            await blockchain.contracts.HoldingStorage.instance.methods.difficultyOverride().call();
 
-        currentDifficulty = await
-        this.state.localBlockchain.contracts.HoldingStorage.instance.methods
-            .difficultyOverride().call();
+        if (currentDifficulty !== difficulty.toString()) {
+            this.logger.log(`Changing difficulty modifier to ${difficulty}.`);
+            // eslint-disable-next-line no-await-in-loop
+            await blockchain.contracts.HoldingStorage.instance.methods
+                .setDifficultyOverride(difficulty).send({
+                    // TODO: Add access to original wallet.
+                    // eslint-disable-next-line no-await-in-loop
+                    from: (await blockchain.web3.eth.getAccounts())[7],
+                    gas: 3000000,
+                }).on('error', (error) => { throw error; });
 
-        expect(currentDifficulty).to.be.equal(difficulty.toString());
+            // eslint-disable-next-line no-await-in-loop
+            currentDifficulty = await blockchain.contracts.HoldingStorage.instance.methods
+                .difficultyOverride().call();
+
+            expect(currentDifficulty).to.be.equal(difficulty.toString());
+        }
     }
 });
 
@@ -70,39 +74,41 @@ Given(/^the (\d+)[st|nd|rd|th]+ node's spend all the (Ethers|Tokens)$/, async fu
     expect(currencyType).to.be.oneOf(['Ethers', 'Tokens']);
 
     const node = this.state.nodes[nodeIndex - 1];
-    const blockchain = Array.isArray(this.state.localBlockchain) ?
-        this.state.localBlockchain[0] : this.state.localBlockchain;
-    const { web3 } = blockchain;
-    const targetWallet = web3.eth.accounts.create();
 
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
+    const i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const { web3 } = this.state.localBlockchain[i];
+        const targetWallet = web3.eth.accounts.create();
 
-    if (currencyType === 'Ethers') {
-        const balance = await blockchain.getBalanceInEthers(nodeWallet);
-        const balanceBN = new BN(balance, 10);
-        const toSend = balanceBN.sub(new BN(await web3.eth.getGasPrice(), 10).mul(new BN(21000)));
-        await web3.eth.sendTransaction({
-            to: targetWallet.address,
-            from: nodeWallet,
-            value: toSend,
-            gas: 21000,
-            gasPrice: await web3.eth.getGasPrice(),
-        });
-        expect(await blockchain.getBalanceInEthers(nodeWallet)).to.equal('0');
-    } else if (currencyType === 'Tokens') {
-        const balance =
-            await blockchain.contracts.Token.instance.methods
-                .balanceOf(nodeWallet).call();
+        if (currencyType === 'Ethers') {
+            // eslint-disable-next-line no-await-in-loop,max-len
+            const balance = await this.state.localBlockchain[i].getBalanceInEthers(implementation.node_wallet);
+            const balanceBN = new BN(balance, 10);
+            // eslint-disable-next-line no-await-in-loop,max-len
+            const toSend = balanceBN.sub(new BN(await web3.eth.getGasPrice(), 10).mul(new BN(21000)));
+            // eslint-disable-next-line no-await-in-loop
+            await web3.eth.sendTransaction({
+                to: targetWallet.address,
+                from: implementation.node_wallet,
+                value: toSend,
+                gas: 21000,
+                // eslint-disable-next-line no-await-in-loop
+                gasPrice: await web3.eth.getGasPrice(),
+            });
+            // eslint-disable-next-line no-await-in-loop
+            expect(await this.state.localBlockchain[i].getBalanceInEthers(implementation.node_wallet)).to.equal('0');
+        } else if (currencyType === 'Tokens') {
+            // eslint-disable-next-line no-await-in-loop,max-len
+            const balance = await this.state.localBlockchain[i].contracts.Token.instance.methods.balanceOf(implementation.node_wallet).call();
 
-        await blockchain.contracts.Token.instance.methods
-            .transfer(targetWallet.address, balance)
-            .send({ from: nodeWallet, gas: 3000000 });
-        expect(await blockchain.contracts.Token.instance.methods
-            .balanceOf(nodeWallet).call()).to.equal('0');
+            // eslint-disable-next-line no-await-in-loop
+            await this.state.localBlockchain[i].contracts.Token.instance.methods
+                .transfer(targetWallet.address, balance)
+                .send({ from: implementation.node_wallet, gas: 3000000 });
+            // eslint-disable-next-line no-await-in-loop
+            expect(await this.state.localBlockchain[i].contracts.Token.instance.methods
+                .balanceOf(implementation.node_wallet).call()).to.equal('0');
+        }
     }
 });
 

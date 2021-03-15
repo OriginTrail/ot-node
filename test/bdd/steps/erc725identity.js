@@ -17,39 +17,39 @@ Given(/^I manually create ERC725 identity for (\d+)[st|nd|rd|th]+ node$/, async 
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWalletJson = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8'));
+    this.state.manualStuff.erc725Identities = [];
 
-    const nodeWallet = nodeWalletJson.node_wallet;
-    const nodeWalletKey = nodeWalletJson.node_private_key;
-    const nodeManagementWallet = nodeWalletJson.management_wallet;
-
-    const identityContractInstance =
-        await this.state.localBlockchain.createIdentity(
-            nodeWallet,
-            nodeWalletKey,
-            nodeManagementWallet,
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        // eslint-disable-next-line no-await-in-loop
+        const identityContractInstance = await this.state.localBlockchain[i].createIdentity(
+            implementation.node_wallet,
+            implementation.node_private_key,
+            implementation.management_wallet,
         );
-    expect(identityContractInstance._address).to.not.be.undefined;
-    this.state.manualStuff.erc725Identity = identityContractInstance._address;
+        expect(identityContractInstance._address).to.not.be.undefined;
+        this.state.manualStuff.erc725Identities.push(identityContractInstance._address);
+        i += 1;
+    }
 });
 
 When(/^I use the created ERC725 identity in (\d+)[st|nd|rd|th]+ node$/, async function (nodeIndex) {
     expect(this.state.localBlockchain, 'No blockchain.').to.not.be.undefined;
-    expect(this.state.manualStuff.erc725Identity, 'No ERC725 identity.').to.not.be.undefined;
+    expect(this.state.manualStuff.erc725Identities, 'No ERC725 identity.').to.not.be.undefined;
     expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    fs.writeFileSync(
-        path.join(node.options.configDir, 'erc725_identity.json'),
-        JSON.stringify({ identity: this.state.manualStuff.erc725Identity }),
-    );
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        fs.writeFileSync(
+            path.join(node.options.configDir, implementation.identity_filepath),
+            JSON.stringify({ identity: this.state.manualStuff.erc725Identities[i] }),
+        );
+        i += 1;
+    }
 });
 
 Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid ERC725 identity/, async function (nodeIndex) {
@@ -59,29 +59,27 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid ERC725 identity/, async 
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    // Profile file should exist in app-data-path.
-    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
-    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
-    expect(erc725Profile).to.have.key('identity');
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const erc725ProfileJsonPath =
+            path.join(node.options.configDir, implementation.identity_filepath);
+        const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+        expect(erc725Profile).to.have.key('identity');
 
-    const erc725ProfileAddress = erc725Profile.identity;
-    const { web3 } = this.state.localBlockchain;
-    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
-    erc725Contract.options.address = erc725ProfileAddress;
+        const erc725ProfileAddress = erc725Profile.identity;
+        const { web3 } = this.state.localBlockchain[i];
+        const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+        erc725Contract.options.address = erc725ProfileAddress;
 
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
-    const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeWallet), 'hex'));
+        const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(implementation.node_wallet), 'hex'));
+        // eslint-disable-next-line no-await-in-loop,max-len
+        const result = await erc725Contract.methods.getKey(utilities.normalizeHex(hashedAddress)).call();
 
+        expect(result).to.have.keys(['0', '1', '2', 'purposes', 'keyType', 'key']);
+        expect(result.purposes).to.have.ordered.members(['1', '2', '3', '4']);
 
-    const result =
-        await erc725Contract.methods.getKey(utilities.normalizeHex(hashedAddress)).call();
-
-    expect(result).to.have.keys(['0', '1', '2', 'purposes', 'keyType', 'key']);
-    expect(result.purposes).to.have.ordered.members(['1', '2', '3', '4']);
+        i += 1;
+    }
 });
 
 Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid profile$/, async function (nodeIndex) {
@@ -92,17 +90,23 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid profile$/, async functio
     const node = this.state.nodes[nodeIndex - 1];
     const nodeId = node.state.identity;
     // Profile file should exist in app-data-path.
-    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
-    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
-    expect(erc725Profile).to.have.key('identity');
 
-    const erc725ProfileAddress = erc725Profile.identity;
-    const result =
-        await this.state.localBlockchain.contracts.ProfileStorage.instance
-            .methods.profile(erc725ProfileAddress).call();
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const erc725ProfileJsonPath =
+            path.join(node.options.configDir, implementation.identity_filepath);
+        const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+        expect(erc725Profile).to.have.key('identity');
 
-    expect(result.nodeId, `Got ${JSON.stringify(result)}`).to.equal(`0x${nodeId}000000000000000000000000`);
-    expect(new BN(result.stake).gt(new BN(0)), `Got ${JSON.stringify(result)}`).to.be.true;
+        const erc725ProfileAddress = erc725Profile.identity;
+        // eslint-disable-next-line no-await-in-loop,max-len
+        const result = await this.state.localBlockchain[i].contracts.ProfileStorage.instance.methods.profile(erc725ProfileAddress).call();
+
+        expect(result.nodeId, `Got ${JSON.stringify(result)}`).to.equal(`0x${nodeId}000000000000000000000000`);
+        expect(new BN(result.stake).gt(new BN(0)), `Got ${JSON.stringify(result)}`).to.be.true;
+
+        i += 1;
+    }
 });
 
 When(/^I set up the (\d+)[st|nd|rd|th]+ node as the parent of the (\d+)[st|nd|rd|th]+ node$/, async function (parentIndex, nodeIndex) {
@@ -194,19 +198,26 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a management wallet/, async func
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    // Profile file should exist in app-data-path.
-    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
-    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
-    expect(erc725Profile).to.have.key('identity');
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        // Profile file should exist in app-data-path.
+        const erc725ProfileJsonPath =
+            path.join(node.options.configDir, implementation.identity_filepath);
+        const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+        expect(erc725Profile).to.have.key('identity');
 
-    const erc725ProfileAddress = erc725Profile.identity;
-    const { web3 } = this.state.localBlockchain;
-    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
-    erc725Contract.options.address = erc725ProfileAddress;
+        const erc725ProfileAddress = erc725Profile.identity;
+        const { web3 } = this.state.localBlockchain[i];
+        const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+        erc725Contract.options.address = erc725ProfileAddress;
 
-    const managementWallet = await erc725Contract.methods.getKeysByPurpose(1).call();
-    expect(managementWallet.length).to.be.greaterThan(0);
-    expect(managementWallet[0]).to.be.not.null;
+        // eslint-disable-next-line no-await-in-loop
+        const managementWallet = await erc725Contract.methods.getKeysByPurpose(1).call();
+        expect(managementWallet.length).to.be.greaterThan(0);
+        expect(managementWallet[0]).to.be.not.null;
+
+        i += 1;
+    }
 });
 
 
@@ -217,26 +228,27 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid management wallet/, asyn
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeManagementWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).management_wallet;
-    const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeManagementWallet), 'hex'));
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(implementation.node_wallet), 'hex'));
+        // Profile file should exist in app-data-path.
+        const erc725ProfileJsonPath =
+            path.join(node.options.configDir, implementation.identity_filepath);
+        const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+        expect(erc725Profile).to.have.key('identity');
 
-    // Profile file should exist in app-data-path.
-    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
-    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
-    expect(erc725Profile).to.have.key('identity');
+        const erc725ProfileAddress = erc725Profile.identity;
+        const { web3 } = this.state.localBlockchain[i];
+        const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+        erc725Contract.options.address = erc725ProfileAddress;
 
-    const erc725ProfileAddress = erc725Profile.identity;
-    const { web3 } = this.state.localBlockchain;
-    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
-    erc725Contract.options.address = erc725ProfileAddress;
+        // eslint-disable-next-line no-await-in-loop
+        const managementWallet = await erc725Contract.methods.getKeysByPurpose(1).call();
+        expect(managementWallet.length).to.be.greaterThan(0);
+        expect(managementWallet[0]).to.equal(`0x${hashedAddress}`);
 
-    const managementWallet = await erc725Contract.methods.getKeysByPurpose(1).call();
-    expect(managementWallet.length).to.be.greaterThan(0);
-    expect(managementWallet[0]).to.equal(`0x${hashedAddress}`);
+        i += 1;
+    }
 });
 
 
@@ -246,29 +258,32 @@ Then(/^the (\d+)[st|nd|rd|th]+ node should have a default management wallet/, as
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
-    const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(nodeWallet), 'hex'));
 
-    // Profile file should exist in app-data-path.
-    const erc725ProfileJsonPath = path.join(node.options.configDir, 'erc725_identity.json');
-    const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
-    expect(erc725Profile).to.have.key('identity');
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        const hashedAddress = keccak_256(Buffer.from(utilities.denormalizeHex(implementation.node_wallet), 'hex'));
 
-    const erc725ProfileAddress = erc725Profile.identity;
-    const { web3 } = this.state.localBlockchain;
-    const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
-    erc725Contract.options.address = erc725ProfileAddress;
+        // Profile file should exist in app-data-path.
+        const erc725ProfileJsonPath =
+            path.join(node.options.configDir, implementation.identity_filepath);
+        const erc725Profile = JSON.parse(fs.readFileSync(erc725ProfileJsonPath, 'utf8'));
+        expect(erc725Profile).to.have.key('identity');
 
-    const purposes = [1, 2, 3, 4];
+        const erc725ProfileAddress = erc725Profile.identity;
+        const { web3 } = this.state.localBlockchain[i];
+        const erc725Contract = new web3.eth.Contract(erc725ProfileAbi);
+        erc725Contract.options.address = erc725ProfileAddress;
 
-    await Promise.all(purposes.map(async (p) => {
-        const managementWallet = await erc725Contract.methods.getKeysByPurpose(p).call();
-        expect(managementWallet.length).to.be.equal(1);
-        expect(managementWallet[0]).to.equal(`0x${hashedAddress}`);
-    }));
+        const purposes = [1, 2, 3, 4];
+
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.all(purposes.map(async (p) => {
+            const managementWallet = await erc725Contract.methods.getKeysByPurpose(p).call();
+            expect(managementWallet.length).to.be.equal(1);
+            expect(managementWallet[0]).to.equal(`0x${hashedAddress}`);
+        }));
+
+        i += 1;
+    }
 });
 

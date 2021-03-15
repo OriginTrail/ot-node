@@ -11,6 +11,8 @@ const { normalizeGraph } = require('./Database/graph-converter');
 const Models = require('../models');
 const OtJsonUtilities = require('./OtJsonUtilities');
 const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
+// TODO Is this safe to read, IE will it always be the same,
+//  (could the node somehow change this in runtime? )
 const defaultConfig = require('../config/config')[process.env.NODE_ENV];
 
 const data_constants = {
