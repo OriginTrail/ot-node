@@ -558,17 +558,8 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
     const dc1 = this.state.nodes[nodeIndex1 - 1];
     const dc2 = this.state.nodes[nodeIndex2 - 1];
 
-    const nodeWalletPath1 = path.join(
-        dc1.options.configDir,
-        dc1.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet1 = JSON.parse(fs.readFileSync(nodeWalletPath1, 'utf8')).node_wallet;
-
-    const nodeWalletPath2 = path.join(
-        dc2.options.configDir,
-        dc2.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet2 = JSON.parse(fs.readFileSync(nodeWalletPath2, 'utf8')).node_wallet;
+    const nodeWallet1 = dc1.options.nodeConfiguration.blockchain.implementations[0].node_wallet;
+    const nodeWallet2 = dc2.options.nodeConfiguration.blockchain.implementations[0].node_wallet;
 
     // check dataset_id
     const calculatedDatasetId1 = ImportUtilities.calculateGraphPublicHash(dataset1);
