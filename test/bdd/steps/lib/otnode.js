@@ -276,7 +276,7 @@ class OtNode extends EventEmitter {
             const offerId = line.match(offerIdRegex)[0];
         } else if (line.match(/Not enough DHs submitted/gi)) {
             this.emit('not-enough-dhs');
-        } else if (line.match(/.*Offer .+ finalized/gi)) {
+        } else if (line.match(/.*Offer .+ finalized.*/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
             this.state.offersFinalized.push(offerId);

@@ -38,8 +38,6 @@ class DcFinalizeImport extends Command {
         }
 
         try {
-            const { node_wallet } = this.blockchain.getWallet().response;
-
             let dataProviderWallets;
             if (!data_provider_wallets) {
                 dataProviderWallets = this.blockchain.getAllWallets()

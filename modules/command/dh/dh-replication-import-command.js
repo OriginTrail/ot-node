@@ -61,7 +61,7 @@ class DhReplicationImportCommand extends Command {
                 encryptedMap = result.encMap;
             })
             .then(() => this.validateDatasetId(dataSetId, decryptedDataset))
-            .then(() => this.validateRootHash(decryptedDataset, dataSetId, otJson))
+            .then(() => this.validateRootHash(decryptedDataset, dataSetId, otJson, blockchain_id))
             .then((result) => {
                 decryptedGraphRootHash = result;
             })
@@ -72,6 +72,7 @@ class DhReplicationImportCommand extends Command {
                 dataSetId,
                 dcIdentity,
                 dcNodeId,
+                blockchain_id,
             ))
             .then(() => this.updateHoldingData(
                 offerId,
@@ -92,8 +93,9 @@ class DhReplicationImportCommand extends Command {
                 otJson,
                 decryptedGraphRootHash,
                 dcWallet,
+                blockchain_id,
             ))
-            .then(() => this.sendReplicationFinishedMessage(offerId, dcNodeId))
+            .then(() => this.sendReplicationFinishedMessage(offerId, dcNodeId, blockchain_id))
             .then(() => this.updateBidData(offerId))
             .then(() => this.commandExecutor.add({
                 name: 'dhOfferFinalizedCommand',
@@ -152,10 +154,11 @@ class DhReplicationImportCommand extends Command {
         }
     }
 
-    async validateRootHash(decryptedDataset, dataSetId, otJson) {
+    async validateRootHash(decryptedDataset, dataSetId, otJson, blockchain_id) {
         this.logger.trace('Validating root hash.');
         const decryptedGraphRootHash = ImportUtilities.calculateDatasetRootHash(decryptedDataset);
-        const blockchainRootHash = await this.blockchain.getRootHash(dataSetId);
+        const blockchainRootHash = await this.blockchain
+            .getRootHash(dataSetId, blockchain_id).response;
         if (decryptedGraphRootHash !== blockchainRootHash) {
             throw Error(`Calculated root hash ${decryptedGraphRootHash} differs from Blockchain root hash ${blockchainRootHash}`);
         }
@@ -185,6 +188,7 @@ class DhReplicationImportCommand extends Command {
         dataSetId,
         dcIdentity,
         dcNodeId,
+        blockchain_id,
     ) {
         this.permissionedDataService.attachPermissionedDataToGraph(
             decryptedDataset['@graph'],
@@ -194,6 +198,7 @@ class DhReplicationImportCommand extends Command {
         await this.permissionedDataService.addDataSellerForPermissionedData(
             dataSetId,
             dcIdentity,
+            blockchain_id,
             0,
             dcNodeId,
             decryptedDataset['@graph'],
@@ -252,8 +257,15 @@ class DhReplicationImportCommand extends Command {
         }
     }
 
-    async updateDataInfo(dataSetId, decryptedDataset, otJson, decryptedGraphRootHash, dcWallet) {
-        const dataInfo = await Models.data_info.findOne({
+    async updateDataInfo(
+        dataSetId,
+        decryptedDataset,
+        otJson,
+        decryptedGraphRootHash,
+        dcWallet,
+        blockchainId,
+    ) {
+        let dataInfo = await Models.data_info.findOne({
             where: {
                 data_set_id: dataSetId,
             },
@@ -262,31 +274,48 @@ class DhReplicationImportCommand extends Command {
         if (dataInfo == null) {
             const dataSize = bytes(JSON.stringify(decryptedDataset));
             const dataHash = Utilities.normalizeHex(sha3_256(`${otJson}`));
-            await Models.data_info.create({
+
+            dataInfo = await Models.data_info.create({
                 data_set_id: dataSetId,
-                total_documents: decryptedDataset['@graph'].length,
                 root_hash: decryptedGraphRootHash,
-                data_provider_wallet: dcWallet,
                 import_timestamp: new Date(),
+                total_documents: decryptedDataset['@graph'].length,
+                origin: 'HOLDING',
                 otjson_size_in_bytes: dataSize,
                 data_hash: dataHash,
-                origin: 'HOLDING',
+            });
+        }
+        const dataProviderWallet = await Models.data_provider_wallets.findOne({
+            where: {
+                wallet: Utilities.normalizeHex(dcWallet),
+                blockchain_id: blockchainId,
+            },
+        });
+        if (!dataProviderWallet) {
+            Models.data_provider_wallets.create({
+                data_info_id: dataInfo.id,
+                wallet: Utilities.normalizeHex(dcWallet),
+                blockchain_id: blockchainId,
             });
         }
     }
 
-    async sendReplicationFinishedMessage(offerId, dcNodeId) {
+    async sendReplicationFinishedMessage(offerId, dcNodeId, blockchainId) {
+        const dhIdentity = this.profileService.getIdentity(blockchainId);
         const toSign = [
             Utilities.denormalizeHex(offerId),
-            Utilities.denormalizeHex(this.config.erc725Identity)];
+            Utilities.denormalizeHex(dhIdentity)];
+
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
+            .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
         const replicationFinishedMessage = {
             offerId,
-            dhIdentity: this.config.erc725Identity,
+            dhIdentity,
             messageSignature: messageSignature.signature,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
         };
 
         await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);

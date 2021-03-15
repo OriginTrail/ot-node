@@ -32,7 +32,7 @@ class DcReplicationCompletedCommand extends Command {
         const address = encryption.extractSignerAddress(toValidate, signature);
 
         if (!Utilities.compareHexStrings(address, dhWallet)) {
-            throw new Error(`Faile d to validate DH ${dhWallet} signature for offer ${offerId}`);
+            throw new Error(`Failed to validate DH ${dhWallet} signature for offer ${offerId}`);
         }
 
         const replicatedData = await models.replicated_data.findOne({
