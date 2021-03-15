@@ -28,7 +28,7 @@ class RestAPIServiceV2 {
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
 
-        this.version_id = 'v2.0';
+        this.version_id = 'v2.1';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();

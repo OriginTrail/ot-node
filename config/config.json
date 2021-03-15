@@ -33,7 +33,7 @@
     "read_stake_factor": "1",
     "dh_min_stake_amount": "100000000000",
     "dh_min_reputation": -50,
-    "latest_api_version" : "v2.0",
+    "latest_api_version" : "v2.1",
     "default_data_price": "100000000000000000000",
     "send_challenges_log" : true,
     "database": {
@@ -195,7 +195,7 @@
     "read_stake_factor": "1",
     "dh_min_stake_amount": "100000000000",
     "dh_min_reputation": -50,
-    "latest_api_version" : "v2.0",
+    "latest_api_version" : "v2.1",
     "default_data_price": "100000000000000000000",
     "send_challenges_log" : true,
     "database": {
@@ -361,7 +361,7 @@
     "read_stake_factor": "1",
     "dh_min_stake_amount": "100000000000",
     "dh_min_reputation": -50,
-    "latest_api_version" : "v2.0",
+    "latest_api_version" : "v2.1",
     "default_data_price": "100000000000000000000",
     "send_challenges_log" : true,
     "database": {
