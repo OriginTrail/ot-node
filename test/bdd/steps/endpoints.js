@@ -435,7 +435,7 @@ Given(
 
         const host = this.state[dataOwner.toLowerCase()].state.node_rpc_url;
         const viewerState = this.state[viewer.toLowerCase()];
-        const viewerErc725 = JSON.parse(fs.readFileSync(`${viewerState.options.configDir}/${viewerState.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+        const viewerErc725 = JSON.parse(fs.readFileSync(`${viewerState.options.configDir}/${viewerState.options.nodeConfiguration.blockchain.implementations[0].identity_filepath}`).toString());
 
         const requestBody = {
             ot_object_id: objectId,
