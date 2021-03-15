@@ -18,7 +18,7 @@ Feature: Data layer related features
     And DC waits for holding time
     Then selected DHes should be paid out
 
-  @fourth
+  @skip
   Scenario: Check that updating the Holding contract doesn't make an offer fail
     Given I setup 4 nodes
     And I override configuration for all nodes
