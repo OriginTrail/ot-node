@@ -5,6 +5,7 @@ const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 const OtJsonUtilities = require('../OtJsonUtilities');
 const fs = require('fs');
+const defaultConfig = require('../../config/config')[process.env.NODE_ENV];
 
 process.on('message', async (data) => {
     const {
@@ -40,7 +41,33 @@ process.on('message', async (data) => {
         }
 
         const dc_node_wallets = ImportUtilities.extractDatasetSigners(document);
-        const data_creator = document.datasetHeader.dataCreator;
+        const data_creator = Utilities.copyObject(document.datasetHeader.dataCreator);
+
+        if (data_creator.identifiers && Array.isArray(data_creator.identifiers)
+            && data_creator.identifiers.length > 0) {
+            for (const identifierObject of data_creator.identifiers) {
+                const identifierSchemaName = identifierObject.validationSchema;
+
+                const schemas = document.datasetHeader.validationSchemas;
+                let schemaObject;
+                for (const headerSchemaName in schemas) {
+                    if (Object.prototype.hasOwnProperty.call(schemas, headerSchemaName) &&
+                        identifierSchemaName.includes(headerSchemaName)) {
+                        schemaObject = schemas[headerSchemaName];
+                    }
+                }
+                if (schemaObject) {
+                    // Added to overwrite the previous ambiguous blockchain_id of Ethereum
+                    const blockchain_id = schemaObject.networkId === 'mainnet' ?
+                        defaultConfig.blockchain.implementations[0].network_id :
+                        schemaObject.networkId;
+
+                    identifierObject.blockchain_id = blockchain_id;
+                } else {
+                    throw new Error(`Could not find validationSchema for ${identifierSchemaName}`);
+                }
+            }
+        }
 
         let dataset;
         switch (standardId) {
