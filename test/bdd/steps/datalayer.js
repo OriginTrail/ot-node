@@ -92,9 +92,8 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         const myDataSetId = myApiImportsInfo[i].data_set_id;
 
         const myFingerprints = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
-        for (const fingerprint of myFingerprints) {
-            expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
-        }
+        const fingerprint = myFingerprints[0].root_hash;
+        expect(utilities.isZeroHash(fingerprint), 'root hash value should not be zero hash').to.be.equal(false);
 
         const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
@@ -102,10 +101,7 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
         const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset);
-
-        for (const fingerprint of myFingerprints) {
-            expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
-        }
+        expect(fingerprint, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
     }
 });
 
