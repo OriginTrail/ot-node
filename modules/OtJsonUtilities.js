@@ -74,12 +74,13 @@ class OtJsonUtilities {
         const result = [];
         for (const creatorId of datasetHeader.dataCreator.identifiers) {
             const identity = creatorId.identifierValue;
+            const validationSchemaName = creatorId.validationSchema.replace('/schemas/', '');
 
             // Added to overwrite the previous ambiguous blockchain_id of Ethereum
             const blockchain_id =
-                datasetHeader.validationSchemas[creatorId.validationSchema].networkId === 'mainnet'
+                datasetHeader.validationSchemas[validationSchemaName].networkId === 'mainnet'
                     ? defaultConfig.blockchain.implementations[0].networkId
-                    : datasetHeader.validationSchemas[creatorId.validationSchema].network_id;
+                    : datasetHeader.validationSchemas[validationSchemaName].networkId;
 
             const schemaPostfix = creatorId.validationSchema.split('erc725-main').pop();
             const schemaEndpoint = `merkleRoot${schemaPostfix}`;
