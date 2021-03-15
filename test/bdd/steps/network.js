@@ -405,13 +405,7 @@ Then(/^the last exported dataset signature should belong to ([DC|DV]+)$/, async 
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    const nodeWalletPath = path.join(
-        myNode.options.configDir,
-        myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
-
-    expect(ImportUtilities.extractDatasetSigners(lastExport.data.formatted_dataset)[0].wallet.toLowerCase() === nodeWallet.toLowerCase(), 'Signature not valid!').to.be.true;
+    expect(ImportUtilities.extractDatasetSigners(lastExport.data.formatted_dataset)[0].wallet.toLowerCase() === myNode.options.nodeConfiguration.blockchain.implementations[0].node_wallet.toLowerCase(), 'Signature not valid!').to.be.true;
 });
 
 Then(/^the last exported dataset should contain "([^"]*)" data as "([^"]*)"$/, async function (filePath, dataId) {
