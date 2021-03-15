@@ -555,49 +555,22 @@ Then(/^the last two exported datasets from (\d+)[st|nd|rd|th]+ and (\d+)[st|nd|r
 
     const dataset1 = JSON.parse(this.state.secondLastExport.data.formatted_dataset);
     const dataset2 = JSON.parse(this.state.lastExport.data.formatted_dataset);
-    const dc1 = this.state.nodes[nodeIndex1 - 1];
-    const dc2 = this.state.nodes[nodeIndex2 - 1];
-
-    const nodeWallet1 = dc1.options.nodeConfiguration.blockchain.implementations[0].node_wallet;
-    const nodeWallet2 = dc2.options.nodeConfiguration.blockchain.implementations[0].node_wallet;
 
     // check dataset_id
     const calculatedDatasetId1 = ImportUtilities.calculateGraphPublicHash(dataset1);
-    expect(this.state.secondLastImport.data.dataset_id, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(calculatedDatasetId1);
-
-    // check signature
-    const calcuatedDatasetSignature1 = ImportUtilities.extractDatasetSigners(dataset1)[0].wallet;
-    expect(Utilities.normalizeHex(calcuatedDatasetSignature1), 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(Utilities.normalizeHex(nodeWallet1));
-
     // check root_hash
     const calculatedDatasetRootHash1 = ImportUtilities.calculateDatasetRootHash(dataset1);
-    expect(calculatedDatasetRootHash1, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(this.state.secondLastExport.data.root_hash);
 
     // check dataset_id
     const calculatedDatasetId2 = ImportUtilities.calculateGraphPublicHash(dataset2);
-    expect(this.state.lastImport.data.dataset_id, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(calculatedDatasetId2);
-
-    // check signature
-    const calcuatedDatasetSignature2 = ImportUtilities.extractDatasetSigners(dataset2)[0].wallet;
-    expect(Utilities.normalizeHex(calcuatedDatasetSignature2), 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(Utilities.normalizeHex(nodeWallet2));
-
     // check root_hash
     const calculatedDatasetRootHash2 = ImportUtilities.calculateDatasetRootHash(dataset2);
-    expect(calculatedDatasetRootHash2, 'Dataset from API endpoint and manually calculated should match')
-        .to.be.equal(this.state.lastExport.data.root_hash);
 
     if (condition.includes('not')) {
         expect(calculatedDatasetId1).to.be.not.equal(calculatedDatasetId2);
-        expect(calcuatedDatasetSignature1).to.be.not.equal(calcuatedDatasetSignature2);
         expect(calculatedDatasetRootHash1).to.be.not.equal(calculatedDatasetRootHash2);
     } else {
         expect(calculatedDatasetId1).to.be.equal(calculatedDatasetId2);
-        expect(calcuatedDatasetSignature1).to.be.equal(calcuatedDatasetSignature2);
         expect(calculatedDatasetRootHash1).to.be.equal(calculatedDatasetRootHash2);
     }
 });
