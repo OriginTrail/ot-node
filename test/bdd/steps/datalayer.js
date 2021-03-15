@@ -439,9 +439,14 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
             const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);
 
             const myFingerprint = await httpApiHelper.apiFingerprint(host, dataset);
+            let fingerprintFound = false;
             for (const fingerprint of myFingerprint) {
-                expect(`0x${rootHash}`).to.be.equal(fingerprint.root_hash);
+                if (fingerprint.root_hash) {
+                    expect(`0x${rootHash}`).to.be.equal(fingerprint.root_hash);
+                    fingerprintFound = true;
+                }
             }
+            expect(fingerprintFound, 'Unable to validate fingerprint').to.be.equal(true);
         }
     }
 });
