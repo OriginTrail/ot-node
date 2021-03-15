@@ -17,39 +17,39 @@ Given(/^I manually create ERC725 identity for (\d+)[st|nd|rd|th]+ node$/, async 
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
-    const nodeWalletPath = path.join(
-        node.options.configDir,
-        node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
-    );
-    const nodeWalletJson = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8'));
+    this.state.manualStuff.erc725Identities = [];
 
-    const nodeWallet = nodeWalletJson.node_wallet;
-    const nodeWalletKey = nodeWalletJson.node_private_key;
-    const nodeManagementWallet = nodeWalletJson.management_wallet;
-
-    const identityContractInstance =
-        await this.state.localBlockchain.createIdentity(
-            nodeWallet,
-            nodeWalletKey,
-            nodeManagementWallet,
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        // eslint-disable-next-line no-await-in-loop
+        const identityContractInstance = await this.state.localBlockchain[i].createIdentity(
+            implementation.node_wallet,
+            implementation.node_private_key,
+            implementation.management_wallet,
         );
-    expect(identityContractInstance._address).to.not.be.undefined;
-    this.state.manualStuff.erc725Identity = identityContractInstance._address;
+        expect(identityContractInstance._address).to.not.be.undefined;
+        this.state.manualStuff.erc725Identities.push(identityContractInstance._address);
+        i += 1;
+    }
 });
 
 When(/^I use the created ERC725 identity in (\d+)[st|nd|rd|th]+ node$/, async function (nodeIndex) {
     expect(this.state.localBlockchain, 'No blockchain.').to.not.be.undefined;
-    expect(this.state.manualStuff.erc725Identity, 'No ERC725 identity.').to.not.be.undefined;
+    expect(this.state.manualStuff.erc725Identities, 'No ERC725 identity.').to.not.be.undefined;
     expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const node = this.state.nodes[nodeIndex - 1];
 
-    fs.writeFileSync(
-        path.join(node.options.configDir, 'erc725_identity.json'),
-        JSON.stringify({ identity: this.state.manualStuff.erc725Identity }),
-    );
+    let i = 0;
+    for (const implementation of node.options.nodeConfiguration.blockchain.implementations) {
+        fs.writeFileSync(
+            path.join(node.options.configDir, implementation.identity_filepath),
+            JSON.stringify({ identity: this.state.manualStuff.erc725Identities[i] }),
+        );
+        i += 1;
+    }
 });
 
 Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid ERC725 identity/, async function (nodeIndex) {
