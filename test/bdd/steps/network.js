@@ -919,11 +919,15 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
             dc.state.node_rpc_url,
             this.state.lastImport.data.dataset_id,
         );
+    let fingerprintFound = false;
     for (const myFingerprint of myFingerprints) {
-        expect(myFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
-        expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+        if (myFingerprint.root_hash) {
+            expect(myFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+            expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+            fingerprintFound = true;
+        }
     }
-
+    expect(fingerprintFound, 'Unable to remember previos import fingerprint value').to.be.equal(true);
     this.state.secondLastFingerprint = myFingerprints;
     this.state.secondLastImport = this.state.lastImport;
 });
@@ -941,19 +945,9 @@ Then(/^checking again first import's root hash should point to remembered value$
             this.state.secondLastImport.data.dataset_id,
         );
 
-    for (const firstImportFingerprint of firstImportFingerprints) {
-        expect(firstImportFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
-        expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
-
-        const secondLastFingerprint = this.state.secondLastFingerprint
-            .find(e => e.blockchain_id === firstImportFingerprint.blockchain_id);
-
-        expect(firstImportFingerprint.root_hash).to.be.equal(secondLastFingerprint.root_hash);
-    }
-
     expect(
         deepEqual(firstImportFingerprints, this.state.secondLastFingerprint),
-        'import and root has in both scenario should be indentical',
+        'import and root hash in both scenario should be indentical',
     ).to.be.equal(true);
 });
 
