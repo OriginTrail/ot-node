@@ -103,6 +103,7 @@ class DhReplicationImportCommand extends Command {
                 period: 10 * 1000,
                 data: {
                     offerId,
+                    blockchain_id,
                 },
             }));
         return Command.empty();
