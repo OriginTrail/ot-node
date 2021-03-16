@@ -15,7 +15,6 @@ class EventEmitter {
     constructor(ctx) {
         this.ctx = ctx;
         this.product = ctx.product;
-        this.web3 = ctx.web3;
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
         this.appState = ctx.appState;
@@ -205,16 +204,23 @@ class EventEmitter {
         this._on('api-imports-info', async (data) => {
             logger.debug('Get import ids');
             try {
-                const dataimports = await Models.data_info.findAll();
+                const dataimports = await Models.data_info.findAll({
+                    include: [
+                        {
+                            model: Models.data_provider_wallets,
+                            attributes: ['wallet', 'blockchain_id'],
+                        },
+                    ],
+                });
                 data.response.status(200);
                 const promises = dataimports.map(async di => ({
                     data_set_id: di.data_set_id,
                     total_documents: di.total_documents,
                     root_hash: di.root_hash,
                     data_size: di.data_size,
-                    transaction_hash: await ImportUtilities
-                        .getTransactionHash(di.data_set_id, di.origin),
-                    data_provider_wallet: di.data_provider_wallet,
+                    replication_info: await ImportUtilities
+                        .getReplicationInfo(di.data_set_id, di.origin),
+                    data_provider_wallets: di.data_provider_wallets,
                 }));
                 data.response.send(await Promise.all(promises));
             } catch (e) {
@@ -252,7 +258,7 @@ class EventEmitter {
             logger.info(`Payout called for offer ${offerId}.`);
             const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
             if (bid) {
-                await profileService.payOut(offerId, urgent);
+                await profileService.payOut(offerId, urgent, bid.dataValues.blockchain_id);
 
                 data.response.status(200);
                 data.response.send({
@@ -271,8 +277,15 @@ class EventEmitter {
             const { dataSetId, responseFormat } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
-                const dataInfo =
-                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
+                const dataInfo = await Models.data_info.findOne({
+                    where: { data_set_id: dataSetId },
+                    include: [
+                        {
+                            model: Models.data_provider_wallets,
+                            attributes: ['wallet', 'blockchain_id'],
+                        },
+                    ],
+                });
 
                 if (!dataInfo) {
                     logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
@@ -296,16 +309,16 @@ class EventEmitter {
                     default: throw Error('Invalid response format.');
                     }
 
-                    const transactionHash = await ImportUtilities
-                        .getTransactionHash(dataSetId, dataInfo.origin);
+                    const replicationInfo = await ImportUtilities
+                        .getReplicationInfo(dataSetId, dataInfo.origin);
 
                     data.response.status(200);
                     data.response.send({
                         dataSetId,
                         document: formattedDataset,
                         root_hash: dataInfo.root_hash,
-                        transaction: transactionHash,
-                        data_provider_wallet: dataInfo.data_provider_wallet,
+                        data_provider_wallets: dataInfo.data_provider_wallets,
+                        replication_info: replicationInfo,
                     });
                 }
             } catch (error) {
@@ -391,13 +404,14 @@ class EventEmitter {
                 holdingTimeInMinutes,
                 litigationIntervalInMinutes,
                 tokenAmountPerHolder,
+                blockchain_id,
             } = eventData;
 
             try {
                 await dhService.handleOffer(
                     offerId, dcNodeId,
                     dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-                    tokenAmountPerHolder, dataSetId,
+                    tokenAmountPerHolder, dataSetId, blockchain_id,
                 );
             } catch (e) {
                 logger.warn(e.message);
@@ -434,7 +448,7 @@ class EventEmitter {
             }
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
@@ -458,7 +472,7 @@ class EventEmitter {
 
             logger.info(`Purchase confirmation from DV ${message.seller_node_id} received`);
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
@@ -466,15 +480,16 @@ class EventEmitter {
             try {
                 const {
                     purchase_id,
+                    blockchain_id,
                     data_set_id,
                     ot_object_id,
                     seller_node_id,
-                    seller_erc_id,
-                    price,
+                    seller_erc_ids,
+                    prices,
                 } = message;
                 await dvController.handleNewDataSeller(
-                    purchase_id, seller_erc_id, seller_node_id,
-                    data_set_id, ot_object_id, price,
+                    purchase_id, blockchain_id, seller_erc_ids, seller_node_id,
+                    data_set_id, ot_object_id, prices,
                 );
             } catch (error) {
                 const errorMessage = `Failed to process purchase completion message. ${error}.`;
@@ -490,15 +505,14 @@ class EventEmitter {
                 const { message, messageSignature } = kadReplicationRequest;
                 replicationMessage = message;
 
-                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                if (!Utilities.isMessageSigned(message, messageSignature)) {
                     logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                     return;
                 }
             }
 
             const {
-                offerId, wallet, dhIdentity,
-                async_enabled,
+                offerId, wallet, dhIdentity, async_enabled,
             } = replicationMessage;
             const identity = transport.extractSenderID(request);
             try {
@@ -528,7 +542,7 @@ class EventEmitter {
                 const { message, messageSignature } = kadReplicationRequest;
                 replicationMessage = message;
 
-                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                if (!Utilities.isMessageSigned(message, messageSignature)) {
                     logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                     return;
                 }
@@ -603,7 +617,7 @@ class EventEmitter {
                     const {
                         message, messageSignature,
                     } = replicationFinishedMessage;
-                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    if (!Utilities.isMessageSigned(message, messageSignature)) {
                         logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                         return;
                     }
@@ -662,7 +676,7 @@ class EventEmitter {
                 }
                 if (challengeRequest.messageSignature) { // todo remove if for next update
                     const { messageSignature } = challengeRequest;
-                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    if (!Utilities.isMessageSigned(message, messageSignature)) {
                         logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                         return;
                     }
@@ -707,7 +721,7 @@ class EventEmitter {
 
                 if (challengeResponse.messageSignature) { // todo remove if for next update
                     const { messageSignature } = challengeResponse;
-                    if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    if (!Utilities.isMessageSigned(message, messageSignature)) {
                         logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                         return;
                     }
@@ -735,7 +749,7 @@ class EventEmitter {
                 const dataLocationResponseObject = transport.extractMessage(request);
                 const { message, messageSignature } = dataLocationResponseObject;
 
-                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                if (!Utilities.isMessageSigned(message, messageSignature)) {
                     const returnMessage = `We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`;
                     logger.warn(returnMessage);
                     return;
@@ -754,7 +768,7 @@ class EventEmitter {
             const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 const returnMessage = `We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`;
                 logger.warn(returnMessage);
@@ -782,7 +796,7 @@ class EventEmitter {
             const dataReadResponseObject = reqMessage;
             const { message, messageSignature } = dataReadResponseObject;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 console.log('kad-data-read-response', JSON.stringify(message), JSON.stringify(messageSignature));
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
@@ -795,20 +809,26 @@ class EventEmitter {
             }
         });
 
-        this._on('kad-permissioned-data-read-request', async (request) => {
+        this._on('kad-permissioned-data-read-request', async (request, response) => {
             logger.info('Request for permissioned data read received');
             const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
             try {
                 await dcController.handlePermissionedDataReadRequest(message);
+                await transport.sendResponse(response, {
+                    status: 'SUCCESS',
+                });
             } catch (error) {
                 logger.warn(`Failed to process permissioned data read request. ${error}.`);
-                // todo send error to dv
+                await transport.sendResponse(response, {
+                    status: 'FAIL',
+                    message: error.message,
+                });
             }
         });
 
@@ -818,7 +838,7 @@ class EventEmitter {
             const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
@@ -841,7 +861,7 @@ class EventEmitter {
             }
             const { message, messageSignature } = reqMessage;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
@@ -866,7 +886,7 @@ class EventEmitter {
             }
             const { message, messageSignature } = reqMessage;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
@@ -891,7 +911,7 @@ class EventEmitter {
             }
             const { message, messageSignature } = reqMessage;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
@@ -916,7 +936,7 @@ class EventEmitter {
             }
             const { message, messageSignature } = reqMessage;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
@@ -936,14 +956,13 @@ class EventEmitter {
             const encryptedPaddedKeyObject = transport.extractMessage(request);
             const { message, messageSignature } = encryptedPaddedKeyObject;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            if (!Utilities.isMessageSigned(message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
                 return;
             }
 
             const senderId = transport.extractSenderID();
             try {
-                await dvService.handleEncryptedPaddedKey(message);
                 await transport.sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
                 }, senderId);

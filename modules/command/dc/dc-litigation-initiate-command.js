@@ -18,6 +18,7 @@ class DCLitigationInitiateCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.remoteControl = ctx.remoteControl;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -28,6 +29,7 @@ class DCLitigationInitiateCommand extends Command {
     async execute(command, transaction) {
         const {
             offerId,
+            blockchain_id,
             dhIdentity,
             objectIndex,
             blockIndex,
@@ -68,8 +70,9 @@ class DCLitigationInitiateCommand extends Command {
         replicatedData.status = 'LITIGATION_STARTED';
         await replicatedData.save({ fields: ['status'] });
 
-        const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
+        const dcIdentity = this.profileService.getIdentity(blockchain_id);
         const otJson = await this.importService.getImport(offer.data_set_id);
+        importUtilities.removeGraphPermissionedData(otJson['@graph']);
 
         const encryptedDataset = importUtilities.encryptDataset(
             otJson,
@@ -89,8 +92,8 @@ class DCLitigationInitiateCommand extends Command {
 
         await this.blockchain.initiateLitigation(
             offerId, dhIdentity, dcIdentity, objectIndex, blockIndex,
-            merkleProof,
-        );
+            merkleProof, blockchain_id,
+        ).response;
         return {
             commands: [{
                 name: 'dcLitigationInitiatedCommand',
@@ -98,6 +101,7 @@ class DCLitigationInitiateCommand extends Command {
                     objectIndex,
                     blockIndex,
                     offerId,
+                    blockchain_id,
                     dhIdentity,
                 },
                 period: 5000,

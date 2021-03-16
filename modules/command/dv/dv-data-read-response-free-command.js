@@ -48,9 +48,9 @@ class DVDataReadResponseFreeCommand extends Command {
         const replyId = message.id;
         const {
             data_set_id: dataSetId,
-            data_provider_wallet: dcWallet,
+            data_provider_wallets,
             wallet: dhWallet,
-            transaction_hash,
+            replication_info: received_replication_info,
             handler_id,
         } = message;
 
@@ -74,21 +74,46 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         const { document, permissionedData } = message;
-        // Calculate root hash and check is it the same on the SC.
-        const fingerprint = await this.blockchain.getRootHash(dataSetId);
+        // Calculate root hash and check is it the same on the SC
+        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
 
-        if (!fingerprint || Utilities.isZeroHash(fingerprint)) {
-            const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${dataSetId}`;
+        const signerArray = ImportUtilities.extractDatasetSigners(document);
+        const myBlockchains = this.blockchain.getAllWallets().map(e => e.blockchain_id);
+
+        const availableBlockchains = [];
+        const validationData = {
+            fingerprints_exist: 0,
+            fingerprints_match: 0,
+        };
+        for (const signerObject of signerArray) {
+            if (myBlockchains.includes(signerObject.blockchain_id)) {
+                // eslint-disable-next-line no-await-in-loop
+                const fingerprint = await this.blockchain
+                    .getRootHash(dataSetId, signerObject.blockchain_id).response;
+
+                if (fingerprint && !Utilities.isZeroHash(fingerprint)) {
+                    validationData.fingerprints_exist += 1;
+                    if (fingerprint === rootHash) {
+                        validationData.fingerprints_match += 1;
+                        availableBlockchains.push(signerObject.blockchain_id);
+                    } else {
+                        this.logger.warn(`Fingerprint root hash for dataset ${dataSetId} does not match on blockchain ${signerObject.blockchain_id}. ` +
+                            ` Calculated root hash ${rootHash} differs from received blockchain fingerprint ${fingerprint}`);
+                    }
+                }
+            }
+        }
+
+        if (validationData.fingerprints_exist === 0) {
+            const errorMessage = `Couldn't not find fingerprint for dataset_id ${dataSetId} on any chain to validate.`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
-        const rootHash = ImportUtilities.calculateDatasetRootHash(document);
-
-        if (fingerprint !== rootHash) {
-            const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
+        if (validationData.fingerprints_exist !== validationData.fingerprints_match) {
+            const errorMessage = `Fingerprint root hash for dataset ${dataSetId} does not match with the fingerprint received from the blockchain.`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
@@ -100,13 +125,23 @@ class DVDataReadResponseFreeCommand extends Command {
             permissionedData,
         );
 
-        const erc725Identity = document.datasetHeader.dataCreator.identifiers[0].identifierValue;
-        const profile = await this.blockchain.getProfile(erc725Identity);
+        const dataCreatorIdentities =
+            ImportUtilities.extractDatasetIdentities(document.datasetHeader);
 
-        await this.permissionedDataService.addDataSellerForPermissionedData(
+        let profilePromise;
+        for (const identityObject of dataCreatorIdentities) {
+            const { identity, blockchain_id } = identityObject;
+            if (availableBlockchains.includes(blockchain_id)) {
+                profilePromise = this.blockchain.getProfile(identity, blockchain_id).response;
+                break;
+            }
+        }
+        const profile = await profilePromise;
+        await this.permissionedDataService.addMultipleDataSellerForPermissionedData(
             dataSetId,
-            erc725Identity,
-            0,
+            dataCreatorIdentities,
+            availableBlockchains,
+            undefined,
             profile.nodeId.toLowerCase().slice(0, 42),
             document['@graph'],
         );
@@ -119,6 +154,16 @@ class DVDataReadResponseFreeCommand extends Command {
             standard_id,
             readExport,
         } = JSON.parse(handler.data);
+
+        const replication_info = [];
+        for (const replication of received_replication_info) {
+            replication_info.push({
+                origin: 'PURCHASED',
+                offer_id: replication.offer_id,
+                blockchain_id: replication.blockchain_id,
+                offer_creation_transaction_hash: replication.offer_creation_transaction_hash,
+            });
+        }
 
         if (readExport) {
             let sortedDataset = OtJsonUtilities.prepareDatasetForDataRead(document);
@@ -147,7 +192,7 @@ class DVDataReadResponseFreeCommand extends Command {
             });
 
             const data = JSON.parse(handler.data);
-            data.transaction_hash = transaction_hash;
+            data.replication_info = replication_info;
             data.data_creator = document.datasetHeader.dataCreator;
             data.signature = document.signature;
             data.root_hash = rootHash;
@@ -185,7 +230,7 @@ class DVDataReadResponseFreeCommand extends Command {
             const commandData = {
                 documentPath: path.join(cacheDirectory, handler_id),
                 handler_id,
-                data_provider_wallet: dcWallet,
+                data_provider_wallets,
                 purchased: true,
             };
 
@@ -210,10 +255,16 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         // Store holding information and generate keys for eventual data replication.
-        await Models.purchased_data.create({
-            data_set_id: dataSetId,
-            transaction_hash,
-        });
+        const promises = [];
+        for (const replication of replication_info) {
+            promises.push(Models.purchased_data.create({
+                data_set_id: dataSetId,
+                transaction_hash: replication.offer_creation_transaction_hash,
+                offer_id: replication.offer_id,
+                blockchain_id: replication.blockchain_id,
+            }));
+        }
+        await Promise.all(promises);
 
         this.logger.info(`Data set ID ${dataSetId} import started.`);
         this.logger.trace(`DataSet ${dataSetId} purchased for query ID ${networkQueryResponse.query_id}, ` +

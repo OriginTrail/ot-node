@@ -8,7 +8,7 @@ const Web3 = require('web3');
 const EthWallet = require('ethereumjs-wallet');
 const BN = require('bn.js');
 
-const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
+const Transactions = require('../../modules/Blockchain/Web3Implementation/Transactions');
 
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',

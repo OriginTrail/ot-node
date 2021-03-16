@@ -12,6 +12,9 @@ class DHLitigationInitiatedCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
+        this.blockchain = ctx.blockchain;
+        this.profileService = ctx.profileService;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -31,7 +34,11 @@ class DHLitigationInitiatedCommand extends Command {
                     const {
                         holderIdentity,
                     } = JSON.parse(e.data);
-                    return Utilities.compareHexStrings(holderIdentity, this.config.erc725Identity);
+
+                    return Utilities.compareHexStrings(
+                        holderIdentity,
+                        this.profileService.getIdentity(e.blockchain_id),
+                    );
                 });
                 if (event) {
                     event.finished = 1;
@@ -49,6 +56,7 @@ class DHLitigationInitiatedCommand extends Command {
                         name: 'dhLitigationAnswerCommand',
                         data: {
                             offerId,
+                            blockchain_id: event.blockchain_id,
                             objectIndex: requestedObjectIndex,
                             blockIndex: requestedBlockIndex,
                         },

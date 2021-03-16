@@ -80,7 +80,8 @@ process.on('message', async (dataFromParent) => {
 
     try {
         const datasetId = _id(document);
-        const dataCreator = ImportUtilities.getDataCreator(document.datasetHeader);
+        const dataCreatorIdentifiers =
+            ImportUtilities.getDataCreatorIdentifiers(document.datasetHeader);
 
         // Result
         const vertices = [];
@@ -112,7 +113,7 @@ process.on('message', async (dataFromParent) => {
             case constants.objectType.otObject: {
                 // Create entity vertex.
                 const entityVertex = {};
-                entityVertex._key = Utilities.keyFrom(dataCreator, _id(otObject));
+                entityVertex._key = Utilities.keyFrom(dataCreatorIdentifiers, _id(otObject));
                 entityVertex.uid = _id(otObject);
                 entityVertex.vertexType = constants.vertexType.entityObject;
                 entityVertex.objectType = constants.objectType.otObject;
@@ -137,7 +138,7 @@ process.on('message', async (dataFromParent) => {
                         // Add identity edge.
                         const identifyEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 identifierVertex._key,
                                 entityVertex._key,
                             ),
@@ -154,7 +155,7 @@ process.on('message', async (dataFromParent) => {
 
                         const identifiedByEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 entityVertex._key,
                                 identifierVertex._key,
                             ),
@@ -176,8 +177,10 @@ process.on('message', async (dataFromParent) => {
                     const otObjectData = Utilities.copyObject(otObject.properties);
                     ImportUtilities.removeObjectPermissionedData(otObject);
                     const dataVertex = {
-                        _key:
-                            Utilities.keyFrom(dataCreator, Utilities.keyFrom(otObject.properties)),
+                        _key: Utilities.keyFrom(
+                            dataCreatorIdentifiers,
+                            Utilities.keyFrom(otObject.properties),
+                        ),
                         vertexType: constants.vertexType.data,
                         data: otObjectData,
                         datasets: [datasetId],
@@ -190,7 +193,8 @@ process.on('message', async (dataFromParent) => {
 
                     // Add has-data edge.
                     const hasDataEdge = {
-                        _key: Utilities.keyFrom(dataCreator, entityVertex._key, dataVertex._key),
+                        _key: Utilities
+                            .keyFrom(dataCreatorIdentifiers, entityVertex._key, dataVertex._key),
                         _from: entityVertex._key,
                         _to: dataVertex._key,
                         edgeType: constants.edgeType.dataRelation,
@@ -206,11 +210,11 @@ process.on('message', async (dataFromParent) => {
                         const relationEdge = {};
                         relationEdge._from = entityVertex._key;
                         relationEdge._to =
-                            Utilities.keyFrom(dataCreator, _id(relation.linkedObject));
+                            Utilities.keyFrom(dataCreatorIdentifiers, _id(relation.linkedObject));
                         relationEdge.edgeType = constants.edgeType.otRelation;
                         relationEdge.relationType = relation.relationType;
                         relationEdge._key = Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             relationEdge._from,
                             relationEdge._to,
                             relationEdge.relationType,
@@ -231,7 +235,7 @@ process.on('message', async (dataFromParent) => {
             case constants.objectType.otConnector: {
                 // Create connector vertex.
                 const connectorVertex = {
-                    _key: Utilities.keyFrom(dataCreator, _id(otObject)),
+                    _key: Utilities.keyFrom(dataCreatorIdentifiers, _id(otObject)),
                     uid: _id(otObject),
                     vertexType: constants.vertexType.connector,
                     objectType: constants.objectType.otConnector,
@@ -259,7 +263,7 @@ process.on('message', async (dataFromParent) => {
                         // Add identity edge.
                         const identifyEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 identifierVertex._key,
                                 connectorVertex._key,
                             ),
@@ -276,7 +280,7 @@ process.on('message', async (dataFromParent) => {
 
                         const identifiedByEdge = {
                             _key: Utilities.keyFrom(
-                                dataCreator,
+                                dataCreatorIdentifiers,
                                 connectorVertex._key,
                                 identifierVertex._key,
                             ),
@@ -297,7 +301,7 @@ process.on('message', async (dataFromParent) => {
                 if (otObject.properties != null) {
                     const dataVertex = {
                         _key: Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             Utilities.keyFrom(otObject.properties),
                         ),
                         vertexType: constants.vertexType.data,
@@ -313,7 +317,7 @@ process.on('message', async (dataFromParent) => {
                     // Add has-data edge.
                     const hasDataEdge = {
                         _key: Utilities.keyFrom(
-                            dataCreator,
+                            dataCreatorIdentifiers,
                             connectorVertex._key,
                             dataVertex._key,
                         ),
@@ -332,10 +336,10 @@ process.on('message', async (dataFromParent) => {
                         const relationEdge = {};
                         relationEdge._from = connectorVertex._key;
                         relationEdge._to =
-                            Utilities.keyFrom(dataCreator, _id(relation.linkedObject));
+                            Utilities.keyFrom(dataCreatorIdentifiers, _id(relation.linkedObject));
                         relationEdge._key =
                                 Utilities.keyFrom(
-                                    dataCreator,
+                                    dataCreatorIdentifiers,
                                     relationEdge._from, relationEdge._to,
                                 );
                         relationEdge.edgeType = constants.edgeType.otRelation;

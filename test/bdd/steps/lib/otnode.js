@@ -209,7 +209,9 @@ class OtNode extends EventEmitter {
         let line = stripAnsi(data.toString());
         line = line.replace(/[^\x20-\x7E]+/g, '');
 
-        if (line.includes('OT Node started')) {
+        if (line.includes('======================================================')) {
+            this.emit('started');
+        } else if (line.includes('OT Node started')) {
             this.logger.log(`Node ${this.id} initialized.`);
             this.state.initialized = true;
             this.emit('initialized');
@@ -274,7 +276,7 @@ class OtNode extends EventEmitter {
             const offerId = line.match(offerIdRegex)[0];
         } else if (line.match(/Not enough DHs submitted/gi)) {
             this.emit('not-enough-dhs');
-        } else if (line.match(/.*Offer .+ finalized/gi)) {
+        } else if (line.match(/.*Offer .+ finalized.*/gi)) {
             const offerId = line.match(offerIdRegex)[0];
             assert(offerId);
             this.state.offersFinalized.push(offerId);
@@ -351,15 +353,15 @@ class OtNode extends EventEmitter {
             this.emit('deposit-command-completed');
         } else if (line.match(/Replication window for .+ is closed\. Replicated to .+ peers\. Verified .+\./gi)) {
             this.emit('replication-window-closed');
-        } else if (line.match(/.*Offer with internal ID .+ for data set .+ written to blockchain. Waiting for DHs\.\.\./gi)) {
+        } else if (line.match(/.*Offer with internal ID .+ for data set .+ written to blockchain .+\. Waiting for DHs\.\.\./gi)) {
             this.emit('offer-written-blockchain');
         } else if (line.match(/Command dhPayOutCommand and ID .+ processed\./gi)) {
             this.emit('dh-pay-out-finalized');
         } else if (line.match(/Accepting offer with price: .+ TRAC\./gi)) {
             const result = line.match(walletAmountRegex);
             this.state.calculatedOfferPrice = result[result.length - 1];
-        } else if (line.match(/Payout for offer .+ successfully completed\./gi)) {
-            const offerId = line.match(/Payout for offer .+ successfully completed\./gi)[0].match(/Payout for offer (.*?) successfully completed\./)[1];
+        } else if (line.match(/Payout for offer .+ successfully completed.+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
             this.emit(`dh-pay-out-offer-${offerId}-completed`);
         } else if (line.match(/Command dhOfferFinalizedCommand and ID .+ processed\./gi)) {
             this.emit('dh-offer-finalized');
@@ -428,6 +430,8 @@ class OtNode extends EventEmitter {
             this.emit('purchase-completed');
         } else if (line.match(/Payment has been taken for purchase .+/gi)) {
             this.emit('purchase-payment-taken');
+        } else if (line.match(/Failed to initialize profile on blockchain .+/gi)) {
+            this.emit('profile-initialize-failed');
         }
     }
 

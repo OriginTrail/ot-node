@@ -90,26 +90,18 @@ Then(/^(DC|DH)'s (\d+) dataset hashes should match blockchain values$/, async fu
 
     for (const i in Array.from({ length: myApiImportsInfo.length })) {
         const myDataSetId = myApiImportsInfo[i].data_set_id;
-        const myFingerprint = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
-        expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+        const myFingerprints = await httpApiHelper.apiFingerprint(myNode.state.node_rpc_url, myDataSetId);
+        const fingerprint = myFingerprints[0].root_hash;
+        expect(utilities.isZeroHash(fingerprint), 'root hash value should not be zero hash').to.be.equal(false);
 
         const dataset = await httpApiHelper.apiQueryLocalImportByDataSetId(myNode.state.node_rpc_url, myDataSetId);
 
         const calculatedImportHash = ImportUtilities.calculateGraphPublicHash(dataset);
         expect(calculatedImportHash, 'Calculated hashes are different').to.be.equal(myDataSetId);
 
-        const dataCreator = {
-            identifiers: [
-                {
-                    identifierValue: ImportUtilities.getDataCreator(dataset.datasetHeader),
-                    identifierType: 'ERC725',
-                    validationSchema: '/schemas/erc725-main',
-                },
-            ],
-        };
         const myMerkle = ImportUtilities.calculateDatasetRootHash(dataset);
-
-        expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
+        expect(fingerprint, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle);
     }
 });
 
@@ -405,7 +397,7 @@ Then(
     async function () {
         expect(!!this.state.corruptedNode, 'Corrupted node not defined. Use other step to define it.').to.be.equal(true);
 
-        const erc725 = JSON.parse(fs.readFileSync(`${this.state.corruptedNode.options.configDir}/${this.state.corruptedNode.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+        const erc725 = JSON.parse(fs.readFileSync(`${this.state.corruptedNode.options.configDir}/${this.state.corruptedNode.options.nodeConfiguration.blockchain.implementations[0].identity_filepath}`).toString());
         expect(
             erc725.identity.toUpperCase(),
             'Declined identity should be the one that db was corrupted.',
@@ -447,7 +439,14 @@ Then(/^I calculate and validate the proof of the last traversal/, { timeout: 120
             const rootHash = merkleTree.calculateProofResult(proof, objectText, object_index);
 
             const myFingerprint = await httpApiHelper.apiFingerprint(host, dataset);
-            expect(`0x${rootHash}`).to.be.equal(myFingerprint.root_hash);
+            let fingerprintFound = false;
+            for (const fingerprint of myFingerprint) {
+                if (fingerprint.root_hash) {
+                    expect(`0x${rootHash}`).to.be.equal(fingerprint.root_hash);
+                    fingerprintFound = true;
+                }
+            }
+            expect(fingerprintFound, 'Unable to validate fingerprint').to.be.equal(true);
         }
     }
 });

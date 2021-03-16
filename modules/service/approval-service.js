@@ -16,30 +16,6 @@ class ApprovalService {
     }
 
     /**
-     * Load all nodes currently approved for functioning on the network
-     */
-    async initialize() {
-        const allNodes = await this.blockchain.getAddedNodes();
-        const nodeApproved = await this.blockchain.getNodeStatuses();
-        const approvedNodes = [];
-
-        for (let i = 0; i < allNodes.length; i += 1) {
-            if (nodeApproved[i] === true) {
-                allNodes[i] = allNodes[i].toLowerCase();
-                allNodes[i] = Utilities.normalizeHex(allNodes[i]);
-                if (allNodes[i].length > 42) {
-                    allNodes[i] = allNodes[i].substr(-40, 40);
-                    allNodes[i] = Utilities.normalizeHex(allNodes[i]);
-                }
-                if (approvedNodes.indexOf(allNodes[i]) === -1) {
-                    approvedNodes.push(allNodes[i]);
-                }
-            }
-        }
-        this.approvedNodes = approvedNodes;
-    }
-
-    /**
      * Return all nodes currently approved for functioning on the network
      */
     getApprovedNodes() {
