@@ -802,6 +802,8 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
             }
         }
     }
+    const dcDataProviderWallets = Utilities.copyObject(dcImportInfo.data_provider_wallets);
+    delete dcImportInfo.data_provider_wallets;
 
     const promises = [];
     dc.state.replications.forEach(({ offer_id, dhId }) => {
@@ -829,6 +831,18 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                         }
                     }
                 }
+
+                const dhDataProviderWallets = Utilities.copyObject(dhImportInfo.data_provider_wallets);
+                delete dhImportInfo.data_provider_wallets;
+
+                let walletFound = false;
+                for (const dcDataProviderWallet of dcDataProviderWallets) {
+                    if (deepEqual(dcDataProviderWallet, dhDataProviderWallets[0])) {
+                        walletFound = true;
+                    }
+                }
+
+                expect(walletFound, 'Unable to match data provider wallet').to.be.equal(true);
 
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
                     accept();

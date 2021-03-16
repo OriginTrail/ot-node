@@ -451,7 +451,7 @@
     "dc_challenge_retry_delay_in_millis": 600000,
     "dh_challenge_retry_delay_in_millis": 600000,
     "dh_max_holding_time_in_minutes": 5256000,
-    "dh_maximum_dataset_filesize_in_mb": 10,
+    "dh_maximum_dataset_filesize_in_mb": 5,
     "dh_min_litigation_interval_in_minutes": 5,
     "dc_choose_time": 600000,
     "requireApproval": false,
