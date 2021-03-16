@@ -1,7 +1,4 @@
 {
-   "node_wallet":"0xb664cf668534fde04cf43173e2187b7a9196bfc3",
-   "node_private_key":"0dbaee2066aacd16d43a9e23649f232913bca244369463320610ffe6ffb0d69d",
-   "management_wallet":"0x64b592e8e9af51eb0dba5d4c18b817c01e8e75a8",
    "initial_deposit_amount": "10000000000000000000000",
    "local_network_only":true,
    "blockchain":{
@@ -18,6 +15,9 @@
              "dc_price_factor" : "3",
              "dh_price_factor" : "2",
              "trac_price_in_eth" : "0.00005",
+             "node_wallet":"0xb664cf668534fde04cf43173e2187b7a9196bfc3",
+                "node_private_key":"0dbaee2066aacd16d43a9e23649f232913bca244369463320610ffe6ffb0d69d",
+                "management_wallet":"0x64b592e8e9af51eb0dba5d4c18b817c01e8e75a8",
              "plugins": [
                {
                  "enabled": false,

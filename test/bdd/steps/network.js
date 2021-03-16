@@ -195,7 +195,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             },
             blockchain: loadBlockchainConfig(this.state.localBlockchain, i),
             local_network_only: true,
-            dc_choose_time: 90000, // 90 seconds
+            dc_choose_time: 60000, // 60 seconds
             initial_deposit_amount: '10000000000000000000000',
             commandExecutorVerboseLoggingEnabled: true,
         };
