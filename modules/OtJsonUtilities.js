@@ -80,7 +80,7 @@ class OtJsonUtilities {
             let blockchain_id;
             if (datasetHeader.validationSchemas[validationSchemaName].networkId === 'mainnet' ||
                 datasetHeader.validationSchemas[validationSchemaName].networkId === 'rinkeby') {
-                blockchain_id = defaultConfig.blockchain.implementations[0].networkId;
+                blockchain_id = defaultConfig.blockchain.implementations[0].network_id;
             } else {
                 blockchain_id = datasetHeader.validationSchemas[validationSchemaName].networkId;
             }
