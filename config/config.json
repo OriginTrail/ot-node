@@ -249,7 +249,7 @@
           "blockchain_title": "Ethereum",
           "network_id": "ethr:rinkeby:2",
           "hub_contract_address": "0xfdf46024707698ccc26ec2997C2aE71C74CCA8aC",
-          "identity_filepath": "erc725_identity.json",
+          "identity_filepath": "rinkeby_2_erc725_identity.json",
           "gas_limit": "2000000",
           "gas_price": "20000000000",
           "max_allowed_gas_price" : 50000000000,
