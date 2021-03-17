@@ -58,9 +58,13 @@ process.on('message', async (data) => {
                 }
                 if (schemaObject) {
                     // Added to overwrite the previous ambiguous blockchain_id of Ethereum
-                    const blockchain_id = schemaObject.networkId === 'mainnet' ?
-                        defaultConfig.blockchain.implementations[0].network_id :
-                        schemaObject.networkId;
+                    let blockchain_id;
+                    if (schemaObject.networkId === 'mainnet' ||
+                        schemaObject.networkId === 'rinkeby') {
+                        blockchain_id = defaultConfig.blockchain.implementations[0].networkId;
+                    } else {
+                        blockchain_id = schemaObject.networkId;
+                    }
 
                     identifierObject.blockchain_id = blockchain_id;
                 } else {
