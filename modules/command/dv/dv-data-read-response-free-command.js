@@ -87,9 +87,14 @@ class DVDataReadResponseFreeCommand extends Command {
         };
         for (const signerObject of signerArray) {
             if (myBlockchains.includes(signerObject.blockchain_id)) {
-                // eslint-disable-next-line no-await-in-loop
-                const fingerprint = await this.blockchain
-                    .getRootHash(dataSetId, signerObject.blockchain_id).response;
+                let fingerprint;
+                try {
+                    // eslint-disable-next-line no-await-in-loop
+                    fingerprint = await this.blockchain
+                        .getRootHash(dataSetId, signerObject.blockchain_id).response;
+                } catch (error) {
+                    this.logger.warn(`Unable to find fingerprint for datasetid: ${dataSetId} on blockchain: ${signerObject.blockchain_id}`);
+                }
 
                 if (fingerprint && !Utilities.isZeroHash(fingerprint)) {
                     validationData.fingerprints_exist += 1;
