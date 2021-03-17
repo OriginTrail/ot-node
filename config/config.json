@@ -299,7 +299,7 @@
       "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
       "identityDifficulty": 12,
-      "routing_table_validity_period_in_hours": 24,
+      "routing_table_validity_period_in_hours": 0,
       "churnPlugin": {
         "cooldownBaseTimeout": "5m",
         "cooldownMultiplier": 2,
