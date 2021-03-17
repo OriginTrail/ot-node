@@ -61,7 +61,7 @@ process.on('message', async (data) => {
                     let blockchain_id;
                     if (schemaObject.networkId === 'mainnet' ||
                         schemaObject.networkId === 'rinkeby') {
-                        blockchain_id = defaultConfig.blockchain.implementations[0].networkId;
+                        blockchain_id = defaultConfig.blockchain.implementations[0].network_id;
                     } else {
                         blockchain_id = schemaObject.networkId;
                     }
