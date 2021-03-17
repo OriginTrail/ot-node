@@ -24,6 +24,7 @@ class DcOfferMiningStatusCommand extends Command {
             isReplacement,
             dhIdentity,
             handler_id,
+            blockchain_id,
         } = command.data;
 
         const mined = await Models.miner_tasks.findOne({
@@ -53,6 +54,7 @@ class DcOfferMiningStatusCommand extends Command {
                                 dhIdentity,
                                 excludedDHs: command.data.excludedDHs,
                                 handler_id,
+                                blockchain_id,
                             },
                             transactional: false,
                         },
@@ -69,6 +71,7 @@ class DcOfferMiningStatusCommand extends Command {
                                 isReplacement,
                                 handler_id,
                                 success: false,
+                                blockchain_id,
                             },
                             transactional: false,
                         },
@@ -87,7 +90,7 @@ class DcOfferMiningStatusCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { offerId, handler_id } = command.data;
+        const { offerId, handler_id, blockchain_id } = command.data;
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
@@ -108,6 +111,7 @@ class DcOfferMiningStatusCommand extends Command {
                 litigationIntervalInMinutes: offer.litigation_interval_in_minutes,
                 datasetId: offer.data_set_id,
                 holdingTimeInMinutes: offer.holding_time_in_minutes,
+                blockchain_id,
             },
             constants.PROCESS_NAME.offerHandling,
         );
@@ -122,13 +126,16 @@ class DcOfferMiningStatusCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { dataSetId, offerId, handler_id } = command.data;
-        this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
+        const {
+            dataSetId, offerId, handler_id, blockchain_id,
+        } = command.data;
+        this.logger.notify(`Offer for data set ${dataSetId} has not been started on blockchain ${blockchain_id}.`);
 
         const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
         offer.status = 'FAILED';
         offer.global_status = 'FAILED';
-        offer.message = `Offer for data set ${dataSetId} has not been started.`;
+        offer.message = `Offer for data set ${dataSetId} has not been started
+        .`;
         await offer.save({ fields: ['status', 'message', 'global_status'] });
         this.remoteControl.offerUpdate({
             offer_id: offerId,

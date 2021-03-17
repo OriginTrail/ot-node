@@ -1,6 +1,6 @@
 Feature: Data layer related features
-  Background: Setup local blockchain and bootstraps
-    Given the blockchain is set up
+  Background: Setup local blockchains and bootstraps
+    Given the blockchains are set up
     And 1 bootstrap is running
 
   @third
@@ -60,7 +60,7 @@ Feature: Data layer related features
     Then DH's 2 dataset hashes should match blockchain values
 
 
-  @third
+  @skip
   Scenario: Dataset immutability II
     Given I setup 1 node
     And I start the node

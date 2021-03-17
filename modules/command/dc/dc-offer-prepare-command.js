@@ -14,15 +14,18 @@ class DCOfferPrepareCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
-        this.graphStorage = ctx.graphStorage;
-        this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
-        this.errorNotificationService = ctx.errorNotificationService;
+        this.commandExecutor = ctx.commandExecutor;
+
+        this.dcService = ctx.dcService;
         this.importService = ctx.importService;
         this.pricingService = ctx.pricingService;
         this.profileService = ctx.profileService;
-        this.dcService = ctx.dcService;
-        this.commandExecutor = ctx.commandExecutor;
+        this.errorNotificationService = ctx.errorNotificationService;
+
+        this.blockchain = ctx.blockchain;
+        this.graphStorage = ctx.graphStorage;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -32,31 +35,36 @@ class DCOfferPrepareCommand extends Command {
      */
     async execute(command) {
         const {
-            dataSetId, dataSizeInBytes, handler_id,
+            dataSetId, dataSizeInBytes, handler_id, blockchain_id,
         } = command.data;
 
         if (!command.data.holdingTimeInMinutes) {
             command.data.holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
         }
+
+        const { dc_price_factor } = this.blockchain.getPriceFactors(blockchain_id).response;
+
         let offerPrice = {};
         if (!command.data.tokenAmountPerHolder) {
             offerPrice = await this.pricingService
                 .calculateOfferPriceinTrac(
                     dataSizeInBytes,
                     command.data.holdingTimeInMinutes,
-                    this.config.blockchain.dc_price_factor,
+                    dc_price_factor,
+                    blockchain_id,
                 );
             command.data.tokenAmountPerHolder = offerPrice.finalPrice;
         }
 
         const offer = await Models.offers.create({
             data_set_id: dataSetId,
+            blockchain_id,
             message: 'Offer is pending',
             status: 'PENDING',
             global_status: 'PENDING',
-            trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
+            trac_in_base_currency_used_for_price_calculation: offerPrice.tracInBaseCurrency,
             gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
-            price_factor_used_for_price_calculation: this.config.blockchain.dc_price_factor,
+            price_factor_used_for_price_calculation: dc_price_factor,
         });
 
         command.data.internalOfferId = offer.id;
@@ -83,7 +91,7 @@ class DCOfferPrepareCommand extends Command {
             }
         } else {
             const hasFunds = await this.dcService
-                .hasProfileBalanceForOffer(command.data.tokenAmountPerHolder);
+                .hasProfileBalanceForOffer(command.data.tokenAmountPerHolder, blockchain_id);
             if (!hasFunds) {
                 const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
                 this.logger.warn(message);
@@ -172,6 +180,7 @@ class DCOfferPrepareCommand extends Command {
             err,
             {
                 offerId: offer.offer_id,
+                blockchain_id: offer.blockchain_id,
                 internalOfferId,
                 tokenAmountPerHolder: offer.token_amount_per_holder,
                 litigationIntervalInMinutes: offer.litigation_interval_in_minutes,

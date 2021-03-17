@@ -141,7 +141,7 @@ Then(/^the consensus check should pass for the two last imports$/, function () {
         && objectEvent1.properties.bizStep !== objectEvent2.properties.bizStep, 'Invalid bizStep in consensus.').to.be.equal(true);
     expect(JSON.stringify(objectEvent1.properties.epcList) === JSON.stringify(objectEvent2.properties.epcList), 'Invalid epcList in consensus.').to.be.equal(true);
 
-    expect(this.state.lastIssuerIdentity.identity !== this.state.secondLastIssuerIdentity).to.be.equal(true);
+    expect(this.state.lastIssuerIdentities.toString() !== this.state.secondLastIssuerIdentities.toString()).to.be.equal(true);
 });
 
 Given(/^(DC|DH|DV|DV2) waits for export to finish$/, { timeout: 1200000 }, async function (targetNode) {
@@ -435,7 +435,7 @@ Given(
 
         const host = this.state[dataOwner.toLowerCase()].state.node_rpc_url;
         const viewerState = this.state[viewer.toLowerCase()];
-        const viewerErc725 = JSON.parse(fs.readFileSync(`${viewerState.options.configDir}/${viewerState.options.nodeConfiguration.erc725_identity_filepath}`).toString());
+        const viewerErc725 = JSON.parse(fs.readFileSync(`${viewerState.options.configDir}/${viewerState.options.nodeConfiguration.blockchain.implementations[0].identity_filepath}`).toString());
 
         const requestBody = {
             ot_object_id: objectId,
@@ -459,7 +459,7 @@ Given(/^([DC|DH|DV]+) gets the list of available datasets for trading$/, async f
 
     const availableResponse = await httpApiHelper.apiPermissionedDataAvailable(host);
     expect(availableResponse[0], 'Should have keys called dataset, ot_objects, seller_erc_id, seller_node_id, timestamp')
-        .to.have.all.keys('dataset', 'ot_objects', 'seller_erc_id', 'seller_node_id', 'timestamp');
+        .to.have.all.keys('dataset', 'ot_objects', 'seller_identities', 'seller_node_id', 'timestamp');
 
     const { dataset, ot_objects, seller_node_id } = availableResponse[0];
     expect(this.state.lastImport.data.dataset_id).to.be.equal(dataset.id);
@@ -605,7 +605,7 @@ Given(/^default initial token amount should be deposited on (\d+)[st|nd|rd|th]+ 
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const balance = await httpApiHelper.apiBalance(this.state.nodes[nodeIndex - 1].state.node_rpc_url, false);
-    const staked = new BN(balance.profile.staked);
+    const staked = new BN(balance[0].profile.staked);
     const initialDepositAmount = new BN(this.state.nodes[nodeIndex - 1].options.nodeConfiguration.initial_deposit_amount);
 
     expect(staked.toString()).to.be.equal(initialDepositAmount.toString());
@@ -629,6 +629,9 @@ Then(/^DC should be the issuer for the selected element$/, { timeout: 120000 }, 
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    const erc725 = JSON.parse(fs.readFileSync(`${dc.options.configDir}/${dc.options.nodeConfiguration.erc725_identity_filepath}`).toString());
-    expect(this.state.elementIssuer[0].identifiers[0].identifierValue.toUpperCase()).to.be.equal(erc725.identity.toUpperCase());
+
+    for (const implementation of dc.options.nodeConfiguration.blockchain.implementations) {
+        const erc725 = JSON.parse(fs.readFileSync(`${dc.options.configDir}/${implementation.identity_filepath}`).toString());
+        expect(this.state.elementIssuer[0].identifiers[0].identifierValue.toUpperCase()).to.be.equal(erc725.identity.toUpperCase());
+    }
 });

@@ -15,6 +15,7 @@ class DCLitigationCompleteCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -25,6 +26,7 @@ class DCLitigationCompleteCommand extends Command {
     async execute(command, transaction) {
         const {
             offerId,
+            blockchain_id,
             dhIdentity,
             blockIndex,
             objectIndex,
@@ -43,7 +45,7 @@ class DCLitigationCompleteCommand extends Command {
             return Command.empty();
         }
 
-        const dcIdentity = utilities.normalizeHex(this.config.erc725Identity);
+        const dcIdentity = this.profileService.getIdentity(blockchain_id);
 
         const challenge = await models.challenges.findOne({
             where:
@@ -63,7 +65,8 @@ class DCLitigationCompleteCommand extends Command {
             answer,
             challenge.test_index,
             true,
-        );
+            blockchain_id,
+        ).response;
         return {
             commands: [
                 {

@@ -134,6 +134,7 @@ module.exports = async (deployer, network, accounts) => {
         await token.finishMinting({ from: accounts[0] });
 
         break;
+    case 'development':
     case 'ganache':
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
             .then((result) => {
@@ -230,6 +231,20 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
         console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
 
+        break;
+    case 'supplyTokens':
+        await Hub.at('0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a')
+            .then((result) => {
+                hub = result;
+            });
+        console.log(hub);
+        temp = await hub.getContractAddress.call('Token');
+        console.log(temp);
+        console.log(temp);
+        console.log(temp);
+        console.log(temp);
+        token = await TracToken.at(temp);
+        await token.transfer(accounts[0], amountToMint.divn(2), { from: accounts[1] });
         break;
     case 'setIdentity':
         temp = await deployer.deploy(TestingUtilities);
@@ -414,7 +429,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        console.log('\n\n \t Contract adressess on ganache:');
+        console.log('\n\n \t Contract adressess on rinkeby:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);

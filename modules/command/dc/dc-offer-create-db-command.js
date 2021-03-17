@@ -14,6 +14,9 @@ class DCOfferCreateDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
+
+        this.profileService = ctx.profileService;
+
         this.remoteControl = ctx.remoteControl;
         this.errorNotificationService = ctx.errorNotificationService;
         this.permissionedDataService = ctx.permissionedDataService;
@@ -35,6 +38,7 @@ class DCOfferCreateDbCommand extends Command {
             litigationIntervalInMinutes,
             urgent,
             handler_id,
+            blockchain_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -67,7 +71,8 @@ class DCOfferCreateDbCommand extends Command {
         const otJson = JSON.parse(fs.readFileSync(documentPath, { encoding: 'utf-8' }));
         await this.permissionedDataService.addDataSellerForPermissionedData(
             offer.data_set_id,
-            this.config.erc725Identity,
+            this.profileService.getIdentity(blockchain_id),
+            blockchain_id,
             this.config.default_data_price,
             this.config.identity,
             otJson['@graph'],

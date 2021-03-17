@@ -44,6 +44,26 @@ module.exports = {
                 type: Sequelize.TEXT,
             });
         await queryInterface
+            .changeColumn('holding_data', 'litigation_public_key', {
+                type: Sequelize.TEXT,
+            });
+        await queryInterface
+            .changeColumn('holding_data', 'distribution_public_key', {
+                type: Sequelize.TEXT,
+            });
+        await queryInterface
+            .changeColumn('holding_data', 'distribution_private_key', {
+                type: Sequelize.TEXT,
+            });
+        await queryInterface
+            .changeColumn('holding_data', 'distribution_epk', {
+                type: Sequelize.TEXT,
+            });
+        await queryInterface
+            .changeColumn('bids', 'message', {
+                type: Sequelize.TEXT,
+            });
+        await queryInterface
             .changeColumn('challenges', 'start_time', {
                 type: Sequelize.BIGINT,
             });
