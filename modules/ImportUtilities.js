@@ -917,7 +917,7 @@ class ImportUtilities {
             let blockchain_id;
             if (validationSchema.networkId === 'mainnet' ||
                 validationSchema.networkId === 'rinkeby') {
-                blockchain_id = defaultConfig.blockchain.implementations[0].networkId;
+                blockchain_id = defaultConfig.blockchain.implementations[0].network_id;
             } else {
                 blockchain_id = validationSchema.networkId;
             }
