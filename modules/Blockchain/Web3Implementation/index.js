@@ -76,7 +76,6 @@ class Web3Implementation {
         // Loading contracts
         this.hubContractAddress = this.config.hub_contract_address;
 
-        console.log(path.join(this.contractPath, 'hub.json'));
         const hubAbiFile = fs.readFileSync(path.join(this.contractPath, 'hub.json'));
         this.hubContractAbi = JSON.parse(hubAbiFile);
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
