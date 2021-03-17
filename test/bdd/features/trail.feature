@@ -2,7 +2,7 @@
 
 Feature: Trail features
   Background: Setup local blockchain and bootstraps
-    Given the blockchain is set up
+    Given the blockchains are set up
     And 1 bootstrap is running
 
 @fifth

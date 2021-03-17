@@ -43,7 +43,6 @@ class RemoteControl {
         this.blockchain = ctx.blockchain;
         this.log = ctx.logger;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.socket = new SocketDecorator(ctx.logger);
         this.profileService = ctx.profileService;
 
@@ -93,6 +92,9 @@ class RemoteControl {
 
             this.socket.on('config-update', async (data) => {
                 const configClean = Object.assign({}, data);
+                configClean.blockchain.implementations.forEach((implementation) => {
+                    implementation.node_private_key = '*** MASKED ***';
+                });
                 configClean.node_private_key = '*** MASKED ***';
                 configClean.houston_password = '*** MASKED ***';
                 configClean.database.password = '*** MASKED ***';
@@ -197,11 +199,17 @@ class RemoteControl {
      */
     getImports() {
         return new Promise((resolve, reject) => {
-            Models.data_info.findAll()
-                .then((rows) => {
-                    this.socket.emit('imports', rows);
-                    resolve();
-                });
+            Models.data_info.findAll({
+                include: [
+                    {
+                        model: Models.data_provider_wallets,
+                        attributes: ['wallet', 'blockchain_id'],
+                    },
+                ],
+            }).then((rows) => {
+                this.socket.emit('imports', rows);
+                resolve();
+            });
         });
     }
 
@@ -360,11 +368,12 @@ class RemoteControl {
                         data_set_id: holding.data_set_id,
                     },
                 });
-
+                // todo pass blockchain identity
+                const identity = this.profileService.getIdentity();
                 const paidAmount = await this.blockchain
-                    .getHolderPaidAmount(bid.offer_id, this.config.erc725Identity);
+                    .getHolderPaidAmount(bid.offer_id, identity).response;
                 const stakedAmount = await this.blockchain
-                    .getHolderStakedAmount(bid.offer_id, this.config.erc725Identity);
+                    .getHolderStakedAmount(bid.offer_id, identity).response;
 
                 return {
                     data_set_id: holding.data_set_id,
@@ -388,8 +397,12 @@ class RemoteControl {
      * @return {Promise<Model>}
      */
     async _findHoldingByBid(bid) {
+        // todo pass blockchain identity
         const encryptionType = await this.blockchain
-            .getHolderLitigationEncryptionType(bid.offer_id, this.config.erc725Identity);
+            .getHolderLitigationEncryptionType(
+                bid.offer_id,
+                this.profileService.getIdentity(),
+            ).response;
 
         return Models.holding_data.findOne({
             where: {
@@ -471,6 +484,12 @@ class RemoteControl {
             where: {
                 import_id: importId,
             },
+            include: [
+                {
+                    model: Models.data_provider_wallets,
+                    attributes: ['wallet', 'blockchain_id'],
+                },
+            ],
         })
             .then((rows) => {
                 this.socket.emit('localDataResponse', rows);
@@ -480,17 +499,15 @@ class RemoteControl {
 
     /**
      * Get wallet balance
-     * @param wallet
      */
     getBalance() {
-        Utilities.getTracTokenBalance(
-            this.web3, this.config.node_wallet,
-            this.config.blockchain.token_contract_address,
-        ).then((trac) => {
+        const { response, blockchain_id } = this.blockchain.getWallet();
+        const { node_wallet } = response;
+        this.blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response.then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        this.web3.eth.getBalance(this.config.node_wallet).then((balance) => {
-            this.socket.emit('balance', balance);
+        this.blockchain.getWalletBaseBalance(node_wallet, blockchain_id).response.then((base) => {
+            this.socket.emit('balance', base);
         });
     }
 
@@ -498,7 +515,7 @@ class RemoteControl {
      * Get amount of tokens currently staked in a job
      */
     async getStakedAmount(import_id) {
-        const stakedAmount = await this.blockchain.getStakedAmount(import_id);
+        const stakedAmount = await this.blockchain.getStakedAmount(import_id).response;
         this.socket.emit('jobStake', { stakedAmount, import_id });
     }
 
@@ -506,7 +523,7 @@ class RemoteControl {
      * Get payments for one data holding job
      */
     async getHoldingIncome(import_id) {
-        const holdingIncome = await this.blockchain.getHoldingIncome(import_id);
+        const holdingIncome = await this.blockchain.getHoldingIncome(import_id).response;
         this.socket.emit('holdingIncome', { holdingIncome, import_id });
     }
 
@@ -516,7 +533,7 @@ class RemoteControl {
     async getPurchaseIncome(data) {
         const DV_wallet = data.sourceWalletPerHolding;
         const import_id = data.importIdPerHolding;
-        const stakedAmount = await this.blockchain.getPurchaseIncome(import_id, DV_wallet);
+        const stakedAmount = await this.blockchain.getPurchaseIncome(import_id, DV_wallet).response;
         this.socket.emit('purchaseIncome', { stakedAmount, import_id, DV_wallet });
     }
 
@@ -524,7 +541,9 @@ class RemoteControl {
      * Get profile
      */
     async getProfile() {
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const profile = await this.blockchain
+            .getProfile(this.profileService.getIdentity()).response;
         this.socket.emit('profile', profile);
     }
 
@@ -532,7 +551,9 @@ class RemoteControl {
      * Get total payments - earning in total
      */
     async getTotalPayouts() {
-        const totalAmount = await this.blockchain.getTotalPayouts(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const totalAmount = await this.blockchain
+            .getTotalPayouts(this.profileService.getIdentity()).response;
         this.socket.emit('total_payouts', totalAmount);
     }
 
@@ -576,6 +597,12 @@ class RemoteControl {
             where: {
                 data_set_id: datasetId,
             },
+            include: [
+                {
+                    model: Models.data_provider_wallets,
+                    attributes: ['wallet', 'blockchain_id'],
+                },
+            ],
         })
             .then((rows) => {
                 this.socket.emit('localDataResponses', rows);

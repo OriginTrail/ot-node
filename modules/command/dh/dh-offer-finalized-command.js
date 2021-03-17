@@ -12,6 +12,7 @@ class DhOfferFinalizedCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.remoteControl = ctx.remoteControl;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -19,12 +20,13 @@ class DhOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const { offerId, blockchain_id } = command.data;
 
         const events = await Models.events.findAll({
             where: {
                 event: 'OfferFinalized',
                 finished: 0,
+                blockchain_id,
             },
         });
         if (events) {
@@ -38,7 +40,7 @@ class DhOfferFinalizedCommand extends Command {
                 event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
-                this.logger.important(`Offer ${offerId} finalized`);
+                this.logger.important(`Offer ${offerId} finalized on blockchain ${blockchain_id}`);
 
                 const {
                     holder1,
@@ -47,9 +49,11 @@ class DhOfferFinalizedCommand extends Command {
                 } = JSON.parse(event.data);
 
                 const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
-                const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+                const bid =
+                    await Models.bids.findOne({ where: { offer_id: offerId, blockchain_id } });
 
-                if (holders.includes(Utilities.normalizeHex(this.config.erc725Identity))) {
+                // todo pass blockchain identity
+                if (holders.includes(this.profileService.getIdentity(blockchain_id))) {
                     bid.status = 'CHOSEN';
                     await bid.save({ fields: ['status'] });
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
@@ -69,6 +73,7 @@ class DhOfferFinalizedCommand extends Command {
                                     transactional: false,
                                     data: {
                                         offerId,
+                                        blockchain_id,
                                         viaAPI: false,
                                     },
                                 },
@@ -80,7 +85,7 @@ class DhOfferFinalizedCommand extends Command {
 
                 bid.status = 'NOT_CHOSEN';
                 await bid.save({ fields: ['status'] });
-                this.logger.important(`I haven't been chosen for offer ${offerId}.`);
+                this.logger.important(`I haven't been chosen for offer ${offerId} on blockchain ${blockchain_id}.`);
                 // await this.remoteControl.onCompletedBids();
                 return Command.empty();
             }

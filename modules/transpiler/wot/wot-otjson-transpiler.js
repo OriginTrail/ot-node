@@ -8,16 +8,19 @@ const { sha3_256 } = require('js-sha3');
 class WotOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
-        this.web3 = ctx.web3;
+        /* todo This is a workaround to detect if a node is running in a spawned process or in the
+        main loop, we should find another way to make this distinction */
+        this.logger = ctx.logger;
         this.connectionTypes = ['PART OF', 'OBSERVES', 'OBSERVATION_READ_POINT'];
     }
 
     /**
      * Convert WOT JSON document to OT-JSON
      * @param wotJson - json string
+     * @param blockchain
      * @return {*} - OT-JSON object
      */
-    convertToOTJson(wotJson) {
+    convertToOTJson(wotJson, blockchain) {
         if (wotJson == null) {
             throw new Error('[Transpilation Error] JSON document cannot be empty');
         }
@@ -56,7 +59,11 @@ class WotOtJsonTranspiler {
 
         otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-        otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
+        otjson.datasetHeader = importUtilities.createDatasetHeader(
+            this.config,
+            transpilationInfo,
+            blockchain,
+        );
 
         let result = OtJsonUtilities.prepareDatasetForNewImport(otjson);
         if (!result) {
@@ -64,11 +71,13 @@ class WotOtJsonTranspiler {
         }
         result['@id'] = importUtilities.calculateGraphPublicHash(result);
         const merkleRoot = importUtilities.calculateDatasetRootHash(result);
-        result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
+        importUtilities.attachDatasetRootHash(result.datasetHeader, merkleRoot);
 
-        // Until we update all routes to work with commands, keep this web3 implementation
-        if (this.web3) {
-            result = importUtilities.signDataset(result, this.config, this.web3);
+        // Until we update all routes to work with commands, keep this signing implementation
+        /* todo This is a workaround to detect if a node is running in a spawned process or in the
+        main loop, we should find another way to make this distinction */
+        if (this.logger) {
+            result = importUtilities.signDataset(result, blockchain);
         } else {
             const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
             if (sortedDataset) {

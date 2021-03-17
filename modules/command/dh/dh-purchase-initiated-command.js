@@ -25,11 +25,13 @@ class DhPurchaseInitiatedCommand extends Command {
             ot_json_object_id,
             buyer_node_id,
             encoded_object,
+            blockchain_id,
         } = command.data;
 
         const events = await Models.events.findAll({
             where: {
                 event: 'PurchaseInitiated',
+                blockchain_id,
                 finished: 0,
             },
         });
@@ -38,6 +40,7 @@ class DhPurchaseInitiatedCommand extends Command {
                 where: {
                     data_set_id,
                     ot_json_object_id,
+                    blockchain_id,
                     buyer_node_id,
                     status: { [Op.ne]: 'FAILED' },
                 },
@@ -63,16 +66,18 @@ class DhPurchaseInitiatedCommand extends Command {
                 const { purchaseId } = JSON.parse(event.data);
                 this.logger.important(`Purchase ${purchaseId} initiated`);
 
-                await this.blockchain.depositKey(purchaseId, encoded_object.key);
+                await this.blockchain
+                    .depositKey(purchaseId, encoded_object.key, blockchain_id).response;
 
                 dataTrade.purchase_id = Utilities.normalizeHex(purchaseId);
                 await dataTrade.save({ fields: ['purchase_id'] });
 
                 const commandData = {
                     purchase_id: purchaseId,
+                    blockchain_id,
                 };
 
-                let delay = await this.blockchain.getPaymentStageInterval();
+                let delay = await this.blockchain.getPaymentStageInterval(blockchain_id).response;
                 delay = parseInt(delay, 10) * 1000;
 
                 this.logger.info(`Key deposited for purchaseID ${purchaseId}.`
@@ -90,7 +95,9 @@ class DhPurchaseInitiatedCommand extends Command {
             await this._handleError(
                 data_set_id,
                 ot_json_object_id,
-                buyer_node_id, 'Couldn\'t find PurchaseInitiated event on blockchain.',
+                buyer_node_id,
+                blockchain_id,
+                'Couldn\'t find PurchaseInitiated event on blockchain.',
             );
             return Command.empty();
         }
@@ -118,12 +125,15 @@ class DhPurchaseInitiatedCommand extends Command {
             data_set_id,
             ot_json_object_id,
             buyer_node_id,
+            blockchain_id,
         } = command.data;
 
         await this._handleError(
             data_set_id,
             ot_json_object_id,
-            buyer_node_id, `Failed to process dhPurchaseInitiatedCommand. Error: ${err}`,
+            buyer_node_id,
+            blockchain_id,
+            `Failed to process dhPurchaseInitiatedCommand. Error: ${err}`,
         );
 
         return Command.empty();
@@ -133,6 +143,7 @@ class DhPurchaseInitiatedCommand extends Command {
         data_set_id,
         ot_json_object_id,
         buyer_node_id,
+        blockchain_id,
         errorMessage,
     ) {
         this.logger.error(errorMessage);
@@ -144,6 +155,7 @@ class DhPurchaseInitiatedCommand extends Command {
                 where: {
                     data_set_id,
                     ot_json_object_id,
+                    blockchain_id,
                     buyer_node_id,
                     status: { [Op.ne]: 'FAILED' },
                 },

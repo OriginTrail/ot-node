@@ -21,6 +21,7 @@ class DcOfferFinalizedCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.errorNotificationService = ctx.errorNotificationService;
     }
 
     /**
@@ -28,12 +29,15 @@ class DcOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId, nodeIdentifiers, handler_id } = command.data;
+        const {
+            offerId, nodeIdentifiers, handler_id, blockchain_id,
+        } = command.data;
 
         const events = await Models.events.findAll({
             where: {
                 event: 'OfferFinalized',
                 finished: 0,
+                blockchain_id,
             },
         });
         if (events) {
@@ -47,7 +51,7 @@ class DcOfferFinalizedCommand extends Command {
                 event.finished = 1;
                 await event.save({ fields: ['finished'] });
 
-                this.logger.important(`Offer ${offerId} finalized`);
+                this.logger.important(`Offer ${offerId} finalized on blockchain ${blockchain_id}`);
 
                 const handler = await Models.handler_ids.findOne({
                     where: { handler_id },
@@ -81,7 +85,8 @@ class DcOfferFinalizedCommand extends Command {
                     },
                 });
 
-                const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
+                const offer =
+                    await Models.offers.findOne({ where: { offer_id: offerId, blockchain_id } });
                 offer.status = 'FINALIZED';
                 offer.global_status = 'ACTIVE';
                 offer.number_of_replications = replications;
@@ -112,6 +117,7 @@ class DcOfferFinalizedCommand extends Command {
                             name: 'dcOfferCleanupCommand',
                             data: {
                                 offerId,
+                                blockchain_id,
                             },
                             delay: scheduledTime,
                         },
@@ -180,6 +186,7 @@ class DcOfferFinalizedCommand extends Command {
                     expected_answer: challenge.answer,
                     start_time: challenge.time,
                     offer_id: offer.offer_id,
+                    blockchain_id: offer.blockchain_id,
                     status: 'PENDING',
                 }));
         });

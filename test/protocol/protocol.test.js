@@ -19,7 +19,7 @@ const Utilities = require('../../modules/Utilities');
 
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
-const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
+const Transactions = require('../../modules/Blockchain/Web3Implementation/Transactions');
 
 const sequelizeConfig = require('./../../config/sequelizeConfig').development;
 
@@ -654,15 +654,20 @@ describe.skip('Protocol tests', () => {
                 normalized.edges,
             );
 
-            Models.data_info.create({
+            const dataInfo = await Models.data_info.create({
                 import_id: importId,
                 root_hash: rootHash,
                 import_hash: importHash,
-                data_provider_wallet: testNode1.wallet,
                 import_timestamp: new Date(),
                 total_documents: vertices.length,
                 data_size: bytes(JSON.stringify(vertices)),
                 transaction_hash: null,
+            });
+
+            Models.data_provider_wallets.create({
+                data_info_id: dataInfo.id,
+                wallet: Utilities.normalizeHex(testNode1.wallet),
+                blockchain_id: 'testing',
             });
         });
 
@@ -777,11 +782,11 @@ describe.skip('Protocol tests', () => {
                 await sleep.sleep(500);
             }
 
-            const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId);
+            const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId).response;
             expect(result2).to.not.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
             expect(Utilities.isHexStrict(result2)).to.be.true;
 
-            const result1 = await testNode1.blockchain.getRootHash(testNode1.wallet, importId);
+            const result1 = await testNode1.blockchain.getRootHash(testNode1.wallet, importId).response;
             expect(result1).to.be.equal(result2);
         });
     });

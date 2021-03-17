@@ -426,6 +426,16 @@ class GraphStorage {
     }
 
     /**
+     * Run query on graph database
+     * @param {string} - queryString
+     * @param {object} - params
+     * @returns {Promise<any>}
+     */
+    async runQuery(queryString, params) {
+        return this.db.runQuery(queryString, params);
+    }
+
+    /**
      * Updates edge imports by ID
      * @param senderId
      * @param uid
@@ -724,12 +734,12 @@ class GraphStorage {
      * @param datasetId
      * @returns {Promise}
      */
-    async findIssuerIdentityForDatasetId(datasetId) {
+    async findIssuerIdentitiesForDatasetId(datasetId) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findIssuerIdentityForDatasetId(datasetId).then((result) => {
+                this.db.findIssuerIdentitiesForDatasetId(datasetId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

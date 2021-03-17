@@ -6,10 +6,15 @@ class ErrorNotificationService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     initialize() {
         const cleanConfig = Object.assign({}, this.config);
+        cleanConfig.blockchain.implementations.forEach((implementation) => {
+            delete implementation.node_private_key;
+        });
         delete cleanConfig.node_private_key;
         delete cleanConfig.houston_password;
         delete cleanConfig.database;
@@ -17,6 +22,9 @@ class ErrorNotificationService {
 
         const releaseStage = process.env.NODE_ENV === 'mariner' ? 'mainnet' : process.env.NODE_ENV;
 
+        const { node_wallet, management_wallet } = this.blockchain.getWallet().response;
+
+        // todo pass blockchain identity
         Bugsnag.start({
             apiKey: pjson.config.bugsnagkey,
             appVersion: pjson.version,
@@ -33,7 +41,7 @@ class ErrorNotificationService {
                as user provided data so it can help us with debugging
             * */
             user: {
-                id: this.config.erc725Identity,
+                id: this.profileService.getIdentity(),
                 name: '',
                 email: '',
             },
@@ -43,8 +51,8 @@ class ErrorNotificationService {
             metadata: {
                 generalNodeInformation: {
                     nodeId: this.config.identity,
-                    managementWallet: this.config.management_wallet,
-                    operationalWallet: this.config.node_wallet,
+                    managementWallet: management_wallet,
+                    operationalWallet: node_wallet,
                 },
                 configuration: cleanConfig,
             },

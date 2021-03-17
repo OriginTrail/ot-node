@@ -5,7 +5,7 @@ const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 const OtJsonUtilities = require('../OtJsonUtilities');
 const fs = require('fs');
-const Web3 = require('web3');
+const defaultConfig = require('../../config/config')[process.env.NODE_ENV];
 
 process.on('message', async (data) => {
     const {
@@ -40,10 +40,38 @@ process.on('message', async (data) => {
             }
         }
 
-        const web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
+        const dc_node_wallets = ImportUtilities.extractDatasetSigners(document);
+        const data_creator = Utilities.copyObject(document.datasetHeader.dataCreator);
 
-        const dc_node_wallet = ImportUtilities.extractDatasetSigner(document, web3);
-        const data_creator = document.datasetHeader.dataCreator;
+        if (data_creator.identifiers && Array.isArray(data_creator.identifiers)
+            && data_creator.identifiers.length > 0) {
+            for (const identifierObject of data_creator.identifiers) {
+                const identifierSchemaName = identifierObject.validationSchema;
+
+                const schemas = document.datasetHeader.validationSchemas;
+                let schemaObject;
+                for (const headerSchemaName in schemas) {
+                    if (Object.prototype.hasOwnProperty.call(schemas, headerSchemaName) &&
+                        identifierSchemaName.includes(headerSchemaName)) {
+                        schemaObject = schemas[headerSchemaName];
+                    }
+                }
+                if (schemaObject) {
+                    // Added to overwrite the previous ambiguous blockchain_id of Ethereum
+                    let blockchain_id;
+                    if (schemaObject.networkId === 'mainnet' ||
+                        schemaObject.networkId === 'rinkeby') {
+                        blockchain_id = defaultConfig.blockchain.implementations[0].networkId;
+                    } else {
+                        blockchain_id = schemaObject.networkId;
+                    }
+
+                    identifierObject.blockchain_id = blockchain_id;
+                } else {
+                    throw new Error(`Could not find validationSchema for ${identifierSchemaName}`);
+                }
+            }
+        }
 
         let dataset;
         switch (standardId) {
@@ -75,7 +103,7 @@ process.on('message', async (data) => {
             await Utilities.writeContentsToFile(
                 cacheDirectory,
                 handlerId,
-                JSON.stringify({ formatted_dataset: dataset, dc_node_wallet, data_creator }),
+                JSON.stringify({ formatted_dataset: dataset, dc_node_wallets, data_creator }),
             );
         } catch (e) {
             const filePath = path.join(cacheDirectory, handlerId);

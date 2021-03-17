@@ -7,17 +7,18 @@ const Models = require('../../../models/index');
 /**
  * Handles replication request
  */
-class DcReplicationSendCommand extends Command {
+class DCReplicationSendCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
-        this.web3 = ctx.web3;
+        this.blockchain = ctx.blockchain;
 
         this.replicationService = ctx.replicationService;
         this.permissionedDataService = ctx.permissionedDataService;
         this.importService = ctx.importService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -73,12 +74,15 @@ class DcReplicationSendCommand extends Command {
             Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
             Utilities.denormalizeHex(replication.distributionRootHash),
         ];
-        const distributionSignature = Encryption.signMessage(
-            this.web3, toSign,
-            Utilities.normalizeHex(this.config.node_private_key),
-        );
 
-        const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+        const { node_wallet, node_private_key } =
+            this.blockchain.getWallet(offer.blockchain_id).response;
+        const blockchainIdentity = this.profileService.getIdentity(offer.blockchain_id);
+
+        const distributionSignature = Encryption
+            .signMessage(toSign, Utilities.normalizeHex(node_private_key));
+
+        const permissionedData = await this.permissionedDataService.getAllowedPermissionedDataMap(
             offer.data_set_id,
             identity,
         );
@@ -97,9 +101,10 @@ class DcReplicationSendCommand extends Command {
 
         const payload = {
             offer_id: offer.offer_id,
+            blockchain_id: offer.blockchain_id,
             data_set_id: offer.data_set_id,
-            dc_wallet: this.config.node_wallet,
-            dcIdentity: this.config.erc725Identity,
+            dc_wallet: node_wallet,
+            dcIdentity: blockchainIdentity,
             dcNodeId: this.config.network.identity,
             otJson: replication.otJson,
             permissionedData,
@@ -144,4 +149,4 @@ class DcReplicationSendCommand extends Command {
     }
 }
 
-module.exports = DcReplicationSendCommand;
+module.exports = DCReplicationSendCommand;

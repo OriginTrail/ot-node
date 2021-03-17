@@ -13,6 +13,8 @@ class DHOfferHandleCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
+        this.blockchain = ctx.blockchain;
+        this.profileService = ctx.profileService;
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -23,26 +25,31 @@ class DHOfferHandleCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            blockchain_id,
             dcNodeId,
         } = command.data;
+
+        const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
 
         this.logger.trace(`Sending replication request for offer ${offerId} to node ${dcNodeId}.`);
         const response = await this.transport.replicationRequest({
             offerId,
-            wallet: this.config.node_wallet,
-            dhIdentity: this.config.erc725Identity,
+            blockchain_id,
+            wallet: node_wallet,
+            dhIdentity: this.profileService.getIdentity(blockchain_id),
             async_enabled: true,
         }, dcNodeId);
 
-        if (response.status === 'fail') {
-            const bid = await Models.bids.findOne({
-                where: {
-                    offer_id: offerId,
-                },
-            });
+        const bid = await Models.bids.findOne({
+            where: {
+                offer_id: offerId,
+                blockchain_id,
+            },
+        });
 
+        if (response.status === 'fail') {
             bid.status = 'FAILED';
-            let message = `Failed to receive replication from ${dcNodeId} for offer ${offerId}.`;
+            let message = `Failed to receive replication from ${dcNodeId} for offer ${offerId} on chain ${blockchain_id}.`;
             if (response.message != null) {
                 message = `${message} Data creator reason: ${response.message}`;
             }
@@ -53,9 +60,6 @@ class DHOfferHandleCommand extends Command {
             return Command.empty();
         }
 
-        const bid = await Models.bids.findOne({
-            where: { offer_id: offerId },
-        });
         bid.status = 'SENT';
         await bid.save({ fields: ['status'] });
 
@@ -92,6 +96,7 @@ class DHOfferHandleCommand extends Command {
         const packedResponse = DHOfferHandleCommand._stripResponse(response);
         Object.assign(packedResponse, {
             dcNodeId,
+            blockchain_id,
             documentPath: path.join(cacheDirectory, offerId),
         });
         return {

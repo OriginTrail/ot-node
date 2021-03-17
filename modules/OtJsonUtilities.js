@@ -1,5 +1,7 @@
 const Utilities = require('./Utilities');
 const { sha3_256 } = require('js-sha3');
+const defaultConfig = require('../config/config')[process.env.NODE_ENV];
+
 
 class OtJsonUtilities {
     /**
@@ -44,14 +46,11 @@ class OtJsonUtilities {
 
     static _repackDataset(dataset) {
         const config = {};
-        config.blockchain = {};
-        config.blockchain.network_id = dataset.datasetHeader.validationSchemas.merkleRoot.networkId;
-        config.blockchain.hub_contract_address =
-            dataset.datasetHeader.validationSchemas.merkleRoot.hubContractAddress;
-        config.erc725Identity = dataset.datasetHeader.dataCreator.identifiers[0].identifierValue;
+        config.blockchain = OtJsonUtilities._extractBlockchainData(dataset.datasetHeader);
         // eslint-disable-next-line global-require
         const header = require('./ImportUtilities').createDatasetHeader(
             config, null,
+            config.blockchain,
             dataset.datasetHeader.datasetTags,
             dataset.datasetHeader.datasetTitle,
             dataset.datasetHeader.datasetDescription,
@@ -69,6 +68,37 @@ class OtJsonUtilities {
             '@graph': graph,
             signature: dataset.signature,
         };
+    }
+
+    static _extractBlockchainData(datasetHeader) {
+        const result = [];
+        for (const creatorId of datasetHeader.dataCreator.identifiers) {
+            const identity = creatorId.identifierValue;
+            const validationSchemaName = creatorId.validationSchema.replace('/schemas/', '');
+
+            // Added to overwrite the previous ambiguous blockchain_id of Ethereum
+            let blockchain_id;
+            if (datasetHeader.validationSchemas[validationSchemaName].networkId === 'mainnet' ||
+                datasetHeader.validationSchemas[validationSchemaName].networkId === 'rinkeby') {
+                blockchain_id = defaultConfig.blockchain.implementations[0].networkId;
+            } else {
+                blockchain_id = datasetHeader.validationSchemas[validationSchemaName].networkId;
+            }
+
+            const schemaPostfix = creatorId.validationSchema.split('erc725-main').pop();
+            const schemaEndpoint = `merkleRoot${schemaPostfix}`;
+            const hub_contract_address =
+                datasetHeader.validationSchemas[schemaEndpoint].hubContractAddress;
+
+            result.push({
+                blockchain_id,
+                identity,
+                hub_contract_address,
+            });
+        }
+        result.sort((a, b) => a.blockchain_id.localeCompare(b.blockchain_id));
+
+        return result;
     }
 
     /**
