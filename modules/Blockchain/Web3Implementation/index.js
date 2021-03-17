@@ -150,7 +150,7 @@ class Web3Implementation {
         // Old Holding storage contract data
         const oldHoldingStorageAbiFile = fs.readFileSync(path.join(this.contractPath, 'holding-storage.json'));
         this.oldHoldingStorageContractAddress = await this._getOldHoldingStorageContractAddress();
-        if (!Utilities.isZeroHash(this.oldHoldingContractAddress)) {
+        if (!Utilities.isZeroHash(this.oldHoldingStorageContractAddress)) {
             this.oldHoldingStorageContractAbi = JSON.parse(oldHoldingStorageAbiFile);
             this.oldHoldingStorageContract = new this.web3.eth.Contract(
                 this.oldHoldingStorageContractAbi,
