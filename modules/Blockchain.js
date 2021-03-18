@@ -102,13 +102,20 @@ class Blockchain {
 
             for (const implUserConfig of config.implementations) {
                 if (!implUserConfig.blockchain_title) {
-                    throw Error(`Blockchain implementation missing title.\nGiven config: ${JSON.stringify(implUserConfig, null, 4)}`);
+                    throw Error('Blockchain implementation missing type, please add blockchain_title parameter.\n'
+                       + `Given config: ${JSON.stringify(implUserConfig, null, 4)}`);
+                }
+                if (!implUserConfig.network_id) {
+                    throw Error('Blockchain implementation missing id, please add network_id parameter.\n'
+                        + `Given config: ${JSON.stringify(implUserConfig, null, 4)}`);
                 }
 
                 const implDefaultConfig =
-                    defaults.find(cfg => cfg.blockchain_title === implUserConfig.blockchain_title);
+                    defaults.find(cfg => (cfg.network_id === implUserConfig.network_id
+                        && cfg.blockchain_title === implUserConfig.blockchain_title));
                 if (!implDefaultConfig) {
-                    throw Error(`Unsupported blockchain ${implUserConfig.blockchain_title}`);
+                    throw Error(`Blockchain with type ${implUserConfig.blockchain_title}`
+                       + ` and id ${implUserConfig.network_id} is not supported on the ot-node`);
                 }
 
                 result.implementations.push(deepExtend({}, implDefaultConfig, implUserConfig));
