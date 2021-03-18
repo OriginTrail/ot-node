@@ -101,13 +101,14 @@ class Blockchain {
             result.implementations = [];
 
             for (const implUserConfig of config.implementations) {
+                if (!implUserConfig.blockchain_title && !implUserConfig.network_id) {
+                    throw Error('Blockchain implementation missing type, please add blockchain_title and network_id parameter.');
+                }
                 if (!implUserConfig.blockchain_title) {
-                    throw Error('Blockchain implementation missing type, please add blockchain_title parameter.\n'
-                       + `Given config: ${JSON.stringify(implUserConfig, null, 4)}`);
+                    throw Error('Blockchain implementation missing type, please add blockchain_title parameter');
                 }
                 if (!implUserConfig.network_id) {
-                    throw Error('Blockchain implementation missing id, please add network_id parameter.\n'
-                        + `Given config: ${JSON.stringify(implUserConfig, null, 4)}`);
+                    throw Error('Blockchain implementation missing id, please add network_id parameter.');
                 }
 
                 const implDefaultConfig =
