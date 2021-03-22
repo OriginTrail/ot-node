@@ -26,7 +26,7 @@ class M7ArangoDatasetSignatureMigration {
             if (!Array.isArray(document.signature)) {
                 const newSignature = [{
                     type: document.signature.type,
-                    proofValue: document.signature.proofValue,
+                    proofValue: document.signature.value,
                     proofPurpose: 'assertionMethod',
                     created: document.datasetHeader.datasetCreationTimestamp,
                     domain: blockchain_id,
