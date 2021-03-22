@@ -266,6 +266,15 @@ class DCService {
             return;
         }
 
+        const purposes = await this.blockchain
+            .getWalletPurposes(dhIdentity, wallet, offer.blockchain_id).response;
+        if (!purposes.includes('2')) {
+            const message = 'Wallet provided does not have the appropriate permissions set up for the given identity.';
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+            return;
+        }
+
         const dhReputation = await this.getReputationForDh(dhIdentity);
 
         if (dhReputation.lt(new BN(this.config.dh_min_reputation))) {

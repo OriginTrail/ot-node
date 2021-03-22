@@ -94,6 +94,64 @@
           "dc_price_factor" : "3",
           "dh_price_factor" : "2",
           "trac_price_in_base_currency" : "0.4"
+        },
+        {
+          "blockchain_title": "Ethereum",
+          "network_id": "ganache_7545",
+          "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
+          "identity_filepath": "ganache_7545_erc725_identity.json",
+          "gas_limit": "2000000",
+          "gas_price": "20000000000",
+          "max_allowed_gas_price" : 100000000000,
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_base_currency" : "0.00005",
+          "node_wallet": "",
+          "node_private_key": "",
+          "management_wallet": "",
+          "plugins": [
+            {
+              "enabled": false,
+              "provider": "Hyperledger",
+              "name": "fingerprint-plugin",
+              "config": {
+                "url": "URL",
+                "auth": {
+                  "user": "USER",
+                  "pass": "PASS"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "blockchain_title": "Ethereum",
+          "network_id": "ganache_8545",
+          "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
+          "identity_filepath": "ganache_8545_erc725_identity.json",
+          "gas_limit": "2000000",
+          "gas_price": "20000000000",
+          "max_allowed_gas_price" : 100000000000,
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_base_currency" : "0.00005",
+          "node_wallet": "",
+          "node_private_key": "",
+          "management_wallet": "",
+          "plugins": [
+            {
+              "enabled": false,
+              "provider": "Hyperledger",
+              "name": "fingerprint-plugin",
+              "config": {
+                "url": "URL",
+                "auth": {
+                  "user": "USER",
+                  "pass": "PASS"
+                }
+              }
+            }
+          ]
         }
       ]
     },
