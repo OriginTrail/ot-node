@@ -7,19 +7,16 @@ const OtJsonUtilities = require('../OtJsonUtilities');
 class ImportWorkerController {
     constructor(ctx) {
         this.logger = ctx.logger;
-        this.web3 = ctx.web3;
         this.importService = ctx.importService;
+        this.blockchain = ctx.blockchain;
 
         this.commandExecutor = ctx.commandExecutor;
         this.config = ctx.config;
     }
 
     /**
-     * Call miner process
-     * @param task
-     * @param wallets
-     * @param difficulty
-     * @param offerId
+     * Start graph converter worker to convert an OT-JSON to a graph format
+     * @param command {Object}
      */
     async startGraphConverterWorker(command) {
         this.logger.info('Starting graph converter worker');
@@ -27,26 +24,21 @@ class ImportWorkerController {
             documentPath,
             handler_id,
             encryptedMap,
-            data_provider_wallet,
+            data_provider_wallets,
             purchased,
         } = command.data;
+
+        const blockchain_ids = this.blockchain.getAllBlockchainIds();
 
         let document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
         const otjson_size_in_bytes = bytes(document);
         document = JSON.parse(document);
         // Extract wallet from signature.
-        const wallet = ImportUtilities.extractDatasetSigner(
-            document,
-            this.web3,
-        );
-
-        await this.importService.validateDocument(document);
+        await this.importService.validateDocument(document, blockchain_ids);
 
         const forked = fork('modules/worker/graph-converter-worker.js');
 
-        forked.send(JSON.stringify({
-            document, encryptedMap, wallet, handler_id,
-        }));
+        forked.send(JSON.stringify({ document, encryptedMap }));
 
         forked.on('message', async (response) => {
             if (response.error) {
@@ -70,7 +62,7 @@ class ImportWorkerController {
                 data_hash: parsedData.data_hash,
                 total_documents: parsedData.total_documents,
                 otjson_size_in_bytes,
-                data_provider_wallet,
+                data_provider_wallets,
                 purchased,
             };
 
@@ -85,13 +77,15 @@ class ImportWorkerController {
         });
     }
 
-    async startOtjsonConverterWorker(command, standardId) {
+    async startOtjsonConverterWorker(command, standardId, blockchain) {
         this.logger.info('Starting ot-json converter worker');
         const { documentPath, handler_id } = command.data;
         const document = fs.readFileSync(documentPath, { encoding: 'utf-8' });
         const forked = fork('modules/worker/otjson-converter-worker.js');
 
-        forked.send(JSON.stringify({ config: this.config, dataset: document, standardId }));
+        forked.send(JSON.stringify({
+            config: this.config, dataset: document, standardId, blockchain,
+        }));
 
         forked.on('message', async (response) => {
             if (response.error) {
@@ -99,7 +93,7 @@ class ImportWorkerController {
             } else {
                 const otjson = response;
 
-                const signedOtjson = ImportUtilities.signDataset(otjson, this.config, this.web3);
+                const signedOtjson = ImportUtilities.signDataset(otjson, blockchain);
                 fs.writeFileSync(documentPath, JSON.stringify(signedOtjson));
                 const commandData = {
                     documentPath,

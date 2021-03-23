@@ -44,10 +44,12 @@ const M2SequelizeMetaMigration = require('./modules/migration/m2-sequelize-meta-
 const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-identity-migration');
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
+const M7ArangoDatasetSignatureMigration = require('./modules/migration/m7-arango-dataset-signature-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
+const RestoreService = require('./scripts/restore');
 const { execSync } = require('child_process');
 
 const semver = require('semver');
@@ -55,17 +57,15 @@ const semver = require('semver');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
-const Web3 = require('web3');
-
 const log = require('./modules/logger');
 
 global.__basedir = __dirname;
 
 let context;
-const defaultConfig = configjson[
+const defaultConfig = Utilities.copyObject(configjson[
     process.env.NODE_ENV &&
     ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-        process.env.NODE_ENV : 'development'];
+        process.env.NODE_ENV : 'development']);
 
 let config;
 try {
@@ -81,21 +81,6 @@ try {
             `.${pjson.name}rc`,
             process.env.NODE_ENV,
         );
-    }
-
-    if (!config.node_wallet || !config.node_private_key) {
-        console.error('Please provide valid wallet.');
-        process.abort();
-    }
-
-    if (!config.management_wallet) {
-        console.error('Please provide a valid management wallet.');
-        process.abort();
-    }
-
-    if (!config.blockchain.rpc_server_url) {
-        console.error('Please provide a valid RPC server URL.');
-        process.abort();
     }
 } catch (error) {
     console.error(`Failed to read configuration. ${error}.`);
@@ -176,12 +161,9 @@ class OTNode {
         config.erc725Identity = '';
         config.publicKeyData = {};
 
-        const web3 =
-            new Web3(new Web3.providers.HttpProvider(config.blockchain.rpc_server_url));
-
         const appState = {};
         if (config.is_bootstrap_node) {
-            await this.startBootstrapNode({ appState }, web3);
+            await this.startBootstrapNode({ appState });
             return;
         }
 
@@ -229,6 +211,7 @@ class OTNode {
             }
         }
 
+        this._checkRestoreRequestStatus(config);
 
         // Checking if selected graph database exists
         try {
@@ -266,7 +249,6 @@ class OTNode {
             approvalService: awilix.asClass(ApprovalService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
-            web3: awilix.asValue(web3),
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
@@ -290,14 +272,13 @@ class OTNode {
             otNodeClient: awilix.asClass(OtNodeClient).singleton(),
         });
         const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
+        await blockchain.loadContracts();
 
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
         const profileService = container.resolve('profileService');
         const approvalService = container.resolve('approvalService');
-        await approvalService.initialize();
 
         emitter.initialize();
 
@@ -306,12 +287,9 @@ class OTNode {
         try {
             await graphStorage.connect();
             log.info(`Connected to graph database: ${graphStorage.identify()}`);
-            // TODO https://www.pivotaltracker.com/story/show/157873617
-            // const myVersion = await graphStorage.version();
-            // log.info(`Database version: ${myVersion}`);
+            await this._runArangoDatasetSignatureMigration(config, graphStorage);
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
-            console.log(err);
             process.exit(1);
         }
 
@@ -345,7 +323,6 @@ class OTNode {
         try {
             await profileService.initProfile();
             await this._runPayoutMigration(blockchain, config);
-            await profileService.upgradeProfile();
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
@@ -353,15 +330,7 @@ class OTNode {
         }
         await transport.start();
 
-        // Check if ERC725 has valid node ID.
-        const profile = await blockchain.getProfile(config.erc725Identity);
-
-        if (!profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
-            await blockchain.setNodeId(
-                config.erc725Identity,
-                Utilities.normalizeHex(config.identity.toLowerCase()),
-            );
-        }
+        await profileService.validateAndUpdateProfiles();
         // Initialize bugsnag notification service
         const errorNotificationService = container.resolve('errorNotificationService');
         await errorNotificationService.initialize();
@@ -418,12 +387,37 @@ class OTNode {
             try {
                 log.info('Initializing Arango migration...');
                 await migration.run();
-                log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                log.warn(`One-time Arango migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
                 await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    async _runArangoDatasetSignatureMigration(config, graphStorage) {
+        const migrationsStartedMills = Date.now();
+
+        const m7ArangoSignatureMigrationFilename = '7_m7ArangoDatasetSignatureMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m7ArangoSignatureMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M7ArangoDatasetSignatureMigration({
+                config,
+                graphStorage,
+            });
+
+            try {
+                log.info('Initializing Arango dataset signature migration...');
+                await migration.run();
+                log.warn(`One-time Arango dataset signature migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m7ArangoSignatureMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 process.exit(1);
             }
         }
@@ -484,11 +478,51 @@ class OTNode {
         }
     }
 
+    _checkRestoreRequestStatus(config) {
+        const restoreFile = path.join(config.appDataPath, 'restore_request_status.txt');
+
+        if (fs.existsSync(restoreFile)) {
+            log.info('Detected restore request file, checking status.');
+            const restoreStatus = fs.readFileSync(restoreFile).toString();
+
+            switch (restoreStatus) {
+            case 'COMPLETED':
+                log.info('Restore status is completed, continuing with node startup.');
+                break;
+            case 'FAILED':
+                log.warn('Restore status is failed, cancelling node startup');
+                if (fs.existsSync(path.join(config.appDataPath, 'restore_error_message.txt'))) {
+                    log.warn(`Found error during restore procedure: \n${fs.readFileSync(path
+                        .join(config.appDataPath, 'restore_error_message.txt')).toString()}`);
+                }
+                log.important('To start your node please fix the restoration error(s) or skip the restore process by deleting the restore request file.');
+                process.exit(1);
+                break;
+            case 'REQUESTED':
+            default:
+                log.info('Restore status is requested, starting restore process');
+                try {
+                    const restorer = new RestoreService(log);
+                    restorer.restore();
+                    log.info('Successfully completed node restore, restarting to read restored files.');
+                    fs.writeFileSync(restoreFile, 'COMPLETED');
+                    // Exit with unexpected code, so that the node restarts
+                    process.exit(2);
+                } catch (e) {
+                    log.error(`Failed to execute node restore. Error: ${e.toString()}`);
+                    fs.writeFileSync(path.join(config.appDataPath, 'restore_error_message.txt'), e.toString());
+                    fs.writeFileSync(restoreFile, 'FAILED');
+                    process.exit(1);
+                }
+                break;
+            }
+        }
+    }
     /**
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode({ appState }, web3) {
+    async startBootstrapNode({ appState }) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
@@ -503,11 +537,10 @@ class OTNode {
 
         container.register({
             emitter: awilix.asValue({}),
-            web3: awilix.asValue(web3),
             blockchain: awilix.asClass(Blockchain).singleton(),
             blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
-            approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
+            dvService: awilix.asClass(DVService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
@@ -522,18 +555,9 @@ class OTNode {
             schemaValidator: awilix.asClass(SchemaValidator).singleton(),
             importService: awilix.asClass(ImportService).singleton(),
         });
-
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
         await transport.start();
-
-        const blockchain = container.resolve('blockchain');
-        await blockchain.initialize();
-
-        const approvalService = container.resolve('approvalService');
-        await approvalService.initialize();
-
-        this.listenBlockchainEvents(blockchain);
 
         const restApiController = container.resolve('restApiController');
         try {
@@ -557,17 +581,22 @@ class OTNode {
         let deadline = Date.now();
         setInterval(async () => {
             if (!working && Date.now() > deadline) {
-                working = true;
-                await blockchain.getAllPastEvents('HUB_CONTRACT');
-                await blockchain.getAllPastEvents('HOLDING_CONTRACT');
-                await blockchain.getAllPastEvents('PROFILE_CONTRACT');
-                await blockchain.getAllPastEvents('APPROVAL_CONTRACT');
-                await blockchain.getAllPastEvents('LITIGATION_CONTRACT');
-                await blockchain.getAllPastEvents('MARKETPLACE_CONTRACT');
-                await blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
-                await blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
-                deadline = Date.now() + delay;
-                working = false;
+                try {
+                    working = true;
+                    await blockchain.getAllPastEvents('HUB_CONTRACT');
+                    await blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                    await blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                    await blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                    await blockchain.getAllPastEvents('LITIGATION_CONTRACT');
+                    await blockchain.getAllPastEvents('MARKETPLACE_CONTRACT');
+                    await blockchain.getAllPastEvents('REPLACEMENT_CONTRACT');
+                    await blockchain.getAllPastEvents('OLD_HOLDING_CONTRACT'); // TODO remove after successful migration
+                    deadline = Date.now() + delay;
+                } catch (e) {
+                    log.error(`Failed to get blockchain events. Error: ${e}`);
+                } finally {
+                    working = false;
+                }
             }
         }, 5000);
     }

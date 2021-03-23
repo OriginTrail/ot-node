@@ -11,8 +11,8 @@ class DVQueryNetworkCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
-        this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -31,10 +31,12 @@ class DVQueryNetworkCommand extends Command {
             throw Error('Failed to store network query.');
         }
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         const dataLocationRequestObject = {
             message: {
                 id: queryId,
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 nodeId: this.config.identity,
                 query,
             },
@@ -43,8 +45,7 @@ class DVQueryNetworkCommand extends Command {
         dataLocationRequestObject.messageSignature =
             Utilities.generateRsvSignature(
                 dataLocationRequestObject.message,
-                this.web3,
-                this.config.node_private_key,
+                node_private_key,
             );
 
         await this.transport.publish('kad-data-location-request', dataLocationRequestObject);

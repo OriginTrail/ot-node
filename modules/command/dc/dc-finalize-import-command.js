@@ -9,6 +9,7 @@ class DcFinalizeImport extends Command {
         this.logger = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -20,7 +21,7 @@ class DcFinalizeImport extends Command {
             error,
             handler_id,
             data_set_id,
-            data_provider_wallet,
+            data_provider_wallets,
             purchased,
             documentPath,
             root_hash,
@@ -37,56 +38,44 @@ class DcFinalizeImport extends Command {
         }
 
         try {
+            let dataProviderWallets;
+            if (!data_provider_wallets) {
+                dataProviderWallets = this.blockchain.getAllWallets()
+                    .map(elem => ({
+                        blockchain_id: elem.blockchain_id,
+                        wallet: Utilities.normalizeHex(elem.response.node_wallet),
+                    }));
+            } else {
+                dataProviderWallets = data_provider_wallets;
+            }
+
             const import_timestamp = new Date();
             this.remoteControl.importRequestData();
-            await Models.data_info.create({
+            const dataInfo = await Models.data_info.create({
                 data_set_id,
                 root_hash,
-                data_provider_wallet: data_provider_wallet || this.config.node_wallet,
                 import_timestamp,
                 total_documents,
                 origin: purchased ? 'PURCHASED' : 'IMPORTED',
                 otjson_size_in_bytes,
                 data_hash,
             }).catch(async (error) => {
-                this.logger.error(error);
-                const handler = await Models.handler_ids.findOne({
-                    where: { handler_id },
-                });
-                const data = JSON.parse(handler.data);
-                if (data && data.readExport) {
-                    data.import_status = 'FAILED';
-                    handler.status = data.export_status === 'PENDING' ? 'PENDING' : 'FAILED';
-                    handler.data = JSON.stringify(data);
-
-                    await Models.handler_ids.update(
-                        {
-                            data: handler.data,
-                            status: handler.status,
-                        },
-                        {
-                            where: {
-                                handler_id,
-                            },
-                        },
-                    );
-                } else {
-                    await Models.handler_ids.update(
-                        {
-                            status: 'FAILED',
-                            data: JSON.stringify({
-                                error,
-                            }),
-                        },
-                        {
-                            where: {
-                                handler_id,
-                            },
-                        },
-                    );
-                }
-                this.remoteControl.importFailed(error);
+                this._processError(error, handler_id);
             });
+
+            const promises = [];
+            for (const providerObject of dataProviderWallets) {
+                promises.push(Models.data_provider_wallets.create({
+                    data_info_id: dataInfo.id,
+                    wallet: providerObject.wallet,
+                    blockchain_id: providerObject.blockchain_id,
+                }));
+            }
+
+            await Promise.all(promises).catch(async (error) => {
+                await this._processError(error, handler_id);
+            });
+
             const handler = await Models.handler_ids.findOne({
                 where: { handler_id },
             });
@@ -134,43 +123,7 @@ class DcFinalizeImport extends Command {
             this.logger.info(`Data set ID: ${data_set_id}`);
             this.remoteControl.importSucceeded();
         } catch (error) {
-            this.logger.error(`Failed to register import. Error ${error}.`);
-            const handler = await Models.handler_ids.findOne({
-                where: { handler_id },
-            });
-            const data = JSON.parse(handler.data);
-            if (data && data.readExport) {
-                data.import_status = 'FAILED';
-                handler.status = data.export_status === 'PENDING' ? 'PENDING' : 'FAILED';
-                handler.data = JSON.stringify(data);
-
-                await Models.handler_ids.update(
-                    {
-                        data: handler.data,
-                        status: handler.status,
-                    },
-                    {
-                        where: {
-                            handler_id,
-                        },
-                    },
-                );
-            } else {
-                await Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({
-                            error,
-                        }),
-                    },
-                    {
-                        where: {
-                            handler_id,
-                        },
-                    },
-                );
-            }
-            this.remoteControl.importFailed(error);
+            await this._processError(error, handler_id);
         }
         return Command.empty();
     }
@@ -190,21 +143,43 @@ class DcFinalizeImport extends Command {
         return command;
     }
 
-    async _processError(error, handlerId, documentPath) {
-        this.logger.error(error.message);
-        await Models.handler_ids.update(
-            {
-                status: 'FAILED',
-                data: JSON.stringify({
-                    error: error.message,
-                }),
-            },
-            {
-                where: {
-                    handler_id: handlerId,
+    async _processError(error, handler_id) {
+        this.logger.error(error);
+        const handler = await Models.handler_ids.findOne({
+            where: { handler_id },
+        });
+        const data = JSON.parse(handler.data);
+        if (data && data.readExport) {
+            data.import_status = 'FAILED';
+            handler.status = data.export_status === 'PENDING' ? 'PENDING' : 'FAILED';
+            handler.data = JSON.stringify(data);
+
+            await Models.handler_ids.update(
+                {
+                    data: handler.data,
+                    status: handler.status,
                 },
-            },
-        );
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+        } else {
+            await Models.handler_ids.update(
+                {
+                    status: 'FAILED',
+                    data: JSON.stringify({
+                        error,
+                    }),
+                },
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+        }
         this.remoteControl.importFailed(error);
     }
 }

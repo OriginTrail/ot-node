@@ -33,6 +33,7 @@ class DCOfferChooseCommand extends Command {
             dhIdentity,
             handler_id,
             urgent,
+            blockchain_id,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -73,12 +74,15 @@ class DCOfferChooseCommand extends Command {
         let task = null;
         let difficulty = null;
         if (isReplacement) {
-            task = await this.blockchain.getLitigationReplacementTask(offer.offer_id, dhIdentity);
-            difficulty = await this.blockchain.getLitigationDifficulty(offer.offer_id, dhIdentity);
+            task = await this.blockchain
+                .getLitigationReplacementTask(offer.offer_id, dhIdentity, blockchain_id).response;
+            difficulty = await this.blockchain
+                .getLitigationDifficulty(offer.offer_id, dhIdentity, blockchain_id).response;
         } else {
             // eslint-disable-next-line
             task = offer.task;
-            difficulty = await this.blockchain.getOfferDifficulty(offer.offer_id);
+            difficulty =
+                await this.blockchain.getOfferDifficulty(offer.offer_id, blockchain_id).response;
         }
         const handler = await models.handler_ids.findOne({
             where: { handler_id },
@@ -112,6 +116,7 @@ class DCOfferChooseCommand extends Command {
                         isReplacement,
                         dhIdentity,
                         handler_id,
+                        blockchain_id,
                     },
                 },
             ],

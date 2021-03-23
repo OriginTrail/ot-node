@@ -246,7 +246,12 @@ class Logger {
         if (msg.includes('could not connect to server')) {
             return null;
         }
-
+        if (msg.includes('N-API is an experimental feature and could change at any time')) {
+            return null;
+        }
+        if (msg === 'Warning') {
+            return null;
+        }
         return {
             level,
             msg,

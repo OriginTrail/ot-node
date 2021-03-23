@@ -56,8 +56,8 @@ class Kademlia {
         this.emitter = ctx.emitter;
         this.kademliaUtilities = ctx.kademliaUtilities;
         this.config = ctx.config;
-        this.approvalService = ctx.approvalService;
         this.networkService = ctx.networkService;
+        this.blockchain = ctx.blockchain;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
@@ -147,7 +147,6 @@ class Kademlia {
                 protocol: 'https:',
                 port: this.config.node_port,
                 // agent: kadence.version.protocol,
-                wallet: this.config.node_wallet,
                 network_id: this.config.network.id,
                 identity: this.config.identity,
             };
@@ -571,8 +570,7 @@ class Kademlia {
         // async
         this.node.use('kad-permissioned-data-read-request', (request, response, next) => {
             this.log.debug('kad-permissioned-data-read-request received');
-            this.emitter.emit('kad-permissioned-data-read-request', request);
-            response.send([]);
+            this.emitter.emit('kad-permissioned-data-read-request', request, response);
         });
 
         // async

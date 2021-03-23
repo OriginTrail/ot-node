@@ -3,7 +3,9 @@ const WotOtJsonTranspiler = require('.././transpiler/wot/wot-otjson-transpiler')
 
 process.on('message', (data) => {
     try {
-        const { standardId, config, dataset } = JSON.parse(data);
+        const {
+            standardId, config, dataset, blockchain,
+        } = JSON.parse(data);
         let transpiler;
         switch (standardId) {
         case 'gs1': {
@@ -19,7 +21,7 @@ process.on('message', (data) => {
             return;
         }
 
-        const stringifiedJson = transpiler.convertToOTJson(dataset);
+        const stringifiedJson = transpiler.convertToOTJson(dataset, blockchain);
         process.send(stringifiedJson);
     } catch (e) {
         process.send({ error: `${e.message}\n${e.stack}` });

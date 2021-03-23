@@ -1383,11 +1383,11 @@ class ArangoJS {
      * @param datasetId
      * @returns {Promise}
      */
-    async findIssuerIdentityForDatasetId(datasetId) {
+    async findIssuerIdentitiesForDatasetId(datasetId) {
         const queryString = `let dataset_info = (
                                 return document('ot_datasets', @datasetId) 
                             )
-                            return dataset_info[0].datasetHeader.dataCreator.identifiers[0]`;
+                            return dataset_info[0].datasetHeader.dataCreator.identifiers`;
         const params = { datasetId };
         return this.runQuery(queryString, params);
     }

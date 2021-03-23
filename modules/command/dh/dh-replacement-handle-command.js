@@ -16,12 +16,12 @@ class DHReplacementImportCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
         this.challengeService = ctx.challengeService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -35,14 +35,16 @@ class DHReplacementImportCommand extends Command {
         } = command.data;
 
         // Check if ERC725 has valid node ID.
-        const profile = await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity));
+        const profile =
+            await this.blockchain.getProfile(Utilities.normalizeHex(litigatorIdentity)).response;
         const dcNodeId = Utilities.denormalizeHex(profile.nodeId.toLowerCase()).substring(0, 40);
 
         this.logger.trace(`Sending replacement request for offer ${offerId} to ${dcNodeId}.`);
+        // todo pass blockchain identity
         const response = await this.transport.replacementReplicationRequest({
             offerId,
             wallet: this.config.node_wallet,
-            dhIdentity: this.config.erc725Identity,
+            dhIdentity: this.profileService.getIdentity(),
         }, dcNodeId);
 
         this.logger.info(`Replacement replication request for ${offerId} sent to ${dcNodeId}`);
@@ -193,7 +195,7 @@ class DHReplacementImportCommand extends Command {
                 data_set_id: importResult.data_set_id,
                 total_documents: importResult.vertices.length,
                 root_hash: importResult.root_hash,
-                data_provider_wallet: importResult.wallet,
+                data_provider_wallets: importResult.wallet,
                 import_timestamp: new Date(),
                 data_size: dataSize,
                 origin: 'HOLDING',
@@ -202,15 +204,17 @@ class DHReplacementImportCommand extends Command {
 
         this.logger.important(`[DH] Replacement replication finished for offer ID ${offerId}`);
 
+        // todo pass blockchain identity
         const toSign = [
             Utilities.denormalizeHex(offerId),
-            Utilities.denormalizeHex(this.config.erc725Identity)];
+            Utilities.denormalizeHex(this.profileService.getIdentity())];
         const messageSignature = Encryption
-            .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
+            .signMessage(toSign, Utilities.normalizeHex(this.config.node_private_key));
 
+        // todo pass blockchain identity
         const replicationFinishedMessage = {
             offerId,
-            dhIdentity: this.config.erc725Identity,
+            dhIdentity: this.profileService.getIdentity(),
             messageSignature: messageSignature.signature,
         };
 

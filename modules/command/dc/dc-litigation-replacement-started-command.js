@@ -7,6 +7,7 @@ class DCLitigationReplacementStartedCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -31,8 +32,12 @@ class DCLitigationReplacementStartedCommand extends Command {
                     offerId: eventOfferId,
                     challengerIdentity,
                 } = JSON.parse(e.data);
+                // todo pass blockchain identity
                 return utilities.compareHexStrings(offerId, eventOfferId)
-                    && utilities.compareHexStrings(this.config.erc725Identity, challengerIdentity);
+                    && utilities.compareHexStrings(
+                        this.profileService.getIdentity(),
+                        challengerIdentity,
+                    );
             });
             if (event) {
                 event.finished = 1;

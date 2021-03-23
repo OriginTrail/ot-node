@@ -4,7 +4,7 @@ const path = require('path');
 
 /**
  * @typedef {Object} ImportInfo
- * @property {string} data_provider_wallet Data provider wallet.
+ * @property {string} data_provider_wallets Data provider wallets.
  * @property {Object} import Import object with vertices and edges.
  * @property {string} import_hash SHA3 of the import (sorted import object to JSON with padding 0).
  * @property {string} root_hash Merkle root-hash of the import (sorted import object).
@@ -291,7 +291,7 @@ async function apiImportContent(nodeRpcUrl, content = '', importType = 'GS1') {
  * @property {string} root_hash Merkle root-hash of the import (sorted import object).
  * @property {Number} data_size Size in bytes of whole import.
  * @property {string} transaction_hash Transaction hash of the write-fingerprint transaction.
- * @property {string} data_provider_wallet Wallet of initial data provider.
+ * @property {string} data_provider_wallets Wallets of initial data provider.
  */
 
 /**
