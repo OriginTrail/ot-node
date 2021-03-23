@@ -501,7 +501,7 @@
         {
           "blockchain_title": "xDai",
           "network_id": "xdai:mainnet",
-          "rpc_server_url": "https://xdai.poanetwork.dev",
+          "rpc_server_url": "https://rpc.xdaichain.com/origintrail/",
           "hub_contract_address": "0xB4Cf5D3876FA929706A87F3B4042C741dcb3d688",
           "identity_filepath": "xdai_erc725_identity.json",
           "gas_limit": "2000000",
