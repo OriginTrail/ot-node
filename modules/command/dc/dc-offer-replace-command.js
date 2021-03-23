@@ -18,6 +18,7 @@ class DCOfferReplaceCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -61,16 +62,17 @@ class DCOfferReplaceCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
+        // todo pass blockchain identity
         await this.blockchain.replaceHolder(
             offerId,
             dhIdentity,
-            this.config.erc725Identity,
+            this.profileService.getIdentity(),
             new BN(solution.shift, 10),
             confirmations[0],
             confirmations[1],
             confirmations[2],
             nodeIdentifiers,
-        );
+        ).response;
 
         return {
             commands: [

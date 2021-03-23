@@ -5,6 +5,7 @@ const pjson = require('../package.json');
 const constants = require('../modules/constants');
 const configjson = require('./config.json');
 const rc = require('rc');
+const Utilities = require('../modules/Utilities');
 
 if (!process.env.NODE_ENV) {
     process.env.NODE_ENV = 'testnet';
@@ -15,7 +16,7 @@ if (process.env.DB_TYPE === constants.DB_TYPE.psql) {
         process.env.NODE_ENV &&
         ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
             process.env.NODE_ENV : 'development'];
-    const config = rc(pjson.name, defaultConfig);
+    const config = rc(pjson.name, Utilities.copyObject(defaultConfig));
 
     module.exports = {
         [process.env.NODE_ENV]: {

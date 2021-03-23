@@ -19,6 +19,7 @@ class DCOfferReplacementCompletedCommand extends Command {
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -43,8 +44,12 @@ class DCOfferReplacementCompletedCommand extends Command {
                     offerId: eventOfferId,
                     challengerIdentity,
                 } = JSON.parse(e.data);
+                // todo pass blockchain identity
                 return utilities.compareHexStrings(offerId, eventOfferId)
-                    && utilities.compareHexStrings(this.config.erc725Identity, challengerIdentity);
+                    && utilities.compareHexStrings(
+                        this.profileService.getIdentity(),
+                        challengerIdentity,
+                    );
             });
             if (event) {
                 event.finished = 1;

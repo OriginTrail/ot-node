@@ -26,13 +26,13 @@ class DvPurchaseInitiateCommand extends Command {
         const {
             handler_id, status, message, encoded_data,
             permissioned_data_root_hash, encoded_data_root_hash,
-            permissioned_data_array_length, permissioned_data_original_length,
+            permissioned_data_array_length, permissioned_data_original_length, blockchain_id,
         } = command.data;
 
 
         if (status !== 'SUCCESSFUL') {
             this.logger.warn(`Unable to initiate purchase, seller returned status: ${status} with message: ${message}`);
-            await this._handleError(handler_id, status);
+            await this._handleError(handler_id, message);
             return Command.empty();
         }
         const {
@@ -74,11 +74,12 @@ class DvPurchaseInitiateCommand extends Command {
             },
         });
         const result = await this.blockchain.initiatePurchase(
-            dataTrade.seller_erc_id, dataTrade.buyer_erc_id,
-            dataTrade.price, permissioned_data_root_hash, encoded_data_root_hash,
-        );
+            dataTrade.seller_erc_id, dataTrade.buyer_erc_id, dataTrade.price,
+            permissioned_data_root_hash, encoded_data_root_hash, blockchain_id,
+        ).response;
 
-        const { purchaseId } = this.blockchain.decodePurchaseInitiatedEventFromTransaction(result);
+        const { purchaseId } = this.blockchain
+            .decodePurchaseInitiatedEventFromTransaction(result, blockchain_id).response;
         this.logger.important(`Purchase ${purchaseId} initiated. Waiting for key from seller...`);
 
         if (!purchaseId) {
@@ -93,6 +94,7 @@ class DvPurchaseInitiateCommand extends Command {
 
         const commandData = {
             handler_id,
+            blockchain_id,
             encoded_data,
             purchase_id: purchaseId,
             permissioned_data_array_length,
@@ -163,7 +165,7 @@ class DvPurchaseInitiateCommand extends Command {
             },
         });
 
-        return JSON.parse(handler.data);
+        return JSON.parse(handler.dataValues.data);
     }
 }
 

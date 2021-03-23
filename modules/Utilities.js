@@ -7,7 +7,6 @@ const ipaddr = require('ipaddr.js');
 const _ = require('lodash');
 const _u = require('underscore');
 const randomString = require('randomstring');
-const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
@@ -18,6 +17,7 @@ const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
+const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
 
 const logger = require('./logger');
 const { sha3_256 } = require('js-sha3');
@@ -302,41 +302,6 @@ class Utilities {
     }
 
     /**
-     * Get wallet's balance in Ether
-     * @param web3 Instance of Web3
-     * @param wallet Address of the wallet.
-     * @returns {Promise<string |  | Object>}
-     */
-    static async getBalanceInEthers(web3, wallet) {
-        const result = await web3.eth.getBalance(wallet);
-        return web3.utils.fromWei(result, 'ether');
-    }
-
-    /**
-     * Get wallet's TRAC token balance in Ether
-     * @param web3 Instance of Web3
-     * @param wallet Address of the wallet.
-     * @param tokenContractAddress Contract address.
-     * @param humanReadable format result in floating point TRAC value or not i.e. 0.3.
-     * @returns {Promise<string |  | Object>}
-     */
-    static async getTracTokenBalance(web3, wallet, tokenContractAddress, humanReadable = true) {
-        const walletDenormalized = this.denormalizeHex(wallet);
-        // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
-        const contractData = (`0x70a08231000000000000000000000000${walletDenormalized}`);
-        const result = await web3.eth.call({
-            to: this.normalizeHex(tokenContractAddress),
-            data: contractData,
-        });
-        const tokensInWei = web3.utils.toBN(result).toString();
-        if (humanReadable) {
-            return web3.utils.fromWei(tokensInWei, 'ether');
-        }
-
-        return tokensInWei;
-    }
-
-    /**
      * Makes a copy of object
      *
      * @param object Obj
@@ -419,26 +384,6 @@ class Utilities {
     }
 
     /**
-     * Check on which network blockchain is running on
-     * @returns {Promise<any>}
-     */
-    static getNodeNetworkType() {
-        return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                web3.eth.net.getNetworkType()
-                    .then((result) => {
-                        resolve(result);
-                    }).catch((error) => {
-                        reject(error);
-                    });
-            }).catch((error) => {
-                reject(error);
-            });
-        });
-    }
-
-    /**
      * Pings infura rinkeby api methods endpoint
      * @returns {Promise<any>}
      */
@@ -486,22 +431,6 @@ class Utilities {
                     }
                 }).catch((err) => {
                     reject(err);
-                });
-        });
-    }
-
-    /**
-     * Gets block number from web3
-     * @returns {Promise<any>}
-     */
-    static getBlockNumberFromWeb3(web3) {
-        return new Promise((resolve, reject) => {
-            web3.eth.getBlockNumber()
-                .then((result) => {
-                    resolve(web3.utils.hexToNumber(result));
-                }).catch((error) => {
-                    logger.error(error);
-                    reject(error);
                 });
         });
     }
@@ -691,14 +620,16 @@ class Utilities {
         return Math.abs(myBid.sub(offer));
     }
 
-    static generateRsvSignature(message, web3, privateKey) {
+    static generateRsvSignature(message, privateKey) {
         let sortedMessage;
         if (typeof message === 'string' || message instanceof String) {
             sortedMessage = message;
         } else {
             sortedMessage = JSON.stringify(Utilities.sortObject(message));
         }
-        const signature = web3.eth.accounts.sign(
+
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        const signature = dataIntegrityService.sign(
             sortedMessage,
             privateKey.toLowerCase().startsWith('0x') ?
                 privateKey : `0x${privateKey}`,
@@ -707,32 +638,16 @@ class Utilities {
         return { r: signature.r, s: signature.s, v: signature.v };
     }
 
-    static isMessageSigned(web3, message, signature) {
+    static isMessageSigned(message, signature) {
         let sortedMessage;
         if (typeof message === 'string' || message instanceof String) {
             sortedMessage = message;
         } else {
-            sortedMessage = JSON.stringify(message);
+            sortedMessage = JSON.stringify(Utilities.sortObject(message));
         }
-        const signedAddress = web3.eth.accounts.recover(
-            sortedMessage,
-            signature.v,
-            signature.r,
-            signature.s,
-        );
 
-        // todo remove this patch in the next release
-        if (!Utilities.compareHexStrings(signedAddress, message.wallet)) {
-            const sortedMessage = Utilities.sortObject(message);
-            const signedAddress = web3.eth.accounts.recover(
-                JSON.stringify(sortedMessage),
-                signature.v,
-                signature.r,
-                signature.s,
-            );
-            return Utilities.compareHexStrings(signedAddress, message.wallet);
-        }
-        return true;
+        const dataIntegrityService = DataIntegrityResolver.getInstance().resolve();
+        return dataIntegrityService.verify(sortedMessage, signature, message.wallet);
     }
 
     /**
@@ -893,6 +808,24 @@ class Utilities {
     }
 
     /**
+     * Loads JSON data from file
+     * @returns {Promise<JSON object>}
+     * @private
+     */
+    static loadJsonFromFile(filePath, fileName) {
+        if (filePath && fileName) {
+            const file = path.join(
+                filePath,
+                fileName,
+            );
+            if (fs.existsSync(file)) {
+                return JSON.parse(fs.readFileSync(file));
+            }
+        }
+        return null;
+    }
+
+    /**
      * Write contents to file
      * @param directory
      * @param filename
@@ -1007,6 +940,41 @@ class Utilities {
             return obj;
         }
         return [obj];
+    }
+
+    static fromNumber(num) {
+        const hex = num.toString(16);
+        return hex.length % 2 === 0 ? `0x${hex}` : `0x0${hex}`;
+    }
+
+    static toNumber(hex) {
+        return parseInt(hex.slice(2), 16);
+    }
+
+    static fromString(str) {
+        const bn = `0x${(str.slice(0, 2) === '0x' ? new BN(str.slice(2), 16) : new BN(str, 10)).toString('hex')}`;
+        return bn === '0x0' ? '0x' : bn;
+    }
+
+    static fromNat(bn) {
+        // eslint-disable-next-line no-nested-ternary
+        return bn === '0x0' ? '0x' : bn.length % 2 === 0 ? bn : `0x0${bn.slice(2)}`;
+    }
+
+    static pad(l, hex) {
+        return hex.length === (l * 2) + 2 ? hex : Utilities.pad(l, `0x0${hex.slice(2)}`);
+    }
+
+    static flatten(a) {
+        return `0x${a.reduce((r, s) => r + s.slice(2), '')}`;
+    }
+
+    static slice(i, j, bs) {
+        return `0x${bs.slice((i * 2) + 2, (j * 2) + 2)}`;
+    }
+
+    static length(a) {
+        return (a.length - 2) / 2;
     }
 
     /**

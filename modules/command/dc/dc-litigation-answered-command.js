@@ -20,6 +20,7 @@ class DCLitigationAnsweredCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            blockchain_id,
             dhIdentity,
             blockIndex,
             objectIndex,
@@ -67,6 +68,7 @@ class DCLitigationAnsweredCommand extends Command {
                         {
                             data: {
                                 offerId,
+                                blockchain_id,
                                 dhIdentity,
                                 blockIndex,
                                 objectIndex,

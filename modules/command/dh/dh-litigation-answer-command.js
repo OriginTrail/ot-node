@@ -18,6 +18,7 @@ class DHLitigationAnswerCommand extends Command {
         this.replicationService = ctx.replicationService;
         this.challengeService = ctx.challengeService;
         this.errorNotificationService = ctx.errorNotificationService;
+        this.profileService = ctx.profileService;
     }
 
     /**
@@ -27,6 +28,7 @@ class DHLitigationAnswerCommand extends Command {
     async execute(command) {
         const {
             offerId,
+            blockchain_id,
             objectIndex,
             blockIndex,
         } = command.data;
@@ -41,8 +43,9 @@ class DHLitigationAnswerCommand extends Command {
             throw new Error(`Failed to find holding data for offer ${offerId}`);
         }
 
-        const dhIdentity = utilities.normalizeHex(this.config.erc725Identity);
-        const { status, timestamp } = await this.blockchain.getLitigation(offerId, dhIdentity);
+        const dhIdentity = this.profileService.getIdentity(blockchain_id);
+        const { status, timestamp } =
+            await this.blockchain.getLitigation(offerId, dhIdentity, blockchain_id).response;
 
         const { litigation_interval_in_minutes } = await models.bids.findOne({
             where: {
@@ -68,7 +71,8 @@ class DHLitigationAnswerCommand extends Command {
 
                 this.logger.info(`Calculated answer for offer ${offerId}, color ${color}, object index ${objectIndex}, and block index ${blockIndex} is ${answer}`);
 
-                await this.blockchain.answerLitigation(offerId, dhIdentity, rawAnswer, true);
+                await this.blockchain
+                    .answerLitigation(offerId, dhIdentity, rawAnswer, true, blockchain_id).response;
 
                 return {
                     commands: [
@@ -76,6 +80,7 @@ class DHLitigationAnswerCommand extends Command {
                             name: 'dhLitigationAnsweredCommand',
                             data: {
                                 offerId,
+                                blockchain_id,
                                 dhIdentity,
                             },
                             period: 5000,

@@ -17,9 +17,10 @@ class DVController {
 
         this.transport = ctx.transport;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
+        this.profileService = ctx.profileService;
+        this.dvService = ctx.dvService;
 
         this.mapping_standards_for_event = new Map();
         this.mapping_standards_for_event.set('OT-JSON', 'ot-json');
@@ -114,7 +115,8 @@ class DVController {
                 message: 'Param type with values: PURCHASED, SOLD or ALL is required.',
             });
         }
-        const normalizedIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        // todo pass blockchain identity
+        const normalizedIdentity = this.profileService.getIdentity();
         const whereCondition = {};
         if (requestedType === this.trading_type_purchased) {
             whereCondition.buyer_erc_id = normalizedIdentity;
@@ -196,6 +198,16 @@ class DVController {
                 res.send({ message });
                 return;
             }
+
+            const checkResult = await this.dvService.checkFingerprintData(data_set_id, offer);
+
+            if (!checkResult.passed) {
+                this.logger.trace(checkResult.message);
+                res.status(400);
+                res.send({ message: checkResult.message });
+                return;
+            }
+
             const handler_data = {
                 data_set_id,
                 reply_id,
@@ -242,14 +254,20 @@ class DVController {
 
         if (!request.body || !request.body.seller_node_id
             || !request.body.data_set_id
-            || !request.body.ot_object_id) {
-            request.status(400);
-            request.send({ message: 'Params data_set_id,ot_object_id and seller_node_id are required.' });
+            || !request.body.ot_object_ids) {
+            response.status(400);
+            response.send({ message: 'Params data_set_id,ot_object_ids and seller_node_id are required.' });
+            return;
         }
-        const { data_set_id, ot_object_id, seller_node_id } = request.body;
+        const { data_set_id, ot_object_ids, seller_node_id } = request.body;
+        if (!Array.isArray(ot_object_ids) || ot_object_ids.length === 0) {
+            response.status(400);
+            response.send({ message: 'Params ot_object_ids must be a non-empty array.' });
+            return;
+        }
         const handler_data = {
             data_set_id,
-            ot_object_id,
+            ot_object_ids,
             seller_node_id,
         };
         const inserted_object = await Models.handler_ids.create({
@@ -257,7 +275,7 @@ class DVController {
             data: JSON.stringify(handler_data),
         });
         const { handler_id } = inserted_object.dataValues;
-        this.logger.info(`Read private data with id ${ot_object_id} with handler id ${handler_id} initiated.`);
+        this.logger.info(`Read private data with ids ${ot_object_ids} with handler id ${handler_id} initiated.`);
 
         response.status(200);
         response.send({
@@ -269,7 +287,7 @@ class DVController {
             delay: 0,
             data: {
                 data_set_id,
-                ot_object_id,
+                ot_object_ids,
                 seller_node_id,
                 handler_id,
             },
@@ -279,20 +297,39 @@ class DVController {
 
     async handlePermissionedDataReadResponse(message) {
         const {
-            handler_id, ot_objects,
+            handler_id, ot_objects, supported_identities,
         } = message;
         const documentsToBeUpdated = [];
+
+        if (!Array.isArray(ot_objects) || ot_objects.length === 0) {
+            await Models.handler_ids.update({
+                status: 'FAILED',
+                data: {
+                    message: 'Did not receive any objects with permissioned data!',
+                },
+            }, { where: { handler_id } });
+            return;
+        }
+
         ot_objects.forEach((otObject) => {
             otObject.relatedObjects.forEach((relatedObject) => {
-                if (relatedObject.vertex.vertexType === 'Data') {
+                const { vertexType, data } = relatedObject.vertex;
+                if (vertexType === 'Data') {
+                    const { permissioned_data } = data;
                     const permissionedDataHash = ImportUtilities
-                        .calculatePermissionedDataHash(relatedObject.vertex.data.permissioned_data);
-                    if (permissionedDataHash !== relatedObject.vertex.data.permissioned_data.permissioned_data_hash) { throw new Error(`Calculated permissioned data hash ${permissionedDataHash} differs from DC permissioned data hash ${relatedObject.vertex.data.permissioned_data.permissioned_data_hash}`); }
+                        .calculatePermissionedDataHash(permissioned_data);
+
+                    if (permissionedDataHash !== permissioned_data.permissioned_data_hash) {
+                        throw Error(`Calculated permissioned data hash ${permissionedDataHash} ` +
+                            `differs from DC permissioned data hash ${permissioned_data.permissioned_data_hash}`);
+                    }
+
                     documentsToBeUpdated.push(relatedObject.vertex);
                 }
             });
         });
-        const promises = [];
+
+        let promises = [];
         documentsToBeUpdated.forEach((document) => {
             promises.push(this.graphStorage.updateDocument('ot_vertices', document));
         });
@@ -304,19 +341,47 @@ class DVController {
             },
         });
 
-        const { data_set_id, ot_object_id } = JSON.parse(handlerData.data);
+        const { data_set_id, ot_object_ids, seller_node_id } = JSON.parse(handlerData.data);
+        if (ot_objects.length < ot_object_ids.length) {
+            const missedObjects = [];
+            for (const requested of ot_object_ids) {
+                if (!ot_objects.find(vertex => vertex.rootObject.uid === requested)) {
+                    missedObjects.push(requested);
+                }
+            }
+            this.logger.warn(`Failed to receive for the following objects: ${JSON.stringify(missedObjects)}`);
+        }
 
-        await Models.data_sellers.create({
+        promises = [];
+        const received_ot_object_ids = [];
+        for (const ot_object of ot_objects) {
+            const ot_object_id = ot_object.rootObject.uid;
+            received_ot_object_ids.push(ot_object_id);
+            for (const identityObject of supported_identities) {
+                const { response: blockchain_identity, blockchain_id } = identityObject;
+
+                promises.push(Models.data_sellers.create({
+                    data_set_id,
+                    ot_json_object_id: ot_object_id,
+                    seller_node_id: Utilities.denormalizeHex(this.config.identity),
+                    seller_erc_id: Utilities.normalizeHex(blockchain_identity),
+                    blockchain_id,
+                    price: this.config.default_data_price,
+                }));
+            }
+        }
+        await Promise.all(promises);
+
+        const result = {
+            seller_node_id,
             data_set_id,
-            ot_json_object_id: ot_object_id,
-            seller_node_id: this.config.identity.toLowerCase(),
-            seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
-            price: this.config.default_data_price,
-        });
-
+            ot_object_ids,
+            received_ot_objects: received_ot_object_ids,
+        };
 
         await Models.handler_ids.update({
             status: 'COMPLETED',
+            data: JSON.stringify(result),
         }, { where: { handler_id } });
     }
 
@@ -324,11 +389,18 @@ class DVController {
     async getPermissionedDataAvailable(req, res) {
         this.logger.api('GET: Permissioned data Available for purchase.');
 
-        const query = 'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE MY.seller_erc_id = :seller_erc AND MY.data_set_id = DS.data_set_id AND MY.ot_json_object_id = DS.ot_json_object_id)';
+        const query =
+            'SELECT * FROM data_sellers DS WHERE NOT EXISTS(SELECT * FROM data_sellers MY WHERE ' +
+            'MY.seller_erc_id IN (:seller_ercs) AND MY.data_set_id = DS.data_set_id AND ' +
+            'MY.ot_json_object_id = DS.ot_json_object_id)';
+
+        const allMyIdentities = this.blockchain.getAllBlockchainIds()
+            .map(id => this.profileService.getIdentity(id));
+
         const data = await Models.sequelize.query(
             query,
             {
-                replacements: { seller_erc: Utilities.normalizeHex(this.config.erc725Identity) },
+                replacements: { seller_ercs: allMyIdentities },
                 type: QueryTypes.SELECT,
             },
         );
@@ -349,29 +421,52 @@ class DVController {
                }
              */
             data.forEach((obj) => {
-                if (not_owned_objects[obj.data_set_id]) {
-                    if (not_owned_objects[obj.data_set_id][obj.seller_node_id]) {
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
-                            .ot_json_object_id.push(obj.ot_json_object_id);
-                    } else {
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
+                const {
+                    data_set_id,
+                    blockchain_id,
+                    seller_node_id,
+                    ot_json_object_id: ot_object_id,
+                    seller_erc_id,
+                } = obj;
 
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
-                            .ot_json_object_id = [obj.ot_json_object_id];
-                        not_owned_objects[obj.data_set_id][obj.seller_node_id]
-                            .seller_erc_id = obj.seller_erc_id;
-                    }
-                } else {
-                    allDatasets.push(obj.data_set_id);
 
-                    not_owned_objects[obj.data_set_id] = {};
+                if (!not_owned_objects[data_set_id]) {
+                    // Add new dataset and seller and object
+                    allDatasets.push(data_set_id);
 
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id] = {};
+                    not_owned_objects[data_set_id] = {};
 
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id]
-                        .ot_json_object_id = [obj.ot_json_object_id];
-                    not_owned_objects[obj.data_set_id][obj.seller_node_id]
-                        .seller_erc_id = obj.seller_erc_id;
+                    not_owned_objects[data_set_id][seller_node_id] = {
+                        ot_objects: [ot_object_id],
+                        identities: [{
+                            blockchain_id,
+                            seller_erc_id,
+                        }],
+                    };
+                } else if (!not_owned_objects[data_set_id][seller_node_id]) {
+                    // Add new seller and object
+                    not_owned_objects[data_set_id][seller_node_id] = {
+                        ot_objects: [ot_object_id],
+                        identities: [{
+                            blockchain_id,
+                            seller_erc_id,
+                        }],
+                    };
+                } else if (!not_owned_objects[data_set_id][seller_node_id]
+                    .ot_objects.includes(ot_object_id)) {
+                    // Add new object
+                    not_owned_objects[data_set_id][seller_node_id].ot_objects
+                        .push(ot_object_id);
+                }
+
+
+                if (!not_owned_objects[data_set_id][seller_node_id]
+                    .identities.find(e => e.blockchain_id === blockchain_id)) {
+                    // Add new blockchain and appropriate identity
+                    not_owned_objects[data_set_id][seller_node_id].identities.push({
+                        blockchain_id,
+                        seller_erc_id,
+                    });
                 }
             });
 
@@ -383,6 +478,12 @@ class DVController {
                         [Models.sequelize.Op.in]: allDatasets,
                     },
                 },
+                include: [
+                    {
+                        model: Models.data_provider_wallets,
+                        attributes: ['wallet', 'blockchain_id'],
+                    },
+                ],
             });
 
             allDatasets.forEach((datasetId) => {
@@ -393,8 +494,8 @@ class DVController {
                     datasetTags: datasetHeader.datasetTags,
                     datasetDescription: datasetHeader.datasetDescription,
                     timestamp: dataInfo.import_timestamp,
-                    creator_identity: ImportUtilities.getDataCreator(datasetHeader),
-                    creator_wallet: dataInfo.data_provider_wallet,
+                    creator_identities: ImportUtilities.extractDatasetIdentities(datasetHeader),
+                    creator_wallets: dataInfo.data_provider_wallets,
                 };
             });
 
@@ -411,11 +512,11 @@ class DVController {
                                 description: not_owned_objects[dataset].metadata.datasetDescription,
                                 tags: not_owned_objects[dataset].metadata.datasetTags,
                                 creator_wallet: not_owned_objects[dataset].metadata.creator_wallet,
-                                creator_identity:
-                                    not_owned_objects[dataset].metadata.creator_identity,
+                                creator_identities:
+                                    not_owned_objects[dataset].metadata.creator_identities,
                             },
-                            ot_objects: not_owned_objects[dataset][data_seller].ot_json_object_id,
-                            seller_erc_id: not_owned_objects[dataset][data_seller].seller_erc_id,
+                            ot_objects: not_owned_objects[dataset][data_seller].ot_objects,
+                            seller_identities: not_owned_objects[dataset][data_seller].identities,
                         });
                     }
                 }
@@ -472,7 +573,7 @@ class DVController {
             return;
         }
         const {
-            data_set_id, seller_node_id, ot_object_id,
+            data_set_id, seller_node_id, ot_object_id, blockchain_id,
         } = request.body;
         const inserted_object = await Models.handler_ids.create({
             data: JSON.stringify({
@@ -491,6 +592,7 @@ class DVController {
             handler_id,
             ot_object_id,
             seller_node_id,
+            blockchain_id,
         };
 
         await this.commandExecutor.add({
@@ -500,18 +602,19 @@ class DVController {
     }
 
     async sendPermissionedDataPriceRequest(dataSetId, nodeId, otJsonObjectId, handlerId) {
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         const message = {
             data_set_id: dataSetId,
             handler_id: handlerId,
             ot_json_object_id: otJsonObjectId,
-            wallet: this.config.node_wallet,
+            wallet: node_wallet,
         };
         const dataPriceRequestObject = {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 
@@ -525,11 +628,12 @@ class DVController {
         const {
             handler_id, status, message, encoded_data,
             permissioned_data_root_hash, encoded_data_root_hash,
-            permissioned_data_array_length, permissioned_data_original_length,
+            permissioned_data_array_length, permissioned_data_original_length, blockchain_id,
         } = response;
 
         const commandData = {
             handler_id,
+            blockchain_id,
             status,
             message,
             encoded_data,
@@ -547,7 +651,7 @@ class DVController {
 
     async handlePermissionedDataPriceResponse(response) {
         const {
-            handler_id, status, price_in_trac,
+            handler_id, status, prices,
         } = response;
 
         const handler = await Models.handler_ids.findOne({
@@ -562,16 +666,50 @@ class DVController {
             ot_object_id,
         } = JSON.parse(handler.data);
 
+        const allMyBlockchainIds = this.blockchain.getAllBlockchainIds();
+
         if (status === 'COMPLETED') {
-            await Models.data_sellers.update({
-                price: price_in_trac,
-            }, {
+            const promises = [];
+
+            const existingPrices = await Models.data_sellers.findAll({
                 where: {
                     data_set_id,
                     seller_node_id,
                     ot_json_object_id: ot_object_id,
                 },
             });
+
+            for (const price_response of prices) {
+                if (allMyBlockchainIds.includes(price_response.blockchain_id)) {
+                    const entryExists = !!existingPrices && !!existingPrices.find(elem =>
+                        elem.dataValues.blockchain_id === price_response.blockchain_id);
+                    if (entryExists) {
+                        promises.push(Models.data_sellers.update(
+                            {
+                                price: price_response.price_in_trac,
+                            },
+                            {
+                                where: {
+                                    blockchain_id: price_response.blockchain_id,
+                                    data_set_id,
+                                    seller_node_id,
+                                    ot_json_object_id: ot_object_id,
+                                },
+                            },
+                        ));
+                    } else {
+                        promises.push(Models.data_sellers.create({
+                            data_set_id,
+                            blockchain_id: price_response.blockchain_id,
+                            ot_json_object_id: ot_object_id,
+                            seller_node_id,
+                            seller_erc_id: price_response.seller_erc_id,
+                            price: price_response.price_in_trac,
+                        }));
+                    }
+                }
+            }
+            await Promise.all(promises);
         }
 
         await Models.handler_ids.update({
@@ -580,7 +718,7 @@ class DVController {
                     data_set_id,
                     seller_node_id,
                     ot_object_id,
-                    price_in_trac,
+                    prices,
                 },
             }),
             status,
@@ -673,6 +811,15 @@ class DVController {
                     transactional: false,
                 });
             } else {
+                const checkResult = await this.dvService.checkFingerprintData(data_set_id, offer);
+
+                if (!checkResult.passed) {
+                    this.logger.trace(checkResult.message);
+                    res.status(400);
+                    res.send({ message: checkResult.message });
+                    return;
+                }
+
                 this.logger.info(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
                 this.remoteControl.offerInitiated(`Read offer for query ${offer.query_id} with handler id ${inserted_object.dataValues.handler_id} initiated.`);
 
@@ -756,7 +903,7 @@ class DVController {
         });
     }
 
-    handleGetFingerprint(req, res) {
+    async handleGetFingerprint(req, res) {
         this.logger.api('GET: Fingerprint request received.');
         const { dataset_id } = req.params;
         if (dataset_id == null) {
@@ -767,47 +914,60 @@ class DVController {
             return;
         }
 
-        this.blockchain.getRootHash(dataset_id).then((dataRootHash) => {
+        const allBlockchainIds = this.blockchain.getAllBlockchainIds();
+        const promises = allBlockchainIds.map(blockchain_id =>
+            this.blockchain.getRootHash(dataset_id, blockchain_id).response);
+        const allRootHashes = await Promise.all(promises);
+
+        const result = [];
+        let foundHashes = 0;
+        for (let i = 0; i < allRootHashes.length; i += 1) {
+            const blockchain_id = allBlockchainIds[i];
+            const dataRootHash = allRootHashes[i];
+
             if (dataRootHash) {
                 if (!Utilities.isZeroHash(dataRootHash)) {
-                    res.status(200);
-                    res.send({
+                    foundHashes += 1;
+                    result.push({
+                        blockchain_id,
                         root_hash: dataRootHash,
                     });
                 } else {
-                    res.status(404);
-                    res.send({
+                    result.push({
+                        blockchain_id,
                         message: `Root hash not found for ${dataset_id}`,
                     });
                 }
             } else {
-                res.status(500);
-                res.send({
-                    message: `Failed to get root hash for ${dataset_id}`,
+                result.push({
+                    blockchain_id,
+                    message: `Root hash not found for ${dataset_id}`,
                 });
             }
-        }).catch((err) => {
-            res.status(500);
-            res.send({
-                message: err,
-            });
-        });
+        }
+        if (foundHashes > 0) {
+            res.status(200);
+        } else {
+            res.status(404);
+        }
+        res.send(result);
     }
 
     /**
      * Handle new purchase on the blockchain and add the node that bought data as a new
      * data seller
      * @param purchase_id
-     * @param seller_erc_id
+     * @param blockchain_id
+     * @param seller_erc_ids
      * @param seller_node_id
      * @param data_set_id
      * @param ot_object_id
-     * @param price
+     * @param prices
      * @returns {Promise<void>}
      */
     async handleNewDataSeller(
-        purchase_id, seller_erc_id, seller_node_id,
-        data_set_id, ot_object_id, price,
+        purchase_id, blockchain_id, seller_erc_ids, seller_node_id,
+        data_set_id, ot_object_id, prices,
     ) {
         /*
         * [x] Check that I have the dataset
@@ -823,11 +983,16 @@ class DVController {
             return;
         }
 
+        const allMyBlockchains = this.blockchain.getAllBlockchainIds();
+        const allMyIdentities = allMyBlockchains.map(id => this.profileService.getIdentity(id));
+
         const myDataPrice = await Models.data_sellers.findAll({
             where: {
                 data_set_id,
                 ot_json_object_id: ot_object_id,
-                seller_erc_id: Utilities.normalizeHex(this.config.erc725Identity),
+                seller_erc_id: {
+                    [Models.Sequelize.Op.in]: allMyIdentities,
+                },
             },
         });
 
@@ -837,14 +1002,21 @@ class DVController {
             return;
         }
 
-        const purchase = await this.blockchain.getPurchase(purchase_id);
+        if (!allMyBlockchains.includes(blockchain_id)) {
+            this.logger.info(`I do not have permissioned data of object ${ot_object_id}` +
+                ` from dataset ${data_set_id} but I cannot verify purchase on blockchain ${blockchain_id}`);
+            return;
+        }
+
+        const purchase = await this.blockchain.getPurchase(purchase_id, blockchain_id).response;
         const {
             seller,
             buyer,
             originalDataRootHash,
         } = purchase;
+        const seller_erc_id = seller_erc_ids.find(e => e.blockchain_id === blockchain_id).identity;
 
-        if (Utilities.normalizeHex(buyer) !== Utilities.normalizeHex(seller_erc_id)) {
+        if (!Utilities.compareHexStrings(buyer, seller_erc_id)) {
             this.logger.warn('New data seller\'s ERC-725 identity does not match' +
                 ` the purchase buyer identity ${Utilities.normalizeHex(buyer)}`);
             return;
@@ -858,20 +1030,31 @@ class DVController {
         }
 
         const permissionedDataHash = otObject.properties.permissioned_data.permissioned_data_hash;
-        if (Utilities.normalizeHex(permissionedDataHash) !==
-            Utilities.normalizeHex(originalDataRootHash)) {
+        if (!Utilities.compareHexStrings(permissionedDataHash, originalDataRootHash)) {
             this.logger.info('Purchase permissioned data root hash does not match ' +
                 'the permissioned data root hash from dataset.');
             return;
         }
 
-        await Models.data_sellers.create({
-            data_set_id,
-            ot_json_object_id: ot_object_id,
-            seller_node_id,
-            seller_erc_id,
-            price,
-        });
+        const promises = [];
+        for (const seller_object of seller_erc_ids) {
+            const { blockchain_id, identity: seller_erc_id } = seller_object;
+
+            const price = prices.find(e => e.blockchain_id === blockchain_id).price_in_trac;
+
+            if (allMyBlockchains.includes(blockchain_id)) {
+                promises.push(Models.data_sellers.create({
+                    data_set_id,
+                    blockchain_id,
+                    ot_json_object_id: ot_object_id,
+                    seller_node_id,
+                    seller_erc_id,
+                    price,
+                }));
+            }
+        }
+
+        await Promise.all(promises);
 
         this.logger.notify(`Saved ${seller_node_id} as new seller for permissioned data ` +
             `of object ${ot_object_id} from dataset ${data_set_id}`);

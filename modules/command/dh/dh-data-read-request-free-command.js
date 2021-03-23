@@ -16,10 +16,10 @@ class DHDataReadRequestFreeCommand extends Command {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.importService = ctx.importService;
         this.permissionedDataService = ctx.permissionedDataService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -34,6 +34,10 @@ class DHDataReadRequestFreeCommand extends Command {
         const {
             nodeId, wallet, id, data_set_id, handler_id,
         } = message;
+
+
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+
         try {
             // Check is it mine offer.
             const networkReplyModel = await Models.network_replies.find({ where: { id } });
@@ -53,6 +57,12 @@ class DHDataReadRequestFreeCommand extends Command {
                 where: {
                     data_set_id: importId,
                 },
+                include: [
+                    {
+                        model: Models.data_provider_wallets,
+                        attributes: ['wallet', 'blockchain_id'],
+                    },
+                ],
             });
 
             if (!dataInfo) {
@@ -82,27 +92,26 @@ class DHDataReadRequestFreeCommand extends Command {
 
             ImportUtilities.removeGraphPermissionedData(document['@graph']);
 
-            const transactionHash = await ImportUtilities
-                .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
+            const replicationInfo = await ImportUtilities
+                .getReplicationInfo(dataInfo.data_set_id, dataInfo.origin);
 
             const replyMessage = {
                 id,
-                wallet: this.config.node_wallet,
+                wallet: node_wallet,
                 nodeId: this.config.identity,
-                data_provider_wallet: dataInfo.data_provider_wallet,
+                data_provider_wallets: dataInfo.data_provider_wallets,
                 agreementStatus: 'CONFIRMED',
                 document,
                 permissionedData,
                 data_set_id: importId,
-                transaction_hash: transactionHash,
+                replication_info: replicationInfo,
                 handler_id,
             };
             const dataReadResponseObject = {
                 message: replyMessage,
                 messageSignature: Utilities.generateRsvSignature(
                     replyMessage,
-                    this.web3,
-                    this.config.node_private_key,
+                    node_private_key,
                 ),
             };
 
@@ -115,8 +124,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 message: errorMessage,
                 messageSignature: Utilities.generateRsvSignature(
                     errorMessage,
-                    this.web3,
-                    this.config.node_private_key,
+                    node_private_key,
                 ),
             }, nodeId);
         }

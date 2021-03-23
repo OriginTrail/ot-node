@@ -13,16 +13,20 @@ const deepExtend = require('deep-extend');
 class EpcisOtJsonTranspiler {
     constructor(ctx) {
         this.config = ctx.config;
-        this.web3 = ctx.web3;
+        /* todo This is a workaround to detect if a node is running in a spawned process or in the
+        main loop, we should find another way to make this distinction */
+        this.logger = ctx.logger;
+
         this.connectionTypes = ['SOURCE', 'DESTINATION', 'EPC', 'EPC_QUANTITY', 'QUANTITY_LIST_ITEM', 'HAS_DATA', 'CONNECTOR_FOR', 'CONNECTION_DOWNSTREAM', 'PARENT_EPC', 'CHILD_EPC', 'READ_POINT', 'BIZ_LOCATION'];
     }
 
     /**
      * Convert EPCIS XML document to OT-JSON
      * @param xml - XML string
+     * @param blockchain
      * @return {*} - OT-JSON object
      */
-    convertToOTJson(xml) {
+    convertToOTJson(xml, blockchain) {
         if (xml == null) {
             throw new Error('[Transpilation Error] XML document cannot be empty');
         }
@@ -75,7 +79,11 @@ class EpcisOtJsonTranspiler {
 
         otjson['@id'] = '';
         otjson['@type'] = 'Dataset';
-        otjson.datasetHeader = importUtilities.createDatasetHeader(this.config, transpilationInfo);
+        otjson.datasetHeader = importUtilities.createDatasetHeader(
+            this.config,
+            transpilationInfo,
+            blockchain,
+        );
         importUtilities.calculateGraphPermissionedDataHashes(otjson['@graph']);
 
         let result = OtJsonUtilities.prepareDatasetForNewImport(otjson);
@@ -84,11 +92,13 @@ class EpcisOtJsonTranspiler {
         }
         result['@id'] = importUtilities.calculateGraphPublicHash(result);
         const merkleRoot = importUtilities.calculateDatasetRootHash(result);
-        result.datasetHeader.dataIntegrity.proofs[0].proofValue = merkleRoot;
+        importUtilities.attachDatasetRootHash(result.datasetHeader, merkleRoot);
 
-        // Until we update all routes to work with commands, keep this web3 implementation
-        if (this.web3) {
-            result = importUtilities.signDataset(result, this.config, this.web3);
+        // Until we update all routes to work with commands, keep this signing implementation
+        /* todo This is a workaround to detect if a node is running in a spawned process or in the
+        main loop, we should find another way to make this distinction */
+        if (this.logger) {
+            result = importUtilities.signDataset(result, blockchain);
         } else {
             const sortedDataset = OtJsonUtilities.prepareDatasetForOldImport(result);
             if (sortedDataset) {

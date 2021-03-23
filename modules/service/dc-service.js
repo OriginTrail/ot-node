@@ -9,7 +9,6 @@ const ImportUtilities = require('../ImportUtilities');
 
 class DCService {
     constructor(ctx) {
-        this.web3 = ctx.web3;
         this.transport = ctx.transport;
         this.logger = ctx.logger;
         this.config = ctx.config;
@@ -32,22 +31,27 @@ class DCService {
      * @param litigationIntervalInMinutes
      * @param handler_id
      * @param urgent
+     * @param blockchain_id
      * @returns {Promise<*>}
      */
     async createOffer(
         dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
-        dataSizeInBytes, litigationIntervalInMinutes, handler_id, urgent,
+        dataSizeInBytes, litigationIntervalInMinutes, handler_id, urgent, blockchain_id,
     ) {
         if (!holdingTimeInMinutes) {
             holdingTimeInMinutes = this.config.dc_holding_time_in_minutes;
         }
+
+        const { dc_price_factor } = this.blockchain.getPriceFactors(blockchain_id).response;
+
         let offerPrice = {};
         if (!tokenAmountPerHolder) {
             offerPrice = await this.pricingService
                 .calculateOfferPriceinTrac(
                     dataSizeInBytes,
                     holdingTimeInMinutes,
-                    this.config.blockchain.dc_price_factor,
+                    dc_price_factor,
+                    blockchain_id,
                 );
             tokenAmountPerHolder = offerPrice.finalPrice;
         }
@@ -57,36 +61,21 @@ class DCService {
             message: 'Offer is pending',
             status: 'PENDING',
             global_status: 'PENDING',
-            trac_in_eth_used_for_price_calculation: offerPrice.tracInEth,
+            trac_in_base_currency_used_for_price_calculation: offerPrice.tracInBaseCurrency,
             gas_price_used_for_price_calculation: offerPrice.gasPriceInGwei,
-            price_factor_used_for_price_calculation: this.config.blockchain.dc_price_factor,
+            price_factor_used_for_price_calculation: dc_price_factor,
+            blockchain_id,
         });
 
         if (!litigationIntervalInMinutes) {
             litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);
         }
 
-        if (this.config.parentIdentity) {
-            const hasPermission = await this.profileService.hasParentPermission();
-            if (!hasPermission) {
-                const message = 'Identity does not have permission to use parent identity funds. To replicate data please acquire permissions or remove parent identity from config';
-                this.logger.warn(message);
-                throw new Error(message);
-            }
-
-            const hasFunds = await this.parentHasProfileBalanceForOffer(tokenAmountPerHolder);
-            if (!hasFunds) {
-                const message = 'Parent profile does not have enough tokens. To replicate data please deposit more tokens to your profile';
-                this.logger.warn(message);
-                throw new Error(message);
-            }
-        } else {
-            const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder);
-            if (!hasFunds) {
-                const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
-                this.logger.warn(message);
-                throw new Error(message);
-            }
+        const hasFunds = await this.hasProfileBalanceForOffer(tokenAmountPerHolder, blockchain_id);
+        if (!hasFunds) {
+            const message = 'Not enough tokens. To replicate data please deposit more tokens to your profile';
+            this.logger.warn(message);
+            throw new Error(message);
         }
 
         const commandData = {
@@ -99,6 +88,7 @@ class DCService {
             litigationIntervalInMinutes,
             handler_id,
             urgent,
+            blockchain_id,
         };
         const commandSequence = [
             'dcOfferPrepareCommand',
@@ -121,12 +111,14 @@ class DCService {
      * Check for funds
      * @param identities
      * @param tokenAmountPerHolder
+     * @param blockchain_id
      * @return {Promise<*>}
      */
-    async checkDhFunds(identities, tokenAmountPerHolder) {
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+    async checkDhFunds(identities, tokenAmountPerHolder, blockchain_id) {
+        const profileMinStake =
+            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id).response, 10);
         const excluded = await Promise.all(identities.map(async (identity) => {
-            const profile = await this.blockchain.getProfile(identity);
+            const profile = await this.blockchain.getProfile(identity, blockchain_id).response;
             const profileStake = new BN(profile.stake, 10);
             const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
@@ -153,10 +145,12 @@ class DCService {
     /**
      * Has enough balance on profile for creating an offer
      * @param tokenAmountPerHolder - Tokens per DH
+     * @param blockchain_id - Blockchain implementation to use
      * @return {Promise<*>}
      */
-    async hasProfileBalanceForOffer(tokenAmountPerHolder) {
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+    async hasProfileBalanceForOffer(tokenAmountPerHolder, blockchain_id) {
+        const identity = this.profileService.getIdentity(blockchain_id);
+        const profile = await this.blockchain.getProfile(identity, blockchain_id).response;
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
@@ -168,35 +162,8 @@ class DCService {
             remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
         }
 
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
-        if (profileStake.sub(profileStakeReserved).sub(offerStake).lt(profileMinStake)) {
-            const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
-            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
-                remainder = stakeRemainder;
-            }
-        }
-        return !remainder;
-    }
-
-    /**
-     * Parent has enough balance on profile for creating an offer
-     * @param tokenAmountPerHolder - Tokens per DH
-     * @return {Promise<*>}
-     */
-    async parentHasProfileBalanceForOffer(tokenAmountPerHolder) {
-        const profile = await this.blockchain.getProfile(this.config.parentIdentity);
-        const profileStake = new BN(profile.stake, 10);
-        const profileStakeReserved = new BN(profile.stakeReserved, 10);
-
-        const offerStake = new BN(tokenAmountPerHolder, 10)
-            .mul(new BN(constants.DEFAULT_NUMBER_OF_HOLDERS, 10));
-
-        let remainder = null;
-        if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
-            remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
-        }
-
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        const profileMinStake =
+            new BN(await this.blockchain.getProfileMinimumStake(blockchain_id).response, 10);
         if (profileStake.sub(profileStakeReserved).sub(offerStake).lt(profileMinStake)) {
             const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
             if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
@@ -294,6 +261,15 @@ class DCService {
         const offer = offerModel.get({ plain: true });
         if (offer.status !== 'STARTED') {
             const message = `Replication request for offer external ${offerId} that is not in STARTED state.`;
+            this.logger.warn(message);
+            await this.transport.sendResponse(response, { status: 'fail', message });
+            return;
+        }
+
+        const purposes = await this.blockchain
+            .getWalletPurposes(dhIdentity, wallet, offer.blockchain_id).response;
+        if (!purposes.includes('2')) {
+            const message = 'Wallet provided does not have the appropriate permissions set up for the given identity.';
             this.logger.warn(message);
             await this.transport.sendResponse(response, { status: 'fail', message });
             return;
@@ -506,12 +482,14 @@ class DCService {
             Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
             Utilities.denormalizeHex(replication.distributionRootHash),
         ];
-        const distributionSignature = Encryption.signMessage(
-            this.web3, toSign,
-            Utilities.normalizeHex(this.config.node_private_key),
-        );
 
-        const permissionedData = await this.permissionedDataService.getAllowedPermissionedData(
+        const { node_wallet, node_private_key } =
+            this.blockchain.getWallet(offer.blockchain_id).response;
+
+        const distributionSignature = Encryption
+            .signMessage(toSign, Utilities.normalizeHex(node_private_key));
+
+        const permissionedData = await this.permissionedDataService.getAllowedPermissionedDataMap(
             offer.data_set_id,
             identity,
         );
@@ -531,7 +509,7 @@ class DCService {
         const payload = {
             offer_id: offer.offer_id,
             data_set_id: offer.data_set_id,
-            dc_wallet: this.config.node_wallet,
+            dc_wallet: node_wallet,
             otJson: replication.otJson,
             permissionedData,
             litigation_public_key: replication.litigationPublicKey,
@@ -545,7 +523,7 @@ class DCService {
             transaction_hash: offer.transaction_hash,
             distributionSignature,
             color: colorNumber,
-            dcIdentity: this.config.erc725Identity,
+            dcIdentity: this.profileService.getIdentity(offer.blockchain_id),
         };
 
         // send replication to DH

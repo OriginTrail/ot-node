@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         object_index: DataTypes.INTEGER,
         block_index: DataTypes.INTEGER,
         offer_id: DataTypes.STRING,
+        blockchain_id: DataTypes.STRING,
         answer: DataTypes.STRING,
         expected_answer: DataTypes.STRING,
         data_set_id: DataTypes.STRING,

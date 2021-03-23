@@ -4,6 +4,7 @@ const pjson = require('../../package.json');
 const RestAPIValidator = require('../validator/rest-api-validator');
 const Utilities = require('../Utilities');
 const Models = require('../../models');
+const Blockchain = require('../Blockchain');
 
 class RestAPIServiceV2 {
     constructor(ctx) {
@@ -27,7 +28,7 @@ class RestAPIServiceV2 {
         this.graphStorage = ctx.graphStorage;
         this.importService = ctx.importService;
 
-        this.version_id = 'v2.0';
+        this.version_id = 'v2.1';
         this.stanards = ['OT-JSON', 'GS1-EPCIS', 'GRAPH', 'WOT'];
         this.graphStorage = ctx.graphStorage;
         this.mapping_standards_for_event = new Map();
@@ -42,7 +43,7 @@ class RestAPIServiceV2 {
      */
     _exposeAPIRoutes(server) {
         const {
-            transport, emitter, blockchain, web3, config,
+            transport, emitter, blockchain, config,
         } = this.ctx;
 
         server.get(`/api/${this.version_id}/health_check`, (req, res) => {
@@ -85,6 +86,10 @@ class RestAPIServiceV2 {
 
         server.get(`/api/${this.version_id}/standards`, async (req, res) => {
             this._getStandards(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/blockchains`, async (req, res) => {
+            await this.infoController.getBlockchains(req, res);
         });
 
         server.get(`/api/${this.version_id}/get_element_issuer_identity/:element_id`, async (req, res) => {
@@ -296,6 +301,7 @@ class RestAPIServiceV2 {
 
             emitter.emit('api-payout', {
                 offerId: req.query.offer_id,
+                blockchain_id: req.query.blockchain_id,
                 response: res,
             });
         });
@@ -303,8 +309,8 @@ class RestAPIServiceV2 {
         /** Get root hash for provided data query
          * @param Query params: data_set_id
          */
-        server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, (req, res) => {
-            this.dvController.handleGetFingerprint(req, res);
+        server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, async (req, res) => {
+            await this.dvController.handleGetFingerprint(req, res);
         });
 
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
@@ -329,31 +335,52 @@ class RestAPIServiceV2 {
             try {
                 const humanReadable = req.query.humanReadable === 'true';
 
-                const walletEthBalance = await web3.eth.getBalance(config.node_wallet);
-                const walletTokenBalance = await Utilities.getTracTokenBalance(
-                    web3,
-                    config.node_wallet,
-                    blockchain.getTokenContractAddress(),
-                    false,
-                );
-                const profile = await blockchain.getProfile(config.erc725Identity);
-                const profileMinimalStake = await blockchain.getProfileMinimumStake();
+                const blockchains = this.infoController.getBlockchainInfo();
+                const promises = [];
+                for (const blockchain_info of blockchains) {
+                    const {
+                        blockchain_id, blockchain_title, node_wallet, identity,
+                    } = blockchain_info;
 
-                const body = {
-                    wallet: {
-                        address: config.node_wallet,
-                        ethBalance: humanReadable ? web3.utils.fromWei(walletEthBalance, 'ether') : walletEthBalance,
-                        tokenBalance: humanReadable ? web3.utils.fromWei(walletTokenBalance, 'ether') : walletTokenBalance,
-                    },
-                    profile: {
-                        staked: humanReadable ? web3.utils.fromWei(profile.stake, 'ether') : profile.stake,
-                        reserved: humanReadable ? web3.utils.fromWei(profile.stakeReserved, 'ether') : profile.stakeReserved,
-                        minimalStake: humanReadable ? web3.utils.fromWei(profileMinimalStake, 'ether') : profileMinimalStake,
-                    },
-                };
+                    // eslint-disable-next-line no-loop-func
+                    promises.push(new Promise(async (resolve, reject) => {
+                        try {
+                            const walletBaseBalance = await blockchain
+                                .getWalletBaseBalance(node_wallet, blockchain_id).response;
+                            const walletTokenBalance = await blockchain
+                                .getWalletTokenBalance(node_wallet, blockchain_id).response;
+
+                            const profile =
+                                await blockchain.getProfile(identity, blockchain_id).response;
+                            const profileMinimalStake =
+                                await blockchain.getProfileMinimumStake(blockchain_id).response;
+
+                            const body = {
+                                blockchain_id,
+                                blockchain_title,
+                                wallet: {
+                                    address: node_wallet,
+                                    ethBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletBaseBalance, 'ether') : walletBaseBalance,
+                                    tokenBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletTokenBalance, 'ether') : walletTokenBalance,
+                                },
+                                profile: {
+                                    address: identity,
+                                    staked: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stake, 'ether') : profile.stake,
+                                    reserved: humanReadable ? Blockchain.fromWei(blockchain_title, profile.stakeReserved, 'ether') : profile.stakeReserved,
+                                    minimalStake: humanReadable ? Blockchain.fromWei(blockchain_title, profileMinimalStake, 'ether') : profileMinimalStake,
+                                },
+                            };
+                            resolve(body);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    }));
+                }
+
+                const result = await Promise.all(promises);
 
                 res.status(200);
-                res.send(body);
+                res.send(result);
             } catch (error) {
                 this.logger.error(`Failed to get balance. ${error.message}.`);
                 res.status(503);
@@ -522,8 +549,8 @@ class RestAPIServiceV2 {
             if (offer) {
                 offerData.number_of_replications = offer.number_of_replications;
                 offerData.number_of_verified_replications = offer.number_of_verified_replications;
-                offerData.trac_in_eth_used_for_price_calculation =
-                    offer.trac_in_eth_used_for_price_calculation;
+                offerData.trac_in_base_currency_used_for_price_calculation =
+                    offer.trac_in_base_currency_used_for_price_calculation;
                 offerData.gas_price_used_for_price_calculation =
                     offer.gas_price_used_for_price_calculation;
                 offerData.price_factor_used_for_price_calculation =

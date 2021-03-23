@@ -11,8 +11,9 @@ class DVPermissionedDataReadRequestCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
-        this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
+        this.profileService = ctx.profileService;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -23,32 +24,51 @@ class DVPermissionedDataReadRequestCommand extends Command {
     async execute(command, transaction) {
         const {
             data_set_id,
-            ot_object_id,
+            ot_object_ids,
             seller_node_id,
             handler_id,
         } = command.data;
 
+        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const identities = await this.blockchain.getAllIdentities();
+
         const message = {
             data_set_id,
-            ot_object_id,
-            wallet: this.config.node_wallet,
+            ot_object_ids,
+            wallet: node_wallet,
             nodeId: this.config.identity,
-            dv_erc725_identity: this.config.erc725Identity,
+            dv_erc725_identities: identities,
             handler_id,
         };
         const dataReadRequestObject = {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 
-        await this.transport.sendPermissionedDataReadRequest(
+        const result = await this.transport.sendPermissionedDataReadRequest(
             dataReadRequestObject,
             seller_node_id,
         );
+
+        if (result && result.status === 'FAIL') {
+            this.logger.warn(`Permissioned Data request failed for handler ID ${handler_id}. ${result.message}.`);
+            await Models.handler_ids.update(
+                {
+                    status: 'FAILED',
+                    data: JSON.stringify({
+                        error: result.message,
+                    }),
+                },
+                {
+                    where: {
+                        handler_id,
+                    },
+                },
+            );
+        }
 
         return Command.empty();
     }

@@ -4,6 +4,8 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const Database = require('arangojs');
+const path = require('path');
+const fs = require('fs');
 
 const Models = require('../../../models');
 
@@ -314,12 +316,18 @@ Then(/^I simulate true litigation answer for (\d+)[st|nd|rd|th]+ node$/, { timeo
             dc.once('dc-litigation-completed', () => accept());
         });
 
+        const nodeWalletPath = path.join(
+            node.options.configDir,
+            node.options.nodeConfiguration.blockchain.implementations[0].node_wallet_path,
+        );
+        const nodeWallet = JSON.parse(fs.readFileSync(nodeWalletPath, 'utf8')).node_wallet;
+
         await localBlockchain.litigationInstance.methods.answerLitigation(
             event.offerId,
             event.holderIdentity,
             `0x${answer}`,
         ).send({
-            from: node.options.nodeConfiguration.node_wallet,
+            from: nodeWallet,
             gasPrice: '10000000000000',
             gas: 1000000,
         });

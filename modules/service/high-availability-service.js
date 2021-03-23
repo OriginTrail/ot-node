@@ -6,6 +6,13 @@ const constants = require('../constants');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { Pool } = require('pg');
 const Utilities = require('../Utilities');
+const configjson = require('../../config/config.json');
+const Blockchain = require('../Blockchain');
+
+const defaultBlockchainConfig = Utilities.copyObject(configjson[
+    process.env.NODE_ENV &&
+    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+        process.env.NODE_ENV : 'development'].blockchain);
 
 class HighAvailabilityService {
     constructor(ctx) {
@@ -13,7 +20,9 @@ class HighAvailabilityService {
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
         this.otNodeClient = ctx.otNodeClient;
-        this.web3 = ctx.web3;
+        this.blockchain = ctx.blockchain;
+        this.config.blockchain =
+            Blockchain.attachDefaultConfig(this.config.blockchain, defaultBlockchainConfig);
     }
 
     async startHighAvailabilityNode() {
@@ -176,13 +185,6 @@ class HighAvailabilityService {
         this.logger.trace('Synchronizing with master node....');
         const message = {};
         // fetch identities if missing
-        const identityFilePath = path.join(
-            this.config.appDataPath,
-            this.config.erc725_identity_filepath,
-        );
-        if (!fs.existsSync(identityFilePath)) {
-            message.erc725Identity = true;
-        }
         const networkIdentity = path.join(
             this.config.appDataPath,
             this.config.identity_filepath,
@@ -204,16 +206,36 @@ class HighAvailabilityService {
         if (!fs.existsSync(kademliaKeyFilePath)) {
             message.kademliaKey = true;
         }
+
+        message.blockchain = [];
+
+        for (const implementation of this.config.blockchain.implementations) {
+            const missingParameters = {};
+
+            const identityFilePath = path.join(
+                this.config.appDataPath,
+                implementation.identity_filepath,
+            );
+            if (!fs.existsSync(identityFilePath)) {
+                missingParameters.identity = true;
+            }
+
+            if (Object.keys(missingParameters).length !== 0) {
+                missingParameters.network_id = implementation.network_id;
+                message.blockchain.push(missingParameters);
+            }
+        }
+        if (message.blockchain.length === 0) message.blockchain = false;
+
         message.bootstraps = true;
         message.routingTable = true;
-
-        message.wallet = this.config.node_wallet;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(null, true).response;
+        message.wallet = node_wallet;
         const request = {
             message,
             messageSignature: Utilities.generateRsvSignature(
                 message,
-                this.web3,
-                this.config.node_private_key,
+                node_private_key,
             ),
         };
 
@@ -223,12 +245,6 @@ class HighAvailabilityService {
             this.config.high_availability.active_node_data_sync_use_ssl,
         );
 
-        if (masterNodeData.erc725Identity) {
-            fs.writeFileSync(path.join(
-                this.config.appDataPath,
-                this.config.erc725_identity_filepath,
-            ), masterNodeData.erc725Identity);
-        }
         if (masterNodeData.networkIdentity) {
             fs.writeFileSync(path.join(
                 this.config.appDataPath,
@@ -259,6 +275,21 @@ class HighAvailabilityService {
                 'router.json',
             ), masterNodeData.routingTable);
         }
+        if (masterNodeData.blockchain) {
+            for (const response of masterNodeData.blockchain) {
+                const { network_id, identity } = response;
+                const { identity_filepath } =
+                    this.config.blockchain.implementations.find(e => e.network_id === network_id);
+
+                if (identity) {
+                    fs.writeFileSync(path.join(
+                        this.config.appDataPath,
+                        identity_filepath,
+                    ), JSON.stringify({ identity }));
+                }
+            }
+        }
+
         this.logger.trace('Synchronizing with master node completed.');
     }
 

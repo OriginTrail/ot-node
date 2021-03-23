@@ -15,6 +15,7 @@ class CommandResolver {
         try {
             return this.ctx[`${name}`];
         } catch (e) {
+            this.ctx.logger.warn(`Failed to get handler for command ${name}. Error ${e.toString()}`);
             throw new Error(`No handler defined for command '${name}'`);
         }
     }
