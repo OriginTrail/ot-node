@@ -163,6 +163,7 @@ class Transactions {
                 if (Object.keys(receipt).length > 0) {
                     break;
                 }
+                this.logger.warn(`Failed to fetch transaction receipt from empty response on attempt ${i + 1}.`);
             } catch (e) {
                 this.logger.warn(`Failed to fetch transaction receipt. Error: ${e.toString()}`);
             }
