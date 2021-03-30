@@ -95,6 +95,10 @@ function getDataFileNames() {
     return ['kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db'];
 }
 
+function getMigrationFileNames() {
+    return ['1_m1PayoutAllMigrationFile', '4_m4ArangoMigrationFile', '5_m5ArangoPasswordMigrationFile', '6_m6OperationalDBMigrationFile', '7_m7ArangoDatasetSignatureMigrationFile'];
+}
+
 function moveFileFromNodeToBackup(fileName, nodeDir, backupDir, showErrors = true) {
     try {
         const source = path.join(nodeDir, fileName);
@@ -140,6 +144,7 @@ function main() {
         const identityFiles = getIdentityFileNames();
         const certs = getCertificateFileNames();
         const dataFiles = getDataFileNames();
+        const migrationFiles = getMigrationFileNames();
 
         backupDir = createBackupFolder();
 
@@ -164,6 +169,10 @@ function main() {
 
         for (const file of certs) {
             moveFileFromNodeToBackup(file, argv.certs, backupDir, false);
+        }
+
+        for (const file of migrationFiles) {
+            moveFileFromNodeToBackup(file, path.join(config.appDataPath,'migrations'), backupDir);
         }
 
         console.log('Database export...');
