@@ -105,7 +105,7 @@ class RestoreService {
         }
 
         for (const file of migrationFiles) {
-            this._moveFileFromBackupToNode(file, this.restore_directory, path.join(this.config.appDataPath,'migrations'));
+            this._moveFileFromBackupToNode(file, path.join(this.restore_directory, 'migrations'), path.join(this.config.appDataPath, 'migrations'));
         }
 
         this._moveDatabaseFromBackupToNode();
@@ -195,7 +195,16 @@ class RestoreService {
 
 
     _getMigrationFileNames() {
-        return ['1_m1PayoutAllMigrationFile', '4_m4ArangoMigrationFile', '5_m5ArangoPasswordMigrationFile', '6_m6OperationalDBMigrationFile', '7_m7ArangoDatasetSignatureMigrationFile'];
+        const migrationFileNames = [];
+        const directoryPath = path.join(this.restore_directory, 'migrations');
+        if (fs.existsSync(directoryPath)) {
+            fs.readdir(directoryPath, (err, files) => {
+                files.forEach((file) => {
+                    migrationFileNames.push(file);
+                });
+            });
+        }
+        return migrationFileNames;
     }
 
     _checkFolderStruct() {

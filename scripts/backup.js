@@ -96,7 +96,16 @@ function getDataFileNames() {
 }
 
 function getMigrationFileNames() {
-    return ['1_m1PayoutAllMigrationFile', '4_m4ArangoMigrationFile', '5_m5ArangoPasswordMigrationFile', '6_m6OperationalDBMigrationFile', '7_m7ArangoDatasetSignatureMigrationFile'];
+    const migrationFileNames = [];
+    const directoryPath = path.join(config.appDataPath, 'migrations');
+    if (fs.existsSync(directoryPath)) {
+        fs.readdir(directoryPath, (err, files) => {
+            files.forEach((file) => {
+                migrationFileNames.push(file);
+            });
+        });
+    }
+    return migrationFileNames;
 }
 
 function moveFileFromNodeToBackup(fileName, nodeDir, backupDir, showErrors = true) {
@@ -133,6 +142,7 @@ function createBackupFolder() {
 
     console.log(`Creating ${argv.backup_directory}/${timestamp} directories...`);
     mkdirp.sync(`${argv.backup_directory}/${timestamp}`);
+    mkdirp.sync(`${argv.backup_directory}/${timestamp}/migrations`);
 
     return path.join(argv.backup_directory, timestamp);
 }
@@ -172,7 +182,7 @@ function main() {
         }
 
         for (const file of migrationFiles) {
-            moveFileFromNodeToBackup(file, path.join(config.appDataPath,'migrations'), backupDir);
+            moveFileFromNodeToBackup(file, path.join(config.appDataPath, 'migrations'), path.join(backupDir, 'migrations'));
         }
 
         console.log('Database export...');
