@@ -48,12 +48,18 @@ exports.TRAIL_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
+ * @constant {number} DATASET_PRUNING_COMMAND_TIME_MILLS -
+ * Datasets pruning command interval 24h
+ */
+exports.DATASET_PRUNING_COMMAND_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+/**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
     'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
-    'trailCleanerCommand', 'handlerIdsCleanerCommand',
+    'trailCleanerCommand', 'handlerIdsCleanerCommand', 'datasetPruningCommand',
 ];
 
 /**
