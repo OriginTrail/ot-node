@@ -6,6 +6,7 @@ class DatasetPruningCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.datasetPruningService = ctx.datasetPruningService;
     }
 
     /**
@@ -13,13 +14,13 @@ class DatasetPruningCommand extends Command {
      * @param command
      */
     async execute(command) {
-        if (!this.config.autoUpdater.enabled) {
-            this.logger.debug('Dataaset pruning command ignored.');
+        if (!this.config.dataset_pruning.enabled) {
+            this.logger.debug('Dataset pruning command ignored.');
             return Command.repeat();
         }
 
-        this.logger.info('Dataaset pruning command initiated');
-
+        await this.datasetPruningService
+            .pruneDatasets(this.config.dataset_pruning.prune_purchased_datasets);
 
         this.logger.info('Dataset pruning completed');
         return Command.repeat();
