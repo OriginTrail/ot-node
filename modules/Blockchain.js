@@ -561,10 +561,16 @@ class Blockchain {
         }
 
         const that = this;
+        let processingEvents = false;
+
         const handle = setInterval(async () => {
             if (!that.appState.started) {
                 return;
             }
+            if (processingEvents) {
+                return;
+            }
+            processingEvents = true;
 
             const where = {
                 event,
@@ -582,6 +588,8 @@ class Blockchain {
                     await data.save();
                 });
             }
+
+            processingEvents = false;
         }, 2000);
 
         return handle;
