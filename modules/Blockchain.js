@@ -704,25 +704,37 @@ class Blockchain {
     async handleReceivedEvents(events, contractName, blockchain_id) {
         for (let i = 0; events && i < events.length; i += 1) {
             const event = events[i];
-            const timestamp = Date.now();
+
             if (event.returnValues.DH_wallet) {
                 event.returnValues.DH_wallet = event.returnValues.DH_wallet.toLowerCase();
             }
-            /* eslint-disable-next-line */
-            await Models.events.create({
-                id: uuidv4(),
-                contract: contractName,
-                event: event.event,
-                data: JSON.stringify(event.returnValues),
-                data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
-                block: event.blockNumber,
-                blockchain_id,
-                timestamp,
-                finished: 0,
+            const eventData = JSON.stringify(event.returnValues);
+            // eslint-disable-next-line no-await-in-loop
+            const databaseEvent = await Models.events.findOne({
+                where: {
+                    contract: contractName,
+                    event: event.event,
+                    data: eventData,
+                    block: event.blockNumber,
+                    blockchain_id,
+                },
             });
+            if (!databaseEvent) {
+                const timestamp = Date.now();
+                /* eslint-disable-next-line */
+                await Models.events.create({
+                    id: uuidv4(),
+                    contract: contractName,
+                    event: event.event,
+                    data: eventData,
+                    data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
+                    block: event.blockNumber,
+                    blockchain_id,
+                    timestamp,
+                    finished: 0,
+                });
+            }
         }
-
-
         const twoWeeksAgo = new Date();
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
         // Delete old events
