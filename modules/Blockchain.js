@@ -564,32 +564,34 @@ class Blockchain {
         let processingEvents = false;
 
         const handle = setInterval(async () => {
-            if (!that.appState.started) {
-                return;
-            }
-            if (processingEvents) {
-                return;
-            }
-            processingEvents = true;
+            try {
+                if (!that.appState.started) {
+                    return;
+                }
+                if (processingEvents) {
+                    return;
+                }
+                processingEvents = true;
 
-            const where = {
-                event,
-                finished: 0,
-                [Op.or]: blockStartConditions,
-            };
+                const where = {
+                    event,
+                    finished: 0,
+                    [Op.or]: blockStartConditions,
+                };
 
-            const eventData = await Models.events.findAll({ where });
-            if (eventData) {
-                eventData.forEach(async (data) => {
-                    const dataToSend = JSON.parse(data.dataValues.data);
-                    dataToSend.blockchain_id = data.dataValues.blockchain_id;
-                    this.emitter.emit(`eth-${data.event}`, dataToSend);
-                    data.finished = 1;
-                    await data.save();
-                });
+                const eventData = await Models.events.findAll({ where });
+                if (eventData) {
+                    eventData.forEach(async (data) => {
+                        const dataToSend = JSON.parse(data.dataValues.data);
+                        dataToSend.blockchain_id = data.dataValues.blockchain_id;
+                        this.emitter.emit(`eth-${data.event}`, dataToSend);
+                        data.finished = 1;
+                        await data.save();
+                    });
+                }
+            } finally {
+                processingEvents = false;
             }
-
-            processingEvents = false;
         }, 2000);
 
         return handle;
