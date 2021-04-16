@@ -49,35 +49,33 @@ class DCReplicationSendCommand extends Command {
                 offer_id: offerId,
             },
         });
-
-        let colorNumber = Utilities.getRandomInt(2);
-        if (usedDH != null && usedDH.status === 'STARTED' && usedDH.color) {
-            colorNumber = usedDH.color;
+        if (usedDH) {
+            return Command.empty();
         }
+
+        const colorNumber = Utilities.getRandomInt(2);
 
         const color = this.replicationService.castNumberToColor(colorNumber);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         const replication = await this.replicationService.loadReplication(offer.id, color);
 
-        if (!usedDH) {
-            await Models.replicated_data.create({
-                dh_id: identity,
-                dh_wallet: wallet.toLowerCase(),
-                dh_identity: dhIdentity.toLowerCase(),
-                offer_id: offer.offer_id,
-                litigation_private_key: replication.litigationPrivateKey,
-                litigation_public_key: replication.litigationPublicKey,
-                distribution_public_key: replication.distributionPublicKey,
-                distribution_private_key: replication.distributionPrivateKey,
-                distribution_epk_checksum: replication.distributionEpkChecksum,
-                litigation_root_hash: replication.litigationRootHash,
-                distribution_root_hash: replication.distributionRootHash,
-                distribution_epk: replication.distributionEpk,
-                status: 'STARTED',
-                color: colorNumber,
-            });
-        }
+        await Models.replicated_data.create({
+            dh_id: identity,
+            dh_wallet: wallet.toLowerCase(),
+            dh_identity: dhIdentity.toLowerCase(),
+            offer_id: offer.offer_id,
+            litigation_private_key: replication.litigationPrivateKey,
+            litigation_public_key: replication.litigationPublicKey,
+            distribution_public_key: replication.distributionPublicKey,
+            distribution_private_key: replication.distributionPrivateKey,
+            distribution_epk_checksum: replication.distributionEpkChecksum,
+            litigation_root_hash: replication.litigationRootHash,
+            distribution_root_hash: replication.distributionRootHash,
+            distribution_epk: replication.distributionEpk,
+            status: 'STARTED',
+            color: colorNumber,
+        });
 
         const toSign = [
             Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
