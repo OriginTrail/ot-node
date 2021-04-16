@@ -12,6 +12,7 @@ class DcOfferTaskCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.dcService = ctx.dcService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
         this.errorNotificationService = ctx.errorNotificationService;
@@ -61,6 +62,9 @@ class DcOfferTaskCommand extends Command {
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
             await offer.save({ fields: ['task', 'offer_id', 'status', 'message'] });
+
+            this.dcService.tempMapping[eventOfferId] = Date.now();
+
             this.remoteControl.offerUpdate({
                 id: internalOfferId,
             });

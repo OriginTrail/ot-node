@@ -18,6 +18,7 @@ class DcOfferFinalizedCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
+        this.dcService = ctx.dcService;
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
@@ -108,6 +109,9 @@ class DcOfferFinalizedCommand extends Command {
                         },
                     },
                 });
+
+
+                delete this.dcService.tempMapping[offerId];
 
                 const delayOnComplete = 5 * 60 * 1000; // 5 minutes
                 const scheduledTime = (offer.holding_time_in_minutes * 60 * 1000) + delayOnComplete;
@@ -225,6 +229,9 @@ class DcOfferFinalizedCommand extends Command {
         await Models.handler_ids.update({
             status: 'FAILED',
         }, { where: { handler_id } });
+
+
+        delete this.dcService.tempMapping[offerId];
 
         this.errorNotificationService.notifyError(
             err,

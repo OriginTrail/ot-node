@@ -28,8 +28,17 @@ class DCReplicationSendCommand extends Command {
      */
     async execute(command) {
         const {
-            internalOfferId, wallet, identity, dhIdentity, offerId,
+            internalOfferId, wallet, identity, dhIdentity, offerId, blockchainId,
         } = command.data;
+
+        const purposes = await this.blockchain
+            .getWalletPurposes(dhIdentity, wallet, blockchainId).response;
+        if (!purposes.includes('2')) {
+            const message = 'Wallet provided does not have the appropriate permissions set up for the given identity.';
+            this.logger.warn(message);
+            // await this.transport.sendResponse(response, { status: 'fail', message });
+            return Command.empty();
+        }
 
 
         const usedDH = await Models.replicated_data.findOne({
