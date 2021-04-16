@@ -14,6 +14,7 @@ class DCReplicationSendCommand extends Command {
         this.logger = ctx.logger;
         this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
+        this.dcService = ctx.dcService;
 
         this.replicationService = ctx.replicationService;
         this.permissionedDataService = ctx.permissionedDataService;
@@ -30,6 +31,10 @@ class DCReplicationSendCommand extends Command {
         const {
             internalOfferId, wallet, identity, dhIdentity, offerId, blockchainId,
         } = command.data;
+
+        if ((this.dcService.tempMapping[offerId] + this.config.dc_choose_time) < Date.now()) {
+            return Command.empty();
+        }
 
         const purposes = await this.blockchain
             .getWalletPurposes(dhIdentity, wallet, blockchainId).response;
