@@ -1,6 +1,5 @@
 const Models = require('../../models/index');
 const { QueryTypes } = require('sequelize');
-const constants = require('../constants');
 
 class DatasetPruningService {
     /**
@@ -25,9 +24,10 @@ class DatasetPruningService {
         const repackedDatasets = this.repackDatasets(datasets);
 
         if (!datasets) {
-            this.logger.trace('Found 0 dataset for pruning');
+            this.logger.trace('Found 0 datasets for pruning');
             return;
         }
+        this.logger.trace('Datasets pruning started.');
         const importedPruningDelayInMilisec = importedPruningDelayInMinutes * 60 * 1000;
         const replicatedPruningDelayInMilisec = replicatedPruningDelayInMinutes * 60 * 1000;
         const datasetsToBeDeleted = [];
@@ -89,8 +89,8 @@ class DatasetPruningService {
                 }
             }
         });
+        this.logger.trace(`Found ${datasetsToBeDeleted.length} datasets for pruning`);
         if (datasetsToBeDeleted.length === 0) {
-            this.logger.trace('Found 0 dataset for pruning');
             return;
         }
         await this.removeDatasetsFromGraphDb(datasetsToBeDeleted);
@@ -123,8 +123,14 @@ class DatasetPruningService {
 
     async removeDatasetsFromGraphDb(datasets) {
         for (const dataset of datasets) {
-            // eslint-disable-next-line no-await-in-loop
-            await this.graphStorage.removeDataset(dataset.datasetId);
+            try {
+                this.logger.trace('Pruning dataset with id: ', dataset.datasetId);
+                // eslint-disable-next-line no-await-in-loop
+                await this.graphStorage.removeDataset(dataset.datasetId);
+                this.logger.trace('Sucessfully pruned dataset with id: ', dataset.datasetId);
+            } catch (error) {
+                this.logger.error('Unable to prune dataset: ', dataset.datasetId);
+            }
         }
     }
 
@@ -177,21 +183,34 @@ class DatasetPruningService {
                     bids: [],
                 };
             }
-            repackedDatasets[dataset.data_set_id].dataInfo.push({
-                id: dataset.data_info_id,
-                importTimestamp: new Date(dataset.import_timestamp).getTime(),
-            });
-            if (dataset.offer_id) {
-                repackedDatasets[dataset.data_set_id].offers.push({
-                    id: dataset.offer_id,
-                    holdingTimeInMinutes: dataset.offer_holding_time_in_minutes,
+            const foundDataInfoId = repackedDatasets[dataset.data_set_id].dataInfo
+                .some(el => el.id === dataset.data_info_id);
+            if (!foundDataInfoId) {
+                repackedDatasets[dataset.data_set_id].dataInfo.push({
+                    id: dataset.data_info_id,
+                    importTimestamp: new Date(dataset.import_timestamp).getTime(),
                 });
             }
+
+            if (dataset.offer_id) {
+                const foundOfferId = repackedDatasets[dataset.data_set_id].offers
+                    .some(el => el.id === dataset.offer_id);
+                if (!foundOfferId) {
+                    repackedDatasets[dataset.data_set_id].offers.push({
+                        id: dataset.offer_id,
+                        holdingTimeInMinutes: dataset.offer_holding_time_in_minutes,
+                    });
+                }
+            }
             if (dataset.bid_id) {
-                repackedDatasets[dataset.data_set_id].bids.push({
-                    id: dataset.bid_id,
-                    holdingTimeInMinutes: dataset.bid_holding_time_in_minutes,
-                });
+                const foundBidId = repackedDatasets[dataset.data_set_id].bids
+                    .some(el => el.id === dataset.bid_id);
+                if (!foundBidId) {
+                    repackedDatasets[dataset.data_set_id].bids.push({
+                        id: dataset.bid_id,
+                        holdingTimeInMinutes: dataset.bid_holding_time_in_minutes,
+                    });
+                }
             }
         });
         return repackedDatasets;

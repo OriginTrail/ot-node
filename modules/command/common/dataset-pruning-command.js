@@ -1,5 +1,6 @@
 const Command = require('../command');
 const constants = require('../../constants');
+const { fork } = require('child_process');
 
 class DatasetPruningCommand extends Command {
     constructor(ctx) {
@@ -16,15 +17,22 @@ class DatasetPruningCommand extends Command {
     async execute(command) {
         if (!this.config.dataset_pruning.enabled) {
             this.logger.debug('Dataset pruning command ignored.');
-            return Command.repeat();
+            return Command.empty();
         }
 
-        await this.datasetPruningService
-            .pruneDatasets(
-                this.config.dataset_pruning.imported_pruning_delay_in_minutes,
-                this.config.dataset_pruning.replicated_pruning_delay_in_minutes,
-            );
+        const forked = fork('modules/worker/datasets-pruning-worker.js');
 
+        forked.send(JSON.stringify({
+            selectedDatabase: this.config.database,
+            importedPruningDelayInMinutes: this.config
+                .dataset_pruning.imported_pruning_delay_in_minutes,
+            replicatedPruningDelayInMinutes: this.config.dataset_pruning
+                .replicated_pruning_delay_in_minutes,
+        }));
+
+        forked.on('message', async (response) => {
+            console.log(response);
+        });
         this.logger.info('Dataset pruning completed');
         return Command.repeat();
     }

@@ -378,8 +378,8 @@
     },
     "autoUpdater": {
       "enabled": true,
-      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/release/testnet/package.json",
-      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/release/testnet.zip"
+      "packageJsonUrl": "https://raw.githubusercontent.com/OriginTrail/ot-node/feature/dataset-pruning/package.json",
+      "archiveUrl": "https://github.com/OriginTrail/ot-node/archive/feature/dataset-pruning.zip"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
