@@ -20,7 +20,10 @@ class DatasetPruningCommand extends Command {
         }
 
         await this.datasetPruningService
-            .pruneDatasets(this.config.dataset_pruning.prune_purchased_datasets);
+            .pruneDatasets(
+                this.config.dataset_pruning.imported_pruning_delay_in_minutes,
+                this.config.dataset_pruning.replicated_pruning_delay_in_minutes,
+            );
 
         this.logger.info('Dataset pruning completed');
         return Command.repeat();

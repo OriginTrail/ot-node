@@ -9,9 +9,10 @@ class DatasetPruningService {
      */
     constructor(ctx) {
         this.logger = ctx.logger;
+        this.graphStorage = ctx.graphStorage;
     }
 
-    async pruneDatasets(prunePurchasedDatasets = false) {
+    async pruneDatasets(importedPruningDelayInMinutes, replicatedPruningDelayInMinutes) {
         const queryString = 'select di.id as data_info_id, offer.id as offer_id, bid.id as bid_id, pd.id as purchased_data_id, di.data_set_id, di.import_timestamp, \n' +
             'offer.holding_time_in_minutes as offer_holding_time_in_minutes,\n' +
             'bid.holding_time_in_minutes as bid_holding_time_in_minutes \n' +
@@ -21,65 +22,120 @@ class DatasetPruningService {
             'left join purchased_data as pd on di.data_set_id = pd.data_set_id';
         const datasets = await Models.sequelize.query(queryString, { type: QueryTypes.SELECT });
 
-        const repackedDatasets = this.repackDatasets(datasets, !prunePurchasedDatasets);
+        const repackedDatasets = this.repackDatasets(datasets);
 
         if (!datasets) {
-            this.logger.trace('Found 0 datasets for pruning');
+            this.logger.trace('Found 0 dataset for pruning');
             return;
         }
+        const importedPruningDelayInMilisec = importedPruningDelayInMinutes * 60 * 1000;
+        const replicatedPruningDelayInMilisec = replicatedPruningDelayInMinutes * 60 * 1000;
         const datasetsToBeDeleted = [];
         let dataInfoIdToBeDeleted = [];
         let offerIdToBeDeleted = [];
-        let bidsIdToBeDeleted = [];
 
         const now = (new Date()).getTime();
         Object.keys(repackedDatasets).forEach((key) => {
             const dataset = repackedDatasets[key];
-
+            // there are no bids or offers associated with datasetId
             if (dataset.offers.length === 0 && dataset.bids.length === 0) {
                 let dataInfoDeletedCount = 0;
+                // import delay
                 dataset.dataInfo.forEach((dataInfo) => {
                     if (dataInfo.importTimestamp +
-                        constants.DATASET_MINIMUM_VALIDITY_PERIOD_MILLS < now) {
+                        importedPruningDelayInMilisec < now) {
                         dataInfoIdToBeDeleted.push(dataInfo.id);
                         dataInfoDeletedCount += 1;
                     }
                 });
                 if (dataset.dataInfo.length === dataInfoDeletedCount) {
-                    datasetsToBeDeleted.push(key);
+                    const latestImportTimestamp =
+                        Math.max(...dataset.dataInfo.map(di => di.importTimestamp));
+                    datasetsToBeDeleted.push({
+                        datasetId: key,
+                        importTimestamp: latestImportTimestamp,
+                    });
                 }
             } else {
                 const latestImportTimestamp =
                     Math.max(...dataset.dataInfo.map(di => di.importTimestamp));
 
-                const offerIds = this
-                    .getIdsForPruningFromArray(dataset.offers, latestImportTimestamp, now);
+                // get offer ids for pruning
+                const offerIds = this.getIdsForPruningFromArray(
+                    dataset.offers,
+                    latestImportTimestamp,
+                    replicatedPruningDelayInMilisec,
+                );
                 const offersDeletedCount = offerIds.length;
                 offerIdToBeDeleted = offerIdToBeDeleted.concat(offerIds);
 
-                const bidIds = this
-                    .getIdsForPruningFromArray(dataset.bids, latestImportTimestamp, now);
+                // get bid ids for pruning
+                const bidIds = this.getIdsForPruningFromArray(
+                    dataset.bids,
+                    latestImportTimestamp,
+                    replicatedPruningDelayInMilisec,
+                );
                 const bidsDeletedCount = bidIds.length;
-                bidsIdToBeDeleted = bidsIdToBeDeleted.concat(bidIds);
 
-
+                // get data info ids for pruning
                 if (offersDeletedCount === dataset.offers.length &&
                 bidsDeletedCount === dataset.bids.length) {
-                    datasetsToBeDeleted.push(key);
+                    datasetsToBeDeleted.push({
+                        datasetId: key,
+                        importTimestamp: latestImportTimestamp,
+                    });
                     dataInfoIdToBeDeleted = dataInfoIdToBeDeleted
                         .concat(dataset.dataInfo.map(di => di.id));
                 }
             }
         });
+        if (datasetsToBeDeleted.length === 0) {
+            this.logger.trace('Found 0 dataset for pruning');
+            return;
+        }
+        await this.removeDatasetsFromGraphDb(datasetsToBeDeleted);
+        await this.removeEntriesWithId('offers', offerIdToBeDeleted);
+        await this.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
+
+        await this.updatePruningHistory(datasetsToBeDeleted);
+        this.logger.trace(`Sucessfully pruned ${datasetsToBeDeleted.length} datasets.`);
     }
 
-    getIdsForPruningFromArray(array, latestImportTimestamp, now) {
+    async updatePruningHistory(datasetsToBeDeleted) {
+        const now = (new Date()).getTime();
+        for (const dataset of datasetsToBeDeleted) {
+            // eslint-disable-next-line no-await-in-loop
+            await Models.pruning_history.create({
+                data_set_id: dataset.datasetId,
+                imported_timestamp: dataset.importTimestamp,
+                pruned_timestamp: now,
+            });
+        }
+    }
+
+    async removeEntriesWithId(table, idArray) {
+        await Models[table].destroy({
+            where: {
+                id: { [Models.sequelize.Op.in]: idArray },
+            },
+        });
+    }
+
+    async removeDatasetsFromGraphDb(datasets) {
+        for (const dataset of datasets) {
+            // eslint-disable-next-line no-await-in-loop
+            await this.graphStorage.removeDataset(dataset.datasetId);
+        }
+    }
+
+    getIdsForPruningFromArray(array, latestImportTimestamp, replicatedPruningDelayInMilisec) {
+        const now = (new Date()).getTime();
         const idsForPruning = [];
         if (array.length > 0) {
             array.forEach((element) => {
                 if (latestImportTimestamp +
-                    (element.holdingTimeInMinutes * 60 * 1000) +
-                    constants.DATASET_MINIMUM_VALIDITY_PERIOD_MILLS < now) {
+                    replicatedPruningDelayInMilisec +
+                    (element.holdingTimeInMinutes * 60 * 1000) < now) {
                     idsForPruning.push(element.id);
                 }
             });
@@ -108,7 +164,7 @@ class DatasetPruningService {
      * @param datasets
      * @returns {{}}
      */
-    repackDatasets(datasets, includePurchased) {
+    repackDatasets(datasets, includePurchased = false) {
         const repackedDatasets = {};
         datasets.forEach((dataset) => {
             if (!includePurchased && dataset.purchased_data_id) {

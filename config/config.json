@@ -220,8 +220,8 @@
     },
     "dataset_pruning": {
       "enabled": true,
-      "prune_purchased_datasets": false,
-      "prune_dataset_after_in_minutes": 1440
+      "imported_pruning_delay_in_minutes": 1440,
+      "replicated_pruning_delay_in_minutes": 1440
     }
   },
   "testnet": {
