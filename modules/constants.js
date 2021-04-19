@@ -54,12 +54,6 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 exports.DATASET_PRUNING_COMMAND_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 /**
- * @constant {number} DATASET_MINIMUM_VALIDITY_PERIOD_MILLS -
- * Datasets dataset minimum validity time before pruning 24h
- */
-exports.DATASET_MINIMUM_VALIDITY_PERIOD_MILLS = 24 * 60 * 60 * 1000;
-
-/**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
