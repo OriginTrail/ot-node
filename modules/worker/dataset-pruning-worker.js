@@ -18,11 +18,10 @@ process.on('message', async (data) => {
                 importedPruningDelayInMinutes,
                 replicatedPruningDelayInMinutes,
             );
-        if (idsForPruning.datasetsToBeDeleted.length === 0) {
-            process.send(idsForPruning);
-            return;
+        if (idsForPruning.datasetsToBeDeleted.length !== 0) {
+            await datasetPruningService
+                .removeDatasetsFromGraphDb(idsForPruning.datasetsToBeDeleted);
         }
-        await datasetPruningService.removeDatasetsFromGraphDb(idsForPruning.datasetsToBeDeleted);
         process.send(idsForPruning);
     } catch (error) {
         process.send({ error: `${error.message}` });
