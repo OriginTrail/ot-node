@@ -12,7 +12,7 @@ process.on('message', async (data) => {
     try {
         const graphStorage = new GraphStorage(selectedDatabase, logger);
         const datasetPruningService = new DatasetPruningService({ logger, graphStorage });
-        const idsForPruning = await datasetPruningService
+        const idsForPruning = datasetPruningService
             .getIdsForPruning(
                 repackedDatasets,
                 importedPruningDelayInMinutes,

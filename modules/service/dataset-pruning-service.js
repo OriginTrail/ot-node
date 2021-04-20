@@ -11,7 +11,7 @@ class DatasetPruningService {
         this.graphStorage = ctx.graphStorage;
     }
 
-    async getIdsForPruning(
+    getIdsForPruning(
         repackedDatasets,
         importedPruningDelayInMinutes,
         replicatedPruningDelayInMinutes,
