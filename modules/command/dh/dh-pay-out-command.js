@@ -74,6 +74,7 @@ class DhPayOutCommand extends Command {
                 await this.blockchain
                     .payOut(blockchainIdentity, offerId, urgent, blockchain_id).response;
                 this.logger.important(`Payout for offer ${offerId} successfully completed on blockchain ${blockchain_id}.`);
+                await this._clearReplicationDatabaseData(offerId);
                 await this._printBalances(blockchainIdentity, blockchain_id);
             } catch (error) {
                 if (error.message.includes('Gas price higher than maximum allowed price')) {
@@ -150,6 +151,20 @@ class DhPayOutCommand extends Command {
         this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
+    async _clearReplicationDatabaseData(offerId) {
+        await Models.bids.destroy({
+            where: {
+                offer_id: offerId,
+                status: 'COMPLETED',
+            },
+        });
+
+        await Models.holding_data.destroy({
+            where: {
+                offer_id: offerId,
+            },
+        });
+    }
     /**
      * Builds default command
      * @param map
