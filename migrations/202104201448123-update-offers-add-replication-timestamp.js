@@ -4,7 +4,7 @@ module.exports = {
             'offers',
             'replication_start_timestamp',
             {
-                type: Sequelize.String,
+                type: Sequelize.STRING,
             },
         );
     },
