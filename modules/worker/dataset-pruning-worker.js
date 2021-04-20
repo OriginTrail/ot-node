@@ -4,18 +4,26 @@ const DatasetPruningService = require('../../modules/service/dataset-pruning-ser
 
 process.on('message', async (data) => {
     const {
-        selectedDatabase, importedPruningDelayInMinutes, replicatedPruningDelayInMinutes,
+        selectedDatabase,
+        importedPruningDelayInMinutes,
+        replicatedPruningDelayInMinutes,
+        repackedDatasets,
     } = JSON.parse(data);
     try {
         const graphStorage = new GraphStorage(selectedDatabase, logger);
         const datasetPruningService = new DatasetPruningService({ logger, graphStorage });
-        await datasetPruningService
-            .pruneDatasets(
+        const idsForPruning = await datasetPruningService
+            .getIdsForPruning(
+                repackedDatasets,
                 importedPruningDelayInMinutes,
                 replicatedPruningDelayInMinutes,
             );
-
-        process.send('Finalized');
+        if (idsForPruning.datasetsToBeDeleted.length === 0) {
+            process.send(idsForPruning);
+            return;
+        }
+        await datasetPruningService.removeDatasetsFromGraphDb(idsForPruning.datasetsToBeDeleted);
+        process.send(idsForPruning);
     } catch (error) {
         process.send({ error: `${error.message}` });
     }

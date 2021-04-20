@@ -8,6 +8,7 @@ class DatasetPruningCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.datasetPruningService = ctx.datasetPruningService;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -20,7 +21,16 @@ class DatasetPruningCommand extends Command {
             return Command.empty();
         }
 
-        const forked = fork('modules/worker/datasets-pruning-worker.js');
+        const datasets = await this.datasetPruningService.fetchDatasetData();
+
+        if (!datasets) {
+            this.logger.trace('Found 0 datasets for pruning');
+            return;
+        }
+
+        const repackedDatasets = this.datasetPruningService.repackDatasets(datasets);
+
+        const forked = fork('modules/worker/dataset-pruning-worker.js');
 
         forked.send(JSON.stringify({
             selectedDatabase: this.config.database,
@@ -28,13 +38,44 @@ class DatasetPruningCommand extends Command {
                 .dataset_pruning.imported_pruning_delay_in_minutes,
             replicatedPruningDelayInMinutes: this.config.dataset_pruning
                 .replicated_pruning_delay_in_minutes,
+            repackedDatasets,
         }));
 
         forked.on('message', async (response) => {
-            console.log(response);
+            if (response.error) {
+                this.logger.error(`Error while pruning datasets: ${response.error}`);
+                forked.kill();
+                await this.addPruningCommandToExecutor();
+                return;
+            }
+            const {
+                offerIdToBeDeleted,
+                dataInfoIdToBeDeleted,
+                datasetsToBeDeleted,
+            } = response;
+            if (datasetsToBeDeleted.length === 0) {
+                this.logger.trace('Found 0 datasets for pruning');
+                return;
+            }
+            await this.removeEntriesWithId('offers', offerIdToBeDeleted);
+            await this.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
+
+            await this.updatePruningHistory(datasetsToBeDeleted);
+            this.logger.info(`Sucessfully pruned ${datasetsToBeDeleted.length} datasets.`);
+            forked.kill();
+            await this.addPruningCommandToExecutor();
         });
-        this.logger.info('Dataset pruning completed');
-        return Command.repeat();
+        this.logger.trace('Dataset pruning worker started');
+        return Command.empty();
+    }
+
+    async addPruningCommandToExecutor() {
+        await this.commandExecutor.add({
+            name: 'datasetPruningCommand',
+            delay: constants.DATASET_PRUNING_COMMAND_TIME_MILLS,
+            period: constants.DATASET_PRUNING_COMMAND_TIME_MILLS,
+            transactional: false,
+        });
     }
 
     /**

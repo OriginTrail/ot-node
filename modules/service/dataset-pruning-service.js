@@ -11,23 +11,11 @@ class DatasetPruningService {
         this.graphStorage = ctx.graphStorage;
     }
 
-    async pruneDatasets(importedPruningDelayInMinutes, replicatedPruningDelayInMinutes) {
-        const queryString = 'select di.id as data_info_id, offer.id as offer_id, bid.id as bid_id, pd.id as purchased_data_id, di.data_set_id, di.import_timestamp, \n' +
-            'offer.holding_time_in_minutes as offer_holding_time_in_minutes,\n' +
-            'bid.holding_time_in_minutes as bid_holding_time_in_minutes \n' +
-            'from data_info as di\n' +
-            'left join offers as offer on di.data_set_id = offer.data_set_id\n' +
-            'left join bids as bid on di.data_set_id = bid.data_set_id\n' +
-            'left join purchased_data as pd on di.data_set_id = pd.data_set_id';
-        const datasets = await Models.sequelize.query(queryString, { type: QueryTypes.SELECT });
-
-        const repackedDatasets = this.repackDatasets(datasets);
-
-        if (!datasets) {
-            this.logger.trace('Found 0 datasets for pruning');
-            return;
-        }
-        this.logger.trace('Datasets pruning started.');
+    async getIdsForPruning(
+        repackedDatasets,
+        importedPruningDelayInMinutes,
+        replicatedPruningDelayInMinutes,
+    ) {
         const importedPruningDelayInMilisec = importedPruningDelayInMinutes * 60 * 1000;
         const replicatedPruningDelayInMilisec = replicatedPruningDelayInMinutes * 60 * 1000;
         const datasetsToBeDeleted = [];
@@ -90,15 +78,23 @@ class DatasetPruningService {
             }
         });
         this.logger.trace(`Found ${datasetsToBeDeleted.length} datasets for pruning`);
-        if (datasetsToBeDeleted.length === 0) {
-            return;
-        }
-        await this.removeDatasetsFromGraphDb(datasetsToBeDeleted);
-        await this.removeEntriesWithId('offers', offerIdToBeDeleted);
-        await this.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
 
-        await this.updatePruningHistory(datasetsToBeDeleted);
-        this.logger.trace(`Sucessfully pruned ${datasetsToBeDeleted.length} datasets.`);
+        return {
+            datasetsToBeDeleted,
+            offerIdToBeDeleted,
+            dataInfoIdToBeDeleted,
+        };
+    }
+
+    async fetchDatasetData() {
+        const queryString = 'select di.id as data_info_id, offer.id as offer_id, bid.id as bid_id, pd.id as purchased_data_id, di.data_set_id, di.import_timestamp, \n' +
+            'offer.holding_time_in_minutes as offer_holding_time_in_minutes,\n' +
+            'bid.holding_time_in_minutes as bid_holding_time_in_minutes \n' +
+            'from data_info as di\n' +
+            'left join offers as offer on di.data_set_id = offer.data_set_id\n' +
+            'left join bids as bid on di.data_set_id = bid.data_set_id\n' +
+            'left join purchased_data as pd on di.data_set_id = pd.data_set_id';
+        return Models.sequelize.query(queryString, { type: QueryTypes.SELECT });
     }
 
     async updatePruningHistory(datasetsToBeDeleted) {
@@ -124,12 +120,10 @@ class DatasetPruningService {
     async removeDatasetsFromGraphDb(datasets) {
         for (const dataset of datasets) {
             try {
-                this.logger.trace('Pruning dataset with id: ', dataset.datasetId);
                 // eslint-disable-next-line no-await-in-loop
                 await this.graphStorage.removeDataset(dataset.datasetId);
-                this.logger.trace('Sucessfully pruned dataset with id: ', dataset.datasetId);
             } catch (error) {
-                this.logger.error('Unable to prune dataset: ', dataset.datasetId);
+                this.logger.error('Unable to prune dataset with id: ', dataset.datasetId);
             }
         }
     }
