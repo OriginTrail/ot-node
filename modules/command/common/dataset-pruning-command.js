@@ -25,7 +25,7 @@ class DatasetPruningCommand extends Command {
 
         if (!datasets) {
             this.logger.trace('Found 0 datasets for pruning');
-            return;
+            return Command.repeat();
         }
 
         const repackedDatasets = this.datasetPruningService.repackDatasets(datasets);
@@ -57,10 +57,10 @@ class DatasetPruningCommand extends Command {
                 this.logger.trace('Found 0 datasets for pruning');
                 return;
             }
-            await this.removeEntriesWithId('offers', offerIdToBeDeleted);
-            await this.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
+            await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
+            await this.datasetPruningService.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
 
-            await this.updatePruningHistory(datasetsToBeDeleted);
+            await this.datasetPruningService.updatePruningHistory(datasetsToBeDeleted);
             this.logger.info(`Sucessfully pruned ${datasetsToBeDeleted.length} datasets.`);
             forked.kill();
             await this.addPruningCommandToExecutor();
