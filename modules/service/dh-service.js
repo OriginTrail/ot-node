@@ -95,6 +95,17 @@ class DHService {
             return; // the offer is mine
         }
 
+        const existingBid = await Models.bids.findOne({
+            where: {
+                offer_id: offerId,
+            },
+        });
+
+        if (existingBid) {
+            return;
+        }
+
+
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId} on blockchain ${blockchain_id}.`);
         if (dataSetSizeInBytes) {
             const dataSizeInMB = dataSetSizeInBytes / 1000000;
