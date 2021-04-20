@@ -10,7 +10,6 @@ const ImportUtilities = require('../ImportUtilities');
 
 class DCService {
     constructor(ctx) {
-        this.tempMapping = {};
         this.transport = ctx.transport;
         this.logger = ctx.logger;
         this.config = ctx.config;
@@ -280,15 +279,17 @@ class DCService {
         if (async_enabled) {
             await this._sendReplicationAcknowledgement(offerId, identity, response);
 
-            const currentTime = Date.now();
-            let lower = this.tempMapping[offerId] + 4 * 60 * 1000; // + this.config.dc_choose_time * 0.5;
-            const upper = this.tempMapping[offerId] + this.config.dc_choose_time * 0.9;
-            const scheduledTime = Math.ceil(Math.random() * (upper - lower) + lower);
-            const delay = scheduledTime - currentTime;
+            const minDelay =
+                Math.min(constants.REPLICATION_MIN_DELAY_MILLS, this.config.dc_choose_time * 0.1);
+            const maxDelay = this.config.dc_choose_time * 0.9;
+            const randomDelay = Math.ceil(minDelay + (Math.random() * (maxDelay - minDelay)));
+
+            const startTime = parseInt(offer.replication_start_timestamp, 10);
+            const adjustedDelay = (startTime - Date.now()) + randomDelay;
 
             await this.commandExecutor.add({
                 name: 'dcReplicationSendCommand',
-                delay: (delay > 0 ? delay : 0),
+                delay: (adjustedDelay > 0 ? adjustedDelay : 0),
                 data: {
                     internalOfferId: offer.id,
                     offerId,
@@ -297,6 +298,7 @@ class DCService {
                     dhIdentity,
                     response,
                     blockchainId: offer.blockchain_id,
+                    replicationStartTime: startTime,
                 },
                 transactional: false,
             });
@@ -405,6 +407,7 @@ class DCService {
                     identity,
                     dhIdentity,
                     response,
+                    replicationStartTime: parseInt(offer.replication_start_timestamp, 10),
                 },
                 transactional: false,
             });

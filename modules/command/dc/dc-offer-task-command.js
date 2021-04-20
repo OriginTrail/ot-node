@@ -59,11 +59,12 @@ class DcOfferTaskCommand extends Command {
             }
             offer.task = eventTask;
             offer.offer_id = eventOfferId;
+            offer.replication_start_timestamp = Date.now().toString();
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
-            await offer.save({ fields: ['task', 'offer_id', 'status', 'message'] });
-
-            this.dcService.tempMapping[eventOfferId] = Date.now();
+            await offer.save({
+                fields: ['task', 'offer_id', 'replication_start_timestamp', 'status', 'message'],
+            });
 
             this.remoteControl.offerUpdate({
                 id: internalOfferId,

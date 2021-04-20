@@ -2,6 +2,10 @@
  * @constant {number} DEFAULT_NUMBER_OF_HOLDERS - Number of data holders for a dataset
  */
 exports.DEFAULT_NUMBER_OF_HOLDERS = 3;
+/**
+ * @constant {number} DEFAULT_NUMBER_OF_HOLDERS - Number of data holders for a dataset
+ */
+exports.REPLICATION_MIN_DELAY_MILLS = 4 * 60 * 1000;
 
 /**
  * @constant {number} DEFAULT_CHALLENGE_NUMBER_OF_TESTS - Number of challenges per DH
