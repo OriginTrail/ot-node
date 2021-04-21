@@ -148,7 +148,6 @@ class DcOfferFinalizedCommand extends Command {
         const startTime = Date.now();
         const endTime = startTime + (offer.holding_time_in_minutes * 60 * 1000);
 
-        // const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id);
         const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
         await forEach(holders, async (holder) => {
             const replicatedData = await Models.replicated_data.findOne({
