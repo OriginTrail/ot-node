@@ -28,6 +28,9 @@ class DhPayOutCommand extends Command {
         const {
             offerId,
             urgent,
+        } = command.data;
+
+        let {
             blockchain_id,
         } = command.data;
 
@@ -37,6 +40,16 @@ class DhPayOutCommand extends Command {
                 status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'CHOSEN'] },
             },
         });
+
+        if (!blockchain_id) {
+            if (bid && bid.blockchain_id) {
+                // eslint-disable-next-line prefer-destructuring
+                blockchain_id = bid.blockchain_id;
+            } else {
+                this.logger.important(`Cannot determine blockchain_id for offer ${offerId}. Cannot execute payout.`);
+                return Command.empty();
+            }
+        }
 
         const blockchainIdentity = this.profileService.getIdentity(blockchain_id);
 
