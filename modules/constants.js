@@ -3,7 +3,8 @@
  */
 exports.DEFAULT_NUMBER_OF_HOLDERS = 3;
 /**
- * @constant {number} DEFAULT_NUMBER_OF_HOLDERS - Number of data holders for a dataset
+ * @constant {number} REPLICATION_MIN_DELAY_MILLS - Default minimum delay for replication sending
+ *        The value could be lower if the 10% of the DC choose time is shorter
  */
 exports.REPLICATION_MIN_DELAY_MILLS = 4 * 60 * 1000;
 
