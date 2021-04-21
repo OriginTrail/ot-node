@@ -18,6 +18,7 @@ class DcOfferFinalizedCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
+        this.dcService = ctx.dcService;
         this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
         this.remoteControl = ctx.remoteControl;
