@@ -58,6 +58,7 @@ class DCReplicationSendCommand extends Command {
             },
         });
         if (usedDH) {
+            this.logger.warn(`Already sent replication data for offer ${offerId} to ${identity}`);
             return Command.empty();
         }
 
