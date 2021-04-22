@@ -10,7 +10,10 @@ module.exports = (sequelize, DataTypes) => {
         data_set_id: DataTypes.STRING,
         imported_timestamp: DataTypes.STRING,
         pruned_timestamp: DataTypes.STRING,
-    }, {});
+    }, {
+        freezeTableName: true,
+        tableName: 'pruning_history',
+    });
     pruning_history.associate = (models) => {
         // associations can be defined here
     };

@@ -54,7 +54,6 @@ class DatasetPruningCommand extends Command {
                 datasetsToBeDeleted,
             } = response;
             if (datasetsToBeDeleted.length === 0) {
-                this.logger.trace('Found 0 datasets for pruning');
                 return;
             }
             await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
@@ -75,6 +74,8 @@ class DatasetPruningCommand extends Command {
             delay: constants.DATASET_PRUNING_COMMAND_TIME_MILLS,
             period: constants.DATASET_PRUNING_COMMAND_TIME_MILLS,
             transactional: false,
+            data: {
+            },
         });
     }
 
