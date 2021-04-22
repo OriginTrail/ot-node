@@ -123,7 +123,7 @@ class DatasetPruningService {
                 // eslint-disable-next-line no-await-in-loop
                 await this.graphStorage.removeDataset(dataset.datasetId);
             } catch (error) {
-                this.logger.error('Unable to prune dataset with id: ', dataset.datasetId);
+                this.logger.debug(`Unable to prune dataset with id: ${dataset.datasetId}. Error message: ${error.message}`);
             }
         }
     }
