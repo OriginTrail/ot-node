@@ -5,7 +5,16 @@ const Utilities = require('../Utilities');
 const ImportUtilities = require('../ImportUtilities');
 const OtJsonUtilities = require('../OtJsonUtilities');
 const fs = require('fs');
-const defaultConfig = require('../../config/config')[process.env.NODE_ENV];
+
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'testnet';
+}
+const environment = process.env.NODE_ENV === 'mariner' ? 'mainnet' : process.env.NODE_ENV;
+if (['mainnet', 'testnet', 'development'].indexOf(environment) < 0) {
+    throw Error(`Unsupported node environment ${environment}`);
+}
+const defaultConfig = require('../../config/config')[environment];
 
 process.on('message', async (data) => {
     const {

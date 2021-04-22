@@ -217,6 +217,11 @@
       "username": "ot_node",
       "password": "origintrail",
       "root_user_password": "origintrail"
+    },
+    "dataset_pruning": {
+      "enabled": false,
+      "imported_pruning_delay_in_minutes": 1440,
+      "replicated_pruning_delay_in_minutes": 1440
     }
   },
   "testnet": {
@@ -412,6 +417,11 @@
       "username": "ot_node",
       "password": "origintrail",
       "root_user_password": "origintrail"
+    },
+    "dataset_pruning": {
+      "enabled": false,
+      "imported_pruning_delay_in_minutes": 1440,
+      "replicated_pruning_delay_in_minutes": 1440
     }
   },
   "mainnet": {
@@ -580,6 +590,11 @@
       "username": "ot_node",
       "password": "origintrail",
       "root_user_password": "origintrail"
+    },
+    "dataset_pruning": {
+      "enabled": false,
+      "imported_pruning_delay_in_minutes": 1440,
+      "replicated_pruning_delay_in_minutes": 1440
     }
   }
 }
