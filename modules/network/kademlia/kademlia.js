@@ -749,12 +749,12 @@ class Kademlia {
                         if (err) {
                             reject(err);
                         } else {
-                            if (successfulPublishes === 0) {
+                            if (successfulPublishes.length === 0) {
                                 // Publish failed.
                                 reject(Error('Publish failed.'));
                                 return;
                             }
-                            this.log.debug(`Published successfully to ${successfulPublishes} peers.`);
+                            this.log.debug(`Published successfully to ${successfulPublishes.length} peers.`);
                             resolve(successfulPublishes);
                         }
                     },
