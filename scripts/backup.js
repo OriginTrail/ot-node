@@ -96,16 +96,11 @@ function getDataFileNames() {
 }
 
 function getMigrationFileNames() {
-    const migrationFileNames = [];
     const directoryPath = path.join(config.appDataPath, 'migrations');
     if (fs.existsSync(directoryPath)) {
-        fs.readdir(directoryPath, (err, files) => {
-            files.forEach((file) => {
-                migrationFileNames.push(file);
-            });
-        });
+        return fs.readdirSync(directoryPath);
     }
-    return migrationFileNames;
+    return [];
 }
 
 function moveFileFromNodeToBackup(fileName, nodeDir, backupDir, showErrors = true) {
