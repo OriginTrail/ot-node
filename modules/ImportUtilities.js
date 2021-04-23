@@ -13,7 +13,15 @@ const OtJsonUtilities = require('./OtJsonUtilities');
 const DataIntegrityResolver = require('./service/data-integrity/data-integrity-resolver');
 // TODO Is this safe to read, IE will it always be the same,
 //  (could the node somehow change this in runtime? )
-const defaultConfig = require('../config/config')[process.env.NODE_ENV];
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'testnet';
+}
+const environment = process.env.NODE_ENV === 'mariner' ? 'mainnet' : process.env.NODE_ENV;
+if (['mainnet', 'testnet', 'development'].indexOf(environment) < 0) {
+    throw Error(`Unsupported node environment ${environment}`);
+}
+const defaultConfig = require('../config/config')[environment];
 
 const data_constants = {
     vertexType: {
