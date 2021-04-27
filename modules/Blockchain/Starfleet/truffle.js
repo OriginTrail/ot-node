@@ -33,9 +33,9 @@ module.exports = {
         },
 
         contracts: {
-            provider: () => new WalletProvider(privateKey, `${rpc_endpoint}`),
+            provider: () => new WalletProvider(privateKey, rpc_endpoint),
             network_id: 4,
-            gasPrice: 1000000000,
+            gasPrice: 1,
             gas: 6000000, // Gas limit used for deploys
             skipDryRun: true,
         },

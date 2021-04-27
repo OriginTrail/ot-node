@@ -191,7 +191,8 @@ module.exports = async (deployer, network, accounts) => {
         approval = await deployer.deploy(Approval);
         await hub.setContractAddress('Approval', approval.address);
 
-        await hub.setContractAddress('Token', '0x18F75411914f45665f352908F1D3D11f0Eb01f2A');
+        token = await deployer.deploy(XDaiTrac, accounts[0], amountToMint);
+        await hub.setContractAddress('Token', token.address);
 
         profile = await deployer.deploy(Profile, hub.address);
         await hub.setContractAddress('Profile', profile.address);
@@ -218,9 +219,15 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        console.log('\n\n \t Contract adressess on rinkeby:');
+        recepients = [accounts[0]];
+        amounts.push(amountToMint.muln(10));
+        await token.mintMany(recepients, amounts, { from: accounts[0] });
+        await token.finishMinting({ from: accounts[0] });
+
+        console.log('\n\n \t Contract adressess on starfleet:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Approval contract address: \t\t${approval.address}`);
+        console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
