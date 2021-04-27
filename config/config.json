@@ -100,7 +100,7 @@
           "network_id": "stfl:testnet",
           "identity_filepath": "starfleet_erc725_identity.json",
           "gas_limit": "2000000",
-          "gas_price": "1000000000",
+          "gas_price": "100",
           "dc_price_factor" : "3",
           "dh_price_factor" : "2",
           "trac_price_in_base_currency" : "1"
