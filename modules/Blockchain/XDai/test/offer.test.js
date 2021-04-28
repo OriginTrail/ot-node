@@ -348,13 +348,40 @@ contract('Offer testing', async (accounts) => {
             { from: DC_wallet },
         );
 
+        // Offer finalize should fail when called the second time
+        let errored = false;
+        try {
+            res = await holding.finalizeOffer(
+                DC_identity,
+                offerId,
+                shift,
+                confimations[0].signature,
+                confimations[1].signature,
+                confimations[2].signature,
+                [new BN(0), new BN(1), new BN(2)],
+                [
+                    sortedIdentities[0].identity,
+                    sortedIdentities[1].identity,
+                    sortedIdentities[2].identity,
+                ],
+                emptyAddress,
+                { from: DC_wallet },
+            );
+        } catch (e) {
+            errored = true;
+        } finally {
+            assert(errored, 'Finalizing offer twice did not fail as it should have');
+        }
+
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             res = await profileStorage.profile.call(sortedIdentities[i].identity);
-            assert(tokenAmountPerHolder.eq(res.stakeReserved), `Reserved stake amount incorrect for account ${i}!`);
+            assert(tokenAmountPerHolder.eq(res.stakeReserved), `Reserved stake amount incorrect for holder ${i + 1}!`
+                + `\n\tExpected: ${tokenAmountPerHolder.toString(10)}\n\tActual: ${res.stakeReserved.toString(10)}`);
         }
         res = await profileStorage.profile.call(DC_identity);
-        assert(tokenAmountPerHolder.mul(new BN(3)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC!');
+        assert(tokenAmountPerHolder.mul(new BN(3)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC!'
+            + `\n\tExpected: ${tokenAmountPerHolder.muln(3).toString(10)}\n\tActual: ${res.stakeReserved.toString(10)}`);
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
