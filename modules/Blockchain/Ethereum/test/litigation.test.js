@@ -307,7 +307,7 @@ contract('Litigation testing', async (accounts) => {
 
 
     // eslint-disable-next-line no-undef
-    it('Challenge and replace an unresponsive DH', async () => {
+    it('DH did not answer, DC Completes', async () => {
         // Get initial litigation values
         const initialLitigationState =
             await litigationStorage.litigation.call(offerId, DH_identity);
@@ -477,7 +477,7 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Inactive DC should enable DH to payout some time after answering', async () => {
+    it('DH answered correctly, DC inactive, DH can payout', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -508,46 +508,6 @@ contract('Litigation testing', async (accounts) => {
         timestamp = await holdingStorage.getHolderPaymentTimestamp.call(offerId, DH_identity);
         timestamp = timestamp.sub(litigationIntervalInMinutes.muln(60).addn(1));
         await holdingStorage.setHolderPaymentTimestamp(offerId, DH_identity, timestamp);
-
-        let failed = false;
-        try {
-            await holding.payOut(identities[0], offerId);
-        } catch (err) {
-            console.log(err);
-            failed = true;
-        } finally {
-            assert(!failed, 'Expected payout failed');
-        }
-    });
-
-    // eslint-disable-next-line no-undef
-    it('Inactive DC should enable DH to payout some time after answering', async () => {
-        // Get initial litigation values
-        let res = await litigationStorage.litigation.call(offerId, identities[0]);
-
-        // Initiate litigation
-        res = await litigation.initiateLitigation(
-            offerId,
-            identities[0],
-            DC_identity,
-            new BN(0),
-            new BN(0),
-            [hashes[1], hash_CD, hash_EFGH],
-            { from: DC_wallet },
-        );
-
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
-        timestamp = timestamp.sub(new BN(80));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
-
-        // answerLitigation(bytes32 offerId, address holderIdentity, bytes32 requestedData)
-        await litigation.answerLitigation(offerId, identities[0], hashes[0]);
-
-        res = await litigationStorage.litigation.call(offerId, identities[0]);
-
-        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
-        timestamp = timestamp.sub(new BN(80));
-        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
 
         let failed = false;
         try {
