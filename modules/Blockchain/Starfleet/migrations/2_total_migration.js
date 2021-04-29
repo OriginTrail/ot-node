@@ -95,7 +95,7 @@ module.exports = async (deployer, network, accounts) => {
         approval = await deployer.deploy(Approval);
         await hub.setContractAddress('Approval', approval.address);
 
-        token = await deployer.deploy(XDaiTrac, accounts[0], amountToMint);
+        token = await deployer.deploy(TracToken, accounts[0], accounts[0], accounts[0]);
         await hub.setContractAddress('Token', token.address);
 
         profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
@@ -133,7 +133,11 @@ module.exports = async (deployer, network, accounts) => {
         await hub.setContractAddress('Replacement', replacement.address);
 
         for (let i = 0; i < 10; i += 1) {
-            amounts.push(amountToMint);
+            if (i === 0) {
+                amounts.push(amountToMint.muln(1000));
+            } else {
+                amounts.push(amountToMint);
+            }
             recepients.push(accounts[i]);
         }
         await token.mintMany(recepients, amounts, { from: accounts[0] });
