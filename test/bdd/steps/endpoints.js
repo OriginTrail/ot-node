@@ -106,6 +106,7 @@ Given(/^I wait for trail to finish$/, { timeout: 1200000 }, async function () {
 });
 
 Given(/^(DC|DH|DV|DV2) exports the last imported dataset as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, async function (targetNode, exportType) {
+    this.logger.log(`${targetNode} exports the last imported dataset as ${exportType}`);
     expect(exportType, 'export type can only be GS1-EPCIS, OT-JSON, WOT, or GRAPH.').to.satisfy(val => (val === 'GS1-EPCIS' || val === 'GRAPH' || val === 'OT-JSON' || val === 'WOT'));
     expect(targetNode, 'Node type can only be DC, DV2, DV, or DH.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV' || val === 'DH'));
     expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
@@ -265,6 +266,7 @@ Given(/^I query ([DC|DH|DV]+) node locally for last imported data set id$/, asyn
 });
 
 Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network$/, { timeout: 90000 }, async function (whichDV, path, value, opcode) {
+    this.logger.log(`${whichDV} publishes query to the network`);
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
     const dv = this.state[whichDV.toLowerCase()];
@@ -426,12 +428,12 @@ Given(/^([DC|DH|DV]+) calls consensus endpoint for sender: "(\S+)"$/, async func
 });
 
 Given(
-    /^([DC|DH|DV]+) whitelists ([DC|DH|DV]+) for object id: "(\S+)" in the last imported dataset$/,
+    /^(DC|DH|DV2|DV) whitelists (DC|DH|DV2|DV) for object id: "(\S+)" in the last imported dataset$/,
     async function (dataOwner, viewer, objectId) {
         this.logger.log(`${dataOwner} whitelists ${viewer} for object id ${objectId} in the last imported dataset.`);
 
-        expect(dataOwner, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
-        expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+        expect(dataOwner, 'Whitelisting node can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
+        expect(viewer, 'Whitelisted node can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
 
         const host = this.state[dataOwner.toLowerCase()].state.node_rpc_url;
         const viewerState = this.state[viewer.toLowerCase()];
@@ -451,11 +453,11 @@ Given(
     },
 );
 
-Given(/^([DC|DH|DV]+) gets the list of available datasets for trading$/, async function (viewer) {
-    this.logger.log(`${viewer} gets the list of available datasets for trading.`);
-    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+Given(/^(DC|DH|DV2|DV) gets the list of available datasets for trading$/, async function (targetNode) {
+    this.logger.log(`${targetNode} gets the list of available datasets for trading.`);
+    expect(targetNode, 'Node type can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
 
-    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const availableResponse = await httpApiHelper.apiPermissionedDataAvailable(host);
     expect(availableResponse[0], 'Should have keys called dataset, ot_objects, seller_erc_id, seller_node_id, timestamp')
@@ -470,11 +472,11 @@ Given(/^([DC|DH|DV]+) gets the list of available datasets for trading$/, async f
     };
 });
 
-Given(/^([DC|DH|DV]+) gets the price for the last imported dataset$/, async function (viewer) {
-    this.logger.log(`${viewer} gets the price for the last imported dataset.`);
-    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+Given(/^(DC|DH|DV2|DV) gets the price for the last imported dataset$/, async function (targetNode) {
+    this.logger.log(`${targetNode} gets the price for the last imported dataset.`);
+    expect(targetNode, 'Node type can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
 
-    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const { handler_id } = await httpApiHelper.apiPermissionedDataGetPrice(host, this.state.availablePurchase);
     await sleep.sleep(2000);
@@ -484,11 +486,11 @@ Given(/^([DC|DH|DV]+) gets the price for the last imported dataset$/, async func
     expect(response.status).to.be.equal('COMPLETED');
 });
 
-Given(/^([DC|DH|DV]+) unsuccessfully gets the price for the last imported dataset$/, async function (viewer) {
-    this.logger.log(`${viewer} gets the price for the last imported dataset.`);
-    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+Given(/^(DC|DH|DV2|DV) unsuccessfully gets the price for the last imported dataset$/, async function (targetNode) {
+    this.logger.log(`${targetNode} gets the price for the last imported dataset.`);
+    expect(targetNode, 'Node type can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
 
-    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const { handler_id } = await httpApiHelper.apiPermissionedDataGetPrice(host, this.state.availablePurchase);
     await sleep.sleep(2000);
@@ -499,24 +501,24 @@ Given(/^([DC|DH|DV]+) unsuccessfully gets the price for the last imported datase
 });
 
 
-Given(/^([DC|DH|DV]+) initiates purchase for the last imported dataset and waits for confirmation$/, async function (viewer) {
-    this.logger.log(`${viewer} initiates purchase for the last imported dataset and waits for confirmation.`);
-    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+Given(/^(DC|DH|DV2|DV) initiates purchase for the last imported dataset and waits for confirmation$/, async function (targetNode) {
+    this.logger.log(`${targetNode} initiates purchase for the last imported dataset and waits for confirmation.`);
+    expect(targetNode, 'Node type can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
 
-    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const { handler_id } = await httpApiHelper.apiPermissionedDataPurchase(host, this.state.availablePurchase);
     this.state.lastPurchaseHandler = handler_id;
 
     this.state.lastQueryNetworkId = {};
-    this.state[viewer.toLowerCase()].state.purchasedDatasets = {};
-    this.state[viewer.toLowerCase()].state.purchasedDatasets[this.state.availablePurchase.data_set_id] = {};
+    this.state[targetNode.toLowerCase()].state.purchasedDatasets = {};
+    this.state[targetNode.toLowerCase()].state.purchasedDatasets[this.state.availablePurchase.data_set_id] = {};
 
     const source = this.state.dc;
 
     const promise = new Promise((acc, reject) => {
         source.once('purchase-confirmed', async (data) => {
-            const target = this.state[viewer.toLowerCase()];
+            const target = this.state[targetNode.toLowerCase()];
             if (target.state.identity === data.dv_identity) { acc(); } else { reject(); }
         });
     });
@@ -525,18 +527,18 @@ Given(/^([DC|DH|DV]+) initiates purchase for the last imported dataset and waits
 });
 
 
-Then(/^([DC|DH|DV]+) unsuccessfully initiates purchase for the last imported dataset$/, async function (viewer) {
-    this.logger.log(`${viewer} initiates purchase for the last imported dataset and waits for confirmation.`);
-    expect(viewer, 'Node type can only be DC, DH, DV.').to.be.oneOf(['DC', 'DH', 'DV']);
+Then(/^(DC|DH|DV2|DV) unsuccessfully initiates purchase for the last imported dataset$/, async function (targetNode) {
+    this.logger.log(`${targetNode} initiates purchase for the last imported dataset and waits for confirmation.`);
+    expect(targetNode, 'Node type can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
 
-    const host = this.state[viewer.toLowerCase()].state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
 
     const { handler_id } = await httpApiHelper.apiPermissionedDataPurchase(host, this.state.availablePurchase);
     this.state.lastPurchaseHandler = handler_id;
 
     this.state.lastQueryNetworkId = {};
-    this.state[viewer.toLowerCase()].state.purchasedDatasets = {};
-    this.state[viewer.toLowerCase()].state.purchasedDatasets[this.state.availablePurchase.data_set_id] = {};
+    this.state[targetNode.toLowerCase()].state.purchasedDatasets = {};
+    this.state[targetNode.toLowerCase()].state.purchasedDatasets[this.state.availablePurchase.data_set_id] = {};
 
     const source = this.state.dc;
 
@@ -549,9 +551,9 @@ Then(/^([DC|DH|DV]+) unsuccessfully initiates purchase for the last imported dat
     return promise;
 });
 
-Given(/^(DC|DV|DV2) waits for purchase to finish$/, { timeout: 300000 }, async function (targetNode) {
+Given(/^(DC|DH|DV2|DV) waits for purchase to finish$/, { timeout: 300000 }, async function (targetNode) {
     this.logger.log(`${targetNode} waits for purchase to finish.`);
-    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
+    expect(targetNode, 'Node type can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -582,9 +584,9 @@ Then(/^The last export doesn't have permissioned data$/, async function () {
 });
 
 
-Given(/^(DC|DV|DV2) waits to take a payment$/, { timeout: 300000 }, async function (targetNode) {
+Given(/^(DC|DH|DV2|DV) waits to take a payment$/, { timeout: 300000 }, async function (targetNode) {
     this.logger.log(`${targetNode} waits to take a payment.`);
-    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DV2' || val === 'DV'));
+    expect(targetNode, 'Node type can only be DC, DH, DV or DV2.').to.be.oneOf(['DC', 'DH', 'DV', 'DV2']);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
@@ -596,12 +598,11 @@ Given(/^(DC|DV|DV2) waits to take a payment$/, { timeout: 300000 }, async functi
         });
     });
 
-
     return promise;
 });
 
 
-Given(/^default initial token amount should be deposited on (\d+)[st|nd|rd|th]+ node's profile$/, async function (nodeIndex) {
+Given(/^default initial token amount should be deposited on (\d+)(?:st|nd|rd|th) node's profile$/, async function (nodeIndex) {
     expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     const balance = await httpApiHelper.apiBalance(this.state.nodes[nodeIndex - 1].state.node_rpc_url, false);
