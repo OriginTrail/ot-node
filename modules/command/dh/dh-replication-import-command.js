@@ -7,7 +7,7 @@ const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');
 const OtJsonUtilities = require('../../OtJsonUtilities');
-
+const constants = require('../../constants');
 /**
  * Imports data for replication
  */
@@ -99,8 +99,8 @@ class DhReplicationImportCommand extends Command {
             .then(() => this.updateBidData(offerId))
             .then(() => this.commandExecutor.add({
                 name: 'dhOfferFinalizedCommand',
-                // TODO Revert change after testing
-                deadline_at: Date.now() + (5 * 1000), // five seconds
+                deadline_at: Date.now() +
+                    constants.OFFER_FINALIZED_COMMAND_DEADLINE_AT,
                 period: 10 * 1000,
                 data: {
                     offerId,
