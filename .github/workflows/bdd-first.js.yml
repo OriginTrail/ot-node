@@ -14,7 +14,7 @@ jobs:
     env:
       NODE_ENV: development
       ARTIFACTS_DIR: ./artifacts
-      CUCUMBER_ARTIFACTS_DIR: $ARTIFACTS_DIR/cucumber      
+      CUCUMBER_ARTIFACTS_DIR: ./artifacts/cucumber      
     strategy:
       matrix:
         node-version: [9.x]
@@ -26,6 +26,12 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
     - run: echo $ARTIFACTS_DIR
     - run: echo $CUCUMBER_ARTIFACTS_DIR
     - run: mkdir -p $ARTIFACTS_DIR
