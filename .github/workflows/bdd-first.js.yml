@@ -6,40 +6,88 @@ name: BDD tests tag - FIRST
 on:
   pull_request:
     branches: [ develop ]
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-    env:
+env:
       NODE_ENV: development
       ARTIFACTS_DIR: ./artifacts
-      CUCUMBER_ARTIFACTS_DIR: ./artifacts/cucumber      
+      CUCUMBER_ARTIFACTS_DIR: ./artifacts/cucumber
+jobs:
+  setup:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [9.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Cache dependencies
-      uses: actions/cache@v2
-      with:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
           path: ~/.npm
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
-    - run: echo $ARTIFACTS_DIR
-    - run: echo $CUCUMBER_ARTIFACTS_DIR
-    - run: mkdir -p $ARTIFACTS_DIR
-    - run: sudo chmod -R 777 $ARTIFACTS_DIR
-    - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
-    - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
-    - run: npm install
-    - run: sudo ./setup_arangodb.sh
-    - run: cp .origintrail_noderc.travis .origintrail_noderc
-    - run: npm run bootstrap
-    - run: npm run test:bdd -- --tags=@first --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - run: echo $ARTIFACTS_DIR
+      - run: echo $CUCUMBER_ARTIFACTS_DIR
+      - run: mkdir -p $ARTIFACTS_DIR
+      - run: sudo chmod -R 777 $ARTIFACTS_DIR
+      - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
+      - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
+      - run: sudo ./setup_arangodb.sh
+      - run: cp .origintrail_noderc.travis .origintrail_noderc
+  initialize-bootstrap:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run bootstrap
+  test-first:
+    needs: initialize-bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run test:bdd -- --tags=@first --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+  test-secound:
+    needs: initialize-bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run test:bdd -- --tags=@second --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+  test-third:
+    needs: initialize-bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run test:bdd -- --tags=@third --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+  test-fourth:
+    needs: initialize-bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run test:bdd -- --tags=@fourth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+  test-fifth:
+    needs: initialize-bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run test:bdd -- --tags=@fifth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+  test-unit:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run lint
+      - run: npm test 2> $ARTIFACTS_DIR/mocha-logs.log;
+  test-truffle:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run ganache &> $ARTIFACTS_DIR/ganache.log
+      - run: npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
+      - run: npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
+  test-docker:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run ganache &> $ARTIFACTS_DIR/ganache.log;
+      - run: npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
+      - run: ./test/docker/check_image.sh;
+      - run: ./test/docker/cleanup_image.sh;
