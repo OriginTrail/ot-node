@@ -1,7 +1,7 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Node.js CI
+name: BDD tests tag - FIRST
 
 on:
   pull_request:
@@ -11,7 +11,10 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    env:
+      NODE_ENV=development
+      ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
+      CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber      
     strategy:
       matrix:
         node-version: [9.x]
