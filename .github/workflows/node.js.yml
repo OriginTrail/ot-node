@@ -23,7 +23,7 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm ci
+    - run: npm install
     - run: sudo ./setup_arangodb.sh
     - run: cp .origintrail_noderc.travis .origintrail_noderc
     - run: npm run bootstrap
