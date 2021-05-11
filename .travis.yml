@@ -33,37 +33,36 @@ before_script:
   - npm run bootstrap
 script:
   - npm run lint
-  - if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
+  - if [ "$BDD_SECTION" == "first" || "$BDD_SECTION" == "second" || "$BDD_SECTION" == "third" || "$BDD_SECTION" == "fourth" || "$BDD_SECTION" == "fifth"]; then
       npm run test:bdd:dryrun;
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
+  - if [ "$BDD_SECTION" == "first" ]; then
     travis_wait 50 npm run test:bdd -- --tags=@first --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "second" ) ]]; then
+  - if [ "$BDD_SECTION" == "second" ]; then
     travis_wait 50 npm run test:bdd -- --tags=@second --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "third" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "third" ) ]]; then
+  - if [ "$BDD_SECTION" == "third" ]; then
     travis_wait 50 npm run test:bdd -- --tags=@third --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fourth" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "fourth" ) ]]; then
+  - if [ "$BDD_SECTION" == "fourth" ]; then
     travis_wait 50 npm run test:bdd -- --tags=@fourth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ("$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "fifth" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "fifth" ) ]]; then
+  - if [ "$BDD_SECTION" == "fifth" ]; then
     travis_wait 50 npm run test:bdd -- --tags=@fifth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
-  - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "sixth" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "first" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "first" ) ]]; then
-      npm test 2> $ARTIFACTS_DIR/mocha-logs.log;
+  - if [ "$BDD_SECTION" == "sixth" ]; then
+    npm test 2> $ARTIFACTS_DIR/mocha-logs.log;
+    npm run ganache &> $ARTIFACTS_DIR/ganache.log;
+    npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
+    npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
     fi
-  # compile and check Smart Contracts
-  - npm run ganache &> $ARTIFACTS_DIR/ganache.log &
-  - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "sixth" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "sixth" ) ]]; then
-      npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
-    fi
-  - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "sixth" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "sixth" ) || ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "docker" )]]; then
-      npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
-    fi
-  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "docker" ]]; then ./test/docker/check_image.sh; fi
-  - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "docker" ]]; then ./test/docker/cleanup_image.sh; fi
+  - if [ "$BDD_SECTION" == "docker" ];
+    npm run ganache &> $ARTIFACTS_DIR/ganache.log;
+    npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
+    ./test/docker/check_image.sh;
+    ./test/docker/cleanup_image.sh;
+  - fi
   - jobs
   - kill -9 %1
 after_script:

@@ -592,7 +592,7 @@
       "root_user_password": "origintrail"
     },
     "dataset_pruning": {
-      "enabled": false,
+      "enabled": true,
       "imported_pruning_delay_in_minutes": 1440,
       "replicated_pruning_delay_in_minutes": 1440
     }
