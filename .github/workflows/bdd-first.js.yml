@@ -12,9 +12,9 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      NODE_ENV=development
-      ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
-      CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber      
+      NODE_ENV: development
+      ARTIFACTS_DIR: $TRAVIS_BUILD_DIR/artifacts
+      CUCUMBER_ARTIFACTS_DIR: $ARTIFACTS_DIR/cucumber      
     strategy:
       matrix:
         node-version: [9.x]
