@@ -27,6 +27,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm install
+    - run: mkdir -p $ARTIFACTS_DIR
+    - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
     - run: sudo ./setup_arangodb.sh
     - run: cp .origintrail_noderc.travis .origintrail_noderc
     - run: npm run bootstrap
