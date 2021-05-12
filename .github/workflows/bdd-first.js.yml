@@ -33,6 +33,9 @@ jobs:
       - run: cp .origintrail_noderc.travis .origintrail_noderc
       - run: npm run lint
       - run: npm run test:unit > $ARTIFACTS_DIR/mocha-logs.log
+      - name: print logs
+        if: ${{always()}}
+        run: cat $ARTIFACTS_DIR/mocha-logs.log
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:
