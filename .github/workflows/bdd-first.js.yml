@@ -8,8 +8,8 @@ on:
     branches: [ develop ]
 env:
   NODE_ENV: development
-  ARTIFACTS_DIR: ./artifacts
-  CUCUMBER_ARTIFACTS_DIR: ./artifacts/cucumber
+  ARTIFACTS_DIR: artifacts
+  CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
 jobs:
   test-unit:
     runs-on: ubuntu-latest
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: my-artifact
-          path: ./artifacts/
+          path: artifacts/
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
