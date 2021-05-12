@@ -24,6 +24,9 @@ jobs:
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: pwd
+      - run: cd artifacts
+      - run: pwd
+      - run: cd ..
       - run: ls -l
       - uses: actions/checkout@v2
       - uses: shallwefootball/s3-upload-action@master
