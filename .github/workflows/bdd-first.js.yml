@@ -22,7 +22,7 @@ jobs:
       - run: mkdir -p $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: echo hello > $ARTIFACTS_DIR/world.txt
-      - run: echo hello > CUCUMBER_ARTIFACTS_DIR/world.txt
+      - run: echo hello > $CUCUMBER_ARTIFACTS_DIR/world.txt
       - uses: actions/checkout@v2
       - uses: actions/upload-artifact@v2
         with:
