@@ -20,7 +20,9 @@ jobs:
     environment: Testing
     steps:
       - run: mkdir -p $ARTIFACTS_DIR
+      - run: ls -l /home/runner/work/ot-node/ot-node/
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
+      - run: ls -l /home/runner/work/ot-node/ot-node/artifacts
       - run: echo hello > $ARTIFACTS_DIR/world.txt
       - run: echo hello > $CUCUMBER_ARTIFACTS_DIR/world.txt
       - run: cd artifacts && pwd
