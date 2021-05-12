@@ -95,7 +95,7 @@ Feature: Test basic importer features
     Then DC checks status of the last import
     And The last import status should be "PENDING"
 
-  @djordje
+  @first
   Scenario: Get issuer identity
     Given I setup 4 node
     And I start the node
