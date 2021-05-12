@@ -21,6 +21,8 @@ jobs:
     steps:
       - run: mkdir -p $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
+      - run: pwd
+      - run: ls -l
       - uses: actions/checkout@v2
       - uses: shallwefootball/s3-upload-action@master
         name: Upload S3
