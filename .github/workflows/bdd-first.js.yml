@@ -22,11 +22,12 @@ jobs:
       - run: mkdir -p $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: echo hello > $ARTIFACTS_DIR/world.txt
+      - run: echo hello > CUCUMBER_ARTIFACTS_DIR/world.txt
       - uses: actions/checkout@v2
       - uses: actions/upload-artifact@v2
         with:
           name: my-artifact
-          path: artifacts
+          path: 'artifacts/'
       - uses: shallwefootball/s3-upload-action@master
         name: Upload S3
         if: ${{ always() }}
@@ -35,7 +36,7 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY }}
           aws_secret_access_key: ${{ secrets.AWS_ACCESS_SECRET}}
           aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
-          source_dir: 'artifacts'
+          source_dir: 'artifacts/'
       - name: Copy files to the test website with the AWS CLI
         run: |
           aws s3 sync artifacts s3://origintrail-travis-ci
