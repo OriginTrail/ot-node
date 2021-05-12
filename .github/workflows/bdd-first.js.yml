@@ -29,6 +29,10 @@ jobs:
       - run: cd ..
       - run: ls -l
       - uses: actions/checkout@v2
+      - uses: actions/upload-artifact@v2
+        with:
+          name: my-artifact
+          path: {{ env.ARTIFACTS_DIR}}
       - uses: shallwefootball/s3-upload-action@master
         name: Upload S3
         if: ${{ always() }}
