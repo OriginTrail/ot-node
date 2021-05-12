@@ -187,4 +187,7 @@ docker exec ${CONTAINER_NAME} arangorestore --server.database ${databaseName} --
 echo docker restart ${CONTAINER_NAME}
 docker restart ${CONTAINER_NAME}
 
+echo docker exec ${CONTAINER_NAME} rm -rf ${CONFIGDIR}/arangodb
+docker exec ${CONTAINER_NAME} rm -rf ${CONFIGDIR}/arangodb
+
 
