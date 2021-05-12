@@ -322,7 +322,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runPayoutMigration(blockchain, config);
+            await this._runPayoutMigration(blockchain, config, profileService);
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
@@ -452,10 +452,11 @@ class OTNode {
      * Run one time payout migration
      * @param blockchain
      * @param config
+     * @param profileService
      * @returns {Promise<void>}
      * @private
      */
-    async _runPayoutMigration(blockchain, config) {
+    async _runPayoutMigration(blockchain, config, profileService) {
         const migrationsStartedMills = Date.now();
         log.info('Initializing payOut migration...');
 
@@ -463,7 +464,9 @@ class OTNode {
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
+            const migration = new M1PayoutAllMigration({
+                logger: log, blockchain, config, profileService,
+            });
 
             try {
                 await migration.run();
