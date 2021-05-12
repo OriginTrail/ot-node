@@ -32,7 +32,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: my-artifact
-          path: {{ env.ARTIFACTS_DIR}}
+          path: artifacts
       - uses: shallwefootball/s3-upload-action@master
         name: Upload S3
         if: ${{ always() }}
