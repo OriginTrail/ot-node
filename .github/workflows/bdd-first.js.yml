@@ -27,7 +27,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: my-artifact
-          path: artifacts/
+          path: ./artifacts/
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
