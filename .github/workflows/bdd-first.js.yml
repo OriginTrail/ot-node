@@ -26,6 +26,15 @@ jobs:
       - run: pwd
       - run: ls -l
       - uses: actions/checkout@v2
+      - uses: shallwefootball/s3-upload-action@master
+          name: Upload S3
+          if: ${{ always() }}
+          id: S3
+          with:
+            aws_key_id: ${{ secrets.AWS_ACCESS_KEY }}
+            aws_secret_access_key: ${{ secrets.AWS_ACCESS_SECRET}}
+            aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
+            source_dir: 'artifacts'
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
         with:
