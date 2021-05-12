@@ -1,7 +1,7 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: BDD tests tag - FIRST
+name: Lint and Unit tests
 
 on:
   pull_request:
@@ -17,21 +17,20 @@ jobs:
       matrix:
         node-version: [9.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+    environment: Testing
     steps:
       - run: mkdir -p $ARTIFACTS_DIR
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - uses: actions/checkout@v2
       - uses: shallwefootball/s3-upload-action@master
-          name: Upload S3
-          environment: Testing
-          if: ${{ always() }}
-          id: S3
-          with:
-            aws_key_id: ${{ secrets.AWS_ACCESS_KEY }}
-            aws_secret_access_key: ${{ secrets.AWS_ACCESS_SECRET}}
-            aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
-            source_dir: $ARTIFACTS_DIR
+        name: Upload S3
+        if: ${{ always() }}
+        id: S3
+        with:
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_access_key: ${{ secrets.AWS_ACCESS_SECRET}}
+          aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
+          source_dir: $ARTIFACTS_DIR
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
