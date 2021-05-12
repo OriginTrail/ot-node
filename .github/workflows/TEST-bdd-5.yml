@@ -1,4 +1,4 @@
-name: TEST-bdd-tag-FIRST
+name: TEST-bdd-tag-FIFTH
 
 on: [pull_request]
 env:
@@ -25,4 +25,4 @@ jobs:
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
       - run: npm run bootstrap
-      - run: npm run test:bdd -- --tags=@first --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+      - run: npm run test:bdd -- --tags=@fifth --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';

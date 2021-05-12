@@ -1,0 +1,40 @@
+name: TEST-unit
+
+on: [pull_request]
+env:
+  NODE_ENV: development
+  ARTIFACTS_DIR: ./artifacts
+  CUCUMBER_ARTIFACTS_DIR: ./artifacts/cucumber
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [9.x]
+    environment: Testing
+    steps:
+      - run: mkdir -p $ARTIFACTS_DIR
+      - run: ls -l /home/runner/work/ot-node/ot-node/
+      - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
+      - run: ls -l /home/runner/work/ot-node/ot-node/artifacts
+      - run: echo hello > $ARTIFACTS_DIR/world.txt
+      - run: echo hello > $CUCUMBER_ARTIFACTS_DIR/world.txt
+      - run: cd artifacts && pwd
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: sudo ./setup_arangodb.sh
+      - run: cp .origintrail_noderc.travis .origintrail_noderc
+      - run: npm run lint
+      - run: npm run test:unit > $ARTIFACTS_DIR/mocha-logs.log
+      - name: print logs
+        if: ${{always()}}
+        run: ls -l /home/runner/work/ot-node/ot-node/artifacts
+      - uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          name: my-artifact
+          path: /home/runner/work/ot-node/ot-node/artifacts

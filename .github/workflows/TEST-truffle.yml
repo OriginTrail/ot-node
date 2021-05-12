@@ -1,4 +1,4 @@
-name: TEST-bdd-tag-FIRST
+name: TEST-truffle
 
 on: [pull_request]
 env:
@@ -11,12 +11,20 @@ jobs:
     strategy:
       matrix:
         node-version: [9.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
       - run: npm install
       - run: mkdir -p $ARTIFACTS_DIR
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
@@ -24,5 +32,5 @@ jobs:
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
-      - run: npm run bootstrap
-      - run: npm run test:bdd -- --tags=@first --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
+      - run: npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
+      - run: npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
