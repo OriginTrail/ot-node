@@ -35,7 +35,7 @@ jobs:
 
       - name: Copy files to the test website with the AWS CLI
         run: |
-          aws s3 sync $ARTIFACTS_DIR s3://origintrail-travis-ci
+          aws s3 sync artifacts s3://origintrail-travis-ci
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
