@@ -20,6 +20,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: shallwefootball/s3-upload-action@master
+        name: Upload S3
+        if: ${{ always() }}
+        id: S3
+        with:
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_access_key: ${{ secrets.AWS_ACCESS_SECRET}}
+          aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
+          source_dir: $ARTIFACTS_DIR
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
@@ -31,12 +40,4 @@ jobs:
       - run: cp .origintrail_noderc.travis .origintrail_noderc
       - run: npm run lint
       - run: npm run test:unit > $ARTIFACTS_DIR/mocha-logs.log;
-      - uses: shallwefootball/s3-upload-action@master
-      - name: Upload S3
-        if: ${{ always() }}
-        id: S3
-        with:
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws_secret_access_key: ${{ secrets.AWS_ACCESS_SECRET}}
-          aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
-          source_dir: $ARTIFACTS_DIR
+
