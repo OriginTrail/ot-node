@@ -30,7 +30,7 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY }}
           aws_secret_access_key: ${{ secrets.AWS_ACCESS_SECRET}}
           aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
-          source_dir: ${{ env.ARTIFACTS_DIR }}
+          source_dir: './artifacts'
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
