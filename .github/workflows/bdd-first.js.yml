@@ -31,7 +31,7 @@ jobs:
       - run: npm install
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
-      - run: npm run lint > $ARTIFACTS_DIR/lint-logs.log
+      - run: npm run lint
       - run: npm run test:unit > $ARTIFACTS_DIR/mocha-logs.log
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
