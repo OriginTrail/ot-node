@@ -33,4 +33,4 @@ jobs:
       - run: npm run test:unit > $ARTIFACTS_DIR/mocha-logs.log;
       - name: upload to AWS bucket
         if: ${{ always() }}
-        run: s3cmd --acl-public --access_key=${{secrets.AWS_ACCESS_KEY}} --secret_key=${{secrets.AWS_ACCESS_SECRET}} put --recursive $ARTIFACTS_DIR/* s3://{{secrets.AWS_BUCKET_NAME}}/test/test1/123456/
+        run: apt-get s3cmd && s3cmd --acl-public --access_key=${{secrets.AWS_ACCESS_KEY}} --secret_key=${{secrets.AWS_ACCESS_SECRET}} put --recursive $ARTIFACTS_DIR/* s3://{{secrets.AWS_BUCKET_NAME}}/test/test1/123456/
