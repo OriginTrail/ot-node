@@ -3,8 +3,8 @@ name: TEST-truffle
 on: [pull_request]
 env:
   NODE_ENV: development
-  ARTIFACTS_DIR: ./artifacts
-  CUCUMBER_ARTIFACTS_DIR: ./artifacts/cucumber
+  ARTIFACTS_DIR: artifacts
+  CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -32,5 +32,6 @@ jobs:
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
+      - run: npm run ganache > $ARTIFACTS_DIR/ganache.log;
       - run: npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
       - run: npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;

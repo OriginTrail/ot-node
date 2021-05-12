@@ -3,8 +3,8 @@ name: TEST-bdd-tag-FIFTH
 on: [pull_request]
 env:
   NODE_ENV: development
-  ARTIFACTS_DIR: ./artifacts
-  CUCUMBER_ARTIFACTS_DIR: ./artifacts/cucumber
+  ARTIFACTS_DIR: artifacts
+  CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
 jobs:
   test:
     runs-on: ubuntu-latest
