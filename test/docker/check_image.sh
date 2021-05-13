@@ -4,11 +4,11 @@ set -ev
 docker ps -a
 docker build --file Dockerfile.development -t myimage:latest .
 docker images
-# TODO make sure that following hub contract address is in .origintrail_noderc.image
+# TODO make sure that following hub contract address is in origintrail_noderc.image
 cat $ARTIFACTS_DIR/truffle-migrate.log | grep "Hub contract address:"
 node test/docker/getHubAddress.js
-docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 --network host -v .origintrail_noderc.image:/ot-node/.origintrail_noderc myimage:latest
-# TODO make sure that one of acct-keys is in .origintrail_noderc.image
+docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 --network host -v origintrail_noderc.image:/ot-node/.origintrail_noderc myimage:latest
+# TODO make sure that one of acct-keys is in origintrail_noderc.image
 # cat $ARTIFACTS_DIR/acct-keys.log
 # Give some time for node to start
 sleep 180
