@@ -44,7 +44,6 @@
     "debug:test:api": "mocha --inspect-brk --exit $(find test/api -name '*.js')",
     "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')",
     "ganache": "ganache-cli -i 5777 -p 7545 -l 10000000 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
-    "ganache:detach": "ganache-cli -i 5777 -p 7545 -l 10000000 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\" --detach",
     "truffle:compile": "cd modules/Blockchain/Ethereum && truffle compile",
     "truffle:deploy:rinkeby": "cd modules/Blockchain/Ethereum && truffle migrate --network rinkeby",
     "truffle:deploy:supplyTokens": "cd modules/Blockchain/Ethereum && truffle migrate --network supplyTokens",
