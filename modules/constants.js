@@ -18,7 +18,6 @@ exports.DEFAULT_CHALLENGE_NUMBER_OF_TESTS = 2;
  */
 exports.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES = 31;
 
-
 /**
  * @constant {number} DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS - Challenge response time
  */
@@ -48,15 +47,21 @@ exports.TRAIL_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
  * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
- * Export command cleanup interval time 1h
+ * Export command cleanup interval time 24h
  */
-exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
+exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
 
 /**
  * @constant {number} DATASET_PRUNING_COMMAND_TIME_MILLS -
  * Datasets pruning command interval 24h
  */
 exports.DATASET_PRUNING_COMMAND_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+/**
+ * @constant {number} OFFER_FINALIZED_COMMAND_DEADLINE_AT -
+ * Offer finalized command deadline time 6h
+ */
+exports.OFFER_FINALIZED_COMMAND_DEADLINE_AT = 6 * 60 * 60 * 1000;
 
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
@@ -71,7 +76,6 @@ exports.PERMANENT_COMMANDS = [
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
  */
 exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
-
 
 /**
  * @constant {number} DEFAULT_COMMAND_REPEAT_IN_MILLS - Default repeat interval
