@@ -30,5 +30,10 @@ jobs:
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
-      - run: npm run ganache > $ARTIFACTS_DIR/truffle-test.log & npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
+      - run: npm run ganache > $ARTIFACTS_DIR/ganache.log & npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
       - run: ./test/docker/check_image.sh;
+      - uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          name: my-artifact
+          path: /home/runner/work/ot-node/ot-node/artifacts
