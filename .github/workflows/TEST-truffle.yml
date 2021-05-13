@@ -32,6 +32,6 @@ jobs:
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
-      - run: npm run ganache:detach > $ARTIFACTS_DIR/truffle-test.log;
+      - run: ganache-cli -i 5777 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief";
       - run: npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
       - run: npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
