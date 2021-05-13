@@ -152,9 +152,20 @@ contract Litigation {
             require(parameters[0] + parameters[1] < block.timestamp,
                 "The answer window has not passed, cannot complete litigation yet!");
 
-            // DH is considered inactive, replace him regardless of the proofData
-            startReplacement(offerId, holderIdentity, litigatorIdentity, parameters[3]);
-            return true;
+
+            if(calculateMerkleTrees(offerId, holderIdentity, proofData, bytes32(parameters[3]), leafIndex)) {
+                // DH has the reRquested data -> Set litigation as completed, no transfer of tokens
+                litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.completed);
+                litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
+
+                emit LitigationCompleted(offerId, holderIdentity, false);
+                return false;
+            }
+            else {
+                // DH didn't have the requested data, and the litigation was valid
+                startReplacement(offerId, holderIdentity, litigatorIdentity, parameters[3]);
+                return true;
+            }
         }
 
         // The litigation status is answered, verify that the completion is happening during the completion time frame

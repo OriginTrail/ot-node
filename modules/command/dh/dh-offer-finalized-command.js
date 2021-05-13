@@ -52,7 +52,6 @@ class DhOfferFinalizedCommand extends Command {
                 const bid =
                     await Models.bids.findOne({ where: { offer_id: offerId, blockchain_id } });
 
-                // todo pass blockchain identity
                 if (holders.includes(this.profileService.getIdentity(blockchain_id))) {
                     bid.status = 'CHOSEN';
                     await bid.save({ fields: ['status'] });
