@@ -165,7 +165,7 @@ contract('Litigation testing', async (accounts) => {
         // Calculating indexed hashes of requested data
         promises = [];
         for (let i = 0; i < 8; i += 1) {
-            promises[i] = util.keccakIndex.call(requested_data[i], i);
+            promises[i] = util.keccakIndexIndex.call(requested_data[i], 0, i);
         }
         hashes = await Promise.all(promises);
 
@@ -187,105 +187,127 @@ contract('Litigation testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     beforeEach(async () => {
         await holdingStorage.setDifficultyOverride(new BN(1));
-        // Creating offer used for litigation
-        const res = await holding.createOffer(
-            DC_identity,
-            dataSetId,
-            dataRootHash,
-            redLitigationHash,
-            greenLitigationHash,
-            blueLitigationHash,
-            dcNodeId,
-            holdingTimeInMinutes,
-            tokenAmountPerHolder,
-            dataSetSizeInBytes,
-            litigationIntervalInMinutes,
-            { from: DC_wallet },
-        );
-        // eslint-disable-next-line prefer-destructuring
-        offerId = res.logs[0].args.offerId;
-        const task = await holdingStorage.getOfferTask.call(offerId);
 
-        const hash1 = await util.keccakAddressBytes(identities[0], task);
-        const hash2 = await util.keccakAddressBytes(identities[1], task);
-        const hash3 = await util.keccakAddressBytes(identities[2], task);
-
-        const sortedIdentities = [
-            {
-                identity: identities[0],
-                privateKey: privateKeys[0],
-                hash: hash1,
-            },
-            {
-                identity: identities[1],
-                privateKey: privateKeys[1],
-                hash: hash2,
-            },
-            {
-                identity: identities[2],
-                privateKey: privateKeys[2],
-                hash: hash3,
-            },
-        ].sort((x, y) => x.hash.localeCompare(y.hash));
-
-        const solution = await util.keccakBytesBytesBytes.call(
-            sortedIdentities[0].hash,
-            sortedIdentities[1].hash,
-            sortedIdentities[2].hash,
-        );
-
-        // Calculate task solution
-        for (var i = 65; i >= 2; i -= 1) {
-            if (task.charAt(task.length - 1) === solution.charAt(i)) break;
-        }
-        if (i === 2) {
-            assert(false, 'Could not find solution for offer challenge!');
-        }
-        const shift = 65 - i;
-
-        // Calculating confirmations to be signed by DH's
-        var confirmations = [];
-        let promises = [];
-        for (let i = 0; i < 3; i += 1) {
+        let offerCreated = false;
+        while (!offerCreated) {
+            // Creating offer used for litigation
             // eslint-disable-next-line no-await-in-loop
-            promises[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
-        }
-        confirmations = await Promise.all(promises);
-
-        // Signing calculated confirmations
-        promises = [];
-        for (let i = 0; i < 3; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            promises[i] = web3.eth.accounts.sign(
-                confirmations[i],
-                sortedIdentities[i].privateKey,
+            const res = await holding.createOffer(
+                DC_identity,
+                dataSetId,
+                dataRootHash,
+                redLitigationHash,
+                greenLitigationHash,
+                blueLitigationHash,
+                dcNodeId,
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSetSizeInBytes,
+                litigationIntervalInMinutes,
+                { from: DC_wallet },
             );
-        }
-        const signedConfirmations = await Promise.all(promises);
+            // eslint-disable-next-line prefer-destructuring
+            offerId = res.logs[0].args.offerId;
+            // eslint-disable-next-line no-await-in-loop
+            const task = await holdingStorage.getOfferTask.call(offerId);
 
-        await holding.finalizeOffer(
-            DC_identity,
-            offerId,
-            shift,
-            signedConfirmations[0].signature,
-            signedConfirmations[1].signature,
-            signedConfirmations[2].signature,
-            [new BN(2), new BN(2), new BN(2)],
-            [
-                sortedIdentities[0].identity,
-                sortedIdentities[1].identity,
-                sortedIdentities[2].identity,
-            ],
-            emptyAddress,
-            { from: DC_wallet },
-        );
+            // eslint-disable-next-line no-await-in-loop
+            const hash1 = await util.keccakAddressBytes(identities[0], task);
+            // eslint-disable-next-line no-await-in-loop
+            const hash2 = await util.keccakAddressBytes(identities[1], task);
+            // eslint-disable-next-line no-await-in-loop
+            const hash3 = await util.keccakAddressBytes(identities[2], task);
+
+            const sortedIdentities = [
+                {
+                    identity: identities[0],
+                    privateKey: privateKeys[0],
+                    hash: hash1,
+                },
+                {
+                    identity: identities[1],
+                    privateKey: privateKeys[1],
+                    hash: hash2,
+                },
+                {
+                    identity: identities[2],
+                    privateKey: privateKeys[2],
+                    hash: hash3,
+                },
+            ].sort((x, y) => x.hash.localeCompare(y.hash));
+
+            // eslint-disable-next-line no-await-in-loop
+            const solution = await util.keccakBytesBytesBytes.call(
+                sortedIdentities[0].hash,
+                sortedIdentities[1].hash,
+                sortedIdentities[2].hash,
+            );
+
+            // Calculate task solution
+            for (var i = 65; i > 2; i -= 1) {
+                if (task.charAt(task.length - 1) === solution.charAt(i)) break;
+            }
+            if (i !== 2) {
+                const shift = 65 - i;
+
+                // Calculating confirmations to be signed by DH's
+                var confirmations = [];
+                let promises = [];
+                for (let i = 0; i < 3; i += 1) {
+                    // eslint-disable-next-line no-await-in-loop
+                    promises[i] = await util.keccakBytesAddress
+                        .call(offerId, sortedIdentities[i].identity);
+                }
+                // eslint-disable-next-line no-await-in-loop
+                confirmations = await Promise.all(promises);
+
+                // Signing calculated confirmations
+                promises = [];
+                for (let i = 0; i < 3; i += 1) {
+                    // eslint-disable-next-line no-await-in-loop
+                    promises[i] = web3.eth.accounts.sign(
+                        confirmations[i],
+                        sortedIdentities[i].privateKey,
+                    );
+                }
+                // eslint-disable-next-line no-await-in-loop
+                const signedConfirmations = await Promise.all(promises);
+
+                try {
+                    // eslint-disable-next-line no-await-in-loop
+                    await holding.finalizeOffer(
+                        DC_identity,
+                        offerId,
+                        shift,
+                        signedConfirmations[0].signature,
+                        signedConfirmations[1].signature,
+                        signedConfirmations[2].signature,
+                        [new BN(2), new BN(2), new BN(2)],
+                        [
+                            sortedIdentities[0].identity,
+                            sortedIdentities[1].identity,
+                            sortedIdentities[2].identity,
+                        ],
+                        emptyAddress,
+                        { from: DC_wallet },
+                    );
+                    offerCreated = true;
+                } catch (e) {
+                    console.log(e.message);
+                    console.log('Failed to create offer, retrying');
+                    offerCreated = false;
+                }
+            } else {
+                console.log('Could not find solution for offer, trying new offer');
+            }
+        }
 
         await holdingStorage.setDifficultyOverride(new BN(0));
     });
 
 
     // eslint-disable-next-line no-undef
-    it('Challenge and replace an unresponsive DH', async () => {
+    it('DH did not answer, DC Completes', async () => {
         // Get initial litigation values
         const initialLitigationState =
             await litigationStorage.litigation.call(offerId, DH_identity);
@@ -357,7 +379,7 @@ contract('Litigation testing', async (accounts) => {
             offerId,
             DH_identity,
             DC_identity,
-            hashes[5],
+            requested_data[5],
             new BN(5),
             { from: DC_wallet, gasLimit: 6000000 },
         );
@@ -372,10 +394,10 @@ contract('Litigation testing', async (accounts) => {
             await holdingStorage.getHolderPaidAmount.call(offerId, DH_identity);
 
         assert(
-            holderPaidAmount.gt(tokenAmountPerHolder.divn(2).subn(5)) &&
-                holderPaidAmount.lt(tokenAmountPerHolder.divn(2).addn(5)),
+            holderPaidAmount.gt(tokenAmountPerHolder.divn(2).subn(10)) &&
+                holderPaidAmount.lt(tokenAmountPerHolder.divn(2).addn(10)),
             'Incorrect paid amount for DH after litigation completion!' +
-            ` Got ${res.toString()} but expected ${tokenAmountPerHolder.divn(2).toString()}`,
+            ` Got ${holderPaidAmount.toString()} but expected around ${tokenAmountPerHolder.divn(2).toString()}`,
         );
 
         assert(
@@ -439,7 +461,7 @@ contract('Litigation testing', async (accounts) => {
             offerId,
             DH_identity,
             DC_identity,
-            hashes[0],
+            requested_data[0],
             new BN(0),
             { from: DC_wallet, gasLimit: 6000000 },
         );
@@ -455,7 +477,7 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Inactive DC should enable DH to payout some time after answering', async () => {
+    it('DH answered correctly, DC inactive, DH can payout', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
 
@@ -499,46 +521,6 @@ contract('Litigation testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Inactive DC should enable DH to payout some time after answering', async () => {
-        // Get initial litigation values
-        let res = await litigationStorage.litigation.call(offerId, identities[0]);
-
-        // Initiate litigation
-        res = await litigation.initiateLitigation(
-            offerId,
-            identities[0],
-            DC_identity,
-            new BN(0),
-            new BN(0),
-            [hashes[1], hash_CD, hash_EFGH],
-            { from: DC_wallet },
-        );
-
-        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
-        timestamp = timestamp.sub(new BN(80));
-        await holdingStorage.setOfferStartTime(offerId, timestamp);
-
-        // answerLitigation(bytes32 offerId, address holderIdentity, bytes32 requestedData)
-        await litigation.answerLitigation(offerId, identities[0], hashes[0]);
-
-        res = await litigationStorage.litigation.call(offerId, identities[0]);
-
-        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
-        timestamp = timestamp.sub(new BN(80));
-        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
-
-        let failed = false;
-        try {
-            await holding.payOut(identities[0], offerId);
-        } catch (err) {
-            console.log(err);
-            failed = true;
-        } finally {
-            assert(!failed, 'Expected payout failed');
-        }
-    });
-
-    // eslint-disable-next-line no-undef
     it('DH answered correctly, DC Completes', async () => {
         // Get initial litigation values
         let res = await litigationStorage.litigation.call(offerId, identities[0]);
@@ -553,7 +535,7 @@ contract('Litigation testing', async (accounts) => {
             [hashes[1], hash_CD, hash_EFGH],
             { from: DC_wallet },
         );
-        console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
+        // console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
 
         const requestedData = requested_data[0];
 
@@ -564,13 +546,81 @@ contract('Litigation testing', async (accounts) => {
             offerId,
             identities[0],
             DC_identity,
-            hashes[0],
+            requestedData,
             new BN(0),
             { from: DC_wallet, gasLimit: 6000000 },
         );
 
         res = await litigationStorage.litigation.call(offerId, identities[0]);
         assert(res.status.toString('hex') === '0');
+    });
+
+    // eslint-disable-next-line no-undef
+    it('DH answered correctly, DC answers incorrectly', async () => {
+        // Get initial litigation values
+        let res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Initiate litigation
+        res = await litigation.initiateLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            new BN(0),
+            new BN(0),
+            [hashes[1], hash_CD, hash_EFGH],
+            { from: DC_wallet },
+        );
+
+        const requestedData = requested_data[0];
+
+        res = await litigation.answerLitigation(offerId, identities[0], requestedData);
+
+        // Complete litigation
+        res = await litigation.completeLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            requestedData,
+            new BN(0),
+            { from: DC_wallet, gasLimit: 6000000 },
+        );
+
+        res = await litigationStorage.litigation.call(offerId, identities[0]);
+        assert(res.status.toString('hex') === '0');
+    });
+
+    // eslint-disable-next-line no-undef
+    it('DH answered incorrectly, DC Completes', async () => {
+        // Get initial litigation values
+        let res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Initiate litigation
+        res = await litigation.initiateLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            new BN(0),
+            new BN(0),
+            [hashes[1], hash_CD, hash_EFGH],
+            { from: DC_wallet },
+        );
+
+        const requestedData = requested_data[0];
+
+        res = await litigation.answerLitigation(offerId, identities[0], requested_data[1]);
+
+        // Complete litigation
+        res = await litigation.completeLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            requestedData,
+            new BN(0),
+            { from: DC_wallet, gasLimit: 6000000 },
+        );
+
+        res = await litigationStorage.litigation.call(offerId, identities[0]);
+        assert(res.status.toString('hex') === '4');
     });
 
     // eslint-disable-next-line no-undef
@@ -588,7 +638,6 @@ contract('Litigation testing', async (accounts) => {
             [hashes[1], hash_CD, hash_EFGH],
             { from: DC_wallet },
         );
-        console.log(`\t Gas used for initiating litigation: ${res.receipt.gasUsed}`);
 
         const requestedData = requested_data[0];
 
@@ -603,6 +652,61 @@ contract('Litigation testing', async (accounts) => {
         timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
         timestamp = timestamp.sub(new BN(1000));
         await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
+
+        try {
+            await holding.payOut(identities[0], offerId);
+        } catch (err) {
+            console.log(err);
+            assert(false, 'DH should successfully complete the payout');
+        }
+    });
+
+    // eslint-disable-next-line no-undef
+    it('DH did not answer, DC answers incorrectly', async () => {
+        // Get initial litigation values
+        let res = await litigationStorage.litigation.call(offerId, identities[0]);
+
+        // Initiate litigation
+        res = await litigation.initiateLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            new BN(0),
+            new BN(0),
+            [hashes[1], hash_CD, hash_EFGH],
+            { from: DC_wallet },
+        );
+
+        const requestedData = requested_data[0];
+
+        // DH does not answer
+        // DC is inactive,
+        // Move offer time the litigation period
+        // Move litigation time the litigation period
+
+        let timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(new BN((parseInt(litigationIntervalInMinutes, 10) * 60) + 1));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
+        timestamp = await litigationStorage.getLitigationTimestamp.call(offerId, identities[0]);
+        timestamp = timestamp.sub(new BN((parseInt(litigationIntervalInMinutes, 10) * 60) + 1));
+        await litigationStorage.setLitigationTimestamp(offerId, identities[0], timestamp);
+
+        // Complete litigation
+        res = await litigation.completeLitigation(
+            offerId,
+            identities[0],
+            DC_identity,
+            requested_data[1],
+            new BN(0),
+            { from: DC_wallet, gasLimit: 6000000 },
+        );
+
+        res = await litigationStorage.litigation.call(offerId, identities[0]);
+        assert(res.status.toString('hex') === '0');
+
+        timestamp = await holdingStorage.getOfferStartTime.call(offerId);
+        timestamp = timestamp.sub(new BN((parseInt(litigationIntervalInMinutes, 10) * 60) + 1));
+        await holdingStorage.setOfferStartTime(offerId, timestamp);
 
         try {
             await holding.payOut(identities[0], offerId);

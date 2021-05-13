@@ -88,6 +88,11 @@ contract TestingUtilities{
 		return keccak256(abi.encodePacked(a,b));
 	}
 
+	function keccakIndexIndex(bytes32 a, uint b, uint c)
+	public pure returns (bytes32){
+		return keccak256(abi.encodePacked(a,b,c));
+	}
+
 	function keccakSender()
 	public view returns (bytes32){
 		return keccak256(abi.encodePacked(msg.sender));
