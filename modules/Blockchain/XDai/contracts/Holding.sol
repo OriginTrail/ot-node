@@ -110,6 +110,7 @@ contract Holding is Ownable {
             CreditorHandler(hub.getContractAddress("CreditorHandler")).finalizeOffer(offerId, identity, parentIdentity);
         }
         require(identity == holdingStorage.getOfferCreator(bytes32(offerId)), "Offer can only be finalized by its creator!");
+        require(holdingStorage.getOfferStartTime(bytes32(offerId)) == 0);
 
         // Check if signatures match identities
         require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[0]))), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
@@ -279,7 +280,7 @@ contract Holding is Ownable {
     }
 
     function logs2(uint x) internal pure returns (uint y) {
-        require(x > 0, "log(0) not allowed");
+        require(x > 0);
         assembly {
             let arg := x
             x := sub(x,1)

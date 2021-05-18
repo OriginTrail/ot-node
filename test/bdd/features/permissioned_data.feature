@@ -72,3 +72,50 @@ Feature: Permissioned data features
     Then the last exported dataset should not contain permissioned data as "urn:ot:object:actor:id:company-red"
     And DV unsuccessfully gets the price for the last imported dataset
     Then DV unsuccessfully initiates purchase for the last imported dataset
+
+  @manual
+  Scenario: Permissioned data system complete test
+    Given I setup 6 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And I use 2nd node as DH
+    And I use 5th node as DV
+    And I use 6th node as DV2
+    And I stop [5, 6] nodes
+    And DC imports "importers/use_cases/marketplace/permissioned_data_simple_sample.json" as OT-JSON
+    And DC waits for import to finish
+    Given DC initiates the replication for last imported dataset
+    And I wait for 30 seconds
+    And DC whitelists DH for object id: "urn:ot:object:actor:id:company-red" in the last imported dataset
+    And DC whitelists DV for object id: "urn:ot:object:actor:id:company-red" in the last imported dataset
+    And I wait for replications to finish
+    When DH exports the last imported dataset as OT-JSON
+    And DH waits for export to finish
+    Then the last exported dataset should contain permissioned data as "urn:ot:object:actor:id:company-red"
+    Given I use 3rd node as DH
+    When DH exports the last imported dataset as OT-JSON
+    And DH waits for export to finish
+    Then the last exported dataset should not contain permissioned data as "urn:ot:object:actor:id:company-red"
+    Given I start the 5th node
+    And I start the 6th node
+    Given DV publishes query consisting of path: "id", value: "urn:ot:object:actor:id:company-red" and opcode: "EQ" to the network
+    And all nodes with last import should answer to last network query by DV
+    When the DV purchases last import from the last query from the DC
+    And DV waits for import to finish
+    And DV exports the last imported dataset as OT-JSON
+    And DV waits for export to finish
+    Then the last exported dataset should contain permissioned data as "urn:ot:object:actor:id:company-red"
+    Given DV2 publishes query consisting of path: "id", value: "urn:ot:object:actor:id:company-red" and opcode: "EQ" to the network
+    And all nodes with last import should answer to last network query by DV2
+    When the DV2 purchases last import from the last query from the DC
+    And DV2 waits for import to finish
+    And DV2 exports the last imported dataset as OT-JSON
+    And DV2 waits for export to finish
+    Then the last exported dataset should not contain permissioned data as "urn:ot:object:actor:id:company-red"
+    Given DV2 gets the list of available datasets for trading
+    And DV2 gets the price for the last imported dataset
+    And DV2 initiates purchase for the last imported dataset and waits for confirmation
+    And DV2 waits for purchase to finish
+    When DV2 exports the last imported dataset as OT-JSON
+    And DV2 waits for export to finish
+    Then the last exported dataset should contain permissioned data as "urn:ot:object:actor:id:company-red"
