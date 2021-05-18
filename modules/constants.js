@@ -2,6 +2,11 @@
  * @constant {number} DEFAULT_NUMBER_OF_HOLDERS - Number of data holders for a dataset
  */
 exports.DEFAULT_NUMBER_OF_HOLDERS = 3;
+/**
+ * @constant {number} REPLICATION_MIN_DELAY_MILLS - Default minimum delay for replication sending
+ *        The value could be lower if the 10% of the DC choose time is shorter
+ */
+exports.REPLICATION_MIN_DELAY_MILLS = 4 * 60 * 1000;
 
 /**
  * @constant {number} DEFAULT_CHALLENGE_NUMBER_OF_TESTS - Number of challenges per DH
@@ -12,7 +17,6 @@ exports.DEFAULT_CHALLENGE_NUMBER_OF_TESTS = 2;
  * @constant {number} DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES - Block size in bytes used for Merkle tree
  */
 exports.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES = 31;
-
 
 /**
  * @constant {number} DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS - Challenge response time
@@ -43,9 +47,21 @@ exports.TRAIL_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 
 /**
  * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
- * Export command cleanup interval time 1h
+ * Export command cleanup interval time 24h
  */
-exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
+exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+/**
+ * @constant {number} DATASET_PRUNING_COMMAND_TIME_MILLS -
+ * Datasets pruning command interval 24h
+ */
+exports.DATASET_PRUNING_COMMAND_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+/**
+ * @constant {number} OFFER_FINALIZED_COMMAND_DEADLINE_AT -
+ * Offer finalized command deadline time 6h
+ */
+exports.OFFER_FINALIZED_COMMAND_DEADLINE_AT = 6 * 60 * 60 * 1000;
 
 /**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
@@ -53,14 +69,13 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 60 * 60 * 1000;
 exports.PERMANENT_COMMANDS = [
     'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
     'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
-    'trailCleanerCommand', 'handlerIdsCleanerCommand',
+    'trailCleanerCommand', 'handlerIdsCleanerCommand', 'datasetPruningCommand',
 ];
 
 /**
  * @constant {number} MAX_COMMAND_DELAY_IN_MILLS - Maximum delay for commands
  */
 exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
-
 
 /**
  * @constant {number} DEFAULT_COMMAND_REPEAT_IN_MILLS - Default repeat interval

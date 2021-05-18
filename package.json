@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "5.0.1",
+  "version": "5.0.3",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -23,6 +23,7 @@
     "test:bdd:third": "cucumber-js --tags=@third --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:fourth": "cucumber-js --tags=@fourth --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:fifth": "cucumber-js --tags=@fifth --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd:manual": "cucumber-js --tags=@manual --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:dryrun": "cucumber-js --dry-run test/bdd/ -r test/bdd/steps/",
     "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:verbose": "cucumber-js --fail-fast --format event-protocol --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",

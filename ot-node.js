@@ -45,6 +45,7 @@ const M3NetowrkIdentityMigration = require('./modules/migration/m3-network-ident
 const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
 const M7ArangoDatasetSignatureMigration = require('./modules/migration/m7-arango-dataset-signature-migration');
+const M8MissedOfferCheckMigration = require('./modules/migration/m8-missed-offer-check-migration');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
@@ -322,7 +323,7 @@ class OTNode {
 
         try {
             await profileService.initProfile();
-            await this._runPayoutMigration(blockchain, config);
+            await this._runPayoutMigration(blockchain, config, profileService);
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
@@ -353,6 +354,8 @@ class OTNode {
         await commandExecutor.init();
         await commandExecutor.replay();
         await commandExecutor.start();
+
+        await this._runOfferCheckMigration(blockchain, config, profileService, commandExecutor);
         appState.started = true;
     }
 
@@ -452,10 +455,11 @@ class OTNode {
      * Run one time payout migration
      * @param blockchain
      * @param config
+     * @param profileService
      * @returns {Promise<void>}
      * @private
      */
-    async _runPayoutMigration(blockchain, config) {
+    async _runPayoutMigration(blockchain, config, profileService) {
         const migrationsStartedMills = Date.now();
         log.info('Initializing payOut migration...');
 
@@ -463,13 +467,49 @@ class OTNode {
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m1PayoutAllMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M1PayoutAllMigration({ logger: log, blockchain, config });
+            const migration = new M1PayoutAllMigration({
+                logger: log, blockchain, config, profileService,
+            });
 
             try {
                 await migration.run();
                 log.warn(`One-time payout migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
                 await Utilities.writeContentsToFile(migrationDir, m1PayoutAllMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                console.log(e);
+                process.exit(1);
+            }
+        }
+    }
+
+    /**
+     * Run offer check migration
+     * @param blockchain
+     * @param config
+     * @param profileService
+     * @param commandExecutor
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _runOfferCheckMigration(blockchain, config, profileService, commandExecutor) {
+        const migrationsStartedMills = Date.now();
+        log.info('Initializing missed offer check migration...');
+
+        const m8MissedOfferCheckMigrationFilename = '8_m8MissedOfferCheckMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m8MissedOfferCheckMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M8MissedOfferCheckMigration({
+                logger: log, blockchain, config, profileService, commandExecutor,
+            });
+
+            try {
+                await migration.run();
+                log.warn(`One-time missed offer check migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m8MissedOfferCheckMigrationFilename, 'PROCESSED');
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 console.log(e);
