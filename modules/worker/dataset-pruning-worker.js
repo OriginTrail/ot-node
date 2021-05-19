@@ -11,6 +11,7 @@ process.on('message', async (data) => {
     } = JSON.parse(data);
     try {
         const graphStorage = new GraphStorage(selectedDatabase, logger);
+        await graphStorage.connect();
         const datasetPruningService = new DatasetPruningService({ logger, graphStorage });
         const idsForPruning = datasetPruningService
             .getIdsForPruning(
