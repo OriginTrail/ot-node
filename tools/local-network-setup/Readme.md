@@ -1,7 +1,7 @@
 Local Network Setup Tool
 ========================
 
-####Run a single command to create an entire testing enviroment for ot-node development.
+#### Run a single command to create an entire testing enviroment for ot-node development.
 
 The Local Network Setup tool will start a local blockchain, deploy the required smart contracts, set up the configuration files for the nodes and start them up. From there you're ready to send API calls to your local nodes and test new features on the ot-node without worrying about funds, servers or network connectivity issues.
 
