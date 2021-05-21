@@ -1,7 +1,7 @@
 Local Network Setup Tool
 ========================
 
-Run a single command to create an entire testing enviroment for ot-node development.
+####Run a single command to create an entire testing enviroment for ot-node development.
 
 The Local Network Setup tool will start a local blockchain, deploy the required smart contracts, set up the configuration files for the nodes and start them up. From there you're ready to send API calls to your local nodes and test new features on the ot-node without worrying about funds, servers or network connectivity issues.
 
@@ -20,6 +20,8 @@ npm run tools:lns:start
 Usage
 =====
 
+## Specifying the number of nodes
+
 The LNS tool deploys 4 nodes, each connected to two blockchain implementations which are running on a local ganache process.
 
 The first node is named `DC`, while subsequent nodes are named `DH1, DH2, ...`.
@@ -30,8 +32,13 @@ You can specify to run between one and ten nodes with the `--nodes` parameter.
 npm run tools:lns:start -- --nodes=10
 ```
 
+## Editing the node configuration
+
+### Editing the configuration for all nodes
 
 If you need to edit the configuration for every node, before you run the nodes you can edit the `config_template.json` file and the new configuration will be loaded during node set up.
+
+### Editing the configuration for a single node
 
 If you want to edit a single node's configuration, you can do it in two ways:
 
@@ -46,7 +53,7 @@ if (node_name === 'DH4') {
 2. Once the nodes are set up, each node has its own node configuration file in the `temporary-config-files` directory, which you can edit directly. For example, if you wanted to enable additional logs on the DC node you could add the following to `DC.json`. **Note:** After editing the the configuration this way you'll need to stop and start the node again for the changes to take effect.
 ```json
 {
-    ...
+    "...": "...",
     "commandExecutorVerboseLoggingEnabled": true
 }
 ```
