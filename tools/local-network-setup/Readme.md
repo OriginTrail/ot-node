@@ -13,14 +13,15 @@ Quick Start
 
 ## Prerequisites
 
-You need to have arangodb installed and running on your machine. You can find instructions on the [ArangoDB website](https://www.arangodb.com/docs/stable/getting-started-installation.html)
+* You need to have arangodb installed and running on your machine. You can find instructions on the [ArangoDB website](https://www.arangodb.com/docs/stable/getting-started-installation.html)
+
+* You should have ot-node dependencies installed with the `npm install` command
 
 ## How to start
 
-From the ot-node directory, run the below commands
+From the ot-node directory, run the below command
 
 ```bash
-npm install
 npm run tools:lns:start
 ```
 
