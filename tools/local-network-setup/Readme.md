@@ -3,12 +3,19 @@ Local Network Setup Tool
 
 #### Run a single command to create an entire testing enviroment for ot-node development.
 
-The Local Network Setup tool will start a local blockchain, deploy the required smart contracts, set up the configuration files for the nodes and start them up. From there you're ready to send API calls to your local nodes and test new features on the ot-node without worrying about funds, servers or network connectivity issues.
+The Local Network Setup tool will start a local blockchain, deploy the required smart contracts, set up the configuration files for the nodes and start the nodes in separate windows.
+From there you're ready to send API calls to your local nodes and test new features on the ot-node without worrying about funds, servers or network connectivity issues.
 
 **Note: This tool is an internal tool used by the OriginTrail team and thus is developed for our workflow, meaning that it currently only supports MacOS**, but we encourage you to adapt it for your workflow as well.
 
 Quick Start
 ===========
+
+## Prerequisites
+
+You need to have arangodb installed and running on your machine. You can find instructions on the [ArangoDB website](https://www.arangodb.com/docs/stable/getting-started-installation.html)
+
+## How to start
 
 From the ot-node directory, run the below commands
 
