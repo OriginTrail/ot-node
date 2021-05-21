@@ -29,7 +29,7 @@ class M8MissedOfferCheckMigration {
             },
         });
 
-        const identity = this.profileService.getIdentity();
+        const myIdentites = {};
 
         const offers = [];
         const offersData = {};
@@ -42,8 +42,13 @@ class M8MissedOfferCheckMigration {
             const { holder1, holder2, holder3 } = data;
             const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
 
-            if (holders.includes(identity)) {
-                this.logger.important(`Found missed offer ${data.offerId} finalized on blockchain ${event.blockchain_id}`);
+            const { blockchain_id } = event;
+            if (!myIdentites[blockchain_id]) {
+                myIdentites[blockchain_id] = this.profileService.getIdentity(blockchain_id);
+            }
+
+            if (holders.includes(myIdentites[blockchain_id])) {
+                this.logger.important(`Found missed offer ${data.offerId} finalized on blockchain ${blockchain_id}`);
                 const offerId = Utilities.normalizeHex(data.offerId);
                 offers.push(offerId);
                 offersData[offerId] = {
