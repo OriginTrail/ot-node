@@ -12,9 +12,9 @@ Quick Start
 
 From the ot-node directory, run the below commands
 
-```
-    npm install
-    npm run tools:lns:start
+```bash
+npm install
+npm run tools:lns:start
 ```
 
 Usage
@@ -26,8 +26,8 @@ The first node is named `DC`, while subsequent nodes are named `DH1, DH2, ...`.
 
 You can specify to run between one and ten nodes with the `--nodes` parameter.
 
-```
-    npm run tools:lns:start -- --nodes=10
+```bash
+npm run tools:lns:start -- --nodes=10
 ```
 
 
@@ -36,19 +36,19 @@ If you need to edit the configuration for every node, before you run the nodes y
 If you want to edit a single node's configuration, you can do it in two ways:
 
 1. Before you start the nodes, edit the `generate_config_files.js` with a specific condition. For example, if you wanted to set the fifth node to reject all offers you'd add something like the following:
-```
-    if (node_name === 'DH4') {
-        savedConfig.blockchain.implementations[0].dh_price_factor = "10000000";
-        savedConfig.blockchain.implementations[1].dh_price_factor = "10000000";
-    }
+```js
+if (node_name === 'DH4') {
+    savedConfig.blockchain.implementations[0].dh_price_factor = "10000000";
+    savedConfig.blockchain.implementations[1].dh_price_factor = "10000000";
+}
 ```
 
 2. Once the nodes are set up, each node has its own node configuration file in the `temporary-config-files` directory, which you can edit directly. For example, if you wanted to enable additional logs on the DC node you could add the following to `DC.json`. **Note:** After editing the the configuration this way you'll need to stop and start the node again for the changes to take effect.
-```
-    {
-        ...
-        "commandExecutorVerboseLoggingEnabled": true
-    }
+```json
+{
+    ...
+    "commandExecutorVerboseLoggingEnabled": true
+}
 ```
 
 
