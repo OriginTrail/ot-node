@@ -11,6 +11,9 @@ const logger = require('../../modules/logger');
  * @return {Promise<any>}
  */
 function recreateDatabase() {
+    console.log('sequelizeConfig.storage', sequelizeConfig.storage);
+    fs.closeSync(fs.openSync(sequelizeConfig.storage, 'w'));
+
     const migrator = new Umzug({
         storage: 'sequelize',
         storageOptions: {
