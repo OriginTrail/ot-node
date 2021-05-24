@@ -52,8 +52,8 @@ class DCReplicationSendCommand extends Command {
         const usedDH = await Models.replicated_data.findOne({
             where: {
                 dh_id: identity,
-                dh_wallet: wallet,
-                dh_identity: dhIdentity,
+                dh_wallet: wallet.toLowerCase(),
+                dh_identity: dhIdentity.toLowerCase(),
                 offer_id: offerId,
             },
         });
