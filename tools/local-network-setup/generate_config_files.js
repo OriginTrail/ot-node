@@ -84,9 +84,12 @@ for (let i = 0; i < number_of_nodes; i += 1) {
     // }
 
     fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
-
-    execSync(`mkdir ${configDir}`);
-    execSync(`cd ${path_to_node} && npm run setup:hard -- --configDir=${configDir} --config=${configPath}`);
+    try {
+        execSync(`mkdir ${configDir}`);
+        execSync(`cd ${path_to_node} && npm run setup:hard -- --configDir=${configDir} --config=${configPath}`);
+    } catch (e) {
+        process.exit(1);
+    }
 
     if (node_name === 'DC') {
         const identityFilePath = path.join(__dirname, 'pregenerated-values');

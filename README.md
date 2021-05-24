@@ -2,6 +2,7 @@ OriginTrail Node
 ================
 
 [comment]: # (TODO: Insert badges for github builds)
+![badge](https://img.shields.io/docker/automated/origintrail/ot-node)
 
 __OriginTrail is an ecosystem dedicated to making global supply chains work together by enabling a universal, collaborative and trusted data exchange.__
  

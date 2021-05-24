@@ -69,6 +69,14 @@ echo ================================
 node $pathToOtNode/tools/local-network-setup/generate_config_files.js --number_of_nodes=$number_of_nodes \
 --config_path=$pathToConfigFiles --path_to_node=$pathToOtNode
 
+RESULT=$?
+if [ $RESULT -ne 0 ]; then
+  echo ==================================================
+  echo ======== Setting up nodes failed, exiting ========
+  echo ==================================================
+  exit 1
+fi
+
 echo ================================
 echo ======== Starting nodes ========
 echo ================================
