@@ -38,7 +38,7 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
 
     before('Setup preconditions and call DCOfferCreateDatabaseCommand execute function', async () => {
         config = rc(pjson.name, defaultConfig);
-
+        await testUtilities.recreateDatabase();
         // make sure offers table is cleaned up
 
         await models.offers.destroy({
