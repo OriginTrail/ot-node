@@ -276,10 +276,8 @@ class OTNode {
         await blockchain.loadContracts();
 
         const emitter = container.resolve('emitter');
-        const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
         const profileService = container.resolve('profileService');
-        const approvalService = container.resolve('approvalService');
 
         emitter.initialize();
 
@@ -319,7 +317,6 @@ class OTNode {
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
-        dhService.listenToBlockchainEvents();
 
         try {
             await profileService.initProfile();
