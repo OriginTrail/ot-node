@@ -613,21 +613,6 @@ class EventEmitter {
                     dhWallet = transport.extractSenderInfo(request).wallet;
                 }
 
-                if (replicationFinishedMessage.message) { // todo remove if for next update
-                    const {
-                        message, messageSignature,
-                    } = replicationFinishedMessage;
-                    if (!Utilities.isMessageSigned(message, messageSignature)) {
-                        logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
-                        return;
-                    }
-
-                    await dcService.verifyDHReplication(
-                        message.offerId, messageSignature,
-                        dhNodeId, message.dhIdentity, dhWallet, false,
-                    );
-                }
-
                 const {
                     offerId, messageSignature, dhIdentity,
                 } = replicationFinishedMessage;

@@ -300,7 +300,7 @@ class DhReplicationImportCommand extends Command {
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(dhIdentity)];
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchainId).response;
 
         const messageSignature = Encryption
             .signMessage(toSign, Utilities.normalizeHex(node_private_key));
