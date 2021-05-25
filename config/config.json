@@ -56,9 +56,9 @@
       "implementations": [
         {
           "blockchain_title": "Ethereum",
-          "network_id": "development",
-          "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
-          "identity_filepath": "erc725_identity.json",
+          "network_id": "stargazer",
+          "hub_contract_address": "0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a",
+          "identity_filepath": "stargazer_identity.json",
           "gas_limit": "2000000",
           "gas_price": "20000000000",
           "max_allowed_gas_price" : 100000000000,
@@ -68,20 +68,23 @@
           "node_wallet": "",
           "node_private_key": "",
           "management_wallet": "",
-          "plugins": [
-            {
-              "enabled": false,
-              "provider": "Hyperledger",
-              "name": "fingerprint-plugin",
-              "config": {
-                "url": "URL",
-                "auth": {
-                  "user": "USER",
-                  "pass": "PASS"
-                }
-              }
-            }
-          ]
+          "plugins": []
+        },
+        {
+          "blockchain_title": "Ethereum",
+          "network_id": "copernicus",
+          "hub_contract_address": "0x791ee543738B997B7A125bc849005B62aFD35578",
+          "identity_filepath": "copernicus_identity.json",
+          "gas_limit": "2000000",
+          "gas_price": "20000000000",
+          "max_allowed_gas_price" : 100000000000,
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_base_currency" : "0.00005",
+          "node_wallet": "",
+          "node_private_key": "",
+          "management_wallet": "",
+          "plugins": []
         },
         {
           "blockchain_title": "xDai",
@@ -93,65 +96,8 @@
           "gas_price": "1000000000",
           "dc_price_factor" : "3",
           "dh_price_factor" : "2",
-          "trac_price_in_base_currency" : "0.4"
-        },
-        {
-          "blockchain_title": "Ethereum",
-          "network_id": "ganache_7545",
-          "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
-          "identity_filepath": "ganache_7545_erc725_identity.json",
-          "gas_limit": "2000000",
-          "gas_price": "20000000000",
-          "max_allowed_gas_price" : 100000000000,
-          "dc_price_factor" : "3",
-          "dh_price_factor" : "2",
-          "trac_price_in_base_currency" : "0.00005",
-          "node_wallet": "",
-          "node_private_key": "",
-          "management_wallet": "",
-          "plugins": [
-            {
-              "enabled": false,
-              "provider": "Hyperledger",
-              "name": "fingerprint-plugin",
-              "config": {
-                "url": "URL",
-                "auth": {
-                  "user": "USER",
-                  "pass": "PASS"
-                }
-              }
-            }
-          ]
-        },
-        {
-          "blockchain_title": "Ethereum",
-          "network_id": "ganache_8545",
-          "hub_contract_address": "0x2B7ca432a13e0D035BC46F0d6bf3cde1E72A10E5",
-          "identity_filepath": "ganache_8545_erc725_identity.json",
-          "gas_limit": "2000000",
-          "gas_price": "20000000000",
-          "max_allowed_gas_price" : 100000000000,
-          "dc_price_factor" : "3",
-          "dh_price_factor" : "2",
-          "trac_price_in_base_currency" : "0.00005",
-          "node_wallet": "",
-          "node_private_key": "",
-          "management_wallet": "",
-          "plugins": [
-            {
-              "enabled": false,
-              "provider": "Hyperledger",
-              "name": "fingerprint-plugin",
-              "config": {
-                "url": "URL",
-                "auth": {
-                  "user": "USER",
-                  "pass": "PASS"
-                }
-              }
-            }
-          ]
+          "trac_price_in_base_currency" : "0.4",
+          "plugins": []
         }
       ]
     },
