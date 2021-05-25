@@ -61,20 +61,15 @@ class DHProcessBlockchainEventsCommand extends Command {
         const allMyIdentities = {};
         this.blockchain.getAllBlockchainIds()
             .forEach(id => allMyIdentities[id] = this.profileService.getIdentity(id));
+        const promises = [];
         const event = events.find((e) => {
-            const {
-                holderIdentity,
-            } = JSON.parse(e.data);
-
-            return Utilities.compareHexStrings(
-                holderIdentity,
-                allMyIdentities[e.blockchain_id],
-            );
+            const { holderIdentity } = JSON.parse(e.data);
+            e.finished = 1;
+            promises.push(e.save());
+            return Utilities.compareHexStrings(holderIdentity, allMyIdentities[e.blockchain_id]);
         });
+        await Promise.all(promises);
         if (event) {
-            event.finished = 1;
-            await event.save({ fields: ['finished'] });
-
             const {
                 offerId,
                 requestedObjectIndex,
@@ -99,22 +94,16 @@ class DHProcessBlockchainEventsCommand extends Command {
     async handleOfferCreatedEvents(events) {
         let offerData = {};
         let dcNodeId = '';
-        const event = events.find(async (e) => {
+        const promises = [];
+        const event = events.find((e) => {
             offerData = JSON.parse(e.data);
             dcNodeId = Utilities.denormalizeHex(offerData.dcNodeId).substring(24);
-
-            if (Utilities.compareHexStrings(this.config.identity, dcNodeId)) {
-                e.finished = 1;
-                await e.save();
-                return false; // the offer is mine
-            }
-            return true;
+            e.finished = 1;
+            promises.push(e.save());
+            return !Utilities.compareHexStrings(this.config.identity, dcNodeId);
         });
-
+        await Promise.all(promises);
         if (event) {
-            event.finished = 1;
-            await event.save();
-
             try {
                 this.logger.notify(`Offer ${offerData.offerId} has been created by ${dcNodeId} on blockchain ${event.blockchain_id}.`);
                 await this.dhService.handleOffer(
