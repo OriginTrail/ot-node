@@ -97,19 +97,26 @@ class DHProcessBlockchainEventsCommand extends Command {
     }
 
     async handleOfferCreatedEvents(events) {
-        for (const singleEvent of events) {
-            singleEvent.finished = 1;
-            // eslint-disable-next-line no-await-in-loop
-            await singleEvent.save();
+        let offerData = {};
+        let dcNodeId = '';
+        const event = events.find(async (e) => {
+            offerData = JSON.parse(e.data);
+            dcNodeId = Utilities.denormalizeHex(offerData.dcNodeId).substring(24);
 
-            const offerData = JSON.parse(singleEvent.data);
-            const dcNodeId = Utilities.denormalizeHex(offerData.dcNodeId).substring(24);
-            if (dcNodeId === this.config.identity) {
-                return; // the offer is mine
+            if (Utilities.compareHexStrings(this.config.identity, dcNodeId)) {
+                e.finished = 1;
+                await e.save();
+                return false; // the offer is mine
             }
+            return true;
+        });
+
+        if (event) {
+            event.finished = 1;
+            await event.save();
+
             try {
-                this.logger.notify(`Offer ${offerData.offerId} has been created by ${dcNodeId} on blockchain ${singleEvent.blockchain_id}.`);
-                // eslint-disable-next-line no-await-in-loop
+                this.logger.notify(`Offer ${offerData.offerId} has been created by ${dcNodeId} on blockchain ${event.blockchain_id}.`);
                 await this.dhService.handleOffer(
                     offerData.offerId,
                     dcNodeId,
@@ -118,7 +125,7 @@ class DHProcessBlockchainEventsCommand extends Command {
                     offerData.litigationIntervalInMinutes,
                     offerData.tokenAmountPerHolder,
                     offerData.dataSetId,
-                    singleEvent.blockchain_id,
+                    event.blockchain_id,
                 );
             } catch (e) {
                 this.logger.warn(e.message);
