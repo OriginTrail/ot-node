@@ -67,10 +67,6 @@ describe('GS1 Importer tests', () => {
         };
     }
 
-    before('Setup models', async () => {
-        Storage.models = (await models.sequelize.sync()).models;
-    });
-
     beforeEach('Setup DB', async function setupDb() {
         this.timeout(5000);
 

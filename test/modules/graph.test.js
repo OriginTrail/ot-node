@@ -16,7 +16,6 @@ const pjson = require('../../package.json');
 describe('graph module ', () => {
     before('Init GraphStorage', async () => {
         const config = rc(pjson.name, defaultConfig);
-        Storage.models = (await models.sequelize.sync()).models;
         assert.hasAllKeys(config.database, ['provider', 'username', 'password',
             'password_file_name', 'host', 'port', 'database', 'max_path_length', 'replication_info']);
         assert.hasAllKeys(config.database.replication_info, ['endpoint', 'username', 'password', 'port']);
