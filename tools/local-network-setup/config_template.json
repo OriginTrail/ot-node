@@ -1,0 +1,52 @@
+{
+  "node_rpc_port": 8900,
+  "node_port": 5278,
+  "node_remote_control_port": 3001,
+  "control_port": 5881,
+  "local_network_only": true,
+  "traverse_nat_enabled": false,
+  "houston_password": "houston",
+  "database": {
+    "provider": "arangodb",
+    "database": "origintrail",
+    "host": "localhost",
+    "port": 8529,
+    "username": "root",
+    "password": "",
+    "max_path_length": 1000
+  },
+  "network": {
+    "remoteWhitelist": [],
+    "bootstraps": ["https://127.0.0.1:5278/#781e64952478359bd10b79ab69d42bea189834be"]
+  },
+  "blockchain": {
+    "implementations": [
+      {
+        "blockchain_title": "Ethereum",
+        "network_id": "stargazer",
+        "gas_limit": "2000000",
+        "gas_price": "20000000000",
+        "identity_filepath": "stargazer_identity.json",
+        "hub_contract_address": "0x0987197628Bb06133B6FA2409eb4cF9FCaFe8d3a",
+        "rpc_server_url": "http://127.0.0.1:7545/"
+      },
+      {
+        "blockchain_title": "Ethereum",
+        "network_id": "copernicus",
+        "gas_limit": "2000000",
+        "gas_price": "20000000000",
+        "identity_filepath": "copernicus_identity.json",
+        "hub_contract_address": "0x791ee543738B997B7A125bc849005B62aFD35578",
+        "rpc_server_url": "http://127.0.0.1:7545/"
+      }
+    ]
+  },
+  "initial_deposit_amount": "10000000000000000000000",
+  "dc_holding_time_in_minutes": 5,
+  "logs_level_debug": true,
+  "dc_choose_time": 90000,
+  "dc_litigation_interval_in_minutes": 1,
+  "dh_min_litigation_interval_in_minutes": 1,
+  "litigationEnabled": true,
+  "commandExecutorVerboseLoggingEnabled": false
+}
