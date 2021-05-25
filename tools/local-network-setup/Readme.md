@@ -31,14 +31,13 @@ Usage
 ## Specifying the number of nodes
 
 The LNS tool deploys 4 nodes, each connected to two blockchain implementations which are running on a local ganache process.
-
-The first node is named `DC`, while subsequent nodes are named `DH1, DH2, ...`.
-
-You can specify to run between one and ten nodes with the `--nodes` parameter.
+You can specify to run anywhere between one and ten nodes with the `--nodes` parameter.
 
 ```bash
 npm run tools:lns:start -- --nodes=10
 ```
+
+The first node will be named `DC`, while subsequent nodes will be named `DH1, DH2, ...`.
 
 ## Editing the node configuration
 
