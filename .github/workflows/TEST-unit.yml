@@ -12,23 +12,20 @@ jobs:
       matrix:
         node-version: [9.x]
     steps:
-      - run: mkdir -p $ARTIFACTS_DIR
-      - run: ls -l /home/runner/work/ot-node/ot-node/
-      - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
-      - run: ls -l /home/runner/work/ot-node/ot-node/artifacts
-      - run: echo hello > $ARTIFACTS_DIR/world.txt
-      - run: echo hello > $CUCUMBER_ARTIFACTS_DIR/world.txt
-      - run: cd artifacts && pwd
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
+      - run: mkdir -p $ARTIFACTS_DIR
+      - run: sudo chmod -R 777 $ARTIFACTS_DIR
+      - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
+      - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
       - run: npm run lint
-      - run: npm run test:unit > $ARTIFACTS_DIR/mocha-logs.log
+      - run: npm test 2> $ARTIFACTS_DIR/mocha-logs.log;
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:

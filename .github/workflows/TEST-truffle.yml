@@ -19,12 +19,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
       - run: npm install
       - run: mkdir -p $ARTIFACTS_DIR
       - run: sudo chmod -R 777 $ARTIFACTS_DIR
@@ -32,5 +26,10 @@ jobs:
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
-      - run: npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
-      - run: npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
+      - run: npm run ganache > $ARTIFACTS_DIR/run-ganache1.log & npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
+      - run: npm run ganache > $ARTIFACTS_DIR/run-ganache2.log & npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
+      - uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          name: my-artifact
+          path: /home/runner/work/ot-node/ot-node/artifacts
