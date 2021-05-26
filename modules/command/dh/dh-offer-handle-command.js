@@ -2,7 +2,7 @@ const path = require('path');
 
 const Command = require('../command');
 const Models = require('../../../models');
-const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 /**
  * Handles new offer from the DH side
@@ -69,7 +69,7 @@ class DHOfferHandleCommand extends Command {
             commands: [
                 {
                     name: 'dhReplicationTimeoutCommand',
-                    delay: this.config.dc_choose_time,
+                    delay: constants.OFFER_FINALIZED_COMMAND_DEADLINE_AT,
                     data: {
                         offerId,
                         dcNodeId,
