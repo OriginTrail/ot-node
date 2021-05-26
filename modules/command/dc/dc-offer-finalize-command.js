@@ -150,10 +150,14 @@ class DCOfferFinalizeCommand extends Command {
             // send back to miner
             this.logger.important(`DHs [${excludedDHs}] don't have enough funds for offer ${offerId}. Sending back to miner...`);
             const { data } = command;
-            Object.assign(data, {
-                excludedDHs,
-                internalOfferId: offer.id,
-            });
+            if (data.excludedDHs) {
+                data.excludedDHs.push(...excludedDHs);
+            } else {
+                Object.assign(data, {
+                    excludedDHs,
+                    internalOfferId: offer.id,
+                });
+            }
             this.logger.warn(`Failed to finalize offer ${offerId} because some of the DHs didn't have enough funds. Trying again...`);
             return {
                 commands: [{
