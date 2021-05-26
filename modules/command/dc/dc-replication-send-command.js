@@ -3,6 +3,7 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Encryption = require('../../RSAEncryption');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Handles replication request
@@ -41,7 +42,7 @@ class DCReplicationSendCommand extends Command {
 
         const purposes = await this.blockchain
             .getWalletPurposes(dhIdentity, wallet, blockchainId).response;
-        if (!purposes.includes('2')) {
+        if (!purposes.includes(constants.IDENTITY_PERMISSION.action)) {
             const message = 'Wallet provided does not have the appropriate permissions set up for the given identity.';
             this.logger.warn(message);
             // TODO Send some response to DH to avoid pointlessly waiting

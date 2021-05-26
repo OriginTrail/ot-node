@@ -1,7 +1,8 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const encryption = require('../../RSAEncryption');
-const models = require('../../../models/index');
+const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 /**
  * Handles replication request
@@ -12,6 +13,7 @@ class DcReplicationCompletedCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -31,11 +33,33 @@ class DcReplicationCompletedCommand extends Command {
             Utilities.denormalizeHex(dhIdentity)];
         const address = encryption.extractSignerAddress(toValidate, signature);
 
-        if (!Utilities.compareHexStrings(address, dhWallet)) {
-            throw new Error(`Failed to validate DH ${dhWallet} signature for offer ${offerId}`);
+        const offer = await Models.offers.findOne({
+            where: {
+                offer_id: offerId,
+            },
+        });
+        const { blockchain_id } = offer;
+
+        let validationFailed = false;
+        let message = '';
+
+        const purposes = await this.blockchain
+            .getWalletPurposes(dhIdentity, address, blockchain_id).response;
+        if (!purposes.includes(constants.IDENTITY_PERMISSION.encryption)) {
+            validationFailed = true;
+            message += `Extracted signer wallet ${address} does not have the appropriate permissions set up for the given identity ${dhIdentity}. `;
         }
 
-        const replicatedData = await models.replicated_data.findOne({
+        if (!Utilities.compareHexStrings(address, dhWallet)) {
+            validationFailed = true;
+            message += `Signer wallet ${address} does not match the sender wallet ${dhWallet}`;
+        }
+
+        if (validationFailed) {
+            throw Error(`Failed to validate DH ${dhWallet} signature for offer ${offerId}. ${message}`);
+        }
+
+        const replicatedData = await Models.replicated_data.findOne({
             where:
                 {
                     offer_id: offerId, dh_id: dhNodeId,
