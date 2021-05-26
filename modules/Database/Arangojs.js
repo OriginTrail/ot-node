@@ -864,6 +864,27 @@ class ArangoJS {
     }
 
     /**
+     * This method will leave only encryption for selected color, datasetId and offerId
+     * Rest of the encryption data will be removed
+     * @param datasetId
+     * @param offerId
+     * @param leaveColor
+     * @returns {Promise<void>}
+     */
+    async removeUnnecessaryEncryptionData(datasetId, offerId, leaveColor) {
+        const queryString = `LET datasetMetadata = DOCUMENT('ot_datasets', @datasetId)
+for v in DOCUMENT('ot_vertices', datasetMetadata.vertices)
+filter v.encrypted != null
+filter v.encrypted[@offerId] != null
+let newEncrypted = merge(v.encrypted, {@offerId: { @leaveColor: v.encrypted[@offerId][@leaveColor]}})
+
+UPDATE v with {encrypted: newEncrypted } in 'ot_vertices' OPTIONS { mergeObjects: false }`;
+        await this.runQuery(queryString, {
+            datasetId, offerId, leaveColor,
+        });
+    }
+
+    /**
      * Updates document imports by ID
      * @param collectionName
      * @param senderId
