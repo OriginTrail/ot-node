@@ -191,6 +191,27 @@ class GraphStorage {
     }
 
     /**
+     * This method will remove all encryption data for dataset and offer
+     * @param datasetId
+     * @param offerId
+     * @returns {Promise<void>}
+     */
+    async removeEncryptionData(datasetId, offerId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.removeEncryptionData(datasetId, offerId)
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
      * Finds imports IDs based on data location query
      *
      * DataLocationQuery structure: [[path, value, opcode]*]

@@ -885,6 +885,24 @@ UPDATE v with {encrypted: newEncrypted } in 'ot_vertices' OPTIONS { mergeObjects
     }
 
     /**
+     * This method will remove all encryption data for dataset and offer
+     * @param datasetId
+     * @param offerId
+     * @returns {Promise<void>}
+     */
+    async removeEncryptionData(datasetId, offerId) {
+        const queryString = `LET datasetMetadata = DOCUMENT('ot_datasets', @datasetId)
+for v in DOCUMENT('ot_vertices', datasetMetadata.vertices)
+filter v.encrypted != null
+filter v.encrypted[@offerId] != null
+let newEncrypted = unset(v.encrypted, @offerId)
+UPDATE v with {encrypted: newEncrypted } in 'ot_vertices' OPTIONS { mergeObjects: false, keepNull: false }`;
+        await this.runQuery(queryString, {
+            datasetId, offerId,
+        });
+    }
+
+    /**
      * Updates document imports by ID
      * @param collectionName
      * @param senderId

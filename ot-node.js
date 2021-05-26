@@ -289,13 +289,6 @@ class OTNode {
             await graphStorage.connect();
             log.info(`Connected to graph database: ${graphStorage.identify()}`);
             await this._runArangoDatasetSignatureMigration(config, graphStorage);
-            await this._runArangoRemoveUnnecessaryEncryptionDataMigration(
-                config,
-                graphStorage,
-                blockchain,
-                profileService,
-                replicationService,
-            );
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             process.exit(1);
@@ -335,9 +328,18 @@ class OTNode {
             console.log(e);
             process.exit(1);
         }
-        await transport.start();
 
         await profileService.validateAndUpdateProfiles();
+        await this._runArangoRemoveUnnecessaryEncryptionDataMigration(
+            config,
+            graphStorage,
+            blockchain,
+            profileService,
+            replicationService,
+        );
+
+        await transport.start();
+
         // Initialize bugsnag notification service
         const errorNotificationService = container.resolve('errorNotificationService');
         await errorNotificationService.initialize();

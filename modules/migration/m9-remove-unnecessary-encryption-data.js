@@ -20,7 +20,7 @@ class M9RemoveEncryptionDataMigration {
      */
     async run() {
         const bids = await Models.bids.findAll({
-            attributes: ['data_set_id', 'offer_id', 'blockchain_id'],
+            attributes: ['data_set_id', 'offer_id', 'blockchain_id', 'status'],
         });
 
         const allMyIdentities = {};
@@ -35,19 +35,22 @@ class M9RemoveEncryptionDataMigration {
                     allMyIdentities[bid.blockchain_id],
                     bid.blockchain_id,
                 ).response;
-            let encryptionColor = null;
-            if (holder.stakedAmount !== 0 && bid.status === '') {
-                // i'm choosen for the offer
-                encryptionColor = this.replicationService
-                    .castNumberToColor(holder.litigationEncryptionType);
+            if (bid.status === 'CHOSEN' && holder.stakedAmount !== '0') {
+                const encryptionColor = this.replicationService
+                    .castNumberToColor(parseInt(holder.litigationEncryptionType, 10));
+                // eslint-disable-next-line no-await-in-loop
+                await this.graphStorage.removeUnnecessaryEncryptionData(
+                    bid.data_set_id,
+                    bid.offer_id,
+                    encryptionColor,
+                );
+            } else if (bid.status === 'NOT_CHOSEN' && holder.stakedAmount === '0') {
+                // eslint-disable-next-line no-await-in-loop
+                await this.graphStorage.removeEncryptionData(
+                    bid.data_set_id,
+                    bid.offer_id,
+                );
             }
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.graphStorage.removeUnnecessaryEncryptionData(
-                bid.data_set_id,
-                bid.offer_id,
-                encryptionColor,
-            );
         }
     }
 }
