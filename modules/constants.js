@@ -202,3 +202,14 @@ exports.EVENT_NAME = {
 exports.DB_TYPE = {
     psql: 'psql',
 };
+
+/**
+ * @constant {Object: string} IDENTITY_PERMISSION
+ * Possible permissions for a wallet to have for a given identity
+ * @type {{management: string, action: string, encryption: string}}
+ */
+exports.IDENTITY_PERMISSION = {
+    management: '1',
+    action: '2',
+    encryption: '4',
+};
