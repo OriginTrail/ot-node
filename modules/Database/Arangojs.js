@@ -864,6 +864,92 @@ class ArangoJS {
     }
 
     /**
+     * This method will leave only encryption for selected color, datasetId and offerId
+     * Rest of the encryption data will be removed
+     * @param datasetId
+     * @param offerId
+     * @param leaveColor
+     * @returns {Promise<void>}
+     */
+    async removeUnnecessaryEncryptionData(datasetId, offerId, leaveColor) {
+        const queryString = `LET datasetMetadata = DOCUMENT('ot_datasets', @datasetId)
+let verticesAction = (for v in DOCUMENT('ot_vertices', datasetMetadata.vertices)
+filter v.encrypted != null
+filter v.encrypted[@offerId] != null
+filter ATTRIBUTES(v.encrypted[@offerId]) > 1
+let encrypted = merge(v.encrypted, {@offerId: { @leaveColor: v.encrypted[@offerId][@leaveColor]}})
+return {key: v._key, encrypted}
+)
+let edgesAction = (for e in DOCUMENT('ot_edges', datasetMetadata.edges)
+filter e.encrypted != null
+filter e.encrypted[@offerId] != null
+filter ATTRIBUTES(e.encrypted[@offerId]) > 1
+let encrypted = merge(e.encrypted, {@offerId: { @leaveColor: e.encrypted[@offerId][@leaveColor]}})
+return {key: e._key, encrypted}
+)
+
+return {verticesAction, edgesAction}`;
+
+        const actions = await this.runQuery(queryString, {
+            datasetId, offerId, leaveColor,
+        });
+
+        /* eslint-disable no-unused-expressions,import/no-unresolved,global-require */
+        const action = String((params) => {
+            const { query } = require('@arangodb');
+            query`for action in ${params.params.verticesAction} UPDATE {_key: action.key, encrypted: action.encrypted } in 'ot_vertices' OPTIONS { mergeObjects: false }`;
+            query`for action in ${params.params.edgesAction} UPDATE {_key: action.key, encrypted: action.encrypted } in 'ot_edges' OPTIONS { mergeObjects: false }`;
+        });
+
+        await this.db.transaction(['ot_vertices', 'ot_edges'], action, {
+            params: {
+                edgesAction: actions[0].edgesAction,
+                verticesAction: actions[0].verticesAction,
+            },
+        });
+    }
+
+    /**
+     * This method will remove all encryption data for dataset and offer
+     * @param datasetId
+     * @param offerId
+     * @returns {Promise<void>}
+     */
+    async removeEncryptionData(datasetId, offerId) {
+        const queryString = `LET datasetMetadata = DOCUMENT('ot_datasets', @datasetId)
+let verticesAction = (for v in DOCUMENT('ot_vertices', datasetMetadata.vertices)
+filter v.encrypted != null
+filter v.encrypted[@offerId] != null
+let encrypted = unset(v.encrypted, @offerId)
+return {key: v._key, encrypted}
+)
+let edgesAction = (for e in DOCUMENT('ot_edges', datasetMetadata.edges)
+filter e.encrypted != null
+filter e.encrypted[@offerId] != null
+let encrypted = unset(e.encrypted, @offerId)
+return {key: e._key, encrypted}
+)
+return {verticesAction, edgesAction}`;
+        const actions = await this.runQuery(queryString, {
+            datasetId, offerId,
+        });
+
+        /* eslint-disable no-unused-expressions,import/no-unresolved,global-require */
+        const action = String((params) => {
+            const { query } = require('@arangodb');
+            query`for action in ${params.params.verticesAction} UPDATE {_key: action.key, encrypted: action.encrypted } in 'ot_vertices' OPTIONS { mergeObjects: false }`;
+            query`for action in ${params.params.edgesAction} UPDATE {_key: action.key, encrypted: action.encrypted } in 'ot_edges' OPTIONS { mergeObjects: false }`;
+        });
+
+        await this.db.transaction(['ot_vertices', 'ot_edges'], action, {
+            params: {
+                edgesAction: actions[0].edgesAction,
+                verticesAction: actions[0].verticesAction,
+            },
+        });
+    }
+
+    /**
      * Updates document imports by ID
      * @param collectionName
      * @param senderId

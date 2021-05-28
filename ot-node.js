@@ -46,6 +46,7 @@ const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
 const M7ArangoDatasetSignatureMigration = require('./modules/migration/m7-arango-dataset-signature-migration');
 const M8MissedOfferCheckMigration = require('./modules/migration/m8-missed-offer-check-migration');
+const M9RemoveEncryptionDataMigration = require('./modules/migration/m9-remove-unnecessary-encryption-data');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
@@ -276,10 +277,9 @@ class OTNode {
         await blockchain.loadContracts();
 
         const emitter = container.resolve('emitter');
-        const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
         const profileService = container.resolve('profileService');
-        const approvalService = container.resolve('approvalService');
+        const replicationService = container.resolve('replicationService');
 
         emitter.initialize();
 
@@ -319,7 +319,6 @@ class OTNode {
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
-        dhService.listenToBlockchainEvents();
 
         try {
             await profileService.initProfile();
@@ -329,9 +328,18 @@ class OTNode {
             console.log(e);
             process.exit(1);
         }
-        await transport.start();
 
         await profileService.validateAndUpdateProfiles();
+        await this._runArangoRemoveUnnecessaryEncryptionDataMigration(
+            config,
+            graphStorage,
+            blockchain,
+            profileService,
+            replicationService,
+        );
+
+        await transport.start();
+
         // Initialize bugsnag notification service
         const errorNotificationService = container.resolve('errorNotificationService');
         await errorNotificationService.initialize();
@@ -419,6 +427,41 @@ class OTNode {
                 log.warn(`One-time Arango dataset signature migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
 
                 await Utilities.writeContentsToFile(migrationDir, m7ArangoSignatureMigrationFilename, 'PROCESSED');
+            } catch (e) {
+                log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
+                process.exit(1);
+            }
+        }
+    }
+
+    async _runArangoRemoveUnnecessaryEncryptionDataMigration(
+        config,
+        graphStorage,
+        blockchain,
+        profileService,
+        replicationService,
+    ) {
+        const migrationsStartedMills = Date.now();
+
+        const m9ArangoEncryptionDataMigrationFilename = '9_m9ArangoRemoveUnnecessaryEncryptionDataMigrationFile';
+        const migrationDir = path.join(config.appDataPath, 'migrations');
+        const migrationFilePath = path.join(migrationDir, m9ArangoEncryptionDataMigrationFilename);
+        if (!fs.existsSync(migrationFilePath)) {
+            const migration = new M9RemoveEncryptionDataMigration({
+                logger: log,
+                config,
+                blockchain,
+                graphStorage,
+                profileService,
+                replicationService,
+            });
+
+            try {
+                log.info('Initializing Arango remove unnecessary encryption data migration...');
+                await migration.run();
+                log.warn(`One-time Arango remove unnecessary encryption data migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+
+                await Utilities.writeContentsToFile(migrationDir, m9ArangoEncryptionDataMigrationFilename, 'PROCESSED');
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 process.exit(1);
