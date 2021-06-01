@@ -145,7 +145,6 @@ Feature: Test basic importer features
     When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
     And DC imports "importers/use_cases/otjson_1.2/sort2.json" as GRAPH
-    And DC waits for import to finish
-    When DV exports the last imported dataset as OT-JSON
-    And DV waits for export to finish
-    Then the last two exported datasets from 1st and 1st node should have the same hashes
+    And I wait for 2 seconds
+    And DC checks status of the last import
+    Then the last import should already have been imported
