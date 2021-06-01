@@ -86,10 +86,7 @@ class DhOfferFinalizedCommand extends Command {
                 bid.status = 'NOT_CHOSEN';
                 await bid.save({ fields: ['status'] });
                 this.logger.important(`I haven't been chosen for offer ${offerId} on blockchain ${blockchain_id}.`);
-                await this.graphStorage.removeEncryptionData(
-                    bid.data_set_id,
-                    bid.offer_id,
-                );
+
                 return Command.empty();
             }
         }

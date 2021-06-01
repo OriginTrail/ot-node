@@ -46,9 +46,10 @@ class M9RemoveEncryptionDataMigration {
                 );
             } else if (bid.status === 'NOT_CHOSEN' && holder.stakedAmount === '0') {
                 // eslint-disable-next-line no-await-in-loop
-                await this.graphStorage.removeEncryptionData(
+                await this.graphStorage.removeUnnecessaryEncryptionData(
                     bid.data_set_id,
                     bid.offer_id,
+                    null,
                 );
             }
         }
