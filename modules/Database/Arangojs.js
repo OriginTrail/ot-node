@@ -897,7 +897,7 @@ filter v.encrypted != null
 filter v.encrypted[@offerId] != null
 filter ATTRIBUTES(v.encrypted[@offerId]) > 1
 let encrypted = merge(v.encrypted, {@offerId: { [finalColor]: v.encrypted[@offerId][finalColor]}})
-return {key: v._key, encrypted, finalColor}
+return {key: v._key, encrypted}
 )
 let edgesAction = (for e in DOCUMENT('ot_edges', datasetMetadata.edges)
 filter e.encrypted != null
