@@ -12,7 +12,12 @@ module.exports = {
             });
         await queryInterface
             .changeColumn('offers', 'data_set_id', {
+                type: Sequelize.STRING,
                 unique: false,
+            });
+        await queryInterface
+            .changeColumn('offers', 'price_factor_used_for_price_calculation', {
+                type: Sequelize.STRING,
             });
     },
     down: async (queryInterface) => { },
