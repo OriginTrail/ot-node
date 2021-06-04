@@ -1,6 +1,6 @@
 Feature: Test various litigation scenarios
   Background: Setup local blockchain and bootstraps
-    Given the blockchains are set up
+    Given the blockchain is set up
     And 1 bootstrap is running
 
   @first
@@ -15,12 +15,8 @@ Feature: Test various litigation scenarios
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1-EPCIS
     And DC waits for import to finish
-    Then DC's last import's hash should be the same as one manually calculated
     Given DC initiates the replication for last imported dataset
-    And DC waits for last offer to get written to blockchain
     And I wait for replications to finish
-    Then the last root hash should be the same as one manually calculated
-    Then the last import should be the same on all nodes that replicated data
     And I wait for challenges to start
     And I corrupt 1st holder's database ot_vertices collection
     And I wait for litigation initiation
