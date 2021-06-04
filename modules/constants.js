@@ -67,7 +67,7 @@ exports.OFFER_FINALIZED_COMMAND_DEADLINE_AT = 6 * 60 * 60 * 1000;
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
-    'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
+    'cleanerCommand', 'dcChallengesCommand', 'dhProcessBlockchainEventsCommand',
     'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
     'trailCleanerCommand', 'handlerIdsCleanerCommand', 'datasetPruningCommand',
 ];
@@ -148,6 +148,7 @@ exports.PUBLIC_KEY_VALIDITY_IN_MILLS = 30 * 24 * 60 * 60 * 1000; // 30 days
  */
 exports.PROCESS_NAME = {
     other: 'other',
+    bcEventsHandling: 'blockchain-events-handling',
     offerHandling: 'offer-handling',
     challengesHandling: 'challenges-handling',
     litigationHandling: 'litigation-handling',
@@ -188,6 +189,14 @@ exports.NODE_STATUS = {
     active: 'ACTIVE',
     fallback: 'FALLBACK',
     updating: 'UPDATING',
+};
+/**
+ * Blockchain event names
+ * @type {{LitigationInitiated: string, OfferCreated: string}}
+ */
+exports.EVENT_NAME = {
+    LitigationInitiated: 'LitigationInitiated',
+    OfferCreated: 'OfferCreated',
 };
 
 exports.DB_TYPE = {
