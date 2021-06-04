@@ -781,15 +781,25 @@ class Web3Implementation {
     /**
      * Gets the version variable from a contract, might throw an error if the variable doesn't exist
      * @param contractName
-     * @returns {Promise<BN>}
+     * @returns {Promise<String>}
      */
     async getContractVersion(contractName) {
         this.logger.trace(`[${this.getBlockchainId()}] Reading ${contractName} contract version.`);
         const contract = this.contractsByName[contractName];
+
         if (!contract || Utilities.isZeroHash(contract._address)) {
             return;
         }
-        return contract.methods.version().call();
+
+        const code = await this.web3.eth.getCode(contract._address);
+
+        const signature = 'version()';
+        const hash = this.web3.eth.abi.encodeFunctionSignature(signature);
+
+        if (code.indexOf(hash.slice(2, hash.length)) > 0) {
+            return contract.methods.version().call();
+        }
+        throw Error('Contract does not have version variable');
     }
 
     /**

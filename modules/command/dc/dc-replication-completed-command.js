@@ -111,7 +111,11 @@ class DcReplicationCompletedCommand extends Command {
                 .getContractVersion('HOLDING_CONTRACT', blockchain_id).response;
             holdingVersion = parseInt(holdingVersion, 10);
         } catch (e) {
-            holdingVersion = 100;
+            if (e.message === 'Contract does not have version variable') {
+                holdingVersion = 100;
+            } else {
+                throw Error('Failed to fetch holding contract version');
+            }
         }
 
         if (holdingVersion >= 101 && newSignatureMatches) {
