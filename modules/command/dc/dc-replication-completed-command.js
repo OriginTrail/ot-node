@@ -26,46 +26,52 @@ class DcReplicationCompletedCommand extends Command {
             offerId, dhNodeId,
             dhWallet, dhIdentity,
             signature, isReplacement,
-            alternativeSignature,
+            alternativeSignature, response,
         } = command.data;
-
-        const offer = await Models.offers.findOne({
-            where: {
-                offer_id: offerId,
-            },
-        });
-        const { blockchain_id } = offer;
-
-        const replicatedData = await Models.replicated_data.findOne({
-            where:
-                {
-                    offer_id: offerId, dh_id: dhNodeId,
+        try {
+            const offer = await Models.offers.findOne({
+                where: {
+                    offer_id: offerId,
                 },
-        });
-        if (!replicatedData) {
-            throw new Error(`Failed to find replication for DH node ${dhNodeId}`);
-        }
+            });
+            const { blockchain_id } = offer;
 
-        const { signerOld, signerNew } = this.extractSigners(
-            offerId, dhIdentity, replicatedData.color,
-            signature, alternativeSignature,
-        );
+            const replicatedData = await Models.replicated_data.findOne({
+                where:
+                    {
+                        offer_id: offerId, dh_id: dhNodeId,
+                    },
+            });
+            if (!replicatedData) {
+                throw new Error(`Failed to find replication for DH node ${dhNodeId}`);
+            }
 
-        const confirmation = await this
-            .validateSignatures(
-                offerId, dhIdentity, dhWallet,
-                signerOld, signerNew, signature, alternativeSignature, blockchain_id,
+            const { signerOld, signerNew } = this.extractSigners(
+                offerId, dhIdentity, replicatedData.color,
+                signature, alternativeSignature,
             );
 
-        replicatedData.confirmation = confirmation;
-        replicatedData.status = 'VERIFIED';
-        await replicatedData.save({ fields: ['status', 'confirmation'] });
+            const confirmation = await this
+                .validateSignatures(
+                    offerId, dhIdentity, dhWallet,
+                    signerOld, signerNew, signature, alternativeSignature, blockchain_id,
+                );
 
-        if (isReplacement === false) {
-            this.logger.notify(`Replication finished for DH node ${dhNodeId}`);
-        } else {
-            this.logger.notify(`Replacement replication finished for DH node ${dhNodeId}`);
+            replicatedData.confirmation = confirmation;
+            replicatedData.status = 'VERIFIED';
+            await replicatedData.save({ fields: ['status', 'confirmation'] });
+
+            await this.transport.sendResponse(response, { status: 'verified', offer_id: offerId });
+
+            if (isReplacement === false) {
+                this.logger.notify(`Replication finished for DH node ${dhNodeId}`);
+            } else {
+                this.logger.notify(`Replacement replication finished for DH node ${dhNodeId}`);
+            }
+        } catch (error) {
+            await this._handleError(command, error);
         }
+
         return Command.empty();
     }
 
@@ -123,7 +129,7 @@ class DcReplicationCompletedCommand extends Command {
         }
 
         if (holdingVersion >= 101 && oldSignatureMatches) {
-            errorMessage += 'Detected deprecated offer confirmation format, please update your node'
+            errorMessage += 'Detected deprecated offer confirmation format, the holder should update their node'
                 + ' to be eligible for new offers';
             throw Error(errorMessage);
         }
@@ -160,16 +166,20 @@ class DcReplicationCompletedCommand extends Command {
     }
 
     async recover(command, error) {
+        await this._handleError(command, error);
+
+        return Command.empty();
+    }
+
+    async _handleError(command, error) {
         const {
             offerId, dhIdentity, response,
         } = command.data;
 
-        this.logger.error(`Failed to complete replication for offerId ${offerId} `
+        this.logger.warn(`Failed to complete replication for offerId ${offerId} `
             + `and holder identity ${dhIdentity}. ${error.message}`);
 
         await this.transport.sendResponse(response, { status: 'fail', message: error.message });
-
-        return Command.empty();
     }
 
     /**

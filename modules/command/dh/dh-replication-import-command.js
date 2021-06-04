@@ -60,10 +60,7 @@ class DhReplicationImportCommand extends Command {
             .then((result) => {
                 decryptedDataset = result.decDataset;
                 encryptedMap = result.encMap;
-                color = this.getColorFromEncryptedMap(encryptedMap, offerId);
-                if (![0, 1, 2].includes(color)) {
-                    throw Error('Could not determine encryption color');
-                }
+                color = encColor;
             })
             .then(() => this.validateDatasetId(dataSetId, decryptedDataset))
             .then(() => this.validateRootHash(decryptedDataset, dataSetId, otJson, blockchain_id))
@@ -347,44 +344,6 @@ class DhReplicationImportCommand extends Command {
         bid.status = 'REPLICATED';
         await bid.save({ fields: ['status'] });
     }
-
-    getColorFromEncryptedMap(encryptedMap, offerId) {
-        let necessaryObject;
-
-        for (const objectId in encryptedMap.objects) {
-            const object = encryptedMap.objects[objectId];
-            if (object[offerId]) {
-                necessaryObject = object[offerId];
-                break;
-            }
-        }
-
-        if (!necessaryObject) {
-            for (const objectId in encryptedMap.objects) {
-                const object = encryptedMap.relations[objectId];
-                if (object[offerId]) {
-                    necessaryObject = object[offerId];
-                    break;
-                }
-            }
-        }
-
-        if (!necessaryObject) {
-            return null;
-        }
-        if (necessaryObject.red) {
-            return 0;
-        }
-        if (necessaryObject.green) {
-            return 1;
-        }
-        if (necessaryObject.blue) {
-            return 2;
-        }
-
-        return null;
-    }
-
 
     /**
      * Builds default
