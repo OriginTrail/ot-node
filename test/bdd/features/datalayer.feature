@@ -203,25 +203,6 @@ Feature: Data layer related features
     Then the last exported dataset should contain "../../../importers/use_cases/certs/halal.jpg" data as "urn:ot:object:product:batch:Id:pVey_company-red_company-red"
 
 
-  @first
-  Scenario: Challenge request-response test
-    Given I setup 4 nodes
-    And I override configuration for all nodes
-      | dc_holding_time_in_minutes | 5 |
-      | numberOfChallenges | 100 |
-      | challengeResponseTimeMills | 5000 |
-    And I start the nodes
-    And I use 1st node as DC
-    And I use 3th node as DH
-    And DC imports "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1-EPCIS
-    And DC waits for import to finish
-    Given DC initiates the replication for last imported dataset
-    And I wait for replications to finish
-    Then DC should send a challenge request
-    Then DH should send the challenge response
-    Then DC should verify the response
-
-
   @second
   Scenario: Node should not respond to network query if he did't replicate it itself
     Given the replication difficulty is 0
