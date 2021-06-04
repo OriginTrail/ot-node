@@ -779,6 +779,20 @@ class Web3Implementation {
     }
 
     /**
+     * Gets the version variable from a contract, might throw an error if the variable doesn't exist
+     * @param contractName
+     * @returns {Promise<BN>}
+     */
+    async getContractVersion(contractName) {
+        this.logger.trace(`[${this.getBlockchainId()}] Reading ${contractName} contract version.`);
+        const contract = this.contractsByName[contractName];
+        if (!contract || Utilities.isZeroHash(contract._address)) {
+            return;
+        }
+        return contract.methods.version().call();
+    }
+
+    /**
      * Gets all past events for the contract
      * @param contractName
      * @param fromBlock
@@ -1090,7 +1104,7 @@ class Web3Implementation {
      * @param wallet {string}
      * @return {Promise<[]>}
      */
-    getWalletPurposes(erc725Identity, wallet) {
+    async getWalletPurposes(erc725Identity, wallet) {
         const erc725IdentityContract = new this.web3.eth.Contract(
             this.erc725IdentityContractAbi,
             erc725Identity,

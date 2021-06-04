@@ -54,11 +54,16 @@ class DhReplicationImportCommand extends Command {
         let decryptedDataset;
         let encryptedMap;
         let decryptedGraphRootHash;
+        let color;
 
         this.decryptAndSortDataset(otJson, litigationPublicKey, offerId, encColor)
             .then((result) => {
                 decryptedDataset = result.decDataset;
                 encryptedMap = result.encMap;
+                color = this.getColorFromEncryptedMap(encryptedMap, offerId);
+                if (![0, 1, 2].includes(color)) {
+                    throw Error('Could not determine encryption color');
+                }
             })
             .then(() => this.validateDatasetId(dataSetId, decryptedDataset))
             .then(() => this.validateRootHash(decryptedDataset, dataSetId, otJson, blockchain_id))
@@ -95,7 +100,12 @@ class DhReplicationImportCommand extends Command {
                 dcWallet,
                 blockchain_id,
             ))
-            .then(() => this.sendReplicationFinishedMessage(offerId, dcNodeId, blockchain_id))
+            .then(() => this.sendReplicationFinishedMessage(
+                offerId,
+                dcNodeId,
+                color,
+                blockchain_id,
+            ))
             .then(() => this.updateBidData(offerId))
             .then(() => this.commandExecutor.add({
                 name: 'dhOfferFinalizedCommand',
@@ -294,7 +304,16 @@ class DhReplicationImportCommand extends Command {
         });
     }
 
-    async sendReplicationFinishedMessage(offerId, dcNodeId, blockchainId) {
+    /**
+     * Sends replication-finished message to DC, along with bid confirmations
+     * @param offerId - The offer ID
+     * @param dcNodeId - The network Identifier of the DC
+     * @param color - The number of the encryption received (0 = red, 1 = green, 2 = blue)
+     * @param blockchainId - The blockchain ID for the offer, in order to use the proper
+     *                       blockchain identity and wallet
+     * @returns {Promise<void>}
+     */
+    async sendReplicationFinishedMessage(offerId, dcNodeId, color, blockchainId) {
         const dhIdentity = this.profileService.getIdentity(blockchainId);
         const toSign = [
             Utilities.denormalizeHex(offerId),
@@ -302,13 +321,21 @@ class DhReplicationImportCommand extends Command {
 
         const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchainId).response;
 
+        const toSignNew = [
+            Utilities.denormalizeHex(offerId),
+            Utilities.denormalizeHex(dhIdentity),
+            color,
+        ];
         const messageSignature = Encryption
             .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
+        const alternativeSignature = Encryption
+            .signMessage(toSignNew, Utilities.normalizeHex(node_private_key));
         const replicationFinishedMessage = {
             offerId,
             dhIdentity,
             messageSignature: messageSignature.signature,
+            alternativeSignature: alternativeSignature.signature,
             wallet: node_wallet,
         };
 
@@ -320,6 +347,44 @@ class DhReplicationImportCommand extends Command {
         bid.status = 'REPLICATED';
         await bid.save({ fields: ['status'] });
     }
+
+    getColorFromEncryptedMap(encryptedMap, offerId) {
+        let necessaryObject;
+
+        for (const objectId in encryptedMap.objects) {
+            const object = encryptedMap.objects[objectId];
+            if (object[offerId]) {
+                necessaryObject = object[offerId];
+                break;
+            }
+        }
+
+        if (!necessaryObject) {
+            for (const objectId in encryptedMap.objects) {
+                const object = encryptedMap.relations[objectId];
+                if (object[offerId]) {
+                    necessaryObject = object[offerId];
+                    break;
+                }
+            }
+        }
+
+        if (!necessaryObject) {
+            return null;
+        }
+        if (necessaryObject.red) {
+            return 0;
+        }
+        if (necessaryObject.green) {
+            return 1;
+        }
+        if (necessaryObject.blue) {
+            return 2;
+        }
+
+        return null;
+    }
+
 
     /**
      * Builds default

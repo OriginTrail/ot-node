@@ -496,6 +496,15 @@ module.exports = async (deployer, network, accounts) => {
         //     { gas: 6000000, gasPrice: 8000000000 },
         // );
         break;
+    case 'updateContract':
+        hub = await Hub.at('insert hub contract address here');
+        console.log(JSON.stringify(hub.address));
+        if (hub.address) {
+            holding = await deployer
+                .deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
+            await hub.setContractAddress('Holding', holding.address);
+        }
+        break;
     default:
         console.warn('Please use one of the following network identifiers: ganache, mock, test, or rinkeby');
         break;
