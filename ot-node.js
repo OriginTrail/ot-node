@@ -307,7 +307,7 @@ class OTNode {
             log.notify('================================================================');
         }
 
-        if (config.high_availability_setup) {
+        if (config.high_availability.enabled) {
             const highAvailabilityService = container.resolve('highAvailabilityService');
 
             await highAvailabilityService.startHighAvailabilityNode();

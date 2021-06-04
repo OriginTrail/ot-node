@@ -61,11 +61,18 @@ class DHProcessBlockchainEventsCommand extends Command {
         const allMyIdentities = {};
         this.blockchain.getAllBlockchainIds()
             .forEach(id => allMyIdentities[id] = this.profileService.getIdentity(id));
+        const replicationData = await Models.replicated_data.findAll({
+            where: { status: 'LITIGATION_STARTED' },
+            attributes: ['offer_id'],
+        });
+        const myOfferIds = replicationData ? replicationData.map(data => data.offer_id) : [];
         const promises = [];
         const event = events.find((e) => {
-            const { holderIdentity } = JSON.parse(e.data);
-            e.finished = 1;
-            promises.push(e.save());
+            const { holderIdentity, offerId } = JSON.parse(e.data);
+            if (!myOfferIds.includes(offerId)) {
+                e.finished = 1;
+                promises.push(e.save());
+            }
             return Utilities.compareHexStrings(holderIdentity, allMyIdentities[e.blockchain_id]);
         });
         await Promise.all(promises);
