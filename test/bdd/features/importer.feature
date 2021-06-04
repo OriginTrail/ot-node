@@ -111,7 +111,7 @@ Feature: Test basic importer features
 
   @third
   Scenario: Check that two OT-JSON 1.1 datasets with different order have different hashes
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 node
     And I start the nodes
     And I use 1st node as DC
@@ -133,7 +133,7 @@ Feature: Test basic importer features
 
   @fourth
   Scenario: Check that two OT-JSON 1.2 datasets with different order have the same hashes
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 node
     And I start the nodes
     And I use 1st node as DC
