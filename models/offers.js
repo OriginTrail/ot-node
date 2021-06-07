@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
         number_of_verified_replications: DataTypes.INTEGER,
         trac_in_base_currency_used_for_price_calculation: DataTypes.STRING,
         gas_price_used_for_price_calculation: DataTypes.STRING,
-        price_factor_used_for_price_calculation: DataTypes.INTEGER,
+        price_factor_used_for_price_calculation: DataTypes.STRING,
         offer_finalize_transaction_hash: DataTypes.STRING(128),
         blockchain_id: DataTypes.STRING,
         replication_start_timestamp: DataTypes.STRING,
