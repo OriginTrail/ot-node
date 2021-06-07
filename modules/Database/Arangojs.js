@@ -1133,6 +1133,10 @@ return {verticesAction, edgesAction}`;
                         existing.encrypted[key] = document.encrypted[key];
                     }
                 }
+                if (document.objectIds && !existing.objectIds) {
+                    existing.objectIds = document.objectIds;
+                }
+
                 return this.updateDocument(collectionName, existing);
             }
         }

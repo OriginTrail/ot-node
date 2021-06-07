@@ -98,6 +98,7 @@ class ImportWorkerController {
                 const commandData = {
                     documentPath,
                     handler_id,
+                    data_set_id: otjson['@id'],
                 };
                 await this.commandExecutor.add({
                     name: command.sequence[0],
