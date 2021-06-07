@@ -60,27 +60,27 @@ for (let i = 0; i < number_of_nodes; i += 1) {
 
     // Uncomment if you want nodes to have different blockchain setups and for some nodes to be DVs
     // if (node_name === 'DH2' || node_name === 'DH5') {
-    //     savedConfig.blockchain.implementations.splice(0,1);
+    //     parsedTemplate.blockchain.implementations.splice(0,1);
     //     if (node_name === 'DH5') {
-    //         savedConfig.blockchain.implementations[0].dh_price_factor = "10000000";
+    //         parsedTemplate.blockchain.implementations[0].dh_price_factor = '10000000';
     //     }
     // } else if (node_name === 'DH3' || node_name === 'DH6') {
-    //     savedConfig.blockchain.implementations.splice(1,1);
+    //     parsedTemplate.blockchain.implementations.splice(1,1);
     //     if (node_name === 'DH6') {
-    //         savedConfig.blockchain.implementations[0].dh_price_factor = "10000000";
+    //         parsedTemplate.blockchain.implementations[0].dh_price_factor = '10000000';
     //     }
     // } else if (node_name === 'DH4' || node_name === 'DH7') {
-    //     savedConfig.blockchain.implementations.reverse();
+    //     parsedTemplate.blockchain.implementations.reverse();
     //     if (node_name === 'DH4') {
-    //         savedConfig.blockchain.implementations[0].dh_price_factor = "10000000";
-    //         savedConfig.blockchain.implementations[1].dh_price_factor = "10000000";
+    //         parsedTemplate.blockchain.implementations[0].dh_price_factor = '10000000';
+    //         parsedTemplate.blockchain.implementations[1].dh_price_factor = '10000000';
     //     }
     // }
 
     // Uncomment if you want DH4 to be a DV
     // if (node_name === 'DH4') {
-    //     savedConfig.blockchain.implementations[0].dh_price_factor = "10000000";
-    //     savedConfig.blockchain.implementations[1].dh_price_factor = "10000000";
+    //     parsedTemplate.blockchain.implementations[0].dh_price_factor = '10000000';
+    //     parsedTemplate.blockchain.implementations[1].dh_price_factor = '10000000';
     // }
 
     fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));

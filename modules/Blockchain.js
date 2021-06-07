@@ -197,6 +197,21 @@ class Blockchain {
     }
 
     /**
+     * Gets the version variable from a contract, might throw an error if the variable doesn't exist
+     * @param contractName
+     * @param blockchain_id
+     * @param {Boolean} showUninitialized - Return all implementations, not only initialized ones
+     * @returns {Object} - An object containing the blockchain_id string and the response promise
+     */
+    getContractVersion(contractName, blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.getContractVersion(contractName),
+        };
+    }
+
+    /**
      * Gets profile by wallet
      * @param identity
      * @param blockchain_id
