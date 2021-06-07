@@ -912,7 +912,8 @@ return {verticesAction, edgesAction}`;
         const actions = await this.runQuery(queryString, {
             datasetId, offerId, leaveColor,
         });
-
+        actions[0].edgesAction = actions[0].edgesAction ? actions[0].edgesAction : [];
+        actions[0].verticesAction = actions[0].verticesAction ? actions[0].verticesAction : [];
         /* eslint-disable no-unused-expressions,import/no-unresolved,global-require */
         const action = String((params) => {
             const { query } = require('@arangodb');
