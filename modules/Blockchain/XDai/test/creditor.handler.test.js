@@ -96,16 +96,19 @@ async function createOffer(accounts) {
                 identity: identities[0],
                 privateKey: privateKeys[0],
                 hash: hash1,
+                color: new BN(1),
             },
             {
                 identity: identities[1],
                 privateKey: privateKeys[1],
                 hash: hash2,
+                color: new BN(2),
             },
             {
                 identity: identities[2],
                 privateKey: privateKeys[2],
                 hash: hash3,
+                color: new BN(3),
             },
         ].sort((x, y) => x.hash.localeCompare(y.hash));
 
@@ -126,7 +129,8 @@ async function createOffer(accounts) {
             var hashes = [];
             let promises = [];
             for (i = 0; i < 3; i += 1) {
-                promises[i] = util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+                promises[i] = util.keccakBytesAddressNumber
+                    .call(offerId, sortedIdentities[i].identity, sortedIdentities[i].color);
             }
             // eslint-disable-next-line no-await-in-loop
             hashes = await Promise.all(promises);
@@ -152,7 +156,11 @@ async function createOffer(accounts) {
                     confimations[0].signature,
                     confimations[1].signature,
                     confimations[2].signature,
-                    [new BN(0), new BN(1), new BN(2)],
+                    [
+                        sortedIdentities[0].color,
+                        sortedIdentities[1].color,
+                        sortedIdentities[2].color,
+                    ],
                     [
                         sortedIdentities[0].identity,
                         sortedIdentities[1].identity,
@@ -319,16 +327,19 @@ contract('Creditor handler testing', async (accounts) => {
                 identity: identities[0],
                 privateKey: privateKeys[0],
                 hash: hash1,
+                color: new BN(0),
             },
             {
                 identity: identities[1],
                 privateKey: privateKeys[1],
                 hash: hash2,
+                color: new BN(1),
             },
             {
                 identity: identities[2],
                 privateKey: privateKeys[2],
                 hash: hash3,
+                color: new BN(2),
             },
         ].sort((x, y) => x.hash.localeCompare(y.hash));
 
@@ -350,7 +361,8 @@ contract('Creditor handler testing', async (accounts) => {
         var hashes = [];
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            hashes[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+            hashes[i] = await util.keccakBytesAddressNumber
+                .call(offerId, sortedIdentities[i].identity, sortedIdentities[i].color);
         }
 
         // Getting confirmations
@@ -372,7 +384,11 @@ contract('Creditor handler testing', async (accounts) => {
                 confimations[0].signature,
                 confimations[1].signature,
                 confimations[2].signature,
-                [new BN(0), new BN(1), new BN(2)],
+                [
+                    sortedIdentities[0].color,
+                    sortedIdentities[1].color,
+                    sortedIdentities[2].color,
+                ],
                 [
                     sortedIdentities[0].identity,
                     sortedIdentities[1].identity,
@@ -456,16 +472,19 @@ contract('Creditor handler testing', async (accounts) => {
                 identity: identities[0],
                 privateKey: privateKeys[0],
                 hash: hash1,
+                color: new BN(0),
             },
             {
                 identity: identities[1],
                 privateKey: privateKeys[1],
                 hash: hash2,
+                color: new BN(1),
             },
             {
                 identity: identities[2],
                 privateKey: privateKeys[2],
                 hash: hash3,
+                color: new BN(2),
             },
         ].sort((x, y) => x.hash.localeCompare(y.hash));
 
@@ -487,7 +506,8 @@ contract('Creditor handler testing', async (accounts) => {
         var hashes = [];
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            hashes[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+            hashes[i] = await util.keccakBytesAddressNumber
+                .call(offerId, sortedIdentities[i].identity, sortedIdentities[i].color);
         }
 
         // Getting confirmations
@@ -507,7 +527,11 @@ contract('Creditor handler testing', async (accounts) => {
             confimations[0].signature,
             confimations[1].signature,
             confimations[2].signature,
-            [new BN(0), new BN(1), new BN(2)],
+            [
+                sortedIdentities[0].color,
+                sortedIdentities[1].color,
+                sortedIdentities[2].color,
+            ],
             [
                 sortedIdentities[0].identity,
                 sortedIdentities[1].identity,
@@ -527,7 +551,8 @@ contract('Creditor handler testing', async (accounts) => {
         for (let i = 0; i < res.length; i += 1) {
             assert(tokenAmountPerHolder.eq(res[i].stakedAmount), `Token amount not matching for identity ${sortedIdentities[i].identity}!`
             + `Expected ${tokenAmountPerHolder.toString()}, but got ${res[i].stakedAmount}!`);
-            assert.equal(res[i].litigationEncryptionType, i, 'Litigation hash not matching!');
+            const chosenEnctyptionType = sortedIdentities[i].color.toString(10);
+            assert.equal(res[i].litigationEncryptionType, chosenEnctyptionType, 'Litigation hash not matching!');
         }
 
         const finalStake = [];
