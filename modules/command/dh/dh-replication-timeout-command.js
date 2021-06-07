@@ -57,7 +57,7 @@ class DHOfferTimeoutCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferHandleCommand',
+            name: 'dhReplicationTimeoutCommand',
             delay: 0,
             transactional: false,
         };

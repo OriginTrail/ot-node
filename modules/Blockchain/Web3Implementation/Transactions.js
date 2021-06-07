@@ -35,6 +35,10 @@ class Transactions {
 
                         // eslint-disable-next-line no-await-in-loop
                         const result = await this._sendTransaction(transaction, serializedTx);
+
+                        if (!result) {
+                            future.reject(new TransactionFailedError('Received empty response from blockchain', transaction));
+                        }
                         if (result.status === '0x0') {
                             future.reject(result);
                         } else {
@@ -49,11 +53,10 @@ class Transactions {
                                 const transactionReceipt =
                                     // eslint-disable-next-line no-await-in-loop
                                     await this._fetchTransactionReceipt(transactionHash);
-
-                                if (transactionReceipt.status) {
+                                if (transactionReceipt && transactionReceipt.status) {
                                     future.resolve(transactionReceipt);
                                 } else {
-                                    future.reject(transactionReceipt);
+                                    future.reject(new TransactionFailedError(`Failed to fetch transaction receipt. Received receipt: ${transactionReceipt}`));
                                 }
 
                                 transactionHandled = true;
@@ -160,7 +163,7 @@ class Transactions {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 receipt = await this.web3.eth.getTransactionReceipt(transactionHash);
-                if (Object.keys(receipt).length > 0) {
+                if (receipt && typeof receipt === 'object' && Object.keys(receipt).length > 0) {
                     break;
                 }
                 this.logger.warn(`Failed to fetch transaction receipt from empty response on attempt ${i + 1}.`);

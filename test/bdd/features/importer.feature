@@ -111,7 +111,7 @@ Feature: Test basic importer features
 
   @third
   Scenario: Check that two OT-JSON 1.1 datasets with different order have different hashes
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 node
     And I start the nodes
     And I use 1st node as DC
@@ -133,7 +133,7 @@ Feature: Test basic importer features
 
   @fourth
   Scenario: Check that two OT-JSON 1.2 datasets with different order have the same hashes
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 node
     And I start the nodes
     And I use 1st node as DC
@@ -145,7 +145,6 @@ Feature: Test basic importer features
     When DV exports the last imported dataset as OT-JSON
     And DV waits for export to finish
     And DC imports "importers/use_cases/otjson_1.2/sort2.json" as GRAPH
-    And DC waits for import to finish
-    When DV exports the last imported dataset as OT-JSON
-    And DV waits for export to finish
-    Then the last two exported datasets from 1st and 1st node should have the same hashes
+    And I wait for 2 seconds
+    And DC checks status of the last import
+    Then the last import should already have been imported

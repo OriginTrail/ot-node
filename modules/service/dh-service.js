@@ -24,77 +24,17 @@ class DHService {
         this.remoteControl = ctx.remoteControl;
         this.pricingService = ctx.pricingService;
         this.profileService = ctx.profileService;
-
-        const that = this;
-        this.queue = new Queue((async (args, cb) => {
-            const {
-                offerId,
-                dcNodeId,
-                dataSetSizeInBytes,
-                holdingTimeInMinutes,
-                litigationIntervalInMinutes,
-                tokenAmountPerHolder,
-                dataSetId,
-                blockchain_id,
-                future,
-            } = args;
-            try {
-                await that._handleOffer(
-                    offerId,
-                    dcNodeId,
-                    dataSetSizeInBytes,
-                    holdingTimeInMinutes,
-                    litigationIntervalInMinutes,
-                    tokenAmountPerHolder,
-                    dataSetId,
-                    blockchain_id,
-                );
-                future.resolve();
-            } catch (e) {
-                future.reject(e);
-            }
-            cb();
-        }), { concurrent: 1 });
-    }
-
-    /**
-     * Throttle offer using internal queue
-     */
-    handleOffer(
-        offerId, dcNodeId,
-        dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-        tokenAmountPerHolder, dataSetId, blockchain_id,
-    ) {
-        return new Promise((resolve, reject) => {
-            this.queue.push({
-                offerId,
-                dcNodeId,
-                dataSetSizeInBytes,
-                holdingTimeInMinutes,
-                litigationIntervalInMinutes,
-                tokenAmountPerHolder,
-                dataSetId,
-                blockchain_id,
-                future: {
-                    resolve, reject,
-                },
-            });
-        });
     }
 
     /**
      * Handles one offer
      * @returns {Promise<void>}
      */
-    async _handleOffer(
+    async handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
         tokenAmountPerHolder, dataSetId, blockchain_id,
     ) {
-        if (dcNodeId === this.config.identity) {
-            return; // the offer is mine
-        }
-
         const existingBid = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
@@ -105,8 +45,6 @@ class DHService {
             return;
         }
 
-
-        this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId} on blockchain ${blockchain_id}.`);
         if (dataSetSizeInBytes) {
             const dataSizeInMB = dataSetSizeInBytes / 1000000;
             if (dataSizeInMB > this.config.dh_maximum_dataset_filesize_in_mb) {
@@ -188,8 +126,6 @@ class DHService {
             data,
             transactional: false,
         });
-
-        // await this.remoteControl.getPendingBids();
     }
 
     /**
@@ -201,7 +137,6 @@ class DHService {
      * @private
      */
     async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder, blockchain_id) {
-        // todo pass blockchain identity
         const profile = await this.blockchain
             .getProfile(this.profileService.getIdentity(blockchain_id), blockchain_id).response;
         const profileStake = new BN(profile.stake, 10);
@@ -645,14 +580,6 @@ class DHService {
         });
 
         return vertices;
-    }
-
-    async listenToBlockchainEvents() {
-        this.blockchain.subscribeToEventPermanent([
-            'OfferCreated',
-            'NodeApproved',
-            'NodeRemoved',
-        ]);
     }
 }
 

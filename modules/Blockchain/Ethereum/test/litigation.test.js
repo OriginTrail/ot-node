@@ -223,16 +223,19 @@ contract('Litigation testing', async (accounts) => {
                     identity: identities[0],
                     privateKey: privateKeys[0],
                     hash: hash1,
+                    color: new BN(0),
                 },
                 {
                     identity: identities[1],
                     privateKey: privateKeys[1],
                     hash: hash2,
+                    color: new BN(1),
                 },
                 {
                     identity: identities[2],
                     privateKey: privateKeys[2],
                     hash: hash3,
+                    color: new BN(2),
                 },
             ].sort((x, y) => x.hash.localeCompare(y.hash));
 
@@ -255,8 +258,8 @@ contract('Litigation testing', async (accounts) => {
                 let promises = [];
                 for (let i = 0; i < 3; i += 1) {
                     // eslint-disable-next-line no-await-in-loop
-                    promises[i] = await util.keccakBytesAddress
-                        .call(offerId, sortedIdentities[i].identity);
+                    promises[i] = await util.keccakBytesAddressNumber
+                        .call(offerId, sortedIdentities[i].identity, sortedIdentities[i].color);
                 }
                 // eslint-disable-next-line no-await-in-loop
                 confirmations = await Promise.all(promises);
@@ -282,7 +285,11 @@ contract('Litigation testing', async (accounts) => {
                         signedConfirmations[0].signature,
                         signedConfirmations[1].signature,
                         signedConfirmations[2].signature,
-                        [new BN(2), new BN(2), new BN(2)],
+                        [
+                            sortedIdentities[0].color,
+                            sortedIdentities[1].color,
+                            sortedIdentities[2].color,
+                        ],
                         [
                             sortedIdentities[0].identity,
                             sortedIdentities[1].identity,
