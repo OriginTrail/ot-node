@@ -5,6 +5,7 @@ env:
   NODE_ENV: development
   ARTIFACTS_DIR: artifacts
   CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
+  SEQUELIZEDB: artifacts/system.db
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -24,8 +25,8 @@ jobs:
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: sudo ./setup_arangodb.sh
       - run: cp .origintrail_noderc.travis .origintrail_noderc
-      - run: npm run lint
-      - run: npm test 2> $ARTIFACTS_DIR/mocha-logs.log;
+      - run: npm run lint > $ARTIFACTS_DIR/lint.log
+      - run: npm run test > $ARTIFACTS_DIR/unit.log;
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:
