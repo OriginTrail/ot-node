@@ -5,7 +5,7 @@ Feature: Test basic network features
 
   @fourth
   Scenario: Test replication DC -> DH
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
@@ -19,7 +19,7 @@ Feature: Test basic network features
 
   @first
   Scenario: Test failing replication DC -> DH
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 2 nodes
     And I override configuration for all nodes
       | dc_choose_time | 60000 |
@@ -35,7 +35,7 @@ Feature: Test basic network features
 
   @skip
   Scenario: DC->DH->DV replication + DV network read + DV purchase
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
@@ -60,7 +60,7 @@ Feature: Test basic network features
 
   @skip
   Scenario: DV purchases data directly from DC, no DHes
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 3 node
     And I start the node
     And I use 1st node as DC
@@ -84,7 +84,7 @@ Feature: Test basic network features
 
   @skip
   Scenario: 2nd DV purchases data from 1st DV, no DHes
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 3 node
     And I start the node
     And I use 1st node as DC
@@ -145,7 +145,7 @@ Feature: Test basic network features
 
   @third
   Scenario: DH payout scenario
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 5 nodes
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 1 |
@@ -160,7 +160,7 @@ Feature: Test basic network features
 
   @fourth
   Scenario: DH with disabled auto-payouts
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 5 nodes
     And I override configuration for all nodes
       | dc_holding_time_in_minutes |   1  |
@@ -183,7 +183,7 @@ Feature: Test basic network features
 
   @second
   Scenario: Test repeated offer creation with same dataset
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 3 nodes
     And I start the nodes
     And I use 1st node as DC

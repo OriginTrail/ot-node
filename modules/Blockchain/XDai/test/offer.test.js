@@ -96,16 +96,19 @@ async function createOffer(accounts) {
                 identity: identities[0],
                 privateKey: privateKeys[0],
                 hash: hash1,
+                color: new BN(1),
             },
             {
                 identity: identities[1],
                 privateKey: privateKeys[1],
                 hash: hash2,
+                color: new BN(2),
             },
             {
                 identity: identities[2],
                 privateKey: privateKeys[2],
                 hash: hash3,
+                color: new BN(3),
             },
         ].sort((x, y) => x.hash.localeCompare(y.hash));
 
@@ -126,7 +129,8 @@ async function createOffer(accounts) {
             var hashes = [];
             let promises = [];
             for (i = 0; i < 3; i += 1) {
-                promises[i] = util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+                promises[i] = util.keccakBytesAddressNumber
+                    .call(offerId, sortedIdentities[i].identity, sortedIdentities[i].color);
             }
             // eslint-disable-next-line no-await-in-loop
             hashes = await Promise.all(promises);
@@ -152,7 +156,11 @@ async function createOffer(accounts) {
                     confimations[0].signature,
                     confimations[1].signature,
                     confimations[2].signature,
-                    [new BN(0), new BN(1), new BN(2)],
+                    [
+                        sortedIdentities[0].color,
+                        sortedIdentities[1].color,
+                        sortedIdentities[2].color,
+                    ],
                     [
                         sortedIdentities[0].identity,
                         sortedIdentities[1].identity,
@@ -308,16 +316,19 @@ contract('Offer testing', async (accounts) => {
                 identity: identities[0],
                 privateKey: privateKeys[0],
                 hash: hash1,
+                color: new BN(0),
             },
             {
                 identity: identities[1],
                 privateKey: privateKeys[1],
                 hash: hash2,
+                color: new BN(1),
             },
             {
                 identity: identities[2],
                 privateKey: privateKeys[2],
                 hash: hash3,
+                color: new BN(2),
             },
         ].sort((x, y) => x.hash.localeCompare(y.hash));
 
@@ -339,7 +350,8 @@ contract('Offer testing', async (accounts) => {
         var hashes = [];
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            hashes[i] = await util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+            hashes[i] = await util.keccakBytesAddressNumber
+                .call(offerId, sortedIdentities[i].identity, sortedIdentities[i].color);
         }
 
         // Getting confirmations
@@ -359,7 +371,11 @@ contract('Offer testing', async (accounts) => {
             confimations[0].signature,
             confimations[1].signature,
             confimations[2].signature,
-            [new BN(0), new BN(1), new BN(2)],
+            [
+                sortedIdentities[0].color,
+                sortedIdentities[1].color,
+                sortedIdentities[2].color,
+            ],
             [
                 sortedIdentities[0].identity,
                 sortedIdentities[1].identity,
@@ -379,7 +395,11 @@ contract('Offer testing', async (accounts) => {
                 confimations[0].signature,
                 confimations[1].signature,
                 confimations[2].signature,
-                [new BN(0), new BN(1), new BN(2)],
+                [
+                    sortedIdentities[0].color,
+                    sortedIdentities[1].color,
+                    sortedIdentities[2].color,
+                ],
                 [
                     sortedIdentities[0].identity,
                     sortedIdentities[1].identity,
@@ -398,7 +418,7 @@ contract('Offer testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             res = await profileStorage.profile.call(sortedIdentities[i].identity);
             assert(tokenAmountPerHolder.eq(res.stakeReserved), `Reserved stake amount incorrect for holder ${i + 1}!`
-                + `\n\tExpected: ${tokenAmountPerHolder.toString(10)}\n\tActual: ${res.stakeReserved.toString(10)}`);
+            + `\n\tExpected: ${tokenAmountPerHolder.toString(10)}\n\tActual: ${res.stakeReserved.toString(10)}`);
         }
         res = await profileStorage.profile.call(DC_identity);
         assert(tokenAmountPerHolder.mul(new BN(3)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC!'
@@ -409,7 +429,8 @@ contract('Offer testing', async (accounts) => {
             res = await holdingStorage.holder.call(offerId, sortedIdentities[i].identity);
 
             assert(tokenAmountPerHolder.eq(res.stakedAmount), 'Token amount not matching!');
-            assert.equal(res.litigationEncryptionType, i, 'Red litigation hash not matching!');
+            const expectedEncryptionType = sortedIdentities[i].color.toString(10);
+            assert.equal(res.litigationEncryptionType, expectedEncryptionType, 'Litigation hash not matching!');
         }
 
         for (i = 0; i < confimations.length; i += 1) {

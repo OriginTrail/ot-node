@@ -99,16 +99,19 @@ async function createOffer(accounts) {
             identity: identities[0],
             privateKey: privateKeys[0],
             hash: hash1,
+            color: new BN(1),
         },
         {
             identity: identities[1],
             privateKey: privateKeys[1],
             hash: hash2,
+            color: new BN(2),
         },
         {
             identity: identities[2],
             privateKey: privateKeys[2],
             hash: hash3,
+            color: new BN(3),
         },
     ].sort((x, y) => x.hash.localeCompare(y.hash));
 
@@ -130,7 +133,8 @@ async function createOffer(accounts) {
     var hashes = [];
     let promises = [];
     for (i = 0; i < 3; i += 1) {
-        promises[i] = util.keccakBytesAddress.call(offerId, sortedIdentities[i].identity);
+        promises[i] = util.keccakBytesAddressNumber
+            .call(offerId, sortedIdentities[i].identity, sortedIdentities[i].color);
     }
     hashes = await Promise.all(promises);
 
@@ -152,7 +156,11 @@ async function createOffer(accounts) {
         confimations[0].signature,
         confimations[1].signature,
         confimations[2].signature,
-        [new BN(0), new BN(1), new BN(2)],
+        [
+            sortedIdentities[0].color,
+            sortedIdentities[1].color,
+            sortedIdentities[2].color,
+        ],
         [
             sortedIdentities[0].identity,
             sortedIdentities[1].identity,
