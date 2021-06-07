@@ -5,6 +5,7 @@ env:
   NODE_ENV: development
   ARTIFACTS_DIR: artifacts
   CUCUMBER_ARTIFACTS_DIR: artifacts/cucumber
+  SEQUELIZEDB: artifacts/system.db
 jobs:
   test:
     runs-on: ubuntu-latest
