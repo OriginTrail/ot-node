@@ -501,14 +501,20 @@ module.exports = async (deployer, network, accounts) => {
         hub = await Hub.at('0x85720D4D09A52eD66656b28c68567E41AD45dD0e');
         console.log(`Using  hub  contract: ${hub.address}`);
         if (hub.address) {
-            temp = await Hub.getContractAddress.call('Owner');
+            temp = await hub.getContractAddress.call('Owner');
             console.log(`\tOwner address in contract map: ${temp}`);
 
-            temp = await Hub.owner.call();
+            temp = await hub.owner.call();
             console.log(`\tOwner address in contract var: ${temp}`);
-            // holding = await deployer
-            //     .deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
-            // await hub.setContractAddress('Holding', holding.address);
+
+            // Deploy contract
+            holding = await deployer
+                .deploy(Holding, hub.address, { gas: 7000000, from: accounts[0] });
+            console.log(`Deployed new contract to address: ${holding.address}`);
+
+            console.log('Updating contract in Hub contract map');
+            await hub.setContractAddress('Holding', holding.address);
+            console.log('Updated contract in Hub contract map!');
         }
         break;
     default:

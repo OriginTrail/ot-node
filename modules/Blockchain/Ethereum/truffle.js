@@ -1,8 +1,6 @@
 require('dotenv').config({ path: `${__dirname}/../../../.env` });
 // eslint-disable-next-line import/no-extraneous-dependencies
-var PrivatekeyProvider = require('truffle-privatekey-provider');
-var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-line import/no-unresolved
-
+var HDWalletProvider = require('@truffle/hdwallet-provider');
 
 const private_key = process.env.RINKEBY_PRIVATE_KEY;
 const rpc_endpoint = process.env.RINKEBY_ACCESS_KEY;
@@ -58,7 +56,7 @@ module.exports = {
         updateRinkeby: {
             host: 'localhost', // Connect to geth on the specified
             port: 8545,
-            provider: () => new PrivatekeyProvider(private_key, rpc_endpoint, 4),
+            provider: () => new HDWalletProvider([private_key], rpc_endpoint, 4),
             network_id: 4,
             gas: 6000000, // Gas limit used for deploys
             websockets: true,
@@ -82,7 +80,7 @@ module.exports = {
         rinkeby: {
             host: 'localhost', // Connect to geth on the specified
             port: 8545,
-            provider: () => new PrivatekeyProvider(private_key, rpc_endpoint, 4),
+            provider: () => new HDWalletProvider([private_key], rpc_endpoint, 4),
             network_id: 4,
             gas: 6500000, // Gas limit used for deploys
             websockets: true,
@@ -92,7 +90,7 @@ module.exports = {
         live: {
             host: 'localhost',
             port: 8545,
-            provider: () => new PrivatekeyProvider(private_key, rpc_endpoint, 1),
+            provider: () => new HDWalletProvider([private_key], rpc_endpoint, 1),
             network_id: 1,
             gas: 6000000, // Gas limit used for deploys
             websockets: true,
@@ -100,8 +98,6 @@ module.exports = {
         },
 
         updateContract: {
-            host: 'localhost', // Connect to geth on the specified
-            port: 8545,
             provider: () => new HDWalletProvider([private_key], rpc_endpoint),
             network_id: 4,
             gas: 6500000, // Gas limit used for deploys
