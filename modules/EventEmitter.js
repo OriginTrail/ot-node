@@ -603,7 +603,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-replication-finished', async (request) => {
+        this._on('kad-replication-finished', async (request, response) => {
             try {
                 const dhNodeId = transport.extractSenderID(request);
                 const replicationFinishedMessage = transport.extractMessage(request);
@@ -613,27 +613,12 @@ class EventEmitter {
                     dhWallet = transport.extractSenderInfo(request).wallet;
                 }
 
-                if (replicationFinishedMessage.message) { // todo remove if for next update
-                    const {
-                        message, messageSignature,
-                    } = replicationFinishedMessage;
-                    if (!Utilities.isMessageSigned(message, messageSignature)) {
-                        logger.warn(`We have a forger here. Signature doesn't match for message: ${JSON.stringify(message)}`);
-                        return;
-                    }
-
-                    await dcService.verifyDHReplication(
-                        message.offerId, messageSignature,
-                        dhNodeId, message.dhIdentity, dhWallet, false,
-                    );
-                }
-
                 const {
-                    offerId, messageSignature, dhIdentity,
+                    offerId, messageSignature, dhIdentity, alternativeSignature,
                 } = replicationFinishedMessage;
 
                 await dcService.verifyDHReplication(
-                    offerId, messageSignature,
+                    offerId, response, messageSignature, alternativeSignature,
                     dhNodeId, dhIdentity, dhWallet, false,
                 );
             } catch (e) {

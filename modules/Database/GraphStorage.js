@@ -168,6 +168,50 @@ class GraphStorage {
     }
 
     /**
+     * This method will leave only encryption for selected color, datasetId and offerId
+     * Rest of the encryption data will be removed
+     * @param datasetId
+     * @param offerId
+     * @param leaveColor
+     * @returns {Promise<void>}
+     */
+    async removeUnnecessaryEncryptionData(datasetId, offerId, leaveColor) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.removeUnnecessaryEncryptionData(datasetId, offerId, leaveColor)
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
+     * This method will remove all encryption data for dataset and offer
+     * @param datasetId
+     * @param offerId
+     * @returns {Promise<void>}
+     */
+    async removeEncryptionData(datasetId, offerId) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.removeEncryptionData(datasetId, offerId)
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((err) => {
+                        reject(err);
+                    });
+            }
+        });
+    }
+
+    /**
      * Finds imports IDs based on data location query
      *
      * DataLocationQuery structure: [[path, value, opcode]*]

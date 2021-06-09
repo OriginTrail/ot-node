@@ -31,7 +31,7 @@ Given(/^DC imports "([^"]*)" as ([GS1\-EPCIS|GRAPH|OT\-JSON|WOT]+)$/, { timeout:
     this.state.lastImportHandler = importResponse.handler_id;
 });
 
-Then(/^DC checks status of the last import$/, { timeout: 1200000 }, async function () {
+Then(/^DC checks status of the last import$/, { timeout: 20000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
@@ -47,6 +47,17 @@ Then(/^The last import status should be "([^"]*)"$/, { timeout: 1200000 }, async
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(this.state.lastImportStatus.status).to.be.equal(status);
+});
+
+Then(/^the last import should already have been imported$/, { timeout: 1200000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(this.state.lastImportStatus.status).to.be.equal('COMPLETED');
+    expect(this.state.lastImportStatus.data).to.have.property(
+        'message',
+        'Dataset already imported on the node, importing skipped',
+    );
 });
 
 

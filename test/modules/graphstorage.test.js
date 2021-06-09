@@ -37,8 +37,6 @@ describe('GraphStorage module', () => {
         const config = rc(pjson.name, defaultConfig);
         selectedDatabase = config.database;
         selectedDatabase.database = myDatabaseName;
-        Storage.models = deasync(models.sequelize.sync()).models;
-        selectedDatabase.database = myDatabaseName;
 
         if (selectedDatabase.provider === 'arangodb') {
             systemDb = new Database();
