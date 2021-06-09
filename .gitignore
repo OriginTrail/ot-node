@@ -15,7 +15,7 @@ manual-testing-scripts
 node.log
 keys
 data
-modules/blockchain_interface/ethereum/build/*
+tools/local-network-setup/temporary-config-files
 modules/Blockchain/Ethereum/test/development.test.js
 modules/Blockchain/Ethereum/build/
 modules/Blockchain/XDai/build/

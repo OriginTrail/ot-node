@@ -7,7 +7,7 @@ const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const ImportUtilities = require('../../ImportUtilities');
 const OtJsonUtilities = require('../../OtJsonUtilities');
-
+const constants = require('../../constants');
 /**
  * Imports data for replication
  */
@@ -54,11 +54,13 @@ class DhReplicationImportCommand extends Command {
         let decryptedDataset;
         let encryptedMap;
         let decryptedGraphRootHash;
+        let color;
 
         this.decryptAndSortDataset(otJson, litigationPublicKey, offerId, encColor)
             .then((result) => {
                 decryptedDataset = result.decDataset;
                 encryptedMap = result.encMap;
+                color = encColor;
             })
             .then(() => this.validateDatasetId(dataSetId, decryptedDataset))
             .then(() => this.validateRootHash(decryptedDataset, dataSetId, otJson, blockchain_id))
@@ -95,11 +97,17 @@ class DhReplicationImportCommand extends Command {
                 dcWallet,
                 blockchain_id,
             ))
-            .then(() => this.sendReplicationFinishedMessage(offerId, dcNodeId, blockchain_id))
+            .then(() => this.sendReplicationFinishedMessage(
+                offerId,
+                dcNodeId,
+                color,
+                blockchain_id,
+            ))
             .then(() => this.updateBidData(offerId))
             .then(() => this.commandExecutor.add({
                 name: 'dhOfferFinalizedCommand',
-                deadline_at: Date.now() + (60 * 60 * 1000), // One hour.
+                deadline_at: Date.now() +
+                    constants.OFFER_FINALIZED_COMMAND_DEADLINE_AT,
                 period: 10 * 1000,
                 data: {
                     offerId,
@@ -293,21 +301,38 @@ class DhReplicationImportCommand extends Command {
         });
     }
 
-    async sendReplicationFinishedMessage(offerId, dcNodeId, blockchainId) {
+    /**
+     * Sends replication-finished message to DC, along with bid confirmations
+     * @param offerId - The offer ID
+     * @param dcNodeId - The network Identifier of the DC
+     * @param color - The number of the encryption received (0 = red, 1 = green, 2 = blue)
+     * @param blockchainId - The blockchain ID for the offer, in order to use the proper
+     *                       blockchain identity and wallet
+     * @returns {Promise<void>}
+     */
+    async sendReplicationFinishedMessage(offerId, dcNodeId, color, blockchainId) {
         const dhIdentity = this.profileService.getIdentity(blockchainId);
         const toSign = [
             Utilities.denormalizeHex(offerId),
             Utilities.denormalizeHex(dhIdentity)];
 
-        const { node_wallet, node_private_key } = this.blockchain.getWallet().response;
+        const { node_wallet, node_private_key } = this.blockchain.getWallet(blockchainId).response;
 
+        const toSignNew = [
+            Utilities.denormalizeHex(offerId),
+            Utilities.denormalizeHex(dhIdentity),
+            color,
+        ];
         const messageSignature = Encryption
             .signMessage(toSign, Utilities.normalizeHex(node_private_key));
 
+        const alternativeSignature = Encryption
+            .signMessage(toSignNew, Utilities.normalizeHex(node_private_key));
         const replicationFinishedMessage = {
             offerId,
             dhIdentity,
             messageSignature: messageSignature.signature,
+            alternativeSignature: alternativeSignature.signature,
             wallet: node_wallet,
         };
 

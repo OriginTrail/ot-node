@@ -13,6 +13,7 @@ class DhOfferFinalizedCommand extends Command {
         this.config = ctx.config;
         this.remoteControl = ctx.remoteControl;
         this.profileService = ctx.profileService;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -52,7 +53,6 @@ class DhOfferFinalizedCommand extends Command {
                 const bid =
                     await Models.bids.findOne({ where: { offer_id: offerId, blockchain_id } });
 
-                // todo pass blockchain identity
                 if (holders.includes(this.profileService.getIdentity(blockchain_id))) {
                     bid.status = 'CHOSEN';
                     await bid.save({ fields: ['status'] });
@@ -86,7 +86,7 @@ class DhOfferFinalizedCommand extends Command {
                 bid.status = 'NOT_CHOSEN';
                 await bid.save({ fields: ['status'] });
                 this.logger.important(`I haven't been chosen for offer ${offerId} on blockchain ${blockchain_id}.`);
-                // await this.remoteControl.onCompletedBids();
+
                 return Command.empty();
             }
         }
@@ -104,6 +104,10 @@ class DhOfferFinalizedCommand extends Command {
         const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
         bid.status = 'NOT_CHOSEN';
         await bid.save({ fields: ['status'] });
+        await this.graphStorage.removeEncryptionData(
+            bid.data_set_id,
+            bid.offer_id,
+        );
         // await this.remoteControl.onCompletedBids();
         return Command.empty();
     }

@@ -211,7 +211,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     done();
 });
 
-Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
+Given(/^I wait for (\d+) second[s]$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
     expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
 }));
@@ -442,9 +442,30 @@ Then(/^the last exported dataset should not contain permissioned data as "([^"]*
     expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
         .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
 
-    expect(lastExport.data.formatted_dataset['@graph']
-        .find(x => x['@id'] === objectId).properties.permissioned_data.data)
-        .to.be.equal(undefined);
+    const { permissioned_data } = lastExport.data
+        .formatted_dataset['@graph'].find(x => x['@id'] === objectId).properties;
+
+    expect(permissioned_data).to.not.have.property('data');
+});
+
+Then(/^the last exported dataset should contain permissioned data as "([^"]*)"$/, async function (objectId) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastExport, 'Last export didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const { lastExport } = this.state;
+
+    expect(lastExport.status, 'response.status should be "COMPLETED"')
+        .to.be.equal('COMPLETED');
+
+    lastExport.data.formatted_dataset = JSON.parse(lastExport.data.formatted_dataset);
+    expect(lastExport.data.formatted_dataset, 'response.data.formatted_dataset should be in OT JSON format')
+        .to.have.keys(['datasetHeader', '@id', '@type', '@graph', 'signature']);
+
+    const { permissioned_data } = lastExport.data
+        .formatted_dataset['@graph'].find(x => x['@id'] === objectId).properties;
+
+    expect(permissioned_data).to.be.an('object');
+    expect(permissioned_data).to.have.property('data').and.not.be.empty;
 });
 
 Then(/^the last exported dataset data should be the same as "([^"]*)"$/, async function (importedFilePath) {

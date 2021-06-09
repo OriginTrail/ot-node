@@ -32,6 +32,7 @@ class DcConvertToOtJsonCommand extends Command {
 
                 fs.writeFileSync(documentPath, JSON.stringify(document));
 
+                Object.assign(command.data, { data_set_id: document['@id'] });
                 return this.continueSequence(command.data, command.sequence);
             }
             await this.importWorkerController.startOtjsonConverterWorker(

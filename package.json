@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "5.0.2",
+  "version": "5.0.4",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -23,6 +23,7 @@
     "test:bdd:third": "cucumber-js --tags=@third --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:fourth": "cucumber-js --tags=@fourth --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:fifth": "cucumber-js --tags=@fifth --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd:manual": "cucumber-js --tags=@manual --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:dryrun": "cucumber-js --dry-run test/bdd/ -r test/bdd/steps/",
     "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:verbose": "cucumber-js --fail-fast --format event-protocol --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
@@ -42,7 +43,7 @@
     "debug:test:unit": "mocha --inspect-brk --exit $(find test/modules -name '*.js')",
     "debug:test:api": "mocha --inspect-brk --exit $(find test/api -name '*.js')",
     "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')",
-    "ganache": "ganache-cli -i 5777 -p 7545 -l 10000000 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
+    "ganache": "ganache-cli -i 5777 -p 7545 -l 10000000 -a 20 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
     "truffle:compile": "cd modules/Blockchain/Ethereum && truffle compile",
     "truffle:deploy:rinkeby": "cd modules/Blockchain/Ethereum && truffle migrate --network rinkeby",
     "truffle:deploy:supplyTokens": "cd modules/Blockchain/Ethereum && truffle migrate --network supplyTokens",
@@ -50,7 +51,8 @@
     "truffle:test": "cd modules/Blockchain/Ethereum && truffle test --network test",
     "truffle:test:litigation": "cd modules/Blockchain/Ethereum && truffle test ./test/litigation.test.js --network test",
     "truffle:test:creditorhandler": "cd modules/Blockchain/Ethereum && truffle test ./test/creditor.handler.test.js --network test",
-    "truffle:test:offer": "cd modules/Blockchain/Ethereum && truffle test ./test/offer.test.js --network test"
+    "truffle:test:offer": "cd modules/Blockchain/Ethereum && truffle test ./test/offer.test.js --network test",
+    "tools:lns:start": "cd tools/local-network-setup && ./setup_environment.sh"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
