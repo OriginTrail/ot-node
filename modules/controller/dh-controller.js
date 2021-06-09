@@ -43,8 +43,17 @@ class DHController {
                 offer_id: offerId, otJson, permissionedData,
             } = replicationMessage;
 
-
             this.logger.notify(`Received replication data for offer_id ${offerId} from node ${dcNodeId}.`);
+
+            const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+            if (bid.status !== 'SENT') {
+                this.logger.important(`Already replicated data for offer_id ${offerId} from node ${dcNodeId}`);
+                await this.transport.sendResponse(
+                    response,
+                    { status: 'fail', message: 'Replication already received' },
+                );
+                return;
+            }
 
             const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
 
@@ -69,6 +78,7 @@ class DHController {
                 transactional: false,
             });
         } catch (e) {
+            this.logger.error(e.message);
             await this.transport.sendResponse(response, { status: 'fail', message: e });
         }
 

@@ -2,7 +2,7 @@ const path = require('path');
 
 const Command = require('../command');
 const Models = require('../../../models');
-const Utilities = require('../../Utilities');
+const constants = require('../../constants');
 
 /**
  * Handles new offer from the DH side
@@ -63,48 +63,17 @@ class DHOfferHandleCommand extends Command {
         bid.status = 'SENT';
         await bid.save({ fields: ['status'] });
 
-        if (response.status === 'acknowledge') {
-            this.logger.notify(`Received replication request acknowledgement for offer_id ${offerId} from node ${dcNodeId}.`);
+        this.logger.notify(`Received replication request acknowledgement for offer_id ${offerId} from node ${dcNodeId}.`);
 
-            return {
-                commands: [
-                    {
-                        name: 'dhReplicationTimeoutCommand',
-                        delay: this.config.dc_choose_time,
-                        data: {
-                            offerId,
-                            dcNodeId,
-                        },
-                    },
-                ],
-            };
-        }
-
-        this.logger.notify(`Received replication data for offer_id ${offerId} from node ${dcNodeId}.`);
-
-        const cacheDirectory = path.join(this.config.appDataPath, 'import_cache');
-
-        await Utilities.writeContentsToFile(
-            cacheDirectory,
-            offerId,
-            JSON.stringify({
-                otJson: response.otJson,
-                permissionedData: response.permissionedData,
-            }),
-        );
-
-        const packedResponse = DHOfferHandleCommand._stripResponse(response);
-        Object.assign(packedResponse, {
-            dcNodeId,
-            blockchain_id,
-            documentPath: path.join(cacheDirectory, offerId),
-        });
         return {
             commands: [
                 {
-                    name: 'dhReplicationImportCommand',
-                    data: packedResponse,
-                    transactional: false,
+                    name: 'dhReplicationTimeoutCommand',
+                    delay: constants.OFFER_FINALIZED_COMMAND_DEADLINE_AT,
+                    data: {
+                        offerId,
+                        dcNodeId,
+                    },
                 },
             ],
         };

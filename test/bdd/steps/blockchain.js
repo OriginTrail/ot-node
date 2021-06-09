@@ -13,8 +13,9 @@ const LocalBlockchain = require('./lib/local-blockchain');
 Given(/^the blockchain is set up$/, { timeout: 60000 }, function (done) {
     expect(this.state.localBlockchain, 'localBlockchain shouldn\'t be defined').to.be.equal(null);
 
-    this.state.localBlockchain = new LocalBlockchain({ logger: this.logger });
-    this.state.localBlockchain.initialize().then(() => {
+    this.state.localBlockchain = [];
+    this.state.localBlockchain[0] = new LocalBlockchain({ logger: this.logger, name: 'stargazer' });
+    this.state.localBlockchain[0].initialize().then(() => {
         done();
     }).catch(error => done(error));
 });
@@ -24,8 +25,8 @@ Given(/^the blockchains are set up$/, { timeout: 60000 }, async function () {
     expect(this.state.localBlockchain, 'localBlockchain shouldn\'t be defined').to.be.equal(null);
 
     this.state.localBlockchain = [];
-    this.state.localBlockchain[0] = new LocalBlockchain({ logger: this.logger, port: 7545, name: 'ganache_7545' });
-    this.state.localBlockchain[1] = new LocalBlockchain({ logger: this.logger, port: 8545, name: 'ganache_8545' });
+    this.state.localBlockchain[0] = new LocalBlockchain({ logger: this.logger, port: 7545, name: 'copernicus' });
+    this.state.localBlockchain[1] = new LocalBlockchain({ logger: this.logger, port: 8545, name: 'stargazer' });
 
     const promises = [];
     for (const blockchain of this.state.localBlockchain) {
@@ -37,7 +38,6 @@ Given(/^the blockchains are set up$/, { timeout: 60000 }, async function () {
 Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
     this.logger.log(`The replication difficulty is ${difficulty}`);
     expect(this.state.localBlockchain, 'localBlockchain is not an array').to.be.an('array');
-    expect(this.state.localBlockchain, 'localBlockchain is not an array').to.have.lengthOf(2);
 
     for (const blockchain of this.state.localBlockchain) {
         expect(blockchain.isInitialized, 'localBlockchain not initialized').to.be.equal(true);

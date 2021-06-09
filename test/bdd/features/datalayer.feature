@@ -146,7 +146,7 @@ Feature: Data layer related features
 
   @fourth
   Scenario: Data read and export successfully
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 nodes
     And I start the nodes
     And I use 1st node as DC
@@ -177,7 +177,7 @@ Feature: Data layer related features
 
   @second
   Scenario: Graph level data encryption
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 nodes
     And I override configuration for all nodes
       | dc_holding_time_in_minutes | 3 |
@@ -224,7 +224,7 @@ Feature: Data layer related features
 
   @second
   Scenario: Node should not respond to network query if he did't replicate it itself
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 4 nodes
     And I start the nodes
     And I use 1st node as DC
@@ -242,7 +242,7 @@ Feature: Data layer related features
 
   @third
   Scenario: Cover message routing protocol via proxy nodes
-    Given the replication difficulty is 0
+    Given the replication difficulty is 1
     And I setup 10 nodes
     And I override configuration for 3rd node
       | dh_price_factor | 100 |

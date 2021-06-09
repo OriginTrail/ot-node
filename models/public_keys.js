@@ -7,11 +7,11 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
             defaultValue: () => uuidv4(),
         },
-        public_key: DataTypes.STRING,
+        public_key: DataTypes.TEXT,
         node_erc: DataTypes.STRING,
         node_id: DataTypes.STRING,
         timestamp: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             defaultValue: () => Date.now(),
         },
     }, {});

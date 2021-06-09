@@ -67,7 +67,7 @@ exports.OFFER_FINALIZED_COMMAND_DEADLINE_AT = 6 * 60 * 60 * 1000;
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
-    'cleanerCommand', 'dcChallengesCommand', 'dhLitigationInitiatedCommand',
+    'cleanerCommand', 'dcChallengesCommand', 'dhProcessBlockchainEventsCommand',
     'reputationUpdateCommand', 'autoupdaterCommand', 'exportCleanerCommand',
     'trailCleanerCommand', 'handlerIdsCleanerCommand', 'datasetPruningCommand',
 ];
@@ -148,6 +148,7 @@ exports.PUBLIC_KEY_VALIDITY_IN_MILLS = 30 * 24 * 60 * 60 * 1000; // 30 days
  */
 exports.PROCESS_NAME = {
     other: 'other',
+    bcEventsHandling: 'blockchain-events-handling',
     offerHandling: 'offer-handling',
     challengesHandling: 'challenges-handling',
     litigationHandling: 'litigation-handling',
@@ -189,7 +190,26 @@ exports.NODE_STATUS = {
     fallback: 'FALLBACK',
     updating: 'UPDATING',
 };
+/**
+ * Blockchain event names
+ * @type {{LitigationInitiated: string, OfferCreated: string}}
+ */
+exports.EVENT_NAME = {
+    LitigationInitiated: 'LitigationInitiated',
+    OfferCreated: 'OfferCreated',
+};
 
 exports.DB_TYPE = {
     psql: 'psql',
+};
+
+/**
+ * @constant {Object: string} IDENTITY_PERMISSION
+ * Possible permissions for a wallet to have for a given identity
+ * @type {{management: string, action: string, encryption: string}}
+ */
+exports.IDENTITY_PERMISSION = {
+    management: '1',
+    action: '2',
+    encryption: '4',
 };
