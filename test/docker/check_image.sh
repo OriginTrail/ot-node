@@ -14,8 +14,8 @@ docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 --network hos
 sleep 180
 # docker container inspect mynode
 # docker network inspect host
-docker logs otnode -f --tail 1000 > $ARTIFACTS_DIR/docker.logs
-docker exec mynode /bin/sh -c "curl -X POST http://127.0.0.1:8900/api/latest/import -F standard_id=GS1-EPCIS -F file=/importers/xml_examples/Retail/03_Pink_to_orange_shipment.xml" > importResult.json
-cat importResult.json
+docker logs mynode -f --tail 1000 > $ARTIFACTS_DIR/docker.logs
+docker exec mynode /bin/sh -c "curl -X POST http://127.0.0.1:8900/api/latest/import -F standard_id=GS1-EPCIS -F file=@/importers/xml_examples/Retail/03_Pink_to_orange_shipment.xml" > importResult.json
+cat importResult.json > $ARTIFACTS_DIR/importResult.json
 # TODO better asserts that import response has one key, handler_id
 grep -q 'handler_id' importResult.json
