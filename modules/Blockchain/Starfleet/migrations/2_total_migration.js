@@ -11,7 +11,6 @@ var Litigation = artifacts.require('Litigation'); // eslint-disable-line no-unde
 var Marketplace = artifacts.require('Marketplace'); // eslint-disable-line no-undef
 var Replacement = artifacts.require('Replacement'); // eslint-disable-line no-undef
 var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
-var XDaiTrac = artifacts.require('XDAITestTrac'); // eslint-disable-line no-undef
 
 var ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
 var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
@@ -25,7 +24,6 @@ var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-
 var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
 
 const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
-const tokenSupply = (new BN(5)).mul((new BN(10)).pow(new BN(25)));
 
 module.exports = async (deployer, network, accounts) => {
     let hub;
@@ -195,7 +193,7 @@ module.exports = async (deployer, network, accounts) => {
         approval = await deployer.deploy(Approval);
         await hub.setContractAddress('Approval', approval.address);
 
-        token = await deployer.deploy(XDaiTrac, accounts[0], amountToMint);
+        token = await deployer.deploy(TracToken, accounts[0], accounts[0], accounts[0]);
         await hub.setContractAddress('Token', token.address);
 
         profile = await deployer.deploy(Profile, hub.address);
@@ -247,7 +245,7 @@ module.exports = async (deployer, network, accounts) => {
     case 'token':
         recepients = [];
         amounts = [];
-        await deployer.deploy(XDaiTrac, accounts[0], tokenSupply)
+        await deployer.deploy(TracToken, accounts[0], accounts[0], accounts[0])
             .then(async (token) => {
                 console.log(`Token deployed at: ${token.address}`);
                 await token.finishMinting({ from: accounts[0] });
