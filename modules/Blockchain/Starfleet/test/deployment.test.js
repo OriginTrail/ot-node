@@ -1,7 +1,6 @@
 const { assert, expect } = require('chai');
 
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 
@@ -21,28 +20,6 @@ contract('Deployment tests', async () => {
         await Hub.deployed()
             .catch((err) => {
                 assert(false, 'Hub contract is not deployed!');
-            });
-    });
-
-    // eslint-disable-next-line no-undef
-    it('Should get TracToken contract and verify its value in the hub contract', async () => {
-        const hub = await Hub.deployed();
-        const res = await hub.tokenAddress.call();
-        assert.notEqual(
-            res,
-            '0x0000000000000000000000000000000000000000',
-            'TracToken contract address in Hub is not set!',
-        );
-        await TracToken.deployed()
-            .then((instance) => {
-                assert.equal(
-                    instance.address,
-                    res,
-                    'Deployed instance address and address in hub contract do not match!',
-                );
-            })
-            .catch((err) => {
-                assert(false, 'TracToken contract is not deployed!');
             });
     });
 

@@ -2,7 +2,6 @@ var BN = require('bn.js'); // eslint-disable-line no-undef
 const { assert, expect } = require('chai');
 
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 
@@ -15,15 +14,14 @@ var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
 
 var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
 
-var Web3 = require('web3');
+const Web3 = require('web3');
 
 var web3;
-
-var Ganache = require('ganache-core');
 
 // Global values
 const amountToDeposit = (new BN(10)).pow(new BN(21));
 const amountToWithdraw = (new BN(100));
+const gasPrice = new BN(10000000000);
 const nodeId = '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
 
 // Profile variables
@@ -38,15 +36,15 @@ contract('Profile contract testing', async (accounts) => {
     before(async () => {
         // Generate web3 and set provider
         web3 = new Web3('HTTP://127.0.0.1:7545');
-        web3.setProvider(Ganache.provider());
     });
 
     // eslint-disable-next-line no-undef
     it('Should create 10 profiles with existing identities', async () => {
         // Get contracts used in hook
-        const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
         const profileStorage = await ProfileStorage.deployed();
+        let profileStorageInitialBalance = await web3.eth.getBalance(profileStorage.address);
+        profileStorageInitialBalance = new BN(profileStorageInitialBalance);
 
         var identities = [];
         for (var i = 0; i < accounts.length; i += 1) {
@@ -57,40 +55,36 @@ contract('Profile contract testing', async (accounts) => {
         var initialBalances = [];
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            initialBalances[i] = await trac.balanceOf.call(accounts[i]);
+            initialBalances[i] = await web3.eth.getBalance(accounts[i]);
+            initialBalances[i] = new BN(initialBalances[i]);
         }
 
         var promises = [];
         for (i = 0; i < accounts.length; i += 1) {
-            promises[i] = trac.increaseApproval(
-                profile.address,
-                amountToDeposit,
-                { from: accounts[i] },
-            );
-        }
-        await Promise.all(promises);
-
-        promises = [];
-        for (i = 0; i < accounts.length; i += 1) {
             promises[i] = profile.createProfile(
                 accounts[i],
                 nodeId,
-                amountToDeposit,
                 true,
                 identities[i].address,
-                { from: accounts[i] },
+                { from: accounts[i], value: amountToDeposit, gasPrice },
             );
         }
-        await Promise.all(promises);
+        const results = await Promise.all(promises);
 
         // Get new balances
         var newBalances = [];
         for (i = 0; i < accounts.length; i += 1) {
+            const gasUsed = results[i].receipt.cumulativeGasUsed;
+            const transactionCost = (new BN(gasUsed)).mul(gasPrice);
+
             // eslint-disable-next-line no-await-in-loop
-            newBalances[i] = await trac.balanceOf.call(accounts[i]);
+            newBalances[i] = await web3.eth.getBalance(accounts[i]);
+            newBalances[i] = new BN(newBalances[i]);
             assert(
-                newBalances[i].eq(initialBalances[i].sub(amountToDeposit)),
-                `Account balance for account ${i} does not match!`,
+                newBalances[i].eq(initialBalances[i].sub(amountToDeposit).sub(transactionCost)),
+                `Account balance for account ${i} does not match!` +
+                `\n\tExpected: ${initialBalances[i].sub(amountToDeposit).sub(transactionCost).toString(10)}` +
+                `\n\tReceived: ${newBalances[i].toString(10)}`,
             );
         }
 
@@ -127,52 +121,60 @@ contract('Profile contract testing', async (accounts) => {
                 `NodeId not equal to the submitted for account ${i}!`,
             );
         }
+
+        const totalDeposits = amountToDeposit.mul(new BN(initialBalances.length));
+        let profileStorageFinalBalance = await web3.eth.getBalance(profileStorage.address);
+        profileStorageFinalBalance = new BN(profileStorageFinalBalance);
+        assert(
+            profileStorageFinalBalance.eq(profileStorageInitialBalance.add(totalDeposits)),
+            'Profile storage balance does not match!' +
+            `\n\tExpected: ${profileStorageInitialBalance.add(totalDeposits).toString(10)}` +
+            `\n\tReceived: ${profileStorageFinalBalance.toString(10)}`,
+        );
     });
 
     // eslint-disable-next-line no-undef
     it('Should create 10 profiles without existing identities', async () => {
         // Get contracts used in hook
-        const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
         const profileStorage = await ProfileStorage.deployed();
+        let profileStorageInitialBalance = await web3.eth.getBalance(profileStorage.address);
+        profileStorageInitialBalance = new BN(profileStorageInitialBalance);
 
         var initialBalances = [];
         for (var i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            initialBalances[i] = await trac.balanceOf.call(accounts[i]);
+            initialBalances[i] = await web3.eth.getBalance(accounts[i]);
+            initialBalances[i] = new BN(initialBalances[i]);
         }
 
-        var promises = [];
-        for (i = 0; i < accounts.length; i += 1) {
-            promises[i] = trac.increaseApproval(
-                profile.address,
-                amountToDeposit,
-                { from: accounts[i] },
-            );
-        }
-        await Promise.all(promises);
-
+        const results = [];
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            const res = await profile.createProfile(
+            results[i] = await profile.createProfile(
                 accounts[i],
                 nodeId,
-                amountToDeposit,
                 false,
                 '0x7e9f99b7971cb3de779690a82fec5e2ceec74dd0',
-                { from: accounts[i] },
+                { from: accounts[i], value: amountToDeposit, gasPrice },
             );
-            identities[i] = res.logs[0].args.newIdentity;
+            identities[i] = results[i].logs[0].args.newIdentity;
         }
 
         // Get new balances
         var newBalances = [];
         for (i = 0; i < accounts.length; i += 1) {
+            const gasUsed = results[i].receipt.cumulativeGasUsed;
+            const transactionCost = (new BN(gasUsed)).mul(gasPrice);
+
             // eslint-disable-next-line no-await-in-loop
-            newBalances[i] = await trac.balanceOf.call(accounts[i]);
+            newBalances[i] = await web3.eth.getBalance(accounts[i]);
+            newBalances[i] = new BN(newBalances[i]);
             assert(
-                newBalances[i].eq(initialBalances[i].sub(amountToDeposit)),
-                `Account balance for account ${i} does not match!`,
+                newBalances[i].eq(initialBalances[i].sub(amountToDeposit).sub(transactionCost)),
+                `Account balance for account ${i} does not match!` +
+                `\n\tExpected: ${initialBalances[i].sub(amountToDeposit).sub(transactionCost).toString(10)}` +
+                `\n\tReceived: ${newBalances[i].toString(10)}`,
             );
         }
 
@@ -209,48 +211,56 @@ contract('Profile contract testing', async (accounts) => {
                 `NodeId not equal to the submitted for account ${i}!`,
             );
         }
+
+        const totalDeposits = amountToDeposit.mul(new BN(initialBalances.length));
+        let profileStorageFinalBalance = await web3.eth.getBalance(profileStorage.address);
+        profileStorageFinalBalance = new BN(profileStorageFinalBalance);
+        assert(
+            profileStorageFinalBalance.eq(profileStorageInitialBalance.add(totalDeposits)),
+            'Profile storage balance does not match!' +
+            `\n\tExpected: ${profileStorageInitialBalance.add(totalDeposits).toString(10)}` +
+            `\n\tReceived: ${profileStorageFinalBalance.toString(10)}`,
+        );
     });
 
     // eslint-disable-next-line no-undef
     it('Should deposit tokens to profile', async () => {
         // Get contracts used in hook
-        const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
         const profileStorage = await ProfileStorage.deployed();
+        let profileStorageInitialBalance = await web3.eth.getBalance(profileStorage.address);
+        profileStorageInitialBalance = new BN(profileStorageInitialBalance);
 
         var initialBalances = [];
         for (var i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            initialBalances[i] = await trac.balanceOf.call(accounts[i]);
+            initialBalances[i] = await web3.eth.getBalance(accounts[i]);
+            initialBalances[i] = new BN(initialBalances[i]);
         }
 
-        var promises = [];
-        for (i = 0; i < accounts.length; i += 1) {
-            promises[i] = trac.increaseApproval(
-                profile.address,
-                amountToDeposit,
-                { from: accounts[i] },
-            );
-        }
-        await Promise.all(promises);
-
+        const results = [];
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            const res = await profile.depositTokens(
+            results[i] = await profile.depositTokens(
                 identities[i],
-                amountToDeposit,
-                { from: accounts[i] },
+                { from: accounts[i], value: amountToDeposit, gasPrice },
             );
         }
 
         // Get new balances
         var newBalances = [];
         for (i = 0; i < accounts.length; i += 1) {
+            const gasUsed = results[i].receipt.cumulativeGasUsed;
+            const transactionCost = (new BN(gasUsed)).mul(gasPrice);
+
             // eslint-disable-next-line no-await-in-loop
-            newBalances[i] = await trac.balanceOf.call(accounts[i]);
+            newBalances[i] = await web3.eth.getBalance(accounts[i]);
+            newBalances[i] = new BN(newBalances[i]);
             assert(
-                newBalances[i].eq(initialBalances[i].sub(amountToDeposit)),
-                `Account balance for account ${i} does not match!`,
+                newBalances[i].eq(initialBalances[i].sub(amountToDeposit).sub(transactionCost)),
+                `Account balance for account ${i} does not match!` +
+                `\n\tExpected: ${initialBalances[i].sub(amountToDeposit).sub(transactionCost).toString()}` +
+                `\n\tReceived: ${newBalances[i].toString()}`,
             );
         }
 
@@ -287,6 +297,16 @@ contract('Profile contract testing', async (accounts) => {
                 `NodeId not equal to the submitted for account ${i}!`,
             );
         }
+
+        const totalDeposits = amountToDeposit.mul(new BN(initialBalances.length));
+        let profileStorageFinalBalance = await web3.eth.getBalance(profileStorage.address);
+        profileStorageFinalBalance = new BN(profileStorageFinalBalance);
+        assert(
+            profileStorageFinalBalance.eq(profileStorageInitialBalance.add(totalDeposits)),
+            'Profile storage balance does not match!' +
+            `\n\tExpected: ${profileStorageInitialBalance.add(totalDeposits).toString(10)}` +
+            `\n\tReceived: ${profileStorageFinalBalance.toString(10)}`,
+        );
     });
 
     // eslint-disable-next-line no-undef
@@ -525,7 +545,6 @@ contract('Profile contract testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should complete token withdrawal process', async () => {
         // Get contracts used in hook
-        const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
         const profileStorage = await ProfileStorage.deployed();
         const util = await TestingUtilities.deployed();
@@ -540,7 +559,8 @@ contract('Profile contract testing', async (accounts) => {
         var initialStakesReserved = [];
         for (var i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            initialBalances[i] = await trac.balanceOf.call(accounts[i]);
+            initialBalances[i] = await web3.eth.getBalance(accounts[i]);
+            initialBalances[i] = new BN(initialBalances[i]);
             // eslint-disable-next-line no-await-in-loop
             const res = await profileStorage.profile.call(identities[i]);
             initialStakes[i] = res.stake;
@@ -548,21 +568,29 @@ contract('Profile contract testing', async (accounts) => {
         }
 
         // Call tested function
+        const promises = [];
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            await profile.withdrawTokens(identities[i], { from: accounts[i] });
+            promises.push(profile.withdrawTokens(identities[i], { from: accounts[i], gasPrice }));
         }
+        const results = await Promise.all(promises);
 
         // Get new balances
         var newBalances = [];
         for (i = 0; i < accounts.length; i += 1) {
+            const gasUsed = results[i].receipt.cumulativeGasUsed;
+            const transactionCost = (new BN(gasUsed)).mul(gasPrice);
+
             // eslint-disable-next-line no-await-in-loop
-            newBalances[i] = await trac.balanceOf.call(accounts[i]);
+            newBalances[i] = await web3.eth.getBalance(accounts[i]);
+            newBalances[i] = new BN(newBalances[i]);
             // eslint-disable-next-line no-await-in-loop
             const res = await profileStorage.profile.call(identities[i]);
             assert(
-                newBalances[i].eq(initialBalances[i].add(amountToWithdraw)),
-                `Account balance for account ${i} does not match!`,
+                newBalances[i].eq(initialBalances[i].add(amountToWithdraw).sub(transactionCost)),
+                `Account balance for account ${i} does not match!` +
+                `\n\tExpected: ${initialBalances[i].add(amountToWithdraw).sub(transactionCost).toString()}` +
+                `\n\tReceived: ${newBalances[i].toString()}`,
             );
             assert(
                 initialStakes[i].sub(amountToWithdraw).eq(res.stake),
@@ -583,7 +611,6 @@ contract('Profile contract testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should test withdrawal of entire balance', async () => {
         // Get contracts used in hook
-        const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
         const profileStorage = await ProfileStorage.deployed();
         const util = await TestingUtilities.deployed();
@@ -595,26 +622,35 @@ contract('Profile contract testing', async (accounts) => {
         let res = await profileStorage.profile.call(identities[0]);
         const initialStake = res.stake;
         const initialStakeReserved = res.stakeReserved;
-        const initialBalance = await trac.balanceOf.call(accounts[0]);
+        let initialBalance = await web3.eth.getBalance(accounts[0]);
+        initialBalance = new BN(initialBalance);
         const availableForWithdrawal = initialStake.sub(initialStakeReserved);
 
         res = await profile.startTokenWithdrawal(
             identities[0],
             availableForWithdrawal,
-            { from: accounts[0] },
+            { from: accounts[0], gasPrice },
         );
+
+        let gasUsed = res.receipt.cumulativeGasUsed;
 
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        await profile.withdrawTokens(identities[0], { from: accounts[0] });
+        res = await profile.withdrawTokens(identities[0], { from: accounts[0], gasPrice });
+
+        gasUsed += res.receipt.cumulativeGasUsed;
+        const transactionCost = (new BN(gasUsed)).mul(gasPrice);
 
         // eslint-disable-next-line no-await-in-loop
-        const newBalance = await trac.balanceOf.call(accounts[0]);
+        let newBalance = await web3.eth.getBalance(accounts[0]);
+        newBalance = new BN(newBalance);
         // eslint-disable-next-line no-await-in-loop
         res = await profileStorage.profile.call(identities[0]);
         assert(
-            newBalance.eq(initialBalance.add(availableForWithdrawal)),
-            `Account balance does not match, expected ${initialBalance.add(availableForWithdrawal).toString()}, got ${newBalance.toString()}`,
+            newBalance.eq(initialBalance.add(availableForWithdrawal).sub(transactionCost)),
+            'Account balance does not match!' +
+            `\n\tExpected: ${initialBalance.add(availableForWithdrawal).sub(transactionCost).toString()}` +
+            `\n\tReceived: ${newBalance.toString()}`,
         );
         assert(
             initialStake.sub(availableForWithdrawal).eq(res.stake),

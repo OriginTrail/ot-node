@@ -2,7 +2,6 @@ var BN = require('bn.js'); // eslint-disable-line no-undef
 const { assert, expect } = require('chai');
 
 const TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-const TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 
 const Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 
@@ -21,8 +20,6 @@ const Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
 var Web3 = require('web3');
 
 var web3;
-
-var Ganache = require('ganache-core');
 
 // Helper variables
 var errored = true;
@@ -64,7 +61,6 @@ var privateKeys = [];
 var identities = [];
 
 // Contracts used in test
-var trac;
 var profile;
 var holding;
 var litigation;
@@ -79,7 +75,6 @@ contract('Litigation testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     before(async () => {
         // Get contracts used in hook
-        trac = await TracToken.deployed();
         profile = await Profile.deployed();
         holding = await Holding.deployed();
         litigation = await Litigation.deployed();
@@ -105,20 +100,7 @@ contract('Litigation testing', async (accounts) => {
 
         // Generate web3 and set provider
         web3 = new Web3('HTTP://127.0.0.1:7545');
-        web3.setProvider(Ganache.provider());
-
         // Generate eth_account, identities, and profiles
-
-        // Increase approval for depositing tokens
-        let promises = [];
-        for (let i = 0; i < accounts.length; i += 1) {
-            promises[i] = trac.increaseApproval(
-                profile.address,
-                tokensToDeposit,
-                { from: accounts[i] },
-            );
-        }
-        await Promise.all(promises);
 
         let res;
         // Generate profiles
@@ -127,10 +109,9 @@ contract('Litigation testing', async (accounts) => {
             res = await profile.createProfile(
                 accounts[i],
                 accounts[i],
-                tokensToDeposit,
                 false,
                 '0x7e9f99b7971cb3de779690a82fec5e2ceec74dd0',
-                { from: accounts[i] },
+                { from: accounts[i], value: tokensToDeposit },
             );
             identities[i] = res.logs[0].args.newIdentity;
         }
@@ -156,7 +137,7 @@ contract('Litigation testing', async (accounts) => {
         A  B C  D E  F G  H  */
 
         // Calculating hashes of requested data
-        promises = [];
+        let promises = [];
         for (let i = 0; i < 8; i += 1) {
             promises[i] = util.keccakString.call(letters[i]);
         }

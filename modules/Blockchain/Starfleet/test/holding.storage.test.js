@@ -2,7 +2,6 @@ var BN = require('bn.js'); // eslint-disable-line no-undef
 const { assert, expect } = require('chai');
 
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 

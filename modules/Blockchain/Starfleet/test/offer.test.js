@@ -2,7 +2,6 @@ var BN = require('bn.js'); // eslint-disable-line no-undef
 const { assert, expect } = require('chai');
 
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 
@@ -18,8 +17,6 @@ var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
 var Web3 = require('web3');
 
 var web3;
-
-var Ganache = require('ganache-core');
 
 // Helper variables
 var errored = true;
@@ -48,7 +45,6 @@ var identities = [];
 
 // Contracts used in test
 var hub;
-var trac;
 var profile;
 var holding;
 var holdingStorage;
@@ -189,7 +185,6 @@ contract('Offer testing', async (accounts) => {
     before(async () => {
         // Get contracts used in hook
         hub = await Hub.deployed();
-        trac = await TracToken.deployed();
         profile = await Profile.deployed();
         holding = await Holding.deployed();
         const holdingStorageAddress = await hub.getContractAddress.call('HoldingStorage');
@@ -213,33 +208,19 @@ contract('Offer testing', async (accounts) => {
 
         // Generate web3 and set provider
         web3 = new Web3('HTTP://127.0.0.1:7545');
-        web3.setProvider(Ganache.provider());
 
         // Generate eth_account, identities, and profiles
 
-        // Increase approval for depositing tokens
-        var promises = [];
-        for (var i = 0; i < accounts.length; i += 1) {
-            promises[i] = trac.increaseApproval(
-                profile.address,
-                tokensToDeposit,
-                { from: accounts[i] },
-            );
-        }
-        await Promise.all(promises);
-
-
         var res;
         // Generate profiles
-        for (i = 0; i < accounts.length; i += 1) {
+        for (let i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             res = await profile.createProfile(
                 accounts[i],
                 accounts[i],
-                tokensToDeposit,
                 false,
                 '0x7e9f99b7971cb3de779690a82fec5e2ceec74dd0',
-                { from: accounts[i] },
+                { from: accounts[i], value: tokensToDeposit },
             );
             identities[i] = res.logs[0].args.newIdentity;
         }

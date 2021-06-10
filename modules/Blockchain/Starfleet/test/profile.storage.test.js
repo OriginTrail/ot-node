@@ -1,23 +1,19 @@
 var BN = require('bn.js'); // eslint-disable-line no-undef
-const { assert, expect } = require('chai');
+const { assert } = require('chai');
 
-var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
+const Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
+const Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
+const ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
+const TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
-var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
+var Web3 = require('web3');
 
-var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
-var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
-
-var ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
-var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
-var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
-
-var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
+let web3;
 
 // Helper variables
 var amountToTransfer = (new BN(5)).mul(new BN(10).pow(new BN(10)));
 const emptyHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
+const gasPrice = new BN(10000000000);
 
 // Profile variables
 const profileId = '0x0000000000000000000000000000000000000000';
@@ -28,21 +24,23 @@ const withdrawalTimestamp = new BN(34291);
 const withdrawalAmount = new BN(989123);
 const nodeId = '0x5cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
 
-// Contract used in contract
-var trac;
+// Contracts used in test
 var hub;
 var profile;
 var profileStorage;
+var utilities;
 
 // eslint-disable-next-line no-undef
 contract('Profile storage testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     before(async () => {
+        web3 = new Web3('HTTP://127.0.0.1:7545');
+
         // Get contracts used in hook
-        trac = await TracToken.deployed();
         hub = await Hub.deployed();
         profile = await Profile.deployed();
         profileStorage = await ProfileStorage.deployed();
+        utilities = await TestingUtilities.deployed();
 
         // Set accounts[0] as profile contract so it can execute functions
         await hub.setContractAddress('Profile', accounts[0]);
@@ -227,41 +225,61 @@ contract('Profile storage testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should transfer tokens from smart contract to an account', async () => {
-        const initialContractBalance = await trac.balanceOf.call(profileStorage.address);
-        const initialSenderBalance = await trac.balanceOf.call(accounts[0]);
+        let initialContractBalance = await web3.eth.getBalance(profileStorage.address);
+        initialContractBalance = new BN(initialContractBalance);
+        let initialSenderBalance = await web3.eth.getBalance(accounts[0]);
+        initialSenderBalance = new BN(initialSenderBalance);
 
         assert(initialSenderBalance.gte(amountToTransfer), 'Sender does not have enough funds to transfer');
 
-        await trac.transfer(profileStorage.address, amountToTransfer, { from: accounts[0] });
+        let res = await utilities.transfer(
+            profileStorage.address,
+            { from: accounts[0], value: amountToTransfer, gasPrice },
+        );
+        let transactionCost = (new BN(res.receipt.cumulativeGasUsed)).mul(gasPrice);
 
-        const secondContractBalance = await trac.balanceOf.call(profileStorage.address);
+        let secondContractBalance = await web3.eth.getBalance(profileStorage.address);
+        secondContractBalance = new BN(secondContractBalance);
+
         assert(
             secondContractBalance.eq(initialContractBalance.add(amountToTransfer)),
-            `Incorrect amount sent to Profile Storage contract! 
-            Got ${secondContractBalance.toString()} instead of ${initialContractBalance.add(amountToTransfer).toString()}`,
+            'Incorrect amount sent to Profile Storage contract!' +
+            `\n\tExpected: ${initialContractBalance.add(amountToTransfer).toString()}` +
+            `\n\tReceived: ${secondContractBalance.toString()}`,
         );
 
-        const secondSenderBalance = await trac.balanceOf.call(accounts[0]);
+        let secondSenderBalance = await web3.eth.getBalance(accounts[0]);
+        secondSenderBalance = new BN(secondSenderBalance);
         assert(
-            secondSenderBalance.eq(initialSenderBalance.sub(amountToTransfer)),
-            `Incorrect amount taken from sender account 
-            Got ${secondSenderBalance.toString()} instead of ${initialSenderBalance.sub(amountToTransfer).toString()}`,
+            secondSenderBalance.eq(initialSenderBalance.sub(amountToTransfer).sub(transactionCost)),
+            'Incorrect amount taken from sender account!' +
+            `\n\tExpected: ${initialSenderBalance.sub(amountToTransfer).sub(transactionCost).toString()}` +
+            `\n\tReceived: ${secondSenderBalance.toString()}`,
         );
 
         // Execute tested function
-        await profileStorage.transferTokens(accounts[0], amountToTransfer);
+        res = await profileStorage.transferTokens(
+            accounts[0], amountToTransfer,
+            { from: accounts[0], gasPrice },
+        );
+        transactionCost =
+            transactionCost.add((new BN(res.receipt.cumulativeGasUsed)).mul(gasPrice));
 
-        const finalContractBalance = await trac.balanceOf.call(profileStorage.address);
+        let finalContractBalance = await web3.eth.getBalance(profileStorage.address);
+        finalContractBalance = new BN(finalContractBalance);
         assert(
             finalContractBalance.eq(initialContractBalance),
-            `Incorrect final balance of Profile Storage contract! 
-            Got ${finalContractBalance.toString()} instead of ${initialContractBalance.toString()}`,
+            'Incorrect final balance of Profile Storage contract!' +
+            `\n\tExpected: ${initialContractBalance.toString()}` +
+            `\n\tReceived: ${finalContractBalance.toString()}`,
         );
-        const finalSenderBalance = await trac.balanceOf.call(accounts[0]);
+        let finalSenderBalance = await web3.eth.getBalance(accounts[0]);
+        finalSenderBalance = new BN(finalSenderBalance);
         assert(
-            finalSenderBalance.eq(initialSenderBalance),
-            `Incorrect final balance of sender account! 
-            Got ${finalSenderBalance.toString()} instead of ${initialSenderBalance.toString()}`,
+            finalSenderBalance.eq(initialSenderBalance.sub(transactionCost)),
+            'Incorrect final balance of sender account!' +
+            `\n\tExpected: ${initialSenderBalance.sub(transactionCost).toString()}` +
+            `\n\tReceived: ${finalSenderBalance.toString()}`,
         );
     });
 });

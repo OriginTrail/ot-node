@@ -1,9 +1,6 @@
 var BN = require('bn.js');
 
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
-
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
-var OldHub = artifacts.require('OldHub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
 var CreditorHandler = artifacts.require('CreditorHandler'); // eslint-disable-line no-undef
@@ -17,18 +14,12 @@ var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line
 var LitigationStorage = artifacts.require('LitigationStorage'); // eslint-disable-line no-undef
 var MarketplaceStorage = artifacts.require('MarketplaceStorage'); // eslint-disable-line no-undef
 
-var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
-var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
 var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
 
-const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
-
 module.exports = async (deployer, network, accounts) => {
     let hub;
-    let oldHub;
-    let token;
 
     let profile;
     let holding;
@@ -93,9 +84,6 @@ module.exports = async (deployer, network, accounts) => {
         approval = await deployer.deploy(Approval);
         await hub.setContractAddress('Approval', approval.address);
 
-        token = await deployer.deploy(TracToken, accounts[0], accounts[0], accounts[0]);
-        await hub.setContractAddress('Token', token.address);
-
         profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
         await hub.setContractAddress('Profile', profile.address);
 
@@ -130,21 +118,9 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        for (let i = 0; i < 10; i += 1) {
-            if (i === 0) {
-                amounts.push(amountToMint.muln(1000));
-            } else {
-                amounts.push(amountToMint);
-            }
-            recepients.push(accounts[i]);
-        }
-        await token.mintMany(recepients, amounts, { from: accounts[0] });
-        await token.finishMinting({ from: accounts[0] });
-
         console.log('\n\n \t Contract adressess on ganache:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Approval contract address: \t\t${approval.address}`);
-        console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
@@ -193,9 +169,6 @@ module.exports = async (deployer, network, accounts) => {
         approval = await deployer.deploy(Approval);
         await hub.setContractAddress('Approval', approval.address);
 
-        token = await deployer.deploy(TracToken, accounts[0], accounts[0], accounts[0]);
-        await hub.setContractAddress('Token', token.address);
-
         profile = await deployer.deploy(Profile, hub.address);
         await hub.setContractAddress('Profile', profile.address);
 
@@ -221,15 +194,9 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Replacement', replacement.address);
 
-        recepients = [accounts[0]];
-        amounts.push(amountToMint.muln(10));
-        await token.mintMany(recepients, amounts, { from: accounts[0] });
-        await token.finishMinting({ from: accounts[0] });
-
         console.log('\n\n \t Contract adressess on starfleet:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Approval contract address: \t\t${approval.address}`);
-        console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
@@ -241,16 +208,6 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
         console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
 
-        break;
-    case 'token':
-        recepients = [];
-        amounts = [];
-        await deployer.deploy(TracToken, accounts[0], accounts[0], accounts[0])
-            .then(async (token) => {
-                console.log(`Token deployed at: ${token.address}`);
-                await token.finishMinting({ from: accounts[0] });
-                console.log('Finished minting');
-            });
         break;
     default:
         console.warn('Please use one of the following network identifiers: ganache, mock, test, or rinkeby');

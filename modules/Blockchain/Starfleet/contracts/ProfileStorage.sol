@@ -1,11 +1,10 @@
 pragma solidity ^0.4.24;
 
-import {ERC20} from './TracToken.sol';
 import {Hub} from './Hub.sol';
 
 contract ProfileStorage {
     Hub public hub;
-    
+
     constructor(address hubAddress) public {
         hub = Hub(hubAddress);
         activeNodes = 1;
@@ -16,7 +15,7 @@ contract ProfileStorage {
         require(newHubAddress != address(0));
         hub = Hub(newHubAddress);
     }
-    
+
     modifier onlyContracts(){
         require(hub.isContract(msg.sender),
         "Function can only be called by contracts!");
@@ -25,7 +24,7 @@ contract ProfileStorage {
 
     uint256 public activeNodes;
 
-    function setActiveNodes(uint256 newActiveNodes) 
+    function setActiveNodes(uint256 newActiveNodes)
     public onlyContracts {
         activeNodes = newActiveNodes;
     }
@@ -41,56 +40,56 @@ contract ProfileStorage {
     }
     mapping(address => ProfileDefinition) public profile;
 
-    function getStake(address identity) 
+    function getStake(address identity)
     public view returns(uint256) {
         return profile[identity].stake;
     }
-    function getStakeReserved(address identity) 
+    function getStakeReserved(address identity)
     public view returns(uint256) {
         return profile[identity].stakeReserved;
     }
-    function getReputation(address identity) 
+    function getReputation(address identity)
     public view returns(uint256) {
         return profile[identity].reputation;
     }
-    function getWithdrawalPending(address identity) 
+    function getWithdrawalPending(address identity)
     public view returns(bool) {
         return profile[identity].withdrawalPending;
     }
-    function getWithdrawalTimestamp(address identity) 
+    function getWithdrawalTimestamp(address identity)
     public view returns(uint256) {
         return profile[identity].withdrawalTimestamp;
     }
-    function getWithdrawalAmount(address identity) 
+    function getWithdrawalAmount(address identity)
     public view returns(uint256) {
         return profile[identity].withdrawalAmount;
     }
-    function getNodeId(address identity) 
+    function getNodeId(address identity)
     public view returns(bytes32) {
         return profile[identity].nodeId;
     }
-    
-    function setStake(address identity, uint256 stake) 
+
+    function setStake(address identity, uint256 stake)
     public onlyContracts {
         profile[identity].stake = stake;
     }
-    function setStakeReserved(address identity, uint256 stakeReserved) 
+    function setStakeReserved(address identity, uint256 stakeReserved)
     public onlyContracts {
         profile[identity].stakeReserved = stakeReserved;
     }
-    function setReputation(address identity, uint256 reputation) 
+    function setReputation(address identity, uint256 reputation)
     public onlyContracts {
         profile[identity].reputation = reputation;
     }
-    function setWithdrawalPending(address identity, bool withdrawalPending) 
+    function setWithdrawalPending(address identity, bool withdrawalPending)
     public onlyContracts {
         profile[identity].withdrawalPending = withdrawalPending;
     }
-    function setWithdrawalTimestamp(address identity, uint256 withdrawalTimestamp) 
+    function setWithdrawalTimestamp(address identity, uint256 withdrawalTimestamp)
     public onlyContracts {
         profile[identity].withdrawalTimestamp = withdrawalTimestamp;
     }
-    function setWithdrawalAmount(address identity, uint256 withdrawalAmount) 
+    function setWithdrawalAmount(address identity, uint256 withdrawalAmount)
     public onlyContracts {
         profile[identity].withdrawalAmount = withdrawalAmount;
     }
@@ -115,7 +114,8 @@ contract ProfileStorage {
 
     function transferTokens(address wallet, uint256 amount)
     public onlyContracts {
-        ERC20 token = ERC20(hub.tokenAddress());
-        token.transfer(wallet, amount);
+         wallet.transfer(amount);
     }
+
+    function () public payable {}
 }

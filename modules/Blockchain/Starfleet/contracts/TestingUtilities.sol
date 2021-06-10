@@ -3,7 +3,7 @@ pragma solidity ^0.4.19;
 contract TestingUtilities{
 	bool internalData;
 
-	function ecrecovery(bytes32 message, bytes signature) 
+	function ecrecovery(bytes32 message, bytes signature)
 	public pure returns (address) {
 		bytes32 r;
         bytes32 s;
@@ -14,7 +14,7 @@ contract TestingUtilities{
 
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, message));
-  
+
         // The signature format is a compact form of:
         //   {bytes32 r}{bytes32 s}{uint8 v}
         // Compact means, uint8 is not padded to 32 bytes.
@@ -126,6 +126,11 @@ contract TestingUtilities{
 	function xorBytes(bytes32 byt1, bytes32 byt2)
 	public pure returns (bytes32){
 		return byt1 ^ byt2;
+	}
+
+	function transfer(address recipient)
+	public payable {
+		recipient.transfer(msg.value);
 	}
 
 	function moveTheBlock()
