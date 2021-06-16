@@ -213,3 +213,14 @@ exports.IDENTITY_PERMISSION = {
     action: '2',
     encryption: '4',
 };
+
+/**
+ * @constant {Object: string} BLOCKCHAIN_TITLE
+ * Possible types of blockchain implementations available on ot-node
+ * @type {{Starfleet: string, Ethereum: string, XDai: string}}
+ */
+exports.BLOCKCHAIN_TITLE = {
+    Starfleet: 'Starfleet',
+    Ethereum: 'Ethereum',
+    XDai: 'XDai',
+};
