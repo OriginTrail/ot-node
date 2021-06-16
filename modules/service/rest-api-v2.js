@@ -349,7 +349,8 @@ class RestAPIServiceV2 {
                             const walletBaseBalance = await blockchain
                                 .getWalletBaseBalance(node_wallet, blockchain_id).response;
                             let walletTokenBalance;
-                            if (blockchain_title !== constants.BLOCKCHAIN_TITLE.Starfleet) {
+                            if (blockchain_title !==
+                                constants.BLOCKCHAIN_TITLE.OriginTrailParachain) {
                                 walletTokenBalance = await blockchain
                                     .getWalletTokenBalance(node_wallet, blockchain_id).response;
                             }

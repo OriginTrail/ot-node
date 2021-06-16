@@ -155,7 +155,7 @@ class DhPayOutCommand extends Command {
             .getProfile(blockchainIdentity, blockchain_id).response;
 
         let walletBalance;
-        if (blockchain_title !== constants.BLOCKCHAIN_TITLE.Starfleet) {
+        if (blockchain_title !== constants.BLOCKCHAIN_TITLE.OriginTrailParachain) {
             walletBalance =
                 await this.blockchain.getWalletTokenBalance(node_wallet, blockchain_id).response;
         } else {

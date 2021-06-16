@@ -220,7 +220,7 @@ exports.IDENTITY_PERMISSION = {
  * @type {{Starfleet: string, Ethereum: string, XDai: string}}
  */
 exports.BLOCKCHAIN_TITLE = {
-    Starfleet: 'Starfleet',
+    OriginTrailParachain: 'OriginTrail-Parachain',
     Ethereum: 'Ethereum',
     XDai: 'XDai',
 };
