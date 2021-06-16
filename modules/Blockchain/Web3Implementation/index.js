@@ -465,7 +465,7 @@ class Web3Implementation {
      */
     getWalletBaseBalance(wallet) {
         return new Promise((resolve, reject) => {
-            this.logger.trace(`[${this.getBlockchainId()}] Getting ETH balance by wallet ${wallet}`);
+            this.logger.trace(`[${this.getBlockchainId()}] Getting base balance by wallet ${wallet}`);
             this.web3.eth.getBalance(wallet)
                 .then((res) => {
                     resolve(res);
