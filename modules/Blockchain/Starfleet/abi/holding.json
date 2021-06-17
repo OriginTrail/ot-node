@@ -11,7 +11,8 @@
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "signature": "0x365a86fc"
   },
   {
     "constant": true,
@@ -25,7 +26,8 @@
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "signature": "0x54fd4d50"
   },
   {
     "constant": true,
@@ -39,7 +41,8 @@
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "signature": "0x67ebbdc6"
   },
   {
     "constant": true,
@@ -53,7 +56,8 @@
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "signature": "0x8da5cb5b"
   },
   {
     "constant": false,
@@ -67,7 +71,8 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
+    "type": "function",
+    "signature": "0xf2fde38b"
   },
   {
     "inputs": [
@@ -78,7 +83,8 @@
     ],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "constructor"
+    "type": "constructor",
+    "signature": "constructor"
   },
   {
     "anonymous": false,
@@ -105,7 +111,8 @@
       }
     ],
     "name": "OfferTask",
-    "type": "event"
+    "type": "event",
+    "signature": "0xc02335f4c444cce217a60853f6fd34ba3e698ba52c208883d975253732055495"
   },
   {
     "anonymous": false,
@@ -147,7 +154,8 @@
       }
     ],
     "name": "OfferCreated",
-    "type": "event"
+    "type": "event",
+    "signature": "0xb9705efa5b8a53b16627c24baa6d9acb1767218fe3bcfeb0b4e26a4325ef79cf"
   },
   {
     "anonymous": false,
@@ -174,7 +182,8 @@
       }
     ],
     "name": "OfferFinalized",
-    "type": "event"
+    "type": "event",
+    "signature": "0xeac1e15fac392f7eb69fb5accdf5e9892330f41cd8fa89933c2d2c8c68e4d4a7"
   },
   {
     "anonymous": false,
@@ -196,7 +205,8 @@
       }
     ],
     "name": "PaidOut",
-    "type": "event"
+    "type": "event",
+    "signature": "0xf4292e0ae547c949263a88899ebcdac1a5493bef4f206b7592b5a7de68f4c0de"
   },
   {
     "anonymous": false,
@@ -213,7 +223,8 @@
       }
     ],
     "name": "OwnershipTransferred",
-    "type": "event"
+    "type": "event",
+    "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
   },
   {
     "constant": false,
@@ -227,7 +238,8 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
+    "type": "function",
+    "signature": "0xc7eb4522"
   },
   {
     "constant": false,
@@ -281,7 +293,8 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
+    "type": "function",
+    "signature": "0x212c3925"
   },
   {
     "constant": false,
@@ -327,7 +340,8 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
+    "type": "function",
+    "signature": "0x1f0a07df"
   },
   {
     "constant": false,
@@ -345,6 +359,7 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
+    "type": "function",
+    "signature": "0x0221038a"
   }
 ]
