@@ -17,7 +17,7 @@ class Starfleet extends Web3Implementation {
     }
 
     async getRelativeTracPrice() {
-        return undefined;
+        return '1';
     }
 
     async calculateGasPrice() {
