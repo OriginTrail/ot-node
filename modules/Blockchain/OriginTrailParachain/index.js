@@ -5,7 +5,7 @@ const Web3Implementation = require('../Web3Implementation');
 
 class OriginTrailParachain extends Web3Implementation {
     /**
-     * Initializing Starfleet blockchain connector
+     * Initializing OriginTrail Parachain blockchain connector
      */
     constructor({ config, emitter, logger }, configuration) {
         super({
