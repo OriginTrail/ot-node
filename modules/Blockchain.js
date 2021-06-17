@@ -1347,8 +1347,8 @@ class Blockchain {
     /**
      * Returns blockchain title from configuration
      */
-    getBlockchainTitle(blockchain_id) {
-        const implementation = this._getImplementationFromId(blockchain_id);
+    getBlockchainTitle(blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
         return {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.getBlockchainTitle(),
