@@ -72,8 +72,8 @@
         },
         {
           "blockchain_title": "Starfleet",
-          "network_id": "stfl:testnet",
-          "identity_filepath": "starfleet_erc725_identity.json",
+          "network_id": "orion",
+          "identity_filepath": "orion_erc725_identity.json",
           "gas_limit": "2000000",
           "gas_price": "100",
           "dc_price_factor" : "3",
