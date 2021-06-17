@@ -3,7 +3,7 @@ const path = require('path');
 const Utilities = require('../../Utilities');
 const Web3Implementation = require('../Web3Implementation');
 
-class Starfleet extends Web3Implementation {
+class OriginTrailParachain extends Web3Implementation {
     /**
      * Initializing Starfleet blockchain connector
      */
@@ -15,7 +15,7 @@ class Starfleet extends Web3Implementation {
             contractPath: path.join(__dirname, 'abi'),
         }, configuration);
 
-        this.logger.info(`[${this.getBlockchainId()}] Selected blockchain: Starfleet`);
+        this.logger.info(`[${this.getBlockchainId()}] Selected blockchain: OriginTrail Parachain`);
     }
 
     async getRelativeTracPrice() {
@@ -64,4 +64,4 @@ class Starfleet extends Web3Implementation {
     }
 }
 
-module.exports = Starfleet;
+module.exports = OriginTrailParachain;
