@@ -249,8 +249,8 @@ class Blockchain {
      * Creates node profile on the Bidding contract
      * @param managementWallet - Management wallet
      * @param profileNodeId - Network node ID
-     * @param initialBalance - Initial profile balance
-     * @param isSender725 - Is sender ERC 725?
+     * @param {Object<BigNumber>} initialBalance - Initial profile balance
+     * @param {Boolean} hasERC725 - Does sender already have an ERC 725 identity?
      * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @param blockchain_id - Blockchain implementation to use
      * @param {Boolean} showUninitialized - Return implementations even if they aren't initialized
@@ -260,7 +260,7 @@ class Blockchain {
         managementWallet,
         profileNodeId,
         initialBalance,
-        isSender725,
+        hasERC725,
         blockchainIdentity,
         blockchain_id,
         showUninitialized = false,
@@ -270,7 +270,7 @@ class Blockchain {
             blockchain_id: implementation.getBlockchainId(),
             response: implementation.createProfile(
                 managementWallet,
-                profileNodeId, initialBalance, isSender725,
+                profileNodeId, initialBalance, hasERC725,
                 blockchainIdentity,
             ),
         };
