@@ -217,7 +217,7 @@ exports.IDENTITY_PERMISSION = {
 /**
  * @constant {Object: string} BLOCKCHAIN_TITLE
  * Possible types of blockchain implementations available on ot-node
- * @type {{Starfleet: string, Ethereum: string, XDai: string}}
+ * @type {{OriginTrailParachain: string, Ethereum: string, XDai: string}}
  */
 exports.BLOCKCHAIN_TITLE = {
     OriginTrailParachain: 'OriginTrail-Parachain',

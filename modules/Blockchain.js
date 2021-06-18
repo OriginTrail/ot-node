@@ -1,6 +1,6 @@
 const Ethereum = require('./Blockchain/Ethereum');
 const XDai = require('./Blockchain/XDai');
-const Starfleet = require('./Blockchain/Starfleet');
+const OriginTrailParachain = require('./Blockchain/OriginTrailParachain');
 const uuidv4 = require('uuid/v4');
 const Op = require('sequelize/lib/operators');
 const deepExtend = require('deep-extend');
@@ -8,6 +8,7 @@ const deepExtend = require('deep-extend');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const configjson = require('../config/config.json');
+const constants = require('./constants');
 
 const defaultBlockchainConfig = Utilities.copyObject(configjson[
     process.env.NODE_ENV &&
@@ -34,14 +35,14 @@ class Blockchain {
             const implementation_configuration = this.config.implementations[i];
 
             switch (implementation_configuration.blockchain_title) {
-            case 'Ethereum':
+            case constants.BLOCKCHAIN_TITLE.Ethereum:
                 this.blockchain[i] = new Ethereum(ctx, implementation_configuration);
                 break;
-            case 'xDai':
+            case constants.BLOCKCHAIN_TITLE.XDai:
                 this.blockchain[i] = new XDai(ctx, implementation_configuration);
                 break;
-            case 'Starfleet':
-                this.blockchain[i] = new Starfleet(ctx, implementation_configuration);
+            case constants.BLOCKCHAIN_TITLE.OriginTrailParachain:
+                this.blockchain[i] = new OriginTrailParachain(ctx, implementation_configuration);
                 break;
             default:
                 this.log.error('Unsupported blockchain', implementation_configuration.blockchain_title);

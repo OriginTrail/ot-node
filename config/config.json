@@ -71,7 +71,7 @@
           "plugins": []
         },
         {
-          "blockchain_title": "Starfleet",
+          "blockchain_title": "OriginTrail-Parachain",
           "network_id": "orion",
           "identity_filepath": "orion_erc725_identity.json",
           "gas_limit": "2000000",

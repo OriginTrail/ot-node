@@ -1,8 +1,8 @@
 require('dotenv').config({ path: `${__dirname}/../../../.env` });
 const WalletProvider = require('@truffle/hdwallet-provider'); // eslint-disable-line import/no-unresolved
 
-const privateKey = process.env.STARFLEET_PRIVATE_KEY;
-const rpc_endpoint = process.env.STARFLEET_ACCESS_KEY;
+const privateKey = process.env.PARACHAIN_PRIVATE_KEY;
+const rpc_endpoint = process.env.PARACHAIN_ACCESS_KEY;
 
 module.exports = {
     compilers: {
