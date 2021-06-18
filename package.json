@@ -53,9 +53,11 @@
     "truffle:test:ethr": "cd modules/Blockchain/Ethereum && truffle test --network test",
     "truffle:test:otpc": "cd modules/Blockchain/OriginTrailParachain && truffle test  --network test",
     "truffle:test:otpc:utilities": "cd modules/Blockchain/OriginTrailParachain && truffle test ./test/utilities.test.js --network test",
+    "truffle:test:etrh:litigation": "cd modules/Blockchain/Ethereum && truffle test ./test/litigation.test.js --network test",
     "tools:lns:start": "cd tools/local-network-setup && ./setup_environment.sh"
   },
   "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.4.0",
     "babel-eslint": "^8.2.6",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
@@ -91,7 +93,6 @@
     "@bugsnag/js": "^7.0.0",
     "@deadcanaries/kadence": "git+https://github.com/OriginTrail/kadence.git",
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@truffle/hdwallet-provider": "^1.2.6",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "asn1.js": "latest",
@@ -183,7 +184,6 @@
     "strip-ansi": "^5.0.0",
     "superagent": "^3.8.3",
     "truffle": "5.0.0-beta.1",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.0",
     "umzug": "^2.1.0",
     "underscore": "^1.9.0",
     "utf8": "^3.0.0",
