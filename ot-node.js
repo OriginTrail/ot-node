@@ -330,13 +330,14 @@ class OTNode {
         }
 
         await profileService.validateAndUpdateProfiles();
-        await this._runArangoRemoveUnnecessaryEncryptionDataMigration(
-            config,
-            graphStorage,
-            blockchain,
-            profileService,
-            replicationService,
-        );
+        // postponed for next release
+        // await this._runArangoRemoveUnnecessaryEncryptionDataMigration(
+        //     config,
+        //     graphStorage,
+        //     blockchain,
+        //     profileService,
+        //     replicationService,
+        // );
 
         await transport.start();
 
