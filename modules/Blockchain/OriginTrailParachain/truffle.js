@@ -1,8 +1,10 @@
 require('dotenv').config({ path: `${__dirname}/../../../.env` });
-const WalletProvider = require('@truffle/hdwallet-provider'); // eslint-disable-line import/no-unresolved
+// eslint-disable-next-line import/no-extraneous-dependencies, import/no-unresolved
+const WalletProvider = require('@truffle/hdwallet-provider');
 
 const privateKey = process.env.PARACHAIN_PRIVATE_KEY;
 const rpc_endpoint = process.env.PARACHAIN_ACCESS_KEY;
+const chain_id = process.env.PARACHAIN_CHAIN_ID;
 
 module.exports = {
     compilers: {
@@ -41,6 +43,22 @@ module.exports = {
         contracts: {
             provider: () => new WalletProvider([privateKey], rpc_endpoint),
             network_id: 4,
+            gasPrice: 1,
+            gas: 6000000, // Gas limit used for deploys
+            skipDryRun: true,
+        },
+
+        testnet: {
+            provider: () => new WalletProvider([privateKey], rpc_endpoint),
+            network_id: chain_id,
+            gasPrice: 1,
+            gas: 6000000, // Gas limit used for deploys
+            skipDryRun: true,
+        },
+
+        updateContracts: {
+            provider: () => new WalletProvider([privateKey], rpc_endpoint),
+            network_id: chain_id,
             gasPrice: 1,
             gas: 6000000, // Gas limit used for deploys
             skipDryRun: true,

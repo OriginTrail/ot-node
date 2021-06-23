@@ -1,3 +1,5 @@
+require('dotenv').config({ path: `${__dirname}/../../.env` });
+
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
@@ -46,21 +48,40 @@ for (let i = 0; i < number_of_nodes; i += 1) {
     parsedTemplate.database.database = `origintrail-${node_name}`;
     // parsedTemplate.disableAutoPayouts = true;
 
-    parsedTemplate.blockchain.implementations[0].node_wallet = wallets[3 * i].wallet;
-    parsedTemplate.blockchain.implementations[0].node_private_key = wallets[3 * i].privateKey;
-    parsedTemplate.blockchain.implementations[0].management_wallet = wallets[3 * i].wallet;
-
-    parsedTemplate.blockchain.implementations[1].node_wallet = wallets[(3 * i) + 1].wallet;
-    parsedTemplate.blockchain.implementations[1].node_private_key = wallets[(3 * i) + 1].privateKey;
-    parsedTemplate.blockchain.implementations[1].management_wallet = wallets[(3 * i) + 1].wallet;
-
-    parsedTemplate.blockchain.implementations[2].node_wallet = wallets[(3 * i) + 2].wallet;
-    parsedTemplate.blockchain.implementations[2].node_private_key = wallets[(3 * i) + 2].privateKey;
-    parsedTemplate.blockchain.implementations[2].management_wallet = wallets[(3 * i) + 2].wallet;
-
-    if (node_name === 'DH1') {
-        parsedTemplate.blockchain.implementations.reverse();
+    if (i === 0) {
+        parsedTemplate.blockchain.implementations[0].node_wallet =
+            process.env.PARACHAIN_ADDRESS;
+        parsedTemplate.blockchain.implementations[0].node_private_key =
+            process.env.PARACHAIN_PRIVATE_KEY;
+        parsedTemplate.blockchain.implementations[0].management_wallet =
+            process.env.PARACHAIN_ADDRESS;
+    } else if (i === 1) {
+        parsedTemplate.blockchain.implementations[0].node_wallet =
+            process.env.PARACHAIN_ADDRESS_1;
+        parsedTemplate.blockchain.implementations[0].node_private_key =
+            process.env.PARACHAIN_PRIVATE_KEY_1;
+        parsedTemplate.blockchain.implementations[0].management_wallet =
+            process.env.PARACHAIN_ADDRESS_1;
+    } else if (i === 2) {
+        parsedTemplate.blockchain.implementations[0].node_wallet =
+            process.env.PARACHAIN_ADDRESS_2;
+        parsedTemplate.blockchain.implementations[0].node_private_key =
+            process.env.PARACHAIN_PRIVATE_KEY_2;
+        parsedTemplate.blockchain.implementations[0].management_wallet =
+            process.env.PARACHAIN_ADDRESS_2;
+    } else if (i === 3) {
+        parsedTemplate.blockchain.implementations[0].node_wallet =
+            process.env.PARACHAIN_ADDRESS_3;
+        parsedTemplate.blockchain.implementations[0].node_private_key =
+            process.env.PARACHAIN_PRIVATE_KEY_3;
+        parsedTemplate.blockchain.implementations[0].management_wallet =
+            process.env.PARACHAIN_ADDRESS_3;
     }
+
+    parsedTemplate.blockchain.implementations[0].rpc_server_url =
+        process.env.PARACHAIN_ACCESS_KEY;
+    parsedTemplate.blockchain.implementations[0].hub_contract_address =
+        process.env.PARACHAIN_HUB_ADDRESS;
 
     // Uncomment if you want nodes to have different blockchain setups and for some nodes to be DVs
     // if (node_name === 'DH2' || node_name === 'DH6') {

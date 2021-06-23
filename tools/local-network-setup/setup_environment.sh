@@ -36,33 +36,6 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-echo ==============================
-echo ====== Starting ganache ======
-echo ==============================
-
-
-ganachePID="$(ps aux | grep '[g]anache-cli' | head -1 | awk '{print $2}')"
-if [ $ganachePID ]
-then
-  echo Ganache is already running, stopping previous ganache process...
-  kill -9 $ganachePID
-fi
-
-osascript -e "
-  tell app \"Terminal\"
-      do script \"cd $pathToOtNode && npm run ganache\"
-  end tell
-  "
-
-echo ===============================
-echo ===== Deploying contracts =====
-echo ===============================
-
-sleep 7
-npm run truffle:deploy:otpc:ganache
-npm run truffle:deploy:ethr:ganache
-npm run truffle:deploy:ethr:ganache
-
 echo ================================
 echo ======= Setting up nodes =======
 echo ================================

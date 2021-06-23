@@ -23,10 +23,12 @@ class OriginTrailParachain extends Web3Implementation {
     }
 
     async calculateGasPrice() {
+        // TODO Add logic for pricing mechanism based on Parachain
         return this.config.gas_price;
     }
 
     async getGasPrice() {
+        // TODO Add logic for pricing mechanism based on Parachain
         return this.config.gas_price;
     }
 

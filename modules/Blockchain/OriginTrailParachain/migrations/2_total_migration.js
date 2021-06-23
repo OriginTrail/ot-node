@@ -134,6 +134,7 @@ module.exports = async (deployer, network, accounts) => {
 
         break;
     case 'contracts':
+    case 'testnet':
         console.log(`Deploying from wallet: ${accounts[0]}`);
         await deployer.deploy(Hub)
             .then((result) => {
@@ -166,9 +167,6 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('MarketplaceStorage', marketplaceStorage.address);
 
-        approval = await deployer.deploy(Approval);
-        await hub.setContractAddress('Approval', approval.address);
-
         profile = await deployer.deploy(Profile, hub.address);
         await hub.setContractAddress('Profile', profile.address);
 
@@ -196,7 +194,6 @@ module.exports = async (deployer, network, accounts) => {
 
         console.log('\n\n \t Contract adressess on starfleet:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
-        console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
@@ -207,6 +204,21 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
         console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
+
+        break;
+    case 'updateContracts':
+        console.log(`Deploying from wallet: ${accounts[0]}`);
+        await Hub.at('0x43C7faf221DFd7f10a07F646D5635766021D036E')
+            .then((result) => {
+                hub = result;
+            });
+
+        profile = await deployer.deploy(Profile, hub.address);
+        await hub.setContractAddress('Profile', profile.address);
+
+        console.log('\n\n \t Contract adressess on starfleet:');
+        console.log(`\t Hub contract address: \t\t\t${hub.address}`);
+        console.log(`\t Profile contract address: \t\t${profile.address}`);
 
         break;
     default:

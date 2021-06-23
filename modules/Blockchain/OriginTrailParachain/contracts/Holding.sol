@@ -7,7 +7,6 @@ import {ProfileStorage} from './ProfileStorage.sol';
 import {LitigationStorage} from './LitigationStorage.sol';
 import {Profile} from './Profile.sol';
 import {CreditorHandler} from './CreditorHandler.sol';
-import {Approval} from './Approval.sol';
 import {SafeMath} from './SafeMath.sol';
 
 contract Holding is Ownable {
@@ -40,7 +39,6 @@ contract Holding is Ownable {
         uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
-        require(Approval(hub.getContractAddress("Approval")).identityHasApproval(identity), "Identity does not have approval for using the contract");
         // First we check that the paramaters are valid
         require(dataRootHash != 0, "Data root hash cannot be zero");
         require(redLitigationHash != 0, "Litigation hash cannot be zero");
@@ -195,7 +193,6 @@ contract Holding is Ownable {
 
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1), "Sender does not have proper permission to call this function!");
-        require(Approval(hub.getContractAddress("Approval")).identityHasApproval(identity), "Identity does not have approval for using the contract");
 
         // Verify that the litigation is not in progress
         LitigationStorage.LitigationStatus status = LitigationStorage(hub.getContractAddress("LitigationStorage")).getLitigationStatus(bytes32(offerId), identity);
