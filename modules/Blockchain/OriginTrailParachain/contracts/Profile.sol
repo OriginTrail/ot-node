@@ -41,32 +41,23 @@ contract Profile {
     event TokensReleased(address profile, uint256 amount);
     event TokensTransferred(address sender, address receiver, uint256 amount);
 
-    function createProfile(address managementWallet, bytes32 profileNodeId, bool senderHas725, address identity)
+    function createProfile(address managementWallet, bytes32 profileNodeId, address identity)
     public payable {
         require(managementWallet!=address(0));
         require(msg.value > 0, "Cannot deposit 0 tokens!");
         require(uint256(profileNodeId) != 0, "Cannot create a profile without a nodeId submitted");
 
         hub.getContractAddress("ProfileStorage").transfer(msg.value);
+        // todo emit from identity contract
+        emit IdentityCreated(msg.sender, address(identity));
+        // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
 
-        if(!senderHas725) {
-            Identity newIdentity = new Identity(msg.sender, managementWallet);
-            emit IdentityCreated(msg.sender, address(newIdentity));
+        ProfileStorage(hub.getContractAddress("ProfileStorage")).setStake(identity, msg.value);
+        ProfileStorage(hub.getContractAddress("ProfileStorage")).setNodeId(identity, profileNodeId);
 
-            ProfileStorage(hub.getContractAddress("ProfileStorage")).setStake(address(newIdentity), msg.value);
-            ProfileStorage(hub.getContractAddress("ProfileStorage")).setNodeId(address(newIdentity), profileNodeId);
+        emit ProfileCreated(identity, msg.value);
 
-            emit ProfileCreated(address(newIdentity), msg.value);
-        }
-        else {
-            // Verify sender
-            require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
-
-            ProfileStorage(hub.getContractAddress("ProfileStorage")).setStake(identity, msg.value);
-            ProfileStorage(hub.getContractAddress("ProfileStorage")).setNodeId(identity, profileNodeId);
-
-            emit ProfileCreated(identity, msg.value);
-        }
 
         if(msg.value > minimalStake) {
             uint256 activeNodes = ProfileStorage(hub.getContractAddress("ProfileStorage")).activeNodes();

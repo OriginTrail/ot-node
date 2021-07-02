@@ -22,8 +22,8 @@ contract Identity is ERC725 {
     mapping (uint256 => bytes32[]) keysByPurpose;
     mapping (uint256 => Execution) executions;
 
-    constructor(address operational, address management) public {
-        require(operational != address(0) && management != address(0));
+    constructor(address management) public {
+        require(msg.sender != address(0) && management != address(0));
 
         otVersion = 1;
 
@@ -41,8 +41,8 @@ contract Identity is ERC725 {
         keysByPurpose[4].push(_management_key);
         emit KeyAdded(_management_key, keys[_management_key].purposes, 1);
 
-        if(operational != management){
-            bytes32 _operational_key = keccak256(abi.encodePacked(operational));
+        if(msg.sender != management){
+            bytes32 _operational_key = keccak256(abi.encodePacked(msg.sender));
 
             keys[_operational_key].key = _operational_key;
 
