@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         query: DataTypes.JSON,
         timestamp: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             defaultValue: () => Date.now(),
         },
         status: {

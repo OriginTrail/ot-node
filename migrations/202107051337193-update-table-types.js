@@ -9,6 +9,10 @@ module.exports = {
             .changeColumn('commands', 'delay', {
                 type: Sequelize.BIGINT,
             });
+        await queryInterface
+            .changeColumn('network_queries', 'timestamp', {
+                type: Sequelize.BIGINT,
+            });
     },
     down: async (queryInterface, Sequelize) => {
         await queryInterface
@@ -17,6 +21,10 @@ module.exports = {
             });
         await queryInterface
             .changeColumn('commands', 'delay', {
+                type: Sequelize.INTEGER,
+            });
+        await queryInterface
+            .changeColumn('network_queries', 'timestamp', {
                 type: Sequelize.INTEGER,
             });
     },
