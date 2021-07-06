@@ -1,9 +1,8 @@
-
 module.exports = {
     up: async (queryInterface, Sequelize) => {
         await queryInterface
             .changeColumn('network_replies', 'timestamp', {
-                type: Sequelize.Date,
+                type: Sequelize.BIGINT,
             });
         await queryInterface
             .changeColumn('commands', 'delay', {
