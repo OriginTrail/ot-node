@@ -24,9 +24,9 @@
       {
         "blockchain_title": "OriginTrail-Parachain",
         "network_id": "orion",
-        "gas_limit": "2000000",
-        "gas_price": "1",
-        "identity_filepath": "orion_identity.json"
+        "gas_limit": "6000000",
+        "gas_price": "100",
+        "identity_filepath": "orion_erc725_identity.json"
       }
     ]
   },

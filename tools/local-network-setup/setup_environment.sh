@@ -73,11 +73,11 @@ then
   echo Waiting for DC node to set up before continuing...
   sleep 15
   i=1
-  while [[ $i -lt $number_of_nodes ]]
-  do
-    startNode DH$i
-    ((i = i + 1))
-  done
+#  while [[ $i -lt $number_of_nodes ]]
+#  do
+#    startNode DH$i
+#    ((i = i + 1))
+#  done
 fi
 
 
