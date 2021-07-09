@@ -3,6 +3,8 @@ const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
 
+const eventsValidityInMiliseconds = 2 * 60 * 60 * 1000; // 2h
+
 /**
  * Repeatable command that checks whether offer is created or litigation is successfully initiated
  */
@@ -24,6 +26,7 @@ class DHProcessBlockchainEventsCommand extends Command {
      */
     async execute(command) {
         try {
+            const timestamp = Date.now() - eventsValidityInMiliseconds;
             const events = await Models.events.findAll({
                 where: {
                     event: {
@@ -32,6 +35,7 @@ class DHProcessBlockchainEventsCommand extends Command {
                             constants.EVENT_NAME.OfferCreated],
                     },
                     finished: 0,
+                    timestamp: { [Models.Sequelize.Op.gte]: timestamp },
                 },
             });
             if (events) {

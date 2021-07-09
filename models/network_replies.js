@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         receiver_wallet: DataTypes.STRING,
         receiver_identity: DataTypes.STRING,
         timestamp: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.BIGINT,
             defaultValue: () => Date.now(),
         },
     }, {});

@@ -30,11 +30,10 @@ class DcOfferTaskCommand extends Command {
             blockchain_id,
         } = command.data;
 
-        const dataSetIdNorm = Utilities.normalizeHex(dataSetId.toString('hex').padStart(64, '0'));
         const event = await Models.events.findOne({
             where: {
                 event: 'OfferTask',
-                data_set_id: dataSetIdNorm,
+                data_set_id: Utilities.normalizeHex(dataSetId),
                 blockchain_id,
                 finished: 0,
             },
@@ -84,7 +83,7 @@ class DcOfferTaskCommand extends Command {
                 },
             );
 
-            this.logger.trace(`Offer successfully started for data set ${dataSetIdNorm} on blockchain ${blockchain_id}. Offer ID ${eventOfferId}. Internal offer ID ${internalOfferId}.`);
+            this.logger.trace(`Offer successfully started for data set ${dataSetId} on blockchain ${blockchain_id}. Offer ID ${eventOfferId}. Internal offer ID ${internalOfferId}.`);
             return this.continueSequence(this.pack(command.data), command.sequence);
         }
 
@@ -145,30 +144,6 @@ class DcOfferTaskCommand extends Command {
     }
 
     /**
-     * Pack data for DB
-     * @param data
-     */
-    pack(data) {
-        Object.assign(data, {
-            dataSetId: Utilities.normalizeHex(data.dataSetId.toString('hex').padStart(64, '0')),
-        });
-        return data;
-    }
-
-    /**
-     * Unpack data from database
-     * @param data
-     * @returns {Promise<*>}
-     */
-    unpack(data) {
-        const parsed = data;
-        Object.assign(parsed, {
-            dataSetId: new BN(Utilities.denormalizeHex(data.dataSetId), 16),
-        });
-        return parsed;
-    }
-
-    /**
      * Builds default AddCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
@@ -178,7 +153,7 @@ class DcOfferTaskCommand extends Command {
             name: 'dcOfferTaskCommand',
             delay: 0,
             period: 5000,
-            deadline_at: Date.now() + (5 * 60 * 1000),
+            deadline_at: Date.now() + (10 * 60 * 1000),
             transactional: false,
         };
         Object.assign(command, map);
