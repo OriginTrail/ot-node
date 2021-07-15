@@ -13,9 +13,14 @@ Quick Start
 
 ## Prerequisites
 
-* You need to have arangodb installed and running on your machine. You can find instructions on the [ArangoDB website](https://www.arangodb.com/docs/stable/getting-started-installation.html)
+* You need to have arangodb 3.5 installed and running on your machine. Find the appropriate binary on the [ArangoDB website](https://download.arangodb.com/arangodb35/index.html)
 
 * You should have ot-node dependencies installed with the `npm install` command
+
+* Install ganache-cli locally ( `npm install -g ganache-cli` )
+
+* generate a .env file in the ot-node root folder and insert ` NODE_ENV=development ` for local development
+
 
 ## How to start
 
