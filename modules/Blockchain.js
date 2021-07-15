@@ -246,6 +246,14 @@ class Blockchain {
         };
     }
 
+    createIdentity(managementWallet, blockchain_id, showUninitialized = false) {
+        const implementation = this._getImplementationFromId(blockchain_id, showUninitialized);
+        return {
+            blockchain_id: implementation.getBlockchainId(),
+            response: implementation.createIdentity(managementWallet),
+        };
+    }
+
     /**
      * Creates node profile on the Bidding contract
      * @param managementWallet - Management wallet

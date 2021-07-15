@@ -59,7 +59,7 @@ class ProfileService {
     }
 
     async createAndSaveNewProfile(profileIdentity, blockchainId) {
-        const identityExists = !!profileIdentity;
+        let identityExists = !!profileIdentity;
         const profileMinStake = await this.blockchain
             .getProfileMinimumStake(blockchainId, true).response;
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}, for blockchain id: ${blockchainId}`);
@@ -72,8 +72,8 @@ class ProfileService {
             initialTokenAmount = new BN(profileMinStake, 10);
         }
 
-        if (this.blockchain.getBlockchainTitle(blockchainId, true).response
-            !== constants.BLOCKCHAIN_TITLE.OriginTrailParachain) {
+        const blockchain_title = this.blockchain.getBlockchainTitle(blockchainId, true).response;
+        if (blockchain_title !== constants.BLOCKCHAIN_TITLE.OriginTrailParachain) {
             let approvalIncreased = false;
             do {
                 try {
@@ -99,11 +99,26 @@ class ProfileService {
             } while (approvalIncreased === false);
         }
 
-        // set empty identity if there is none
-        let identity = identityExists ? profileIdentity : new BN(0, 16);
 
         const { node_wallet, management_wallet } =
             this.blockchain.getWallet(blockchainId, true).response;
+
+        if (blockchain_title === constants.BLOCKCHAIN_TITLE.OriginTrailParachain
+            && !identityExists) {
+            const receipt = await this.blockchain
+                .createIdentity(management_wallet, blockchainId, true).response;
+
+            this.blockchain.saveIdentity(receipt.contractAddress, blockchainId, true);
+            this.logger.notify(`Identity created for node ${this.config.identity}. Identity is ${receipt.contractAddress}. For blockchain id: ${blockchainId}.`);
+
+            profileIdentity = receipt.contractAddress;
+            identityExists = true;
+            await Utilities.sleepForMilliseconds(25000);
+        }
+
+        // set empty identity if there is none
+        let identity = identityExists ? profileIdentity : new BN(0, 16);
+
         let createProfileCalled = false;
         do {
             try {

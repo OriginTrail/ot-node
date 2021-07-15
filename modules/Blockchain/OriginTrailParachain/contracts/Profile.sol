@@ -48,8 +48,6 @@ contract Profile {
         require(uint256(profileNodeId) != 0, "Cannot create a profile without a nodeId submitted");
 
         hub.getContractAddress("ProfileStorage").transfer(msg.value);
-        // todo emit from identity contract
-        emit IdentityCreated(msg.sender, address(identity));
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
 
@@ -57,7 +55,6 @@ contract Profile {
         ProfileStorage(hub.getContractAddress("ProfileStorage")).setNodeId(identity, profileNodeId);
 
         emit ProfileCreated(identity, msg.value);
-
 
         if(msg.value > minimalStake) {
             uint256 activeNodes = ProfileStorage(hub.getContractAddress("ProfileStorage")).activeNodes();

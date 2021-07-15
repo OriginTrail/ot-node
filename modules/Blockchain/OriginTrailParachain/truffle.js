@@ -51,8 +51,8 @@ module.exports = {
         testnet: {
             provider: () => new WalletProvider([privateKey], rpc_endpoint),
             network_id: chain_id,
-            gasPrice: 1,
-            gas: 6000000, // Gas limit used for deploys
+            gasPrice: 100000000,
+            gas: 8000000, // Gas limit used for deploys
             skipDryRun: true,
         },
 

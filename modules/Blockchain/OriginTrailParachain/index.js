@@ -3,9 +3,7 @@ const path = require('path');
 const Utilities = require('../../Utilities');
 const Web3Implementation = require('../Web3Implementation');
 
-
-const ProfileContractAbi = require('./build/contracts/Profile').abi;
-const IdentityContractBytecode = require('./build/contracts/Identity').bytecode;
+const IdentityContractBytecode = require('./bytecode/identity').bytecode;
 
 const Web3 = require('web3');
 
@@ -39,6 +37,27 @@ class OriginTrailParachain extends Web3Implementation {
         return this.config.gas_price;
     }
 
+    async createIdentity(managementWallet) {
+        const parameters = this.web3.eth.abi.encodeParameters(
+            ['address'],
+            [managementWallet],
+        ).slice(2);
+
+        const createTransaction = await this.web3.eth.accounts.signTransaction({
+            from: this.config.node_wallet,
+            data: `${IdentityContractBytecode}${parameters}`,
+            value: '0x00',
+            gas: this.config.gas_limit,
+            gasPrice: this.getGasPrice(),
+            chainId: this.config.blockchain_id,
+        }, this.config.node_private_key);
+
+        const createReceipt =
+            await this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
+
+        return createReceipt;
+    }
+
     /**
      * Creates node profile on the Profile contract
      * @param managementWallet - Management wallet
@@ -55,43 +74,19 @@ class OriginTrailParachain extends Web3Implementation {
         hasERC725,
         blockchainIdentity,
     ) {
-        const parameters = this.web3.eth.abi.encodeParameters(
-            ['address'],
-            [this.config.node_wallet],
-        ).slice(2);
-
-        let createTransaction = await this.web3.eth.accounts.signTransaction({
-            from: this.config.node_wallet,
-            data: `${IdentityContractBytecode}${parameters}`,
-            value: '0x00',
-            gas: this.config.gas_limit,
-            gasPrice: this.getGasPrice(),
-            chainId: this.config.blockchain_id,
-        }, this.config.node_private_key);
-
-        const createReceipt =
-            await this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
-
-        profileNodeId = Utilities.normalizeHex(profileNodeId);
-        this.logger.trace('Identity contract deployed at address: ', createReceipt.contractAddress);
-        const profileAddress = createReceipt.contractAddress;
-
-        const profileContractAddress = await this._getProfileContractAddress();
-
-        const util = new this.web3.eth.Contract(ProfileContractAbi, profileContractAddress);
-        const data = util.methods
-            .createProfile(managementWallet, profileNodeId, profileAddress).encodeABI();
-        createTransaction = await this.web3.eth.accounts.signTransaction({
-            from: this.config.node_wallet,
-            to: profileContractAddress,
-            data,
-            value: this.web3.utils.toWei(this.config.initial_deposit_amount, 'ether'),
-            gas: this.config.gas_limit,
-            gasPrice: this.getGasPrice(),
-            chainId: this.config.blockchain_id,
-        }, this.config.node_private_key);
-        this.logger.trace(`[${this.config.network_id}] Calling create Profile on blockchain`);
-        await this.web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
+        const gasPrice = await this.getGasPrice();
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            value: initialBalance.toString(16),
+            to: this.profileContractAddress,
+        };
+        this.logger.trace(`[${this.getBlockchainId()}] CreateProfile(${managementWallet}, ${profileNodeId}, ${blockchainIdentity}), value ${initialBalance}`);
+        return this.transactions.queueTransaction(
+            this.profileContractAbi, 'createProfile',
+            [managementWallet, Utilities.normalizeHex(profileNodeId), blockchainIdentity],
+            options,
+        );
     }
 }
 
