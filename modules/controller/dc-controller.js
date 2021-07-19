@@ -637,29 +637,36 @@ class DCController {
             req.body = Utilities.arrayze(req.body);
         }
 
-        const promises = [];
+        try {
+            const promises = [];
 
-        for (const obj of req.body) {
-            if (obj.object_ids === undefined ||
+            for (const obj of req.body) {
+                if (obj.object_ids === undefined ||
                 obj.dataset_id === undefined) {
-                res.status(400);
-                res.send({
-                    message: 'Bad request',
-                });
-                return;
+                    res.status(400);
+                    res.send({
+                        message: 'Bad request',
+                    });
+                    return;
+                }
+
+                const { object_ids, dataset_id } = obj;
+                promises.push(this.importService
+                    .getMerkleProofs(Utilities.arrayze(object_ids), dataset_id));
             }
 
-            const { object_ids, dataset_id } = obj;
-            promises.push(this.importService
-                .getMerkleProofs(Utilities.arrayze(object_ids), dataset_id));
+
+            let response = await Promise.all(promises);
+            response = Array.prototype.concat.apply([], response);
+
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            res.status(404);
+            res.send({
+                message: 'Data not found',
+            });
         }
-
-
-        let response = await Promise.all(promises);
-        response = Array.prototype.concat.apply([], response);
-
-        res.status(200);
-        res.send(response);
     }
 }
 
