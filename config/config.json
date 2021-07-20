@@ -308,6 +308,20 @@
           "dc_price_factor" : "3",
           "dh_price_factor" : "2",
           "trac_price_in_base_currency" : "0.4"
+        },
+        {
+          "blockchain_title": "OriginTrail-Parachain",
+          "network_id": "parachain:testnet",
+          "blockchain_id": 2160,
+          "rpc_server_url": "http://159.89.98.23:9933",
+          "identity_filepath": "parachain_erc725_identity.json",
+          "hub_contract_address": "0xA63fF660dd7db1D32a8D5f48249889E7e80f0650",
+          "gas_limit": "6000000",
+          "initial_deposit_amount": "5000",
+          "gas_price": "100",
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_base_currency" : "1"
         }
       ]
     },
