@@ -1,5 +1,3 @@
-var BN = require('bn.js');
-
 var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
@@ -33,12 +31,6 @@ module.exports = async (deployer, network, accounts) => {
     let holdingStorage;
     let litigationStorage;
     let marketplaceStorage;
-
-    var amounts = [];
-    var recepients = [];
-
-    var temp;
-    var temp2;
 
     switch (network) {
     case 'development':
@@ -222,7 +214,7 @@ module.exports = async (deployer, network, accounts) => {
 
         break;
     default:
-        console.warn('Please use one of the following network identifiers: ganache, mock, test, or rinkeby');
+        console.warn('Please use one of the following network identifiers: development, ganache, test, testnet, contracts, updateContracts');
         break;
     }
 };
