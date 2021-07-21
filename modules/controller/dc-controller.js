@@ -624,7 +624,7 @@ class DCController {
     async getMerkleProofs(req, res) {
         this.logger.api('POST: Get Merkle proofs request received.');
 
-        if (req.body === undefined) {
+        if (!req.body) {
             res.status(400);
             res.send({
                 message: 'Bad request',
@@ -641,8 +641,7 @@ class DCController {
             const promises = [];
 
             for (const obj of req.body) {
-                if (obj.object_ids === undefined ||
-                obj.dataset_id === undefined) {
+                if (!obj.object_ids || !obj.dataset_id) {
                     res.status(400);
                     res.send({
                         message: 'Bad request',
