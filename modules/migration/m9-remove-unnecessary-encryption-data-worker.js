@@ -7,14 +7,17 @@ process.on('message', async (dataFromParent) => {
     try {
         const graphStorage = new GraphStorage(database, null);
         await graphStorage.connect();
+
+        const promises = [];
         for (const object of result) {
-            // eslint-disable-next-line no-await-in-loop
-            await graphStorage.removeUnnecessaryEncryptionData(
+            promises.push(graphStorage.removeUnnecessaryEncryptionData(
                 object.data_set_id,
                 object.offer_id,
                 object.encryptionColor,
-            );
+            ));
         }
+
+        await Promise.all(promises);
 
         process.send(JSON.stringify({ status: 'COMPLETED' }), () => {
             process.exit(0);

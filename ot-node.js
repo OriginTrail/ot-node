@@ -52,8 +52,7 @@ const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
 const RestoreService = require('./scripts/restore');
-const { execSync } = require('child_process');
-const { fork } = require('child_process');
+const { execSync, fork } = require('child_process');
 
 const semver = require('semver');
 
