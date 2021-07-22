@@ -557,7 +557,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
             expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
                 .to.be.equal(calculatedRootHash);
         } else {
-            expect(fingerprint).to.have.keys(['message', 'blockchain_id']);
+            expect(fingerprint).to.have.keys(['message', 'dataset_id' 'blockchain_id']);
         }
 
         i += 1;
