@@ -95,6 +95,7 @@ describe('Pricing service test', () => {
         blockchain.blockchain[0].initialized = true;
     });
 
+    // TODO Refactor before each hook in the next sprint
     it.skip('Get gas price - env is develop - expect default is returned', async () => {
         process.env.NODE_ENV = 'development';
         const gasPrice = await blockchain.getGasPrice().response;

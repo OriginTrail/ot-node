@@ -52,7 +52,7 @@ const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
 const PermissionedDataService = require('./modules/service/permissioned-data-service');
 const RestoreService = require('./scripts/restore');
-const { execSync } = require('child_process');
+const { execSync, fork } = require('child_process');
 
 const semver = require('semver');
 
@@ -330,14 +330,14 @@ class OTNode {
         }
 
         await profileService.validateAndUpdateProfiles();
-        // postponed for next release
-        // await this._runArangoRemoveUnnecessaryEncryptionDataMigration(
-        //     config,
-        //     graphStorage,
-        //     blockchain,
-        //     profileService,
-        //     replicationService,
-        // );
+
+        await this._runArangoRemoveUnnecessaryEncryptionDataMigration(
+            config,
+            graphStorage,
+            blockchain,
+            profileService,
+            replicationService,
+        );
 
         await transport.start();
 
@@ -452,17 +452,25 @@ class OTNode {
                 logger: log,
                 config,
                 blockchain,
-                graphStorage,
                 profileService,
                 replicationService,
             });
 
             try {
                 log.info('Initializing Arango remove unnecessary encryption data migration...');
-                await migration.run();
-                log.warn(`One-time Arango remove unnecessary encryption data migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                const result = await migration.run();
 
-                await Utilities.writeContentsToFile(migrationDir, m9ArangoEncryptionDataMigrationFilename, 'PROCESSED');
+                const forked = fork('modules/migration/m9-remove-unnecessary-encryption-data-worker.js');
+                forked.send(JSON.stringify({ result, database: config.database }));
+                forked.on('message', async (response) => {
+                    if (response.error) {
+                        log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${response.error}`);
+                    } else {
+                        log.warn(`One-time Arango remove unnecessary encryption data migration completed. Lasted ${Date.now() - migrationsStartedMills} millisecond(s)`);
+                        await Utilities.writeContentsToFile(migrationDir, m9ArangoEncryptionDataMigrationFilename, 'PROCESSED');
+                    }
+                    forked.kill();
+                });
             } catch (e) {
                 log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${e.message}`);
                 process.exit(1);
