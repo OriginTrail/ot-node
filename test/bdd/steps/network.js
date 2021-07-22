@@ -551,7 +551,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
     let i = 0;
     for (const fingerprint of fingerprints) {
         if (i === 0) {
-            expect(fingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+            expect(fingerprint).to.have.keys(['root_hash', 'dataset_id', 'blockchain_id']);
             expect(utilities.isZeroHash(fingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
             expect(fingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match')
