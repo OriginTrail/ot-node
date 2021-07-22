@@ -915,7 +915,7 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
     let fingerprintFound = false;
     for (const myFingerprint of myFingerprints) {
         if (myFingerprint.root_hash) {
-            expect(myFingerprint).to.have.keys(['root_hash', 'blockchain_id']);
+            expect(myFingerprint).to.have.keys(['root_hash', 'dataset_id', 'blockchain_id']);
             expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
             fingerprintFound = true;
         }
