@@ -935,7 +935,7 @@ class DVController {
 
     async handleGetBulkFingerprint(req, res) {
         this.logger.api('GET: Fingerprint bulk request received.');
-        const dataset_ids = JSON.parse(req.query.dataset_ids);
+        const dataset_ids = JSON.parse(req.body.dataset_ids);
         if (!dataset_ids.length) {
             res.status(400);
             res.send({
@@ -952,6 +952,7 @@ class DVController {
             let result = await Promise.all(promises);
             const replicated = result.some(x => x.replicated);
             result = result.map(x => x.result);
+            result = Array.prototype.concat.apply([], result);
 
             if (replicated) {
                 res.status(200);

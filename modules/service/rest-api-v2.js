@@ -317,7 +317,7 @@ class RestAPIServiceV2 {
         /** Get root hash for provided data array
          * @param Query params: data_set_id
          */
-        server.get(`/api/${this.version_id}/fingerprint`, async (req, res) => {
+        server.post(`/api/${this.version_id}/fingerprint`, async (req, res) => {
             await this.dvController.handleGetBulkFingerprint(req, res);
         });
 
