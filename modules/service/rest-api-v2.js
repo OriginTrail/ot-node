@@ -314,6 +314,13 @@ class RestAPIServiceV2 {
             await this.dvController.handleGetFingerprint(req, res);
         });
 
+        /** Get root hash for provided data array
+         * @param Query params: data_set_id
+         */
+        server.post(`/api/${this.version_id}/fingerprint`, async (req, res) => {
+            await this.dvController.handleGetBulkFingerprint(req, res);
+        });
+
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
             this.logger.api('GET: import_info.');
 

@@ -55,7 +55,7 @@ script:
       npm run truffle:test > $ARTIFACTS_DIR/truffle-test.log;
     fi
   - if [[ ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "sixth" ) || ( "$TRAVIS_EVENT_TYPE" == "push" && "$BDD_SECTION" == "second" ) || ( "$TRAVIS_EVENT_TYPE" == "cron" && "$BDD_SECTION" == "sixth" ) || ( "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "docker" )]]; then
-      npm run truffle:deploy:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
+      npm run truffle:deploy:ethr:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
     fi
   - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "docker" ]]; then ./test/docker/check_image.sh; fi
   - if [[ "$TRAVIS_EVENT_TYPE" == "pull_request" && "$BDD_SECTION" == "docker" ]]; then ./test/docker/cleanup_image.sh; fi
