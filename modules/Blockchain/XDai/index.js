@@ -50,7 +50,7 @@ class XDai extends Web3Implementation {
             return this.config.gas_price;
         }
 
-        let gasBlockscoutPrice = await this.getGasStationGasPrice()
+        let gasBlockscoutPrice = await this.getGasBlockscoutPrice()
             .catch((err) => { this.logger.warn(err); }) * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
         gasBlockscoutPrice = Math.round(gasBlockscoutPrice);
 
@@ -74,7 +74,7 @@ class XDai extends Web3Implementation {
                 return undefined;
             });
         if (response) {
-            return response.average * 100000000;
+            return response.data.average * 1000000000;
         }
         return undefined;
     }
