@@ -5,20 +5,20 @@ const Models = require('../../models');
  */
 class M9RemoveEncryptionDataMigration {
     constructor({
-        logger, blockchain, config, profileService, replicationService, graphStorage,
+        logger, blockchain, config, profileService, replicationService,
     }) {
         this.logger = logger;
         this.config = config;
         this.blockchain = blockchain;
         this.profileService = profileService;
         this.replicationService = replicationService;
-        this.graphStorage = graphStorage;
     }
 
     /**
      * Run migration
      */
     async run() {
+        const result = [];
         const bids = await Models.bids.findAll({
             attributes: ['data_set_id', 'offer_id', 'blockchain_id', 'status'],
             where: {
@@ -42,24 +42,24 @@ class M9RemoveEncryptionDataMigration {
                 if (bid.status === 'CHOSEN' && holder.stakedAmount !== '0') {
                     const encryptionColor = this.replicationService
                         .castNumberToColor(parseInt(holder.litigationEncryptionType, 10));
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.graphStorage.removeUnnecessaryEncryptionData(
-                        bid.data_set_id,
-                        bid.offer_id,
+                    result.push({
+                        data_set_id: bid.data_set_id,
+                        offer_id: bid.offer_id,
                         encryptionColor,
-                    );
+                    });
                 } else if (bid.status === 'NOT_CHOSEN' && holder.stakedAmount === '0') {
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.graphStorage.removeUnnecessaryEncryptionData(
-                        bid.data_set_id,
-                        bid.offer_id,
-                        null,
-                    );
+                    result.push({
+                        data_set_id: bid.data_set_id,
+                        offer_id: bid.offer_id,
+                        encryptionColor: null,
+                    });
                 }
             } catch (error) {
                 this.logger.warn(`Unable to remove encryption data for offer id: ${bid.offer_id}. Error: ${error.message}`);
             }
         }
+
+        return result;
     }
 }
 
