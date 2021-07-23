@@ -222,5 +222,5 @@ exports.IDENTITY_PERMISSION = {
 exports.BLOCKCHAIN_TITLE = {
     OriginTrailParachain: 'OriginTrail-Parachain',
     Ethereum: 'Ethereum',
-    XDai: 'XDai',
+    XDai: 'xDai',
 };
