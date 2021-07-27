@@ -624,6 +624,32 @@ class DCController {
     async getMerkleProofs(req, res) {
         this.logger.api('POST: Get Merkle proofs request received.');
 
+        if (!req.body || !req.body.object_ids || !req.body.dataset_id) {
+            res.status(400);
+            res.send({
+                message: 'Bad request',
+            });
+            return;
+        }
+
+        try {
+            const { object_ids, dataset_id } = req.body;
+            const response = await this.importService
+                .getMerkleProofs(Utilities.arrayze(object_ids), dataset_id);
+
+            res.status(200);
+            res.send(response);
+        } catch (e) {
+            res.status(404);
+            res.send({
+                message: 'Data not found',
+            });
+        }
+    }
+
+    async getBulkMerkleProofs(req, res) {
+        this.logger.api('POST: Get bulk Merkle proofs request received.');
+
         if (!req.body) {
             res.status(400);
             res.send({
@@ -632,38 +658,32 @@ class DCController {
             return;
         }
 
-
-        if (!(req.body instanceof Array)) {
-            req.body = Utilities.arrayze(req.body);
-        }
-
         try {
-            const promises = [];
+            const inserted_object = await Models.handler_ids.create({
+                status: 'PENDING',
+            });
 
-            for (const obj of req.body) {
-                if (!obj.object_ids || !obj.dataset_id) {
-                    res.status(400);
-                    res.send({
-                        message: 'Bad request',
-                    });
-                    return;
-                }
+            const { handler_id } = inserted_object.dataValues;
 
-                const { object_ids, dataset_id } = obj;
-                promises.push(this.importService
-                    .getMerkleProofs(Utilities.arrayze(object_ids), dataset_id));
-            }
-
-
-            let response = await Promise.all(promises);
-            response = Array.prototype.concat.apply([], response);
+            await this.commandExecutor.add({
+                name: 'dcMerkleProofsCommand',
+                sequence: [],
+                delay: 0,
+                data: {
+                    handler_id,
+                    objects: req.body,
+                },
+                transactional: false,
+            });
 
             res.status(200);
-            res.send(response);
-        } catch (e) {
-            res.status(404);
             res.send({
-                message: 'Data not found',
+                handler_id,
+            });
+        } catch (e) {
+            res.status(400);
+            res.send({
+                message: e.message,
             });
         }
     }

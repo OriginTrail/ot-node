@@ -934,38 +934,41 @@ class DVController {
 
 
     async handleGetBulkFingerprint(req, res) {
-        this.logger.api('GET: Fingerprint bulk request received.');
-        const dataset_ids = JSON.parse(req.body.dataset_ids);
-        if (!dataset_ids.length) {
+        this.logger.api('GET: Bulk fingerprint bulk request received.');
+        if (!req.body || !req.body.dataset_ids) {
             res.status(400);
             res.send({
                 message: 'dataset_ids parameter is empty',
             });
             return;
         }
+
         try {
-            const promises = [];
-            for (const dataset_id of dataset_ids) {
-                promises.push(this.dvService.getFingerprintData(dataset_id));
-            }
+            const inserted_object = await Models.handler_ids.create({
+                status: 'PENDING',
+            });
 
-            let result = await Promise.all(promises);
-            const replicated = result.some(x => x.replicated);
-            result = result.map(x => x.result);
-            result = Array.prototype.concat.apply([], result);
+            const { handler_id } = inserted_object.dataValues;
 
-            if (replicated) {
-                res.status(200);
-            } else {
-                res.status(404);
-            }
-            res.send(result);
+            await this.commandExecutor.add({
+                name: 'dvFingerprintCommand',
+                sequence: [],
+                delay: 0,
+                data: {
+                    handler_id,
+                    dataset_ids: req.body.dataset_ids,
+                },
+                transactional: false,
+            });
+
+            res.status(200);
+            res.send({
+                handler_id,
+            });
         } catch (e) {
-            const message = `Failed to get fingerprints. ${e.message}.`;
-            this.logger.error(message);
             res.status(400);
             res.send({
-                message,
+                message: e.message,
             });
         }
     }

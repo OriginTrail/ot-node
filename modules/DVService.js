@@ -118,20 +118,17 @@ class DVService {
                 if (!Utilities.isZeroHash(dataRootHash)) {
                     replicated = true;
                     result.push({
-                        dataset_id,
                         blockchain_id,
                         root_hash: dataRootHash,
                     });
                 } else {
                     result.push({
-                        dataset_id,
                         blockchain_id,
                         message: `Root hash not found for ${dataset_id}`,
                     });
                 }
             } else {
                 result.push({
-                    dataset_id,
                     blockchain_id,
                     message: `Root hash not found for ${dataset_id}`,
                 });
