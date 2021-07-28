@@ -1,7 +1,6 @@
 const GraphStorage = require('../Database/GraphStorage');
 const Blockchain = require('../Blockchain');
 const log = require('../logger');
-const Models = require('../../models');
 const BlockchainPluginService = require('../Blockchain/plugin/blockchain-plugin-service');
 
 
@@ -25,20 +24,19 @@ function castNumberToColor(colorNumber) {
 
 process.on('message', async (dataFromParent) => {
     const {
-        database, config, allMyIdentities,
+        database, config, allMyIdentities, bids,
     } = JSON.parse(dataFromParent);
 
     const blockchainPluginService = new BlockchainPluginService({ config });
     const blockchain = new Blockchain({ config, logger: log, blockchainPluginService });
+    await blockchain.loadContracts();
+    const identities = blockchain.getAllIdentities(true);
+    for (const identity of identities) {
+        blockchain.initialize(identity.blockchain_id);
+    }
 
     try {
         const result = [];
-        const bids = await Models.bids.findAll({
-            attributes: ['data_set_id', 'offer_id', 'blockchain_id', 'status'],
-            where: {
-                status: { [Models.Sequelize.Op.in]: ['CHOSEN', 'NOT_CHOSEN'] },
-            },
-        });
 
         for (const bid of bids) {
             try {
@@ -65,7 +63,7 @@ process.on('message', async (dataFromParent) => {
                     });
                 }
             } catch (error) {
-                this.logger.warn(`Unable to fetch encryption data for offer id: ${bid.offer_id}. Error: ${error.message}`);
+                log.warn(`Unable to fetch encryption data for offer id: ${bid.offer_id}. Error: ${error.message}`);
             }
         }
 

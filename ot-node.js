@@ -450,8 +450,19 @@ class OTNode {
                 const allMyIdentities = {};
                 blockchain.getAllBlockchainIds()
                     .forEach(id => allMyIdentities[id] = profileService.getIdentity(id));
+                const bids = await models.bids.findAll({
+                    attributes: ['data_set_id', 'offer_id', 'blockchain_id', 'status'],
+                    where: {
+                        status: { [models.Sequelize.Op.in]: ['CHOSEN', 'NOT_CHOSEN'] },
+                    },
+                });
                 const forked = fork('modules/migration/m9-remove-unnecessary-encryption-data-worker.js');
-                forked.send(JSON.stringify({ database: config.database, config, allMyIdentities }));
+                forked.send(JSON.stringify({
+                    database: config.database,
+                    config,
+                    allMyIdentities,
+                    bids,
+                }));
                 forked.on('message', async (response) => {
                     if (response.error) {
                         log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${response.error}`);
