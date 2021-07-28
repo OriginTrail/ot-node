@@ -46,7 +46,6 @@ const M4ArangoMigration = require('./modules/migration/m4-arango-migration');
 const M5ArangoPasswordMigration = require('./modules/migration/m5-arango-password-migration');
 const M7ArangoDatasetSignatureMigration = require('./modules/migration/m7-arango-dataset-signature-migration');
 const M8MissedOfferCheckMigration = require('./modules/migration/m8-missed-offer-check-migration');
-const M9RemoveEncryptionDataMigration = require('./modules/migration/m9-remove-unnecessary-encryption-data');
 const ImportWorkerController = require('./modules/worker/import-worker-controller');
 const ImportService = require('./modules/service/import-service');
 const OtNodeClient = require('./modules/service/ot-node-client');
@@ -448,20 +447,13 @@ class OTNode {
         const migrationDir = path.join(config.appDataPath, 'migrations');
         const migrationFilePath = path.join(migrationDir, m9ArangoEncryptionDataMigrationFilename);
         if (!fs.existsSync(migrationFilePath)) {
-            const migration = new M9RemoveEncryptionDataMigration({
-                logger: log,
-                config,
-                blockchain,
-                profileService,
-                replicationService,
-            });
-
             try {
                 log.info('Initializing Arango remove unnecessary encryption data migration...');
-                const result = await migration.run();
-
+                const allMyIdentities = {};
+                blockchain.getAllBlockchainIds()
+                    .forEach(id => allMyIdentities[id] = profileService.getIdentity(id));
                 const forked = fork('modules/migration/m9-remove-unnecessary-encryption-data-worker.js');
-                forked.send(JSON.stringify({ result, database: config.database }));
+                forked.send(JSON.stringify({ database: config.database, config, allMyIdentities }));
                 forked.on('message', async (response) => {
                     if (response.error) {
                         log.error(`Failed to run code migrations. Lasted ${Date.now() - migrationsStartedMills} millisecond(s). ${response.error}`);
