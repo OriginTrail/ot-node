@@ -335,7 +335,6 @@ class OTNode {
             graphStorage,
             blockchain,
             profileService,
-            replicationService,
         );
 
         await transport.start();
@@ -439,7 +438,6 @@ class OTNode {
         graphStorage,
         blockchain,
         profileService,
-        replicationService,
     ) {
         const migrationsStartedMills = Date.now();
 

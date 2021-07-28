@@ -81,7 +81,7 @@ process.on('message', async (dataFromParent) => {
                     object.encryptionColor,
                 );
             } catch (error) {
-                this.logger.warn(`Unable to remove encryption data for offer id: ${object.offer_id}. Error: ${error.message}`);
+                // no-empty
             }
         }
 
