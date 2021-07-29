@@ -878,7 +878,7 @@ let choosenColor = @leaveColor ? @leaveColor: (
     for v in DOCUMENT('ot_vertices', datasetMetadata.vertices)
 filter v.encrypted != null
 filter v.encrypted[@offerId] != null
-filter ATTRIBUTES(v.encrypted[@offerId]) > 1
+filter length(ATTRIBUTES(v.encrypted[@offerId])) > 1
 limit 1
 return ATTRIBUTES(v.encrypted[@offerId])[0]
 )[0]
@@ -887,7 +887,7 @@ let finalColor = choosenColor ? choosenColor: (
     for v in DOCUMENT('ot_edges', datasetMetadata.edges)
 filter v.encrypted != null
 filter v.encrypted[@offerId] != null
-filter ATTRIBUTES(v.encrypted[@offerId]) > 1
+filter length(ATTRIBUTES(v.encrypted[@offerId])) > 1
 limit 1
 return ATTRIBUTES(v.encrypted[@offerId])[0]
 )[0]
@@ -895,14 +895,14 @@ return ATTRIBUTES(v.encrypted[@offerId])[0]
 let verticesAction = (for v in DOCUMENT('ot_vertices', datasetMetadata.vertices)
 filter v.encrypted != null
 filter v.encrypted[@offerId] != null
-filter ATTRIBUTES(v.encrypted[@offerId]) > 1
+filter length(ATTRIBUTES(v.encrypted[@offerId])) > 1
 let encrypted = merge(v.encrypted, {@offerId: { [finalColor]: v.encrypted[@offerId][finalColor]}})
 return {key: v._key, encrypted}
 )
 let edgesAction = (for e in DOCUMENT('ot_edges', datasetMetadata.edges)
 filter e.encrypted != null
 filter e.encrypted[@offerId] != null
-filter ATTRIBUTES(e.encrypted[@offerId]) > 1
+filter length(ATTRIBUTES(e.encrypted[@offerId])) > 1
 let encrypted = merge(e.encrypted, {@offerId: { [finalColor]: e.encrypted[@offerId][finalColor]}})
 return {key: e._key, encrypted}
 )
