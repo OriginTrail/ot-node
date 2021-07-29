@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const pjson = require('../../package.json');
+const constants = require('../constants');
 const RestAPIValidator = require('../validator/rest-api-validator');
 const Utilities = require('../Utilities');
 const Models = require('../../models');
@@ -121,7 +122,7 @@ class RestAPIServiceV2 {
         });
 
         server.post(`/api/${this.version_id}/get_merkle_proofs`, async (req, res) => {
-            await this._getMerkleProofs(req, res);
+            await this.dcController.getMerkleProofs(req, res);
         });
 
         server.post(`/api/${this.version_id}/network/query`, async (req, res) => {
@@ -313,6 +314,13 @@ class RestAPIServiceV2 {
             await this.dvController.handleGetFingerprint(req, res);
         });
 
+        /** Get root hash for provided data array
+         * @param Query params: data_set_id
+         */
+        server.post(`/api/${this.version_id}/fingerprint`, async (req, res) => {
+            await this.dvController.handleGetBulkFingerprint(req, res);
+        });
+
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
             this.logger.api('GET: import_info.');
 
@@ -347,8 +355,12 @@ class RestAPIServiceV2 {
                         try {
                             const walletBaseBalance = await blockchain
                                 .getWalletBaseBalance(node_wallet, blockchain_id).response;
-                            const walletTokenBalance = await blockchain
-                                .getWalletTokenBalance(node_wallet, blockchain_id).response;
+                            let walletTokenBalance;
+                            if (blockchain_title !==
+                                constants.BLOCKCHAIN_TITLE.OriginTrailParachain) {
+                                walletTokenBalance = await blockchain
+                                    .getWalletTokenBalance(node_wallet, blockchain_id).response;
+                            }
 
                             const profile =
                                 await blockchain.getProfile(identity, blockchain_id).response;
@@ -360,8 +372,7 @@ class RestAPIServiceV2 {
                                 blockchain_title,
                                 wallet: {
                                     address: node_wallet,
-                                    ethBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletBaseBalance, 'ether') : walletBaseBalance,
-                                    tokenBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletTokenBalance, 'ether') : walletTokenBalance,
+                                    baseBalance: humanReadable ? Blockchain.fromWei(blockchain_title, walletBaseBalance, 'ether') : walletBaseBalance,
                                 },
                                 profile: {
                                     address: identity,
@@ -370,6 +381,13 @@ class RestAPIServiceV2 {
                                     minimalStake: humanReadable ? Blockchain.fromWei(blockchain_title, profileMinimalStake, 'ether') : profileMinimalStake,
                                 },
                             };
+
+                            if (walletTokenBalance) {
+                                body.wallet.tokenBalance = humanReadable
+                                    ? Blockchain.fromWei(blockchain_title, walletTokenBalance, 'ether')
+                                    : walletTokenBalance;
+                            }
+
                             resolve(body);
                         } catch (error) {
                             reject(error);
@@ -405,35 +423,6 @@ class RestAPIServiceV2 {
                 message,
             });
         });
-    }
-
-    async _getMerkleProofs(req, res) {
-        this.logger.api('POST: Get Merkle proofs request received.');
-
-        if (req.body === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        if (req.body.object_ids === undefined ||
-            req.body.dataset_id === undefined) {
-            res.status(400);
-            res.send({
-                message: 'Bad request',
-            });
-            return;
-        }
-
-        const { object_ids, dataset_id } = req.body;
-
-        const response =
-            await this.importService.getMerkleProofs(Utilities.arrayze(object_ids), dataset_id);
-
-        res.status(200);
-        res.send(response);
     }
 
     async _networkQuery(req, res) {

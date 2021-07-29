@@ -906,51 +906,68 @@ class DVController {
     async handleGetFingerprint(req, res) {
         this.logger.api('GET: Fingerprint request received.');
         const { dataset_id } = req.params;
-        if (dataset_id == null) {
+        if (!dataset_id) {
             res.status(400);
             res.send({
                 message: 'data_set_id parameter is missing',
             });
             return;
         }
+        try {
+            const { result, replicated } = await this.dvService.getFingerprintData(dataset_id);
 
-        const allBlockchainIds = this.blockchain.getAllBlockchainIds();
-        const promises = allBlockchainIds.map(blockchain_id =>
-            this.blockchain.getRootHash(dataset_id, blockchain_id).response);
-        const allRootHashes = await Promise.all(promises);
-
-        const result = [];
-        let foundHashes = 0;
-        for (let i = 0; i < allRootHashes.length; i += 1) {
-            const blockchain_id = allBlockchainIds[i];
-            const dataRootHash = allRootHashes[i];
-
-            if (dataRootHash) {
-                if (!Utilities.isZeroHash(dataRootHash)) {
-                    foundHashes += 1;
-                    result.push({
-                        blockchain_id,
-                        root_hash: dataRootHash,
-                    });
-                } else {
-                    result.push({
-                        blockchain_id,
-                        message: `Root hash not found for ${dataset_id}`,
-                    });
-                }
+            if (replicated) {
+                res.status(200);
             } else {
-                result.push({
-                    blockchain_id,
-                    message: `Root hash not found for ${dataset_id}`,
-                });
+                res.status(404);
             }
+            res.send(result);
+        } catch (e) {
+            const message = `Failed to get fingerprints. ${e.message}.`;
+            this.logger.error(message);
+            res.status(400);
+            res.send({
+                message,
+            });
         }
-        if (foundHashes > 0) {
-            res.status(200);
-        } else {
-            res.status(404);
+    }
+
+
+    async handleGetBulkFingerprint(req, res) {
+        this.logger.api('GET: Fingerprint bulk request received.');
+        const dataset_ids = JSON.parse(req.body.dataset_ids);
+        if (!dataset_ids.length) {
+            res.status(400);
+            res.send({
+                message: 'dataset_ids parameter is empty',
+            });
+            return;
         }
-        res.send(result);
+        try {
+            const promises = [];
+            for (const dataset_id of dataset_ids) {
+                promises.push(this.dvService.getFingerprintData(dataset_id));
+            }
+
+            let result = await Promise.all(promises);
+            const replicated = result.some(x => x.replicated);
+            result = result.map(x => x.result);
+            result = Array.prototype.concat.apply([], result);
+
+            if (replicated) {
+                res.status(200);
+            } else {
+                res.status(404);
+            }
+            res.send(result);
+        } catch (e) {
+            const message = `Failed to get fingerprints. ${e.message}.`;
+            this.logger.error(message);
+            res.status(400);
+            res.send({
+                message,
+            });
+        }
     }
 
     /**
