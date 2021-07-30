@@ -102,6 +102,7 @@ class Ethereum extends Web3Implementation {
                 return undefined;
             });
         if (response) {
+            // todo check if the multiplier has valid value
             return response.data.average * 100000000;
         }
         return undefined;
