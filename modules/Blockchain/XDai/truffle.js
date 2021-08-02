@@ -1,7 +1,9 @@
 const result = require('dotenv').config({ path: `${__dirname}/../../../.env` });
-var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-line import/no-unresolved
+// eslint-disable-next-line import/no-extraneous-dependencies
+var HDWalletProvider = require('@truffle/hdwallet-provider');
 
-var mnemonic = process.env.TRUFFLE_MNEMONIC;
+const private_key = process.env.TESTNET_XDAI_PRIVATE_KEY;
+const rpc_endpoint = process.env.XDAI_ACCESS_KEY;
 
 module.exports = {
     compilers: {
@@ -51,16 +53,6 @@ module.exports = {
             network_id: '5777',
         },
 
-        updateRinkeby: {
-            host: 'localhost', // Connect to geth on the specified
-            port: 8545,
-            provider: () => new HDWalletProvider(mnemonic, `${process.env.RINKEBY_ACCESS_KEY}`),
-            network_id: 4,
-            gas: 6000000, // Gas limit used for deploys
-            websockets: true,
-            skipDryRun: true,
-        },
-
         test: {
             host: 'localhost',
             port: 7545,
@@ -75,31 +67,20 @@ module.exports = {
             network_id: '5777',
         },
 
-        rinkeby: {
-            host: 'localhost', // Connect to geth on the specified
-            port: 8545,
-            provider: () => new HDWalletProvider(mnemonic, `${process.env.RINKEBY_ACCESS_KEY}`),
-            network_id: 4,
-            gas: 6500000, // Gas limit used for deploys
-            websockets: true,
-            skipDryRun: true,
-        },
-
         live: {
-            host: 'localhost',
-            port: 8545,
-            provider: () => new HDWalletProvider(mnemonic, `${process.env.MAINNET_ACCESS_KEY}`),
-            network_id: 1,
+            provider: () => new HDWalletProvider([private_key], rpc_endpoint, 100),
+            network_id: 100,
             gas: 6000000, // Gas limit used for deploys
             websockets: true,
             skipDryRun: true,
         },
 
         updateContract: {
-            host: 'localhost',
-            port: 7545,
-            gas: 6000000,
-            network_id: '5777',
+            provider: () => new HDWalletProvider([private_key], rpc_endpoint),
+            network_id: 100,
+            gas: 6500000, // Gas limit used for deploys
+            websockets: true,
+            skipDryRun: true,
         },
     },
 };

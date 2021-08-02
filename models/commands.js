@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         data: DataTypes.JSON,
         sequence: DataTypes.JSON,
         ready_at: DataTypes.BIGINT,
-        delay: DataTypes.INTEGER,
+        delay: DataTypes.BIGINT,
         started_at: DataTypes.BIGINT,
         deadline_at: DataTypes.BIGINT,
         period: DataTypes.INTEGER,
