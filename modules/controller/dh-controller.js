@@ -345,8 +345,105 @@ class DHController {
     }
 
     async findTrailResult(req, res) {
+        if (!req.params.handler_id) {
+            res.status(400);
+            res.send({
+                message: 'handler_id parameter is required.',
+            });
+            return;
+        }
         const handlerId = req.params.handler_id;
         this.logger.api(`POST: Trail result request received with handler id: ${handlerId}`);
+        await this.getResultFromTrailCache(req, res);
+    }
+
+
+    async handleGetFingerprint(req, res) {
+        this.logger.api('GET: Fingerprint request received.');
+        const { dataset_id } = req.params;
+        if (!dataset_id) {
+            res.status(400);
+            res.send({
+                message: 'data_set_id parameter is missing',
+            });
+            return;
+        }
+        try {
+            const { result, replicated } = await this.dvService.getFingerprintData(dataset_id);
+
+            if (replicated) {
+                res.status(200);
+            } else {
+                res.status(404);
+            }
+            res.send(result);
+        } catch (e) {
+            const message = `Failed to get fingerprints. ${e.message}.`;
+            this.logger.error(message);
+            res.status(400);
+            res.send({
+                message,
+            });
+        }
+    }
+
+
+    async handleGetBulkFingerprint(req, res) {
+        this.logger.api('GET: Bulk fingerprint bulk request received.');
+        if (!req.body || !req.body.dataset_ids) {
+            res.status(400);
+            res.send({
+                message: 'dataset_ids parameter is required.',
+            });
+            return;
+        }
+
+        try {
+            const inserted_object = await Models.handler_ids.create({
+                status: 'PENDING',
+            });
+
+            const { handler_id } = inserted_object.dataValues;
+
+            await this.commandExecutor.add({
+                name: 'dhBulkFingerprintCommand',
+                sequence: [],
+                delay: 0,
+                data: {
+                    handler_id,
+                    dataset_ids: req.body.dataset_ids,
+                },
+                transactional: false,
+            });
+
+            res.status(200);
+            res.send({
+                handler_id,
+            });
+        } catch (e) {
+            res.status(404);
+            this.logger.error('Unable to get bulk fingerprint. Error: ', e);
+            res.send({
+                message: 'Internal server error.',
+            });
+        }
+    }
+
+    async handleGetBulkFingerprintResult(req, res) {
+        if (!req.params.handler_id) {
+            res.status(400);
+            res.send({
+                message: 'handler_id parameter is required.',
+            });
+            return;
+        }
+        const handlerId = req.params.handler_id;
+        this.logger.api(`GET: Bulk fingerprint result request received with handler id: ${handlerId}`);
+        await this.getResultFromTrailCache(req, res);
+    }
+
+    async getResultFromTrailCache(req, res) {
+        const handlerId = req.params.handler_id;
         const handler_object = await Models.handler_ids.findOne({
             where: {
                 handler_id: handlerId,
@@ -356,7 +453,7 @@ class DHController {
         if (!handler_object) {
             const message = 'Unable to find data with given parameters! handler_id is required!';
             this.logger.info(message);
-            res.status(404);
+            res.status(400);
             res.send({
                 message,
             });
@@ -364,7 +461,10 @@ class DHController {
         }
 
         if (handler_object.status === 'COMPLETED') {
-            const cacheDirectory = path.join(this.config.appDataPath, 'trail_cache');
+            const cacheDirectory = path.join(
+                this.config.appDataPath,
+                constants.TRAIL_CACHE_DIRECTORY,
+            );
             const filePath = path.join(cacheDirectory, handlerId);
 
             const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });

@@ -319,20 +319,19 @@ class RestAPIServiceV2 {
          * @param Query params: data_set_id
          */
         server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, async (req, res) => {
-            await this.dvController.handleGetFingerprint(req, res);
+            await this.dhController.handleGetFingerprint(req, res);
         });
 
         /** Get root hash for provided data array
          * @param Query params: data_set_id
          */
         server.post(`/api/${this.version_id}/bulk/fingerprint`, async (req, res) => {
-            await this.dvController.handleGetBulkFingerprint(req, res);
+            await this.dhController.handleGetBulkFingerprint(req, res);
         });
 
         server.get(`/api/${this.version_id}/bulk/fingerprint/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
+            await this.dhController.handleGetBulkFingerprintResult(req, res);
         });
-
 
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
             this.logger.api('GET: import_info.');

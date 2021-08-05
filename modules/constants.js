@@ -224,3 +224,9 @@ exports.BLOCKCHAIN_TITLE = {
     Ethereum: 'Ethereum',
     XDai: 'xDai',
 };
+
+/**
+ * Directory for trail cache
+ * @type {string}
+ */
+exports.TRAIL_CACHE_DIRECTORY = 'trail_cache';
