@@ -130,7 +130,7 @@ class RestAPIServiceV2 {
         });
 
         server.get(`/api/${this.version_id}/bulk/get_merkle_proofs/result/:handler_id`, async (req, res) => {
-            await this._checkForHandlerStatus(req, res);
+            await this.dcController.handleGetMerkleProofsResult(req, res);
         });
 
         server.post(`/api/${this.version_id}/network/query`, async (req, res) => {

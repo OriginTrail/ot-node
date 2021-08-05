@@ -6,6 +6,8 @@ const constants = require('../constants');
 const { QueryTypes } = require('sequelize');
 const BN = require('bn.js');
 const ObjectValidator = require('../validator/object-validator');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * DC related API controller
@@ -653,7 +655,7 @@ class DCController {
         if (!req.body) {
             res.status(400);
             res.send({
-                message: 'Bad request',
+                message: 'Bad request, dataset_id and object_ids are required',
             });
             return;
         }
@@ -680,12 +682,56 @@ class DCController {
             res.send({
                 handler_id,
             });
-        } catch (e) {
-            res.status(400);
+        } catch (error) {
+            res.status(404);
+            this.logger.error('Unable to get bulk get merkle proofs. Error: ', error);
             res.send({
-                message: e.message,
+                message: 'Internal server error.',
             });
         }
+    }
+
+    async handleGetMerkleProofsResult(req, res) {
+        if (!req.params.handler_id) {
+            res.status(400);
+            res.send({
+                message: 'handler_id parameter is required.',
+            });
+            return;
+        }
+        const handlerId = req.params.handler_id;
+        const handler_object = await Models.handler_ids.findOne({
+            where: {
+                handler_id: handlerId,
+            },
+        });
+
+        if (!handler_object) {
+            const message = 'Unable to find data with given parameters! handler_id is required!';
+            this.logger.info(message);
+            res.status(400);
+            res.send({
+                message,
+            });
+            return;
+        }
+
+        if (handler_object.status === 'COMPLETED') {
+            const cacheDirectory = path.join(
+                this.config.appDataPath,
+                constants.TRAIL_CACHE_DIRECTORY,
+            );
+            const filePath = path.join(cacheDirectory, handlerId);
+
+            const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
+            handler_object.data = JSON.parse(fileContent);
+        }
+
+        res.status(200);
+        res.send({
+            data: handler_object.data,
+            status: handler_object.status,
+        });
     }
 }
 
