@@ -46,6 +46,7 @@
     "ganache": "ganache-cli -e 1000000000000 -i 5777 -p 7545 -l 10000000 -a 30 -m \"aspect ask story desert profit engage tuition leave fade giraffe exclude brief\"",
     "truffle:compile:ethr": "cd modules/Blockchain/Ethereum && truffle compile",
     "truffle:compile:otpc": "cd modules/Blockchain/OriginTrailParachain && truffle compile",
+    "truffle:deploy:ganache": "cd modules/Blockchain/Ethereum && truffle migrate --network ganache",
     "truffle:deploy:rinkeby": "cd modules/Blockchain/Ethereum && truffle migrate --network rinkeby",
     "truffle:deploy:supplyTokens": "cd modules/Blockchain/Ethereum && truffle migrate --network supplyTokens",
     "truffle:deploy:ethr:ganache": "cd modules/Blockchain/Ethereum && truffle migrate --network ganache",

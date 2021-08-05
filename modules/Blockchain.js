@@ -56,7 +56,7 @@ class Blockchain {
      * Initialize Blockchain provider
      * @returns {Promise<void>}
      */
-    async loadContracts() {
+    async loadContracts(subscribeToContractsChangedEvents = true) {
         try {
             const promises = [];
 
@@ -70,7 +70,7 @@ class Blockchain {
             throw e;
         }
 
-        if (!this.initalized) {
+        if (!this.initalized && subscribeToContractsChangedEvents) {
             this.initalized = true;
             this.subscribeToEventPermanentWithCallback([
                 'ContractsChanged',
