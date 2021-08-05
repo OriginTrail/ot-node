@@ -608,6 +608,8 @@ class ImportService {
             sortedDataset = dataset;
         }
 
+        ImportUtilities.removeGraphPermissionedData(sortedDataset['@graph']);
+
         const merkleTree = ImportUtilities.createDistributionMerkleTree(
             sortedDataset['@graph'],
             datasetId,
