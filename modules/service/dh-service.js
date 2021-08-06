@@ -581,6 +581,43 @@ class DHService {
 
         return vertices;
     }
+
+    async getFingerprintData(dataset_id) {
+        const result = [];
+        let replicated = false;
+        const allBlockchainIds = this.blockchain.getAllBlockchainIds();
+
+        const promises = allBlockchainIds.map(blockchain_id =>
+            this.blockchain.getRootHash(dataset_id, blockchain_id).response);
+        const allRootHashes = await Promise.all(promises);
+
+        for (let i = 0; i < allRootHashes.length; i += 1) {
+            const blockchain_id = allBlockchainIds[i];
+            const dataRootHash = allRootHashes[i];
+
+            if (dataRootHash) {
+                if (!Utilities.isZeroHash(dataRootHash)) {
+                    replicated = true;
+                    result.push({
+                        blockchain_id,
+                        root_hash: dataRootHash,
+                    });
+                } else {
+                    result.push({
+                        blockchain_id,
+                        message: `Root hash not found for ${dataset_id}`,
+                    });
+                }
+            } else {
+                result.push({
+                    blockchain_id,
+                    message: `Root hash not found for ${dataset_id}`,
+                });
+            }
+        }
+
+        return { result, replicated };
+    }
 }
 
 module.exports = DHService;

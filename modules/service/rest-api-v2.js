@@ -125,6 +125,14 @@ class RestAPIServiceV2 {
             await this.dcController.getMerkleProofs(req, res);
         });
 
+        server.post(`/api/${this.version_id}/bulk/get_merkle_proofs`, async (req, res) => {
+            await this.dcController.getBulkMerkleProofs(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/bulk/get_merkle_proofs/result/:handler_id`, async (req, res) => {
+            await this.dcController.handleGetMerkleProofsResult(req, res);
+        });
+
         server.post(`/api/${this.version_id}/network/query`, async (req, res) => {
             await this._networkQuery(req, res);
         });
@@ -311,14 +319,18 @@ class RestAPIServiceV2 {
          * @param Query params: data_set_id
          */
         server.get(`/api/${this.version_id}/fingerprint/:dataset_id`, async (req, res) => {
-            await this.dvController.handleGetFingerprint(req, res);
+            await this.dhController.handleGetFingerprint(req, res);
         });
 
         /** Get root hash for provided data array
          * @param Query params: data_set_id
          */
-        server.post(`/api/${this.version_id}/fingerprint`, async (req, res) => {
-            await this.dvController.handleGetBulkFingerprint(req, res);
+        server.post(`/api/${this.version_id}/bulk/fingerprint`, async (req, res) => {
+            await this.dhController.handleGetBulkFingerprint(req, res);
+        });
+
+        server.get(`/api/${this.version_id}/bulk/fingerprint/result/:handler_id`, async (req, res) => {
+            await this.dhController.handleGetBulkFingerprintResult(req, res);
         });
 
         server.get(`/api/${this.version_id}/import_info`, async (req, res) => {
