@@ -9,7 +9,7 @@ class DvBulkFingerprintCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.dvService = ctx.dvService;
+        this.dhService = ctx.dhService;
         this.config = ctx.config;
     }
 
@@ -27,7 +27,7 @@ class DvBulkFingerprintCommand extends Command {
 
         for (const dataset_id of dataset_ids) {
             // eslint-disable-next-line no-await-in-loop
-            const { result } = await this.dvService.getFingerprintData(dataset_id);
+            const { result } = await this.dhService.getFingerprintData(dataset_id);
             response.push({ dataset_id, fingerprint_data: result });
         }
 

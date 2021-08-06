@@ -19,6 +19,7 @@ class DHController {
         this.commandExecutor = ctx.commandExecutor;
         this.trailService = ctx.trailService;
         this.profileService = ctx.profileService;
+        this.dhService = ctx.dhService;
     }
 
     isParameterProvided(request, response, parameter_name) {
@@ -369,13 +370,8 @@ class DHController {
             return;
         }
         try {
-            const { result, replicated } = await this.dvService.getFingerprintData(dataset_id);
-
-            if (replicated) {
-                res.status(200);
-            } else {
-                res.status(404);
-            }
+            const { result, replicated } = await this.dhService.getFingerprintData(dataset_id);
+            res.status(200);
             res.send(result);
         } catch (e) {
             const message = `Failed to get fingerprints. ${e.message}.`;
