@@ -78,7 +78,9 @@ class DatasetPruningCommand extends Command {
                 }));
                 return;
             }
-            this.logger.info(`Successfully pruned ${numberOfPrunedDatasets} datasets.`);
+            if (numberOfPrunedDatasets > 0) {
+                this.logger.info(`Successfully pruned ${numberOfPrunedDatasets} datasets.`);
+            }
             await this.addPruningCommandToExecutor();
         });
         this.logger.trace('Dataset pruning worker started');
