@@ -13,7 +13,8 @@ Create directory for new blockchain using the following command:
 ```bash
 mkdir modules/Blockchain/<blockchain_name>
 ```
-If the existing web3 implementation is compatible with the new blockchain, copy content of Ethereum directory to the new directory.
+If the existing web3 implementation is compatible with the new blockchain, copy content of Ethereum directory to the new directory. Otherwise, appropriate library should be used for implementation of blockchain methods on OT-Node (if this is the case, please contact us at
+[office@origin-trail.com](office@origin-trail.com)). 
 The new directory should contain the following content:
 - /abi - Smart contracts ABI files
 - /build - Smart contracts build directory
@@ -25,9 +26,9 @@ The new directory should contain the following content:
 
 ## Smart contracts deployment
 
-After smart contractsand truffle configuration updates, deploy smart contracts using the following command:
+After smart contracts and truffle configuration updates, deploy smart contracts using the following command:
 
-```nashorn js
+```bash
 cd modules/Blockchain/Polygon && truffle migrate --network testnet -f 2
 ```
 

@@ -4,8 +4,10 @@ const axios = require('axios');
 const constants = require('../../constants');
 
 
-const coinGeckoLink = 'https://api.coingecko.com/api/v3/simple/price?ids=origintrail&vs_currencies=usd';
+const coinGeckoLink = 'https://api.coingecko.com/api/v3/simple/price?ids=origintrail,matic-network&vs_currencies=usd';
 const gasStationLink = 'https://gasstation-mainnet.matic.network/';
+
+
 
 class Polygon extends Web3Implementation {
     /**
@@ -25,7 +27,7 @@ class Polygon extends Web3Implementation {
     async getRelativeTracPrice() {
         const response = await axios.get(coinGeckoLink);
         if (response) {
-            return response.data.origintrail.usd;
+            return response.data.origintrail.usd / response.data['matic-network'].usd;
         }
         return undefined;
     }

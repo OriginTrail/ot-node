@@ -99,33 +99,6 @@
           "node_private_key": "",
           "management_wallet": "",
           "plugins": []
-        },
-        {
-          "blockchain_title": "xDai",
-          "network_id": "xdai:testnet",
-          "rpc_server_url": "https://xdai.poanetwork.dev",
-          "hub_contract_address": "0x17324BdB37c607c0742e95eFc98973221E1eB9b4",
-          "identity_filepath": "xdai_erc725_identity.json",
-          "gas_limit": "2000000",
-          "gas_price": "1000000000",
-          "dc_price_factor" : "3",
-          "dh_price_factor" : "2",
-          "trac_price_in_base_currency" : "0.4",
-          "plugins": []
-        },
-        {
-          "blockchain_title": "Polygon",
-          "network_id": "polygon:testnet",
-          "rpc_server_url": "https://rpc-mumbai.matic.today",
-          "chain_id": 80001,
-          "hub_contract_address": "0x819deeadF9c4a1d5199435Fa195ff7824CCd687e",
-          "identity_filepath": "polygon_erc725_identity.json",
-          "gas_limit": "2000000",
-          "gas_price": "10000000000",
-          "dc_price_factor" : "3",
-          "dh_price_factor" : "2",
-          "trac_price_in_base_currency" : "0.4",
-          "plugins": []
         }
       ]
     },
