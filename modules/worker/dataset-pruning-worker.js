@@ -8,17 +8,26 @@ process.on('message', async (data) => {
         importedPruningDelayInMinutes,
         replicatedPruningDelayInMinutes,
         repackedDatasets,
+        lowEstimatedValueDatasetsPruning,
     } = JSON.parse(data);
     try {
         const graphStorage = new GraphStorage(selectedDatabase, logger);
         await graphStorage.connect();
         const datasetPruningService = new DatasetPruningService({ logger, graphStorage });
-        const idsForPruning = datasetPruningService
-            .getIdsForPruning(
-                repackedDatasets,
-                importedPruningDelayInMinutes,
-                replicatedPruningDelayInMinutes,
-            );
+
+        let idsForPruning;
+        if (lowEstimatedValueDatasetsPruning) {
+            idsForPruning = datasetPruningService
+                .getLowEstimatedValueIdsForPruning(repackedDatasets);
+        } else {
+            idsForPruning = datasetPruningService
+                .getIdsForPruning(
+                    repackedDatasets,
+                    importedPruningDelayInMinutes,
+                    replicatedPruningDelayInMinutes,
+                );
+        }
+
         if (idsForPruning.datasetsToBeDeleted.length !== 0) {
             await datasetPruningService
                 .removeDatasetsFromGraphDb(idsForPruning.datasetsToBeDeleted);

@@ -121,6 +121,8 @@ class RegisterNode {
             // Return back migrated 'application-data'.
             execSync(`cp -af ${appMigrationDirPath}/. ${configDir}`);
 
+            execSync(`rm -r ${appMigrationDirPath}`);
+            logger.trace('Successfully removed data migration directory after update.');
             // Potential risk of race condition here. Coping and linking has to be atomic operation.
             const previousVersionPath = fs.realpathSync('/ot-node/current');
             // Just replace current link.
@@ -136,8 +138,17 @@ class RegisterNode {
                     execSync(`rm -r ${filePath}`);
                     logger.trace(`Successfully removed old version directory: ${filePath}`);
                 }
+                if (fileName === 'init') {
+                    execSync(`rm -r ${filePath}`);
+                    logger.trace(`Successfully removed init directory: ${filePath}`);
+                }
             });
-
+            execSync(`rm -r ${previousVersionPath}/node_modules`);
+            logger.trace('Successfully removed node modules directory from previous version.');
+            if (fs.existsSync(`${previousVersionPath}/${appMigrationDirName}`)) {
+                execSync(`rm -r ${previousVersionPath}/${appMigrationDirName}`);
+                logger.trace('Successfully removed data migration directory from previous version after update.');
+            }
             logger.important(`OT Node updated to ${updateInfo.version}. Resetting...`);
             process.exit(2);
         } catch (error) {

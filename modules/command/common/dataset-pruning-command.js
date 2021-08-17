@@ -52,17 +52,37 @@ class DatasetPruningCommand extends Command {
                 offerIdToBeDeleted,
                 dataInfoIdToBeDeleted,
                 datasetsToBeDeleted,
+                bidIdToBeDeleted,
             } = response;
-            if (datasetsToBeDeleted.length === 0) {
-                return;
-            }
+
             await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
             await this.datasetPruningService.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
-
-            await this.datasetPruningService.updatePruningHistory(datasetsToBeDeleted);
-            this.logger.info(`Sucessfully pruned ${datasetsToBeDeleted.length} datasets.`);
+            await this.datasetPruningService.removeEntriesWithId('bids', bidIdToBeDeleted);
+            if (datasetsToBeDeleted.length !== 0) {
+                await this.datasetPruningService.updatePruningHistory(datasetsToBeDeleted);
+                this.logger.info(`Successfully pruned ${datasetsToBeDeleted.length} datasets.`);
+            }
             forked.kill();
-            await this.addPruningCommandToExecutor();
+
+            if (this.datasetPruningService.shouldPruneLowEstimatedValueDatasets()) {
+                const datasets = await this.datasetPruningService.findLowEstimatedValueDatasets();
+
+                if (!datasets) {
+                    await this.addPruningCommandToExecutor();
+                    return;
+                }
+
+                const repackedDatasets = this.datasetPruningService
+                    .repackLowEstimatedValueDatasets(datasets);
+
+                forked.send(JSON.stringify({
+                    selectedDatabase: this.config.database,
+                    lowEstimatedValueDatasetsPruning: true,
+                    repackedDatasets,
+                }));
+            } else {
+                await this.addPruningCommandToExecutor();
+            }
         });
         this.logger.trace('Dataset pruning worker started');
         return Command.empty();
