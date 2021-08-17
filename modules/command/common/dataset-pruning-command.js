@@ -52,12 +52,10 @@ class DatasetPruningCommand extends Command {
                 numberOfPrunedDatasets,
             } = response;
 
-            // await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
-            // await this
-            // .datasetPruningService.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
-            // await this.datasetPruningService.removeEntriesWithId('bids', bidIdToBeDeleted);
+            await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
+            await this.datasetPruningService.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
+            await this.datasetPruningService.removeEntriesWithId('bids', bidIdToBeDeleted);
             await this.datasetPruningService.updatePruningHistory(datasetsToBeDeleted);
-            forked.kill();
 
             if (this.datasetPruningService.shouldPruneLowEstimatedValueDatasets()) {
                 const datasets = await this.datasetPruningService.findLowEstimatedValueDatasets();
@@ -80,7 +78,10 @@ class DatasetPruningCommand extends Command {
             }
             if (numberOfPrunedDatasets > 0) {
                 this.logger.info(`Successfully pruned ${numberOfPrunedDatasets} datasets.`);
+            } else {
+                this.logger.info('Found 0 datasets for pruning');
             }
+            forked.kill();
             await this.addPruningCommandToExecutor();
         });
         this.logger.trace('Dataset pruning worker started');
@@ -93,6 +94,7 @@ class DatasetPruningCommand extends Command {
      * @param err
      */
     async recover(command, err) {
+        this.logger.error(`There was an error during pruning process: ${err.message}. Next pruning command rescheduled.`);
         return Command.repeat();
     }
 

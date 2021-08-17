@@ -83,7 +83,6 @@ class DatasetPruningService {
                 }
             }
         });
-        this.logger.trace(`Found ${datasetsToBeDeleted.length} datasets for pruning`);
 
         return {
             datasetsToBeDeleted,
@@ -93,12 +92,12 @@ class DatasetPruningService {
     }
 
     async fetchDatasetData() {
-        const queryString = 'select di.id as data_info_id, offer.id as offer_id, bid.id as bid_id, pd.id as purchased_data_id, di.data_set_id, di.import_timestamp, \n' +
-            'offer.holding_time_in_minutes as offer_holding_time_in_minutes,\n' +
-            'bid.holding_time_in_minutes as bid_holding_time_in_minutes \n' +
-            'from data_info as di\n' +
-            'left join offers as offer on di.data_set_id = offer.data_set_id\n' +
-            'left join bids as bid on di.data_set_id = bid.data_set_id\n' +
+        const queryString = 'select di.id as data_info_id, di.data_set_id, bid.status as bid_status, ' +
+            'bid.id as bid_id, (di.import_timestamp + bid.holding_time_in_minutes*60000) as expiry, ' +
+            'offer.id as offer_id, pd.id as purchase_id ' +
+            'from data_info as di ' +
+            'left join offers as offer on di.data_set_id = offer.data_set_id ' +
+            'left join bids as bid on di.data_set_id = bid.data_set_id ' +
             'left join purchased_data as pd on di.data_set_id = pd.data_set_id';
         return Models.sequelize.query(queryString, { type: QueryTypes.SELECT });
     }
@@ -219,28 +218,21 @@ class DatasetPruningService {
     }
 
     shouldPruneLowEstimatedValueDatasets() {
-        console.log('************');
-        console.log('shouldPruneLowEstimatedValueDatasets');
-
         if (!this.config.dataset_pruning.low_estimated_value_datasets.enabled) {
             return false;
         }
 
         const diskSpace = this.diskService.getRootFolderInfo();
-        console.log('diskSpace: ', diskSpace);
         const freeSpacePercentage = (100 * diskSpace.free) / diskSpace.total;
-        console.log('freeSpacePercentage: ', freeSpacePercentage);
         const arangoDbEngineFolderSize = this.diskService
             .getFolderSize(this.config.database.engine_folder_path);
         const minimumArangoDbFolderSizeForPruning = 0.2 * diskSpace.total;
-        console.log('arangoDbEngineFolderSize: ', arangoDbEngineFolderSize);
-        console.log('minimumArangoDbFolderSizeForPruning: ', minimumArangoDbFolderSizeForPruning);
         if (freeSpacePercentage > this.config.dataset_pruning
             .low_estimated_value_datasets.minimum_free_space_percentage) {
             return false;
         }
 
-        if (this.diskService.folderExisists(defaultBackupFolderPath)
+        if (this.diskService.folderExists(defaultBackupFolderPath)
             && this.diskService.getFolderSize(defaultBackupFolderPath) > 0) {
             this.logger.warn('Detected ot-node backup on machine. Unable to prune low estimated value datasets!');
             return false;
@@ -251,14 +243,13 @@ class DatasetPruningService {
                 `Minimum size of Graph DB is 20% of total disk size. Current Graph DB folder size is: ${arangoDbEngineFolderSize}kb`);
             return false;
         }
-        console.log('************');
         return true;
     }
 
     async findLowEstimatedValueDatasets() {
         const queryString = 'select di.id as data_info_id, di.data_set_id, bid.status as bid_status' +
             'bid.id as bid_id, (di.import_timestamp + bid.holding_time_in_minutes*60000) as expiry,' +
-            'offer.id as offer_id, pd.id as purchase_id,' +
+            'offer.id as offer_id, pd.id as purchase_id' +
             'from data_info as di ' +
             'left join offers as offer on di.data_set_id = offer.data_set_id ' +
             'inner join bids as bid on di.data_set_id = bid.data_set_id ' +
@@ -283,8 +274,6 @@ class DatasetPruningService {
      * @returns {{}}
      */
     repackLowEstimatedValueDatasets(datasets) {
-        console.log('************');
-        console.log('repackLowEstimatedValueDatasets');
         const repackedDatasets = {};
         datasets.forEach((dataset) => {
             if (!repackedDatasets[dataset.data_set_id]) {
@@ -308,7 +297,7 @@ class DatasetPruningService {
                     .includes(dataset.bid_id);
                 if (!foundBidId) {
                     repackedDatasets[dataset.data_set_id].bids.push(dataset.bid_id);
-                    if (dataset.bids.bid_status === 'CHOSEN') {
+                    if (dataset.bid_status === 'CHOSEN') {
                         repackedDatasets[dataset.data_set_id].chosen = true;
                     }
                 }
@@ -320,14 +309,10 @@ class DatasetPruningService {
                 repackedDatasets[dataset.data_set_id].foundPurchase = true;
             }
         });
-        console.log(JSON.stringify(repackedDatasets, null, 4));
-        console.log('************');
         return repackedDatasets;
     }
 
     getLowEstimatedValueIdsForPruning(repackedDatasets) {
-        console.log('************');
-        console.log('getLowEstimatedValueIdsForPruning');
         const idsForPruning = {
             datasetsToBeDeleted: [],
             dataInfoIdToBeDeleted: [],
@@ -358,8 +343,6 @@ class DatasetPruningService {
             idsForPruning.dataInfoIdToBeDeleted.concat(dataset.dataInfoIds);
             idsForPruning.bidIdToBeDeleted.concat(dataset.bidsIds);
         });
-        console.log('idsForPruning: ', JSON.stringify(idsForPruning, null, 4));
-        console.log('************');
         return idsForPruning;
     }
 }
