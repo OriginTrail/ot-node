@@ -226,13 +226,15 @@ exports.BLOCKCHAIN_TITLE = {
 };
 
 /**
- * Directory for trail cache
- * @type {string}
+ *
+ * @constant {string} TRAIL_CACHE_DIRECTORY -
+ * directory containing trail cache
  */
 exports.TRAIL_CACHE_DIRECTORY = 'trail_cache';
 
 /**
+ *
+ * @constant {number} LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER -
  * Number of datasets to be pruned in one batch
- * @type {string}
  */
 exports.LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER = 100;
