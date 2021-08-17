@@ -1,6 +1,7 @@
 const Models = require('../../models/index');
 const { QueryTypes } = require('sequelize');
 const sequelizeConfig = require('../../config/sequelizeConfig');
+const constants = require('./../constants');
 
 const defaultBackupFolderPath = '/ot-node/backup/';
 
@@ -218,30 +219,40 @@ class DatasetPruningService {
     }
 
     shouldPruneLowEstimatedValueDatasets() {
+        console.log('************');
+        console.log('shouldPruneLowEstimatedValueDatasets');
+
         if (!this.config.dataset_pruning.low_estimated_value_datasets.enabled) {
             return false;
         }
+
+        const diskSpace = this.diskService.getRootFolderInfo();
+        console.log('diskSpace: ', diskSpace);
+        const freeSpacePercentage = (100 * diskSpace.free) / diskSpace.total;
+        console.log('freeSpacePercentage: ', freeSpacePercentage);
+        const arangoDbEngineFolderSize = this.diskService
+            .getFolderSize(this.config.database.engine_folder_path);
+        const minimumArangoDbFolderSizeForPruning = 0.2 * diskSpace.total;
+        console.log('arangoDbEngineFolderSize: ', arangoDbEngineFolderSize);
+        console.log('minimumArangoDbFolderSizeForPruning: ', minimumArangoDbFolderSizeForPruning);
+        if (freeSpacePercentage > this.config.dataset_pruning
+            .low_estimated_value_datasets.minimum_free_space_percentage) {
+            return false;
+        }
+
         if (this.diskService.folderExisists(defaultBackupFolderPath)
             && this.diskService.getFolderSize(defaultBackupFolderPath) > 0) {
             this.logger.warn('Detected ot-node backup on machine. Unable to prune low estimated value datasets!');
-            return;
+            return false;
         }
 
-        const diskSpace = this.diskService.getRootFolderInfo();
-
-        const freeSpacePercentage = (100 * diskSpace.free) / diskSpace.total;
-
-        return freeSpacePercentage < this.config.dataset_pruning
-            .low_estimated_value_datasets.minimum_free_space_percentage;
-        // const arangoDbEngineFolderSize = this.diskService
-        //     .getFolderSize(this.config.database.engine_folder_path);
-        // const operationDbSize = this.diskService.getFileSize(sequelizeConfig.storage);
-        //
-        // const minimumArangoDbFolderSizeForPruning = 0.2 * diskSpace.total;
-        // const minimumRequiredFreeSpace = (arangoDbEngineFolderSize + operationDbSize) * 1.1;
-        //
-        // return arangoDbEngineFolderSize > minimumArangoDbFolderSizeForPruning
-        //     && diskSpace.free < minimumRequiredFreeSpace;
+        if (arangoDbEngineFolderSize > minimumArangoDbFolderSizeForPruning) {
+            this.logger.warn('Reached minimum Graph DB folder size, low estimated value datasets wont be pruned. ' +
+                `Minimum size of Graph DB is 20% of total disk size. Current Graph DB folder size is: ${arangoDbEngineFolderSize}kb`);
+            return false;
+        }
+        console.log('************');
+        return true;
     }
 
     async findLowEstimatedValueDatasets() {
@@ -262,12 +273,18 @@ class DatasetPruningService {
      *     [data_set_id]: {
      *         dataInfos: [],
      *         bids: [],
+     *         expiry: timestamp,
+     *         chosen: false,
+     *         foundOffer: false,
+     *         foundPurchase: false,
      *     }
      * }
      * @param datasets
      * @returns {{}}
      */
     repackLowEstimatedValueDatasets(datasets) {
+        console.log('************');
+        console.log('repackLowEstimatedValueDatasets');
         const repackedDatasets = {};
         datasets.forEach((dataset) => {
             if (!repackedDatasets[dataset.data_set_id]) {
@@ -276,8 +293,6 @@ class DatasetPruningService {
                     bids: [],
                 };
             }
-            // to speed up if already found offer,
-            // purchase or choosen bid just continue to next element
             if (!repackedDatasets[dataset.data_set_id].expiry
                 || repackedDatasets[dataset.data_set_id].expiry < dataset.expiry) {
                 repackedDatasets[dataset.data_set_id].expiry = dataset.expiry;
@@ -293,8 +308,8 @@ class DatasetPruningService {
                     .includes(dataset.bid_id);
                 if (!foundBidId) {
                     repackedDatasets[dataset.data_set_id].bids.push(dataset.bid_id);
-                    if (dataset.bids.bid_status === 'CHOOSEN') {
-                        repackedDatasets[dataset.data_set_id].choosen = true;
+                    if (dataset.bids.bid_status === 'CHOSEN') {
+                        repackedDatasets[dataset.data_set_id].chosen = true;
                     }
                 }
             }
@@ -305,31 +320,47 @@ class DatasetPruningService {
                 repackedDatasets[dataset.data_set_id].foundPurchase = true;
             }
         });
-        // sort by expiry date low to high
-        return repackedDatasets.sort((a, b) => a.expiry - b.expiry);
+        console.log(JSON.stringify(repackedDatasets, null, 4));
+        console.log('************');
+        return repackedDatasets;
     }
 
     getLowEstimatedValueIdsForPruning(repackedDatasets) {
+        console.log('************');
+        console.log('getLowEstimatedValueIdsForPruning');
         const idsForPruning = {
             datasetsToBeDeleted: [],
             dataInfoIdToBeDeleted: [],
             bidIdToBeDeleted: [],
         };
 
+        let datasetsArray = [];
         Object.keys(repackedDatasets).forEach((key) => {
             const dataset = repackedDatasets[key];
-            if (!dataset.foundOffer && !dataset.foundPurchase && !dataset.choosen) {
-                idsForPruning.datasetsToBeDeleted.push({
+            if (!dataset.foundOffer && !dataset.foundPurchase && !dataset.chosen) {
+                datasetsArray.push({
+                    expiry: dataset.expiry,
                     datasetId: key,
+                    dataInfoIds: dataset.dataInfoIds,
+                    bidsIds: dataset.bidsIds,
                 });
-                idsForPruning.dataInfoIdToBeDeleted.concat(dataset.dataInfoIds);
-                idsForPruning.bidIdToBeDeleted.concat(dataset.bidsIds);
             }
         });
 
-        return repackedDatasets
-            .splice(this.config.dataset_pruning
-                .low_estimated_value_datasets.batch_size_for_pruning);
+        datasetsArray = datasetsArray
+            .sort((a, b) => a.expiry - b.expiry)
+            .splice(constants.LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER);
+
+        datasetsArray.forEach((dataset) => {
+            idsForPruning.datasetsToBeDeleted.push({
+                datasetId: dataset.datasetId,
+            });
+            idsForPruning.dataInfoIdToBeDeleted.concat(dataset.dataInfoIds);
+            idsForPruning.bidIdToBeDeleted.concat(dataset.bidsIds);
+        });
+        console.log('idsForPruning: ', JSON.stringify(idsForPruning, null, 4));
+        console.log('************');
+        return idsForPruning;
     }
 }
 

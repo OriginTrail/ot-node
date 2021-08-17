@@ -23,11 +23,6 @@ class DatasetPruningCommand extends Command {
 
         const datasets = await this.datasetPruningService.fetchDatasetData();
 
-        if (!datasets) {
-            this.logger.trace('Found 0 datasets for pruning');
-            return Command.repeat();
-        }
-
         const repackedDatasets = this.datasetPruningService.repackDatasets(datasets);
 
         const forked = fork('modules/worker/dataset-pruning-worker.js');
@@ -39,6 +34,7 @@ class DatasetPruningCommand extends Command {
             replicatedPruningDelayInMinutes: this.config.dataset_pruning
                 .replicated_pruning_delay_in_minutes,
             repackedDatasets,
+            numberOfPrunedDatasets: 0,
         }));
 
         forked.on('message', async (response) => {
@@ -53,15 +49,14 @@ class DatasetPruningCommand extends Command {
                 dataInfoIdToBeDeleted,
                 datasetsToBeDeleted,
                 bidIdToBeDeleted,
+                numberOfPrunedDatasets,
             } = response;
 
-            await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
-            await this.datasetPruningService.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
-            await this.datasetPruningService.removeEntriesWithId('bids', bidIdToBeDeleted);
-            if (datasetsToBeDeleted.length !== 0) {
-                await this.datasetPruningService.updatePruningHistory(datasetsToBeDeleted);
-                this.logger.info(`Successfully pruned ${datasetsToBeDeleted.length} datasets.`);
-            }
+            // await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
+            // await this
+            // .datasetPruningService.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
+            // await this.datasetPruningService.removeEntriesWithId('bids', bidIdToBeDeleted);
+            await this.datasetPruningService.updatePruningHistory(datasetsToBeDeleted);
             forked.kill();
 
             if (this.datasetPruningService.shouldPruneLowEstimatedValueDatasets()) {
@@ -79,13 +74,24 @@ class DatasetPruningCommand extends Command {
                     selectedDatabase: this.config.database,
                     lowEstimatedValueDatasetsPruning: true,
                     repackedDatasets,
+                    numberOfPrunedDatasets,
                 }));
-            } else {
-                await this.addPruningCommandToExecutor();
+                return;
             }
+            this.logger.info(`Successfully pruned ${numberOfPrunedDatasets} datasets.`);
+            await this.addPruningCommandToExecutor();
         });
         this.logger.trace('Dataset pruning worker started');
         return Command.empty();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        return Command.repeat();
     }
 
     async addPruningCommandToExecutor() {

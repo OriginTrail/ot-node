@@ -185,7 +185,6 @@
       "replicated_pruning_delay_in_minutes": 1440,
       "low_estimated_value_datasets": {
         "enabled": false,
-        "batch_size_for_pruning": 100,
         "minimum_free_space_percentage": 50
       }
     }
@@ -405,7 +404,6 @@
       "replicated_pruning_delay_in_minutes": 1440,
       "low_estimated_value_datasets": {
         "enabled": false,
-        "batch_size_for_pruning": 100,
         "minimum_free_space_percentage": 50
       }
     }
@@ -596,7 +594,6 @@
       "replicated_pruning_delay_in_minutes": 1440,
       "low_estimated_value_datasets": {
         "enabled": false,
-        "batch_size_for_pruning": 100,
         "minimum_free_space_percentage": 50
       }
     }

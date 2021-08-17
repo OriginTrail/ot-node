@@ -230,3 +230,9 @@ exports.BLOCKCHAIN_TITLE = {
  * @type {string}
  */
 exports.TRAIL_CACHE_DIRECTORY = 'trail_cache';
+
+/**
+ * Number of datasets to be pruned in one batch
+ * @type {string}
+ */
+exports.LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER = 100;
