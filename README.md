@@ -6,29 +6,33 @@
 
 OriginTrail is an ecosystem dedicated to making global supply chains work together by enabling a universal, collaborative and trusted data exchange.
 This repository contains a work-in-progress code for a network node.
-OriginTrail Decentralized Network (ODN) is currently running in the OriginTrail v5 Mainnet stage. For further information about the roadmap please see our website.
+OriginTrail Decentralized Network (ODN) is currently running in the OriginTrail v5 Mainnet stage. For further information about the roadmap please see our [website](https://tech.origintrail.io/roadmap).
 Please see our main documentation page for more information.
 
 
 ## Installation
 
 Detailed instructions for installation and configuration of OriginTrail Node:
-* API and technical documentation
-* Node setup
+* [API and technical documentation](https://docs.origintrail.io/)
+* [Node setup](https://tech.origintrail.io/node-setup)
 
 
 
 ## What is OriginTrail?
 
-OriginTrail is a purpose-built, open protocol for cross-organizational data sharing in supply chains, supported by blockchain.
+A decentralized knowledge graph (DKG) is a global shared knowledge graph that is designed to benefit organizations and individuals by providing shared public infrastructure for knowledge exchange. 
 
-The key issues OriginTrail tackles are:
-* Fragmented and siloed data across supply chains
-* Low data interoperability
-* Preventing vendor lock-in
-* Ensuring the integrity of exchanged data
+The OriginTrail DKG:
+* removes central authorities - is hosted on the OriginTrail Decentralized Network (ODN)
+* utilizes DIDs & Verifiable Credentials for identity and assertions management
+* enables Dapps with search, integration, analytics, AI and ML capabilities for any data source: blockchains, IPFS, enterprise systems, web services, personal devices
+* enables permissionless PUBLISH and QUERY operations
 
-The OriginTrail Ecosystem is built on 3 main pillars:
+The OriginTrail Decentralized Network is an implementation of the OriginTrail DKG. With the ODN therefore you can query for data across a multitude of systems (discovery), to exchange it via several data exchange protocols and integrate it in your own local knowledge graph or data store. 
+
+For detailed information and up to date documentation visit [docs.origintrail.io](https://docs.origintrail.io/)
+
+## The OriginTrail Ecosystem is built on 3 main pillars
 
 
 ### Neutrality
@@ -42,6 +46,8 @@ Both blockchain environments, as well as OriginTrail, are fundamental technologi
 ### Inclusiveness
 
 Continuing to form partnerships with technological and business global leaders that can employ the OriginTrail ecosystem for their communities. Catering to the needs of leading global communities requires us to be making strides in designing technical infrastructure and business models that support the adoption of the OriginTrail in diverse business communities.
+
+For detailed information and up to date documentation visit [docs.origintrail.io](https://docs.origintrail.io/)
 
 
 ![](https://i.imgur.com/GoXHOfp.jpg)
@@ -58,10 +64,11 @@ Therefore the key development principles of OriginTrail ecosystem are:
 * Connection-first approach - providing ways to connect the world's data into a global, decentralized knowledge graph
 * Technological neutrality - avoiding technological lock-ins and striving towards agnosticism where possible
 * Decentralization - designing, implementing and utilizing that are not based on trusted-third parties or centralized entities
-* Privacy-by-Design approach - according to the 7 Foundational Principles of Privacy by Design
+* Privacy-by-Design approach - according to the [7 Foundational Principles of Privacy by Design](https://www.ipc.on.ca/wp-content/uploads/Resources/7foundationalprinciples.pdf)
 * Development transparency - towards the OriginTrail Ecosystem community of developers, node holders and businesses
-* Open Source Development - according to Open Source Software principles
+* Open Source Development - according to [Open Source Software principles](https://en.wikipedia.org/wiki/Open_source)
 
+For detailed information and up to date documentation visit [docs.origintrail.io](https://docs.origintrail.io/)
 
 ## Contribution
 OriginTrail is an open source project. We happily invite you to join us in our mission of building decentralised world of supply chain. If you would like to contribute, you are more than welcome.
@@ -78,3 +85,5 @@ OriginTrail is an open source project. We happily invite you to join us in our m
 [OriginTrail Telegram Group](https://t.me/origintrail)
 
 [OriginTrail Twitter](https://twitter.com/origin_trail)
+
+[OriginTrail Developers Twitter](https://twitter.com/OriginTrailDev)
