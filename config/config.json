@@ -498,7 +498,7 @@
           "blockchain_title": "Polygon",
           "network_id": "polygon:mainnet",
           "rpc_server_url": "https://rpc-mainnet.matic.network",
-          "chain_id": 80001,
+          "chain_id": 137,
           "hub_contract_address": "",
           "identity_filepath": "polygon_erc725_identity.json",
           "gas_limit": "2000000",
