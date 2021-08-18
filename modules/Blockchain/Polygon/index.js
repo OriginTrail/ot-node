@@ -8,7 +8,6 @@ const coinGeckoLink = 'https://api.coingecko.com/api/v3/simple/price?ids=origint
 const gasStationLink = 'https://gasstation-mainnet.matic.network/';
 
 
-
 class Polygon extends Web3Implementation {
     /**
      * Initializing Polygon blockchain connector
