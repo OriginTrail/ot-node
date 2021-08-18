@@ -253,6 +253,11 @@ exec /usr/bin/supervisord -c /ot-node/current/testnet/supervisord.conf
 
         // Use any previous saved configuration
         if (fs.existsSync(localConfigPath)) {
+            console.log(localConfigPath);
+            console.log(execSync('ls -la'));
+            console.log(execSync('cd /ot-node/ && ls -la'));
+            console.log(execSync(`cd ${localConfigPath} && ls -la`));
+
             externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
         }
 
