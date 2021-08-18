@@ -22,7 +22,6 @@ jobs:
       - run: mkdir -p $CUCUMBER_ARTIFACTS_DIR
       - run: sudo chmod -R 777 $CUCUMBER_ARTIFACTS_DIR
       - run: cp .origintrail_noderc.travis .origintrail_noderc
-      - run: ls -la
       - run: npm install
       - run: npm run ganache > $ARTIFACTS_DIR/ganache.log & npm run truffle:deploy:ethr:ganache > $ARTIFACTS_DIR/truffle-migrate.log;
       - run: ./test/docker/check_image.sh;
