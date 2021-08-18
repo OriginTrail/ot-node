@@ -89,7 +89,7 @@ describe('Transactions class object tests', () => {
         const logger = console;
         const warnings = [];
         logger.warn = (message => warnings.push(message));
-        const transactions = new Transactions(web3, testWallet, testWalletKey, logger);
+        const transactions = new Transactions(web3, testWallet, testWalletKey, null, logger);
 
         const dummyAbi = [
             {
@@ -147,7 +147,7 @@ describe('Transactions class object tests', () => {
         const logger = console;
         const warnings = [];
         logger.warn = (message => warnings.push(message));
-        const transactions = new Transactions(web3, testWallet, testWalletKey, logger);
+        const transactions = new Transactions(web3, testWallet, testWalletKey, null, logger);
 
         const dummyAbi = [
             {
