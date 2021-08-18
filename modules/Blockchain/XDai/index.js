@@ -42,7 +42,7 @@ class XDai extends Web3Implementation {
     async calculateGasPrice() {
         const now = new Date().getTime();
 
-        if (process.env.NODE_ENV !== 'mainnet' || (this.config.gas_price_last_update_timestamp
+        if (process.env.NODE_ENV === 'development' || (this.config.gas_price_last_update_timestamp
             + constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS > now)) {
             this.logger.trace(`[${this.getBlockchainId()}] Using default gas price from `
                 + `configuration: ${this.config.gas_price}`);

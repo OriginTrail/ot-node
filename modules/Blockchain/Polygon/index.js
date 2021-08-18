@@ -5,7 +5,10 @@ const constants = require('../../constants');
 
 
 const coinGeckoLink = 'https://api.coingecko.com/api/v3/simple/price?ids=origintrail,matic-network&vs_currencies=usd';
-const gasStationLink = 'https://gasstation-mainnet.matic.network/';
+const gasStationLinks = {
+    testnet: 'https://gasstation-mumbai.matic.today/',
+    mainnet: 'https://gasstation-mainnet.matic.network/',
+};
 
 
 class Polygon extends Web3Implementation {
@@ -43,7 +46,7 @@ class Polygon extends Web3Implementation {
     async calculateGasPrice() {
         const now = new Date().getTime();
 
-        if (process.env.NODE_ENV !== 'mainnet' || (this.config.gas_price_last_update_timestamp
+        if (process.env.NODE_ENV === 'development' || (this.config.gas_price_last_update_timestamp
             + constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS > now)) {
             this.logger.trace(`[${this.getBlockchainId()}] Using default gas price from `
                 + `configuration: ${this.config.gas_price}`);
@@ -69,7 +72,7 @@ class Polygon extends Web3Implementation {
     }
 
     async getGasStationPrice() {
-        const response = await axios.get(gasStationLink)
+        const response = await axios.get(gasStationLinks[process.env.NODE_ENV])
             .catch((err) => {
                 this.logger.warn(err);
                 return undefined;
