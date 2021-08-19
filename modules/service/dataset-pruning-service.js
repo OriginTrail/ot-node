@@ -229,8 +229,7 @@ class DatasetPruningService {
             const minimumArangoDbFolderSizeForPruning = 0.2 * diskSpace.total;
             if (freeSpacePercentage > this.config.dataset_pruning
                 .low_estimated_value_datasets.minimum_free_space_percentage) {
-                this.logger.debug(`There is enough free space on the disk, low estimated value 
-                datasets pruning will not be executed. Disk free space: ${freeSpacePercentage}%`);
+                this.logger.debug(`There is enough free space on the disk, low estimated value datasets pruning will not be executed. Disk free space: ${freeSpacePercentage}%`);
                 return false;
             }
 
@@ -256,7 +255,7 @@ class DatasetPruningService {
     async findLowEstimatedValueDatasets() {
         const queryString = 'select di.id as data_info_id, di.data_set_id, bid.status as bid_status, ' +
             'bid.id as bid_id, (di.import_timestamp + bid.holding_time_in_minutes*60000) as expiry,' +
-            'offer.id as offer_id, pd.id as purchase_id ' +
+            'offer.id as offer_id, pd.id as purchase_id, di.import_timestamp ' +
             'from data_info as di ' +
             'left join offers as offer on di.data_set_id = offer.data_set_id ' +
             'inner join bids as bid on di.data_set_id = bid.data_set_id ' +
@@ -297,6 +296,7 @@ class DatasetPruningService {
                 .includes(dataset.data_info_id);
             if (!foundDataInfoId) {
                 repackedDatasets[dataset.data_set_id].dataInfos.push(dataset.data_info_id);
+                repackedDatasets[dataset.data_set_id].importTimestamp = dataset.import_timestamp;
             }
 
             if (dataset.bid_id) {
@@ -332,20 +332,24 @@ class DatasetPruningService {
             if (!dataset.foundOffer && !dataset.foundPurchase && !dataset.chosen) {
                 datasetsArray.push({
                     expiry: dataset.expiry,
-                    datasetId: key,
-                    dataInfoIds: dataset.dataInfoIds,
-                    bidsIds: dataset.bidsIds,
+                    datasetId: {
+                        id: key,
+                        importTimestamp: dataset.import_timestamp,
+                    },
+                    dataInfoIds: dataset.dataInfos,
+                    bidsIds: dataset.bids,
                 });
             }
         });
 
         datasetsArray = datasetsArray
             .sort((a, b) => a.expiry - b.expiry)
-            .splice(constants.LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER);
+            .splice(0, constants.LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER);
 
         datasetsArray.forEach((dataset) => {
             idsForPruning.datasetsToBeDeleted.push({
-                datasetId: dataset.datasetId,
+                datasetId: dataset.datasetId.id,
+                importTimestamp: dataset.datasetId.importTimestamp,
             });
             idsForPruning.dataInfoIdToBeDeleted =
                 idsForPruning.dataInfoIdToBeDeleted.concat(dataset.dataInfoIds);
