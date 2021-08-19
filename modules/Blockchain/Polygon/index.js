@@ -6,12 +6,16 @@ const axios = require('axios');
 const constants = require('../../constants');
 
 
-const coinGeckoLink = 'https://api.coingecko.com/api/v3/simple/price?ids=origintrail&vs_currencies=usd';
-const gasBlockscoutLink = 'https://blockscout.com/xdai/mainnet/api/v1/gas-price-oracle';
+const coinGeckoLink = 'https://api.coingecko.com/api/v3/simple/price?ids=origintrail,matic-network&vs_currencies=usd';
+const gasStationLinks = {
+    testnet: 'https://gasstation-mumbai.matic.today/',
+    mainnet: 'https://gasstation-mainnet.matic.network/',
+};
 
-class XDai extends Web3Implementation {
+
+class Polygon extends Web3Implementation {
     /**
-     * Initializing XDai blockchain connector
+     * Initializing Polygon blockchain connector
      */
     constructor({ config, emitter, logger }, configuration) {
         super({
@@ -21,13 +25,13 @@ class XDai extends Web3Implementation {
             contractPath: path.join(__dirname, 'abi'),
         }, configuration);
 
-        this.logger.info(`[${this.getBlockchainId()}] Selected blockchain: xDai`);
+        this.logger.info(`[${this.getBlockchainId()}] Selected blockchain: Polygon`);
     }
 
     async getRelativeTracPrice() {
         const response = await axios.get(coinGeckoLink);
         if (response) {
-            return response.data.origintrail.usd;
+            return response.data.origintrail.usd / response.data['matic-network'].usd;
         }
         return undefined;
     }
@@ -52,15 +56,15 @@ class XDai extends Web3Implementation {
             return this.config.gas_price;
         }
 
-        let gasBlockscoutPrice = await this.getGasBlockscoutPrice()
+        let gasPrice = await this.getGasStationPrice()
             .catch((err) => { this.logger.warn(err); }) * constants.AVERAGE_GAS_PRICE_MULTIPLIER;
-        gasBlockscoutPrice = Math.round(gasBlockscoutPrice);
+        gasPrice = Math.round(gasPrice);
 
-        if (gasBlockscoutPrice) {
-            this.logger.trace(`[${this.getBlockchainId()}] Using gas price from Blockscout service: ${gasBlockscoutPrice}`);
+        if (gasPrice) {
+            this.logger.trace(`[${this.getBlockchainId()}] Using gas price from gas station service: ${gasPrice}`);
 
-            this.saveNewGasPriceAndTime(gasBlockscoutPrice);
-            return gasBlockscoutPrice;
+            this.saveNewGasPriceAndTime(gasPrice);
+            return gasPrice;
         }
 
         this.logger.trace(`[${this.getBlockchainId()}] Using gas price from configuration: `
@@ -69,14 +73,14 @@ class XDai extends Web3Implementation {
         return this.config.gas_price;
     }
 
-    async getGasBlockscoutPrice() {
-        const response = await axios.get(gasBlockscoutLink)
+    async getGasStationPrice() {
+        const response = await axios.get(gasStationLinks[environment])
             .catch((err) => {
                 this.logger.warn(err);
                 return undefined;
             });
         if (response) {
-            return response.data.average * 1000000000;
+            return response.data.standard * 1000000000;
         }
         return undefined;
     }
@@ -87,4 +91,4 @@ class XDai extends Web3Implementation {
     }
 }
 
-module.exports = XDai;
+module.exports = Polygon;
