@@ -19,7 +19,10 @@ class TrailCleanerCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const cacheDirectoryPath = path.join(this.config.appDataPath, 'trail_cache');
+        const cacheDirectoryPath = path.join(
+            this.config.appDataPath,
+            constants.TRAIL_CACHE_DIRECTORY,
+        );
         if (!fs.existsSync(cacheDirectoryPath)) {
             return Command.repeat();
         }

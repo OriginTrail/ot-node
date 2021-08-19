@@ -14,12 +14,14 @@ class Transactions {
      * @param wallet Blockchain wallet represented in hex string in 0x format
      * @param walletKey Wallet's private in Hex string without 0x at beginning
      * @param log Standard logger object.
+     * @param chainId Blockchain id.
      */
-    constructor(web3, wallet, walletKey, log = logger) {
+    constructor(web3, wallet, walletKey, chainId, log = logger) {
         this.web3 = web3;
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
         this.logger = log;
+        this.chainId = chainId;
 
         this.queue = new Queue((async (args, cb) => {
             const { transaction, future } = args;
@@ -143,7 +145,7 @@ class Transactions {
         );
 
         const transaction = new Tx(rawTx);
-
+        if (this.chainId) { transaction._chainId = this.chainId; }
         transaction.sign(this.privateKey);
 
         const serializedTx = Utilities.normalizeHex(transaction.serialize().toString('hex'));

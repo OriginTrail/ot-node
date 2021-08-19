@@ -1,5 +1,6 @@
 const Ethereum = require('./Blockchain/Ethereum');
 const XDai = require('./Blockchain/XDai');
+const Polygon = require('./Blockchain/Polygon');
 const OriginTrailParachain = require('./Blockchain/OriginTrailParachain');
 const uuidv4 = require('uuid/v4');
 const Op = require('sequelize/lib/operators');
@@ -41,6 +42,9 @@ class Blockchain {
             case constants.BLOCKCHAIN_TITLE.XDai:
                 this.blockchain[i] = new XDai(ctx, implementation_configuration);
                 break;
+            case constants.BLOCKCHAIN_TITLE.Polygon:
+                this.blockchain[i] = new Polygon(ctx, implementation_configuration);
+                break;
             case constants.BLOCKCHAIN_TITLE.OriginTrailParachain:
                 this.blockchain[i] = new OriginTrailParachain(ctx, implementation_configuration);
                 break;
@@ -56,7 +60,7 @@ class Blockchain {
      * Initialize Blockchain provider
      * @returns {Promise<void>}
      */
-    async loadContracts() {
+    async loadContracts(subscribeToContractsChangedEvents = true) {
         try {
             const promises = [];
 
@@ -70,7 +74,7 @@ class Blockchain {
             throw e;
         }
 
-        if (!this.initalized) {
+        if (!this.initalized && subscribeToContractsChangedEvents) {
             this.initalized = true;
             this.subscribeToEventPermanentWithCallback([
                 'ContractsChanged',

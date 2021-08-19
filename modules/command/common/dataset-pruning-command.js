@@ -23,27 +23,27 @@ class DatasetPruningCommand extends Command {
 
         const datasets = await this.datasetPruningService.fetchDatasetData();
 
-        if (!datasets) {
-            this.logger.trace('Found 0 datasets for pruning');
-            return Command.repeat();
-        }
-
         const repackedDatasets = this.datasetPruningService.repackDatasets(datasets);
 
+        const idsForPruning = this.datasetPruningService
+            .getIdsForPruning(
+                repackedDatasets,
+                this.config
+                    .dataset_pruning.imported_pruning_delay_in_minutes,
+                this.config.dataset_pruning
+                    .replicated_pruning_delay_in_minutes,
+            );
         const forked = fork('modules/worker/dataset-pruning-worker.js');
 
         forked.send(JSON.stringify({
             selectedDatabase: this.config.database,
-            importedPruningDelayInMinutes: this.config
-                .dataset_pruning.imported_pruning_delay_in_minutes,
-            replicatedPruningDelayInMinutes: this.config.dataset_pruning
-                .replicated_pruning_delay_in_minutes,
-            repackedDatasets,
+            idsForPruning,
+            numberOfPrunedDatasets: 0,
         }));
 
         forked.on('message', async (response) => {
             if (response.error) {
-                this.logger.error(`Error while pruning datasets: ${response.error}`);
+                this.logger.error(`Error while pruning datasets. Error message: ${response.error.message}`);
                 forked.kill();
                 await this.addPruningCommandToExecutor();
                 return;
@@ -52,20 +52,58 @@ class DatasetPruningCommand extends Command {
                 offerIdToBeDeleted,
                 dataInfoIdToBeDeleted,
                 datasetsToBeDeleted,
+                bidIdToBeDeleted,
+                numberOfPrunedDatasets,
             } = response;
-            if (datasetsToBeDeleted.length === 0) {
-                return;
-            }
+
             await this.datasetPruningService.removeEntriesWithId('offers', offerIdToBeDeleted);
             await this.datasetPruningService.removeEntriesWithId('data_info', dataInfoIdToBeDeleted);
-
+            await this.datasetPruningService.removeEntriesWithId('bids', bidIdToBeDeleted);
             await this.datasetPruningService.updatePruningHistory(datasetsToBeDeleted);
-            this.logger.info(`Sucessfully pruned ${datasetsToBeDeleted.length} datasets.`);
+
+            if (this.datasetPruningService.shouldPruneLowEstimatedValueDatasets()) {
+                const datasets = await this.datasetPruningService.findLowEstimatedValueDatasets();
+
+                if (!datasets) {
+                    forked.kill();
+                    await this.addPruningCommandToExecutor();
+                    return;
+                }
+
+                const repackedDatasets = this.datasetPruningService
+                    .repackLowEstimatedValueDatasets(datasets);
+                const idsForPruning = this.datasetPruningService
+                    .getLowEstimatedValueIdsForPruning(repackedDatasets);
+
+                if (idsForPruning.datasetsToBeDeleted.length !== 0) {
+                    forked.send(JSON.stringify({
+                        selectedDatabase: this.config.database,
+                        idsForPruning,
+                        numberOfPrunedDatasets,
+                    }));
+                    return;
+                }
+            }
+            if (numberOfPrunedDatasets > 0) {
+                this.logger.info(`Successfully pruned ${numberOfPrunedDatasets} datasets.`);
+            } else {
+                this.logger.info('Found 0 datasets for pruning');
+            }
             forked.kill();
             await this.addPruningCommandToExecutor();
         });
         this.logger.trace('Dataset pruning worker started');
         return Command.empty();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        this.logger.error(`There was an error during pruning process: ${err.message}. Next pruning command rescheduled.`);
+        return Command.repeat();
     }
 
     async addPruningCommandToExecutor() {
