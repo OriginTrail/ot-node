@@ -218,32 +218,39 @@ class DatasetPruningService {
     }
 
     shouldPruneLowEstimatedValueDatasets() {
-        if (!this.config.dataset_pruning.low_estimated_value_datasets.enabled) {
-            return false;
-        }
+        try {
+            if (!this.config.dataset_pruning.low_estimated_value_datasets.enabled) {
+                return false;
+            }
+            const diskSpace = this.diskService.getRootFolderInfo();
+            const freeSpacePercentage = (100 * diskSpace.free) / diskSpace.total;
+            const arangoDbEngineFolderSize = this.diskService
+                .getFolderSize(this.config.database.engine_folder_path);
+            const minimumArangoDbFolderSizeForPruning = 0.2 * diskSpace.total;
+            if (freeSpacePercentage > this.config.dataset_pruning
+                .low_estimated_value_datasets.minimum_free_space_percentage) {
+                this.logger.debug(`There is enough free space on the disk, low estimated value 
+                datasets pruning will not be executed. Disk free space: ${freeSpacePercentage}%`);
+                return false;
+            }
 
-        const diskSpace = this.diskService.getRootFolderInfo();
-        const freeSpacePercentage = (100 * diskSpace.free) / diskSpace.total;
-        const arangoDbEngineFolderSize = this.diskService
-            .getFolderSize(this.config.database.engine_folder_path);
-        const minimumArangoDbFolderSizeForPruning = 0.2 * diskSpace.total;
-        if (freeSpacePercentage > this.config.dataset_pruning
-            .low_estimated_value_datasets.minimum_free_space_percentage) {
-            return false;
-        }
+            if (this.diskService.folderExists(defaultBackupFolderPath)
+                && this.diskService.getFolderSize(defaultBackupFolderPath) > 0) {
+                this.logger.warn('Detected ot-node backup on machine. please remove backup data in order to enable low estimated value datasets pruning!');
+                return false;
+            }
 
-        if (this.diskService.folderExists(defaultBackupFolderPath)
-            && this.diskService.getFolderSize(defaultBackupFolderPath) > 0) {
-            this.logger.warn('Detected ot-node backup on machine. please remove backup data in order to enable low estimated value datasets pruning!');
+            if (arangoDbEngineFolderSize > minimumArangoDbFolderSizeForPruning) {
+                this.logger.warn('Reached minimum Graph DB folder size, low estimated value datasets wont be pruned. ' +
+                    `Minimum size of Graph DB is 20% of total disk size. Current Graph DB folder size is: ${arangoDbEngineFolderSize}kb`);
+                return false;
+            }
+            this.logger.debug('Bulk pruning of low estimated datasets will be executed.');
+            return true;
+        } catch (error) {
+            this.logger.error('Error while trying to determine should low estimated datasets be pruned. Error: ', error.message);
             return false;
         }
-
-        if (arangoDbEngineFolderSize > minimumArangoDbFolderSizeForPruning) {
-            this.logger.warn('Reached minimum Graph DB folder size, low estimated value datasets wont be pruned. ' +
-                `Minimum size of Graph DB is 20% of total disk size. Current Graph DB folder size is: ${arangoDbEngineFolderSize}kb`);
-            return false;
-        }
-        return true;
     }
 
     async findLowEstimatedValueDatasets() {

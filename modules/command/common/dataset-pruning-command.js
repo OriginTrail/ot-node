@@ -25,21 +25,25 @@ class DatasetPruningCommand extends Command {
 
         const repackedDatasets = this.datasetPruningService.repackDatasets(datasets);
 
+        const idsForPruning = this.datasetPruningService
+            .getIdsForPruning(
+                repackedDatasets,
+                this.config
+                    .dataset_pruning.imported_pruning_delay_in_minutes,
+                this.config.dataset_pruning
+                    .replicated_pruning_delay_in_minutes,
+            );
         const forked = fork('modules/worker/dataset-pruning-worker.js');
 
         forked.send(JSON.stringify({
             selectedDatabase: this.config.database,
-            importedPruningDelayInMinutes: this.config
-                .dataset_pruning.imported_pruning_delay_in_minutes,
-            replicatedPruningDelayInMinutes: this.config.dataset_pruning
-                .replicated_pruning_delay_in_minutes,
-            repackedDatasets,
+            idsForPruning,
             numberOfPrunedDatasets: 0,
         }));
 
         forked.on('message', async (response) => {
             if (response.error) {
-                this.logger.error(`Error while pruning datasets: ${response.error}`);
+                this.logger.error(`Error while pruning datasets. Error message: ${response.error.message}`);
                 forked.kill();
                 await this.addPruningCommandToExecutor();
                 return;
@@ -61,20 +65,24 @@ class DatasetPruningCommand extends Command {
                 const datasets = await this.datasetPruningService.findLowEstimatedValueDatasets();
 
                 if (!datasets) {
+                    forked.kill();
                     await this.addPruningCommandToExecutor();
                     return;
                 }
 
                 const repackedDatasets = this.datasetPruningService
                     .repackLowEstimatedValueDatasets(datasets);
+                const idsForPruning = this.datasetPruningService
+                    .getLowEstimatedValueIdsForPruning(repackedDatasets);
 
-                forked.send(JSON.stringify({
-                    selectedDatabase: this.config.database,
-                    lowEstimatedValueDatasetsPruning: true,
-                    repackedDatasets,
-                    numberOfPrunedDatasets,
-                }));
-                return;
+                if (idsForPruning.datasetsToBeDeleted.length !== 0) {
+                    forked.send(JSON.stringify({
+                        selectedDatabase: this.config.database,
+                        idsForPruning,
+                        numberOfPrunedDatasets,
+                    }));
+                    return;
+                }
             }
             if (numberOfPrunedDatasets > 0) {
                 this.logger.info(`Successfully pruned ${numberOfPrunedDatasets} datasets.`);
