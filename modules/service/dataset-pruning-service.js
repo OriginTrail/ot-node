@@ -229,8 +229,7 @@ class DatasetPruningService {
             const minimumArangoDbFolderSizeForPruning = 0.2 * diskSpace.total;
             if (freeSpacePercentage > this.config.dataset_pruning
                 .low_estimated_value_datasets.minimum_free_space_percentage) {
-                this.logger.debug(`There is enough free space on the disk, low estimated value 
-                datasets pruning will not be executed. Disk free space: ${freeSpacePercentage}%`);
+                this.logger.debug(`There is enough free space on the disk, low estimated value datasets pruning will not be executed. Disk free space: ${freeSpacePercentage}%`);
                 return false;
             }
 
