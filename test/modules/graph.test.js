@@ -17,7 +17,7 @@ describe('graph module ', () => {
     before('Init GraphStorage', async () => {
         const config = rc(pjson.name, defaultConfig);
         assert.hasAllKeys(config.database, ['provider', 'username', 'password',
-            'password_file_name', 'host', 'port', 'database', 'max_path_length', 'replication_info']);
+            'password_file_name', 'host', 'port', 'database', 'max_path_length', 'replication_info', 'engine_folder_path']);
         assert.hasAllKeys(config.database.replication_info, ['endpoint', 'username', 'password', 'port']);
     });
 
