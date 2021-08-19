@@ -45,6 +45,7 @@
       "database": "origintrail-develop",
       "host": "localhost",
       "max_path_length": 1000,
+      "engine_folder_path": "/var/lib/arangodb3/engine-rocksdb",
       "replication_info": {
         "endpoint": "",
         "username": "",
@@ -168,7 +169,11 @@
     "dataset_pruning": {
       "enabled": false,
       "imported_pruning_delay_in_minutes": 1440,
-      "replicated_pruning_delay_in_minutes": 1440
+      "replicated_pruning_delay_in_minutes": 1440,
+      "low_estimated_value_datasets": {
+        "enabled": false,
+        "minimum_free_space_percentage": 50
+      }
     }
   },
   "testnet": {
@@ -217,6 +222,7 @@
       "database": "origintrail",
       "host": "localhost",
       "max_path_length": 1000,
+      "engine_folder_path": "/var/lib/arangodb3/engine-rocksdb",
       "replication_info": {
         "endpoint": "",
         "username": "",
@@ -395,7 +401,11 @@
     "dataset_pruning": {
       "enabled": false,
       "imported_pruning_delay_in_minutes": 1440,
-      "replicated_pruning_delay_in_minutes": 1440
+      "replicated_pruning_delay_in_minutes": 1440,
+      "low_estimated_value_datasets": {
+        "enabled": false,
+        "minimum_free_space_percentage": 50
+      }
     }
   },
   "mainnet": {
@@ -444,6 +454,7 @@
       "database": "origintrail",
       "host": "localhost",
       "max_path_length": 1000,
+      "engine_folder_path": "/var/lib/arangodb3/engine-rocksdb",
       "replication_info": {
         "endpoint": "10.1.0.5",
         "username": "root",
@@ -593,7 +604,11 @@
     "dataset_pruning": {
       "enabled": false,
       "imported_pruning_delay_in_minutes": 1440,
-      "replicated_pruning_delay_in_minutes": 1440
+      "replicated_pruning_delay_in_minutes": 1440,
+      "low_estimated_value_datasets": {
+        "enabled": false,
+        "minimum_free_space_percentage": 50
+      }
     }
   }
 }
