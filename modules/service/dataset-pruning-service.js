@@ -254,13 +254,13 @@ class DatasetPruningService {
     }
 
     async findLowEstimatedValueDatasets() {
-        const queryString = 'select di.id as data_info_id, di.data_set_id, bid.status as bid_status' +
+        const queryString = 'select di.id as data_info_id, di.data_set_id, bid.status as bid_status, ' +
             'bid.id as bid_id, (di.import_timestamp + bid.holding_time_in_minutes*60000) as expiry,' +
             'offer.id as offer_id, pd.id as purchase_id ' +
             'from data_info as di ' +
             'left join offers as offer on di.data_set_id = offer.data_set_id ' +
             'inner join bids as bid on di.data_set_id = bid.data_set_id ' +
-            'left join purchased_data as pd on di.data_set_id = pd.data_set_id' +
+            'left join purchased_data as pd on di.data_set_id = pd.data_set_id ' +
             'order by (di.import_timestamp + bid.holding_time_in_minutes*60000)';
         return Models.sequelize.query(queryString, { type: QueryTypes.SELECT });
     }
