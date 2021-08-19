@@ -234,7 +234,7 @@ class DatasetPruningService {
 
         if (this.diskService.folderExists(defaultBackupFolderPath)
             && this.diskService.getFolderSize(defaultBackupFolderPath) > 0) {
-            this.logger.warn('Detected ot-node backup on machine. Unable to prune low estimated value datasets!');
+            this.logger.warn('Detected ot-node backup on machine. please remove backup data in order to enable low estimated value datasets pruning!');
             return false;
         }
 
@@ -340,8 +340,10 @@ class DatasetPruningService {
             idsForPruning.datasetsToBeDeleted.push({
                 datasetId: dataset.datasetId,
             });
-            idsForPruning.dataInfoIdToBeDeleted.concat(dataset.dataInfoIds);
-            idsForPruning.bidIdToBeDeleted.concat(dataset.bidsIds);
+            idsForPruning.dataInfoIdToBeDeleted =
+                idsForPruning.dataInfoIdToBeDeleted.concat(dataset.dataInfoIds);
+            idsForPruning.bidIdToBeDeleted =
+                idsForPruning.bidIdToBeDeleted.concat(dataset.bidsIds);
         });
         return idsForPruning;
     }
