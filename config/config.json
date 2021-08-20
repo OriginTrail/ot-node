@@ -45,6 +45,7 @@
       "database": "origintrail-develop",
       "host": "localhost",
       "max_path_length": 1000,
+      "engine_folder_path": "/var/lib/arangodb3/engine-rocksdb",
       "replication_info": {
         "endpoint": "",
         "username": "",
@@ -98,19 +99,6 @@
           "node_wallet": "",
           "node_private_key": "",
           "management_wallet": "",
-          "plugins": []
-        },
-        {
-          "blockchain_title": "xDai",
-          "network_id": "xdai:testnet",
-          "rpc_server_url": "https://xdai.poanetwork.dev",
-          "hub_contract_address": "0x17324BdB37c607c0742e95eFc98973221E1eB9b4",
-          "identity_filepath": "xdai_erc725_identity.json",
-          "gas_limit": "2000000",
-          "gas_price": "1000000000",
-          "dc_price_factor" : "3",
-          "dh_price_factor" : "2",
-          "trac_price_in_base_currency" : "0.4",
           "plugins": []
         }
       ]
@@ -181,7 +169,11 @@
     "dataset_pruning": {
       "enabled": false,
       "imported_pruning_delay_in_minutes": 1440,
-      "replicated_pruning_delay_in_minutes": 1440
+      "replicated_pruning_delay_in_minutes": 1440,
+      "low_estimated_value_datasets": {
+        "enabled": false,
+        "minimum_free_space_percentage": 50
+      }
     }
   },
   "testnet": {
@@ -230,6 +222,7 @@
       "database": "origintrail",
       "host": "localhost",
       "max_path_length": 1000,
+      "engine_folder_path": "/var/lib/arangodb3/engine-rocksdb",
       "replication_info": {
         "endpoint": "",
         "username": "",
@@ -303,6 +296,19 @@
           "rpc_server_url": "https://xdai.poanetwork.dev",
           "hub_contract_address": "0x17324BdB37c607c0742e95eFc98973221E1eB9b4",
           "identity_filepath": "xdai_erc725_identity.json",
+          "gas_limit": "2000000",
+          "gas_price": "1000000000",
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_base_currency" : "0.4"
+        },
+        {
+          "blockchain_title": "Polygon",
+          "network_id": "polygon:testnet",
+          "rpc_server_url": "https://rpc-mumbai.matic.today",
+          "chain_id": 80001,
+          "hub_contract_address": "0x819deeadF9c4a1d5199435Fa195ff7824CCd687e",
+          "identity_filepath": "polygon_erc725_identity.json",
           "gas_limit": "2000000",
           "gas_price": "1000000000",
           "dc_price_factor" : "3",
@@ -395,7 +401,11 @@
     "dataset_pruning": {
       "enabled": false,
       "imported_pruning_delay_in_minutes": 1440,
-      "replicated_pruning_delay_in_minutes": 1440
+      "replicated_pruning_delay_in_minutes": 1440,
+      "low_estimated_value_datasets": {
+        "enabled": false,
+        "minimum_free_space_percentage": 50
+      }
     }
   },
   "mainnet": {
@@ -444,6 +454,7 @@
       "database": "origintrail",
       "host": "localhost",
       "max_path_length": 1000,
+      "engine_folder_path": "/var/lib/arangodb3/engine-rocksdb",
       "replication_info": {
         "endpoint": "10.1.0.5",
         "username": "root",
@@ -488,6 +499,19 @@
           "rpc_server_url": "https://rpc.xdaichain.com/origintrail/",
           "hub_contract_address": "0xB4Cf5D3876FA929706A87F3B4042C741dcb3d688",
           "identity_filepath": "xdai_erc725_identity.json",
+          "gas_limit": "2000000",
+          "gas_price": "1000000000",
+          "dc_price_factor" : "3",
+          "dh_price_factor" : "2",
+          "trac_price_in_base_currency" : "0.4"
+        },
+        {
+          "blockchain_title": "Polygon",
+          "network_id": "polygon:mainnet",
+          "rpc_server_url": "https://rpc-mainnet.matic.network",
+          "chain_id": 137,
+          "hub_contract_address": "",
+          "identity_filepath": "polygon_erc725_identity.json",
           "gas_limit": "2000000",
           "gas_price": "1000000000",
           "dc_price_factor" : "3",
@@ -580,7 +604,11 @@
     "dataset_pruning": {
       "enabled": false,
       "imported_pruning_delay_in_minutes": 1440,
-      "replicated_pruning_delay_in_minutes": 1440
+      "replicated_pruning_delay_in_minutes": 1440,
+      "low_estimated_value_datasets": {
+        "enabled": false,
+        "minimum_free_space_percentage": 50
+      }
     }
   }
 }

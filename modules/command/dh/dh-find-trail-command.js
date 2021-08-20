@@ -3,6 +3,7 @@ const Models = require('../../../models/index');
 const Utilities = require('../../Utilities');
 const fs = require('fs');
 const path = require('path');
+const constants = require('../../constants');
 
 /**
  * Handles one data challenge
@@ -36,7 +37,10 @@ class DHFindTrailCommand extends Command {
             included_connection_types,
             excluded_connection_types,
         ).then(async (response) => {
-            const cacheDirectory = path.join(this.config.appDataPath, 'trail_cache');
+            const cacheDirectory = path.join(
+                this.config.appDataPath,
+                constants.TRAIL_CACHE_DIRECTORY,
+            );
 
             try {
                 await Utilities.writeContentsToFile(

@@ -28,8 +28,13 @@ process.on('message', async (dataFromParent) => {
     } = JSON.parse(dataFromParent);
 
     const blockchainPluginService = new BlockchainPluginService({ config });
-    const blockchain = new Blockchain({ config, logger: log, blockchainPluginService });
-    await blockchain.loadContracts();
+    const loggerMock = {
+        trace: () => {},
+        info: () => {},
+        error: () => {},
+    };
+    const blockchain = new Blockchain({ config, logger: loggerMock, blockchainPluginService });
+    await blockchain.loadContracts(false);
     const identities = blockchain.getAllIdentities(true);
     for (const identity of identities) {
         blockchain.initialize(identity.blockchain_id);
