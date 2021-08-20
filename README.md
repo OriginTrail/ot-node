@@ -4,8 +4,10 @@
 ![badge](https://img.shields.io/docker/automated/origintrail/ot-node)
 
 
-OriginTrail is an ecosystem dedicated to making global supply chains work together by enabling a universal, collaborative and trusted data exchange.
+OriginTrail technology is a set of tools and protocols evolving as the [semantic](https://www.w3.org/standards/semanticweb/) layer for Web3, built on the OriginTrail Decentralized Knowledge Graph (DKG). Its function is to empower developers and system integrators utilizing decentralized knowledge exchange supported by emerging standards and DLT networks.
+
 This repository contains a work-in-progress code for a network node.
+
 OriginTrail Decentralized Network (ODN) is currently running in the OriginTrail v5 Mainnet stage. For further information about the roadmap please see our [website](https://tech.origintrail.io/roadmap).
 Please see our main documentation page for more information.
 
