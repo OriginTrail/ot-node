@@ -334,7 +334,7 @@ class DatasetPruningService {
                     expiry: dataset.expiry,
                     datasetId: {
                         id: key,
-                        importTimestamp: dataset.import_timestamp,
+                        importTimestamp: dataset.importTimestamp,
                     },
                     dataInfoIds: dataset.dataInfos,
                     bidsIds: dataset.bids,
