@@ -45,7 +45,7 @@ class DatasetPruningCommand extends Command {
 
         forked.on('message', async (response) => {
             if (response.error) {
-                this.logger.error(`Error while pruning datasets. Error message: ${response.error.message}. Pruning command will be executed again in ${constants.DATASET_PRUNING_COMMAND_TIME_MILLS / (1000 * 60 * 60 * 24)} hours`);
+                this.logger.error(`Error while pruning datasets. Error message: ${response.error.message}. Pruning command will be executed again in ${constants.DATASET_PRUNING_COMMAND_TIME_MILLS / (1000 * 60 * 60)} hours`);
                 forked.kill();
                 await this.addPruningCommandToExecutor();
                 return;
