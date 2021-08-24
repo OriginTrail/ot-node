@@ -20,7 +20,7 @@ class DatasetPruningCommand extends Command {
             this.logger.debug('Dataset pruning command ignored.');
             return Command.empty();
         }
-
+        this.logger.trace('Dataset pruning command started. This command will work in background and will try to remove expired and low estimated value datasets.');
         const datasets = await this.datasetPruningService.fetchDatasetData();
 
         const repackedDatasets = this.datasetPruningService.repackDatasets(datasets);
@@ -34,7 +34,9 @@ class DatasetPruningCommand extends Command {
                     .replicated_pruning_delay_in_minutes,
             );
         const forked = fork('modules/worker/dataset-pruning-worker.js');
-
+        if (idsForPruning.datasetsToBeDeleted.length !== 0) {
+            this.logger.trace(`Removing ${idsForPruning.datasetsToBeDeleted.length} expired datasets.`);
+        }
         forked.send(JSON.stringify({
             selectedDatabase: this.config.database,
             idsForPruning,
@@ -43,7 +45,7 @@ class DatasetPruningCommand extends Command {
 
         forked.on('message', async (response) => {
             if (response.error) {
-                this.logger.error(`Error while pruning datasets. Error message: ${response.error.message}`);
+                this.logger.error(`Error while pruning datasets. Error message: ${response.error.message}. Pruning command will be executed again in ${constants.DATASET_PRUNING_COMMAND_TIME_MILLS / (1000 * 60 * 60 * 24)} hours`);
                 forked.kill();
                 await this.addPruningCommandToExecutor();
                 return;
@@ -76,6 +78,7 @@ class DatasetPruningCommand extends Command {
                     .getLowEstimatedValueIdsForPruning(repackedDatasets);
 
                 if (idsForPruning.datasetsToBeDeleted.length !== 0) {
+                    this.logger.trace(`Removing ${idsForPruning.datasetsToBeDeleted.length} low estimated value datasets.`);
                     forked.send(JSON.stringify({
                         selectedDatabase: this.config.database,
                         idsForPruning,
