@@ -163,6 +163,8 @@ module.exports = async (deployer, network, accounts) => {
         }
         break;
     case 'mainnet':
+        const tokenContractAddress = '0x4287F07CBE6954f9F0DecD91d0705C926d8d03A4';
+
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
             .then((result) => {
                 hub = result;
@@ -204,7 +206,7 @@ module.exports = async (deployer, network, accounts) => {
         approval = await deployer.deploy(Approval);
         await hub.setContractAddress('Approval', approval.address);
 
-        await hub.setContractAddress('Token', '0x4287F07CBE6954f9F0DecD91d0705C926d8d03A4');
+        await hub.setContractAddress('Token', tokenContractAddress);
 
         profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
         await hub.setContractAddress('Profile', profile.address);
@@ -244,7 +246,7 @@ module.exports = async (deployer, network, accounts) => {
         console.log('\n\n \t Contract adressess on polygon mainnet:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Approval contract address: \t\t${approval.address}`);
-        console.log(`\t Token contract address: \t\t0x4287F07CBE6954f9F0DecD91d0705C926d8d03A4`);
+        console.log(`\t Token contract address: \t\t${tokenContractAddress}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
