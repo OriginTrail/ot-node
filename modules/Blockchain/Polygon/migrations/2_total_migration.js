@@ -170,10 +170,6 @@ module.exports = async (deployer, network, accounts) => {
                 hub = result;
             });
 
-        await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
-            .then((result) => {
-                hub = result;
-            });
         await hub.setContractAddress('Owner', accounts[0]);
 
         profileStorage = await deployer.deploy(
