@@ -38,5 +38,12 @@ module.exports = {
             websockets: true,
             skipDryRun: true,
         },
+        mainnet: {
+            provider: () => new HDWalletProvider(private_key, rpc_endpoint),
+            network_id: 137,
+            confirmations: 2,
+            timeoutBlocks: 200,
+            skipDryRun: true,
+        },
     },
 };

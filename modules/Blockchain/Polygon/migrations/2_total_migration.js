@@ -164,7 +164,6 @@ module.exports = async (deployer, network, accounts) => {
         break;
     case 'mainnet':
         const tokenContractAddress = '0x4287F07CBE6954f9F0DecD91d0705C926d8d03A4';
-
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
             .then((result) => {
                 hub = result;
@@ -184,13 +183,6 @@ module.exports = async (deployer, network, accounts) => {
             { gas: 6000000, from: accounts[0] },
         );
         await hub.setContractAddress('HoldingStorage', holdingStorage.address);
-
-        marketplaceStorage = await deployer.deploy(
-            MarketplaceStorage,
-            hub.address,
-            { gas: 6000000, from: accounts[0] },
-        );
-        await hub.setContractAddress('MarketplaceStorage', marketplaceStorage.address);
 
         litigationStorage = await deployer.deploy(
             LitigationStorage,
@@ -224,13 +216,6 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setContractAddress('Litigation', litigation.address);
 
-        marketplace = await deployer.deploy(
-            Marketplace,
-            hub.address,
-            { gas: 7000000, from: accounts[0] },
-        );
-        await hub.setContractAddress('Marketplace', marketplace.address);
-
         replacement = await deployer.deploy(
             Replacement,
             hub.address,
@@ -246,13 +231,11 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
         console.log(`\t Litigation contract address: \t\t${litigation.address}`);
-        console.log(`\t Marketplace contract address: \t\t${marketplace.address}`);
         console.log(`\t Replacement contract address: \t\t${replacement.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
         console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
-        console.log(`\t MarketplaceStorage contract address: \t${marketplaceStorage.address}`);
 
         break;
     default:
