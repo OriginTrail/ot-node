@@ -509,7 +509,7 @@
           "blockchain_title": "Polygon",
           "network_id": "polygon:mainnet",
           "chain_id": 137,
-          "hub_contract_address": "0x86dB1592CD083dD7c758196dB55f317fed6A0a22",
+          "hub_contract_address": "0xe5FC9F71F8e378448c0BD0Fb8E1fb879654E3fbb",
           "identity_filepath": "polygon_erc725_identity.json",
           "gas_limit": "2000000",
           "gas_price": "1000000000",
