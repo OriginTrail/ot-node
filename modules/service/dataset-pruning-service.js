@@ -244,7 +244,6 @@ class DatasetPruningService {
                     `Minimum size of Graph DB is 20% of total disk size. Current Graph DB folder size is: ${arangoDbEngineFolderSize}kb`);
                 return false;
             }
-            this.logger.debug('Bulk pruning of low estimated datasets will be executed.');
             return true;
         } catch (error) {
             this.logger.error('Error while trying to determine should low estimated datasets be pruned. Error: ', error.message);
