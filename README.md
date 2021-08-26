@@ -36,15 +36,15 @@ The key issues OriginTrail tackles are:
 
 The OriginTrail Ecosystem is built on 3 main pillars:
 
- ###Neutrality
+ ### Neutrality
 
 Being an open-source, decentralized system, based on open global standards, neutrality is crucial for the OriginTrail ecosystem as it prevents vendor lock-ins, ensures integrity, and effectively breaks data silos. Neutrality means adopting co-creation principles, working with other blockchain ecosystems and solutions builders even as they may be competing in the same market on the application level.
 
- ###Usability
+ ### Usability
  
 Both blockchain environments, as well as OriginTrail, are fundamental technologies. In order to ensure the onboarding of enterprises, there needs to be a great focus on enhancing the user experience, as solutions need to meet the expectations of rapid value generation.
 
- ###Inclusiveness
+ ### Inclusiveness
  
 Continuing to form partnerships with technological and business global leaders that can employ the OriginTrail ecosystem for their communities. Catering to the needs of leading global communities requires us to be making strides in designing technical infrastructure and business models that support the adoption of the OriginTrail in diverse business communities.
 

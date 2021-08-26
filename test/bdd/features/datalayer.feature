@@ -44,7 +44,7 @@ Feature: Data layer related features
 
   @second
   Scenario: Dataset immutability DC and DH side
-    Given I setup 5 node
+    Given I setup 4 node
     And I start the node
     And I use 1st node as DC
     And DC imports "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1-EPCIS
