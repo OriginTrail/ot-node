@@ -71,6 +71,7 @@ class Web3Implementation {
             this.web3,
             this.config.node_wallet,
             this.config.node_private_key,
+            this.config.chain_id,
         );
 
         // Loading contracts
