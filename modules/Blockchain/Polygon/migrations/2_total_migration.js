@@ -163,7 +163,7 @@ module.exports = async (deployer, network, accounts) => {
         }
         break;
     case 'mainnet':
-        const tokenContractAddress = '0x4287F07CBE6954f9F0DecD91d0705C926d8d03A4';
+        const tokenContractAddress = '0xa7b98d63a137bf402b4570799ac4cad0bb1c4b1c';
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
             .then((result) => {
                 hub = result;
