@@ -162,6 +162,7 @@ module.exports = async (deployer, network, accounts) => {
             console.log('Updated contract in Hub contract map!');
         }
         break;
+        // eslint-disable-next-line no-case-declarations
     case 'mainnet':
         const tokenContractAddress = '0xa7b98d63a137bf402b4570799ac4cad0bb1c4b1c';
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
