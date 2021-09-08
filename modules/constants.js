@@ -253,3 +253,16 @@ exports.MAX_NUMBER_OF_RETRIES_FOR_PAYOUT = 5;
  * Retry delay for payout command in miliseconds
  */
 exports.PAYOUT_COMMAND_RETRY_DELAY_IN_MILISECONDS = 30 * 60 * 1000;
+
+ * @constant {number} GET_ARANGO_DB_STATUS_MAX_RETRY -
+ * Maximum number of times that arango status call should be called
+ */
+exports.GET_ARANGO_DB_STATUS_MAX_RETRY = 5;
+
+/**
+ *
+ * @constant {number} ARANGO_DB_STATUS_TIMEOUT_IN_MILISECONDS -
+ * Delay between two Arango db status checks
+ */
+exports.ARANGO_DB_STATUS_TIMEOUT_IN_MILISECONDS = 5000;
+
