@@ -239,3 +239,16 @@ exports.TRAIL_CACHE_DIRECTORY = 'trail_cache';
  * Number of datasets to be pruned in one batch
  */
 exports.LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER = 100;
+
+/**
+ *
+ * @constant {number} GET_ARANGO_DB_STATUS_MAX_RETRY -
+ * Maximum number of times that arango status call should be called
+ */
+exports.GET_ARANGO_DB_STATUS_MAX_RETRY = 5;
+/**
+ *
+ * @constant {number} ARANGO_DB_STATUS_TIMEOUT_IN_MILISECONDS -
+ * Delay between two Arango db status checks
+ */
+exports.ARANGO_DB_STATUS_TIMEOUT_IN_MILISECONDS = 5000;
