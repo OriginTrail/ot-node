@@ -239,3 +239,17 @@ exports.TRAIL_CACHE_DIRECTORY = 'trail_cache';
  * Number of datasets to be pruned in one batch
  */
 exports.LOW_ESTIMATED_VALUE_DATASETS_PRUNING_BATCH_NUMBER = 100;
+
+/**
+ *
+ * @constant {number} MAX_NUMBER_OF_RETRIES_FOR_PAYOUT -
+ * Maximum number of retries for payout command
+ */
+exports.MAX_NUMBER_OF_RETRIES_FOR_PAYOUT = 5;
+
+/**
+ *
+ * @constant {number} PAYOUT_COMMAND_RETRY_DELAY_IN_MILISECONDS -
+ * Retry delay for payout command in miliseconds
+ */
+exports.PAYOUT_COMMAND_RETRY_DELAY_IN_MILISECONDS = 30 * 60 * 1000;
