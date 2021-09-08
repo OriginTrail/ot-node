@@ -8,8 +8,6 @@ docker images
 cat $ARTIFACTS_DIR/truffle-migrate.log | grep "Hub contract address:"
 node test/docker/getHubAddress.js
 cp origintrail_noderc.image new_config_file
-ls -la
-cat ./new_config_file
 docker run -d --name=mynode -p 8900:8900 -p 5278:5278 -p 3000:3000 --network host -v "$(pwd)"/new_config_file:/ot-node/.origintrail_noderc myimage:latest
 # TODO make sure that one of acct-keys is in origintrail_noderc.image
 # cat $ARTIFACTS_DIR/acct-keys.log
