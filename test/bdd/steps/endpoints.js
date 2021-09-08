@@ -390,7 +390,7 @@ Given(/^([DC|DH]+) runs local query consisting of path: "(\S+)", value: "(\S+)" 
     const queryNetworkResponse =
         await httpApiHelper.apiQueryLocal(dv.state.node_rpc_url, jsonQuery);
     expect(queryNetworkResponse.length, 'Response should be an array').to.be.equal(1);
-    expect(Object.keys(queryNetworkResponse[0]), 'Array element should have datasets, offers, otObject').to.have.members(['dataset_id', 'offer_id', 'otObject']);
+    expect(Object.keys(queryNetworkResponse[0]), 'Array element should have datasets, offers, otObject').to.have.members(['dataset_id', 'replication_info', 'otObject']);
     // eslint-disable-next-line prefer-destructuring
     this.state.lastLocalQueryResponse = queryNetworkResponse[0];
 });
