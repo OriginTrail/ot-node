@@ -428,7 +428,7 @@ class Utilities {
             }
             try {
                 // eslint-disable-next-line no-await-in-loop
-                const response = await request.get(`http://${database.host}:${database.port}/_api/versionn`)
+                const response = await request.get(`http://${database.host}:${database.port}/_api/version`)
                     .auth(database.username, database.password);
                 if (response && response.status === 200) {
                     return response.body;
