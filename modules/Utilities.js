@@ -22,6 +22,9 @@ const DataIntegrityResolver = require('./service/data-integrity/data-integrity-r
 const logger = require('./logger');
 const { sha3_256 } = require('js-sha3');
 
+const get_arango_db_status_max_retry = 5;
+const arango_db_status_timeout_in_miliseconds = 5000;
+
 class Utilities {
     /**
      * Creates new hash import ID.
@@ -417,22 +420,25 @@ class Utilities {
         });
     }
 
-    static getArangoDbVersion({ database }) {
-        return new Promise((resolve, reject) => {
-            request
-                .get(`http://${database.host}:${database.port}/_api/version`)
-                .auth(database.username, database.password)
-                .then((res) => {
-                    if (res.status === 200) {
-                        resolve(res.body);
-                    } else {
-                        // eslint-disable-next-line prefer-promise-reject-errors
-                        reject('Failed to contact DB');
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-        });
+    static async getArangoDbVersion({ database }) {
+        let numberOfRetries = 0;
+        while (numberOfRetries < get_arango_db_status_max_retry) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                const response = await request.get(`http://${database.host}:${database.port}/_api/version`)
+                    .auth(database.username, database.password);
+                if (response && response.status === 200) {
+                    return response.body;
+                }
+                logger.debug(`Unable to fetch ArangoDB status, try number: ${numberOfRetries + 1}/${get_arango_db_status_max_retry}`);
+            } catch (error) {
+                logger.debug(`Error while trying to fetch ArangoDB status, try number: ${numberOfRetries + 1}/${get_arango_db_status_max_retry}. Error: ${error.message}`);
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await this.sleepForMilliseconds(arango_db_status_timeout_in_miliseconds);
+            numberOfRetries += 1;
+        }
+        throw Error('Unable to fetch ArangoDB status');
     }
 
     /**
