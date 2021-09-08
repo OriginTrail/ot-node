@@ -399,7 +399,7 @@ Then(/^The last local query should return otObject from the last imported datase
     expect(this.state.lastLocalQueryResponse, 'Last local query not defined').to.not.be.equal(null);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastImport.data.dataset_id, 'Last imports data set id seems not defined').to.be.equal(true);
-    expect(Object.keys(this.state.lastLocalQueryResponse), 'Array element should have datasets, otObject').to.have.members(['dataset_id', 'offer_id', 'otObject']);
+    expect(Object.keys(this.state.lastLocalQueryResponse), 'Array element should have datasets, otObject').to.have.members(['dataset_id', 'replication_info', 'otObject']);
     expect(this.state.lastImport.data.dataset_id, 'otObject should be from the latest imported dataset').to.be.equal(this.state.lastLocalQueryResponse.dataset_id);
 });
 
