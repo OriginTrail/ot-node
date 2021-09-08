@@ -162,6 +162,83 @@ module.exports = async (deployer, network, accounts) => {
             console.log('Updated contract in Hub contract map!');
         }
         break;
+        // eslint-disable-next-line no-case-declarations
+    case 'mainnet':
+        const tokenContractAddress = '0xa7b98d63a137bf402b4570799ac4cad0bb1c4b1c';
+        await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
+            .then((result) => {
+                hub = result;
+            });
+
+        await hub.setContractAddress('Owner', accounts[0]);
+
+        profileStorage = await deployer.deploy(
+            ProfileStorage,
+            hub.address, { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('ProfileStorage', profileStorage.address);
+
+        holdingStorage = await deployer.deploy(
+            HoldingStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('HoldingStorage', holdingStorage.address);
+
+        litigationStorage = await deployer.deploy(
+            LitigationStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('LitigationStorage', litigationStorage.address);
+
+        approval = await deployer.deploy(Approval);
+        await hub.setContractAddress('Approval', approval.address);
+
+        await hub.setContractAddress('Token', tokenContractAddress);
+
+        profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
+        await hub.setContractAddress('Profile', profile.address);
+
+        holding = await deployer.deploy(Holding, hub.address, { gas: 8000000, from: accounts[0] });
+        await hub.setContractAddress('Holding', holding.address);
+
+        creditorHandler = await deployer.deploy(
+            CreditorHandler,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('CreditorHandler', creditorHandler.address);
+
+        litigation = await deployer.deploy(
+            Litigation,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('Litigation', litigation.address);
+
+        replacement = await deployer.deploy(
+            Replacement,
+            hub.address,
+            { gas: 7000000, from: accounts[0] },
+        );
+        await hub.setContractAddress('Replacement', replacement.address);
+
+
+        console.log('\n\n \t Contract adressess on polygon mainnet:');
+        console.log(`\t Hub contract address: \t\t\t${hub.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
+        console.log(`\t Token contract address: \t\t${tokenContractAddress}`);
+        console.log(`\t Profile contract address: \t\t${profile.address}`);
+        console.log(`\t Holding contract address: \t\t${holding.address}`);
+        console.log(`\t Litigation contract address: \t\t${litigation.address}`);
+        console.log(`\t Replacement contract address: \t\t${replacement.address}`);
+
+        console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
+        console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
+        console.log(`\t LitigationStorage contract address: \t${litigationStorage.address}`);
+
+        break;
     default:
         console.warn('Please use one of the following network identifiers: ganache, mock, test, or rinkeby');
         break;
