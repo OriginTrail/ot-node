@@ -254,6 +254,8 @@ exports.MAX_NUMBER_OF_RETRIES_FOR_PAYOUT = 5;
  */
 exports.PAYOUT_COMMAND_RETRY_DELAY_IN_MILISECONDS = 30 * 60 * 1000;
 
+/**
+ *
  * @constant {number} GET_ARANGO_DB_STATUS_MAX_RETRY -
  * Maximum number of times that arango status call should be called
  */
