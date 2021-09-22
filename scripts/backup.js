@@ -12,6 +12,9 @@ const Utilities = require('../modules/Utilities');
 const pjson = require('../package.json');
 const defaultConfigFile = require('../config/config.json');
 
+const operationalDbFileName = 'system.db';
+const operationDbBackupMaxNumberOfRetries = 10;
+const operationDbTimeoutInMilliseconds = 2000;
 // Get the environment name
 let environment;
 if (!process.env.NODE_ENV) {
@@ -92,7 +95,7 @@ function getCertificateFileNames() {
 }
 
 function getDataFileNames() {
-    return ['kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db'];
+    return ['kademlia.crt', 'kademlia.key', 'houston.txt'];
 }
 
 function getMigrationFileNames() {
@@ -142,6 +145,32 @@ function createBackupFolder() {
     return path.join(argv.backup_directory, timestamp);
 }
 
+function backupOperationalDb(backupDir) {
+    let runInLoop = true;
+    let numberOfRetries = 0;
+    while (runInLoop) {
+        if (numberOfRetries !== 0) {
+            Utilities.sleepForMilliseconds(operationDbTimeoutInMilliseconds);
+        }
+        const result = moveFileFromNodeToBackup(
+            operationalDbFileName,
+            config.appDataPath,
+            backupDir,
+        );
+        numberOfRetries += 1;
+        if (result) {
+            try {
+                execSync('sqlite3 ../data/system.db');
+                runInLoop = false;
+            } catch (error) {
+                if (numberOfRetries === operationDbBackupMaxNumberOfRetries) {
+                    throw error;
+                }
+            }
+        }
+    }
+}
+
 function main() {
     let backupDir;
     try {
@@ -171,6 +200,8 @@ function main() {
                 throw Error(`Cannot backup file ${file}`);
             }
         }
+
+        backupOperationalDb(backupDir);
 
         for (const file of certs) {
             moveFileFromNodeToBackup(file, argv.certs, backupDir, false);
