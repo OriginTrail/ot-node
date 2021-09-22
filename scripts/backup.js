@@ -160,7 +160,8 @@ function backupOperationalDb(backupDir) {
         numberOfRetries += 1;
         if (result) {
             try {
-                execSync('sqlite3 ../data/system.db');
+                const destination = path.join(backupDir, operationalDbFileName);
+                execSync(`sqlite3 ${destination}`);
                 runInLoop = false;
             } catch (error) {
                 if (numberOfRetries === operationDbBackupMaxNumberOfRetries) {
