@@ -145,12 +145,13 @@ function createBackupFolder() {
     return path.join(argv.backup_directory, timestamp);
 }
 
-function backupOperationalDb(backupDir) {
+async function backupOperationalDb(backupDir) {
     let runInLoop = true;
     let numberOfRetries = 0;
     while (runInLoop) {
         if (numberOfRetries !== 0) {
-            Utilities.sleepForMilliseconds(operationDbTimeoutInMilliseconds);
+            // eslint-disable-next-line no-await-in-loop
+            await Utilities.sleepForMilliseconds(operationDbTimeoutInMilliseconds);
         }
         const result = moveFileFromNodeToBackup(
             operationalDbFileName,
@@ -161,9 +162,12 @@ function backupOperationalDb(backupDir) {
         if (result) {
             try {
                 const destination = path.join(backupDir, operationalDbFileName);
-                execSync(`sqlite3 ${destination}`);
+                console.log('Performing integrity check for operational db copy, this check might take a while.');
+                execSync(`sqlite3 ${destination} "pragma integrity_check;" ".exit"`);
+                console.log('Integrity check for operational db copy passed.');
                 runInLoop = false;
             } catch (error) {
+                console.log(`Integrity check for backed up operational db copy failed. Retry number ${numberOfRetries}/${operationDbBackupMaxNumberOfRetries}`);
                 if (numberOfRetries === operationDbBackupMaxNumberOfRetries) {
                     throw error;
                 }
@@ -172,7 +176,7 @@ function backupOperationalDb(backupDir) {
     }
 }
 
-function main() {
+async function main() {
     let backupDir;
     try {
         loadConfiguration();
@@ -202,7 +206,7 @@ function main() {
             }
         }
 
-        backupOperationalDb(backupDir);
+        await backupOperationalDb(backupDir);
 
         for (const file of certs) {
             moveFileFromNodeToBackup(file, argv.certs, backupDir, false);
