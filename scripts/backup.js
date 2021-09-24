@@ -12,6 +12,9 @@ const Utilities = require('../modules/Utilities');
 const pjson = require('../package.json');
 const defaultConfigFile = require('../config/config.json');
 
+const operationalDbFileName = 'system.db';
+const operationDbBackupMaxNumberOfRetries = 10;
+const operationDbTimeoutInMilliseconds = 2000;
 // Get the environment name
 let environment;
 if (!process.env.NODE_ENV) {
@@ -92,7 +95,7 @@ function getCertificateFileNames() {
 }
 
 function getDataFileNames() {
-    return ['kademlia.crt', 'kademlia.key', 'houston.txt', 'system.db'];
+    return ['kademlia.crt', 'kademlia.key', 'houston.txt'];
 }
 
 function getMigrationFileNames() {
@@ -142,7 +145,38 @@ function createBackupFolder() {
     return path.join(argv.backup_directory, timestamp);
 }
 
-function main() {
+async function backupOperationalDb(backupDir) {
+    let runInLoop = true;
+    let numberOfRetries = 0;
+    while (runInLoop) {
+        if (numberOfRetries !== 0) {
+            // eslint-disable-next-line no-await-in-loop
+            await Utilities.sleepForMilliseconds(operationDbTimeoutInMilliseconds);
+        }
+        const result = moveFileFromNodeToBackup(
+            operationalDbFileName,
+            config.appDataPath,
+            backupDir,
+        );
+        numberOfRetries += 1;
+        if (result) {
+            try {
+                const destination = path.join(backupDir, operationalDbFileName);
+                console.log('Performing integrity check for operational db copy, this check might take a while.');
+                execSync(`sqlite3 ${destination} "pragma integrity_check;" ".exit"`);
+                console.log('Integrity check for operational db copy passed.');
+                runInLoop = false;
+            } catch (error) {
+                console.log(`Integrity check for backed up operational db copy failed. Retry number ${numberOfRetries}/${operationDbBackupMaxNumberOfRetries}`);
+                if (numberOfRetries === operationDbBackupMaxNumberOfRetries) {
+                    throw error;
+                }
+            }
+        }
+    }
+}
+
+async function main() {
     let backupDir;
     try {
         loadConfiguration();
@@ -171,6 +205,8 @@ function main() {
                 throw Error(`Cannot backup file ${file}`);
             }
         }
+
+        await backupOperationalDb(backupDir);
 
         for (const file of certs) {
             moveFileFromNodeToBackup(file, argv.certs, backupDir, false);
