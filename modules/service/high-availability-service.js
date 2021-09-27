@@ -297,11 +297,23 @@ class HighAvailabilityService {
         this.logger.trace('Starting postgres replication');
         execSync('/etc/init.d/postgresql stop');
         if (fs.existsSync('/var/lib/postgresql/12/main')) {
+            if (fs.existsSync('/ot-node/data/tmp-postgres-backup')) {
+                execSync('rm -r /ot-node/data/tmp-postgres-backup');
+            }
+            execSync('mkdir /ot-node/data/tmp-postgres-backup');
+            execSync('cp -r /var/lib/postgresql/12/main/* /ot-node/data/tmp-postgres-backup');
             execSync('rm -rfv /var/lib/postgresql/12/main/*');
         }
-        execSync(`su -c "pg_basebackup -h ${remoteHostname} -U ${remoteOpDbUsername} -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres`);
-        execSync('/etc/init.d/postgresql start');
+        try {
+            execSync(`su -c "pg_basebackup -h ${remoteHostname} -U ${remoteOpDbUsername} -p 5432 -D /var/lib/postgresql/12/main/  -Fp -Xs -P -R" - postgres`);
+            execSync('/etc/init.d/postgresql start');
+        } catch (error) {
+            execSync('rm -rfv /var/lib/postgresql/12/main/*');
+            execSync('cp -r /ot-node/data/tmp-postgres-backup/* /var/lib/postgresql/12/main/');
+            throw error;
+        }
         this.logger.trace('Postgres replication started successfully');
+        execSync('rm -r /ot-node/data/tmp-postgres-backup');
     }
 
     stopPostgresReplication() {

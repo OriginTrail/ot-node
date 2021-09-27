@@ -89,6 +89,22 @@ class Polygon extends Web3Implementation {
         this.config.gas_price = gasPrice;
         this.config.gas_price_last_update_timestamp = new Date().getTime();
     }
+
+    /**
+     * Increase token approval for profile
+     * @param {number} tokenAmountIncrease
+     * @returns {Promise}
+     */
+    async increaseProfileApproval(tokenAmountIncrease) {
+        const gasPrice = await this.getGasPrice();
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(gasPrice),
+            to: this.tokenContractAddress,
+        };
+        this.logger.trace(`[${this.getBlockchainId()}] increaseProfileApproval(amount=${tokenAmountIncrease})`);
+        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseAllowance', [this.profileContractAddress, tokenAmountIncrease], options);
+    }
 }
 
 module.exports = Polygon;

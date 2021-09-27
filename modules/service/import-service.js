@@ -637,19 +637,33 @@ class ImportService {
 
     packTrailData(data) {
         const reconstructedObjects = [];
+        const datasets = [];
         for (const object of data) {
             const { rootObject, relatedObjects } = object;
+            const dataVertices = relatedObjects.filter(x => x.vertex.vertexType === 'Data');
+            let numberOfCopies = dataVertices.length;
+            if (!numberOfCopies) numberOfCopies = 1;
+            for (let i = 0; i < numberOfCopies; i += 1) {
+                if (dataVertices.length > 0) {
+                    datasets.push(dataVertices[i].vertex.datasets);
+                } else {
+                    datasets.push(rootObject.datasets);
+                }
 
-            reconstructedObjects.push(this._createObjectGraph(rootObject, relatedObjects));
+                reconstructedObjects.push(this._createObjectGraph(
+                    rootObject,
+                    relatedObjects,
+                    i,
+                ));
+            }
         }
 
         const otObjects = [];
-
         for (let i = 0; i < reconstructedObjects.length; i += 1) {
             if (reconstructedObjects[i] && reconstructedObjects[i]['@id']) {
                 otObjects.push({
                     otObject: reconstructedObjects[i],
-                    datasets: data[i].rootObject.datasets,
+                    datasets: datasets[i],
                 });
             }
         }
@@ -681,8 +695,8 @@ class ImportService {
         return otObjects;
     }
 
-    _createObjectGraph(graphObject, relatedObjects) {
-        const otObject = this._constructOtObject(relatedObjects);
+    _createObjectGraph(graphObject, relatedObjects, copyNumber = 0) {
+        const otObject = this._constructOtObject(relatedObjects, copyNumber);
         otObject['@id'] = graphObject.uid;
         if (graphObject.vertexType === constants.vertexType.entityObject) {
             otObject['@type'] = constants.objectType.otObject;
@@ -692,7 +706,8 @@ class ImportService {
         return otObject;
     }
 
-    _constructOtObject(relatedObjects) {
+    _constructOtObject(relatedObjects, copyNumber) {
+        let dataCounter = 0;
         const otObject = {};
         otObject.identifiers = [];
         otObject.relations = [];
@@ -717,7 +732,10 @@ class ImportService {
             // Check for properties.
             // Relation 'HAS_DATA' goes from entityVertex to dataVertex.
             if (relatedObject.edge.edgeType === constants.edgeType.dataRelation) {
-                otObject.properties = Utilities.copyObject(relatedObject.vertex.data);
+                if (dataCounter === copyNumber) {
+                    otObject.properties = Utilities.copyObject(relatedObject.vertex.data);
+                }
+                dataCounter += 1;
             }
 
 
