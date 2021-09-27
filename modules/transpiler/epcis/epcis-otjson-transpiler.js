@@ -1071,6 +1071,23 @@ class EpcisOtJsonTranspiler {
             }
             break;
             // eslint-disable-next-line
+            case 'giai':
+            // eslint-disable-next-line
+                itemReference = splitted[3];
+            const serialGiai = splitted[4];
+            checkDigit = this._checkDigitGS1(`${companyPrefix.substr(1)}${itemReference}`);
+
+            identifiers = {
+                giai: identifier,
+                companyPrefix: companyPrefix.substr(1),
+                itemReference,
+            };
+
+            if (serialGiai) {
+                identifiers.serial = serialGiai;
+            }
+            break;
+            // eslint-disable-next-line
             case 'sscc':
             // eslint-disable-next-line
                 const serialReference = splitted[3];

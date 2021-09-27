@@ -30,7 +30,16 @@ class DHOfferHandleCommand extends Command {
         } = command.data;
 
         const { node_wallet } = this.blockchain.getWallet(blockchain_id).response;
-
+        const bid = await Models.bids.findOne({
+            where: {
+                offer_id: offerId,
+                blockchain_id,
+            },
+        });
+        if (bid && (bid.status === 'FAILED' || bid.status === 'SENT')) {
+            this.logger.trace(`Replication request for offer ${offerId} already sent to node ${dcNodeId}.`);
+            return Command.empty();
+        }
         this.logger.trace(`Sending replication request for offer ${offerId} to node ${dcNodeId}.`);
         const response = await this.transport.replicationRequest({
             offerId,
@@ -39,13 +48,6 @@ class DHOfferHandleCommand extends Command {
             dhIdentity: this.profileService.getIdentity(blockchain_id),
             async_enabled: true,
         }, dcNodeId);
-
-        const bid = await Models.bids.findOne({
-            where: {
-                offer_id: offerId,
-                blockchain_id,
-            },
-        });
 
         if (response.status === 'fail') {
             bid.status = 'FAILED';

@@ -234,12 +234,12 @@ class DatasetPruningService {
             }
 
             if (this.diskService.folderExists(defaultBackupFolderPath)
-                && this.diskService.getFolderSize(defaultBackupFolderPath) > 0) {
+                && this.diskService.getFolderSize(defaultBackupFolderPath) > 10) {
                 this.logger.warn('Detected ot-node backup on machine. please remove backup data in order to enable low estimated value datasets pruning!');
                 return false;
             }
 
-            if (arangoDbEngineFolderSize > minimumArangoDbFolderSizeForPruning) {
+            if (arangoDbEngineFolderSize < minimumArangoDbFolderSizeForPruning) {
                 this.logger.warn('Reached minimum Graph DB folder size, low estimated value datasets wont be pruned. ' +
                     `Minimum size of Graph DB is 20% of total disk size. Current Graph DB folder size is: ${arangoDbEngineFolderSize}kb`);
                 return false;

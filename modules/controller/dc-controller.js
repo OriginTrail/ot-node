@@ -591,36 +591,35 @@ class DCController {
         const result = await this.graphStorage.findLocalQuery({
             identifierKeys: keys,
         });
-        const response = this.importService.packLocalQueryData(result);
-        for (let i = 0; i < response.length; i += 1) {
-            let offer_id = null;
+        const responses = this.importService.packLocalQueryData(result);
+        const datasetInfos = {};
+        const replicationInfos = {};
+        for (let i = 0; i < responses.length; i += 1) {
+            const response = responses[i];
+            const datasetId = response.datasets[0];
 
-            // eslint-disable-next-line no-await-in-loop
-            const offer = await Models.offers.findOne({
-                where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
-            });
-
-            if (offer) {
-                // eslint-disable-next-line prefer-destructuring
-                offer_id = offer.offer_id;
-            } else {
+            if (!datasetInfos[datasetId]) {
                 // eslint-disable-next-line no-await-in-loop
-                const bid = await Models.bids.findOne({
-                    where: { data_set_id: response[i].datasets[0], status: { [Models.Sequelize.Op.not]: 'FAILED' } },
+                datasetInfos[datasetId] = await Models.data_info.findOne({
+                    where: { data_set_id: datasetId },
                 });
-
-                    // eslint-disable-next-line prefer-destructuring
-                if (bid) { offer_id = bid.offer_id; }
             }
+            const datasetInfo = datasetInfos[datasetId];
 
-            // eslint-disable-next-line prefer-destructuring
-            response[i].dataset_id = response[i].datasets[0];
-            response[i].offer_id = offer_id;
-            delete response[i].datasets;
+            if (!replicationInfos[datasetId]) {
+                // eslint-disable-next-line no-await-in-loop
+                replicationInfos[datasetId] = await ImportUtilities
+                    .getReplicationInfo(datasetId, datasetInfo.origin);
+            }
+            const replicationInfo = replicationInfos[datasetId];
+
+            response.dataset_id = datasetId;
+            response.replication_info = replicationInfo;
+            delete response.datasets;
         }
 
         res.status(200);
-        res.send(response);
+        res.send(responses);
     }
 
     async getMerkleProofs(req, res) {
