@@ -1,11 +1,8 @@
 const Command = require('../command');
-const Utilities = require('../../Utilities');
 const constants = require('../../constants');
 const Blockchain = require('../../Blockchain');
 
 const Models = require('../../../models/index');
-
-const DELAY_ON_FAIL_IN_MILLS = 5 * 60 * 1000;
 
 /**
  * Starts token withdrawal operation
@@ -33,6 +30,10 @@ class DhPayOutCommand extends Command {
         let {
             blockchain_id,
         } = command.data;
+
+        if (!command.data.retryNumber) {
+            command.data.retryNumber = 1;
+        }
 
         const bid = await Models.bids.findOne({
             where: {
@@ -67,6 +68,7 @@ class DhPayOutCommand extends Command {
 
         const { status, timestamp } = await this.blockchain
             .getLitigation(offerId, blockchainIdentity, blockchain_id).response;
+
         const { litigation_interval_in_minutes } = await Models.bids.findOne({
             where: {
                 offer_id: offerId,
@@ -90,24 +92,12 @@ class DhPayOutCommand extends Command {
                 await this._clearReplicationDatabaseData(offerId);
                 await this._printBalances(blockchainIdentity, blockchain_id);
             } catch (error) {
+                let delay = constants.PAYOUT_COMMAND_RETRY_DELAY_IN_MILISECONDS;
                 if (error.message.includes('Gas price higher than maximum allowed price')) {
-                    this.logger.info('Gas price too high, delaying call for 30 minutes');
-                    return {
-                        commands: [
-                            {
-                                name: 'dhPayOutCommand',
-                                delay: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
-                                retries: 3,
-                                transactional: false,
-                                data: {
-                                    offerId,
-                                    viaAPI: false,
-                                },
-                            },
-                        ],
-                    };
+                    this.logger.info(`Gas price too high, delaying call for ${constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS / 60000} minutes`);
+                    delay = constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS;
                 }
-                throw error;
+                return this.rescheduleFailedPayout(command, delay);
             }
         }
 
@@ -120,19 +110,26 @@ class DhPayOutCommand extends Command {
      * @param err
      */
     async recover(command, err) {
+        return this
+            .rescheduleFailedPayout(command, constants.PAYOUT_COMMAND_RETRY_DELAY_IN_MILISECONDS);
+    }
+
+    rescheduleFailedPayout(command, delay) {
         const {
             offerId,
             viaAPI,
+            retryNumber,
         } = command.data;
 
-        if (!viaAPI) {
-            this.logger.warn(`Rescheduling failed payout for offer ${offerId}. Schedule delay ${DELAY_ON_FAIL_IN_MILLS} milliseconds`);
+        if (!viaAPI && retryNumber < constants.MAX_NUMBER_OF_RETRIES_FOR_PAYOUT) {
+            this.logger.warn(`Rescheduling failed payout for offer ${offerId}. Attempt ${retryNumber}/${constants.MAX_NUMBER_OF_RETRIES_FOR_PAYOUT}. Schedule delay ${delay / 60000} minutes`);
+            command.data.retryNumber += 1;
             return {
                 commands: [
                     {
                         name: 'dhPayOutCommand',
                         data: command.data,
-                        delay: DELAY_ON_FAIL_IN_MILLS,
+                        delay,
                     },
                 ],
             };
@@ -193,7 +190,7 @@ class DhPayOutCommand extends Command {
         const command = {
             name: 'dhPayOutCommand',
             delay: 0,
-            period: constants.GAS_PRICE_VALIDITY_TIME_IN_MILLS,
+            period: constants.PAYOUT_COMMAND_RETRY_DELAY_IN_MILISECONDS,
             transactional: false,
         };
         Object.assign(command, map);

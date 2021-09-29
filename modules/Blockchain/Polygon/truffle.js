@@ -38,5 +38,12 @@ module.exports = {
             websockets: true,
             skipDryRun: true,
         },
+        mainnet: {
+            provider: () => new HDWalletProvider(private_key, rpc_endpoint),
+            network_id: 137,
+            gas: 6500000, // Gas limit used for deploys
+            gasPrice: 40000000000,
+            skipDryRun: true,
+        },
     },
 };
