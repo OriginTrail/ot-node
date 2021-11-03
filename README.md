@@ -16,7 +16,7 @@ Please see our main documentation page for more information.
 
 Detailed instructions for installation and configuration of OriginTrail Node:
 * [API and technical documentation](https://docs.origintrail.io/)
-* [Node setup](https://tech.origintrail.io/node-setup)
+* [Node setup](https://docs.origintrail.io/running-nodes/node-setup)
 
 
 
