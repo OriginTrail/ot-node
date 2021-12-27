@@ -1,0 +1,477 @@
+{
+	"info": {
+		"_postman_id": "d88a8124-f950-4bb2-a9cf-f07512d63555",
+		"name": "DKGv6",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Info",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/info",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Publish",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "assets",
+							"value": "[\"ExampleAsset\"]",
+							"type": "text"
+						},
+						{
+							"key": "keywords",
+							"value": "[\"ExampleAsset\",\"NFT\"]",
+							"type": "text"
+						},
+						{
+							"key": "visibility",
+							"value": "true",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/publish",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"publish"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Publish result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/publish/result/7478256a-36da-4450-adc3-db79cb2d95cc",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"publish",
+						"result",
+						"7478256a-36da-4450-adc3-db79cb2d95cc"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/resolve?ids=da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"resolve"
+					],
+					"query": [
+						{
+							"key": "ids",
+							"value": "da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/resolve/result/bed771ec-e8a7-4ec3-9aa8-4df321062895",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"resolve",
+						"result",
+						"bed771ec-e8a7-4ec3-9aa8-4df321062895"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search Entities",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "topic",
+							"value": "blazard1",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/entities:search?prefix=true&limit=20&query=exampleAsset",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"entities:search"
+					],
+					"query": [
+						{
+							"key": "ids",
+							"value": "axie",
+							"disabled": true
+						},
+						{
+							"key": "types",
+							"value": "gs1-epcis",
+							"disabled": true
+						},
+						{
+							"key": "prefix",
+							"value": "true"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						},
+						{
+							"key": "query",
+							"value": "exampleAsset"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search Entities Result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/entities:search/result/116cd013-62f9-4925-b6cc-e8dacea1e06c",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"entities:search",
+						"result",
+						"116cd013-62f9-4925-b6cc-e8dacea1e06c"
+					],
+					"query": [
+						{
+							"key": "ids",
+							"value": "axie",
+							"disabled": true
+						},
+						{
+							"key": "types",
+							"value": "gs1-epcis",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search Assertions",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "topic",
+							"value": "blazard1",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/assertions:search?query=exampleAsset",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"assertions:search"
+					],
+					"query": [
+						{
+							"key": "query",
+							"value": "exampleAsset"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search Assertions Result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/assertions:search/result/39f8b937-5aba-42ad-929b-1fd39ca32122",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"assertions:search",
+						"result",
+						"39f8b937-5aba-42ad-929b-1fd39ca32122"
+					],
+					"query": [
+						{
+							"key": "ids",
+							"value": "axie",
+							"disabled": true
+						},
+						{
+							"key": "types",
+							"value": "gs1-epcis",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "query",
+							"value": "PREFIX schema: <http://schema.org/>\n\nCONSTRUCT { ?s schema:hasRootHash ?o }\n\nWHERE {\n\nGRAPH ?g {\n\n?s schema:hasRootHash ?o .\n\n}\n\n}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/query?type=construct",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"query"
+					],
+					"query": [
+						{
+							"key": "type",
+							"value": "construct"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/query/result/e14d68ee-be14-4c8d-9e38-5b0479dde03c",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"query",
+						"result",
+						"e14d68ee-be14-4c8d-9e38-5b0479dde03c"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proofs",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "nquads",
+							"value": "[\"<did:dkg:bb4c2e7dc6519df692cfd88f714f67fe82ba41286058d4d197e55160a1c3092d> <http://schema.org/hasRootHash> \\\"4bf4a3428ef89d7ed3d35037a47c84c70f7b72281767a33f64263fb37e2cb624\\\" .\",\n            \"<did:dkg:2c680c9c36b8ce0c53d8c159bf02d9a5d4083b6acb2445144b72e93260add68a> <http://schema.org/hasRootHash> \\\"94a87ed335c491a1332d58b69974ea94d0e28b3baa14a4f9d1505b8f36afa8ab\\\" .\",\n            \"<did:dkg:e46798b087e2534cccc388b401b0e39e39ac81cbc67784640bdf7d79d77209cb> <http://schema.org/hasRootHash> \\\"462cd1651821ac1786a5af58383e2b1ac91184f7cda46a083d3746d542f8bf67\\\" .\",\n            \"<did:dkg:881de7b1be2b76bdf6133978b47924529d6ba517f60f5fb01161f1d1e3344485> <http://schema.org/hasRootHash> \\\"7c167a73001faedb139103731e521b6cf76941221a0a1e1ffac9d2cb2c641902\\\" .\",\n            \"<did:dkg:54603acdced105f9ed27a8cc56b952ef363ec31df1db7736cb907786fda078ef> <http://schema.org/hasRootHash> \\\"270d0eac754ac95052c7f0d36476d4052acea0428617ea0f4f26f01dc659ba41\\\" .\"\n            ]",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/proofs:get?assertions=da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"proofs:get"
+					],
+					"query": [
+						{
+							"key": "assertions",
+							"value": "da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proofs result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/proofs:get/result/e145a028-5dea-4287-a65f-e1c2dda8c3f6",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"proofs:get",
+						"result",
+						"e145a028-5dea-4287-a65f-e1c2dda8c3f6"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
