@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "6.1.4-beta",
+  "version": "6.1.5-beta.1",
   "description": "ot-node v6 poc",
   "main": "ot-node.js",
   "scripts": {
