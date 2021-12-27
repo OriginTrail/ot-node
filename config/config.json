@@ -12,9 +12,7 @@
         "hubContractAddress": "0xFA421f2b10FBebaAeC281eb6734b0fA9Cc8dbbD7",
         "rpcEndpoints": [
           "https://rpc-mumbai.maticvigil.com/"
-        ],
-        "publicKey": "0xBD084aB97C704FE4a6D620CB7c30C0BE0366646f",
-        "privateKey": "0x61b1b921f6d57d7f60c4ac17d5bd51f8394c5d72b8d4db177b5d419fbc5c7a41"
+        ]
       }
     ],
     "graphDatabase": {
@@ -24,15 +22,14 @@
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
-      "bootstrap": [],
-      "privateKey": "CAAS4QQwggJdAgEAAoGBAL63AXUGa/fdROIpP8k5XqkBoS9JAxVkv6+MiZYz6AGbMlZ1ZksJ5iYKh7A0TLbVWs2wTdyoKuuK3ZJNrkRJp7E/VNUprsC2MR8lEOMJWzjxaAmfL8AZxRsB9BTlvL69zAc6trG9VPKm47NLDhTZ/aRCA2rstAqzoMeQfH77MdTBAgMBAAECgYArsPVOgAggIrrzLQwF53S+NzdcA9gHAKvBZernVEDkjU986yxiKIRnVqY7QeAJStugn7FWydf7Wjbkm5M+5bjaxsER2PDmDXvyUCyTWcu8nHKkVSDWUn6bZMjpFt8XN9V1SPR6RgzTnrx2hZFtEIN06WvchbRmyEsCiNQj2QWigQJBAPJWakzqENv5UXniL/Dnt4rlQ9j7Qf92c/psNFO2oG004idBSZqWeUjgSxkbp3NY9qDhD5SOMTdeThVX32kbT9kCQQDJd4kk8s8vZ09sP/9Fnf0vjUvu+HL/P7fIm7n4odvEWn5HTAVM8WSs0gpqWg0QstcU9r3wbe6MW+8rBvGH5oMpAkEAxV6cNQhtsrrcIOiXIx2V3wnauF3q4qUW0F5QP939yvPHPTFvQPhMz43dnBVpzAgo1d53UgZ9Dxs/fSKUUoZsAQJASRiHt9Io/cf79wiZM8cIr5ISdNfL0XRq1+w4Y09Gj01N98xLOAl1P4bNpJyblO1uP/ruGyenn2FTu0a/p1EpUQJBANuoJLuKArJbHCQ62GICkgC8z1fKUr58C2Es1uAkQ6ENAMmjHbmL0ANAeA5F/vwX0kgA5ErWJRG0MUAg+66v+mU="
+      "bootstrap": []
     },
     "ipWhitelist": [
       "127.0.0.1"
     ],
     "telemetryHub": {
-      "enabled": true,
-      "url": "https://webhook.site/46e67f38-89ce-46c7-a9f7-e1fef30105d2"
+      "enabled": false,
+      "url": ""
     }
   },
   "testnet": {
@@ -58,7 +55,11 @@
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
-      "bootstrap": ["/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A"]
+      "bootstrap": [
+        "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
+        "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
+        "/ip4/46.101.153.21/tcp/9000/p2p/QmXzmTqVT3TPUtTz4dBDN5NWSABqnX9rKXCG9WCLXMfEaM"
+      ]
     },
     "ipWhitelist": [
       "127.0.0.1"
