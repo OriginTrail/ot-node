@@ -65,8 +65,8 @@
       "127.0.0.1"
     ],
     "telemetryHub": {
-      "enabled": false,
-      "url": ""
+      "enabled": true,
+      "url": "https://polaris.delta.origin-trail.network/metrics/"
     }
   },
   "mainnet": {
