@@ -156,17 +156,17 @@ class Libp2pService {
                     for await (const msg of source) {
                         result = result.concat(msg);
                     }
-                    console.log(`Receiving data using stream: ${result.toString()}`);
+                    // console.log(`Receiving data using stream: ${result.toString()}`);
                     return result;
                 }
             )
 
             try {
                 data = JSON.parse(data);
-                this.logger.info(`Receiving message from ${handlerProps.connection.remotePeer._idB58String} to ${this.config.id}: event=${eventName}; data=${JSON.stringify(data)}`);
+                this.logger.info(`Receiving message from ${handlerProps.connection.remotePeer._idB58String} to ${this.config.id}: event=${eventName};`);
                 if (!async) {
                     const result = await handler(data);
-                    this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName}; data=${JSON.stringify(result)}`);
+                    this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
 
                     await pipe(
                         [JSON.stringify(result)],
@@ -178,12 +178,12 @@ class Libp2pService {
                         stream
                     )
 
-                    this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName}; data=${JSON.stringify(true)}`);
+                    this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
                     const result = await handler(data);
                     if (Date.now() <= timestamp + timeout) {
                         await this.sendMessage(`${eventName}/result`, result, handlerProps.connection.remotePeer);
                     } else {
-                        this.logger.warn(`Too late to send response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName}; data=${JSON.stringify(true)}`);
+                        this.logger.warn(`Too late to send response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
                     }
                 }
             } catch (e) {
@@ -199,7 +199,7 @@ class Libp2pService {
     }
 
     async sendMessage(eventName, data, peerId) {
-        this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName}; data=${JSON.stringify(data)}`);
+        this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName};`);
         const {stream} = await this.node.dialProtocol(peerId, eventName);
         const response = await pipe(
             [JSON.stringify(data)],
