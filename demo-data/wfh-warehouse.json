@@ -1,0 +1,68 @@
+{
+  "@context": [
+    "https://gs1.github.io/EPCIS/epcis-context.jsonld",
+    {
+      "example": "http://ns.example.com/epcis/"
+    }
+  ],
+  "id": "_:document1",
+  "isA": "EPCISDocument",
+  "@type": "gs1-epcis",
+  "schemaVersion": "2.0",
+  "creationDate": "2005-07-11T11:30:47.0Z",
+  "epcisBody": {
+    "eventList": [
+      {
+        "eventID": "ni:///sha-256;df7bb3c352fef055578554f09f5e2aa41782150ced7bd0b8af24dd3ccb30ba69?ver=CBV2.0",
+        "isA": "ObjectEvent",
+        "action": "OBSERVE",
+        "bizStep": "shipping",
+        "disposition": "in_transit",
+        "epcList": [
+          "urn:epc:id:sgtin:0614141.107346.2017",
+          "urn:epc:id:sgtin:0614141.107346.2018"
+        ],
+        "eventTime": "2005-04-03T20:33:31.116000-06:00",
+        "eventTimeZoneOffset": "-06:00",
+        "readPoint": {
+          "id": "urn:epc:id:sgln:0614141.07346.1234"
+        },
+        "bizTransactionList": [
+          {
+            "type": "po",
+            "bizTransaction": "http://transaction.acme.com/po/12345678"
+          }
+        ]
+      },
+      {
+        "eventID": "ni:///sha-256;00e1e6eba3a7cc6125be4793a631f0af50f8322e0ab5f2c0bab994a11cec1d79?ver=CBV2.0",
+        "isA": "ObjectEvent",
+        "action": "OBSERVE",
+        "bizStep": "receiving",
+        "disposition": "in_progress",
+        "epcList": [
+          "urn:epc:id:sgtin:0614141.107346.2018"
+        ],
+        "eventTime": "2005-04-04T20:33:31.116-06:00",
+        "eventTimeZoneOffset": "-06:00",
+        "readPoint": {
+          "id": "urn:epc:id:sgln:0012345.11111.400"
+        },
+        "bizLocation": {
+          "id": "urn:epc:id:sgln:0012345.11111.0"
+        },
+        "bizTransactionList": [
+          {
+            "type": "po",
+            "bizTransaction": "http://transaction.acme.com/po/12345678"
+          },
+          {
+            "type": "desadv",
+            "bizTransaction": "urn:epcglobal:cbv:bt:0614141073467:1152"
+          }
+        ],
+        "example:myField": "Example of a vendor/user extension"
+      }
+    ]
+  }
+}

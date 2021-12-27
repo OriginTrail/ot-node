@@ -1,0 +1,185 @@
+const {v1: uuidv1} = require('uuid');
+const Models = require("../../models/index");
+
+class QueryService {
+    constructor(ctx) {
+        this.networkService = ctx.networkService;
+        this.validationService = ctx.validationService;
+        this.dataService = ctx.dataService;
+        this.logger = ctx.logger;
+    }
+
+    async resolve(data, node) {
+        let rawRdf = await this.networkService.sendMessage('/resolve', data, node);
+
+        if (!rawRdf) {
+            return {assertion: null, rdf: null};
+        }
+
+        const assertionId = data;
+        const {assertion, rdf} = await this.dataService.createAssertion(assertionId, rawRdf);
+        const status = await this.dataService.verifyAssertion(assertion, rdf);
+        return status ? {assertion, rdf} : {assertion: null, rdf: null};
+    }
+
+    async handleResolve(data) {
+        const rdf = await this.dataService.resolve(data);
+        this.logger.info(`Retrieved data from the database: ${JSON.stringify(rdf)}`);
+
+        if (!rdf)
+            return null;
+        return rdf;
+    }
+
+    async search(data, node) {
+        const result = await this.networkService.sendMessage('/search', data, node);
+        return result;
+    }
+
+    async handleSearch(request) {
+        const {query, ids, issuers, types, prefix, limit, handlerId} = request;
+        let response;
+        if (query) {
+            response = await this.dataService.searchByQuery(query, {issuers, types, prefix, limit});
+        } else {
+            response = await this.dataService.searchByIds(ids, {issuers, types, limit});
+        }
+        return { response, handlerId };
+    }
+
+    async handleSearchResult(request) {
+        // TODO: add mutex
+        const { handlerId, response } = request;
+        const handler = await Models.handler_ids.findOne({
+            where: {
+                handler_id: handlerId,
+            },
+        });
+
+        let handlerData = JSON.parse(handler.data);
+
+        for (const asset of response) {
+            for (const rawAssertion of asset.assertions) {
+
+                if (!rawAssertion || !rawAssertion.rdf)
+                    continue
+
+                const {assertion, rdf} = await this.dataService.createAssertion(rawAssertion.id, rawAssertion.rdf);
+                const status = await this.dataService.verifyAssertion(assertion, rdf);
+                //todo check root hash on the blockchain
+                if (status) {
+                    let object = handlerData.find(x => x.type === assertion.metadata.type && x.id === asset.assetId)
+                    if (!object) {
+                        object = {
+                            type: assertion.metadata.type,
+                            id: asset.assetId,
+                            timestamp: assertion.metadata.timestamp,
+                            data: [],
+                            issuers: [],
+                            assertions: [],
+                            nodes: [rawAssertion.node]
+                        }
+                        handlerData.push(object)
+                    }
+
+
+                    if (object.nodes.indexOf(rawAssertion.node) === -1) {
+                        object.nodes.push(rawAssertion.node);
+                    }
+
+                    if (object.issuers.indexOf(assertion.metadata.issuer) === -1) {
+                        object.issuers.push(assertion.metadata.issuer);
+                    }
+
+                    if (object.assertions.indexOf(assertion.id) === -1) {
+                        object.assertions.push(assertion.id);
+                        object.data.push({
+                            id: assertion.id,
+                            timestamp: assertion.metadata.timestamp,
+                            data: assertion.data
+                        });
+                    }
+                    if (new Date(object.timestamp) < new Date(assertion.metadata.timestamp)) {
+                        object.timestamp = assertion.metadata.timestamp;
+                    }
+                }
+            }
+        }
+
+        await Models.handler_ids.update(
+            {
+                status: 'PENDING',
+                data: JSON.stringify(handlerData)
+            },{
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+
+
+        return true;
+    }
+
+    async searchAssertions(data, node) {
+        const result = await this.networkService.sendMessage('/search/assertions', data, node);
+        return result;
+    }
+
+    async handleSearchAssertions(request) {
+        const {query, handlerId} = request;
+        let response = await this.dataService.searchAssertions(query, {limit: 20});
+        return { response, handlerId };
+    }
+
+    async handleSearchAssertionsResult(request) {
+        // TODO: add mutex
+        const { handlerId, response } = request;
+        const handler = await Models.handler_ids.findOne({
+            where: {
+                handler_id: handlerId,
+            },
+        });
+
+        let handlerData = JSON.parse(handler.data);
+
+        for (const object of response) {
+            const assertion = handlerData.find(x => x.id === object.assertionId);
+            if (assertion) {
+                if (assertion.nodes.indexOf(object.node) === -1)
+                    assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
+            } else {
+                if (!object || !object.rdf)
+                    continue
+
+                const {assertion, rdf} = await this.dataService.createAssertion(object.assertionId, object.rdf);
+                const status = await this.dataService.verifyAssertion(assertion, rdf);
+                //todo check root hash on the blockchain
+                if (status) {
+                    handlerData.push({
+                        id: assertion.id,
+                        metadata: assertion.metadata,
+                        signature: assertion.signature,
+                        rootHash: assertion.rootHash,
+                        nodes: [object.node]
+                    })
+                }
+            }
+        }
+
+        await Models.handler_ids.update(
+            {
+                status: 'PENDING',
+                data: JSON.stringify(handlerData)
+            },{
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+
+        return true;
+    }
+}
+
+module.exports = QueryService;

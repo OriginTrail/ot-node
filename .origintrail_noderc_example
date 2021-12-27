@@ -1,0 +1,33 @@
+{
+  "autoUpdate": {
+    "enabled": false,
+    "branch": "develop",
+    "backupDirectory": "../backup"
+  },
+  "blockchain":[
+    {
+      "blockchainTitle": "Polygon",
+      "networkId": "polygon::mainnet",
+      "hubContractAddress": "0x4106886B2752AfDC8A4398711aB1a6C60139ff8B",
+      "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"],
+      "publicKey": "0xBD084aB97C704FE4a6D620CB7c30C0BE0366646f",
+      "privateKey": "0x61b1b921f6d57d7f60c4ac17d5bd51f8394c5d72b8d4db177b5d419fbc5c7a41"
+    }
+  ],
+  "graphDatabase": {
+    "username": "admin",
+    "password": ""
+  },
+  "logLevel": "trace",
+  "rpcPort": 8900,
+  "network": {
+    "bootstrap": ["/ip4/0.0.0.0/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A"]
+  },
+  "ipWhitelist": [
+    "127.0.0.1"
+  ],
+  "telemetryHub": {
+    "enabled": true,
+    "url": "https://webhook.site/46e67f38-89ce-46c7-a9f7-e1fef30105d2"
+  }
+}

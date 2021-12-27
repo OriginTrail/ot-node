@@ -1,0 +1,35 @@
+{
+  "@context": "http://schema.org/",
+  "id": "did:polygon:axie#1",
+  "@type": "nft",
+  "name": "Axie 1",
+  "description": "The genesis collection of NFTs supercharged by the OriginTrail Decentralized Knowledge Graph",
+  "creator": "did:polygon:0xBD084aB97C704FE4a6D620CB7c30C0BE0366646f",
+  "license": "Open license",
+  "encodingFormat": "url",
+  "content": "https://lh3.googleusercontent.com/NZ9lz_eqVsNjMwbaAHldfszslDqkpkcenpMXZA3MwwDKyGeTY3aaOayMUqgjONS-DLpVis2bBgT-usK_-gUeqVIYs74psHZP-od28tI=w600",
+  "dateCreated": "2021",
+  "properties": {
+    "health": {
+      "value": 41
+    },
+    "speed": {
+      "value": 34
+    },
+    "skill": {
+      "value": 35
+    },
+    "morale": {
+      "value": 54
+    }
+  },
+  "teamId": 1,
+  "relatedTo": [
+    "did:polygon:0xe0fa9fb0e30ca86513642112bee1cbbaa2a0580d/tokenURI?tokenId=11366",
+    "did:polygon:0xe0fa9fb0e30ca86513642112bee1cbbaa2a0580d/tokenURI?tokenId=15644"
+  ],
+  "derivedFrom": [
+    "test2",
+    "did:polygon:0xe0fa9fb0e30ca86513642112bee1cbbaa2a0580d/tokenURI?tokenId=45965"
+  ]
+}

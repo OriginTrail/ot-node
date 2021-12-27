@@ -1,0 +1,258 @@
+{
+	"info": {
+		"_postman_id": "b6a0c71d-0397-4f56-8da6-750dc613207c",
+		"name": "V6",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Publish",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/miloskotlar/ot-node-v6-poc/demo-data/Neumann.json"
+						},
+						{
+							"key": "assets",
+							"value": "[\"vn\"]",
+							"type": "text"
+						},
+						{
+							"key": "keywords",
+							"value": "[\"von noyman\",\"science\"]",
+							"type": "text"
+						},
+						{
+							"key": "visibility",
+							"value": "true",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/publish",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"publish"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}/resolve?ids=ed45c52a6cf2510e7cda19b61c7245ca9fe6e5e9bcf34efa5a331f914d713829",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"resolve"
+					],
+					"query": [
+						{
+							"key": "ids",
+							"value": "ed45c52a6cf2510e7cda19b61c7245ca9fe6e5e9bcf34efa5a331f914d713829"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "topic",
+							"value": "blazard1",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/entities:search?query=science&limit=20&prefix=true",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"entities:search"
+					],
+					"query": [
+						{
+							"key": "query",
+							"value": "science"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						},
+						{
+							"key": "prefix",
+							"value": "true"
+						},
+						{
+							"key": "ids",
+							"value": "axie",
+							"disabled": true
+						},
+						{
+							"key": "types",
+							"value": "gs1-epcis",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Discover",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "topic",
+							"value": "Bored Ape Yacht Club",
+							"type": "text"
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text"
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://alpha-stella-node-02.origin-trail.network:8900/discover",
+					"protocol": "https",
+					"host": [
+						"alpha-stella-node-02",
+						"origin-trail",
+						"network"
+					],
+					"port": "8900",
+					"path": [
+						"discover"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "query",
+							"value": "PREFIX schema: <http://schema.org/>\nSELECT ?s\nWHERE {\n ?s schema:name \"John von Neumann\"\n}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/query?type=select",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"query"
+					],
+					"query": [
+						{
+							"key": "type",
+							"value": "select"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Proofs",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "nquads",
+							"value": "[\"_:c14n0 <http://schema.org/name> \\\"John von Neumann\\\" .\"]",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}/proofs?assertions=94d8c000f0b3b1abe0368d77f58d7ac4f6ff4b57b351d12a88ec3d4e4ec944a1",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"proofs"
+					],
+					"query": [
+						{
+							"key": "assertions",
+							"value": "94d8c000f0b3b1abe0368d77f58d7ac4f6ff4b57b351d12a88ec3d4e4ec944a1"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

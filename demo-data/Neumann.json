@@ -1,0 +1,7 @@
+{
+  "@context": "http://schema.org/",
+  "name": "John von Neumann",
+  "description": "John von Neumann integrated pure and applied sciences",
+  "born": "Born: December 28, 1903, Budapest, Hungary",
+  "died": "Died: February 8, 1957, Walter Reed National Military Medical Center, Bethesda"
+}
