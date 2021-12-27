@@ -81,12 +81,12 @@ class GraphdbService {
 
             try {
                 const stream = await this.repository.query(payload);
-                let result = [];
+                let result = '';
                 stream.on('data', (bindings) => {
-                    result.push(bindings);
+                    result += bindings.toString();
                 });
                 stream.on('end', () => {
-                    accept(result.toString());
+                    accept(result);
                 });
             } catch (e) {
                 reject(e);
