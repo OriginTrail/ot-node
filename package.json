@@ -1,15 +1,15 @@
 {
   "name": "origintrail_node",
   "version": "6.1.5-beta.1",
-  "description": "ot-node v6 poc",
-  "main": "ot-node.js",
+  "description": "OTNode v6 beta 1",
+  "main": "index.js",
   "scripts": {
-    "start": "nodemon --quiet index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OriginTrail/ot-node-v6-poc.git"
+    "url": "git+https://github.com/OriginTrail/ot-node.git"
   },
   "keywords": [
     "ot-node",
@@ -18,9 +18,9 @@
   "author": "TraceLabs",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/OriginTrail/ot-node-v6-poc/issues"
+    "url": "https://github.com/OriginTrail/ot-node/issues"
   },
-  "homepage": "https://github.com/OriginTrail/ot-node-v6-poc#readme",
+  "homepage": "https://origintrail.io/",
   "engines": {
     "node": ">=14.17.6",
     "npm": ">=6.14.15"

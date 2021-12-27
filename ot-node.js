@@ -59,9 +59,8 @@ class OTNode {
             }
 
             const autoUpdateConfig = {
-                repository: 'https://github.com/OriginTrail/ot-node-v6-poc',
+                repository: 'https://github.com/OriginTrail/ot-node',
                 branch: this.config.autoUpdate.branch,
-                token: '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', // TODO: Remove when repo becomes public
                 tempLocation: this.config.autoUpdate.backupDirectory,
                 executeOnComplete: 'npx sequelize --config=./config/sequelizeConfig.js db:migrate',
                 exitOnComplete: true,

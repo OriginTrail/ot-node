@@ -2,7 +2,7 @@
   "development": {
     "autoUpdate": {
       "enabled": false,
-      "branch": "develop",
+      "branch": "v6/develop",
       "backupDirectory": "../backup"
     },
     "blockchain": [
@@ -35,7 +35,7 @@
   "testnet": {
     "autoUpdate": {
       "enabled": true,
-      "branch": "release/testnet",
+      "branch": "v6/release/testnet",
       "backupDirectory": "../backup"
     },
     "blockchain": [
@@ -72,7 +72,7 @@
   "mainnet": {
     "autoUpdate": {
       "enabled": true,
-      "branch": "release/mainnet",
+      "branch": "v6/release/mainnet",
       "backupDirectory": "../backup"
     },
     "blockchain": [],
