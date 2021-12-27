@@ -204,7 +204,7 @@ class RpcController {
                 this.logger.info(`Assertion rootHash: ${assertion.rootHash}`);
                 this.logger.info(`Assertion signature: ${assertion.signature}`);
                 this.logger.info(`Assertion metadata: ${JSON.stringify(assertion.metadata)}`);
-                this.logger.info(`Assertion metadata: ${JSON.stringify(assertion.data)}`);
+                // this.logger.info(`Assertion metadata: ${JSON.stringify(assertion.data)}`);
                 this.logger.info(`Keywords: ${keywords}`);
                 this.logger.info(`Assets: ${assets}`);
                 this.logger.info(`Assertion length in N-QUADS format: ${rdf.length}`);
