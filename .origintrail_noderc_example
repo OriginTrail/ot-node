@@ -1,15 +1,11 @@
 {
-  "autoUpdate": {
-    "enabled": false,
-    "branch": "develop",
-    "backupDirectory": "../backup"
-  },
   "blockchain":[
     {
       "blockchainTitle": "Polygon",
-      "networkId": "polygon::mainnet",
-      "hubContractAddress": "0x4106886B2752AfDC8A4398711aB1a6C60139ff8B",
+      "networkId": "polygon::testnet",
       "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"],
+      "publicKey": "...",
+      "privateKey": "..."
     }
   ],
   "graphDatabase": {
@@ -19,13 +15,8 @@
   "logLevel": "trace",
   "rpcPort": 8900,
   "network": {
-    "bootstrap": []
   },
   "ipWhitelist": [
     "127.0.0.1"
-  ],
-  "telemetryHub": {
-    "enabled": false,
-    "url": ""
-  }
+  ]
 }
