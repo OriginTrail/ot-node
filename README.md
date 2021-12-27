@@ -1,5 +1,5 @@
 # ot-node-v6-poc
-Ot-node v6 development
+OT-Node v6 beta 1
 
 
 ## Publish
