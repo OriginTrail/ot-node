@@ -31,6 +31,7 @@ class OtnodeUpdateCommand extends Command {
                 }
             }
         } catch (e) {
+            this.logger.error(e);
             this.logger.emit({
                 msg: 'Telemetry logging error at checking update command',
                 Operation_name: 'Error',
