@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "6.0.0-beta.1.18",
+  "version": "6.0.0-beta.1.19",
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
@@ -45,6 +45,7 @@
     "awilix": "^5.0.1",
     "axios": "^0.24.0",
     "big-number": "^2.0.0",
+    "bl": "^5.0.0",
     "bn": "^1.0.5",
     "colors": "^1.4.0",
     "crypto-js": "^4.1.1",

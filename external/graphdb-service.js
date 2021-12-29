@@ -7,6 +7,7 @@ const axios = require('axios');
 const {execSync} = require('child_process');
 const jsonld = require("jsonld");
 const N3 = require("n3");
+const { BufferList } = require('bl')
 
 class GraphdbService {
     constructor(config) {
@@ -59,12 +60,12 @@ class GraphdbService {
 
             try {
                 const stream = await this.repository.query(payload);
-                const result = [];
+                const bl = new BufferList()
                 stream.on('data', (bindings) => {
-                    result.push(bindings);
+                    bl.append(bindings);
                 });
                 stream.on('end', () => {
-                    accept(result);
+                    accept(bl);
                 });
             } catch (e) {
                 reject(e);
@@ -81,12 +82,12 @@ class GraphdbService {
 
             try {
                 const stream = await this.repository.query(payload);
-                let result = '';
+                const bl = new BufferList()
                 stream.on('data', (bindings) => {
-                    result += bindings.toString();
+                    bl.append(bindings);
                 });
                 stream.on('end', () => {
-                    accept(result);
+                    accept(bl.toString());
                 });
             } catch (e) {
                 reject(e);
@@ -102,12 +103,12 @@ class GraphdbService {
                 .setResponseType(RDFMimeType.BOOLEAN_RESULT);
             try {
                 const stream = await this.repository.query(payload);
-                let result;
+                const bl = new BufferList()
                 stream.on('data', (bindings) => {
-                    result = JSON.parse(bindings);
+                    bl.append(bindings);
                 });
                 stream.on('end', () => {
-                    accept(result);
+                    accept(JSON.parse(bl));
                 });
             } catch (e) {
                 reject(e);

@@ -357,6 +357,13 @@ class DataService {
     }
 
     async fromRDF(rdf, type) {
+        const Id_operation = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of fromRDF command',
+            Event_name: 'fromrdf_start',
+            Operation_name: 'fromrdf',
+            Id_operation
+        });
         let context, frame;
         switch (type) {
             case this.constants.GS1EPCIS:
@@ -388,6 +395,12 @@ class DataService {
         }
 
         const data = await this.data.fromRDF(rdf, context, frame);
+        this.logger.emit({
+            msg: 'Finished measuring execution of fromRDF command',
+            Event_name: 'fromrdf_end',
+            Operation_name: 'fromrdf',
+            Id_operation
+        });
         return data;
         //return sort(data).asc();
     }
