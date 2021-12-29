@@ -87,7 +87,7 @@ class GraphdbService {
                     bl.append(bindings);
                 });
                 stream.on('end', () => {
-                    accept(bl.toString());
+                    accept(bl);
                 });
             } catch (e) {
                 reject(e);
@@ -108,7 +108,7 @@ class GraphdbService {
                     bl.append(bindings);
                 });
                 stream.on('end', () => {
-                    accept(JSON.parse(bl));
+                    accept(bl);
                 });
             } catch (e) {
                 reject(e);
@@ -250,23 +250,13 @@ class GraphdbService {
                             FILTER (?g = <did:dkg:${uri}>) .
                        }`;
         let triples = await this.construct(query);
+        triples = triples.toString();
         if (triples) {
             triples = triples.replace(/_:genid(.){37}/gm, '_:$1');
             triples = triples.split('\n');
             triples = triples.filter((x) => x !== '');
         }
         return triples;
-    }
-
-    async dataQuery(query) {
-        try {
-            let data = await this.execute(query);
-            data = this.parseTriples(data);
-            return data;
-        } catch (e) {
-            this.logger.error('Bad query submitted');
-            return 'Bad query submitted';
-        }
     }
 
     async findAssertions(nquads) {
@@ -278,38 +268,6 @@ class GraphdbService {
                        }`;
         let g = await this.execute(query);
         return JSON.parse(g).results.bindings.map(x=>x.g.value.replace('did:dkg:',''));
-    }
-
-    async isAssertion(uri) {
-        const query = `ASK {
-                        ?s <http://schema.org/hasDataOntology> ?dataOntology ;
-                           <http://schema.org/hasValidationOntology> ?validationOntology ;
-                           <http://schema.org/hasIdentityOntology> ?identityOntology ;
-                           <http://schema.org/hasAuthorizationOntology> ?authorizationOntology .
-                        FILTER (?s = ${uri.indexOf(' ') === -1 ? `<did:dkg:${uri}>` : `"${uri}"`}) .
-        }`;
-        const result = await this.ask(query);
-        return result;
-    }
-
-    async getOntologiesByUri(uri) {
-        const query = `SELECT ?dataOntology ?validationOntology ?identityOntology ?authorizationOntology
-                   WHERE {
-                        ?s <http://schema.org/hasDataOntology> ?dataOntology ;
-                           <http://schema.org/hasValidationOntology> ?validationOntology ;
-                           <http://schema.org/hasIdentityOntology> ?identityOntology ;
-                           <http://schema.org/hasAuthorizationOntology> ?authorizationOntology .
-                        FILTER (?s = ${uri.indexOf(' ') === -1 ? `<did:dkg:${uri}>` : `"${uri}"`}) .
-        }`;
-        const ontologies = await this.execute(query);
-        if (ontologies && ontologies.length > 0) {
-            return {
-                dataOntology: JSON.parse(ontologies[0].dataOntology.id),
-                validationOntology: JSON.parse(ontologies[0].validationOntology.id),
-                identityOntology: JSON.parse(ontologies[0].identityOntology.id),
-                authorizationOntology: JSON.parse(ontologies[0].authorizationOntology.id),
-            };
-        }
     }
 
     async searchByQuery(query, options, localQuery) {
@@ -354,76 +312,6 @@ class GraphdbService {
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings
         return result;
-    }
-
-    async getDataOntologyForNamedGraph(ng) {
-        const query = 'SELECT ?o\n'
-            + 'WHERE {\n'
-            + '    GRAPH ?g { ?s <http://schema.org/has_data_ontology> ?o} \n'
-            + `    FILTER (?g = <${ng}>) .\n`
-            + '}';
-        let dataOntology = await this.execute(query);
-        if (dataOntology[0]) {
-            dataOntology = dataOntology[0].o.id.replace(/"/g, '');
-        } else {
-            dataOntology = null;
-        }
-        return dataOntology;
-    }
-
-    async getGraphsByUri(uri) {
-        const query = `SELECT distinct ?g
-                       WHERE {
-                            ?s ?p ?o  .
-                            GRAPH ?g { ?s ?p ?o }
-                            FILTER (?s = ${uri.indexOf(' ') === -1 ? `<${uri}>` : `"${uri}"`})  .
-                       }`;
-        const graphs = await this.execute(query);
-        if (graphs && graphs.length > 0) {
-            return graphs.map((x) => x.g.id.replace('http://example.com/', ''));
-        }
-
-        return undefined;
-    }
-
-    async getNamedGraphsByTopic(topic) {
-        const query = 'PREFIX schema: <http://schema.org/>\n'
-            + '                SELECT distinct ?g\n'
-            + '                WHERE {\n'
-            + '                     ?s schema:topics ?o  .\n'
-            + '                        GRAPH ?g { ?s schema:topics ?o }\n'
-            + `    FILTER (?o = '${topic}') .\n`
-            + '}';
-        const unfromattedNamedGraphs = await this.execute(query);
-        const namedGraphs = [];
-        for (const ng of unfromattedNamedGraphs) {
-            namedGraphs.push(ng.g.id);
-        }
-        return namedGraphs;
-    }
-
-    async getDataByNamedQuery(nq) {
-        const query = 'SELECT *\n'
-            + 'WHERE {\n'
-            + '   ?s ?p ?o\n'
-            + '   GRAPH ?g { ?s ?p ?o }\n'
-            + `   FILTER (?g = <${nq}>) .\n`
-            + '}';
-        let data = await this.execute(query);
-        data = this.parseTriples(data);
-        data.sort();
-        return data;
-    }
-
-    async getVerifiableCredentialsMetadata(ng) {
-        const query = 'SELECT ?s ?p ?o\n'
-            + 'WHERE {\n'
-            + '    GRAPH ?g {?s ?p ?o}\n'
-            + `    FILTER (?g = <${ng}> && ?p = <http://purl.org/dc/terms/created>) .\n`
-            + '}';
-        let vcMetadata = await this.execute(query);ƒ
-        vcMetadata = this.parseTriples(vcMetadata);
-        return vcMetadata;
     }
 
     async healthCheck() {

@@ -316,7 +316,7 @@ class DataService {
 
     runQuery(query, type) {
         const Id_operation = uuidv1();
-        let result = {};
+        let result;
         this.logger.emit({
             msg: 'Started measuring execution of query node',
             Event_name: 'query_node_start',
@@ -343,17 +343,6 @@ class DataService {
             Id_operation,
         });
         return result;
-    }
-
-    filter(assertion) {
-        return assertion;
-    }
-
-    merge(assertions, assertion) {
-        if (!assertions)
-            return assertion;
-
-        return `${assertions}\n${assertion}`;
     }
 
     async fromRDF(rdf, type) {
@@ -423,33 +412,6 @@ class DataService {
         return jsonld;
     }
 
-
-    async metadataQuery(log_exp_topics) {
-        let metadata = [];
-        let dataOntology = '';
-        const namedGraphs = await this.data.getNamedGraphsByTopic(log_exp_topics);
-        for (const ng of namedGraphs) {
-            dataOntology = await this.data.getDataOntologyForNamedGraph(ng);
-            if (dataOntology) {
-                let newMetadata;
-                switch (dataOntology) {
-                    case 'VerifiableCredentials':
-                        newMetadata = await this.data.getVerifiableCredentialsMetadata(ng);
-                        metadata = metadata.concat(newMetadata);
-                        break;
-                    default:
-                        metadata = {};
-                        break;
-                }
-            }
-        }
-        return {triples: metadata, rootHashes: []};
-    }
-
-    dataQuery(query) {
-        return this.data.dataQuery(query);
-    }
-
     healthCheck() {
         return this.data.healthCheck();
     }
@@ -475,46 +437,6 @@ class DataService {
         rdf = rdf.concat(connections);
         return rdf;
     }
-
-    removeOntologyMetadata(assertions, ontologies, options) {
-        switch (ontologies.dataOntology) {
-            case 'VerifiableCredentials':
-                assertions.splice(assertions.indexOf(assertions.find((triplet) => triplet.includes('has_data_ontology'))), 1);
-                assertions.splice(assertions.indexOf(assertions.find((triplet) => triplet.includes('<http://schema.org/roothash>'))), 1);
-                break;
-            default:
-                this.logger.error('Using unsupported data ontology.');
-                break;
-        }
-        return assertions;
-    }
-
-    //
-    // async transformData(assertions, ontologies, options) {
-    //     for (const func of this.transformationFunctions) {
-    //         assertions = await this[`${func}`](assertions, ontologies, options);
-    //     }
-    //
-    //     return assertions;
-    // }
-    //
-    // filter(assertions, ontologies, options) {
-    //     this.logger.info(`Filtering assertions for data ontology: ${ontologies.dataOntology}`);
-    //     return assertions;
-    // }
-    //
-    // merge(assertions, ontologies, options) {
-    //     this.logger.info('Merging assertions');
-    //     assertions = assertions.filter((triplet, index, self) => index === self.findIndex((t) => (
-    //         t === triplet
-    //     )));
-    //
-    //     return assertions;
-    // }
-    //
-    // format(assertions, ontologies, options) {
-    //     this.logger.info('Formating assertions');
-    // }
 }
 
 module.exports = DataService;
