@@ -1,11 +1,13 @@
 ---
-name: Bug report for v5 ot-node
+name: Bug report for v6 ot-node
 about: Create an issue report
 title: ''
 labels: ''
 assignees: ''
 
 ---
+
+## Issue description
 
 ## Expected behavior
 
@@ -22,7 +24,7 @@ assignees: ''
   - Node version:
   - Platform:
   - Node wallet:
-  - ERC725 identity:
+  - Node libp2p identity:
 
 ## Contact details
   - Email:
