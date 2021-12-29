@@ -560,11 +560,6 @@ class RpcController {
                 });
                 try {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
-                    if (response) {
-                        response = response.split('\n').filter(x => x !== '');
-                    } else {
-                        response = [];
-                    }
 
                     await Models.handler_ids.update(
                         {

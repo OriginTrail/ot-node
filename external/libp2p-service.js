@@ -11,6 +11,8 @@ const {v1: uuidv1} = require("uuid");
 const PeerId = require("peer-id");
 const fs = require("fs");
 const {time} = require("streaming-iterables");
+const { BufferList } = require('bl')
+
 
 
 const initializationObject = {
@@ -149,15 +151,16 @@ class Libp2pService {
         this.node.handle(eventName, async (handlerProps) => {
             const {stream} = handlerProps;
             let timestamp = Date.now();
+
             let data = await pipe(
                 stream,
                 async function (source) {
-                    let result = []
+                    const bl = new BufferList()
                     for await (const msg of source) {
-                        result = result.concat(msg);
+                        bl.append(msg);
                     }
                     // console.log(`Receiving data using stream: ${result.toString()}`);
-                    return result;
+                    return bl;
                 }
             )
 
@@ -205,12 +208,12 @@ class Libp2pService {
             [JSON.stringify(data)],
             stream,
             async function (source) {
-                let result = []
+                const bl = new BufferList()
                 for await (const msg of source) {
-                    result = result.concat(msg);
+                    bl.append(msg);
                 }
-                console.log(`Receiving data using stream: ${result.toString()}`);
-                return result;
+                // console.log(`Receiving data using stream: ${result.toString()}`);
+                return bl;
             },
         )
 
