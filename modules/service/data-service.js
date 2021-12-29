@@ -314,7 +314,7 @@ class DataService {
         return assertions;
     }
 
-    runQuery(query, type) {
+    async runQuery(query, type) {
         const Id_operation = uuidv1();
         let result;
         this.logger.emit({
@@ -328,7 +328,13 @@ class DataService {
             //     result = this.data.execute(query);
             //     break;
             case 'CONSTRUCT':
-                result = this.data.construct(query);
+                result = await this.data.construct(query);
+                result = result.toString();
+                if (result) {
+                    result = result.split('\n').filter(x => x !== '');
+                } else {
+                    result = [];
+                }
                 break;
             // case 'ASK':
             //     result = this.data.ask(query);
