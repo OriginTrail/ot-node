@@ -48,7 +48,7 @@ class OTNode {
         DependencyInjection.registerValue(container, 'logger', this.logger);
         DependencyInjection.registerValue(container, 'constants', constants);
 
-        this.logger.info('Dependency injection module is initialized, running in development mode');
+        this.logger.info('Dependency injection module is initialized');
         return container;
     }
 
