@@ -22,7 +22,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN npm install forever -g
 RUN npm install nodemon -g
-RUN npm install --save form-data
+RUN npm install form-data
 
 
 WORKDIR /ot-node/current
