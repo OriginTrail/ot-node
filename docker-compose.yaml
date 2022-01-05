@@ -13,5 +13,10 @@ services:
       - "3306:3306"
       - "8900:8900"
       - "9000:9000"
-  #  network_mode: host
+    command: >
+       bash -c "
+        service mysql restart && 
+        supervisord -c /ot-node/current/supervisord.conf                
+        "
+    network_mode: host
     
