@@ -49,3 +49,4 @@ EXPOSE 3306
 EXPOSE 8900
 EXPOSE 9000
 CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/supervisord.conf"]
+RUN forever start -a -o out.log -e out.log index.js
