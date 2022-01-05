@@ -14,3 +14,6 @@ services:
       - 8900
       - 9000
     network_mode: host
+    depends_on:
+      graph_db:
+        condition: service_healthy
