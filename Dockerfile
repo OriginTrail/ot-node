@@ -12,7 +12,7 @@ RUN apt-get -qq -y install wget apt-transport-https
 RUN apt-get -qq -y install git nodejs
 RUN apt-get -qq -y install mysql-server unzip nano
 RUN apt-get -qq -y install make python
-RUN apt-get -qq -y install tcllib
+
 
 
 
