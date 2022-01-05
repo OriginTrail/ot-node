@@ -53,5 +53,5 @@ EXPOSE 3306
 EXPOSE 8900
 EXPOSE 9000
 
-CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/supervisord.conf" && "service mysql restart"]
+CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/supervisord.conf"]
 
