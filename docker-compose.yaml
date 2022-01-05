@@ -13,5 +13,5 @@ services:
       - "3306:3306"
       - "8900:8900"
       - "9000:9000"
-    network_mode: host
+  #  network_mode: host
     
