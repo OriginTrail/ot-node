@@ -18,7 +18,7 @@ class GraphdbService {
         this.logger = logger;
         this.logger.info(`Data repository name: ${this.config.repositoryName}`);
         const serverConfig = new ServerClientConfig('http://localhost:7200/')
-            .setTimeout(10000)
+            .setTimeout(40000)
             .setHeaders({
                 Accept: RDFMimeType.N_QUADS,
             })
