@@ -52,4 +52,4 @@ RUN service mysql start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!
 EXPOSE 3306
 EXPOSE 8900
 EXPOSE 9000
-CMD ["/bin/sh", "/etc/init.d/mysql restart" && "/usr/bin/supervisord", "-c", "/ot-node/current/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/supervisord.conf"]
