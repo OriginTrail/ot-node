@@ -3,6 +3,7 @@ FROM ubuntu:20.04
 
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
+ENV NODE_ENV=testnet
 
 
 RUN apt-get -qq update && apt-get -qq -y install curl
@@ -22,8 +23,8 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN npm install forever -g
 RUN npm install nodemon -g
-RUN npm install form-data
 
+ADD .origintrail_noderc_example /ot-node/current/.origintrail_noderc
 
 WORKDIR /ot-node/current
 
@@ -31,7 +32,7 @@ COPY package*.json ./
 
 RUN npm install
 RUN npm ci --only=production
-
+RUN npm install --save form-data
 
 COPY . .
 
