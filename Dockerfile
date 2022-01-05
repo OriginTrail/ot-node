@@ -29,9 +29,9 @@ RUN npm ci --only=production
 COPY . .
 
 
-RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
-RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
-ADD config/papertrail.yml /etc/log_files.yml
+#RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
+#RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
+#ADD config/papertrail.yml /etc/log_files.yml
 
 RUN usermod -d /var/lib/mysql/ mysql
 RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
@@ -42,7 +42,6 @@ RUN service mysql start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!
 # Libp2p 8900
 # RPC 9000
 EXPOSE 3306
-#EXPOSE 7200
 EXPOSE 8900
 EXPOSE 9000
 CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/supervisord.conf"]
