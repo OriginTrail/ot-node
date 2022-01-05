@@ -22,8 +22,9 @@ WORKDIR /ot-node/current
 
 COPY package*.json ./
 
-RUN npm ci --only=production
 RUN npm install
+RUN npm ci --only=production
+
 
 COPY . .
 
