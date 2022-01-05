@@ -2,16 +2,16 @@ version: "3.9"
 services:
   graph_db:
     image: khaller/graphdb-free:latest
-    expose:
-      - 7200
+    ports:
+      - "7200:7200"
     network_mode: host
 
 
   ot_node_v6:
     build: .
-    expose:
-      - 3306
-      - 8900
-      - 9000
+    ports:
+      - "3306:3306"
+      - "8900:8900"
+      - "9000:9000"
     network_mode: host
     
