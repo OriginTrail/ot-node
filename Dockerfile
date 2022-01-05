@@ -21,6 +21,7 @@ RUN mkdir -p /var/log/supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN npm install forever -g
+RUN npm install nodemon -g
 
 WORKDIR /ot-node/current
 
@@ -49,4 +50,4 @@ EXPOSE 3306
 EXPOSE 8900
 EXPOSE 9000
 CMD ["/usr/bin/supervisord", "-c", "/ot-node/current/supervisord.conf"]
-RUN forever start -a -o out.log -e out.log index.js
+
