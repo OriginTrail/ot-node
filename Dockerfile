@@ -24,6 +24,9 @@ RUN apt-get update && apt install -y -qq supervisor
 RUN mkdir -p /var/log/supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+#Install nodemon
+RUN npm install -g nodemon
+
 WORKDIR /ot-node/current
 
 COPY package*.json ./
