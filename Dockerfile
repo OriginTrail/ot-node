@@ -30,14 +30,13 @@ RUN npm install -g nodemon
 
 WORKDIR /ot-node/current
 
-COPY package*.json ./
+ADD ./* ./
+
 
 #Install npm
-RUN npm install -g json-stable-stringify
-RUN npm install
 RUN npm ci --only=production
+RUN npm install
 
-COPY . .
 
 #Intialize mysql
 RUN usermod -d /var/lib/mysql/ mysql
