@@ -12,7 +12,6 @@ services:
     container_name: ot_node_v6
     build: .
     expose:
-      - 3306
       - 8900
       - 9000
     command: >
