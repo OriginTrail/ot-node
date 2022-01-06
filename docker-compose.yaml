@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   graph_db:
+    container_name: ot_node_graph_db
     image: khaller/graphdb-free:latest
     ports:
       - "7200:7200"
@@ -8,6 +9,7 @@ services:
 
 
   ot_node_v6:
+    container_name: ot_node_v6
     build: .
     ports:
       - "3306:3306"
