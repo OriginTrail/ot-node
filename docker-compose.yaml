@@ -3,18 +3,18 @@ services:
   graph_db:
     container_name: ot_node_graph_db
     image: khaller/graphdb-free:latest
-    ports:
-      - "7200:7200"
+    expose:
+      - 7200
     network_mode: host
 
 
   ot_node_v6:
     container_name: ot_node_v6
     build: .
-    ports:
-      - "3306:3306"
-      - "8900:8900"
-      - "9000:9000"
+    expose:
+      - 3306
+      - 8900
+      - 9000
     command: >
        bash -c "
         service mysql restart && 
