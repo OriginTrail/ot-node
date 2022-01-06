@@ -1,5 +1,5 @@
 #base image
-FROM ubuntu:20.04
+FROM debian:bullseye-slim
 
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
