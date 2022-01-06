@@ -63,6 +63,7 @@
     "it-pipe": "^1.1.0",
     "js-sha3": "^0.8.0",
     "json-2-csv": "^3.14.4",
+    "json-stringify-safe": "^5.0.1",
     "jsonld": "^5.2.0",
     "libp2p": "^0.32.4",
     "libp2p-bootstrap": "^0.13.0",
