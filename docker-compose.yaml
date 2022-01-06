@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
 services:
   graph_db:
     container_name: ot_node_graph_db

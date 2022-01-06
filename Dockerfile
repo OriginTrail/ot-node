@@ -27,12 +27,11 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 #Install nodemon
 RUN npm install -g nodemon
 
-
 WORKDIR /ot-node/current
 
 COPY package*.json ./
 
-#Install nppm
+#Install npm
 RUN npm install
 RUN npm ci --only=production
 
