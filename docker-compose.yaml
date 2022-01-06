@@ -16,8 +16,6 @@ services:
       - 9000
     command: >
        bash -c "
-        npm install -g --silent json-stable-stringify &&
-        service mysql restart && 
         supervisord -c /ot-node/current/supervisord.conf                
         "
     volumes:
