@@ -26,7 +26,7 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-if [ $PWD != "/root" ]; then echo "This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo."; exit; fi
+if [ $PWD != "$OTNODE_DIR/installer" ]; then echo "This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo."; exit; fi
 
 echo -n "Checking that the GraphDB file is present in /root: "
 
@@ -38,6 +38,7 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+# Switch to /root
 cd
 
 echo -n "Updating Ubuntu package repository: "
@@ -93,7 +94,7 @@ fi
 
 echo -n "Copying service file: "
 
-OUTPUT=$(cp /root/OT-KwallaBetaInstalla/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
+OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -282,43 +283,8 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing git: "
-
-OUTPUT=$(apt install git -y >/dev/null 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing git."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Cloning the V6 git repo: "
-
-OUTPUT=$(git clone https://github.com/OriginTrail/ot-node >/dev/null 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error cloning the V6 git repo."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
+# Change directory to ot-node
 cd ot-node
-
-echo -n "Executing git checkout: "
-
-OUTPUT=$(git checkout v6/release/testnet >/dev/null 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error executing git checkout."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
 
 echo -n "Executing npm install: "
 
