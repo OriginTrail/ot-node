@@ -24,11 +24,6 @@ RUN apt-get update && apt install -y -qq supervisor
 RUN mkdir -p /var/log/supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-#Install forerver and nodemon
-RUN npm install forever -g
-RUN npm install nodemon -g
-
-
 WORKDIR /ot-node/current
 
 COPY package*.json ./
@@ -36,7 +31,6 @@ COPY package*.json ./
 #Install nppm
 RUN npm install
 RUN npm ci --only=production
-RUN npm install --save form-data
 
 COPY . .
 
