@@ -26,7 +26,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #Install nodemon
 RUN npm install -g nodemon
-RUN npm install -g forerver
+
 
 WORKDIR /ot-node/current
 
