@@ -37,7 +37,6 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "form-data": "^4.0.0",
     "json-stable-stringify": "^1.0.1",
-    "nodemon": "^2.0.15",
     "rc": "^1.2.8"
   },
   "dependencies": {
@@ -56,7 +55,6 @@
     "express-fileupload": "^1.2.1",
     "express-ipfilter": "^1.2.0",
     "fast-sort": "^3.1.1",
-    "forever": "^4.0.1",
     "fs-extra": "^10.0.0",
     "graphdb": "^2.0.0",
     "it-concat": "^2.0.0",
@@ -76,6 +74,7 @@
     "multiformats": "^9.4.7",
     "mysql2": "^2.3.3",
     "n3": "^1.12.2",
+    "nodemon": "^2.0.15",
     "p-iteration": "^1.1.8",
     "peer-id": "^0.15.3",
     "pino": "^7.5.1",
