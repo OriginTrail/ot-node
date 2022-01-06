@@ -16,6 +16,7 @@ services:
       - 9000
     command: >
        bash -c "
+        service mysql restart && 
         supervisord -c /ot-node/current/supervisord.conf                
         "
     volumes:
