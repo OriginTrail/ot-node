@@ -26,7 +26,15 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-if [ $PWD != "$OTNODE_DIR/installer" ]; then echo "This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo."; exit; fi
+echo -n "Checking that we are in /root directory: "
+
+if [ $PWD != "$OTNODE_DIR/installer" ]; then
+    echo "${N1}This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo."
+    echo -e "${RED}FAILED${NC}"
+    exit
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
 
 echo -n "Checking that the GraphDB file is present in /root: "
 
