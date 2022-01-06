@@ -28,8 +28,6 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN npm install forever -g
 RUN npm install nodemon -g
 
-#Copyping origintrail_nodeirc to image
-ADD .origintrail_noderc_example /ot-node/current/.origintrail_noderc
 
 WORKDIR /ot-node/current
 

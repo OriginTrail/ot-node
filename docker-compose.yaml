@@ -19,5 +19,7 @@ services:
         service mysql restart && 
         supervisord -c /ot-node/current/supervisord.conf                
         "
+    volumes:
+      - .origintrail_noderc:/ot-node/current/.origintrail_noderc
     network_mode: host
     
