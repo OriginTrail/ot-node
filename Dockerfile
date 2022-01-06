@@ -26,6 +26,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #Install nodemon
 RUN npm install -g nodemon
+RUN npm install -g json-stable-stringify
 
 WORKDIR /ot-node/current
 
