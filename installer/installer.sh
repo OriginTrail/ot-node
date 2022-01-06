@@ -26,6 +26,8 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+if [ $PWD != "/root" ]; then echo "This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo."; exit; fi
+
 echo -n "Checking that the GraphDB file is present in /root: "
 
 if [[ ! -f $GRAPHDB_FILE ]]; then
