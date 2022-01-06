@@ -14,6 +14,7 @@ RUN apt-get -qq -y install git nodejs
 RUN apt-get -qq -y install make python
 
 #Mysql-server installation
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qq -y install wget
 RUN wget https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
 RUN dpkg -i mysql-apt-config*
