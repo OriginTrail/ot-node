@@ -30,7 +30,7 @@ RUN npm install -g nodemon
 
 WORKDIR /ot-node/current
 
-ADD ./* ./
+COPY . .
 
 
 #Install npm
