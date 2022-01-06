@@ -26,8 +26,6 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo $PWD
-
 echo -n "Checking that we are in /root directory: "
 
 if [ $PWD != "$OTNODE_DIR" ]; then
