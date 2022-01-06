@@ -30,7 +30,7 @@ echo -n "Checking that we are in /root directory: "
 
 if [ $PWD != "$OTNODE_DIR/installer" ]; then
     echo -e "${RED}FAILED${NC}"
-    echo "${N1}This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo."
+    echo "${N1}This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo.${N1}"
     exit
 else
     echo -e "${GREEN}SUCCESS${NC}"
