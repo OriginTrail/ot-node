@@ -8,9 +8,10 @@ services:
 
   mysql:
     container_name: mysql_db
-    image: mysql:latest
+    image: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: operationaldb
     expose:
       - 3306
     command: >
