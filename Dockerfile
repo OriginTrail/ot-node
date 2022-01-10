@@ -22,6 +22,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #Mysql-server installation
 ARG DEBIAN_FRONTEND=noninteractive
+ARG PASSWORD=password
 RUN apt-get install -y lsb-release
 RUN apt-get install -y wget gnupg curl
 RUN curl -LO https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
@@ -54,5 +55,5 @@ RUN npm install --save form-data
 
 #RUN usermod -d /var/lib/mysql/ mysql
 #RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-RUN service mariadb start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
+RUN service mariadb start && mysql -u root ppassword -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
 
