@@ -37,8 +37,8 @@ RUN { \
 
 
 #Install forerver and nodemon
-RUN npm install forever -g
-RUN npm install nodemon -g
+#RUN npm install forever -g
+#RUN npm install nodemon -g
 
 
 
@@ -47,13 +47,13 @@ WORKDIR /ot-node/current
 COPY . .
 
 #Install nppm
-RUN npm install
-RUN npm ci --only=production
-RUN npm install --save form-data
+#RUN npm install
+#RUN npm ci --only=production
+#RUN npm install --save form-data
 
 
 
 #RUN usermod -d /var/lib/mysql/ mysql
 #RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-RUN service mariadb start && mysql -u root ppassword -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
+RUN service mariadb start && mysql -u root -ppassword -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
 
