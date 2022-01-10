@@ -21,13 +21,18 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 
 #Mysql-server installation
-#ARG DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y lsb-release
+RUN apt-get install -y wget gnupg curl
+RUN curl -LO https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
+RUN dpkg -i ./mysql-apt-config_0.8.20-1_all.deb
 
-#RUN { \
-#     echo mariadb-server mysql-server/root_password password $PASSWORD ''; \
-#     echo mariadb-server mysql-server/root_password_again password $PASSWORD ''; \
-#} | debconf-set-selections \
-#    && apt-get update && apt-get install -y mariadb-server
+RUN { \
+     echo mysql-server mysql-server/root_password password $PASSWORD ''; \
+     echo mysql-server mysql-server/root_password_again password $PASSWORD ''; \
+} | debconf-set-selections \
+    && apt-get update && apt-get install -y default-mysql-server default-mysql-server-core
+
 
 
 #Install forerver and nodemon
@@ -47,10 +52,7 @@ RUN npm install --save form-data
 
 
 
-FROM mysql:latest
-ARG MYSQL_ROOT_PASSWORD=password
-
-RUN usermod -d /var/lib/mysql/ mysql
+#RUN usermod -d /var/lib/mysql/ mysql
 #RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-RUN mysql -u root -ppassword -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
+RUN service mariadb start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
 
