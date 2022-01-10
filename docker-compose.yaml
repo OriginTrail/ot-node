@@ -1,4 +1,3 @@
-version: "3"
 services:
   graph_db:
     container_name: ot_node_graph_db
@@ -18,17 +17,17 @@ services:
 
        "
 
-  ot_node_v6:
-    container_name: ot_node_v6
-    build: .
-    expose:
-      - 8900
-      - 9000
-    command: >
-       bash -c "
-        supervisord -c /ot-node/current/supervisord.conf                
-        "
-    volumes:
-      - .origintrail_noderc:/ot-node/current/.origintrail_noderc
-    network_mode: host
+#  ot_node_v6:
+#    container_name: ot_node_v6
+#    build: .
+#    expose:
+#      - 8900
+#      - 9000
+#    command: >
+#       bash -c "
+#        supervisord -c /ot-node/current/supervisord.conf                
+#        "
+#    volumes:
+#      - .origintrail_noderc:/ot-node/current/.origintrail_noderc
+#    network_mode: host
     
