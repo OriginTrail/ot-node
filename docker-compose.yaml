@@ -12,7 +12,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       
     expose:
-      - 3306
+      - 127.0.0.1:3306
     network_mode: host
 
 
