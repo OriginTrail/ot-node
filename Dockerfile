@@ -17,10 +17,11 @@ RUN apt-get -qq -y install make python
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qq -y install wget
 RUN apt-get -qq -y install lsb-release gnupg
-RUN wget https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
-RUN dpkg -i mysql-apt-config*
+RUN apt-get -qq install sudo
+RUN wget http://repo.mysql.com/mysql-apt-config_0.8.10-1_all.deb
+RUN sudo -E apt install ./mysql-apt-config_0.8.10-1_all.deb
 RUN apt-get -qq update
-RUN apt-get -qq install mysql-server
+
 
 #supervisor install
 RUN apt-get update && apt install -y -qq supervisor
@@ -48,5 +49,5 @@ RUN npm install --save form-data
 #Intialize mysql
 RUN usermod -d /var/lib/mysql/ mysql
 RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-RUN mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
+RUN service mysql start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
 
