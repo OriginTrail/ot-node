@@ -51,7 +51,7 @@ COPY . .
 #RUN npm ci --only=production
 #RUN npm install --save form-data
 
-
+RUN npm install -g sequelize-cli
 
 #RUN usermod -d /var/lib/mysql/ mysql
 #RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
