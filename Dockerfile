@@ -38,10 +38,10 @@ WORKDIR /ot-node/current
 COPY . .
 
 #Install nppm
-
+RUN npm install
 RUN npm ci --only=production
 RUN npm install --save form-data
-RUN npm install
+
 
 
 
