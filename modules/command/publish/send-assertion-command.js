@@ -31,7 +31,7 @@ class SendAssertionCommand extends Command {
 
         for (const node of nodes) {
             try {
-                await this.publishService.store({ rdf, id: assertion.id }, node);
+                this.publishService.store({ rdf, id: assertion.id }, node);
             } catch (e) {
                 this.logger.error(`Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`);
                 this.logger.emit({
