@@ -55,5 +55,5 @@ RUN npm install --save form-data
 
 #RUN usermod -d /var/lib/mysql/ mysql
 #RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-RUN service mariadb start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('root'); FLUSH PRIVILEGES;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
+RUN service mariadb start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'; FLUSH PRIVILEGES;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
 
