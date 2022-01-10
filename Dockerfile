@@ -21,7 +21,7 @@ RUN apt-get -qq install sudo
 RUN wget http://repo.mysql.com/mysql-apt-config_0.8.10-1_all.deb
 RUN sudo -E apt install ./mysql-apt-config_0.8.10-1_all.deb
 RUN apt-get -qq --allow-insecure-repositories update
-RUN sudo -E apt install -y mysql-server
+RUN sudo -E apt install -y mysql-server --allow-unauthenticated
 
 #supervisor install
 RUN apt-get update && apt install -y -qq supervisor
