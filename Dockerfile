@@ -13,6 +13,13 @@ RUN apt-get -qq -y install wget apt-transport-https
 RUN apt-get -qq -y install git nodejs
 RUN apt-get -qq -y install make python
 
+#supervisor install
+RUN apt-get update && apt install -y -qq supervisor
+RUN mkdir -p /var/log/supervisor
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+
+
 #Mysql-server installation
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qq -y install wget
@@ -23,10 +30,7 @@ RUN sudo -E apt install ./mysql-apt-config_0.8.10-1_all.deb
 RUN apt-get -qq --allow-insecure-repositories update
 RUN sudo -E apt install -y mysql-server --allow-unauthenticated
 
-#supervisor install
-RUN apt-get update && apt install -y -qq supervisor
-RUN mkdir -p /var/log/supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 
 #Install forerver and nodemon
 RUN npm install forever -g
