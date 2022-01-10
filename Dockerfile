@@ -1,5 +1,5 @@
 #base image
-FROM debian:bullseye-slim
+FROM debian:bullseye
 
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
@@ -16,6 +16,7 @@ RUN apt-get -qq -y install make python
 #Mysql-server installation
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qq -y install wget
+RUN apt-get -qq -y install lsb-release gnupg
 RUN wget https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
 RUN dpkg -i mysql-apt-config*
 RUN apt-get -qq update
