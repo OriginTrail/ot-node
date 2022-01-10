@@ -8,17 +8,11 @@ services:
   
   db:
     image: mysql
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: test_db
+      
     expose:
       - 3306
-    command: >
-       bash -c "
-       mysql -u root -proot -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
-
-       "  
     network_mode: host
 
 
