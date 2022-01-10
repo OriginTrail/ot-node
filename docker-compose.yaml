@@ -5,21 +5,32 @@ services:
     expose:
       - 7200
     network_mode: host
-
-  mysql:
-    container_name: mysql_db
+  
+  db:
     image: mysql
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: operationaldb
-    expose:
-      - 3306
-    command: >
-       bash -c "
-       mysql -u root -ppassword -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test_db
+    ports:
+      - "3307:3306"
 
-       "
-    network_mode: host
+
+
+
+#  mysql:
+#    container_name: mysql_db
+#    image: mysql
+#    environment:
+#      MYSQL_ROOT_PASSWORD: password
+#      MYSQL_DATABASE: operationaldb
+#    expose:
+#   command: >
+#       bash -c "
+#       mysql -u root -ppassword -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
+#
+#       "
+#    network_mode: host
 #  ot_node_v6:
 #    container_name: ot_node_v6
 #    build: .
