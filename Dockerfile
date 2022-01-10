@@ -48,7 +48,7 @@ RUN npm install --save form-data
 
 
 FROM mysql:latest
-ENV MYSQL_ROOT_PASSWORD password
+ARG MYSQL_ROOT_PASSWORD password
 
 RUN usermod -d /var/lib/mysql/ mysql
 #RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf

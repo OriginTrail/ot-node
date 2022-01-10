@@ -5,43 +5,18 @@ services:
     expose:
       - 7200
     network_mode: host
-  
-  db:
-    image: mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      
+
+  ot_node_v6:
+    container_name: ot_node_v6
+    build: .
     expose:
-      - 127.0.0.1:3306
+      - 8900
+      - 9000
+    command: >
+       bash -c "
+        supervisord -c /ot-node/current/supervisord.conf                
+        "
+    volumes:
+      - .origintrail_noderc:/ot-node/current/.origintrail_noderc
     network_mode: host
-
-
-
-
-#  mysql:
-#    container_name: mysql_db
-#    image: mysql
-#    environment:
-#      MYSQL_ROOT_PASSWORD: password
-#      MYSQL_DATABASE: operationaldb
-#    expose:
-#   command: >
-#       bash -c "
-#       mysql -u root -ppassword -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
-#
-#       "
-#    network_mode: host
-#  ot_node_v6:
-#    container_name: ot_node_v6
-#    build: .
-#    expose:
-#      - 8900
-#      - 9000
-#    command: >
-#       bash -c "
-#        supervisord -c /ot-node/current/supervisord.conf                
-#        "
-#    volumes:
-#      - .origintrail_noderc:/ot-node/current/.origintrail_noderc
-#    network_mode: host
     
