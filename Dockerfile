@@ -31,29 +31,22 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN npm install forever -g
 RUN npm install nodemon -g
 
-#Copyping origintrail_nodeirc to image
-ADD .origintrail_noderc_example /ot-node/current/.origintrail_noderc
+
 
 WORKDIR /ot-node/current
 
-COPY package*.json ./
+COPY . .
 
 #Install nppm
-RUN npm install
+
 RUN npm ci --only=production
 RUN npm install --save form-data
+RUN npm install
 
-COPY . .
+
 
 #Intialize mysql
 RUN usermod -d /var/lib/mysql/ mysql
 RUN echo "disable_log_bin" >> /etc/mysql/mysql.conf.d/mysqld.cnf
 RUN /etc/init.d/mysql start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; update mysql.user set plugin = 'mysql_native_password' where User='root'/*\!40100 DEFAULT CHARACTER SET utf8 */; flush privileges;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
 
-#Expose ports
-# Graphdb 7200
-# Libp2p 8900
-# RPC 9000
-EXPOSE 3306
-EXPOSE 8900
-EXPOSE 9000
