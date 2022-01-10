@@ -22,14 +22,12 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #Mysql-server installation
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get -qq -y install wget
-RUN apt-get -qq -y install lsb-release gnupg
-RUN apt-get -qq install sudo
-RUN wget http://repo.mysql.com/mysql-apt-config_0.8.10-1_all.deb
-RUN sudo -E apt install ./mysql-apt-config_0.8.10-1_all.deb
-RUN apt-get -qq --allow-insecure-repositories update
-RUN sudo -E apt install -y mysql-server --allow-unauthenticated
 
+RUN { \
+     echo mariadb-server mysql-server/root_password password $PASSWORD ''; \
+     echo mariadb-server mysql-server/root_password_again password $PASSWORD ''; \
+} | debconf-set-selections \
+    && apt-get update && apt-get install -y mariadb-server
 
 
 #Install forerver and nodemon
