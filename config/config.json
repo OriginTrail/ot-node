@@ -29,16 +29,8 @@
     ],
     "telemetryHub": {
       "enabled": false,
+      "packages": ["ot-telemetry-collector"],
       "url": ""
-    },
-    "modules": {
-      "telemetry_hub": {
-        "enable": true,
-        "npmDependency": "@ot/telemetry-hub-module",
-        "config": {
-          "url": ""
-        }
-      }
     }
   },
   "testnet": {
@@ -75,16 +67,8 @@
     ],
     "telemetryHub": {
       "enabled": true,
+      "packages": ["ot-telemetry-collector"],
       "url": "https://polaris.delta.origin-trail.network/metrics/"
-    },
-    "modules": {
-      "telemetry_hub": {
-        "enable": true,
-        "npmDependency": "@ot/telemetry-hub-module",
-        "config": {
-          "url": ""
-        }
-      }
     }
   },
   "mainnet": {
@@ -108,16 +92,8 @@
     ],
     "telemetryHub": {
       "enabled": false,
+      "packages": ["ot-telemetry-collector"],
       "url": ""
-    },
-    "modules": {
-      "telemetry_hub": {
-        "enable": true,
-        "npmDependency": "@ot/telemetry-hub-module",
-        "config": {
-          "url": ""
-        }
-      }
     }
   }
 }

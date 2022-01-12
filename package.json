@@ -48,6 +48,7 @@
     "bl": "^5.0.0",
     "bn": "^1.0.5",
     "colors": "^1.4.0",
+    "ot-telemetry-collector": "file:../ot-telemetry-collector",
     "crypto-js": "^4.1.1",
     "dotenv": "^10.0.0",
     "elliptic": "^6.5.4",
