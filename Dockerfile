@@ -25,7 +25,7 @@ RUN mkdir -p /var/log/supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #Install nodemon
-RUN npm install -g nodemon
+RUN npm install -g forever
 
 
 WORKDIR /ot-node/current
