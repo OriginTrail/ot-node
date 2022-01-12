@@ -19,10 +19,6 @@ RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/re
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
 ADD config/papertrail.yml /etc/log_files.yml
 
-#supervisor install
-RUN apt-get update && apt install -y -qq supervisor
-RUN mkdir -p /var/log/supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #Install nodemon
 RUN npm install -g forever
