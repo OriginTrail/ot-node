@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 services:
   graphdb:
     container_name: graphdb
@@ -8,16 +8,16 @@ services:
     network_mode: host
 
   ot-node:
-    depends_on:
-      - graphdb
     container_name: ot-node
     build: .
+    depends_on:
+      - graphdb
     expose:
       - 8900
       - 9000
     command: >
        bash -c "
-       service mariadb start &&
+        service mariadb start &&
         forever index.js                
         "
     volumes:
