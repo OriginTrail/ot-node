@@ -49,6 +49,7 @@
       }
     ],
     "graphDatabase": {
+      "name": "ot_node",
       "username": "admin",
       "password": ""
     },

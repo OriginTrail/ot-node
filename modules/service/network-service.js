@@ -1,15 +1,22 @@
 const { v1: uuidv1 } = require('uuid');
+const Libp2p = require('../../external/libp2p-service');
 
 class NetworkService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.rankingService = ctx.rankingService;
     }
 
-    initialize(implementation, rankingImplementation) {
-        this.network = implementation;
-        this.ranking = rankingImplementation;
-        return this.network.initialize(this.logger);
+    initialize() {
+        this.implementation = new Libp2p({
+            bootstrapMultiAddress: this.config.network.bootstrap,
+        });
+        return this.implementation.initialize(this.logger);
+    }
+
+    getName() {
+        return this.implementation.getName();
     }
 
     /**
@@ -21,14 +28,26 @@ class NetworkService {
      */
     async findNodes(key, limit) {
         const Id_operation = uuidv1();
-        this.logger.emit({ msg: 'Started measuring execution of find nodes', Event_name: 'find_nodes_start', Operation_name: 'find_nodes', Id_operation });
-        this.logger.emit({ msg: 'Started measuring execution of kad find nodes', Event_name: 'kad_find_nodes_start', Operation_name: 'find_nodes', Id_operation });
-        const nodes = await this.network.findNodes(key, limit);
-        this.logger.emit({ msg: 'Finished measuring execution of kad find nodes ', Event_name: 'kad_find_nodes_end', Operation_name: 'find_nodes', Id_operation });
-        this.logger.emit({ msg: 'Started measuring execution of rank nodes', Event_name: 'rank_nodes_start', Operation_name: 'find_nodes', Id_operation });
-        const rankedNodes = await this.ranking.rank(nodes, key, ['kad-identity']);
-        this.logger.emit({ msg: 'Finished measuring execution of rank nodes', Event_name: 'rank_nodes_end', Operation_name: 'find_nodes', Id_operation });
-        this.logger.emit({ msg: 'Finished measuring execution of find nodes', Event_name: 'find_nodes_end', Operation_name: 'find_nodes', Id_operation });
+        this.logger.emit({
+            msg: 'Started measuring execution of find nodes', Event_name: 'find_nodes_start', Operation_name: 'find_nodes', Id_operation,
+        });
+        this.logger.emit({
+            msg: 'Started measuring execution of kad find nodes', Event_name: 'kad_find_nodes_start', Operation_name: 'find_nodes', Id_operation,
+        });
+        const nodes = await this.implementation.findNodes(key, limit);
+        this.logger.emit({
+            msg: 'Finished measuring execution of kad find nodes ', Event_name: 'kad_find_nodes_end', Operation_name: 'find_nodes', Id_operation,
+        });
+        this.logger.emit({
+            msg: 'Started measuring execution of rank nodes', Event_name: 'rank_nodes_start', Operation_name: 'find_nodes', Id_operation,
+        });
+        const rankedNodes = await this.rankingService.rank(nodes, key, ['kad-identity']);
+        this.logger.emit({
+            msg: 'Finished measuring execution of rank nodes', Event_name: 'rank_nodes_end', Operation_name: 'find_nodes', Id_operation,
+        });
+        this.logger.emit({
+            msg: 'Finished measuring execution of find nodes', Event_name: 'find_nodes_end', Operation_name: 'find_nodes', Id_operation,
+        });
         return rankedNodes;
     }
 
@@ -42,11 +61,11 @@ class NetworkService {
      * @returns {Promise<{ id: PeerId, multiaddrs: Multiaddr[] }>}
      */
     findPeer(peerId, options) {
-        return this.network.findPeer(peerId, options);
+        return this.implementation.findPeer(peerId, options);
     }
 
     getPeers() {
-        return this.network.getPeers();
+        return this.implementation.getPeers();
     }
 
     /**
@@ -57,7 +76,7 @@ class NetworkService {
      * @param {PeerId} target
      */
     store(peer, key, object) {
-        return this.network.store(peer, key, object);
+        return this.implementation.store(peer, key, object);
     }
 
     handleMessage(eventName, handler, options) {
@@ -65,23 +84,23 @@ class NetworkService {
     }
 
     async sendMessage(eventName, data, peerId) {
-        return await this.network.sendMessage(eventName, data, peerId);
+        return this.implementation.sendMessage(eventName, data, peerId);
     }
 
     getPeerId() {
-        return this.network.getPeerId();
+        return this.implementation.getPeerId();
     }
 
     getPrivateKey() {
-        return this.network.getPrivateKey();
+        return this.implementation.getPrivateKey();
     }
 
     async healthCheck() {
-        return this.network.healthCheck();
+        return this.implementation.healthCheck();
     }
 
     async restartService() {
-        return this.network.restartService();
+        return this.implementation.restartService();
     }
 }
 

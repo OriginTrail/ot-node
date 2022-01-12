@@ -1,14 +1,21 @@
-const {execSync} = require('child_process');
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'development';
+}
+const { execSync } = require('child_process');
+const DeepExtend = require('deep-extend');
 const AutoGitUpdate = require('auto-git-update');
-const pjson = require('./package.json');
+const rc = require('rc');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const db = require('./models');
+const pjson = require('./package.json');
+const defaultConfiguration = require('./config/config.json')[process.env.NODE_ENV];
 
 class OTNode {
-    constructor(config) {
-        this.config = config;
+    constructor(userConfig) {
+        this.initializeConfiguration(userConfig);
         this.logger = Logger.create(this.config.logLevel, this.config.telemetryHub.enabled);
     }
 
@@ -37,9 +44,15 @@ class OTNode {
         this.logger.info('======================================================');
         this.logger.info(`             OriginTrail Node v${pjson.version}`);
         this.logger.info('======================================================');
-        this.logger.info(`Node is running in ${process.env.NODE_ENV &&
-        ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-            process.env.NODE_ENV : 'development'} environment`);
+        this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
+    }
+
+    initializeConfiguration(userConfig) {
+        if (userConfig) {
+            this.config = DeepExtend(defaultConfiguration, userConfig);
+        } else {
+            this.config = rc(pjson.name, defaultConfiguration);
+        }
     }
 
     initializeDependencyContainer() {
@@ -83,12 +96,12 @@ class OTNode {
     async initializeDataModule() {
         try {
             const dataService = this.container.resolve('dataService');
-            if (!this.config.data) {
-                this.logger.warn('Data module not initialized, no implementation is provided');
-            }
+            // if (!this.config.data) {
+            //     this.logger.warn('Data module not initialized, no implementation is provided');
+            // }
 
-            await dataService.initialize(this.config.data);
-            this.logger.info(`Data module: ${this.config.data.getName()} implementation`);
+            await dataService.initialize();
+            this.logger.info(`Data module: ${dataService.getName()} implementation`);
             db.sequelize.sync();
         } catch (e) {
             this.logger.error(`Data module initialization failed. Error message: ${e.message}`);
@@ -98,13 +111,17 @@ class OTNode {
     async initializeNetworkModule() {
         try {
             const networkService = this.container.resolve('networkService');
-            if (!this.config.network) {
-                this.logger.warn('Network module not initialized, no implementation is provided');
-            }
+            await networkService.initialize();
             const rankingService = this.container.resolve('rankingService');
-            await rankingService.initialize(this.config.network.ranking);
-            await networkService.initialize(this.config.network.implementation, rankingService);
-            this.logger.info(`Network module: ${this.config.network.implementation.getName()} implementation`);
+            await rankingService.initialize();
+            // if (!this.config.network) {
+            //     this.logger.warn('Network modu
+            //     le not initialized, no implementation is provided');
+            // }
+            // const rankingService = this.container.resolve('rankingService');
+            // await rankingService.initialize(this.config.network.ranking);
+            // await networkService.initialize(this.config.network.implementation, rankingService);
+            this.logger.info(`Network module: ${networkService.getName()} implementation`);
         } catch (e) {
             this.logger.error(`Network module initialization failed. Error message: ${e.message}`);
         }
@@ -113,12 +130,12 @@ class OTNode {
     async initializeValidationModule() {
         try {
             const validationService = this.container.resolve('validationService');
-            if (!this.config.validation) {
-                this.logger.warn('Validation module not initialized, no implementation is provided');
-            }
+            // if (!this.config.validation) {
+            //     this.logger.warn('Validation module not initialized, no implementation is provided');
+            // }
 
-            await validationService.initialize(this.config.validation);
-            this.logger.info(`Validation module: ${this.config.validation.getName()} implementation`);
+            await validationService.initialize();
+            this.logger.info(`Validation module: ${validationService.getName()} implementation`);
         } catch (e) {
             this.logger.error(`Validation module initialization failed. Error message: ${e.message}`);
         }
@@ -127,12 +144,12 @@ class OTNode {
     async initializeBlockchainModule() {
         try {
             const blockchainService = this.container.resolve('blockchainService');
-            if (!this.config.blockchain) {
-                this.logger.warn('Blockchain module not initialized, no implementation is provided.');
-            }
+            // if (!this.config.blockchain) {
+            //     this.logger.warn('Blockchain module not initialized, no implementation is provided.');
+            // }
 
-            await blockchainService.initialize(this.config.blockchain);
-            this.logger.info(`Blockchain module: ${this.config.blockchain.getName()} implementation`);
+            await blockchainService.initialize();
+            this.logger.info(`Blockchain module: ${blockchainService.getName()} implementation`);
         } catch (e) {
             this.logger.error(`Blockchain module initialization failed. Error message: ${e.message}`);
         }
