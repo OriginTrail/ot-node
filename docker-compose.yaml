@@ -17,7 +17,7 @@ services:
     command: >
        bash -c "
        service mariadb start &&
-        node index.js                
+        forever index.js                
         "
     volumes:
       - .origintrail_noderc:/ot-node/current/.origintrail_noderc
