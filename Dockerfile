@@ -36,8 +36,8 @@ RUN { \
 
 
 
-#Install nodemon
-#RUN npm install forever -g
+#Install nodemon & forever
+RUN npm install forever -g
 RUN npm install nodemon -g
 
 
