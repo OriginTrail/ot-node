@@ -7,6 +7,8 @@ services:
 
   ot-node:
     container_name: ot-node
+    environment:
+     - "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
     build: .
     depends_on:
       - graphdb
