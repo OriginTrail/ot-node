@@ -1,15 +1,16 @@
+version: '3'
 services:
-  graph_db:
-    container_name: ot_node_graph_db
+  graphdb:
+    container_name: graphdb
     image: khaller/graphdb-free:latest
     expose:
       - 7200
     network_mode: host
 
-  ot_node_v6:
+  ot-node:
     depends_on:
-      - graph_db
-    container_name: ot_node_v6
+      - graphdb
+    container_name: ot-node
     build: .
     expose:
       - 8900
