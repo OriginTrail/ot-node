@@ -12,8 +12,14 @@ Get this file into the /root directory on the server. Just leave it as a zip fil
 
 2. Login to the server as root. You __cannot__ sudo and run this script for various reasons. The command "npm install" __will__ fail.
 
-3. Execute the following command:
+3. Execute **one** of the following commands depending on if you have cloned the ot-node repo:
 
+**If the repo is not cloned yet:**
 ```
-/ot-node/installer/installer.sh
+apt install git -y && cd /root && git clone https://github.com/OriginTrail/ot-node && cd ot-node && git checkout v6/release/testnet && installer/installer.sh
+```
+
+**If you have already cloned the ot-node repo:**
+```
+/root/ot-node/installer/installer.sh
 ```
