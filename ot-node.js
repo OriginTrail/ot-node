@@ -9,7 +9,7 @@ const db = require('./models');
 class OTNode {
     constructor(config) {
         this.config = config;
-        this.logger = Logger.create(this.config.logLevel, this.config.telemetryHub.enabled);
+        this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
     }
 
     async start() {
@@ -76,7 +76,10 @@ class OTNode {
 
             this.logger.info('Auto update mechanism initialized');
         } catch (e) {
-            this.logger.error(`Auto update initialization failed. Error message: ${e.message}`);
+            this.logger.error({
+                msg: `Auto update initialization failed. Error message: ${e.message}`,
+                Event_name: 'UpdateInitializationError',
+            });
         }
     }
 
@@ -91,7 +94,10 @@ class OTNode {
             this.logger.info(`Data module: ${this.config.data.getName()} implementation`);
             db.sequelize.sync();
         } catch (e) {
-            this.logger.error(`Data module initialization failed. Error message: ${e.message}`);
+            this.logger.error({
+                msg: `Data module initialization failed. Error message: ${e.message}`,
+                Event_name: 'DataModuleInitializationError',
+            });
         }
     }
 
@@ -106,7 +112,10 @@ class OTNode {
             await networkService.initialize(this.config.network.implementation, rankingService);
             this.logger.info(`Network module: ${this.config.network.implementation.getName()} implementation`);
         } catch (e) {
-            this.logger.error(`Network module initialization failed. Error message: ${e.message}`);
+            this.logger.error({
+                msg: `Network module initialization failed. Error message: ${e.message}`,
+                Event_name: 'NetworkInitializationError',
+            });
         }
     }
 
@@ -120,7 +129,10 @@ class OTNode {
             await validationService.initialize(this.config.validation);
             this.logger.info(`Validation module: ${this.config.validation.getName()} implementation`);
         } catch (e) {
-            this.logger.error(`Validation module initialization failed. Error message: ${e.message}`);
+            this.logger.error({
+                msg: `Validation module initialization failed. Error message: ${e.message}`,
+                Event_name: 'ValidationInitializationError',
+            });
         }
     }
 
@@ -134,7 +146,10 @@ class OTNode {
             await blockchainService.initialize(this.config.blockchain);
             this.logger.info(`Blockchain module: ${this.config.blockchain.getName()} implementation`);
         } catch (e) {
-            this.logger.error(`Blockchain module initialization failed. Error message: ${e.message}`);
+            this.logger.error({
+                msg: `Blockchain module initialization failed. Error message: ${e.message}`,
+                Event_name: 'BlockchainInitializationError',
+            });
         }
     }
 
@@ -145,7 +160,10 @@ class OTNode {
             commandExecutor.replay();
             await commandExecutor.start();
         } catch (e) {
-            this.logger.error(`Command executor initialization failed. Error message: ${e.message}`);
+            this.logger.error({
+                msg: `Command executor initialization failed. Error message: ${e.message}`,
+                Event_name: 'CommandExecutorInitializationError',
+            });
         }
     }
 
@@ -154,7 +172,10 @@ class OTNode {
             const rpcController = this.container.resolve('rpcController');
             await rpcController.enable();
         } catch (e) {
-            this.logger.error(`RPC service initialization failed. Error message: ${e.message}`);
+            this.logger.error({
+                msg: `RPC service initialization failed. Error message: ${e.message}`,
+                Event_name: 'RpcInitializationError',
+            });
         }
     }
 

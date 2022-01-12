@@ -81,7 +81,10 @@ class SendTelemetryCommand extends Command {
                 data : data
             });
         } catch (e) {
-            this.logger.error(`Error while sending telemetry data to Telemetry hub: ${e}`);
+            this.logger.error({
+                msg:`Error while sending telemetry data to Telemetry hub: ${e}`,
+                Event_name: 'SendingDataTelemetryError',
+            });
         }
 
         // Remove intermediate file

@@ -328,7 +328,10 @@ class GraphdbService {
             }
             return false;
         } catch (e) {
-            this.logger.error(`GraphDB not available. ${e}`);
+            this.logger.error({
+                msg: `GraphDB not available. ${e}`,
+                Event_name: 'GraphDBCheckError',
+            });
             return false;
         }
     }

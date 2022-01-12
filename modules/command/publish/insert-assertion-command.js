@@ -14,7 +14,7 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const {
-            assertion, rdf, keywords, assets, handlerId,
+            assertion, rdf, keywords, assets, handlerId, Id_operation,
         } = command.data;
 
         try {
@@ -37,13 +37,12 @@ class InsertAssertionCommand extends Command {
                 },
             );
         } catch (e) {
-            this.logger.warn(`Error while storing dataset to local database: ${e.message}`);
-            this.logger.emit({
-                msg: 'Telemetry logging error at insert assertion command',
+            this.logger.error({
+                msg: `Error while storing dataset to local database: ${e.message}`,
                 Operation_name: 'Error',
                 Event_name: 'InsertAssertionError',
                 Event_value1: e.message,
-                Id_operation: 'Undefined',
+                Id_operation,
             });
         }
 

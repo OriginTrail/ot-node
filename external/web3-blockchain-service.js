@@ -56,7 +56,10 @@ class Web3BlockchainService {
             const gasPrice = await this.web3.eth.getGasPrice();
             if (gasPrice) return true;
         } catch (e) {
-            this.logger.error(`Error on checking blockchain. ${e}`);
+            this.logger.error({
+                msg: `Error on checking blockchain. ${e}`,
+                Event_name: 'BlockchainHealthCheckError',
+            });
             return false;
         }
         return false;

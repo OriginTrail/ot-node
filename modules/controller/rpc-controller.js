@@ -75,14 +75,14 @@ class RpcController {
                     default:
                         return next(error)
                 }
-                this.logger.error(message)
+                this.logger.error({ msg: message, Event_name: 'Api error - Bad request: 400'});
                 return res.status(code).send(message);
             }
             return next(error)
         })
 
         this.app.use((error, req, res, next) => {
-            this.logger.error(error)
+            this.logger.error({ msg: error,  Event_name: 'Api error: 500'});
             return res.status(500).send(error)
         })
     }
@@ -219,7 +219,7 @@ class RpcController {
                     name: commandSequence[0],
                     sequence: commandSequence.slice(1),
                     delay: 0,
-                    data: {rdf, assertion, assets, keywords, handlerId},
+                    data: {rdf, assertion, assets, keywords, handlerId, Id_operation},
                     transactional: false,
                 });
 
@@ -241,10 +241,8 @@ class RpcController {
                 );
 
             } catch (e) {
-                this.logger.error(`Unexpected error at publish route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at publish route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
                     Event_name: 'PublishRouteError',
                     Event_value1: e.message,
                     Id_operation
@@ -328,10 +326,8 @@ class RpcController {
                 );
 
             } catch (e) {
-                this.logger.error(`Unexpected error at resolve route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at resolve route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
                     Event_name: 'ResolveRouteError',
                     Event_value1: e.message,
                     Id_operation
@@ -352,6 +348,7 @@ class RpcController {
             }
             const Id_operation = uuidv1();
             try {
+                throw new Error('Test error');
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
                     Event_name: 'search_start',
@@ -398,10 +395,8 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Unexpected error at search assertions route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at search assertions route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
                     Event_name: 'SearchAssertionsRouteError',
                     Event_value1: e.message,
                     Id_operation
@@ -515,10 +510,8 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Unexpected error at search entities route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at search entities route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
                     Event_name: 'SearchEntitiesRouteError',
                     Event_value1: e.message,
                     Id_operation
@@ -585,10 +578,8 @@ class RpcController {
                     throw e;
                 }
             } catch (e) {
-                this.logger.error(`Unexpected error at query route:: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at query route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at query route:: ${e.message}. ${e.stack}`,
                     Event_name: 'QueryRouteError',
                     Event_value1: e.message,
                     Id_operation
@@ -658,10 +649,8 @@ class RpcController {
                     },
                 );
             } catch (e) {
-                this.logger.error(`Unexpected error at proofs route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at proofs route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
                     Event_name: 'ProofsRouteError',
                     Event_value1: e.message,
                     Id_operation
@@ -786,10 +775,8 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Error while trying to fetch ${operation} data for handler id ${handler_id}. Error message: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at fetching results',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Error while trying to fetch ${operation} data for handler id ${handler_id}. Error message: ${e.message}. ${e.stack}`,
                     Event_name: 'ResultsRouteError',
                     Event_value1: e.message,
                     Id_operation: handler_id

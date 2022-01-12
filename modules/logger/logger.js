@@ -2,7 +2,7 @@ const pino = require('pino');
 const path = require('path');
 
 class Logger {
-    static create(logLevel = 'trace', telemetryHubEnabled) {
+    constructor(logLevel = 'trace', telemetryHubEnabled) {
         try {
             const logFilename = path.join(path.resolve(__dirname, '../../'), 'logs/active.log');
             let chosenTargets = [];
@@ -17,7 +17,7 @@ class Logger {
                 ];
             }
 
-            const logger = pino({
+            this.pinoLogger = pino({
                 transport: {
                     targets: chosenTargets,
                 },
@@ -27,10 +27,45 @@ class Logger {
                 level: logLevel,
             });
 
-            return logger;
+            return this;
         } catch (e) {
             console.error(`Failed to create logger. Error message: ${e.message}`);
         }
+    }
+
+    fatal(obj) {
+        this.pinoLogger.fatal(obj);
+    }
+
+    error(obj) {
+        this.pinoLogger.error(obj.msg);
+        this.pinoLogger.emit({
+            msg: `Telemetry logging error: ${obj.Event_name}`,
+            Operation_name: 'Error',
+            Event_name: obj.Event_name,
+            Event_value1: obj.Event_value1 ? obj.Event_value1 : '',
+            Id_operation: obj.Id_operation ? obj.Id_operation : '',
+        });
+    }
+
+    warn(obj) {
+        this.pinoLogger.warn(obj);
+    }
+
+    info(obj) {
+        this.pinoLogger.info(obj);
+    }
+
+    debug(obj) {
+        this.pinoLogger.debug(obj);
+    }
+
+    emit(obj) {
+        this.pinoLogger.emit(obj);
+    }
+
+    trace(obj) {
+        this.pinoLogger.trace(obj);
     }
 }
 
