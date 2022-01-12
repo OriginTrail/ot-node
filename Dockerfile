@@ -54,5 +54,6 @@ RUN npm ci --only=production
 RUN npm install --save form-data
 
 #Mysql intialization
+ARG MYSQL_ROOT_PASSWORD
 RUN service mariadb start && mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */; SET PASSWORD FOR root@localhost = PASSWORD('${MYSQL_ROOT_PASSWORD}'); FLUSH PRIVILEGES;" && npx sequelize --config=./config/sequelizeConfig.js db:migrate
 
