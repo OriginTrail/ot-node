@@ -1,4 +1,4 @@
-const {execSync} = require('child_process');
+const { execSync } = require('child_process');
 const AutoGitUpdate = require('auto-git-update');
 const pjson = require('./package.json');
 const DependencyInjection = require('./modules/service/dependency-injection');
@@ -23,6 +23,7 @@ class OTNode {
         await this.initializeNetworkModule();
         await this.initializeCommandExecutor();
         await this.initializeRpcModule();
+        await this.initializeTelemetryHubModule();
         // await this.initializeWatchdog();
     }
 
@@ -155,6 +156,15 @@ class OTNode {
             await rpcController.enable();
         } catch (e) {
             this.logger.error(`RPC service initialization failed. Error message: ${e.message}`);
+        }
+    }
+
+    async initializeTelemetryHubModule() {
+        try {
+            const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
+            const result = telemetryHubModuleManager.initialize();
+        } catch (e) {
+            this.logger.error(`Telemetry hub module initialization failed. Error message: ${e.message}`);
         }
     }
 

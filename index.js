@@ -12,6 +12,7 @@ const pjson = require('./package.json');
 const rc = require('rc');
 
 const configjson = require('./config/config.json');
+
 let config = JSON.parse(fs.readFileSync('./.origintrail_noderc', 'utf8'));
 const defaultConfig = JSON.parse(JSON.stringify(configjson[
     process.env.NODE_ENV &&
@@ -24,7 +25,7 @@ if (!config.blockchain[0].hubContractAddress && config.blockchain[0].networkId =
     config.blockchain[0].hubContractAddress = configjson[
         process.env.NODE_ENV &&
         ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-            process.env.NODE_ENV : 'development'].blockchain[0].hubContractAddress
+            process.env.NODE_ENV : 'development'].blockchain[0].hubContractAddress;
 }
 
 (async () => {
@@ -57,6 +58,7 @@ if (!config.blockchain[0].hubContractAddress && config.blockchain[0].networkId =
             telemetryHub: config.telemetryHub,
             logLevel: config.logLevel,
             replicationFactor: 3,
+            modules: config.modules,
         });
         await node.start();
     } catch (e) {
@@ -81,7 +83,7 @@ if (!config.blockchain[0].hubContractAddress && config.blockchain[0].networkId =
 
                 // Wait for results
                 child.stdout.on('end', resolve);
-                child.stdout.on('data', (data) => console.log(`Auto Git Update - npm install: ${data.replace(/\r?\n|\r/g, '')}`));
+                child.stdout.on('data', data => console.log(`Auto Git Update - npm install: ${data.replace(/\r?\n|\r/g, '')}`));
                 child.stderr.on('data', (data) => {
                     if (data.toLowerCase().includes('error')) {
                         // npm passes warnings as errors, only reject if "error" is included
