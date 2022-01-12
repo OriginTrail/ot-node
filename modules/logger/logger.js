@@ -27,7 +27,6 @@ class Logger {
                 level: logLevel,
             });
 
-            return this;
         } catch (e) {
             console.error(`Failed to create logger. Error message: ${e.message}`);
         }

@@ -15,7 +15,7 @@ class SendAssertionCommand extends Command {
      */
     async execute(command) {
         const {
-            rdf, assertion, assets, keywords, Id_operation,
+            rdf, assertion, assets, keywords, operationId,
         } = command.data;
 
         let nodes = [];
@@ -43,7 +43,7 @@ class SendAssertionCommand extends Command {
                     Operation_name: 'Error',
                     Event_name: 'SendAssertionError',
                     Event_value1: e.message,
-                    Id_operation,
+                    Id_operation: operationId,
                 });
             });
         }
