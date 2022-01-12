@@ -3,8 +3,6 @@ services:
   graphdb:
     container_name: graphdb
     image: khaller/graphdb-free:latest
-    expose:
-      - 7200
     network_mode: host
 
   ot-node:
