@@ -1,4 +1,3 @@
-# OT-KwallaBetaInstalla
 Installs the V6 Beta Stage 1 Node
 
 **UPCOMING FEATURE: SSL**
@@ -16,5 +15,5 @@ Get this file into the /root directory on the server. Just leave it as a zip fil
 3. Execute the following command:
 
 ```
-apt install git -y && git clone https://github.com/calr0x/OT-KwallaBetaInstalla.git && cd OT-KwallaBetaInstalla && ./installer.sh
+/ot-node/installer/installer.sh
 ```
