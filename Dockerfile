@@ -36,8 +36,8 @@ RUN { \
 
 
 
-#Install forerver and nodemon
-RUN npm install forever -g
+#Install nodemon
+#RUN npm install forever -g
 RUN npm install nodemon -g
 
 
@@ -49,7 +49,7 @@ COPY . .
 #Install nppm
 RUN npm install
 RUN npm ci --only=production
-RUN npm install --save form-data
+#RUN npm install --save form-data
 
 
 
