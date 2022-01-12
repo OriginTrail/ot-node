@@ -102,3 +102,8 @@ if (!config.blockchain[0].hubContractAddress && config.blockchain[0].networkId =
         }
     }
 })();
+
+process.on('uncaughtException', (err) => {
+    console.error('There was an uncaught error', err);
+    process.exit(1);
+});
