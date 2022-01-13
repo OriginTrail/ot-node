@@ -37,7 +37,7 @@ class InsertAssertionCommand extends Command {
                 },
             );
         } catch (e) {
-            await this.handleError(handlerId, e);
+            await this.handleError(handlerId, e, 'InsertAssertionError', true);
         }
 
         return this.continueSequence(command.data, command.sequence);
@@ -52,31 +52,9 @@ class InsertAssertionCommand extends Command {
         const {
             handlerId,
         } = command.data;
-
-        await this.handleError(handlerId, err);
+        await this.handleError(handlerId, err, 'InsertAssertionError', true);
 
         return Command.empty();
-    }
-
-    async handleError(handlerId, error) {
-        this.logger.error({
-            msg: `Error while storing dataset to local database: ${error.message}`,
-            Operation_name: 'Error',
-            Event_name: 'InsertAssertionError',
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
-        await Models.handler_ids.update(
-            {
-                data: JSON.stringify({ message: error.message }),
-                status: 'FAILED',
-            },
-            {
-                where: {
-                    handlerId,
-                },
-            },
-        );
     }
 
     /**

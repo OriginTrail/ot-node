@@ -44,7 +44,7 @@ class SubmitProofsCommand extends Command {
                 },
             );
         } catch (e) {
-            await this.handleError(handlerId, e);
+            await this.handleError(handlerId, e, 'SubmitProofsError', true);
             return Command.empty();
         }
 
@@ -61,28 +61,7 @@ class SubmitProofsCommand extends Command {
             handlerId,
         } = command.data;
 
-        await this.handleError(handlerId, err);
-
-        return Command.empty();
-    }
-
-    async handleError(handlerId, error) {
-        await Models.handler_ids.update(
-            {
-                status: 'FAILED',
-            }, {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
-        );
-        this.logger.error({
-            msg: `Error while sending transaction to the blockchain. ${error.message}`,
-            Operation_name: 'Error',
-            Event_name: 'SubmitProofsError',
-            Event_value1: error.message,
-            Id_operation: handlerId,
-        });
+        await this.handleError(handlerId, err, 'SubmitProofsError', true);
 
         return Command.empty();
     }
