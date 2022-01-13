@@ -54,7 +54,7 @@ class PublishService {
         this.logger.info(`Assertion length in N-QUADS format: ${rdf.length}`);
 
         const commandSequence = [
-            // 'submitProofsCommand',
+            'submitProofsCommand',
             'sendAssertionCommand',
             'insertAssertionCommand',
         ];

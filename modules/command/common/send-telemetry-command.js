@@ -34,7 +34,7 @@ class SendTelemetryCommand extends Command {
             .then(jsonld =>
             {
                 if (jsonld)
-                    this.publishService.publish(JSON.stringify(jsonld), '.json', [], [`ot-telemetry-${Math.floor(new Date() / (60 * 1000))}`], true, null)
+                    this.publishService.publish(JSON.stringify(jsonld), '.json', [], [`ot-telemetry-${Math.floor(new Date() / (60 * 60 * 1000))}`], true, null)
             })
             .catch(e=>this.logger.error(e.message));
 
@@ -53,7 +53,7 @@ class SendTelemetryCommand extends Command {
             data: {
                 message: '',
             },
-            period: 1 * 60 * 1000, // 5 * 60 * 1000
+            period: 20 * 60 * 1000, // 5 * 60 * 1000
             transactional: false,
         };
         Object.assign(command, map);

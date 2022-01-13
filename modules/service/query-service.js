@@ -127,14 +127,14 @@ class QueryService {
     }
 
     async handleSearchAssertions(request) {
-        const {query, handlerId} = request;
-        let response = await this.dataService.searchAssertions(query, {limit: 20});
-        return { response, handlerId };
+        const {query, handlerId, load } = request;
+        let response = await this.dataService.searchAssertions(query, { });
+        return { response, handlerId, load };
     }
 
     async handleSearchAssertionsResult(request) {
         // TODO: add mutex
-        const { handlerId, response } = request;
+        const { handlerId, response, load } = request;
         const handler = await Models.handler_ids.findOne({
             where: {
                 handler_id: handlerId,
@@ -163,6 +163,11 @@ class QueryService {
                         rootHash: assertion.rootHash,
                         nodes: [object.node]
                     })
+
+                    if (load) {
+                        await this.dataService.insert(object.rdf, `did:dkg:${object.assertionId}`);
+                        this.logger.info(`Assertion ${object.assertionId} is successfully inserted`);
+                    }
                 }
             }
         }

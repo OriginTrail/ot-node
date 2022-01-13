@@ -303,6 +303,7 @@ class RpcController {
                     Id_operation,
                 });
                 req.query.query = escape(req.query.query);
+                const load = req.params.load ? req.params.load : false;
 
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
@@ -314,7 +315,7 @@ class RpcController {
 
                 let response;
                 let nodes = [];
-                response = await this.dataService.searchAssertions(req.query.query, {limit: 20}, true);
+                response = await this.dataService.searchAssertions(req.query.query, { }, true);
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${req.query.query}`);
                 let foundNodes = await this.networkService.findNodes(req.query.query, this.config.replicationFactor);
                 if (foundNodes.length < this.config.replicationFactor)
@@ -337,6 +338,7 @@ class RpcController {
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
                         query: req.query.query,
+                        load,
                         handlerId
                     }, node);
                 }
