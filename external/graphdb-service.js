@@ -4,10 +4,10 @@ const { SparqlXmlResultParser } = require('graphdb').parser;
 const { GetQueryPayload, QueryType } = require('graphdb').query;
 const { RDFMimeType } = require('graphdb').http;
 const axios = require('axios');
-const {execSync} = require('child_process');
-const jsonld = require("jsonld");
-const N3 = require("n3");
-const { BufferList } = require('bl')
+const { execSync } = require('child_process');
+const jsonld = require('jsonld');
+const N3 = require('n3');
+const { BufferList } = require('bl');
 
 class GraphdbService {
     constructor(config) {
@@ -60,7 +60,7 @@ class GraphdbService {
 
             try {
                 const stream = await this.repository.query(payload);
-                const bl = new BufferList()
+                const bl = new BufferList();
                 stream.on('data', (bindings) => {
                     bl.append(bindings);
                 });
@@ -82,7 +82,7 @@ class GraphdbService {
 
             try {
                 const stream = await this.repository.query(payload);
-                const bl = new BufferList()
+                const bl = new BufferList();
                 stream.on('data', (bindings) => {
                     bl.append(bindings);
                 });
@@ -103,7 +103,7 @@ class GraphdbService {
                 .setResponseType(RDFMimeType.BOOLEAN_RESULT);
             try {
                 const stream = await this.repository.query(payload);
-                const bl = new BufferList()
+                const bl = new BufferList();
                 stream.on('data', (bindings) => {
                     bl.append(bindings);
                 });
@@ -131,7 +131,7 @@ class GraphdbService {
     async fromRDF(assertion, context, frame) {
         const copy = await jsonld.fromRDF(assertion.join('\n'), {
             algorithm: 'URDNA2015',
-            format: 'application/n-quads'
+            format: 'application/n-quads',
         });
 
         const framed = await jsonld.frame(copy, frame);
@@ -154,52 +154,63 @@ class GraphdbService {
                 keywords: [],
             };
 
-            parser.parse(
+            const quads = [];
+            await parser.parse(
                 rdf.join('\n'),
                 (error, quad, prefixes) => {
-                    if (error)
+                    if (error) {
                         reject(error);
-                    if (quad)
-                        switch(quad._predicate.id){
-                            case "http://schema.org/hasType":
-                                result.metadata.type = JSON.parse(quad._object.id);
-                                break;
-                            case "http://schema.org/hasTimestamp":
-                                result.metadata.timestamp = JSON.parse(quad._object.id);
-                                break;
-                            case "http://schema.org/hasIssuer":
-                                result.metadata.issuer = JSON.parse(quad._object.id);
-                                break;
-                            case "http://schema.org/hasVisibility":
-                                result.metadata.visibility = !!quad._object.id.includes('true');
-                                break;
-                            case "http://schema.org/hasDataHash":
-                                result.metadata.dataHash = JSON.parse(quad._object.id);
-                                break;
-                            case "http://schema.org/hasAsset":
-                                result.assets.push(JSON.parse(quad._object.id))
-                                break;
-                            case "http://schema.org/hasKeyword":
-                                result.keywords.push(JSON.parse(quad._object.id))
-                                break;
-                            case "http://schema.org/hasSignature":
-                                result.signature = JSON.parse(quad._object.id);
-                                break;
-                            case "http://schema.org/hasRootHash":
-                                result.rootHash = JSON.parse(quad._object.id);
-                                break;
-                            case "http://schema.org/hasBlockchain":
-                                result.blockchain.name = JSON.parse(quad._object.id);
-                                break;
-                            case "http://schema.org/hasTransactionHash":
-                                result.blockchain.transactionHash = JSON.parse(quad._object.id);
-                                break;
-                            default:
-                                break;
-                        }
-                    else
-                        accept(result);
-                });
+                    }
+                    if (quad) {
+                        quads.push(quad);
+                    }
+                },
+            );
+
+            for (const quad of quads) {
+                try {
+                    switch (quad._predicate.id) {
+                    case 'http://schema.org/hasType':
+                        result.metadata.type = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasTimestamp':
+                        result.metadata.timestamp = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasIssuer':
+                        result.metadata.issuer = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasVisibility':
+                        result.metadata.visibility = !!quad._object.id.includes('true');
+                        break;
+                    case 'http://schema.org/hasDataHash':
+                        result.metadata.dataHash = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasAsset':
+                        result.assets.push(JSON.parse(quad._object.id));
+                        break;
+                    case 'http://schema.org/hasKeyword':
+                        result.keywords.push(JSON.parse(quad._object.id));
+                        break;
+                    case 'http://schema.org/hasSignature':
+                        result.signature = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasRootHash':
+                        result.rootHash = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasBlockchain':
+                        result.blockchain.name = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasTransactionHash':
+                        result.blockchain.transactionHash = JSON.parse(quad._object.id);
+                        break;
+                    default:
+                        break;
+                    }
+                } catch (e) {
+                    this.logger.error({ msg: `Error in extracting metadata: ${e}. ${e.stack}`, Event_name: 'ExtractMetadataError' });
+                }
+            }
+            accept(result);
         });
     }
 
@@ -216,7 +227,6 @@ class GraphdbService {
 
         return result.map((x) => x.replace('_:c14n0', `<did:dkg:${assertion.id}>`));
     }
-
 
     async createBlockchainMetadata(assertion) {
         const result = await this.toRDF({
@@ -266,8 +276,8 @@ class GraphdbService {
                             ${nquads}
                             }
                        }`;
-        let g = await this.execute(query);
-        return JSON.parse(g).results.bindings.map(x=>x.g.value.replace('did:dkg:',''));
+        const g = await this.execute(query);
+        return JSON.parse(g).results.bindings.map((x) => x.g.value.replace('did:dkg:', ''));
     }
 
     async searchByQuery(query, options, localQuery) {
@@ -291,7 +301,7 @@ class GraphdbService {
                         group by ?outerAssetId
                         LIMIT ${options.limit}`;
         let result = await this.execute(sparqlQuery);
-        result = JSON.parse(result).results.bindings
+        result = JSON.parse(result).results.bindings;
         return result;
     }
 
@@ -310,7 +320,7 @@ class GraphdbService {
                             LIMIT ${options.limit}`;
 
         let result = await this.execute(sparqlQuery);
-        result = JSON.parse(result).results.bindings
+        result = JSON.parse(result).results.bindings;
         return result;
     }
 
