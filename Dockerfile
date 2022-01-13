@@ -44,7 +44,7 @@ RUN npm install forever -g
 
 
 
-WORKDIR /ot-node/current
+WORKDIR /ot-node
 
 COPY . .
 
