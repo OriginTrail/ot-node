@@ -1,4 +1,5 @@
 const Command = require('../command');
+const Models = require('../../../models/index');
 
 class SendAssertionCommand extends Command {
     constructor(ctx) {
@@ -15,13 +16,13 @@ class SendAssertionCommand extends Command {
      */
     async execute(command) {
         const {
-            rdf, assertion, assets, keywords, Id_operation,
+            rdf, assertion, assets, keywords, handlerId
         } = command.data;
 
         let nodes = [];
         for (const keyword of keywords) {
             this.logger.info(
-                `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`
+                `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
             const foundNodes = await this.networkService.findNodes(
                 keyword,
@@ -38,13 +39,7 @@ class SendAssertionCommand extends Command {
 
         for (const node of nodes) {
             this.publishService.store({ rdf, id: assertion.id }, node).catch((e) => {
-                this.logger.error({
-                    msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
-                    Operation_name: 'Error',
-                    Event_name: 'SendAssertionError',
-                    Event_value1: e.message,
-                    Id_operation,
-                });
+                this.handleError(handlerId, e, `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`);
             });
         }
 
@@ -52,7 +47,26 @@ class SendAssertionCommand extends Command {
     }
 
     /**
-     * Builds default dcConvertToOtJsonCommand
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        return Command.empty();
+    }
+
+    handleError(handlerId, error, msg) {
+        this.logger.error({
+            msg,
+            Operation_name: 'Error',
+            Event_name: 'SendAssertionError',
+            Event_value1: error.message,
+            Id_operation: handlerId,
+        });
+    }
+
+    /**
+     * Builds default sendAssertionCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
     */
@@ -65,7 +79,6 @@ class SendAssertionCommand extends Command {
         Object.assign(command, map);
         return command;
     }
-
 }
 
 module.exports = SendAssertionCommand;

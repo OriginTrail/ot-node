@@ -81,10 +81,7 @@ class SendTelemetryCommand extends Command {
                 data : data
             });
         } catch (e) {
-            this.logger.error({
-                msg:`Error while sending telemetry data to Telemetry hub: ${e}`,
-                Event_name: 'SendingDataTelemetryError',
-            });
+            await this.handleError(err);
         }
 
         // Remove intermediate file
@@ -98,8 +95,21 @@ class SendTelemetryCommand extends Command {
         return Command.repeat();
     }
 
+    async recover(command, err) {
+        await this.handleError(err);
+
+        return Command.retry();
+    }
+
+    async handleError(error) {
+        this.logger.error({
+            msg:`Error while sending telemetry data to Telemetry hub: ${error}. ${error.stack}`,
+            Event_name: 'SendingDataTelemetryError',
+        });
+    }
+
     /**
-     * Builds default command
+     * Builds default sendTelemetryCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

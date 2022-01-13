@@ -1,5 +1,5 @@
-const Command = require('../command');
 const semver = require('semver');
+const Command = require('../command');
 
 class OtnodeUpdateCommand extends Command {
     constructor(ctx) {
@@ -31,17 +31,27 @@ class OtnodeUpdateCommand extends Command {
                 }
             }
         } catch (e) {
-            this.logger.error({
-                msg: `Error in update command: ${e}`,
-                Event_name: 'CheckingUpdateError',
-                Event_value1: e.message,
-            });
+            await this.handleError(e);
         }
         return Command.repeat();
     }
 
+    async recover(command, err) {
+        await this.handleError(err);
+
+        return Command.retry();
+    }
+
+    async handleError(error) {
+        this.logger.error({
+            msg: `Error in update command: ${error}. ${error.stack}`,
+            Event_name: 'CheckingUpdateError',
+            Event_value1: error.message,
+        });
+    }
+
     /**
-     * Builds default UpdateCommand
+     * Builds default otnodeUpdateCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
