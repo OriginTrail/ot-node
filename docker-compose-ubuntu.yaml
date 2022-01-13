@@ -8,7 +8,9 @@ services:
 
   ot-node:
     container_name: ot-node
-    build: .
+    build: 
+      context: .
+      dockerfile: Ubuntu.Dockerfile
     depends_on:
       - graphdb
     expose:
