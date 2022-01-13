@@ -11,6 +11,7 @@ const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const db = require('./models');
 const pjson = require('./package.json');
+const assert = require("assert");
 const defaultConfiguration = require('./config/config.json')[process.env.NODE_ENV];
 
 class OTNode {
@@ -20,20 +21,6 @@ class OTNode {
     }
 
     async start() {
-        this.initialize();
-        this.container = this.initializeDependencyContainer();
-
-        await this.initializeAutoUpdate();
-        await this.initializeDataModule();
-        await this.initializeValidationModule();
-        await this.initializeBlockchainModule();
-        await this.initializeNetworkModule();
-        await this.initializeCommandExecutor();
-        await this.initializeRpcModule();
-        // await this.initializeWatchdog();
-    }
-
-    initialize() {
         this.logger.info(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
         this.logger.info('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
         this.logger.info('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
@@ -45,6 +32,16 @@ class OTNode {
         this.logger.info(`             OriginTrail Node v${pjson.version}`);
         this.logger.info('======================================================');
         this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
+
+        this.initializeDependencyContainer();
+        await this.initializeAutoUpdate();
+        await this.initializeDataModule();
+        await this.initializeValidationModule();
+        await this.initializeBlockchainModule();
+        await this.initializeNetworkModule();
+        await this.initializeCommandExecutor();
+        await this.initializeRpcModule();
+        // await this.initializeWatchdog();
     }
 
     initializeConfiguration(userConfig) {
@@ -56,13 +53,12 @@ class OTNode {
     }
 
     initializeDependencyContainer() {
-        const container = DependencyInjection.initialize();
-        DependencyInjection.registerValue(container, 'config', this.config);
-        DependencyInjection.registerValue(container, 'logger', this.logger);
-        DependencyInjection.registerValue(container, 'constants', constants);
+        this.container = DependencyInjection.initialize();
+        DependencyInjection.registerValue(this.container, 'config', this.config);
+        DependencyInjection.registerValue(this.container, 'logger', this.logger);
+        DependencyInjection.registerValue(this.container, 'constants', constants);
 
         this.logger.info('Dependency injection module is initialized');
-        return container;
     }
 
     async initializeAutoUpdate() {
@@ -169,7 +165,7 @@ class OTNode {
     async initializeRpcModule() {
         try {
             const rpcController = this.container.resolve('rpcController');
-            await rpcController.enable();
+            await rpcController.initialize();
         } catch (e) {
             this.logger.error(`RPC service initialization failed. Error message: ${e.message}`);
         }
@@ -183,6 +179,11 @@ class OTNode {
         } catch (e) {
             this.logger.warn(`Watchdog service initialization failed. Error message: ${e.message}`);
         }
+    }
+
+    stop() {
+        this.logger.info('Stopping node...');
+        process.exit(1);
     }
 }
 

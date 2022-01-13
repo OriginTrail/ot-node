@@ -80,7 +80,7 @@ class NetworkService {
     }
 
     handleMessage(eventName, handler, options) {
-        this.network.handleMessage(eventName, handler, options);
+        this.implementation.handleMessage(eventName, handler, options);
     }
 
     async sendMessage(eventName, data, peerId) {

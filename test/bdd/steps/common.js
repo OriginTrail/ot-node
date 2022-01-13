@@ -1,18 +1,30 @@
-const { Given } = require('cucumber');
+const { Given } = require('@cucumber/cucumber');
 const OTNode = require('../../../ot-node');
+const HttpApiHelper = require('../../utilities/http-api-helper');
+const assert = require("assert");
 
 Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
 
+    const promises = [];
     for (let i = 0; i < nodeCount; i += 1) {
-        const nodeConfiguration = {
-
-        };
+        const nodeConfiguration = {};
 
         const newNode = new OTNode(nodeConfiguration);
         this.state.nodes.push(newNode);
-        newNode.start();
-        this.logger.log(`Node set up at ${newNode.options.configDir}`);
+        promises.push(newNode.start());
     }
-    done();
+    Promise.all(promises).then(() => {
+        this.logger.log('Nodes successfully started');
+        done();
+    });
+});
+
+Given(/^I call info route successfully/, { timeout: 120000 }, function (done) {
+    this.logger.log('I call info route successfully');
+    const apiHelper = new HttpApiHelper();
+    apiHelper.info('http://localhost:8900').then((result) => {
+        assert.equal(result.version, '6.0.0-beta.1.19');
+        done();
+    });
 });
