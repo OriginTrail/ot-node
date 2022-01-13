@@ -1,7 +1,5 @@
 Installs the V6 Beta Stage 1 Node
 
-**UPCOMING FEATURE: SSL**
-
 1. Visit [this link](https://www.ontotext.com/products/graphdb/graphdb-free/) and create an account. They will email you a link to download GraphDB. Look for the sentence (with the download link) that says:
 
 > "If you have issues running executable files on your machine, you may also try GraphDB as a stand-alone distributive."
