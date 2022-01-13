@@ -348,7 +348,6 @@ class RpcController {
             }
             const operationId = uuidv1();
             try {
-                throw new Error('Test error');
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
                     Event_name: 'search_start',
