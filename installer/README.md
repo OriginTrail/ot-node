@@ -8,9 +8,9 @@ Installs the V6 Beta Stage 1 Node
 
 Click the link that says **GraphDB as a stand-alone distributive** in this sentence and download the file.
 
-Get this file into the /root directory on the server. Just leave it as a zip file. My script will unzip it etc. We are working on how to get the zip file on the server easier.
+Get this file into the /root directory on the server. Just leave it as a zip file. The installer script will unzip it and install it as part of the process.
 
-2. Login to the server as root. You __cannot__ sudo and run this script for various reasons. The command "npm install" __will__ fail.
+2. Login to the server as root. You __cannot__ use sudo and run this script. The command "npm install" __will__ fail.
 
 3. Execute **one** of the following commands depending on if you have cloned the ot-node repo:
 
