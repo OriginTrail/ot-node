@@ -24,7 +24,7 @@ ADD config/papertrail.yml /etc/log_files.yml
 RUN npm install -g forever
 
 
-WORKDIR /ot-node/current
+WORKDIR /ot-node
 
 COPY . .
 
