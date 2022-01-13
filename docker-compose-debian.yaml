@@ -7,7 +7,9 @@ services:
 
   ot-node:
     container_name: ot-node
-    build: .
+    build:
+      context: ..
+      dockerfile: Debian.Dockerfile
     depends_on:
       - graphdb
     expose:
