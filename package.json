@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
   "devDependencies": {
     "@babel/core": "^7.15.5",
     "@babel/eslint-parser": "^7.16.5",
+    "@cucumber/cucumber": "^8.0.0-rc.2",
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-airbnb-base": "^14.2.1",
@@ -37,7 +38,7 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "form-data": "^4.0.0",
     "json-stable-stringify": "^1.0.1",
-    "rc": "^1.2.8"
+    "request": "^2.88.2"
   },
   "dependencies": {
     "app-root-path": "^3.0.0",
@@ -49,6 +50,7 @@
     "bn": "^1.0.5",
     "colors": "^1.4.0",
     "crypto-js": "^4.1.1",
+    "deep-extend": "^0.6.0",
     "dotenv": "^10.0.0",
     "elliptic": "^6.5.4",
     "express": "^4.17.1",
@@ -81,6 +83,7 @@
     "pino": "^7.5.1",
     "pino-multi-stream": "^6.0.0",
     "pino-pretty": "^7.2.0",
+    "rc": "^1.2.8",
     "semver": "^7.3.5",
     "sequelize": "^6.9.0",
     "sequelize-cli": "^6.3.0",
