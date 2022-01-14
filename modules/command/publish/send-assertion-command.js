@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 class SendAssertionCommand extends Command {
     constructor(ctx) {
@@ -59,7 +60,7 @@ class SendAssertionCommand extends Command {
         this.logger.error({
             msg,
             Operation_name: 'Error',
-            Event_name: 'SendAssertionError',
+            Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR,
             Event_value1: error.message,
             Id_operation: handlerId,
         });

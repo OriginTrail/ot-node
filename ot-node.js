@@ -78,7 +78,7 @@ class OTNode {
         } catch (e) {
             this.logger.error({
                 msg: `Auto update initialization failed. Error message: ${e.message}`,
-                Event_name: 'UpdateInitializationError',
+                Event_name: constants.ERROR_TYPE.UPDATE_INITIALIZATION_ERROR,
             });
         }
     }
@@ -96,7 +96,7 @@ class OTNode {
         } catch (e) {
             this.logger.error({
                 msg: `Data module initialization failed. Error message: ${e.message}`,
-                Event_name: 'DataModuleInitializationError',
+                Event_name: constants.ERROR_TYPE.DATA_MODULE_INITIALIZATION_ERROR,
             });
         }
     }
@@ -114,7 +114,7 @@ class OTNode {
         } catch (e) {
             this.logger.error({
                 msg: `Network module initialization failed. Error message: ${e.message}`,
-                Event_name: 'NetworkInitializationError',
+                Event_name: constants.ERROR_TYPE.NETWORK_INITIALIZATION_ERROR,
             });
         }
     }
@@ -131,7 +131,7 @@ class OTNode {
         } catch (e) {
             this.logger.error({
                 msg: `Validation module initialization failed. Error message: ${e.message}`,
-                Event_name: 'ValidationInitializationError',
+                Event_name: constants.ERROR_TYPE.VALIDATION_INITIALIZATION_ERROR,
             });
         }
     }
@@ -148,7 +148,7 @@ class OTNode {
         } catch (e) {
             this.logger.error({
                 msg: `Blockchain module initialization failed. Error message: ${e.message}`,
-                Event_name: 'BlockchainInitializationError',
+                Event_name: constants.ERROR_TYPE.BLOCKCHAIN_INITIALIZATION_ERROR,
             });
         }
     }
@@ -162,7 +162,7 @@ class OTNode {
         } catch (e) {
             this.logger.error({
                 msg: `Command executor initialization failed. Error message: ${e.message}`,
-                Event_name: 'CommandExecutorInitializationError',
+                Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_INITIALIZATION_ERROR,
             });
         }
     }
@@ -174,7 +174,7 @@ class OTNode {
         } catch (e) {
             this.logger.error({
                 msg: `RPC service initialization failed. Error message: ${e.message}`,
-                Event_name: 'RpcInitializationError',
+                Event_name: constants.ERROR_TYPE.RPC_INITIALIZATION_ERROR,
             });
         }
     }

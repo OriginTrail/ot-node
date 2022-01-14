@@ -1,6 +1,7 @@
 const Web3 = require('web3');
 const BigNumber = require('big-number');
 const DKGContract = require('../build/contracts/DKGcontract.json').abi;
+const constants = require('../modules/constants');
 
 class Web3BlockchainService {
     constructor(config) {
@@ -58,7 +59,7 @@ class Web3BlockchainService {
         } catch (e) {
             this.logger.error({
                 msg: `Error on checking blockchain. ${e}`,
-                Event_name: 'BlockchainHealthCheckError',
+                Event_name: constants.ERROR_TYPE.BLOCKCHAIN_CHECK_ERROR,
             });
             return false;
         }

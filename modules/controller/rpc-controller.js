@@ -7,6 +7,7 @@ const {IpDeniedError} = require('express-ipfilter');
 const path = require('path')
 const {v1: uuidv1, v4: uuidv4} = require('uuid');
 const Models = require('../../models/index');
+const constants = require('../constants');
 const pjson = require('../../package.json');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
@@ -75,14 +76,14 @@ class RpcController {
                     default:
                         return next(error)
                 }
-                this.logger.error({ msg: message, Event_name: 'Api error - Bad request: 400'});
+                this.logger.error({ msg: message, Event_name: constants.ERROR_TYPE.API_ERROR_400 });
                 return res.status(code).send(message);
             }
             return next(error)
         })
 
         this.app.use((error, req, res, next) => {
-            this.logger.error({ msg: error,  Event_name: 'Api error: 500'});
+            this.logger.error({ msg: error,  Event_name: constants.ERROR_TYPE.API_ERROR_500});
             return res.status(500).send(error)
         })
     }
@@ -243,7 +244,7 @@ class RpcController {
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
-                    Event_name: 'PublishRouteError',
+                    Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation
                 });
@@ -328,7 +329,7 @@ class RpcController {
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
-                    Event_name: 'ResolveRouteError',
+                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation
                 });
@@ -396,7 +397,7 @@ class RpcController {
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
-                    Event_name: 'SearchAssertionsRouteError',
+                    Event_name: constants.ERROR_TYPE.SEARCH_ASSERTIONS_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation
                 });
@@ -511,7 +512,7 @@ class RpcController {
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
-                    Event_name: 'SearchEntitiesRouteError',
+                    Event_name: constants.ERROR_TYPE.SEARCH_ENTITIES_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation
                 });
@@ -579,7 +580,7 @@ class RpcController {
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at query route:: ${e.message}. ${e.stack}`,
-                    Event_name: 'QueryRouteError',
+                    Event_name: constants.ERROR_TYPE.QUERY_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation
                 });
@@ -650,7 +651,7 @@ class RpcController {
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
-                    Event_name: 'ProofsRouteError',
+                    Event_name: constants.ERROR_TYPE.PROOFS_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation
                 });
@@ -776,7 +777,7 @@ class RpcController {
             } catch (e) {
                 this.logger.error({
                     msg: `Error while trying to fetch ${operation} data for handler id ${handler_id}. Error message: ${e.message}. ${e.stack}`,
-                    Event_name: 'ResultsRouteError',
+                    Event_name: constants.ERROR_TYPE.RESULTS_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: handler_id
                 });
@@ -797,7 +798,7 @@ class RpcController {
                 this.logger.emit({
                     msg: 'Telemetry logging error at node info route',
                     Operation_name: 'Error',
-                    Event_name: 'NodeInfoRouteError',
+                    Event_name: constants.ERROR_TYPE.NODE_INFO_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: 'Undefined'
                 });

@@ -9,6 +9,7 @@ const { finished } = require('stream');
 // Constructing promisify from util
 const { promisify } = require('util');
 const path = require("path");
+const constants = require('../../constants');
 // Defining finishedAsync method
 const finishedAsync = promisify(finished);
 
@@ -104,7 +105,7 @@ class SendTelemetryCommand extends Command {
     async handleError(error) {
         this.logger.error({
             msg:`Error while sending telemetry data to Telemetry hub: ${error}. ${error.stack}`,
-            Event_name: 'SendingDataTelemetryError',
+            Event_name: constants.ERROR_TYPE.SENDING_TELEMETRY_DATA_ERROR,
         });
     }
 

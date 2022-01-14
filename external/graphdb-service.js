@@ -8,6 +8,7 @@ const { execSync } = require('child_process');
 const jsonld = require('jsonld');
 const N3 = require('n3');
 const { BufferList } = require('bl');
+const constants = require('../modules/constants');
 
 class GraphdbService {
     constructor(config) {
@@ -207,7 +208,7 @@ class GraphdbService {
                         break;
                     }
                 } catch (e) {
-                    this.logger.error({ msg: `Error in extracting metadata: ${e}. ${e.stack}`, Event_name: 'ExtractMetadataError' });
+                    this.logger.error({ msg: `Error in extracting metadata: ${e}. ${e.stack}`, Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR });
                 }
             }
             accept(result);
@@ -340,7 +341,7 @@ class GraphdbService {
         } catch (e) {
             this.logger.error({
                 msg: `GraphDB not available. ${e}`,
-                Event_name: 'GraphDBCheckError',
+                Event_name: constants.ERROR_TYPE.GRAPHDB_CHECK_ERROR,
             });
             return false;
         }

@@ -1,5 +1,6 @@
 const semver = require('semver');
 const Command = require('../command');
+const constants = require('../../constants');
 
 class OtnodeUpdateCommand extends Command {
     constructor(ctx) {
@@ -45,7 +46,7 @@ class OtnodeUpdateCommand extends Command {
     async handleError(error) {
         this.logger.error({
             msg: `Error in update command: ${error}. ${error.stack}`,
-            Event_name: 'CheckingUpdateError',
+            Event_name: constants.ERROR_TYPE.CHECKING_UPDATE_ERROR,
             Event_value1: error.message,
         });
     }

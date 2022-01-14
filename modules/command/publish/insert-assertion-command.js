@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -37,7 +38,7 @@ class InsertAssertionCommand extends Command {
                 },
             );
         } catch (e) {
-            await this.handleError(handlerId, e, 'InsertAssertionError', true);
+            await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
         }
 
         return this.continueSequence(command.data, command.sequence);
@@ -52,7 +53,7 @@ class InsertAssertionCommand extends Command {
         const {
             handlerId,
         } = command.data;
-        await this.handleError(handlerId, err, 'InsertAssertionError', true);
+        await this.handleError(handlerId, err, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
 
         return Command.empty();
     }

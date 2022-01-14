@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {
@@ -44,7 +45,7 @@ class SubmitProofsCommand extends Command {
                 },
             );
         } catch (e) {
-            await this.handleError(handlerId, e, 'SubmitProofsError', true);
+            await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
             return Command.empty();
         }
 
@@ -61,7 +62,7 @@ class SubmitProofsCommand extends Command {
             handlerId,
         } = command.data;
 
-        await this.handleError(handlerId, err, 'SubmitProofsError', true);
+        await this.handleError(handlerId, err, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
 
         return Command.empty();
     }
