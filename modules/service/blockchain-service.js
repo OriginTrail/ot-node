@@ -1,36 +1,48 @@
+const Blockchain = require('../../external/web3-blockchain-service');
+
 class BlockchainService {
     constructor(ctx) {
         this.config = ctx.config;
         this.logger = ctx.logger;
     }
 
-    initialize(implementation) {
-        this.blockchain = implementation;
-        return this.blockchain.initialize(this.logger);
+    initialize() {
+        this.implementation = new Blockchain({
+            networkId: this.config.blockchain[0].networkId,
+            hubContractAddress: this.config.blockchain[0].hubContractAddress,
+            publicKey: this.config.blockchain[0].publicKey,
+            privateKey: this.config.blockchain[0].privateKey,
+            rpcEndpoints: this.config.blockchain[0].rpcEndpoints,
+        });
+        return this.implementation.initialize(this.logger);
+    }
+
+    getName() {
+        return this.implementation.getName();
     }
 
     getPrivateKey() {
-        return this.blockchain.getPrivateKey();
+        return this.implementation.getPrivateKey();
     }
 
     getPublicKey() {
-        return this.blockchain.getPublicKey();
+        return this.implementation.getPublicKey();
     }
 
     async sendProofs(assertion) {
-        return this.blockchain.sendProofs(assertion);
+        return this.implementation.sendProofs(assertion);
     }
 
     async getProofs(proofs) {
-        return this.blockchain.getProofs(proofs);
+        return this.implementation.getProofs(proofs);
     }
 
     async healthCheck() {
-        return this.blockchain.healthCheck();
+        return this.implementation.healthCheck();
     }
 
     async restartService() {
-        return this.blockchain.restartService();
+        return this.implementation.restartService();
     }
 }
 

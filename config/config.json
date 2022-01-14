@@ -16,6 +16,7 @@
       }
     ],
     "graphDatabase": {
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
@@ -25,6 +26,7 @@
       "bootstrap": []
     },
     "ipWhitelist": [
+      "::1",
       "127.0.0.1"
     ],
     "telemetryHub": {
@@ -49,6 +51,7 @@
       }
     ],
     "graphDatabase": {
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
@@ -62,6 +65,7 @@
       ]
     },
     "ipWhitelist": [
+      "::1",
       "127.0.0.1"
     ],
     "telemetryHub": {
@@ -77,6 +81,7 @@
     },
     "blockchain": [],
     "graphDatabase": {
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
@@ -86,6 +91,7 @@
       "bootstrap": []
     },
     "ipWhitelist": [
+      "::1",
       "127.0.0.1"
     ],
     "telemetryHub": {
