@@ -12,7 +12,7 @@ const configjson = require('./config/config.json');
 
 class OTNode {
     constructor(config) {
-        this.config = config;
+        this.initializeConfiguration(config)
         this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
     }
 
