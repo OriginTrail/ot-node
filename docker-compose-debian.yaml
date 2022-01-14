@@ -7,9 +7,7 @@ services:
 
   ot-node:
     container_name: ot-node
-    build:
-      context: .
-      dockerfile: Debian.Dockerfile
+    image: origintrail/ot-node:v6_release_testnet_debian
     depends_on:
       - graphdb
     expose:
