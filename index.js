@@ -3,11 +3,6 @@ const path = require('path');
 const appRootPath = require('app-root-path');
 const { exec, execSync } = require('child_process');
 const OTNode = require('./ot-node');
-// const Libp2p = require('./external/libp2p-service');
-// const KadIdentityRanking = require('./external/kad-identity-ranking-service');
-// const GraphDB = require('./external/graphdb-service');
-// const MarkleValidation = require('./external/merkle-validation-service');
-// const Blockchain = require('./external/web3-blockchain-service');
 const pjson = require('./package.json');
 const rc = require('rc');
 
@@ -20,12 +15,6 @@ const defaultConfig = JSON.parse(JSON.stringify(configjson[
 
 config = rc(pjson.name, defaultConfig);
 
-// if (!config.blockchain[0].hubContractAddress && config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
-//     config.blockchain[0].hubContractAddress = configjson[
-//         process.env.NODE_ENV &&
-//         ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-//             process.env.NODE_ENV : 'development'].blockchain[0].hubContractAddress
-// }
 
 (async () => {
     try {

@@ -35,7 +35,7 @@ Before(function (testCase, done) {
 });
 
 After(function (testCase, done) {
-    this.logger.log('Completed scenario: ', testCase.pickle.name, `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.line}`);
+    this.logger.log('Completed scenario: ', testCase.pickle.name, `${testCase.gherkinDocument.uri}:${testCase.gherkinDocument.feature.location.line}`);
     this.logger.log('with status: ', testCase.result.status, ' and duration: ', testCase.result.duration, ' miliseconds.');
 
     if (testCase.result.status === 'failed') {
@@ -60,7 +60,7 @@ After(function (testCase, done) {
                 }
             });
         }));
-    this.state.nodes.forEach((node) => (node.isRunning && node.stop()));
+    this.state.nodes.forEach((node) => (node.stop()));
     this.state.bootstraps.forEach((node) => (node.isRunning && node.stop()));
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {

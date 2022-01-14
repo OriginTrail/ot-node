@@ -1,5 +1,5 @@
 if (!process.env.NODE_ENV) {
-    // Environment not set. Use the production.
+    // Environment not set. Use the development.
     process.env.NODE_ENV = 'development';
 }
 const { execSync } = require('child_process');
@@ -11,7 +11,6 @@ const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const db = require('./models');
 const pjson = require('./package.json');
-const assert = require("assert");
 const defaultConfiguration = require('./config/config.json')[process.env.NODE_ENV];
 
 class OTNode {

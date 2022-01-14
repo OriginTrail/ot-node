@@ -16,7 +16,7 @@
       }
     ],
     "graphDatabase": {
-      "name": "ot_node",
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
@@ -51,7 +51,7 @@
       }
     ],
     "graphDatabase": {
-      "name": "ot_node",
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
