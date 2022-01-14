@@ -1,7 +1,7 @@
 const { Given } = require('@cucumber/cucumber');
+const assert = require('assert');
 const OTNode = require('../../../ot-node');
 const HttpApiHelper = require('../../utilities/http-api-helper');
-const assert = require("assert");
 
 Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);

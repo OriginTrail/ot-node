@@ -29,37 +29,7 @@ config = rc(pjson.name, defaultConfig);
 
 (async () => {
     try {
-        const node = new OTNode(
-        //     {
-        //     autoUpdate: config.autoUpdate,
-        //     rpcPort: config.rpcPort,
-        //     whitelist: config.ipWhitelist,
-        //     network: {
-        //         implementation: new Libp2p({
-        //             bootstrapMultiAddress: config.network.bootstrap,
-        //         }),
-        //         ranking: {
-        //             'kad-identity': new KadIdentityRanking(),
-        //         },
-        //     },
-        //     data: new GraphDB({
-        //         repositoryName: 'node0',
-        //         username: config.graphDatabase.username,
-        //         password: config.graphDatabase.password,
-        //     }),
-        //     validation: new MarkleValidation(),
-        //     blockchain: new Blockchain({
-        //         networkId: config.blockchain[0].networkId,
-        //         hubContractAddress: config.blockchain[0].hubContractAddress,
-        //         publicKey: config.blockchain[0].publicKey,
-        //         privateKey: config.blockchain[0].privateKey,
-        //         rpcEndpoints: config.blockchain[0].rpcEndpoints,
-        //     }),
-        //     telemetryHub: config.telemetryHub,
-        //     logLevel: config.logLevel,
-        //     replicationFactor: 3,
-        // }
-        );
+        const node = new OTNode();
         await node.start();
     } catch (e) {
         console.error(`Error occurred while starting new version, error message: ${e}`);
