@@ -1,17 +1,14 @@
-if (!process.env.NODE_ENV) {
-    // Environment not set. Use the development.
-    process.env.NODE_ENV = 'development';
-}
 const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
 const AutoGitUpdate = require('auto-git-update');
-const rc = require('rc');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const db = require('./models');
 const pjson = require('./package.json');
-const defaultConfiguration = require('./config/config.json')[process.env.NODE_ENV];
+const rc = require('rc');
+const configjson = require('./config/config.json');
+
 
 class OTNode {
     constructor(userConfig) {
@@ -30,7 +27,9 @@ class OTNode {
         this.logger.info('======================================================');
         this.logger.info(`             OriginTrail Node v${pjson.version}`);
         this.logger.info('======================================================');
-        this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
+        this.logger.info(`Node is running in ${process.env.NODE_ENV &&
+        ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+            process.env.NODE_ENV : 'development'} environment`);
 
         this.initializeDependencyContainer();
         await this.initializeAutoUpdate();
@@ -39,15 +38,28 @@ class OTNode {
         await this.initializeBlockchainModule();
         await this.initializeNetworkModule();
         await this.initializeCommandExecutor();
+        await this.initializeTelemetryHubModule();
         await this.initializeRpcModule();
         // await this.initializeWatchdog();
     }
 
     initializeConfiguration(userConfig) {
+        const defaultConfig = JSON.parse(JSON.stringify(configjson[
+            process.env.NODE_ENV &&
+            ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+                process.env.NODE_ENV : 'development']));
+
         if (userConfig) {
-            this.config = DeepExtend(defaultConfiguration, userConfig);
+            this.config = DeepExtend(defaultConfig, userConfig);
         } else {
-            this.config = rc(pjson.name, defaultConfiguration);
+            this.config = rc(pjson.name, defaultConfig);
+
+            if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
+                this.config.blockchain[0].hubContractAddress = configjson[
+                    process.env.NODE_ENV &&
+                    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+                        process.env.NODE_ENV : 'development'].blockchain[0].hubContractAddress;
+            }
         }
     }
 
@@ -167,6 +179,16 @@ class OTNode {
             await rpcController.initialize();
         } catch (e) {
             this.logger.error(`RPC service initialization failed. Error message: ${e.message}`);
+        }
+    }
+
+    async initializeTelemetryHubModule() {
+        try {
+            const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
+            telemetryHubModuleManager.initialize();
+            this.logger.info(`Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`);
+        } catch (e) {
+            this.logger.error(`Telemetry hub module initialization failed. Error message: ${e.message}`);
         }
     }
 

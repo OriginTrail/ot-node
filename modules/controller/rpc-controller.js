@@ -161,67 +161,11 @@ class RpcController {
 
                 const fileContent = req.files.file.data;
                 const fileExtension = path.extname(req.files.file.name).toLowerCase();
-                req.body.assets = [...new Set(JSON.parse(req.body.assets.toLowerCase()))];
+                const assets = [...new Set(JSON.parse(req.body.assets.toLowerCase()))];
                 let visibility = JSON.parse(!!req.body.visibility);
                 let keywords = req.body.keywords ? JSON.parse(req.body.keywords.toLowerCase()) : [];
 
-                let {
-                    assertion,
-                    rdf
-                } = await this.dataService.canonize(fileContent, fileExtension);
-
-                assertion.metadata.issuer = this.validationService.getIssuer();
-                assertion.metadata.visibility = visibility;
-                assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
-                assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
-                assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
-                assertion.signature = this.validationService.sign(assertion.id);
-
-                keywords.push(assertion.metadata.type);
-                keywords = [...new Set(keywords.concat(req.body.assets))];
-
-                const assets = [];
-                for (const asset of req.body.assets) {
-                    assets.push(this.validationService.calculateHash(asset + assertion.metadata.type + assertion.metadata.issuer));
-                }
-
-                rdf = await this.dataService.appendMetadata(rdf, assertion);
-                assertion.rootHash = this.validationService.calculateRootHash(rdf);
-                rdf = await this.dataService.appendConnections(rdf, {
-                    assertionId: assertion.id,
-                    assets,
-                    keywords,
-                    rootHash: assertion.rootHash
-                });
-
-                if (!assertion.metadata.visibility) {
-                    rdf = rdf.filter(x => x.startsWith('<did:dkg:'));
-                }
-
-                this.logger.info(`Assertion ID: ${assertion.id}`);
-                this.logger.info(`Assertion metadataHash: ${assertion.metadataHash}`);
-                this.logger.info(`Assertion dataHash: ${assertion.metadata.dataHash}`);
-                this.logger.info(`Assertion rootHash: ${assertion.rootHash}`);
-                this.logger.info(`Assertion signature: ${assertion.signature}`);
-                this.logger.info(`Assertion metadata: ${JSON.stringify(assertion.metadata)}`);
-                // this.logger.info(`Assertion metadata: ${JSON.stringify(assertion.data)}`);
-                this.logger.info(`Keywords: ${keywords}`);
-                this.logger.info(`Assets: ${assets}`);
-                this.logger.info(`Assertion length in N-QUADS format: ${rdf.length}`);
-
-                const commandSequence = [
-                    'submitProofsCommand',
-                    'sendAssertionCommand',
-                    'insertAssertionCommand',
-                ];
-
-                await this.commandExecutor.add({
-                    name: commandSequence[0],
-                    sequence: commandSequence.slice(1),
-                    delay: 0,
-                    data: {rdf, assertion, assets, keywords, handlerId},
-                    transactional: false,
-                });
+                const assertion = await this.publishService.publish(fileContent, fileExtension, assets, keywords, visibility, handlerId);
 
                 const handlerData = {
                     id: assertion.id,
@@ -359,6 +303,7 @@ class RpcController {
                     Id_operation,
                 });
                 req.query.query = escape(req.query.query);
+                const load = req.params.load ? req.params.load : false;
 
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
@@ -370,7 +315,7 @@ class RpcController {
 
                 let response;
                 let nodes = [];
-                response = await this.dataService.searchAssertions(req.query.query, {limit: 20}, true);
+                response = await this.dataService.searchAssertions(req.query.query, { }, true);
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${req.query.query}`);
                 let foundNodes = await this.networkService.findNodes(req.query.query, this.config.replicationFactor);
                 if (foundNodes.length < this.config.replicationFactor)
@@ -393,6 +338,7 @@ class RpcController {
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
                         query: req.query.query,
+                        load,
                         handlerId
                     }, node);
                 }
