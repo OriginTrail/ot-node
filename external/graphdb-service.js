@@ -289,7 +289,7 @@ class GraphdbService {
                             }
                         }
                         group by ?outerAssetId
-                        LIMIT ${options.limit}`;
+                        ${options.limit ? `LIMIT ${options.limit}`: ''}`;
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings
         return result;
