@@ -3,14 +3,10 @@ services:
   graphdb:
     container_name: graphdb
     image: khaller/graphdb-free:latest
-    
     network_mode: host
 
   ot-node:
-    container_name: ot-node
-    build: 
-      context: .
-      dockerfile: Ubuntu.Dockerfile
+    image: origintrail/ot-node:v6_release_testnet_ubuntu
     depends_on:
       - graphdb
     expose:
