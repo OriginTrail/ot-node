@@ -1,10 +1,4 @@
-const {v1: uuidv1} = require('uuid');
-const jsonld = require("jsonld");
-const constants = require("constants");
-const {sort} = require("fast-sort");
-const N3 = require('n3');
-const Bootstrap = require("libp2p-bootstrap");
-const Libp2p = require("libp2p");
+const { v1: uuidv1 } = require('uuid');
 const constants = require('../constants');
 
 class DataService {
