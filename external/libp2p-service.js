@@ -12,8 +12,7 @@ const PeerId = require("peer-id");
 const fs = require("fs");
 const {time} = require("streaming-iterables");
 const { BufferList } = require('bl')
-
-
+const constants = require('../modules/constants');
 
 const initializationObject = {
     addresses: {
@@ -192,7 +191,7 @@ class Libp2pService {
             } catch (e) {
                 this.logger.error({
                    msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${data}`,
-                   Event_name: 'Libp2pHandleMessageError',
+                   Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
                 await pipe(
                     [JSON.stringify(['ack'])],

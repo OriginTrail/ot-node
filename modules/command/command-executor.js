@@ -53,7 +53,7 @@ class CommandExecutor {
             } catch (e) {
                 this.logger.error({
                     msg: `Something went really wrong! OT-node shutting down... ${e}`,
-                    Event_name: 'CommandExecutorError',
+                    Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_ERROR,
                 });
                 process.exit(1);
             }
@@ -178,7 +178,7 @@ class CommandExecutor {
         } catch (e) {
             this.logger.error({
                 msg: `Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`,
-                Event_name: 'CommandFailedError',
+                Event_name: constants.ERROR_TYPE.COMMAND_FAILED_ERROR,
             });
             try {
                 const result = await this._handleError(command, handler, e);

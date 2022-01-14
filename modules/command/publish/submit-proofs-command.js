@@ -1,5 +1,6 @@
 const Command = require('../command');
-const Models = require("../../../models/index");
+const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {
@@ -17,13 +18,14 @@ class SubmitProofsCommand extends Command {
         const { assertion, rdf, handlerId, operationId } = command.data;
         try {
             this.logger.info(`Sending transaction to the blockchain: createAssertionRecord(${assertion.id},${assertion.rootHash})`);
-            const {transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
+            const { transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
             this.logger.info(`Transaction hash is ${transactionHash} on ${blockchain}`);
 
             command.data.assertion.blockchain = {
                 name: blockchain,
-                transactionHash
-            }
+                transactionHash,
+            };
+
             command.data.rdf = await this.dataService.appendBlockchainMetadata(rdf, assertion);
 
             const handler = await Models.handler_ids.findOne({
@@ -31,35 +33,19 @@ class SubmitProofsCommand extends Command {
                     handler_id: handlerId,
                 },
             });
-            let handlerData = JSON.parse(handler.data);
+            const handlerData = JSON.parse(handler.data);
             handlerData.blockchain = command.data.assertion.blockchain;
             await Models.handler_ids.update(
                 {
-                    data: JSON.stringify(handlerData)
-                },{
+                    data: JSON.stringify(handlerData),
+                }, {
                     where: {
                         handler_id: handlerId,
                     },
                 },
             );
-
         } catch (e) {
-            await Models.handler_ids.update(
-                {
-                    status: 'FAILED',
-                },{
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
-            this.logger.error({
-                msg: `Error while sending transaction to the blockchain. ${e.message}`,
-                Operation_name: 'Error',
-                Event_name: 'SubmitProofsError',
-                Event_value1: e.message,
-                Id_operation: operationId,
-            });
+            await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
 
             return Command.empty();
         }
@@ -68,7 +54,22 @@ class SubmitProofsCommand extends Command {
     }
 
     /**
-     * Builds default dcConvertToOtJsonCommand
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            handlerId,
+        } = command.data;
+
+        await this.handleError(handlerId, err, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
+
+        return Command.empty();
+    }
+
+    /**
+     * Builds default submitProofsCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

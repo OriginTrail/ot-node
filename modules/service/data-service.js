@@ -1,4 +1,5 @@
 const { v1: uuidv1 } = require('uuid');
+const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 
 class DataService {
@@ -81,7 +82,7 @@ class DataService {
                 if (array.find(x => !x.includes(`<did:dkg:${assertion.id}>`))) {
                     this.logger.error({
                         msg: 'Invalid assertion in named graph',
-                        Event_name: 'VerifyAssertionError',
+                        Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
                         Event_value1: 'Invalid assertion in named graph',
                     });
                     resolve(false);
@@ -101,7 +102,7 @@ class DataService {
                 if (assertion.id !== calculatedAssertionId) {
                     this.logger.error({
                         msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
-                        Event_name: 'VerifyAssertionError',
+                        Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
                         Event_value1: 'Assertion ID not matching calculated',
                     });
                     return resolve(false);
@@ -110,7 +111,7 @@ class DataService {
                 if (!this.validationService.verify(assertion.id, assertion.signature, assertion.metadata.issuer)) {
                     this.logger.error({
                         msg: 'Signature and issuer don\'t match',
-                        Event_name: 'VerifyAssertionError',
+                        Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
                         Event_value1: 'Signature and issuer not matching',
                     });
                     return resolve(false);
@@ -121,7 +122,7 @@ class DataService {
                     if (assertion.rootHash !== calculateRootHash) {
                         this.logger.error({
                             msg: `Root hash ${assertion.rootHash} doesn't match with calculated ${calculateRootHash}`,
-                            Event_name: 'VerifyAssertionError',
+                            Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
                             Event_value1: 'Root hash not matching calculated',
                         });
                         return resolve(false);

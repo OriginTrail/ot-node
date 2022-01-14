@@ -1,5 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
@@ -37,20 +38,28 @@ class InsertAssertionCommand extends Command {
                 },
             );
         } catch (e) {
-            this.logger.error({
-                msg: `Error while storing dataset to local database: ${e.message}`,
-                Operation_name: 'Error',
-                Event_name: 'InsertAssertionError',
-                Event_value1: e.message,
-                Id_operation: operationId,
-            });
+            await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
         }
 
         return this.continueSequence(command.data, command.sequence);
     }
 
     /**
-     * Builds default dcConvertToOtJsonCommand
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            handlerId,
+        } = command.data;
+        await this.handleError(handlerId, err, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
+
+        return Command.empty();
+    }
+
+    /**
+     * Builds default insertAssertionCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
