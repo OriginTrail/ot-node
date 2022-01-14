@@ -33,14 +33,29 @@ class RpcController {
         }));
     }
 
+    async initialize() {
+        this.startListeningForRpcNetworkCalls();
+
+        this.initializeAuthenticationMiddleware();
+        this.startListeningForRpcApiCalls();
+        await this.initializeErrorMiddleware();
+        if (this.sslEnabled) {
+            await this.httpsServer.listen(this.config.rpcPort);
+        } else {
+            await this.app.listen(this.config.rpcPort);
+        }
+
+        this.logger.info(`RPC module enabled, server running on port ${this.config.rpcPort}`);
+    }
+
     initializeAuthenticationMiddleware() {
         const formattedWhitelist = [];
         const ipv6prefix = '::ffff:';
-        for (let i = 0; i < this.config.whitelist.length; i += 1) {
-            if (!this.config.whitelist[i].includes(':')) {
-                formattedWhitelist.push(ipv6prefix.concat(this.config.whitelist[i]));
+        for (let i = 0; i < this.config.ipWhitelist.length; i += 1) {
+            if (!this.config.ipWhitelist[i].includes(':')) {
+                formattedWhitelist.push(ipv6prefix.concat(this.config.ipWhitelist[i]));
             } else {
-                formattedWhitelist.push(this.config.whitelist[i]);
+                formattedWhitelist.push(this.config.ipWhitelist[i]);
             }
         }
 
@@ -63,8 +78,8 @@ class RpcController {
         })
     }
 
-    initializeErrorMiddleware() {
-        this.app.use((error, req, res, next) => {
+    async initializeErrorMiddleware() {
+        await this.app.use((error, req, res, next) => {
             let code, message;
             if (error && error.code) {
                 switch (error.code) {
@@ -81,7 +96,7 @@ class RpcController {
             return next(error)
         })
 
-        this.app.use((error, req, res, next) => {
+        await this.app.use((error, req, res, next) => {
             this.logger.error(error)
             return res.status(500).send(error)
         })
@@ -96,21 +111,6 @@ class RpcController {
                 cert: fs.readFileSync('/root/certs/fullchain.pem'),
             }, this.app);
         }
-    }
-
-    enable() {
-        this.startListeningForRpcNetworkCalls();
-
-        this.initializeAuthenticationMiddleware();
-        this.startListeningForRpcApiCalls();
-        this.initializeErrorMiddleware();
-        if (this.sslEnabled) {
-            this.httpsServer.listen(this.config.rpcPort);
-        } else {
-            this.app.listen(this.config.rpcPort);
-        }
-
-        this.logger.info(`RPC module enabled, server running on port ${this.config.rpcPort}`);
     }
 
     startListeningForRpcNetworkCalls() {
