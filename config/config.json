@@ -31,6 +31,7 @@
     ],
     "telemetryHub": {
       "enabled": false,
+      "packages": ["ot-telemetry-collector"],
       "url": ""
     }
   },
@@ -70,6 +71,7 @@
     ],
     "telemetryHub": {
       "enabled": true,
+      "packages": ["ot-telemetry-collector"],
       "url": "https://polaris.delta.origin-trail.network/metrics/"
     }
   },
@@ -96,6 +98,7 @@
     ],
     "telemetryHub": {
       "enabled": false,
+      "packages": ["ot-telemetry-collector"],
       "url": ""
     }
   }

@@ -114,7 +114,6 @@ class DataService {
                         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
                         Event_value1: 'Signature and issuer not matching',
                     });
-
                     return resolve(false);
                 }
 

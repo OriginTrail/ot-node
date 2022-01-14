@@ -3,18 +3,6 @@ const path = require('path');
 const appRootPath = require('app-root-path');
 const { exec, execSync } = require('child_process');
 const OTNode = require('./ot-node');
-const pjson = require('./package.json');
-const rc = require('rc');
-
-const configjson = require('./config/config.json');
-let config = JSON.parse(fs.readFileSync('./.origintrail_noderc', 'utf8'));
-const defaultConfig = JSON.parse(JSON.stringify(configjson[
-    process.env.NODE_ENV &&
-    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-        process.env.NODE_ENV : 'development']));
-
-config = rc(pjson.name, defaultConfig);
-
 
 (async () => {
     try {
@@ -65,6 +53,6 @@ config = rc(pjson.name, defaultConfig);
 })();
 
 process.on('uncaughtException', (err) => {
-    console.error('There was an uncaught error', err);
+    console.error('Something went really wrong! OT-node shutting down...', err);
     process.exit(1);
 });

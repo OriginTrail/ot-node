@@ -15,7 +15,7 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const {
-            assertion, rdf, keywords, assets, handlerId,
+            assertion, rdf, keywords, assets, handlerId, operationId,
         } = command.data;
 
         try {

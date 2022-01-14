@@ -2,6 +2,7 @@ const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
 
+
 class SendAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -10,7 +11,7 @@ class SendAssertionCommand extends Command {
         this.networkService = ctx.networkService;
         this.publishService = ctx.publishService;
     }
-
+  
     /**
      * Executes command and produces one or more events
      * @param command
@@ -80,6 +81,7 @@ class SendAssertionCommand extends Command {
         Object.assign(command, map);
         return command;
     }
+
 }
 
 module.exports = SendAssertionCommand;

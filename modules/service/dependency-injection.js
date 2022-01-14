@@ -6,7 +6,7 @@ class DependencyInjection {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        container.loadModules(['modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/command/**/*.js'], {
+        container.loadModules(['modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/command/**/*.js', 'modules/manager/**/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,

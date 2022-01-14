@@ -15,7 +15,7 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { assertion, rdf, handlerId } = command.data;
+        const { assertion, rdf, handlerId, operationId } = command.data;
         try {
             this.logger.info(`Sending transaction to the blockchain: createAssertionRecord(${assertion.id},${assertion.rootHash})`);
             const { transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
@@ -46,6 +46,7 @@ class SubmitProofsCommand extends Command {
             );
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
+
             return Command.empty();
         }
 
