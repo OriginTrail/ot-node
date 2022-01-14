@@ -14,7 +14,7 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { assertion, rdf, handlerId } = command.data;
+        const { assertion, rdf, handlerId, operationId } = command.data;
         try {
             this.logger.info(`Sending transaction to the blockchain: createAssertionRecord(${assertion.id},${assertion.rootHash})`);
             const {transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
@@ -53,13 +53,12 @@ class SubmitProofsCommand extends Command {
                     },
                 },
             );
-            this.logger.error(`Error while sending transaction to the blockchain. ${e.message}`);
-            this.logger.emit({
-                msg: 'Telemetry logging error at submitting proofs to blockchain command',
+            this.logger.error({
+                msg: `Error while sending transaction to the blockchain. ${e.message}`,
                 Operation_name: 'Error',
                 Event_name: 'SubmitProofsError',
                 Event_value1: e.message,
-                Id_operation: 'Undefined',
+                Id_operation: operationId,
             });
 
             return Command.empty();

@@ -77,9 +77,13 @@ class DataService {
     verifyAssertion(assertion, rdf) {
         return new Promise(async (resolve) => {
             try {
-                const array = rdf.join('\n').match(/<did:dkg:(.)+>/gm);
-                if (array.find((x) => !x.includes(`<did:dkg:${assertion.id}>`))) {
-                    this.logger.error('Invalid assertion in named graph');
+                const array = rdf.join('\n').match(/<did:dkg:(.)+>/gm)
+                if (array.find(x => !x.includes(`<did:dkg:${assertion.id}>`))) {
+                    this.logger.error({
+                        msg: 'Invalid assertion in named graph',
+                        Event_name: 'VerifyAssertionError',
+                        Event_value1: 'Invalid assertion in named graph',
+                    });
                     resolve(false);
                 }
 
@@ -95,19 +99,31 @@ class DataService {
                 const metadataHash = this.validationService.calculateHash(assertion.metadata);
                 const calculatedAssertionId = this.validationService.calculateHash(metadataHash + dataHash);
                 if (assertion.id !== calculatedAssertionId) {
-                    this.logger.error(`Assertion Id ${assertion.id} doesn\'t match with calculated ${calculatedAssertionId}`);
+                    this.logger.error({
+                        msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
+                        Event_name: 'VerifyAssertionError',
+                        Event_value1: 'Assertion ID not matching calculated',
+                    });
                     return resolve(false);
                 }
 
                 if (!this.validationService.verify(assertion.id, assertion.signature, assertion.metadata.issuer)) {
-                    this.logger.error('Signature and issuer don\'t match');
+                    this.logger.error({
+                        msg: 'Signature and issuer don\'t match',
+                        Event_name: 'VerifyAssertionError',
+                        Event_value1: 'Signature and issuer not matching',
+                    });
                     return resolve(false);
                 }
 
                 if (assertion.metadata.visibility) {
                     const calculateRootHash = this.validationService.calculateRootHash(rdf);
                     if (assertion.rootHash !== calculateRootHash) {
-                        this.logger.error(`Root hash ${assertion.rootHash} doesn\'t match with calculated ${calculateRootHash}`);
+                        this.logger.error({
+                            msg: `Root hash ${assertion.rootHash} doesn't match with calculated ${calculateRootHash}`,
+                            Event_name: 'VerifyAssertionError',
+                            Event_value1: 'Root hash not matching calculated',
+                        });
                         return resolve(false);
                     }
                 }

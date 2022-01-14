@@ -51,3 +51,8 @@ const OTNode = require('./ot-node');
         }
     }
 })();
+
+process.on('uncaughtException', (err) => {
+    console.error('Something went really wrong! OT-node shutting down...', err);
+    process.exit(1);
+});

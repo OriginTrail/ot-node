@@ -90,14 +90,14 @@ class RpcController {
                     default:
                         return next(error)
                 }
-                this.logger.error(message)
+                this.logger.error({ msg: message, Event_name: 'Api error - Bad request: 400'});
                 return res.status(code).send(message);
             }
             return next(error)
         })
 
-        await this.app.use((error, req, res, next) => {
-            this.logger.error(error)
+        this.app.use((error, req, res, next) => {
+            this.logger.error({ msg: error,  Event_name: 'Api error: 500'});
             return res.status(500).send(error)
         })
     }
@@ -142,13 +142,13 @@ class RpcController {
             if (!req.files || !req.files.file || !req.body.assets) {
                 return next({code: 400, message: 'File, assets, and keywords are required fields.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of publish command',
                     Event_name: 'publish_start',
                     Operation_name: 'publish',
-                    Id_operation
+                    Id_operation: operationId
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -185,20 +185,18 @@ class RpcController {
                 );
 
             } catch (e) {
-                this.logger.error(`Unexpected error at publish route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at publish route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
                     Event_name: 'PublishRouteError',
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of publish command',
                     Event_name: 'publish_end',
                     Operation_name: 'publish',
-                    Id_operation
+                    Id_operation: operationId
                 });
             }
         });
@@ -207,13 +205,13 @@ class RpcController {
             if (!req.query.ids) {
                 return next({code: 400, message: 'Param ids is required.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of resolve command',
                     Event_name: 'resolve_start',
                     Operation_name: 'resolve',
-                    Id_operation,
+                    Id_operation: operationId,
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -272,20 +270,18 @@ class RpcController {
                 );
 
             } catch (e) {
-                this.logger.error(`Unexpected error at resolve route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at resolve route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
                     Event_name: 'ResolveRouteError',
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of resolve command',
                     Event_name: 'resolve_end',
                     Operation_name: 'resolve',
-                    Id_operation
+                    Id_operation: operationId
                 });
             }
         });
@@ -294,13 +290,13 @@ class RpcController {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query is necessary.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
                     Event_name: 'search_start',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
                 req.query.query = escape(req.query.query);
                 const load = req.params.load ? req.params.load : false;
@@ -344,20 +340,18 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Unexpected error at search assertions route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at search assertions route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
                     Event_name: 'SearchAssertionsRouteError',
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
                     Event_name: 'search_end',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
             }
         });
@@ -366,13 +360,13 @@ class RpcController {
             if ((!req.query.query && !req.query.ids) || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query or ids are necessary.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
                     Event_name: 'search_start',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
 
                 let query = escape(req.query.query), ids, issuers, types, prefix = req.query.prefix,
@@ -461,20 +455,18 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Unexpected error at search entities route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at search entities route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
                     Event_name: 'SearchEntitiesRouteError',
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
                     Event_name: 'search_end',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
             }
         });
@@ -487,13 +479,13 @@ class RpcController {
             if (req.query.type !== 'construct') {
                 return next({code: 400, message: 'Unallowed query type, currently supported types: construct'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of query command',
                     Event_name: 'query_start',
                     Operation_name: 'query',
-                    Id_operation,
+                    Id_operation: operationId,
                     Event_value1: req.query.type
                 });
 
@@ -531,20 +523,18 @@ class RpcController {
                     throw e;
                 }
             } catch (e) {
-                this.logger.error(`Unexpected error at query route:: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at query route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at query route:: ${e.message}. ${e.stack}`,
                     Event_name: 'QueryRouteError',
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of query command',
                     Event_name: 'query_end',
                     Operation_name: 'query',
-                    Id_operation,
+                    Id_operation: operationId,
                     Event_value1: req.query.type
                 });
             }
@@ -554,13 +544,13 @@ class RpcController {
             if (!req.body.nquads) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of proofs command',
                     Event_name: 'proofs_start',
                     Operation_name: 'proofs',
-                    Id_operation
+                    Id_operation: operationId
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -604,20 +594,18 @@ class RpcController {
                     },
                 );
             } catch (e) {
-                this.logger.error(`Unexpected error at proofs route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at proofs route',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
                     Event_name: 'ProofsRouteError',
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of proofs command',
                     Event_name: 'proofs_end',
                     Operation_name: 'proofs',
-                    Id_operation
+                    Id_operation: operationId
                 });
             }
         });
@@ -732,10 +720,8 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Error while trying to fetch ${operation} data for handler id ${handler_id}. Error message: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at fetching results',
-                    Operation_name: 'Error',
+                this.logger.error({
+                    msg: `Error while trying to fetch ${operation} data for handler id ${handler_id}. Error message: ${e.message}. ${e.stack}`,
                     Event_name: 'ResultsRouteError',
                     Event_value1: e.message,
                     Id_operation: handler_id

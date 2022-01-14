@@ -190,8 +190,10 @@ class Libp2pService {
                     }
                 }
             } catch (e) {
-                this.logger.error(e, e.stack);
-                this.logger.error('Data received:', data);
+                this.logger.error({
+                   msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${data}`,
+                   Event_name: 'Libp2pHandleMessageError',
+                });
                 await pipe(
                     [JSON.stringify(['ack'])],
                     stream

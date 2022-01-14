@@ -38,6 +38,7 @@ class SendTelemetryCommand extends Command {
             })
             .catch(e=>this.logger.error(e.message));
 
+
         return Command.repeat();
     }
 
