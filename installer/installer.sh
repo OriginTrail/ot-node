@@ -109,6 +109,19 @@ fi
 
 systemctl daemon-reload
 
+echo -n "Enabling GraphDB service on boot: "
+
+OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling GraphDB service on boot."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Starting GraphDB: "
 
 OUTPUT=$(systemctl start graphdb >/dev/null 2>&1)
