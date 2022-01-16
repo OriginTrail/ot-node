@@ -342,7 +342,7 @@ read -p "Enter the operational wallet address: " NODE_WALLET
 echo "Node wallet: $NODE_WALLET"
 
 read -p "Enter the private key: " NODE_PRIVATE_KEY
-echo "Node wallet: $NODE_PRIVATE_KEY"
+echo "Node private key: $NODE_PRIVATE_KEY"
 
 cp $OTNODE_DIR/.origintrail_noderc_example $OTNODE_DIR/.origintrail_noderc
 
