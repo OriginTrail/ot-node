@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  graphdb:
+    container_name: graphdb
+    image: khaller/graphdb-free:latest
+    network_mode: host
+
+  ot-node:
+    image: origintrail/ot-node:v6_release_testnet_ubuntu
+    depends_on:
+      - graphdb
+    expose:
+      - 8900
+      - 9000
+    command: >
+       bash -c "
+        service mysql restart && 
+        forever index.js                
+        "
+    volumes:
+      - .origintrail_noderc:/ot-node/.origintrail_noderc
+      - ~/certs/:/root/certs/
+    network_mode: host
+    
