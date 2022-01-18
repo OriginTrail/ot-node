@@ -30,8 +30,9 @@ COPY . .
 
 
 #Install npm
-RUN npm ci --only=production
 RUN npm install
+RUN npm ci --only=production
+
 
 
 #Intialize mysql

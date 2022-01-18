@@ -19,7 +19,7 @@ services:
         forever index.js                
         "
     volumes:
-      - .origintrail_noderc:/ot-node/.origintrail_noderc
+      - ${PWD}/.origintrail_noderc:/ot-node/.origintrail_noderc
       - ~/certs/:/root/certs/
     network_mode: host
     
