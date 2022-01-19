@@ -27,7 +27,7 @@ services:
       - 8900
       - 9000
     command: >
-       bash -c "
+       sh -c "
         npx sequelize --config=./config/sequelizeConfig.js db:migrate && 
         forever index.js                
         "
