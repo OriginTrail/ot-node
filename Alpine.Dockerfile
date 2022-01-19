@@ -17,5 +17,5 @@ COPY . .
 RUN npm install
 RUN npm ci --only=production
 RUN npm install --save form-data
-RUN npm install pm2 -g
+
 
