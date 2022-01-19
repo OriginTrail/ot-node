@@ -28,6 +28,7 @@ RUN apt-get install -y lsb-release
 RUN apt-get install -y wget gnupg curl
 RUN curl -LO https://dev.mysql.com/get/mysql-apt-config_0.8.20-1_all.deb
 RUN dpkg -i ./mysql-apt-config_0.8.20-1_all.deb
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29
 
 
 RUN { \
