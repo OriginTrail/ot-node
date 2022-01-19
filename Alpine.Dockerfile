@@ -1,5 +1,7 @@
 FROM mhart/alpine-node:14
 
+LABEL maintainer="OriginTrail"
+ENV NODE_ENV=testnet
 
 #Install Papertrail
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
