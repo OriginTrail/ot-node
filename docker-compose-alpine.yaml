@@ -26,12 +26,12 @@ services:
     expose:
       - 8900
       - 9000
-    command: >
-       sh -c "
-        sleep 10 &&
-        npx sequelize --config=./config/sequelizeConfig.js db:migrate && 
-        forever index.js                
-        "
+    command:
+      - '/bin/sh'
+      - '-c'
+      - '/bin/sleep 30 && forever index.js'
+                   
+        
     volumes:
       - ${PWD}/.origintrail_noderc:/ot-node/.origintrail_noderc
       - ~/certs/:/root/certs/
