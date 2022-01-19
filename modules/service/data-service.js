@@ -16,7 +16,11 @@ class DataService {
 
     initialize() {
         this.implementation = new GraphDB({
+            // url: `${this.config.graphDatabase.ssl ? 'https' : 'http'}://${this.config.graphDatabase.hostname}:${this.config.graphDatabase.port}`,
             repositoryName: this.config.graphDatabase.name,
+            hostname: this.config.graphDatabase.hostname,
+            port: this.config.graphDatabase.port,
+            ssl: this.config.graphDatabase.ssl,
             username: this.config.graphDatabase.username,
             password: this.config.graphDatabase.password,
         });
