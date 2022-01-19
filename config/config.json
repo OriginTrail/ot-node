@@ -17,6 +17,9 @@
     ],
     "graphDatabase": {
       "name": "node0",
+      "hostname": "localhost",
+      "port": 7200,
+      "ssl" : false,
       "username": "admin",
       "password": ""
     },
@@ -53,6 +56,9 @@
     ],
     "graphDatabase": {
       "name": "node0",
+      "hostname": "localhost",
+      "port": 7200,
+      "ssl" : false,
       "username": "admin",
       "password": ""
     },
@@ -84,6 +90,9 @@
     "blockchain": [],
     "graphDatabase": {
       "name": "node0",
+      "hostname": "localhost",
+      "port": 7200,
+      "ssl" : false,
       "username": "admin",
       "password": ""
     },
