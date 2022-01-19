@@ -8,6 +8,7 @@ services:
 
 
   mysql:
+    container_name: mysql
     image: mysql:8.0.17
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
@@ -18,6 +19,7 @@ services:
     network_mode: host
 
   ot-node:
+    container_name: ot-node
     build: 
       dockerfile: Alpine.Dockerfile
       context: .
