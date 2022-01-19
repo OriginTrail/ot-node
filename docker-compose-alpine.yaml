@@ -10,7 +10,7 @@ services:
   mysql:
     image: mysql:8.0.17
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: true
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
       MYSQL_ROOT_PASSWORD: null
       MYSQL_DATABASE: operationaldb
     expose:
