@@ -28,7 +28,7 @@ services:
       - 9000
     command: >
        sh -c "
-       echo "Waiting for mysql to intialize" && sleep 10 &&
+        sleep 10 &&
         npx sequelize --config=./config/sequelizeConfig.js db:migrate && 
         forever index.js                
         "
