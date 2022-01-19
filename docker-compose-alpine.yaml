@@ -1,11 +1,37 @@
 version: '3'
 
 services:
+  graphdb:
+    container_name: graphdb
+    image: khaller/graphdb-free:latest
+    network_mode: host
+
 
   mysql:
     image: mysql:8.0.17
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_ROOT_PASSWORD: null
       MYSQL_DATABASE: operationaldb
-    ports:
-      - "3308:3306"
+    expose:
+      - 3306
+    network_mode: host
+
+  ot-node:
+    build: 
+      dockerfile: Alpine.Dockerfile
+      context: .
+    depends_on:
+      - graphdb
+    expose:
+      - 8900
+      - 9000
+    command: >
+       bash -c "
+        npx sequelize --config=./config/sequelizeConfig.js db:migrate && 
+        forever index.js                
+        "
+    volumes:
+      - ${PWD}/.origintrail_noderc:/ot-node/.origintrail_noderc
+      - ~/certs/:/root/certs/
+    network_mode: host
