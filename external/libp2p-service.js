@@ -62,7 +62,9 @@ class Libp2pService {
                 if (!configFile.network.privateKey) {
                     const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
                     configFile.network.privateKey = id.toJSON().privKey;
-                    fs.writeFileSync('.origintrail_noderc', JSON.stringify(configFile, null, 2));
+                    if(process.env.NODE_ENV !== 'development') {
+                        fs.writeFileSync('.origintrail_noderc', JSON.stringify(configFile, null, 2));
+                    }
                 }
                 this.config.privateKey = configFile.network.privateKey;
                 this.config.peerId = await PeerId.createFromPrivKey(this.config.privateKey);
