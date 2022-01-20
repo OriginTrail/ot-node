@@ -20,9 +20,7 @@ services:
 
   ot-node:
     container_name: ot-node
-    build: 
-      dockerfile: Alpine.Dockerfile
-      context: .
+    image: origintrail/ot-node:v6_release_testnet_alpine
     depends_on:
       - graphdb
     expose:
