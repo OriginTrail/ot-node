@@ -15,11 +15,11 @@
     "password": ""
   },
   "logLevel": "trace",
-  "rpcPort": 8902,
+  "rpcPort": 8901,
   "network": {
-    "networkPort": 9002,
+    "networkPort": 9001,
     "bootstrap": [
-      "/ip4/0.0.0.0/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A"
+      "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
     ]
   },
   "ipWhitelist": [

@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-const template = require('./config_template');
+const template = JSON.parse(fs.readFileSync('./.dh_origintrail_noderc'));
 
 const path_to_node = path.join(__dirname, '../');
 const number_of_nodes = process.argv.length === 3 ? parseInt(process.argv[2], 10) : 4;
@@ -20,8 +20,7 @@ for (let i = 0; i < number_of_nodes; i += 1) {
     }
     console.log(`Configuring node ${node_name}`);
 
-    const configDir = path.join(path_to_config, `${node_name}-config-data`);
-    const configPath = path.join(``, `${node_name}.json`);
+    const configPath = path.join(`./.dh${i}_origintrail_noderc`);
     execSync(`touch ${configPath}`);
 
     const parsedTemplate = JSON.parse(JSON.stringify(template));
