@@ -11,6 +11,7 @@ class NetworkService {
     initialize() {
         this.implementation = new Libp2p({
             bootstrapMultiAddress: this.config.network.bootstrap,
+            port: this.config.network.networkPort,
         });
         return this.implementation.initialize(this.logger);
     }

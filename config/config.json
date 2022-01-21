@@ -23,6 +23,7 @@
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
+      "networkPort": 9000,
       "bootstrap": []
     },
     "ipWhitelist": [
@@ -59,6 +60,7 @@
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
+      "networkPort": 9000,
       "bootstrap": [
         "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
         "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
@@ -90,6 +92,7 @@
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
+      "networkPort": 9000,
       "bootstrap": []
     },
     "ipWhitelist": [

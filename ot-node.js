@@ -2,6 +2,7 @@ const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
 const AutoGitUpdate = require('auto-git-update');
 const rc = require('rc');
+const fs = require('fs');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
@@ -26,7 +27,7 @@ class OTNode {
         this.logger.info('======================================================');
         this.logger.info(`             OriginTrail Node v${pjson.version}`);
         this.logger.info('======================================================');
-        this.logger.info(`Node is running in ${this.config.env} environment`);
+        this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
         await this.initializeAutoUpdate();
@@ -41,21 +42,21 @@ class OTNode {
     }
 
     initializeConfiguration(userConfig) {
-        const env = process.env.NODE_ENV &&
-        ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-            process.env.NODE_ENV : 'development';
-        const defaultConfig = JSON.parse(JSON.stringify(configjson[env]));
+        const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
+
+        if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
+            // eslint-disable-next-line prefer-destructuring
+            userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
+        }
 
         if (userConfig) {
             this.config = DeepExtend(defaultConfig, userConfig);
         } else {
             this.config = rc(pjson.name, defaultConfig);
-
-            if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
-                this.config.blockchain[0].hubContractAddress = configjson[env].blockchain[0].hubContractAddress;
-            }
         }
-        this.config.env = env;
+        if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
+            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
+        }
     }
 
     initializeDependencyContainer() {

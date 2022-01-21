@@ -40,9 +40,6 @@ class RpcController {
         this.initializeAuthenticationMiddleware();
         this.startListeningForRpcApiCalls();
         await this.initializeErrorMiddleware();
-        if(process.env.NODE_ENV === 'development') {
-            this.config.rpcPort = process.argv.length >= 3 ? process.argv[2] : 8900;
-        }
         if (this.sslEnabled) {
             await this.httpsServer.listen(this.config.rpcPort);
         } else {
