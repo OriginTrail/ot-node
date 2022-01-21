@@ -653,10 +653,9 @@ class RpcController {
 
                 let response;
                 if (handlerData) {
+                    const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                     switch (req.params.operation) {
                         case 'entities:search':
-
-                                const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
                             response = handlerData.data.map(async (x) => ({
@@ -688,10 +687,7 @@ class RpcController {
                             });
                             break;
                         case 'assertions:search':
-                                const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
-
-
 
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "AssertionSearchResult",
@@ -723,7 +719,6 @@ class RpcController {
                         case 'publish':
                             const result = {};
                             if (handlerData.data) {
-                                const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                                 const {rdf, assertion} = await this.fileService.loadJsonFromFile(documentPath);
                                 result.data = JSON.parse(handlerData.data);
                                 result.data.rdf = rdf;
@@ -732,8 +727,6 @@ class RpcController {
                             res.status(200).send({status: handlerData.status, data: result.data});
                             break;
                         default:
-
-                                const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
