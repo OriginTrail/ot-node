@@ -45,6 +45,7 @@ class GraphdbService {
 
         this.repository = await this.server.getRepository(this.config.repositoryName, repositoryServerConfig);
         this.repository.registerParser(new SparqlXmlResultParser());
+        this.logger.info('GraphDB module initialized successfully');
     }
 
     async insert(triples, rootHash) {
@@ -339,10 +340,6 @@ class GraphdbService {
             }
             return false;
         } catch (e) {
-            this.logger.error({
-                msg: `GraphDB not available. ${e}`,
-                Event_name: constants.ERROR_TYPE.GRAPHDB_CHECK_ERROR,
-            });
             return false;
         }
     }

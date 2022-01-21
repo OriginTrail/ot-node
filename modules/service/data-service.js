@@ -2,6 +2,9 @@ const { v1: uuidv1 } = require('uuid');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 
+const MAX_RETRIES = 10;
+const RETRY_FREQUENCY = 2; // seconds
+
 class DataService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -15,13 +18,37 @@ class DataService {
         return this.implementation.getName();
     }
 
-    initialize() {
+    async initialize() {
         this.implementation = new GraphDB({
             repositoryName: this.config.graphDatabase.name,
             username: this.config.graphDatabase.username,
             password: this.config.graphDatabase.password,
         });
+
+        let ready = await this.healthCheck();
+        let retries = 0;
+        while (!ready && retries < MAX_RETRIES) {
+            retries += 1;
+            this.logger.warn(`${retries}/${MAX_RETRIES}: Cannot connect to GraphDB, retrying in ${RETRY_FREQUENCY} seconds again.`);
+            await new Promise((resolve) => setTimeout(resolve, RETRY_FREQUENCY * 1000));
+            ready = await this.healthCheck();
+        }
+        if (retries === MAX_RETRIES) {
+            console.error('GraphDB not available, max retries reached. Stopping the node...');
+            process.exit(1);
+        }
+
         return this.implementation.initialize(this.logger);
+    }
+
+    async reinitalize() {
+        // TODO add retries
+        const ready = await this.healthCheck();
+        if (!ready) {
+            this.logger.warn('Cannot connect to GraphDB, check if GraphDB is running.');
+        } else {
+            this.implementation.initialize(this.logger);
+        }
     }
 
     async canonize(fileContent, fileExtension) {
