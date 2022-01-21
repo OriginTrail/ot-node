@@ -15,8 +15,10 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const {
-            assertion, rdf, keywords, assets, handlerId, operationId,
+            documentPath, keywords, assets, handlerId, operationId,
         } = command.data;
+
+        const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
             // Store to local graph database

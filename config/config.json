@@ -1,5 +1,6 @@
 {
   "development": {
+    "appDataPath": "data",
     "autoUpdate": {
       "enabled": false,
       "branch": "v6/develop",
@@ -36,6 +37,7 @@
     }
   },
   "testnet": {
+    "appDataPath": "data",
     "autoUpdate": {
       "enabled": true,
       "branch": "v6/release/testnet",
@@ -76,6 +78,7 @@
     }
   },
   "mainnet": {
+    "appDataPath": "data",
     "autoUpdate": {
       "enabled": true,
       "branch": "v6/release/mainnet",

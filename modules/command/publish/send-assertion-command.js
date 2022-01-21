@@ -11,15 +11,17 @@ class SendAssertionCommand extends Command {
         this.networkService = ctx.networkService;
         this.publishService = ctx.publishService;
     }
-  
+
     /**
      * Executes command and produces one or more events
      * @param command
      */
     async execute(command) {
         const {
-            rdf, assertion, assets, keywords, handlerId
+            assets, keywords, handlerId, documentPath,
         } = command.data;
+
+        const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         let nodes = [];
         for (const keyword of keywords) {

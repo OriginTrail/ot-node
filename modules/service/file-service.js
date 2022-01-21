@@ -3,6 +3,11 @@ const { exists, mkdir } = require('fs');
 const fs = require('fs');
 
 class FileService {
+
+    constructor(ctx) {
+        this.config = ctx.config;
+    }
+
     getFileExtension(fileName) {
         return path.extname(fileName).toLowerCase();
     }
@@ -68,6 +73,10 @@ class FileService {
                 }
             });
         });
+    }
+
+    getHandlerIdCachePath() {
+        return path.join(this.config.appDataPath, 'handler_id_cache');
     }
 }
 
