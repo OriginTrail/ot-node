@@ -19,7 +19,7 @@ const configFilename = process.argv.length === 3 && process.env.NODE_ENV === 'de
 
 const initializationObject = {
     addresses: {
-        listen: [`/ip4/0.0.0.0/tcp/9000`],
+        listen: ['/ip4/0.0.0.0/tcp/9000'],
     },
     modules: {
         transport: [TCP],
@@ -61,7 +61,6 @@ class Libp2pService {
             };
 
             if (!this.config.peerId) {
-                console.log(configFilename);
                 const configFile = JSON.parse(fs.readFileSync(configFilename));
                 if (!configFile.network.privateKey) {
                     const id = await PeerId.create({bits: 1024, keyType: 'RSA'})

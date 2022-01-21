@@ -15,7 +15,6 @@ class RankingService {
 
     async rank(nodes, topic, rankingTypes) {
         let rankedNodes = [];
-        // console.log(this.implementation);
         // for (const type of rankingTypes) {
         //     rankedNodes = await this.implementation[type].execute(nodes, topic);
         // }
