@@ -1,5 +1,5 @@
 #!/bin/sh
-pathToOtNode=$(cd .. && pwd)
+pathToOtNode=$(cd ../.. && pwd)
 number_of_nodes=4
 
 # Check for script arguments
@@ -42,7 +42,7 @@ startNode() {
   echo Starting node $1
   osascript -e "tell app \"Terminal\"
       do script \"cd $pathToOtNode
-  node index.js ./local-network-setup/.$1_origintrail_noderc\"
+  node index.js ./tools/local-network-setup/.$1_origintrail_noderc\"
   end tell"
 }
 
