@@ -78,6 +78,10 @@ class FileService {
     getHandlerIdCachePath() {
         return path.join(this.config.appDataPath, 'handler_id_cache');
     }
+
+    getHandlerIdDocumentPath(handlerId) {
+        return path.join(this.getHandlerIdCachePath(), handlerId);
+    }
 }
 
 module.exports = FileService;

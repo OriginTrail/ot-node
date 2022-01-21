@@ -10,6 +10,7 @@ class SendAssertionCommand extends Command {
         this.config = ctx.config;
         this.networkService = ctx.networkService;
         this.publishService = ctx.publishService;
+        this.fileService = ctx.fileService;
     }
 
     /**

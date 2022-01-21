@@ -7,6 +7,7 @@ class InsertAssertionCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.dataService = ctx.dataService;
+        this.fileService = ctx.fileService;
     }
 
     /**
