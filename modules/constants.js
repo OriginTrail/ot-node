@@ -46,7 +46,7 @@ exports.ERROR_TYPE = {
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
     NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
-    GRAPHDB_CHECK_ERROR: 'GraphDBCheckError',
+    TRIPLE_STORE_UNAVAILABLE: 'TripleStoreUnavailableError',
     LIBP2P_HANDLE_MSG_ERROR: 'Libp2pHandleMessageError',
     VERIFY_ASSERTION_ERROR: 'VerifyAssertionError',
     BLOCKCHAIN_CHECK_ERROR: 'BlockchainCheckError',
