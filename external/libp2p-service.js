@@ -14,8 +14,7 @@ const {time} = require("streaming-iterables");
 const { BufferList } = require('bl')
 const constants = require('../modules/constants');
 
-const configFilename = process.argv.length === 3 && process.env.NODE_ENV === 'development'
-    ? process.argv[2] : '.origintrail_noderc';
+
 
 const initializationObject = {
     addresses: {
@@ -61,12 +60,12 @@ class Libp2pService {
             };
 
             if (!this.config.peerId) {
-                const configFile = JSON.parse(fs.readFileSync(configFilename));
+                const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
                 if (!configFile.network.privateKey) {
                     const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
                     configFile.network.privateKey = id.toJSON().privKey;
                     if(process.env.NODE_ENV !== 'development') {
-                        fs.writeFileSync('.origintrail_noderc', JSON.stringify(configFile, null, 2));
+                        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
                     }
                 }
                 this.config.privateKey = configFile.network.privateKey;
