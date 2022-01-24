@@ -517,7 +517,7 @@ class DataService {
         if (e.code === 'ECONNREFUSED') {
             this.logger.error({
                 msg: `Triple Store (${this.implementation.getName()}) not available:: ${e.message}. ${e.stack}`,
-                Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE,
+                Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
                 Event_value1: e.message,
             });
             this.reinitalize();
