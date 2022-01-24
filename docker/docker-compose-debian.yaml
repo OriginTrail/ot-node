@@ -6,7 +6,8 @@ services:
     network_mode: host
 
   ot-node:
-    image: origintrail/ot-node:v6_release_testnet_ubuntu
+    container_name: ot-node
+    image: origintrail/ot-node:ot-node:v6.0.0-beta.1-debian
     depends_on:
       - graphdb
     expose:
@@ -14,7 +15,7 @@ services:
       - 9000
     command: >
        bash -c "
-        service mysql restart && 
+        service mariadb start &&
         forever index.js                
         "
     volumes:

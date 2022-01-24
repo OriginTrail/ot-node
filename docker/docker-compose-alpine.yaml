@@ -20,9 +20,10 @@ services:
 
   ot-node:
     container_name: ot-node
-    image: origintrail/ot-node:v6_release_testnet_alpine
+    image: origintrail/ot-node:ot-node:v6.0.0-beta.1-alpine
     depends_on:
       - graphdb
+      - mysql
     expose:
       - 8900
       - 9000
