@@ -9,10 +9,17 @@ exports.DID = 'DID';
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
 /**
+ * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
+ * Export command cleanup interval time 24h
+ */
+exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+/**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
-    'otnodeUpdateCommand', 'sendTelemetryCommand',
+    'otnodeUpdateCommand', 'sendTelemetryCommand', 'cleanerCommand',
+    'handlerIdsCleanerCommand',
 ];
 
 /**

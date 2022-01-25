@@ -1,32 +1,50 @@
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
+require('dotenv').config('.env');
 
-const template = JSON.parse(fs.readFileSync('./.dh_origintrail_noderc'));
+const numberOfNodes = process.argv.length === 3 ? parseInt(process.argv[2], 10) : 4;
 
-const path_to_node = path.join(__dirname, '../');
-const number_of_nodes = process.argv.length === 3 ? parseInt(process.argv[2], 10) : 4;
+const templatePath = './tools/local-network-setup/.dh_origintrail_noderc';
+const bootstrapTemplatePath = './tools/local-network-setup/.bootstrap_origintrail_noderc';
 
-console.log(`Generating ${number_of_nodes} total nodes`);
+const template = JSON.parse(fs.readFileSync(templatePath));
+const bootstrapTemplate = JSON.parse(fs.readFileSync(bootstrapTemplatePath));
 
-for (let i = 0; i < number_of_nodes; i += 1) {
-    let node_name;
+console.log('Preparing keys for blockchain');
+
+if (!process.env.PRIVATE_KEY || !process.env.PUBLIC_KEY) {
+    console.log('Missing blockchain keys in .env file');
+    process.exit(1);
+}
+
+template.blockchain[0].publicKey = process.env.PUBLIC_KEY;
+template.blockchain[0].privateKey = process.env.PRIVATE_KEY;
+bootstrapTemplate.blockchain[0].publicKey = process.env.PUBLIC_KEY;
+bootstrapTemplate.blockchain[0].privateKey = process.env.PRIVATE_KEY;
+
+fs.writeFileSync(bootstrapTemplatePath, JSON.stringify(bootstrapTemplate, null, 2));
+
+console.log(`Generating ${numberOfNodes} total nodes`);
+
+for (let i = 0; i < numberOfNodes; i += 1) {
+    let nodeName;
     if (i === 0) {
         console.log('Using the preexisting identity for the first node (bootstrap)');
-        node_name = 'bootstrap';
+        nodeName = 'bootstrap';
         continue;
     } else {
-        node_name = `DH${i}`;
+        nodeName = `DH${i}`;
     }
-    console.log(`Configuring node ${node_name}`);
+    console.log(`Configuring node ${nodeName}`);
 
-    const configPath = path.join(`./.dh${i}_origintrail_noderc`);
+    const configPath = path.join(`./tools/local-network-setup/.dh${i}_origintrail_noderc`);
     execSync(`touch ${configPath}`);
 
     const parsedTemplate = JSON.parse(JSON.stringify(template));
 
     parsedTemplate.rpcPort = 8900 + i;
-    parsedTemplate.network.networkPort = 9000 + i;
+    parsedTemplate.network.port = 9000 + i;
 
     fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
 }

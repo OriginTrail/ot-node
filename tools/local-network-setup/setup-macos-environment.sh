@@ -1,14 +1,14 @@
 #!/bin/sh
-pathToOtNode=$(cd ../.. && pwd)
-number_of_nodes=4
+pathToOtNode=$(pwd)
+numberOfNodes=4
 
 # Check for script arguments
 while [ $# -gt 0 ]; do
   case "$1" in
   	# Override number of nodes if the argument is specified
     --nodes=*)
-      number_of_nodes="${1#*=}"
-      if [[ $number_of_nodes -le 0 ]]
+      numberOfNodes="${1#*=}"
+      if [[ $numberOfNodes -le 0 ]]
       then
         echo Cannot run 0 nodes
         exit 1
@@ -32,7 +32,7 @@ echo ================================
 echo ====== Generating configs ======
 echo ================================
 
-node ./generate-config-files.js $number_of_nodes
+node $pathToOtNode/tools/local-network-setup/generate-config-files.js $numberOfNodes
 
 echo ================================
 echo ======== Starting nodes ========
@@ -49,10 +49,10 @@ startNode() {
 startNode bootstrap
 
 # Start only DC node and exit
-if [[ $number_of_nodes -ne 1 ]]
+if [[ $numberOfNodes -ne 1 ]]
 then
   i=1
-  while [[ $i -lt $number_of_nodes ]]
+  while [[ $i -lt $numberOfNodes ]]
   do
     startNode dh$i
     ((i = i + 1))
