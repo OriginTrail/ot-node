@@ -22,7 +22,13 @@ Quick Start
 * You should have ot-node dependencies installed with the `npm install` command
 * You should have run db migrations: 
   * `npx sequelize --config=./config/sequelizeConfig.js db:migrate`
-* generate a .env file in the ot-node root folder and insert ` NODE_ENV=development ` for local development
+* generate a .env file in the ot-node root folder and add public and private keys for polygon blockchain:
+```dotenv
+NODE_ENV=development
+PUBLIC_KEY=<insert_here>
+PRIVATE_KEY=<insert_here>
+```
+
 
 
 ## How to start
