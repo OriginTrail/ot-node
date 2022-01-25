@@ -24,7 +24,7 @@ class RpcController {
         this.dataService = ctx.dataService;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
-
+        this.fileService = ctx.fileService;
         this.app = express();
 
         this.enableSSL();
@@ -259,10 +259,14 @@ class RpcController {
                     }
                 }
 
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
+
                 await Models.handler_ids.update(
                     {
-                        status: 'COMPLETED',
-                        data: JSON.stringify(response)
+                        status: 'COMPLETED'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -320,11 +324,13 @@ class RpcController {
                 nodes = nodes.concat(foundNodes);
 
                 nodes = [...new Set(nodes)];
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING',
-                        data: JSON.stringify(response)
+                        status: 'PENDING'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -432,11 +438,14 @@ class RpcController {
                     }
                     nodes = [...new Set(nodes)];
                 }
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
 
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING',
-                        data: JSON.stringify(response)
+                        status: 'PENDING'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -500,10 +509,14 @@ class RpcController {
                 try {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
 
+                    const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                    await this.fileService
+                        .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
+
                     await Models.handler_ids.update(
                         {
-                            status: 'COMPLETED',
-                            data: JSON.stringify({response: response})
+                            status: 'COMPLETED'
                         }, {
                             where: {
                                 handler_id: handlerId,
@@ -584,13 +597,17 @@ class RpcController {
                     }
                 }
 
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(result));
+
                 await Models.handler_ids.update(
                     {
                         status: 'COMPLETED',
-                        data: JSON.stringify(result)
                     }, {
                         where: {
-                            handler_id: handlerId,
+                            handler_id: handlerId
                         },
                     },
                 );
@@ -636,14 +653,11 @@ class RpcController {
 
                 let response;
                 if (handlerData) {
+                    const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                     switch (req.params.operation) {
                         case 'entities:search':
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
-                            if (handlerData.data) {
-                                handlerData.data = JSON.parse(handlerData.data)
-                            } else {
-                                handlerData.data = [];
-                            }
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "EntitySearchResult",
                                 "result": {
@@ -673,11 +687,7 @@ class RpcController {
                             });
                             break;
                         case 'assertions:search':
-                            if (handlerData.data) {
-                                handlerData.data = JSON.parse(handlerData.data)
-                            } else {
-                                handlerData.data = [];
-                            }
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "AssertionSearchResult",
@@ -706,12 +716,19 @@ class RpcController {
                                 "itemListElement": response
                             });
                             break;
-                        default:
+                        case 'publish':
+                            const result = {};
                             if (handlerData.data) {
-                                handlerData.data = JSON.parse(handlerData.data)
-                            } else {
-                                handlerData.data = {};
+                                const {rdf, assertion} = await this.fileService.loadJsonFromFile(documentPath);
+                                result.data = JSON.parse(handlerData.data);
+                                result.data.rdf = rdf;
+                                result.data.assertion = assertion;
                             }
+                            res.status(200).send({status: handlerData.status, data: result.data});
+                            break;
+                        default:
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                     }
