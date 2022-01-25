@@ -16,7 +16,7 @@ RUN apt-get -qq -y install make python
 #Install Papertrail
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
-COPY ot-node/config/papertrail.yml /etc/log_files.yml
+#COPY ot-node/config/papertrail.yml /etc/log_files.yml
 
 
 
