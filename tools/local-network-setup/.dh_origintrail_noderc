@@ -6,8 +6,8 @@
       "rpcEndpoints": [
         "https://rpc-mumbai.maticvigil.com/"
       ],
-      "publicKey": "...",
-      "privateKey": "..."
+      "publicKey": "0xBD084aB97C704FE4a6D620CB7c30C0BE0366646f",
+      "privateKey": "0x61b1b921f6d57d7f60c4ac17d5bd51f8394c5d72b8d4db177b5d419fbc5c7a41"
     }
   ],
   "graphDatabase": {
