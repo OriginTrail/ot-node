@@ -8,6 +8,7 @@ class DataService {
         this.logger = ctx.logger;
         this.constants = ctx.constants;
         this.validationService = ctx.validationService;
+        this.networkService = ctx.networkService;
     }
 
     getName() {
@@ -160,7 +161,7 @@ class DataService {
                             data: [],
                             issuers: [],
                             assertions: [],
-                            nodes: [this.config.network.implementation.config.id],
+                            nodes: [this.networkService.getPeerId()],
                         };
                         result.push(object);
                     }
@@ -192,7 +193,7 @@ class DataService {
                     if (!object.assertions.find((x) => x.id === assertionId)) {
                         object.assertions.push({
                             id: assertionId,
-                            node: this.config.network.implementation.config.id,
+                            node: this.networkService.getPeerId(),
                             rdf: rawRdf,
                         });
                     }
@@ -228,7 +229,7 @@ class DataService {
                             data: [],
                             issuers: [],
                             assertions: [],
-                            nodes: [this.config.network.implementation.config.id],
+                            nodes: [this.networkService.getPeerId()],
                         };
                         result.push(object);
                     }
@@ -260,7 +261,7 @@ class DataService {
                     if (!object.assertions.find((x) => x.id === assertionId)) {
                         object.assertions.push({
                             id: assertionId,
-                            node: this.config.network.implementation.config.id,
+                            node: this.networkService.getPeerId(),
                             rdf: rawRdf,
                         });
                     }
@@ -293,7 +294,7 @@ class DataService {
                             metadata: assertion.metadata,
                             signature: assertion.signature,
                             rootHash: assertion.rootHash,
-                            nodes: [this.config.network.implementation.config.id],
+                            nodes: [this.networkService.getPeerId()],
                         };
                         result.push(object);
                     }
@@ -302,7 +303,7 @@ class DataService {
                     if (!object) {
                         object = {
                             assertionId,
-                            node: this.config.network.implementation.config.id,
+                            node: this.networkService.getPeerId(),
                             rdf: rawRdf,
                         };
                         result.push(object);

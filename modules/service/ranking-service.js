@@ -6,15 +6,15 @@ class RankingService {
     }
 
     initialize() {
+        // TODO: Initialize array of ranking implementations
         this.implementation = new KadIdentityRanking();
         this.implementation.initialize(this.logger);
     }
 
     async rank(nodes, topic, rankingTypes) {
         let rankedNodes = [];
-        for (const type of rankingTypes) {
-            rankedNodes = await this.implementation[type].execute(nodes, topic);
-        }
+        // TODO: Iterate and execute all ranking implementations provided in rankingTypes
+        rankedNodes = await this.implementation.execute(nodes, topic);
         return rankedNodes;
     }
 }

@@ -1,18 +1,18 @@
 const { execSync } = require('child_process');
 const DeepExtend = require('deep-extend');
 const AutoGitUpdate = require('auto-git-update');
+const rc = require('rc');
+const fs = require('fs');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
 const db = require('./models');
 const pjson = require('./package.json');
-const rc = require('rc');
 const configjson = require('./config/config.json');
-
 
 class OTNode {
     constructor(config) {
-        this.initializeConfiguration(config)
+        this.initializeConfiguration(config);
         this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
     }
 
@@ -27,9 +27,7 @@ class OTNode {
         this.logger.info('======================================================');
         this.logger.info(`             OriginTrail Node v${pjson.version}`);
         this.logger.info('======================================================');
-        this.logger.info(`Node is running in ${process.env.NODE_ENV &&
-        ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-            process.env.NODE_ENV : 'development'} environment`);
+        this.logger.info(`Node is running in ${process.env.NODE_ENV} environment`);
 
         this.initializeDependencyContainer();
         await this.initializeAutoUpdate();
@@ -44,22 +42,20 @@ class OTNode {
     }
 
     initializeConfiguration(userConfig) {
-        const defaultConfig = JSON.parse(JSON.stringify(configjson[
-            process.env.NODE_ENV &&
-            ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-                process.env.NODE_ENV : 'development']));
+        const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
+
+        if (process.env.NODE_ENV === 'development' && process.argv.length === 3) {
+            // eslint-disable-next-line prefer-destructuring
+            userConfig = JSON.parse(fs.readFileSync(process.argv[2]));
+        }
 
         if (userConfig) {
             this.config = DeepExtend(defaultConfig, userConfig);
         } else {
             this.config = rc(pjson.name, defaultConfig);
-
-            if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
-                this.config.blockchain[0].hubContractAddress = configjson[
-                    process.env.NODE_ENV &&
-                    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-                        process.env.NODE_ENV : 'development'].blockchain[0].hubContractAddress;
-            }
+        }
+        if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
+            this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
         }
     }
 
@@ -106,9 +102,6 @@ class OTNode {
     async initializeDataModule() {
         try {
             const dataService = this.container.resolve('dataService');
-            // if (!this.config.data) {
-            //     this.logger.warn('Data module not initialized, no implementation is provided');
-            // }
 
             await dataService.initialize();
             this.logger.info(`Data module: ${dataService.getName()} implementation`);
@@ -127,13 +120,6 @@ class OTNode {
             await networkService.initialize();
             const rankingService = this.container.resolve('rankingService');
             await rankingService.initialize();
-            // if (!this.config.network) {
-            //     this.logger.warn('Network modu
-            //     le not initialized, no implementation is provided');
-            // }
-            // const rankingService = this.container.resolve('rankingService');
-            // await rankingService.initialize(this.config.network.ranking);
-            // await networkService.initialize(this.config.network.implementation, rankingService);
             this.logger.info(`Network module: ${networkService.getName()} implementation`);
         } catch (e) {
             this.logger.error({
@@ -146,9 +132,6 @@ class OTNode {
     async initializeValidationModule() {
         try {
             const validationService = this.container.resolve('validationService');
-            // if (!this.config.validation) {
-            //     this.logger.warn('Validation module not initialized, no implementation is provided');
-            // }
 
             await validationService.initialize();
             this.logger.info(`Validation module: ${validationService.getName()} implementation`);
@@ -163,9 +146,6 @@ class OTNode {
     async initializeBlockchainModule() {
         try {
             const blockchainService = this.container.resolve('blockchainService');
-            // if (!this.config.blockchain) {
-            //     this.logger.warn('Blockchain module not initialized, no implementation is provided.');
-            // }
 
             await blockchainService.initialize();
             this.logger.info(`Blockchain module: ${blockchainService.getName()} implementation`);
@@ -225,7 +205,7 @@ class OTNode {
 
     stop() {
         this.logger.info('Stopping node...');
-        process.exit(1);
+        process.exit(0);
     }
 }
 
