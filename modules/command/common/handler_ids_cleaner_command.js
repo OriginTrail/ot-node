@@ -1,11 +1,9 @@
-const path = require('path');
-const fs = require('fs');
 const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
 
 /**
- * Increases approval for Bidding contract on blockchain
+ * Removes handler id entries in database and cached files
  */
 class HandlerIdsCleanerCommand extends Command {
     constructor(ctx) {
@@ -20,28 +18,30 @@ class HandlerIdsCleanerCommand extends Command {
      */
     async execute(command) {
         const timeToBeDeleted = Date.now() - constants.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS;
-        await Models.handler_ids.destroy({
+        Models.handler_ids.findAll({
             where: {
                 timestamp: { [Models.Sequelize.Op.lt]: timeToBeDeleted },
                 status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'FAILED'] },
             },
+        }).then((handlersToBeDeleted) => {
+            handlersToBeDeleted.forEach((handler) => {
+                const handlerId = handler.handler_id;
+                Models.handler_ids.destroy({
+                    where: {
+                        handler_id: handlerId,
+                    }
+                }).catch((error) => {
+                    this.logger.warn(`Failed to clean handler ids table: error: ${error.message}`);
+                });
+                const filePath = this.fileService.getHandlerIdDocumentPath(handlerId);
+                this.fileService.removeFile(filePath).catch((error) => {
+                    this.logger.warn(`Failed to remove handler id cache file: error: ${error.message}`);
+                });
+            });
+        }).catch((error) => {
+            this.logger.warn(`Failed to clean handler ids table: error: ${error.message}`);
         });
 
-        const cacheDirectoryPath = this.fileService.getHandlerIdCachePath();
-        if (!fs.existsSync(cacheDirectoryPath)) {
-            return Command.repeat();
-        }
-        const fileList = fs.readdirSync(cacheDirectoryPath);
-        fileList.forEach((fileName) => {
-            const filePath = path.join(cacheDirectoryPath, fileName);
-            const now = new Date();
-            const createdDate = fs.lstatSync(filePath).mtime;
-            if (createdDate.getTime() + constants.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS
-                < now.getTime()) {
-                fs.unlinkSync(filePath);
-                this.logger.trace(`Successfully removed handler id cache file: ${filePath}`);
-            }
-        });
         return Command.repeat();
     }
 

@@ -3,7 +3,7 @@ const Models = require('../../../models/index');
 const constants = require('../../constants');
 
 /**
- * Increases approval for Bidding contract on blockchain
+ * Removes commands that have status: completed, failed, expired
  */
 class CleanerCommand extends Command {
     /**

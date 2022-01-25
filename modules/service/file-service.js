@@ -3,7 +3,6 @@ const { exists, mkdir } = require('fs');
 const fs = require('fs');
 
 class FileService {
-
     constructor(ctx) {
         this.config = ctx.config;
     }
@@ -70,6 +69,24 @@ class FileService {
                     });
                 } else {
                     reject(new Error(`File doesn't exist on file path: ${filePath}`));
+                }
+            });
+        });
+    }
+
+    removeFile(filePath) {
+        return new Promise((resolve, reject) => {
+            exists(filePath, (exists) => {
+                if (exists) {
+                    fs.unlink(filePath, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                } else {
+                    reject(new Error(`Unable to delete file on path ${filePath}, there's no such file.`))
                 }
             });
         });
