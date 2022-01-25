@@ -29,7 +29,7 @@ class HandlerIdsCleanerCommand extends Command {
                 Models.handler_ids.destroy({
                     where: {
                         handler_id: handlerId,
-                    }
+                    },
                 }).catch((error) => {
                     this.logger.warn(`Failed to clean handler ids table: error: ${error.message}`);
                 });
