@@ -26,7 +26,7 @@ for (let i = 0; i < number_of_nodes; i += 1) {
     const parsedTemplate = JSON.parse(JSON.stringify(template));
 
     parsedTemplate.rpcPort = 8900 + i;
-    parsedTemplate.network.networkPort = 9000 + i;
+    parsedTemplate.network.port = 9000 + i;
 
     fs.writeFileSync(`${configPath}`, JSON.stringify(parsedTemplate, null, 2));
 }

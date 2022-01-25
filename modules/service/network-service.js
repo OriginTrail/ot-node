@@ -13,7 +13,7 @@ class NetworkService {
             ? process.argv[2] : '.origintrail_noderc';
         this.implementation = new Libp2p({
             bootstrapMultiAddress: this.config.network.bootstrap,
-            port: this.config.network.networkPort,
+            port: this.config.network.port,
             configFilename,
         });
         return this.implementation.initialize(this.logger);
