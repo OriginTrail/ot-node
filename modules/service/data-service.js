@@ -2,10 +2,6 @@ const { v1: uuidv1 } = require('uuid');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 
-// TODO: Discussion on this values
-const MAX_RETRIES = 10;
-const RETRY_FREQUENCY = 10; // seconds
-
 class DataService {
     constructor(ctx) {
         this.config = ctx.config;
@@ -13,6 +9,7 @@ class DataService {
         this.constants = ctx.constants;
         this.validationService = ctx.validationService;
         this.networkService = ctx.networkService;
+        this.nodeService = ctx.nodeService;
     }
 
     getName() {
@@ -28,19 +25,18 @@ class DataService {
 
         let ready = await this.healthCheck();
         let retries = 0;
-        while (!ready && retries < MAX_RETRIES) {
+        while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             retries += 1;
-            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${MAX_RETRIES}. Retrying in ${RETRY_FREQUENCY} seconds again.`);
-            await new Promise((resolve) => setTimeout(resolve, RETRY_FREQUENCY * 1000));
+            this.logger.warn(`Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${constants.TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds again.`);
+            await new Promise((resolve) => setTimeout(resolve, constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000));
             ready = await this.healthCheck();
         }
-        if (retries === MAX_RETRIES) {
+        if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             this.logger.error({
                 msg: `Triple Store (${this.implementation.getName()}) not available, max retries reached.`,
                 Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
             });
-            this.logger.final();
-            process.exit(1);
+            this.nodeService.stop();
         }
 
         return this.implementation.initialize(this.logger);
