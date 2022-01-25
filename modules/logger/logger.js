@@ -66,6 +66,11 @@ class Logger {
     trace(obj) {
         this.pinoLogger.trace(obj);
     }
+
+    final() {
+        const finalLogger = pino.final(this.pinoLogger);
+        finalLogger.error('Stopping the node...');
+    }
 }
 
 module.exports = Logger;

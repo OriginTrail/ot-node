@@ -35,7 +35,11 @@ class DataService {
             ready = await this.healthCheck();
         }
         if (retries === MAX_RETRIES) {
-            console.error('Triple store (GraphDB) not available, max retries reached. Stopping the node...');
+            this.logger.error({
+                msg: `Triple Store (${this.implementation.getName()}) not available, max retries reached.`,
+                Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
+            });
+            this.logger.final();
             process.exit(1);
         }
 
@@ -516,7 +520,7 @@ class DataService {
     handleUnavailableTripleStoreError(e) {
         if (e.code === 'ECONNREFUSED') {
             this.logger.error({
-                msg: `Triple Store (${this.implementation.getName()}) not available:: ${e.message}. ${e.stack}`,
+                msg: `Triple Store (${this.implementation.getName()}) not available: ${e.message}. ${e.stack}`,
                 Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
                 Event_value1: e.message,
             });
