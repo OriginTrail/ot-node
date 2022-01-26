@@ -82,11 +82,11 @@ class FileService {
                         if (err) {
                             reject(err);
                         } else {
-                            resolve();
+                            resolve(true);
                         }
                     });
                 } else {
-                    reject(new Error(`Unable to delete file on path ${filePath}, there's no such file.`))
+                    resolve(false);
                 }
             });
         });
