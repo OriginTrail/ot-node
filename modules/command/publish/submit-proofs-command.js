@@ -40,22 +40,6 @@ class SubmitProofsCommand extends Command {
                     rdf: updatedRdf, assertion,
                 }));
 
-            const handler = await Models.handler_ids.findOne({
-                where: {
-                    handler_id: handlerId,
-                },
-            });
-            const handlerData = JSON.parse(handler.data);
-            handlerData.blockchain = assertion.blockchain;
-            await Models.handler_ids.update(
-                {
-                    data: JSON.stringify(handlerData),
-                }, {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
 
