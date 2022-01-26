@@ -4,9 +4,9 @@ class NodeService {
         this.logger = ctx.logger;
     }
 
-    stop() {
+    stop(exitCode) {
         this.logger.closeLogger('Stopping the node...');
-        process.exit(1);
+        process.exit(exitCode);
     }
 }
 

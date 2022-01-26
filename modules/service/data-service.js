@@ -36,7 +36,7 @@ class DataService {
                 msg: `Triple Store (${this.implementation.getName()}) not available, max retries reached.`,
                 Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
             });
-            this.nodeService.stop();
+            this.nodeService.stop(1);
         }
 
         return this.implementation.initialize(this.logger);
