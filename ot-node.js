@@ -185,7 +185,7 @@ class OTNode {
     async initializeTelemetryHubModule() {
         try {
             const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
-            telemetryHubModuleManager.initialize();
+            telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger);
             this.logger.info(`Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`);
         } catch (e) {
             this.logger.error(`Telemetry hub module initialization failed. Error message: ${e.message}`);
