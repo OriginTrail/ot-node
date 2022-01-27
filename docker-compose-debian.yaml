@@ -17,6 +17,7 @@ services:
       - 9000
     command: >
        bash -c "
+        /bin/sleep 25
         service mariadb start &&
         forever index.js
         "
