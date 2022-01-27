@@ -1,0 +1,16 @@
+#/lib/systemd/system/graphdb.service
+
+[Unit]
+Description=GraphDB - OriginTrail V6 Stage 1 Beta Node
+Documentation=https://github.com/OriginTrail/ot-node/tree/v6/release%2Ftestnet
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/graphdb-free-9.10.1/bin/
+ExecStart=/root/graphdb-free-9.10.1/bin/graphdb
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,12 +1,12 @@
-const {v1: uuidv1} = require('uuid');
-const Models = require("../../models/index");
+const Models = require('../../models/index');
 
 class QueryService {
     constructor(ctx) {
+        this.logger = ctx.logger;
         this.networkService = ctx.networkService;
         this.validationService = ctx.validationService;
         this.dataService = ctx.dataService;
-        this.logger = ctx.logger;
+        this.fileService = ctx.fileService;
     }
 
     async resolve(data, node) {
@@ -44,27 +44,24 @@ class QueryService {
         } else {
             response = await this.dataService.searchByIds(ids, {issuers, types, limit});
         }
+
         return { response, handlerId };
     }
 
     async handleSearchResult(request) {
         // TODO: add mutex
         const { handlerId, response } = request;
-        const handler = await Models.handler_ids.findOne({
-            where: {
-                handler_id: handlerId,
-            },
-        });
 
-        let handlerData = JSON.parse(handler.data);
+        const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
+        const handlerData = await this.fileService.loadJsonFromFile(documentPath);
 
         for (const asset of response) {
             for (const rawAssertion of asset.assertions) {
-
-                if (!rawAssertion || !rawAssertion.rdf)
-                    continue
-
+                if (!rawAssertion || !rawAssertion.rdf) {
+                    continue;
+                }
                 const {assertion, rdf} = await this.dataService.createAssertion(rawAssertion.id, rawAssertion.rdf);
+
                 const status = await this.dataService.verifyAssertion(assertion, rdf);
                 //todo check root hash on the blockchain
                 if (status) {
@@ -106,17 +103,21 @@ class QueryService {
             }
         }
 
+        await this.fileService.writeContentsToFile(
+            this.fileService.getHandlerIdCachePath(),
+            handlerId,
+            JSON.stringify(handlerData),
+        );
+
         await Models.handler_ids.update(
             {
                 status: 'PENDING',
-                data: JSON.stringify(handlerData)
-            },{
+            }, {
                 where: {
                     handler_id: handlerId,
                 },
             },
         );
-
 
         return true;
     }
@@ -127,24 +128,20 @@ class QueryService {
     }
 
     async handleSearchAssertions(request) {
-        const {query, handlerId} = request;
-        let response = await this.dataService.searchAssertions(query, {limit: 20});
-        return { response, handlerId };
+        const {query, handlerId, load } = request;
+        let response = await this.dataService.searchAssertions(query, { });
+        return { response, handlerId, load };
     }
 
     async handleSearchAssertionsResult(request) {
         // TODO: add mutex
-        const { handlerId, response } = request;
-        const handler = await Models.handler_ids.findOne({
-            where: {
-                handler_id: handlerId,
-            },
-        });
+        const { handlerId, response, load } = request;
 
-        let handlerData = JSON.parse(handler.data);
+        const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
+        const handlerData = await this.fileService.loadJsonFromFile(documentPath);
 
         for (const object of response) {
-            const assertion = handlerData.find(x => x.id === object.assertionId);
+            const assertion = handlerData.find((x) => x.id === object.assertionId);
             if (assertion) {
                 if (assertion.nodes.indexOf(object.node) === -1)
                     assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
@@ -163,15 +160,25 @@ class QueryService {
                         rootHash: assertion.rootHash,
                         nodes: [object.node]
                     })
+
+                    if (load) {
+                        await this.dataService.insert(object.rdf, `did:dkg:${object.assertionId}`);
+                        this.logger.info(`Assertion ${object.assertionId} is successfully inserted`);
+                    }
                 }
             }
         }
 
+        await this.fileService.writeContentsToFile(
+            this.fileService.getHandlerIdCachePath(),
+            handlerId,
+            JSON.stringify(handlerData),
+        );
+
         await Models.handler_ids.update(
             {
                 status: 'PENDING',
-                data: JSON.stringify(handlerData)
-            },{
+            }, {
                 where: {
                     handler_id: handlerId,
                 },

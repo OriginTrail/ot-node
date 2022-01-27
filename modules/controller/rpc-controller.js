@@ -7,6 +7,7 @@ const {IpDeniedError} = require('express-ipfilter');
 const path = require('path')
 const {v1: uuidv1, v4: uuidv4} = require('uuid');
 const Models = require('../../models/index');
+const constants = require('../constants');
 const pjson = require('../../package.json');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
@@ -23,7 +24,7 @@ class RpcController {
         this.dataService = ctx.dataService;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
-
+        this.fileService = ctx.fileService;
         this.app = express();
 
         this.enableSSL();
@@ -33,14 +34,29 @@ class RpcController {
         }));
     }
 
+    async initialize() {
+        this.startListeningForRpcNetworkCalls();
+
+        this.initializeAuthenticationMiddleware();
+        this.startListeningForRpcApiCalls();
+        await this.initializeErrorMiddleware();
+        if (this.sslEnabled) {
+            await this.httpsServer.listen(this.config.rpcPort);
+        } else {
+            await this.app.listen(this.config.rpcPort);
+        }
+
+        this.logger.info(`RPC module enabled, server running on port ${this.config.rpcPort}`);
+    }
+
     initializeAuthenticationMiddleware() {
         const formattedWhitelist = [];
         const ipv6prefix = '::ffff:';
-        for (let i = 0; i < this.config.whitelist.length; i += 1) {
-            if (!this.config.whitelist[i].includes(':')) {
-                formattedWhitelist.push(ipv6prefix.concat(this.config.whitelist[i]));
+        for (let i = 0; i < this.config.ipWhitelist.length; i += 1) {
+            if (!this.config.ipWhitelist[i].includes(':')) {
+                formattedWhitelist.push(ipv6prefix.concat(this.config.ipWhitelist[i]));
             } else {
-                formattedWhitelist.push(this.config.whitelist[i]);
+                formattedWhitelist.push(this.config.ipWhitelist[i]);
             }
         }
 
@@ -63,8 +79,8 @@ class RpcController {
         })
     }
 
-    initializeErrorMiddleware() {
-        this.app.use((error, req, res, next) => {
+    async initializeErrorMiddleware() {
+        await this.app.use((error, req, res, next) => {
             let code, message;
             if (error && error.code) {
                 switch (error.code) {
@@ -75,14 +91,14 @@ class RpcController {
                     default:
                         return next(error)
                 }
-                this.logger.error(message)
+                this.logger.error({ msg: message, Event_name: constants.ERROR_TYPE.API_ERROR_400 });
                 return res.status(code).send(message);
             }
             return next(error)
         })
 
         this.app.use((error, req, res, next) => {
-            this.logger.error(error)
+            this.logger.error({ msg: error,  Event_name: constants.ERROR_TYPE.API_ERROR_500});
             return res.status(500).send(error)
         })
     }
@@ -96,21 +112,6 @@ class RpcController {
                 cert: fs.readFileSync('/root/certs/fullchain.pem'),
             }, this.app);
         }
-    }
-
-    enable() {
-        this.startListeningForRpcNetworkCalls();
-
-        this.initializeAuthenticationMiddleware();
-        this.startListeningForRpcApiCalls();
-        this.initializeErrorMiddleware();
-        if (this.sslEnabled) {
-            this.httpsServer.listen(this.config.rpcPort);
-        } else {
-            this.app.listen(this.config.rpcPort);
-        }
-
-        this.logger.info(`RPC module enabled, server running on port ${this.config.rpcPort}`);
     }
 
     startListeningForRpcNetworkCalls() {
@@ -142,13 +143,13 @@ class RpcController {
             if (!req.files || !req.files.file || !req.body.assets) {
                 return next({code: 400, message: 'File, assets, and keywords are required fields.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of publish command',
                     Event_name: 'publish_start',
                     Operation_name: 'publish',
-                    Id_operation
+                    Id_operation: operationId
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -161,67 +162,11 @@ class RpcController {
 
                 const fileContent = req.files.file.data;
                 const fileExtension = path.extname(req.files.file.name).toLowerCase();
-                req.body.assets = [...new Set(JSON.parse(req.body.assets.toLowerCase()))];
+                const assets = [...new Set(JSON.parse(req.body.assets.toLowerCase()))];
                 let visibility = JSON.parse(!!req.body.visibility);
                 let keywords = req.body.keywords ? JSON.parse(req.body.keywords.toLowerCase()) : [];
 
-                let {
-                    assertion,
-                    rdf
-                } = await this.dataService.canonize(fileContent, fileExtension);
-
-                assertion.metadata.issuer = this.validationService.getIssuer();
-                assertion.metadata.visibility = visibility;
-                assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
-                assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
-                assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
-                assertion.signature = this.validationService.sign(assertion.id);
-
-                keywords.push(assertion.metadata.type);
-                keywords = [...new Set(keywords.concat(req.body.assets))];
-
-                const assets = [];
-                for (const asset of req.body.assets) {
-                    assets.push(this.validationService.calculateHash(asset + assertion.metadata.type + assertion.metadata.issuer));
-                }
-
-                rdf = await this.dataService.appendMetadata(rdf, assertion);
-                assertion.rootHash = this.validationService.calculateRootHash(rdf);
-                rdf = await this.dataService.appendConnections(rdf, {
-                    assertionId: assertion.id,
-                    assets,
-                    keywords,
-                    rootHash: assertion.rootHash
-                });
-
-                if (!assertion.metadata.visibility) {
-                    rdf = rdf.filter(x => x.startsWith('<did:dkg:'));
-                }
-
-                this.logger.info(`Assertion ID: ${assertion.id}`);
-                this.logger.info(`Assertion metadataHash: ${assertion.metadataHash}`);
-                this.logger.info(`Assertion dataHash: ${assertion.metadata.dataHash}`);
-                this.logger.info(`Assertion rootHash: ${assertion.rootHash}`);
-                this.logger.info(`Assertion signature: ${assertion.signature}`);
-                this.logger.info(`Assertion metadata: ${JSON.stringify(assertion.metadata)}`);
-                // this.logger.info(`Assertion metadata: ${JSON.stringify(assertion.data)}`);
-                this.logger.info(`Keywords: ${keywords}`);
-                this.logger.info(`Assets: ${assets}`);
-                this.logger.info(`Assertion length in N-QUADS format: ${rdf.length}`);
-
-                const commandSequence = [
-                    'submitProofsCommand',
-                    'sendAssertionCommand',
-                    'insertAssertionCommand',
-                ];
-
-                await this.commandExecutor.add({
-                    name: commandSequence[0],
-                    sequence: commandSequence.slice(1),
-                    delay: 0,
-                    data: {rdf, assertion, assets, keywords, handlerId},
-                    transactional: false,
-                });
+                const assertion = await this.publishService.publish(fileContent, fileExtension, assets, keywords, visibility, handlerId);
 
                 const handlerData = {
                     id: assertion.id,
@@ -241,20 +186,18 @@ class RpcController {
                 );
 
             } catch (e) {
-                this.logger.error(`Unexpected error at publish route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at publish route',
-                    Operation_name: 'Error',
-                    Event_name: 'PublishRouteError',
+                this.logger.error({
+                    msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of publish command',
                     Event_name: 'publish_end',
                     Operation_name: 'publish',
-                    Id_operation
+                    Id_operation: operationId
                 });
             }
         });
@@ -263,13 +206,13 @@ class RpcController {
             if (!req.query.ids) {
                 return next({code: 400, message: 'Param ids is required.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of resolve command',
                     Event_name: 'resolve_start',
                     Operation_name: 'resolve',
-                    Id_operation,
+                    Id_operation: operationId,
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -316,10 +259,14 @@ class RpcController {
                     }
                 }
 
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
+
                 await Models.handler_ids.update(
                     {
-                        status: 'COMPLETED',
-                        data: JSON.stringify(response)
+                        status: 'COMPLETED'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -328,20 +275,18 @@ class RpcController {
                 );
 
             } catch (e) {
-                this.logger.error(`Unexpected error at resolve route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at resolve route',
-                    Operation_name: 'Error',
-                    Event_name: 'ResolveRouteError',
+                this.logger.error({
+                    msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of resolve command',
                     Event_name: 'resolve_end',
                     Operation_name: 'resolve',
-                    Id_operation
+                    Id_operation: operationId
                 });
             }
         });
@@ -350,15 +295,16 @@ class RpcController {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query is necessary.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
                     Event_name: 'search_start',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
                 req.query.query = escape(req.query.query);
+                const load = req.params.load ? req.params.load : false;
 
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
@@ -370,7 +316,7 @@ class RpcController {
 
                 let response;
                 let nodes = [];
-                response = await this.dataService.searchAssertions(req.query.query, {limit: 20}, true);
+                response = await this.dataService.searchAssertions(req.query.query, { }, true);
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${req.query.query}`);
                 let foundNodes = await this.networkService.findNodes(req.query.query, this.config.replicationFactor);
                 if (foundNodes.length < this.config.replicationFactor)
@@ -378,11 +324,13 @@ class RpcController {
                 nodes = nodes.concat(foundNodes);
 
                 nodes = [...new Set(nodes)];
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING',
-                        data: JSON.stringify(response)
+                        status: 'PENDING'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -393,25 +341,24 @@ class RpcController {
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
                         query: req.query.query,
+                        load,
                         handlerId
                     }, node);
                 }
 
             } catch (e) {
-                this.logger.error(`Unexpected error at search assertions route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at search assertions route',
-                    Operation_name: 'Error',
-                    Event_name: 'SearchAssertionsRouteError',
+                this.logger.error({
+                    msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.SEARCH_ASSERTIONS_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
                     Event_name: 'search_end',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
             }
         });
@@ -420,13 +367,13 @@ class RpcController {
             if ((!req.query.query && !req.query.ids) || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query or ids are necessary.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
                     Event_name: 'search_start',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
 
                 let query = escape(req.query.query), ids, issuers, types, prefix = req.query.prefix,
@@ -491,11 +438,14 @@ class RpcController {
                     }
                     nodes = [...new Set(nodes)];
                 }
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
 
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING',
-                        data: JSON.stringify(response)
+                        status: 'PENDING'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -515,20 +465,18 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Unexpected error at search entities route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at search entities route',
-                    Operation_name: 'Error',
-                    Event_name: 'SearchEntitiesRouteError',
+                this.logger.error({
+                    msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.SEARCH_ENTITIES_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
                     Event_name: 'search_end',
                     Operation_name: 'search',
-                    Id_operation,
+                    Id_operation: operationId
                 });
             }
         });
@@ -541,13 +489,13 @@ class RpcController {
             if (req.query.type !== 'construct') {
                 return next({code: 400, message: 'Unallowed query type, currently supported types: construct'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of query command',
                     Event_name: 'query_start',
                     Operation_name: 'query',
-                    Id_operation,
+                    Id_operation: operationId,
                     Event_value1: req.query.type
                 });
 
@@ -561,10 +509,14 @@ class RpcController {
                 try {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
 
+                    const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                    await this.fileService
+                        .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
+
                     await Models.handler_ids.update(
                         {
-                            status: 'COMPLETED',
-                            data: JSON.stringify({response: response})
+                            status: 'COMPLETED'
                         }, {
                             where: {
                                 handler_id: handlerId,
@@ -585,20 +537,18 @@ class RpcController {
                     throw e;
                 }
             } catch (e) {
-                this.logger.error(`Unexpected error at query route:: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at query route',
-                    Operation_name: 'Error',
-                    Event_name: 'QueryRouteError',
+                this.logger.error({
+                    msg: `Unexpected error at query route:: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.QUERY_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of query command',
                     Event_name: 'query_end',
                     Operation_name: 'query',
-                    Id_operation,
+                    Id_operation: operationId,
                     Event_value1: req.query.type
                 });
             }
@@ -608,13 +558,13 @@ class RpcController {
             if (!req.body.nquads) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
-            const Id_operation = uuidv1();
+            const operationId = uuidv1();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of proofs command',
                     Event_name: 'proofs_start',
                     Operation_name: 'proofs',
-                    Id_operation
+                    Id_operation: operationId
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -647,31 +597,33 @@ class RpcController {
                     }
                 }
 
+                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+                await this.fileService
+                    .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(result));
+
                 await Models.handler_ids.update(
                     {
                         status: 'COMPLETED',
-                        data: JSON.stringify(result)
                     }, {
                         where: {
-                            handler_id: handlerId,
+                            handler_id: handlerId
                         },
                     },
                 );
             } catch (e) {
-                this.logger.error(`Unexpected error at proofs route: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at proofs route',
-                    Operation_name: 'Error',
-                    Event_name: 'ProofsRouteError',
+                this.logger.error({
+                    msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.PROOFS_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation
+                    Id_operation: operationId
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of proofs command',
                     Event_name: 'proofs_end',
                     Operation_name: 'proofs',
-                    Id_operation
+                    Id_operation: operationId
                 });
             }
         });
@@ -701,14 +653,11 @@ class RpcController {
 
                 let response;
                 if (handlerData) {
+                    const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                     switch (req.params.operation) {
                         case 'entities:search':
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
-                            if (handlerData.data) {
-                                handlerData.data = JSON.parse(handlerData.data)
-                            } else {
-                                handlerData.data = [];
-                            }
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "EntitySearchResult",
                                 "result": {
@@ -738,11 +687,7 @@ class RpcController {
                             });
                             break;
                         case 'assertions:search':
-                            if (handlerData.data) {
-                                handlerData.data = JSON.parse(handlerData.data)
-                            } else {
-                                handlerData.data = [];
-                            }
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "AssertionSearchResult",
@@ -771,12 +716,19 @@ class RpcController {
                                 "itemListElement": response
                             });
                             break;
-                        default:
+                        case 'publish':
+                            const result = {};
                             if (handlerData.data) {
-                                handlerData.data = JSON.parse(handlerData.data)
-                            } else {
-                                handlerData.data = {};
+                                const {rdf, assertion} = await this.fileService.loadJsonFromFile(documentPath);
+                                result.data = JSON.parse(handlerData.data);
+                                result.data.rdf = rdf;
+                                result.data.assertion = assertion;
                             }
+                            res.status(200).send({status: handlerData.status, data: result.data});
+                            break;
+                        default:
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                     }
@@ -786,11 +738,9 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.logger.error(`Error while trying to fetch ${operation} data for handler id ${handler_id}. Error message: ${e.message}. ${e.stack}`);
-                this.logger.emit({
-                    msg: 'Telemetry logging error at fetching results',
-                    Operation_name: 'Error',
-                    Event_name: 'ResultsRouteError',
+                this.logger.error({
+                    msg: `Error while trying to fetch ${operation} data for handler id ${handler_id}. Error message: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.RESULTS_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: handler_id
                 });
@@ -811,7 +761,7 @@ class RpcController {
                 this.logger.emit({
                     msg: 'Telemetry logging error at node info route',
                     Operation_name: 'Error',
-                    Event_name: 'NodeInfoRouteError',
+                    Event_name: constants.ERROR_TYPE.NODE_INFO_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: 'Undefined'
                 });
