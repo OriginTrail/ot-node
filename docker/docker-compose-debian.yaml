@@ -6,8 +6,9 @@ services:
     network_mode: host
 
   ot-node:
-    container_name: ot-node
-    image: origintrail/ot-node:v6.0.0-beta.1-debian
+    build: 
+      context: .
+      dockerfile: Debian.Dockerfile
     depends_on:
       - graphdb
     expose:

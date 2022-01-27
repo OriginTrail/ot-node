@@ -5,20 +5,6 @@ MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
 ENV NODE_ENV=testnet
 
-#Install git, nodejs,python
-RUN apt-get -qq update && apt-get -qq -y install curl
-RUN curl -sL https://deb.nodesource.com/setup_14.x |  bash -
-RUN apt-get -qq update
-RUN apt-get -qq -y install wget apt-transport-https
-RUN apt-get -qq -y install git nodejs
-RUN apt-get -qq -y install make python
-
-#Install Papertrail
-RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
-RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
-COPY config/papertrail.yml /etc/log_files.yml
-
-
 
 #Mysql-server installation
 
@@ -36,6 +22,23 @@ RUN { \
      echo mysql-server mysql-server/root_password_again password $PASSWORD ''; \
 } | debconf-set-selections \
     && apt-get update && apt-get install -y default-mysql-server default-mysql-server-core
+
+
+#Install git, nodejs,python
+RUN apt-get -qq update && apt-get -qq -y install curl
+RUN curl -sL https://deb.nodesource.com/setup_14.x |  bash -
+RUN apt-get -qq update
+RUN apt-get -qq -y install wget apt-transport-https
+RUN apt-get -qq -y install git nodejs
+RUN apt-get -qq -y install make python
+
+#Install Papertrail
+RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
+RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
+COPY config/papertrail.yml /etc/log_files.yml
+
+
+
 
 
 
