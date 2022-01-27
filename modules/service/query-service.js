@@ -44,7 +44,7 @@ class QueryService {
         } else {
             response = await this.dataService.searchByIds(ids, {issuers, types, limit});
         }
-        console.log(JSON.stringify(response, null, 2));
+
         return { response, handlerId };
     }
 
