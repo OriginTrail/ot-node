@@ -328,19 +328,24 @@ class GraphdbService {
 
     async healthCheck() {
         try {
-            const response = await axios.get('http://localhost:7200/', {},
+            const response = await axios.get(`http://localhost:7200/repositories/${this.config.repositoryName}/health`, {},
                 {
                     auth: {
                         username: this.config.username,
                         password: this.config.password,
                     },
                 });
-            return true;
-        } catch (e) {
-            if (e.code === 'ECONNREFUSED') {
-                return false;
+            if (response.data.status === 'green') {
+                return true;
             }
-            return true;
+            return false;
+        } catch (e) {
+            if (e.response && e.response.status === 404) {
+                // Expected error: GraphDB is up but has not created node0 repository
+                // Ot-node will create repo in initialization
+                return true;
+            }
+            return false;
         }
     }
 
