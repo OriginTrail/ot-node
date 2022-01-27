@@ -1,3 +1,5 @@
+const Models = require('../../models/index');
+
 /**
  * Describes one command handler
  */
@@ -96,6 +98,36 @@ class Command {
             Object.assign(command, opts);
         }
         return command;
+    }
+
+    /**
+     * Error handler for command
+     * @param handlerId  - Operation handler id
+     * @param error  - Error object
+     * @param errorName - Name of error
+     * @param markFailed - Update operation status to failed
+     * @returns {*}
+     */
+    async handleError(handlerId, error, errorName, markFailed) {
+        this.logger.error({
+            msg: `Command error (${errorName}): ${error.message}`,
+            Event_name: errorName,
+            Event_value1: error.message,
+            Id_operation: handlerId,
+        });
+        if (markFailed) {
+            await Models.handler_ids.update(
+                {
+                    data: JSON.stringify({ message: error.message }),
+                    status: 'FAILED',
+                },
+                {
+                    where: {
+                        handler_id: handlerId,
+                    },
+                },
+            );
+        }
     }
 
     /**

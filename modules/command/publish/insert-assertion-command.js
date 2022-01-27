@@ -1,11 +1,13 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 class InsertAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
         this.dataService = ctx.dataService;
+        this.fileService = ctx.fileService;
     }
 
     /**
@@ -14,8 +16,10 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const {
-            assertion, rdf, keywords, assets, handlerId,
+            documentPath, keywords, assets, handlerId, operationId,
         } = command.data;
+
+        const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
             // Store to local graph database
@@ -37,21 +41,28 @@ class InsertAssertionCommand extends Command {
                 },
             );
         } catch (e) {
-            this.logger.warn(`Error while storing dataset to local database: ${e.message}`);
-            this.logger.emit({
-                msg: 'Telemetry logging error at insert assertion command',
-                Operation_name: 'Error',
-                Event_name: 'InsertAssertionError',
-                Event_value1: e.message,
-                Id_operation: 'Undefined',
-            });
+            await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
         }
 
         return this.continueSequence(command.data, command.sequence);
     }
 
     /**
-     * Builds default dcConvertToOtJsonCommand
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            handlerId,
+        } = command.data;
+        await this.handleError(handlerId, err, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
+
+        return Command.empty();
+    }
+
+    /**
+     * Builds default insertAssertionCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

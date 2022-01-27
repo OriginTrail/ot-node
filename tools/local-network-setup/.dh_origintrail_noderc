@@ -1,9 +1,11 @@
 {
-  "blockchain":[
+  "blockchain": [
     {
       "blockchainTitle": "Polygon",
       "networkId": "polygon::testnet",
-      "rpcEndpoints": ["https://rpc-mumbai.maticvigil.com/"],
+      "rpcEndpoints": [
+        "https://rpc-mumbai.maticvigil.com/"
+      ],
       "publicKey": "...",
       "privateKey": "..."
     }
@@ -13,11 +15,14 @@
     "password": ""
   },
   "logLevel": "trace",
-  "rpcPort": 8900,
+  "rpcPort": 8901,
   "network": {
+    "port": 9001,
+    "bootstrap": [
+      "/ip4/0.0.0.0/tcp/9000/p2p/QmWyf3dtqJnhuCpzEDTNmNFYc5tjxTrXhGcUUmGHdg2gtj"
+    ]
   },
   "ipWhitelist": [
-  "::1",
     "127.0.0.1"
   ]
 }

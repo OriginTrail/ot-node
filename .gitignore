@@ -7,6 +7,7 @@ yarn-error.log*
 lerna-debug.log*
 .idea
 .origintrail_noderc
+.*_origintrail_noderc
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -104,3 +105,5 @@ dist
 
 # TernJS port file
 .tern-port
+
+data

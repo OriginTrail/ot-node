@@ -1,5 +1,6 @@
 {
   "development": {
+    "appDataPath": "data",
     "autoUpdate": {
       "enabled": false,
       "branch": "v6/develop",
@@ -16,23 +17,28 @@
       }
     ],
     "graphDatabase": {
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
+      "port": 9000,
       "bootstrap": []
     },
     "ipWhitelist": [
+      "::1",
       "127.0.0.1"
     ],
     "telemetryHub": {
       "enabled": false,
+      "packages": ["ot-telemetry-collector"],
       "url": ""
     }
   },
   "testnet": {
+    "appDataPath": "data",
     "autoUpdate": {
       "enabled": true,
       "branch": "v6/release/testnet",
@@ -49,12 +55,14 @@
       }
     ],
     "graphDatabase": {
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
+      "port": 9000,
       "bootstrap": [
         "/ip4/165.232.122.94/tcp/9000/p2p/QmQ2zigjQikYnyYUSXZydNXrDRhBut2mubwJBaLXobMt3A",
         "/ip4/46.101.111.223/tcp/9000/p2p/QmdTKEP4DDSwYzX2CHEsBfpEAKAVyE4mPq9ouh4ehZZbg5",
@@ -62,14 +70,17 @@
       ]
     },
     "ipWhitelist": [
+      "::1",
       "127.0.0.1"
     ],
     "telemetryHub": {
       "enabled": true,
+      "packages": ["ot-telemetry-collector"],
       "url": "https://polaris.delta.origin-trail.network/metrics/"
     }
   },
   "mainnet": {
+    "appDataPath": "data",
     "autoUpdate": {
       "enabled": true,
       "branch": "v6/release/mainnet",
@@ -77,19 +88,23 @@
     },
     "blockchain": [],
     "graphDatabase": {
+      "name": "node0",
       "username": "admin",
       "password": ""
     },
     "logLevel": "trace",
     "rpcPort": 8900,
     "network": {
+      "port": 9000,
       "bootstrap": []
     },
     "ipWhitelist": [
+      "::1",
       "127.0.0.1"
     ],
     "telemetryHub": {
       "enabled": false,
+      "packages": ["ot-telemetry-collector"],
       "url": ""
     }
   }

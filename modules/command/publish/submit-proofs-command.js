@@ -1,5 +1,6 @@
 const Command = require('../command');
-const Models = require("../../../models/index");
+const Models = require('../../../models/index');
+const constants = require('../../constants');
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {
@@ -7,6 +8,7 @@ class SubmitProofsCommand extends Command {
         this.logger = ctx.logger;
         this.blockchainService = ctx.blockchainService;
         this.dataService = ctx.dataService;
+        this.fileService = ctx.fileService;
     }
 
     /**
@@ -14,53 +16,32 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { assertion, rdf, handlerId } = command.data;
+        const { documentPath, handlerId, operationId } = command.data;
+
         try {
+            const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+
             this.logger.info(`Sending transaction to the blockchain: createAssertionRecord(${assertion.id},${assertion.rootHash})`);
-            const {transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
+            const { transactionHash, blockchain } = await this.blockchainService
+                .sendProofs(assertion);
             this.logger.info(`Transaction hash is ${transactionHash} on ${blockchain}`);
 
-            command.data.assertion.blockchain = {
+            assertion.blockchain = {
                 name: blockchain,
-                transactionHash
-            }
-            command.data.rdf = await this.dataService.appendBlockchainMetadata(rdf, assertion);
+                transactionHash,
+            };
 
-            const handler = await Models.handler_ids.findOne({
-                where: {
-                    handler_id: handlerId,
-                },
-            });
-            let handlerData = JSON.parse(handler.data);
-            handlerData.blockchain = command.data.assertion.blockchain;
-            await Models.handler_ids.update(
-                {
-                    data: JSON.stringify(handlerData)
-                },{
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
+            const updatedRdf = await this.dataService.appendBlockchainMetadata(rdf, assertion);
+
+            const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+            await this.fileService
+                .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify({
+                    rdf: updatedRdf, assertion,
+                }));
 
         } catch (e) {
-            await Models.handler_ids.update(
-                {
-                    status: 'FAILED',
-                },{
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
-            this.logger.error(`Error while sending transaction to the blockchain. ${e.message}`);
-            this.logger.emit({
-                msg: 'Telemetry logging error at submitting proofs to blockchain command',
-                Operation_name: 'Error',
-                Event_name: 'SubmitProofsError',
-                Event_value1: e.message,
-                Id_operation: 'Undefined',
-            });
+            await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
 
             return Command.empty();
         }
@@ -69,7 +50,22 @@ class SubmitProofsCommand extends Command {
     }
 
     /**
-     * Builds default dcConvertToOtJsonCommand
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            handlerId,
+        } = command.data;
+
+        await this.handleError(handlerId, err, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
+
+        return Command.empty();
+    }
+
+    /**
+     * Builds default submitProofsCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */

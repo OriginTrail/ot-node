@@ -51,7 +51,10 @@ class CommandExecutor {
                 }
                 await this._execute(command);
             } catch (e) {
-                this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
+                this.logger.error({
+                    msg: `Something went really wrong! OT-node shutting down... ${e}`,
+                    Event_name: constants.ERROR_TYPE.COMMAND_EXECUTOR_ERROR,
+                });
                 process.exit(1);
             }
 
@@ -173,7 +176,10 @@ class CommandExecutor {
                 result.children.forEach(async (e) => this.add(e, e.delay, false));
             }
         } catch (e) {
-            this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
+            this.logger.error({
+                msg: `Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`,
+                Event_name: constants.ERROR_TYPE.COMMAND_FAILED_ERROR,
+            });
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.commands) {
