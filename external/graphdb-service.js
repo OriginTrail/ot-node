@@ -328,19 +328,19 @@ class GraphdbService {
 
     async healthCheck() {
         try {
-            const response = await axios.get('http://localhost:7200/repositories/node0/health', {},
+            const response = await axios.get('http://localhost:7200/', {},
                 {
                     auth: {
                         username: this.config.username,
                         password: this.config.password,
                     },
                 });
-            if (response.data.status === 'green') {
-                return true;
-            }
-            return false;
+            return true;
         } catch (e) {
-            return false;
+            if (e.code === 'ECONNREFUSED') {
+                return false;
+            }
+            return true;
         }
     }
 
