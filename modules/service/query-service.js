@@ -54,15 +54,14 @@ class QueryService {
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
-        console.log(response);
+
         for (const asset of response) {
             for (const rawAssertion of asset.assertions) {
                 if (!rawAssertion || !rawAssertion.rdf) {
                     continue;
                 }
                 const {assertion, rdf} = await this.dataService.createAssertion(rawAssertion.id, rawAssertion.rdf);
-                console.log(assertion);
-                console.log(rdf);
+
                 const status = await this.dataService.verifyAssertion(assertion, rdf);
                 //todo check root hash on the blockchain
                 if (status) {
