@@ -156,7 +156,7 @@ class DataService {
                 }
 
                 if (assertion.metadata.visibility) {
-                    const calculateRootHash = this.validationService.calculateRootHash(rdf);
+                    const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
                     if (assertion.rootHash !== calculateRootHash) {
                         this.logger.error({
                             msg: `Root hash ${assertion.rootHash} doesn't match with calculated ${calculateRootHash}`,

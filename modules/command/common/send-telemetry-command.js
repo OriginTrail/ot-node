@@ -1,17 +1,6 @@
-const {execSync} = require('child_process');
 const Command = require('../command');
-const axios = require('axios');
-const FormData = require('form-data');
-const fs = require('fs');
-const converter = require('json-2-csv');
-const split = require('split');
-const {finished} = require('stream');
-// Constructing promisify from util
-const {promisify} = require('util');
-const path = require("path");
 const constants = require('../../constants');
-// Defining finishedAsync method
-const finishedAsync = promisify(finished);
+const Models = require('../../../models/index');
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -32,12 +21,18 @@ class SendTelemetryCommand extends Command {
         }
 
         this.telemetryHubModuleManager.aggregateTelemetryData()
-            .then(jsonld =>
-            {
-                if (jsonld)
-                    this.publishService.publish(JSON.stringify(jsonld), '.json', [], [`ot-telemetry-${Math.floor(new Date() / (60 * 60 * 1000))}`], true, null)
+            .then((jsonld) => {
+                if (jsonld) {
+                    Models.handler_ids.create({
+                        status: 'PENDING',
+                    }).then((insertedObject) => {
+                        this.publishService.publish(JSON.stringify(jsonld), '.json', [], [`ot-telemetry-${Math.floor(new Date() / (60 * 60 * 1000))}`], true, insertedObject.dataValues.handler_id);
+                    });
+                }
             })
-            .catch(e=>this.handleError(e.message));
+            .catch((e) => {
+                this.handleError(e.message);
+            });
 
         return Command.repeat();
     }
@@ -50,7 +45,7 @@ class SendTelemetryCommand extends Command {
 
     async handleError(error) {
         this.logger.error({
-            msg:`Error while sending telemetry data to Telemetry hub: ${error}. ${error.stack}`,
+            msg: `Error while sending telemetry data to Telemetry hub: ${error}. ${error.stack}`,
             Event_name: constants.ERROR_TYPE.SENDING_TELEMETRY_DATA_ERROR,
         });
     }
