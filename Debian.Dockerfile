@@ -7,7 +7,6 @@ ENV NODE_ENV=testnet
 
 
 #Mysql-server installation
-
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PASSWORD=password
 RUN apt-get update
@@ -25,13 +24,8 @@ RUN { \
     && apt-get update && apt-get install -y default-mysql-server default-mysql-server-core
 
 
-#Install git, nodejs,python
-#RUN apt-get -qq update && apt-get -qq -y install curl
-#RUN curl -sL https://deb.nodesource.com/setup_14.x |  bash -
-#RUN apt-get -qq update
-#RUN apt-get -qq -y install wget apt-transport-https
+
 RUN apt-get -qq -y install git
-#RUN apt-get -qq -y install git nodejs
 RUN apt-get -qq -y install make python
 
 #Install Papertrail
