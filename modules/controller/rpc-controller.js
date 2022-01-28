@@ -510,9 +510,10 @@ class RpcController {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
 
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
-
-                    await this.fileService
-                        .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
+                    if(response) {
+                        await this.fileService
+                            .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
+                    }
 
                     await Models.handler_ids.update(
                         {
@@ -534,11 +535,10 @@ class RpcController {
                             },
                         },
                     );
-                    throw e;
                 }
             } catch (e) {
                 this.logger.error({
-                    msg: `Unexpected error at query route:: ${e.message}. ${e.stack}`,
+                    msg: `Unexpected error at query route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.QUERY_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: operationId
