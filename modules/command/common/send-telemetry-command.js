@@ -26,7 +26,7 @@ class SendTelemetryCommand extends Command {
                     Models.handler_ids.create({
                         status: 'PENDING',
                     }).then((insertedObject) => {
-                        this.publishService.publish(JSON.stringify(jsonld), '.json', [], [`ot-telemetry-${Math.floor(new Date() / (60 * 60 * 1000))}`], true, insertedObject.dataValues.handler_id);
+                        this.publishService.publish(JSON.stringify(jsonld), '.json', [], [`ot-telemetry-${Math.floor(new Date() / (60 * 1000))}`], true, insertedObject.dataValues.handler_id);
                     });
                 }
             })
@@ -62,7 +62,7 @@ class SendTelemetryCommand extends Command {
             data: {
                 message: '',
             },
-            period: 20 * 60 * 1000, // 5 * 60 * 1000
+            period: 60 * 60 * 1000, // 5 * 60 * 1000
             transactional: false,
         };
         Object.assign(command, map);
