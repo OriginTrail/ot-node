@@ -10,24 +10,15 @@ NC='\033[0m' # No Color
 
 clear
 
-echo -n "${N1}Checking that the OS is Ubuntu 20.04 ONLY: "
+echo -n "${N1}Checking that the OS is Ubuntu 20.04 or 21.10 ONLY: "
 
 if [[ $OS_VERSION != 20.04 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "This installer requires Ubuntu 20.04. Destroy this VPS and remake using Ubuntu 20.04."
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Checking that we are in /root directory: "
-
-if [ $PWD != "$OTNODE_DIR" ]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "${N1}This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo.${N1}"
-    exit
-else
-    echo -e "${GREEN}SUCCESS${NC}"
+    if [[ $OS_VERSION != 21.10 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "This installer requires Ubuntu 20.04 or 21.10. Destroy this VPS and remake using Ubuntu 20.04 or 21.10."
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
 fi
 
 echo -n "Checking that the GraphDB file is present in /root: "
