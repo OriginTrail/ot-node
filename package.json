@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "6.0.0-beta.1.21",
+  "version": "6.0.0-beta.1.22",
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
@@ -76,7 +76,7 @@
     "mysql2": "^2.3.3",
     "n3": "^1.12.2",
     "nodemon": "^2.0.15",
-    "ot-telemetry-collector": "^1.0.1",
+    "ot-telemetry-collector": "^1.0.2",
     "p-iteration": "^1.1.8",
     "peer-id": "^0.15.3",
     "pino": "^7.5.1",
