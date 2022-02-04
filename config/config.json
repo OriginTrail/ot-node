@@ -22,6 +22,7 @@
       "password": ""
     },
     "logLevel": "trace",
+    "replicationFactor" : 3,
     "rpcPort": 8900,
     "network": {
       "port": 9000,
@@ -60,6 +61,7 @@
       "password": ""
     },
     "logLevel": "trace",
+    "replicationFactor" : 3,
     "rpcPort": 8900,
     "network": {
       "port": 9000,
@@ -93,6 +95,7 @@
       "password": ""
     },
     "logLevel": "trace",
+    "replicationFactor" : 3,
     "rpcPort": 8900,
     "network": {
       "port": 9000,
