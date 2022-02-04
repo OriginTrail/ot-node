@@ -1,5 +1,6 @@
 const express = require('express');
 const fileUpload = require('express-fileupload');
+const bodyParser = require('body-parser')
 const ipfilter = require('express-ipfilter').IpFilter;
 const fs = require('fs');
 const https = require('https');
@@ -32,6 +33,8 @@ class RpcController {
         this.app.use(fileUpload({
             createParentPath: true,
         }));
+
+        this.app.use(bodyParser.json())
     }
 
     async initialize() {
@@ -590,7 +593,8 @@ class RpcController {
                     }
                 }
 
-                const nquads = JSON.parse(req.body.nquads);
+                const nquads = req.body.nquads instanceof Array
+                    ? req.body.nquads : JSON.parse(req.body.nquads);
 
                 const result = [];
                 if (!assertions || assertions.length === 0) {
