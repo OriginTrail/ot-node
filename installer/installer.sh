@@ -12,12 +12,11 @@ clear
 
 echo -n "${N1}Checking that the OS is Ubuntu 20.04 or 21.10 ONLY: "
 
-if [[ $OS_VERSION != 20.04 ]]; then
-    if [[ $OS_VERSION != 21.10 ]]; then
+if [[ $OS_VERSION != 20.04 && $OS_VERSION != 21.10 ]]
         echo -e "${RED}FAILED${NC}"
         echo "This installer requires Ubuntu 20.04 or 21.10. Destroy this VPS and remake using Ubuntu 20.04 or 21.10."
         exit 1
-    else
+else
         echo -e "${GREEN}SUCCESS${NC}"
 fi
 
@@ -178,7 +177,7 @@ fi
 
 echo -n "Installing nodejs and npm: "
 
-OUTPUT=$(aptitude install nodejs npm -y >/dev/null 2>&1)
+OUTPUT=$(aptitude install nodejs -y >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing nodejs/npm."
