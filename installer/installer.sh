@@ -109,6 +109,19 @@ fi
 
 systemctl daemon-reload
 
+echo -n "Enable GraphDB service on boot: "
+
+OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling the GraphDB service."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Starting GraphDB: "
 
 OUTPUT=$(systemctl start graphdb >/dev/null 2>&1)
@@ -366,6 +379,19 @@ else
 fi
 
 systemctl daemon-reload
+
+echo -n "Enable otnode service on boot: "
+
+OUTPUT=$(systemctl enable otnode >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling the otnode service."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
 
 echo -n "Starting otnode: "
 
