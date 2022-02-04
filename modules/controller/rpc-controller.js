@@ -142,7 +142,15 @@ class RpcController {
         this.app.post('/publish', async (req, res, next) => {
             if (!req.files || !req.files.file || !req.body.assets) {
                 return next({code: 400, message: 'File, assets, and keywords are required fields.'});
+            } else {
+                if(!this.isArrayOfStrings(req.body.assets)){
+                    return next({code: 400, message: `Assets must be a non-empty array of strings, all strings must have double quotes.`});
+                }
+                if(req.body.keywords && !this.isArrayOfStrings(req.body.keywords)) {
+                    return next({code: 400, message: `Keywords must be a non-empty array of strings, all strings must have double quotes.`});
+                }
             }
+
             const operationId = uuidv1();
             try {
                 this.logger.emit({
@@ -768,6 +776,18 @@ class RpcController {
                 return next({code: 400, message: `Error while fetching node info: ${e}. ${e.stack}`});
             }
         });
+    }
+
+    isArrayOfStrings(arr) {
+        try {
+            const bodyAssets = JSON.parse(arr.toLowerCase());
+            if (!(Array.isArray(bodyAssets)) | !(bodyAssets.length > 0) | !bodyAssets.every(i => (typeof i === "string")) | bodyAssets[0] === "") {
+                return false;
+            }
+        } catch (e) {
+            return false;
+        }
+        return true;
     }
 }
 
