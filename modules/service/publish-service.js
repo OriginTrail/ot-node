@@ -22,7 +22,6 @@ class PublishService {
         assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
         assertion.signature = this.validationService.sign(assertion.id);
 
-        keywords.push(assertion.metadata.type);
         keywords = [...new Set(keywords.concat(rawAssets))];
 
         const assets = [];
