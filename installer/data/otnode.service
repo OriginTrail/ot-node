@@ -1,0 +1,16 @@
+#/lib/systemd/system/graphdb.service
+
+[Unit]
+Description=OriginTrail V6 Stage 1 Beta Node
+Documentation=https://github.com/OriginTrail/ot-node/tree/v6/release%2Ftestnet
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/ot-node
+ExecStart=/usr/bin/node /root/ot-node/index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
