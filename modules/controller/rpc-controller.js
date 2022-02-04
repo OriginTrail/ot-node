@@ -1,6 +1,5 @@
 const express = require('express');
 const fileUpload = require('express-fileupload');
-const bodyParser = require('body-parser')
 const ipfilter = require('express-ipfilter').IpFilter;
 const fs = require('fs');
 const https = require('https');
@@ -27,14 +26,13 @@ class RpcController {
         this.commandExecutor = ctx.commandExecutor;
         this.fileService = ctx.fileService;
         this.app = express();
+        this.app.use(express.json())
 
         this.enableSSL();
 
         this.app.use(fileUpload({
             createParentPath: true,
         }));
-
-        this.app.use(bodyParser.json())
     }
 
     async initialize() {
