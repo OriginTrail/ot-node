@@ -18,14 +18,16 @@ class SendAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const {
-            assets, keywords, handlerId, documentPath,
-        } = command.data;
+        const { documentPath, handlerId } = command.data;
 
-        const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+        let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+
+        if (!assertion.metadata.visibility) {
+            nquads = nquads.filter((x) => x.startsWith('<did:dkg:'));
+        }
 
         let nodes = [];
-        for (const keyword of keywords) {
+        for (const keyword of assertion.metadata.keywords) {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
@@ -43,7 +45,7 @@ class SendAssertionCommand extends Command {
         nodes = [...new Set(nodes)];
 
         for (const node of nodes) {
-            this.publishService.store({ rdf, id: assertion.id }, node).catch((e) => {
+            this.publishService.store({ id:assertion.id, nquads: nquads }, node).catch((e) => {
                 this.handleError(handlerId, e, `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`);
             });
         }

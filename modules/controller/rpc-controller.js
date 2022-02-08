@@ -11,6 +11,7 @@ const constants = require('../constants');
 const pjson = require('../../package.json');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
+const Utilities = require('../utilities');
 
 
 class RpcController {
@@ -25,6 +26,7 @@ class RpcController {
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
         this.fileService = ctx.fileService;
+        this.workerPool = ctx.workerPool;
         this.app = express();
 
         this.enableSSL();
@@ -35,18 +37,16 @@ class RpcController {
     }
 
     async initialize() {
-        this.startListeningForRpcNetworkCalls();
+        this.initializeNetworkApi();
 
         this.initializeAuthenticationMiddleware();
-        this.startListeningForRpcApiCalls();
+        this.initializeServiceApi();
         await this.initializeErrorMiddleware();
         if (this.sslEnabled) {
             await this.httpsServer.listen(this.config.rpcPort);
         } else {
             await this.app.listen(this.config.rpcPort);
         }
-
-        this.logger.info(`RPC module enabled, server running on port ${this.config.rpcPort}`);
     }
 
     initializeAuthenticationMiddleware() {
@@ -91,14 +91,14 @@ class RpcController {
                     default:
                         return next(error)
                 }
-                this.logger.error({ msg: message, Event_name: constants.ERROR_TYPE.API_ERROR_400 });
+                this.logger.error({msg: message, Event_name: constants.ERROR_TYPE.API_ERROR_400});
                 return res.status(code).send(message);
             }
             return next(error)
         })
 
         this.app.use((error, req, res, next) => {
-            this.logger.error({ msg: error,  Event_name: constants.ERROR_TYPE.API_ERROR_500});
+            this.logger.error({msg: error, Event_name: constants.ERROR_TYPE.API_ERROR_500});
             return res.status(500).send(error)
         })
     }
@@ -114,7 +114,9 @@ class RpcController {
         }
     }
 
-    startListeningForRpcNetworkCalls() {
+    initializeNetworkApi() {
+        this.logger.info(`Network API module enabled, server running on port ${this.config.network.port}`);
+
         this.networkService.handleMessage('/store', (result) => this.publishService.handleStore(result));
 
         this.networkService.handleMessage('/resolve', (result) => this.queryService.handleResolve(result));
@@ -137,82 +139,32 @@ class RpcController {
         // this.networkService.handleMessage('/query', (result) => this.queryService.handleQuery(result));
     }
 
-    startListeningForRpcApiCalls() {
+    initializeServiceApi() {
+        this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
         this.app.post('/publish', async (req, res, next) => {
-            if (!req.files || !req.files.file || !req.body.assets) {
-                return next({code: 400, message: 'File, assets, and keywords are required fields.'});
-            } else {
-                if(!this.isArrayOfStrings(req.body.assets)){
-                    return next({code: 400, message: `Assets must be a non-empty array of strings, all strings must have double quotes.`});
-                }
-                if(req.body.keywords && !this.isArrayOfStrings(req.body.keywords)) {
-                    return next({code: 400, message: `Keywords must be a non-empty array of strings, all strings must have double quotes.`});
-                }
-            }
-
-            const operationId = uuidv1();
-            try {
-                this.logger.emit({
-                    msg: 'Started measuring execution of publish command',
-                    Event_name: 'publish_start',
-                    Operation_name: 'publish',
-                    Id_operation: operationId
-                });
-
-                const inserted_object = await Models.handler_ids.create({
-                    status: 'PENDING',
-                });
-                const handlerId = inserted_object.dataValues.handler_id;
-                res.status(200).send({
-                    handler_id: handlerId,
-                });
-
-                const fileContent = req.files.file.data;
-                const fileExtension = path.extname(req.files.file.name).toLowerCase();
-                const assets = [...new Set(JSON.parse(req.body.assets.toLowerCase()))];
-                let visibility = JSON.parse(!!req.body.visibility);
-                let keywords = req.body.keywords ? JSON.parse(req.body.keywords.toLowerCase()) : [];
-
-                const assertion = await this.publishService.publish(fileContent, fileExtension, assets, keywords, visibility, handlerId);
-
-                const handlerData = {
-                    id: assertion.id,
-                    rootHash: assertion.rootHash,
-                    signature: assertion.signature,
-                    metadata: assertion.metadata,
-                };
-
-                await Models.handler_ids.update(
-                    {
-                        data: JSON.stringify(handlerData)
-                    }, {
-                        where: {
-                            handler_id: handlerId,
-                        },
-                    },
-                );
-
-            } catch (e) {
-                this.logger.error({
-                    msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
-                    Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
-                    Event_value1: e.message,
-                    Id_operation: operationId
-                });
-            } finally {
-                this.logger.emit({
-                    msg: 'Finished measuring execution of publish command',
-                    Event_name: 'publish_end',
-                    Operation_name: 'publish',
-                    Id_operation: operationId
+            await this.publish(req, res, next, {isAsset: false});
+        });
+        this.app.post('/provision', async (req, res, next) => {
+            await this.publish(req, res, next, {isAsset: true, ual: null});
+        });
+        this.app.post('/update', async (req, res, next) => {
+            if (!req.body.ual) {
+                return next({
+                    code: 400,
+                    message: `UAL must be a string.`
                 });
             }
+            await this.publish(req, res, next, {isAsset: true, ual: req.body.ual});
         });
 
         this.app.get('/resolve', async (req, res, next) => {
             if (!req.query.ids) {
                 return next({code: 400, message: 'Param ids is required.'});
+            }
+
+            if (!req.query.load) {
+                req.query.load = true;
             }
             const operationId = uuidv1();
             try {
@@ -227,40 +179,70 @@ class RpcController {
                     status: 'PENDING',
                 });
                 const handlerId = inserted_object.dataValues.handler_id;
-                res.status(200).send({
+                res.status(202).send({
                     handler_id: handlerId,
                 });
 
-                let assertionIds = [req.query.ids];
+                let ids = [req.query.ids];
                 if (req.query.ids instanceof Array) {
-                    assertionIds = [...new Set(req.query.ids)];
+                    ids = [...new Set(req.query.ids)];
                 }
-                this.logger.info(`Resolve for assertions ids: ${assertionIds} with handler id ${handlerId} initiated.`);
+                this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
                 const response = [];
 
-                for (const assertionId of assertionIds) {
-                    let namedGraph = await this.dataService.resolve(assertionId, true);
-                    if (namedGraph) {
-                        let {assertion, rdf} = await this.dataService.createAssertion(assertionId, namedGraph);
-                        assertion.metadata = JSON.parse(sortedStringify(assertion.metadata))
-                        assertion.data = JSON.parse(sortedStringify(await this.dataService.fromRDF(assertion.data, assertion.metadata.type)))
-                        response.push({
-                            [assertionId]: assertion
-                        });
+                for (const id of ids) {
+                    let result = await this.dataService.resolve(id, true);
+                    if (!result) {
+                        let {nquads, isAsset} = result;
+                        let assertion = await this.dataService.createAssertion(nquads);
+                        assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
+                        assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
+                        response.push(isAsset ? {
+                                type: 'asset',
+                                id: id,
+                                asset: {
+                                    metadata: {
+                                        type: assertion.jsonld.metadata.type,
+                                        issuer: assertion.jsonld.metadata.issuer,
+                                        latestState: assertion.jsonld.metadata.timestamp,
+                                    },
+                                    data: assertion.jsonld.data
+                                }
+                            } : {
+                                type: 'assertion',
+                                id: id,
+                                assertion: assertion.jsonld
+                            }
+                        );
                     } else {
-                        this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${assertionId}`);
-                        let nodes = await this.networkService.findNodes(assertionId, this.config.replicationFactor);
+                        this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
+                        let nodes = await this.networkService.findNodes(id, this.config.replicationFactor);
                         if (nodes.length < this.config.replicationFactor)
-                            this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${assertionId}`);
+                            this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
                         nodes = [...new Set(nodes)];
                         for (const node of nodes) {
-                            let {assertion} = await this.queryService.resolve(assertionId, node);
-                            if (assertion) {
-                                assertion.metadata = JSON.parse(sortedStringify(assertion.metadata));
-                                assertion.data = JSON.parse(sortedStringify(await this.dataService.fromRDF(assertion.data, assertion.metadata.type)))
-                                response.push({
-                                    [assertionId]: assertion
-                                });
+                            const result = await this.queryService.resolve(id, req.query.load, node);
+                            if (result) {
+                                const {assertion, isAsset} = result;
+                                assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
+                                assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
+                                response.push(isAsset ? {
+                                        type: 'asset',
+                                        id: id,
+                                        asset: {
+                                            metadata: {
+                                                type: assertion.jsonld.metadata.type,
+                                                issuer: assertion.jsonld.metadata.issuer,
+                                                latestState: assertion.jsonld.metadata.timestamp,
+                                            },
+                                            data: assertion.jsonld.data
+                                        }
+                                    } : {
+                                        type: 'assertion',
+                                        id: id,
+                                        assertion: assertion.jsonld
+                                    }
+                                );
                                 break;
                             }
                         }
@@ -303,6 +285,20 @@ class RpcController {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query is necessary.'});
             }
+
+            let prefix = req.query.prefix,
+                limit = req.query.limit;
+
+            if (!prefix) {
+                prefix = false;
+            }
+
+            if (!limit || limit < 1 || !Number(limit)) {
+                limit = 20;
+            } else if (limit > 500) {
+                limit = 500;
+            }
+
             const operationId = uuidv1();
             try {
                 this.logger.emit({
@@ -311,20 +307,18 @@ class RpcController {
                     Operation_name: 'search',
                     Id_operation: operationId
                 });
-                req.query.query = escape(req.query.query);
-                const load = req.params.load ? req.params.load : false;
-
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
                 const handlerId = inserted_object.dataValues.handler_id;
-                res.status(200).send({
+                res.status(202).send({
                     handler_id: handlerId,
                 });
 
+
                 let response;
                 let nodes = [];
-                response = await this.dataService.searchAssertions(req.query.query, { }, true);
+                response = await this.dataService.searchAssertions(req.query.query, {limit, prefix}, true);
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${req.query.query}`);
                 let foundNodes = await this.networkService.findNodes(req.query.query, this.config.replicationFactor);
                 if (foundNodes.length < this.config.replicationFactor)
@@ -349,11 +343,10 @@ class RpcController {
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
                         query: req.query.query,
-                        load,
+                        options: {limit, prefix},
                         handlerId
                     }, node);
                 }
-
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
@@ -372,7 +365,7 @@ class RpcController {
         });
 
         this.app.get('/entities::search', async (req, res, next) => {
-            if ((!req.query.query && !req.query.ids) || req.params.search !== 'search') {
+            if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query or ids are necessary.'});
             }
             const operationId = uuidv1();
@@ -385,15 +378,7 @@ class RpcController {
                 });
 
                 let query = escape(req.query.query), ids, issuers, types, prefix = req.query.prefix,
-                    limit = req.query.limit,
-                    framingCriteria = req.query.framingCriteria;
-
-                if (req.query.ids) {
-                    ids = [req.query.ids];
-                    if (req.query.ids instanceof Array) {
-                        ids = [...new Set(req.query.ids)];
-                    }
-                }
+                    limit = req.query.limit;
 
                 if (req.query.issuers) {
                     issuers = [req.query.issuers];
@@ -435,16 +420,6 @@ class RpcController {
                     nodes = await this.networkService.findNodes(query, this.config.replicationFactor);
                     if (nodes.length < this.config.replicationFactor)
                         this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
-                } else {
-                    response = await this.dataService.searchByIds(ids, {issuers, types, limit}, true);
-                    for (const id of ids) {
-                        this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
-                        let foundNodes = await this.networkService.findNodes(id, this.config.replicationFactor);
-                        if (foundNodes.length < this.config.replicationFactor)
-                            this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${id}`);
-                        nodes = nodes.concat(foundNodes);
-                    }
-                    nodes = [...new Set(nodes)];
                 }
                 const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
@@ -463,7 +438,6 @@ class RpcController {
                 for (const node of nodes) {
                     await this.queryService.search({
                         query,
-                        ids,
                         issuers,
                         types,
                         prefix,
@@ -518,7 +492,7 @@ class RpcController {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
 
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
-                    if(response) {
+                    if (response) {
                         await this.fileService
                             .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
                     }
@@ -637,7 +611,7 @@ class RpcController {
         });
 
         this.app.get('/:operation/result/:handler_id', async (req, res, next) => {
-            if (!['publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
+            if (!['provision', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
                     message: 'Unexisting operation, available operations are: publish, resolve, query, proofs and search'
@@ -664,22 +638,20 @@ class RpcController {
                     const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                     switch (req.params.operation) {
                         case 'entities:search':
-                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
-                            response = handlerData.data.map(async (x) => ({
+                            response = handlerData.data.map((x) => ({
                                 "@type": "EntitySearchResult",
                                 "result": {
                                     "@id": x.id,
                                     "@type": x.type.toUpperCase(),
-                                    ...(await this.dataService.frameAsset(x.data, x.type))
+                                    "timestamp": x.timestamp,
                                 },
                                 "issuers": x.issuers,
                                 "assertions": x.assertions,
                                 "nodes": x.nodes,
                                 "resultScore": 0
                             }));
-
-                            response = await Promise.all(response);
 
                             res.send({
                                 "@context": {
@@ -695,7 +667,7 @@ class RpcController {
                             });
                             break;
                         case 'assertions:search':
-                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "AssertionSearchResult",
@@ -724,18 +696,23 @@ class RpcController {
                                 "itemListElement": response
                             });
                             break;
-                        case 'publish':
-                            const result = {};
-                            if (handlerData.data) {
-                                const {rdf, assertion} = await this.fileService.loadJsonFromFile(documentPath);
-                                result.data = JSON.parse(handlerData.data);
-                                result.data.rdf = rdf;
-                                result.data.assertion = assertion;
+                        case 'resolve':
+                            if (handlerData) {
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
                             }
-                            res.status(200).send({status: handlerData.status, data: result.data});
+                            res.status(200).send({status: handlerData.status, data: handlerData.data});
+                            break;
+                        case 'provision':
+                        case 'publish':
+                        case 'update':
+                            if (handlerData) {
+                                const result = await this.fileService.loadJsonFromFile(documentPath);
+                                handlerData.data = result.assertion;
+                            }
+                            res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                         default:
-                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
 
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
@@ -778,16 +755,92 @@ class RpcController {
         });
     }
 
-    isArrayOfStrings(arr) {
-        try {
-            const bodyAssets = JSON.parse(arr.toLowerCase());
-            if (!(Array.isArray(bodyAssets)) | !(bodyAssets.length > 0) | !bodyAssets.every(i => (typeof i === "string")) | bodyAssets[0] === "") {
-                return false;
-            }
-        } catch (e) {
-            return false;
+    async publish(req, res, next, options) {
+        if (!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') {
+            return next({code: 400, message: 'Assertion file is required field and must be in JSON-LD format.'});
+            //TODO determine file size limit
+        } else if (req.files.file.size > 268435456) {
+            return next({
+                code: 400,
+                message: `File size limit is 256MB.`
+            });
+        } else if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
+            return next({
+                code: 400,
+                message: `Keywords must be a non-empty array of strings, all strings must have double quotes.`
+            });
+        } else if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
+            return next({
+                code: 400,
+                message: `Visibility must be a string, value can be public or private.`
+            });
         }
-        return true;
+
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of publish command',
+            Event_name: 'publish_start',
+            Operation_name: 'publish',
+            Id_operation: operationId
+        });
+
+        const handlerObject = await Models.handler_ids.create({
+            status: 'PENDING',
+        })
+
+        const handlerId = handlerObject.dataValues.handler_id;
+        res.status(202).send({
+            handler_id: handlerId,
+        });
+
+        const fileContent = req.files.file.data;
+        const fileExtension = path.extname(req.files.file.name).toLowerCase();
+        const visibility = req.body.visibility ? req.body.visibility.toLowerCase() : 'public';
+        const ual = options.isAsset ? options.ual : undefined;
+
+        let promise;
+        if (req.body.keywords) {
+            promise = this.workerPool.exec('JSONParse', [req.body.keywords.toLowerCase()]);
+        } else {
+            promise = new Promise((accept) => accept([]));
+        }
+
+        promise
+            .then(keywords => this.publishService.publish(fileContent, fileExtension, keywords, visibility, ual, handlerId))
+            .then(assertion => {
+                const handlerData = {
+                    id: assertion.id,
+                    rootHash: assertion.rootHash,
+                    signature: assertion.signature,
+                    metadata: assertion.metadata,
+                };
+
+                Models.handler_ids.update(
+                    {
+                        data: JSON.stringify(handlerData)
+                    }, {
+                        where: {
+                            handler_id: handlerId,
+                        },
+                    },
+                );
+            })
+            .catch(e => {
+                this.logger.error({
+                    msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
+                    Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
+                    Event_value1: e.message,
+                    Id_operation: operationId
+                });
+            })
+            .then(() => {
+                this.logger.emit({
+                    msg: 'Finished measuring execution of publish command',
+                    Event_name: 'publish_end',
+                    Operation_name: 'publish',
+                    Id_operation: operationId
+                });
+            });
     }
 }
 

@@ -1,13 +1,13 @@
-const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
-const { RepositoryClientConfig, RepositoryConfig, RepositoryType } = require('graphdb').repository;
-const { SparqlXmlResultParser } = require('graphdb').parser;
-const { GetQueryPayload, QueryType } = require('graphdb').query;
-const { RDFMimeType } = require('graphdb').http;
+const {ServerClientConfig, GraphDBServerClient} = require('graphdb').server;
+const {RepositoryClientConfig, RepositoryConfig, RepositoryType} = require('graphdb').repository;
+const {SparqlXmlResultParser} = require('graphdb').parser;
+const {GetQueryPayload, QueryType} = require('graphdb').query;
+const {RDFMimeType} = require('graphdb').http;
 const axios = require('axios');
-const { execSync } = require('child_process');
+const {execSync} = require('child_process');
 const jsonld = require('jsonld');
 const N3 = require('n3');
-const { BufferList } = require('bl');
+const {BufferList} = require('bl');
 const constants = require('../modules/constants');
 
 class GraphdbService {
@@ -144,16 +144,13 @@ class GraphdbService {
 
     async extractMetadata(rdf) {
         return new Promise(async (accept, reject) => {
-            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+            const parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
             const result = {
                 metadata: {
-
+                    keywords: [],
+                    UALs: [],
                 },
-                blockchain: {
-
-                },
-                assets: [],
-                keywords: [],
+                blockchain: {},
             };
 
             const quads = [];
@@ -169,106 +166,123 @@ class GraphdbService {
                 },
             );
 
+
             for (const quad of quads) {
                 try {
                     switch (quad._predicate.id) {
-                    case 'http://schema.org/hasType':
-                        result.metadata.type = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasTimestamp':
-                        result.metadata.timestamp = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasIssuer':
-                        result.metadata.issuer = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasVisibility':
-                        result.metadata.visibility = !!quad._object.id.includes('true');
-                        break;
-                    case 'http://schema.org/hasDataHash':
-                        result.metadata.dataHash = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasAsset':
-                        result.assets.push(JSON.parse(quad._object.id));
-                        break;
-                    case 'http://schema.org/hasKeyword':
-                        result.keywords.push(JSON.parse(quad._object.id));
-                        break;
-                    case 'http://schema.org/hasSignature':
-                        result.signature = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasRootHash':
-                        result.rootHash = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasBlockchain':
-                        result.blockchain.name = JSON.parse(quad._object.id);
-                        break;
-                    case 'http://schema.org/hasTransactionHash':
-                        result.blockchain.transactionHash = JSON.parse(quad._object.id);
-                        break;
-                    default:
-                        break;
+                        case 'http://schema.org/hasType':
+                            result.metadata.type = JSON.parse(quad._object.id);
+                            result.id = quad._subject.id.replace('did:dkg:', '');
+                            break;
+                        case 'http://schema.org/hasTimestamp':
+                            result.metadata.timestamp = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasUALs':
+                            result.metadata.UALs.push(JSON.parse(quad._object.id));
+                            break;
+                        case 'http://schema.org/hasIssuer':
+                            result.metadata.issuer = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasVisibility':
+                            result.metadata.visibility = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasDataHash':
+                            result.metadata.dataHash = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasKeywords':
+                            result.metadata.keywords.push(JSON.parse(quad._object.id));
+                            break;
+                        case 'http://schema.org/hasSignature':
+                            result.signature = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasRootHash':
+                            result.rootHash = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasBlockchain':
+                            result.blockchain.name = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasTransactionHash':
+                            result.blockchain.transactionHash = JSON.parse(quad._object.id);
+                            break;
+                        default:
+                            break;
                     }
                 } catch (e) {
-                    this.logger.error({ msg: `Error in extracting metadata: ${e}. ${e.stack}`, Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR });
+                    this.logger.error({
+                        msg: `Error in extracting metadata: ${e}. ${e.stack}`,
+                        Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR
+                    });
                 }
             }
+
+            result.metadata.keywords.sort();
+            if (!result.metadata.UALs.length)
+                delete result.metadata.UALs;
+            else
+                result.metadata.UALs.sort();
+
+
             accept(result);
         });
     }
 
     async createMetadata(assertion) {
-        const result = await this.toRDF({
+        const metadata = {
             '@context': 'https://www.schema.org/',
+            '@id': `did:dkg:${assertion.id}`,
             hasType: assertion.metadata.type,
             hasSignature: assertion.signature,
             hasIssuer: assertion.metadata.issuer,
             hasTimestamp: assertion.metadata.timestamp,
             hasVisibility: assertion.metadata.visibility,
             hasDataHash: assertion.metadata.dataHash,
-        });
+            hasKeywords: assertion.metadata.keywords,
+        };
 
-        return result.map((x) => x.replace('_:c14n0', `<did:dkg:${assertion.id}>`));
-    }
+        if (assertion.metadata.UALs)
+            metadata.hasUALs = assertion.metadata.UALs;
 
-    async createBlockchainMetadata(assertion) {
-        const result = await this.toRDF({
-            '@context': 'https://www.schema.org/',
-            hasBlockchain: assertion.blockchain.name,
-            hasTransactionHash: assertion.blockchain.transactionHash,
-        });
-
-        return result.map((x) => x.replace('_:c14n0', `<did:dkg:${assertion.id}>`));
-    }
-
-    async createConnections(options) {
-        const {
-            assertionId, assets, keywords, rootHash,
-        } = options;
-
-        const result = await this.toRDF({
-            '@context': 'https://www.schema.org/',
-            hasAsset: assets,
-            hasKeyword: keywords,
-            hasRootHash: rootHash,
-        });
-
-        return result.map((x) => x.replace('_:c14n0', `<did:dkg:${assertionId}>`));
+        const result = await this.toRDF(metadata);
+        return result;
     }
 
     async resolve(uri) {
-        const query = `CONSTRUCT { ?s ?p ?o }
-                       WHERE {
-                            GRAPH ?g { ?s ?p ?o }
-                            FILTER (?g = <did:dkg:${uri}>) .
-                       }`;
-        let triples = await this.construct(query);
-        triples = triples.toString();
-        if (triples) {
-            triples = triples.replace(/_:genid(.){37}/gm, '_:$1');
-            triples = triples.split('\n');
-            triples = triples.filter((x) => x !== '');
+        let isAsset = false;
+        const query = `PREFIX schema: <http://schema.org/>
+                        CONSTRUCT { ?s ?p ?o }
+                        WHERE {
+                          GRAPH <did:dkg:${uri}> {
+                            ?s ?p ?o
+                          }
+                        }`;
+        let nquads = await this.construct(query);
+
+        if (!nquads.length) {
+            const query = `PREFIX schema: <http://schema.org/>
+            CONSTRUCT { ?s ?p ?o }
+            WHERE {
+                GRAPH ?g { ?s ?p ?o }
+                {
+                    SELECT ?ng
+                    WHERE {
+                        ?ng schema:hasUALs "${uri}" .
+                    }
+                    LIMIT 1
+                }
+                FILTER (?g = ?ng) .
+            }`;
+            nquads = await this.construct(query);
+            isAsset = true;
         }
-        return triples;
+
+        if (nquads.length) {
+            nquads = nquads.toString();
+            nquads = nquads.replace(/_:genid(.){37}/gm, '_:$1');
+            nquads = nquads.split('\n');
+            nquads = nquads.filter((x) => x !== '');
+        } else
+            nquads = null;
+        return {nquads, isAsset};
     }
 
     async findAssertions(nquads) {
@@ -282,26 +296,43 @@ class GraphdbService {
         return JSON.parse(g).results.bindings.map((x) => x.g.value.replace('did:dkg:', ''));
     }
 
-    async searchByQuery(query, options, localQuery) {
+    async findAssertionsByKeyword(query, options, localQuery) {
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
-                        SELECT (?outerAssetId AS ?assetId) (GROUP_CONCAT(?assertionId; SEPARATOR=",") AS ?assertions)
-                        WHERE {
-                            ?assertionId schema:hasAsset ?outerAssetId ;
-                            ${!localQuery ? 'schema:hasVisibility true .' : ''}
-                            {
                             SELECT distinct ?assertionId
                             WHERE {
-                                ?assertionId schema:hasKeyword ?keyword ;
-                                             schema:hasIssuer ?issuer ;
-                                             schema:hasType ?type .
+                                ?assertionId schema:hasKeywords ?keyword .
+                                ${!localQuery ? ' ?assertionId schema:hasVisibility "public" .' : ''}
+                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query.toLowerCase()}')` : `FILTER (lcase(?keyword) = '${query.toLowerCase()}')`}
+                            }
+                        ${options.limit ? `LIMIT ${options.limit}` : ''}`;
+        let result = await this.execute(sparqlQuery);
+        result = JSON.parse(result).results.bindings;
+        return result;
+    }
+
+    async findAssetsByKeyword(query, options, localQuery) {
+        const sparqlQuery = `PREFIX schema: <http://schema.org/>
+                            SELECT ?assertionId
+                            WHERE {
+                                ?assertionId schema:hasTimestamp ?timestamp ;
+                            ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
+                                                     schema:hasUALs ?assetId .
+                                    {
+                                        SELECT ?assetId (MAX(?timestamp) AS ?timestamp)
+                                        WHERE {
+                                            ?assertionId schema:hasKeywords ?keyword ;
+                                                         schema:hasIssuer ?issuer ;
+                                                         schema:hasType ?type ;
+                                                         schema:hasTimestamp ?timestamp ;
+                                                         schema:hasUALs ?assetId .
                                 ${options.prefix ? `FILTER contains(lcase(?keyword),'${query.toLowerCase()}')` : `FILTER (lcase(?keyword) = '${query.toLowerCase()}')`}
                                 ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
                                 ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
-                            }
-                            }
-                        }
-                        group by ?outerAssetId
-                        ${options.limit ? `LIMIT ${options.limit}`: ''}`;
+                                        }
+                                        GROUP BY ?assetId
+                                        ${options.limit ? `LIMIT ${options.limit}` : ''}
+                                    }
+                            }`;
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings;
         return result;
