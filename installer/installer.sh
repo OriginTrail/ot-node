@@ -380,4 +380,4 @@ echo -n "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL st
 echo " "
 read -p "Press enter to continue..."
 
-tail -f -n100 out.log
+journalctl -u otnode -f
