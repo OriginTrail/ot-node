@@ -1,4 +1,4 @@
-#/lib/systemd/system/graphdb.service
+#/lib/systemd/system/otnode.service
 
 [Unit]
 Description=OriginTrail V6 Stage 1 Beta Node
