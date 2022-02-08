@@ -8,6 +8,7 @@ class SubmitProofsCommand extends Command {
         this.logger = ctx.logger;
         this.blockchainService = ctx.blockchainService;
         this.dataService = ctx.dataService;
+        this.fileService = ctx.fileService;
     }
 
     /**
@@ -15,35 +16,30 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { assertion, rdf, handlerId, operationId } = command.data;
+        const { documentPath, handlerId, operationId } = command.data;
+
         try {
+            const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+
             this.logger.info(`Sending transaction to the blockchain: createAssertionRecord(${assertion.id},${assertion.rootHash})`);
-            const { transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
+            const { transactionHash, blockchain } = await this.blockchainService
+                .sendProofs(assertion);
             this.logger.info(`Transaction hash is ${transactionHash} on ${blockchain}`);
 
-            command.data.assertion.blockchain = {
+            assertion.blockchain = {
                 name: blockchain,
                 transactionHash,
             };
 
-            command.data.rdf = await this.dataService.appendBlockchainMetadata(rdf, assertion);
+            const updatedRdf = await this.dataService.appendBlockchainMetadata(rdf, assertion);
 
-            const handler = await Models.handler_ids.findOne({
-                where: {
-                    handler_id: handlerId,
-                },
-            });
-            const handlerData = JSON.parse(handler.data);
-            handlerData.blockchain = command.data.assertion.blockchain;
-            await Models.handler_ids.update(
-                {
-                    data: JSON.stringify(handlerData),
-                }, {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
+            const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+            await this.fileService
+                .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify({
+                    rdf: updatedRdf, assertion,
+                }));
+
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
 

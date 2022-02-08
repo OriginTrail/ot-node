@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "6.0.0-beta.1.19",
+  "version": "6.0.0-beta.1.22",
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
@@ -37,7 +37,6 @@
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "form-data": "^4.0.0",
-    "json-stable-stringify": "^1.0.1",
     "request": "^2.88.2"
   },
   "dependencies": {
@@ -63,6 +62,7 @@
     "it-pipe": "^1.1.0",
     "js-sha3": "^0.8.0",
     "json-2-csv": "^3.14.4",
+    "json-stable-stringify": "^1.0.1",
     "jsonld": "^5.2.0",
     "libp2p": "^0.32.4",
     "libp2p-bootstrap": "^0.13.0",
@@ -76,7 +76,7 @@
     "mysql2": "^2.3.3",
     "n3": "^1.12.2",
     "nodemon": "^2.0.15",
-    "ot-telemetry-collector": "^1.0.1",
+    "ot-telemetry-collector": "^1.0.2",
     "p-iteration": "^1.1.8",
     "peer-id": "^0.15.3",
     "pino": "^7.5.1",

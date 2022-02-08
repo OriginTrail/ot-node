@@ -19,7 +19,7 @@ class GraphdbService {
         this.logger = logger;
         this.logger.info(`Data repository name: ${this.config.repositoryName}`);
         const serverConfig = new ServerClientConfig('http://localhost:7200/')
-            .setTimeout(10000)
+            .setTimeout(40000)
             .setHeaders({
                 Accept: RDFMimeType.N_QUADS,
             })
@@ -45,6 +45,7 @@ class GraphdbService {
 
         this.repository = await this.server.getRepository(this.config.repositoryName, repositoryServerConfig);
         this.repository.registerParser(new SparqlXmlResultParser());
+        this.logger.info('GraphDB module initialized successfully');
     }
 
     async insert(triples, rootHash) {
@@ -327,7 +328,7 @@ class GraphdbService {
 
     async healthCheck() {
         try {
-            const response = await axios.get('http://localhost:7200/repositories/node0/health', {},
+            const response = await axios.get(`http://localhost:7200/repositories/${this.config.repositoryName}/health`, {},
                 {
                     auth: {
                         username: this.config.username,
@@ -339,10 +340,11 @@ class GraphdbService {
             }
             return false;
         } catch (e) {
-            this.logger.error({
-                msg: `GraphDB not available. ${e}`,
-                Event_name: constants.ERROR_TYPE.GRAPHDB_CHECK_ERROR,
-            });
+            if (e.response && e.response.status === 404) {
+                // Expected error: GraphDB is up but has not created node0 repository
+                // Ot-node will create repo in initialization
+                return true;
+            }
             return false;
         }
     }

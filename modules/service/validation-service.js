@@ -42,7 +42,7 @@ class ValidationService {
     }
 
     sign(assertionId) {
-        return this.implementation.sign(assertionId, this.config.blockchain.config.privateKey);
+        return this.implementation.sign(assertionId, this.config.blockchain[0].privateKey);
     }
 
     verify(assertionId, signature, issuer) {
@@ -50,7 +50,7 @@ class ValidationService {
     }
 
     getIssuer() {
-        return this.config.blockchain.config.publicKey.toLowerCase();
+        return this.config.blockchain[0].publicKey.toLowerCase();
     }
 
     createProofs(assertion, triples) {

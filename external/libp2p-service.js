@@ -9,10 +9,12 @@ const pipe = require('it-pipe');
 const {sha256} = require('multiformats/hashes/sha2');
 const {v1: uuidv1} = require("uuid");
 const PeerId = require("peer-id");
-const fs = require("fs");
+const fs = require('fs');
 const {time} = require("streaming-iterables");
 const { BufferList } = require('bl')
 const constants = require('../modules/constants');
+
+
 
 const initializationObject = {
     addresses: {
@@ -51,18 +53,20 @@ class Libp2pService {
                         list: this.config.bootstrapMultiAddress,
                     },
                 };
-            } else {
-                initializationObject.addresses = {
-                    listen: ['/ip4/0.0.0.0/tcp/9000'] // for production
-                    // announce: ['/dns4/auto-relay.libp2p.io/tcp/443/wss/p2p/QmWDn2LY8nannvSWJzruUYoLZ4vV83vfCBwd8DipvdgQc3']
-                };
             }
+            initializationObject.addresses = {
+                listen: [`/ip4/0.0.0.0/tcp/${this.config.port}`] // for production
+                // announce: ['/dns4/auto-relay.libp2p.io/tcp/443/wss/p2p/QmWDn2LY8nannvSWJzruUYoLZ4vV83vfCBwd8DipvdgQc3']
+            };
+
             if (!this.config.peerId) {
-                const configFile = JSON.parse(fs.readFileSync('.origintrail_noderc'));
+                const configFile = JSON.parse(fs.readFileSync(this.config.configFilename));
                 if (!configFile.network.privateKey) {
                     const id = await PeerId.create({bits: 1024, keyType: 'RSA'})
                     configFile.network.privateKey = id.toJSON().privKey;
-                    fs.writeFileSync('.origintrail_noderc', JSON.stringify(configFile, null, 2));
+                    if(process.env.NODE_ENV !== 'development') {
+                        fs.writeFileSync(this.config.configFilename, JSON.stringify(configFile, null, 2));
+                    }
                 }
                 this.config.privateKey = configFile.network.privateKey;
                 this.config.peerId = await PeerId.createFromPrivKey(this.config.privateKey);

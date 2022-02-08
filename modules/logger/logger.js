@@ -26,7 +26,6 @@ class Logger {
                 },
                 level: logLevel,
             });
-
         } catch (e) {
             console.error(`Failed to create logger. Error message: ${e.message}`);
         }
@@ -65,6 +64,11 @@ class Logger {
 
     trace(obj) {
         this.pinoLogger.trace(obj);
+    }
+
+    closeLogger(closingMessage) {
+        const finalLogger = pino.final(this.pinoLogger);
+        finalLogger.info(closingMessage);
     }
 }
 
