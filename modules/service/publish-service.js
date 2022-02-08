@@ -6,12 +6,13 @@ class PublishService {
         this.dataService = ctx.dataService;
         this.logger = ctx.logger;
         this.commandExecutor = ctx.commandExecutor;
+        this.fileService = ctx.fileService;
     }
 
-    async publish(fileContent, fileExtension, rawAssets, keywords, visibility, handlerId){
+    async publish(fileContent, fileExtension, rawAssets, keywords, visibility, handlerId) {
         let {
             assertion,
-            rdf
+            rdf,
         } = await this.dataService.canonize(fileContent, fileExtension);
 
         assertion.metadata.issuer = this.validationService.getIssuer();
@@ -21,7 +22,6 @@ class PublishService {
         assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
         assertion.signature = this.validationService.sign(assertion.id);
 
-        keywords.push(assertion.metadata.type);
         keywords = [...new Set(keywords.concat(rawAssets))];
 
         const assets = [];
@@ -35,11 +35,11 @@ class PublishService {
             assertionId: assertion.id,
             assets,
             keywords,
-            rootHash: assertion.rootHash
+            rootHash: assertion.rootHash,
         });
 
         if (!assertion.metadata.visibility) {
-            rdf = rdf.filter(x => x.startsWith('<did:dkg:'));
+            rdf = rdf.filter((x) => x.startsWith('<did:dkg:'));
         }
 
         this.logger.info(`Assertion ID: ${assertion.id}`);
@@ -53,6 +53,13 @@ class PublishService {
         this.logger.info(`Assets: ${assets}`);
         this.logger.info(`Assertion length in N-QUADS format: ${rdf.length}`);
 
+        const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+
+        const documentPath = await this.fileService
+            .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify({
+                rdf, assertion,
+            }));
+
         const commandSequence = [
             'submitProofsCommand',
             'sendAssertionCommand',
@@ -63,7 +70,9 @@ class PublishService {
             name: commandSequence[0],
             sequence: commandSequence.slice(1),
             delay: 0,
-            data: {rdf, assertion, assets, keywords, handlerId},
+            data: {
+                documentPath, assets, keywords, handlerId,
+            },
             transactional: false,
         });
 
@@ -76,12 +85,11 @@ class PublishService {
     }
 
     async handleStore(rawAssertion) {
-        if (!rawAssertion || !rawAssertion.rdf)
-            return false;
-        const {assertion, rdf } = await this.dataService.createAssertion(rawAssertion.id, rawAssertion.rdf);
+        if (!rawAssertion || !rawAssertion.rdf) return false;
+        const { assertion, rdf } = await this.dataService.createAssertion(rawAssertion.id, rawAssertion.rdf);
         const status = await this.dataService.verifyAssertion(assertion, rdf);
 
-        //todo check root hash on the blockchain
+        // todo check root hash on the blockchain
         if (status) {
             await this.dataService.insert(rawAssertion.rdf.join('\n'), `did:dkg:${assertion.id}`);
             this.logger.info(`Assertion ${assertion.id} is successfully inserted`);

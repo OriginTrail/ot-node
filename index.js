@@ -8,11 +8,11 @@ const rc = require('rc');
 
 const configjson = require('./config/config.json');
 
+process.env.NODE_ENV = process.env.NODE_ENV && ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0
+    ? process.env.NODE_ENV : 'development';
+
 let config = JSON.parse(fs.readFileSync('./.origintrail_noderc', 'utf8'));
-const defaultConfig = JSON.parse(JSON.stringify(configjson[
-    process.env.NODE_ENV &&
-    ['development', 'testnet', 'mainnet'].indexOf(process.env.NODE_ENV) >= 0 ?
-        process.env.NODE_ENV : 'development']));
+const defaultConfig = JSON.parse(JSON.stringify(configjson[process.env.NODE_ENV]));
 
 config = rc(pjson.name, defaultConfig);
 

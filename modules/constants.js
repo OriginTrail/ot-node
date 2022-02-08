@@ -9,10 +9,17 @@ exports.DID = 'DID';
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
 
 /**
+ * @constant {number} HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS -
+ * Export command cleanup interval time 24h
+ */
+exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
+
+/**
  * @constant {Array} PERMANENT_COMMANDS - List of all permanent commands
  */
 exports.PERMANENT_COMMANDS = [
-    'otnodeUpdateCommand', 'sendTelemetryCommand',
+    'otnodeUpdateCommand', 'sendTelemetryCommand', 'cleanerCommand',
+    'handlerIdsCleanerCommand',
 ];
 
 /**
@@ -24,6 +31,18 @@ exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
  * @constant {number} DEFAULT_COMMAND_REPEAT_IN_MILLS - Default repeat interval
  */
 exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
+
+/**
+ * @constant {number} TRIPLE_STORE_CONNECT_MAX_RETRIES
+ * - Maximum retries for connecting to triple store
+ */
+exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
+
+/**
+ * @constant {number} TRIPLE_STORE_CONNECT_RETRY_FREQUENCY
+ * - Wait interval between retries for connecting to triple store
+ */
+exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 
 /**
  * @constant {object} ERROR_TYPE -
@@ -46,7 +65,7 @@ exports.ERROR_TYPE = {
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
     NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
-    GRAPHDB_CHECK_ERROR: 'GraphDBCheckError',
+    TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
     LIBP2P_HANDLE_MSG_ERROR: 'Libp2pHandleMessageError',
     VERIFY_ASSERTION_ERROR: 'VerifyAssertionError',
     BLOCKCHAIN_CHECK_ERROR: 'BlockchainCheckError',
