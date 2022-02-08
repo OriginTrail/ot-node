@@ -10,11 +10,11 @@ NC='\033[0m' # No Color
 
 clear
 
-echo -n "${N1}Checking that the OS is Ubuntu 20.04 ONLY: "
+echo -n "${N1}Checking that the OS is Ubuntu 20.04 or newer: "
 
-if [[ $OS_VERSION != 20.04 ]]; then
+if [[ $OS_VERSION != 20.04 ]] || [[ $OS_VERSION != 21.04 ]] || [[ $OS_VERSION != 21.10 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "This installer requires Ubuntu 20.04. Destroy this VPS and remake using Ubuntu 20.04."
+    echo "This installer requires Ubuntu 20.04 or newer. Destroy this VPS and remake using Ubuntu 20.04 or newer."
     exit 1
 else
     echo -e "${GREEN}SUCCESS${NC}"
