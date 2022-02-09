@@ -1,4 +1,5 @@
 const Models = require('../../models/index');
+const constants = require('../constants')
 
 class QueryService {
     constructor(ctx) {
@@ -9,26 +10,31 @@ class QueryService {
         this.fileService = ctx.fileService;
     }
 
-    async resolve(data, node) {
-        let rawRdf = await this.networkService.sendMessage('/resolve', data, node);
+    async resolve(id, load, node) {
+        let result = await this.networkService.sendMessage('/resolve', id, node);
 
-        if (!rawRdf) {
-            return {assertion: null, rdf: null};
+        if (!result) {
+            return null;
         }
 
-        const assertionId = data;
-        const {assertion, rdf} = await this.dataService.createAssertion(assertionId, rawRdf);
-        const status = await this.dataService.verifyAssertion(assertion, rdf);
-        return status ? {assertion, rdf} : {assertion: null, rdf: null};
+        const {nquads, isAsset} = result;
+        let assertion = await this.dataService.createAssertion(nquads);
+        const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads);
+
+        if (status && load) {
+            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.json.id}`);
+            this.logger.info(`Assertion ${assertion.json.id} has been successfully inserted`);
+        }
+        return status ? {assertion, isAsset} : null;
     }
 
-    async handleResolve(data) {
-        const rdf = await this.dataService.resolve(data);
-        this.logger.info(`Retrieved data from the database: ${JSON.stringify(rdf)}`);
+    async handleResolve(id) {
+        const {nquads, isAsset} = await this.dataService.resolve(id);
+        this.logger.info(`Retrieved data from the database: ${JSON.stringify(nquads)}`);
 
-        if (!rdf)
+        if (!nquads)
             return null;
-        return rdf;
+        return {nquads, isAsset};
     }
 
     async search(data, node) {
@@ -37,71 +43,52 @@ class QueryService {
     }
 
     async handleSearch(request) {
-        const {query, ids, issuers, types, prefix, limit, handlerId} = request;
-        let response;
-        if (query) {
-            response = await this.dataService.searchByQuery(query, {issuers, types, prefix, limit});
-        } else {
-            response = await this.dataService.searchByIds(ids, {issuers, types, limit});
-        }
+        const {query, issuers, types, prefix, limit, handlerId} = request;
+        let response = await this.dataService.searchByQuery(query, {issuers, types, prefix, limit});
 
-        return { response, handlerId };
+        return {response, handlerId};
     }
 
     async handleSearchResult(request) {
         // TODO: add mutex
-        const { handlerId, response } = request;
+        const {handlerId, response} = request;
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
 
-        for (const asset of response) {
-            for (const rawAssertion of asset.assertions) {
-                if (!rawAssertion || !rawAssertion.rdf) {
-                    continue;
+        for (const assertion of response) {
+            if (!assertion || !assertion.nquads) continue;
+
+            const { jsonld, nquads } = await this.dataService.createAssertion(assertion.nquads);
+            let object = handlerData.find(x => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
+            if (!object) {
+                object = {
+                    type: jsonld.metadata.type,
+                    id: jsonld.metadata.UALs[0],
+                    timestamp: jsonld.metadata.timestamp,
+                    issuers: [],
+                    assertions: [],
+                    nodes: [assertion.node]
                 }
-                const {assertion, rdf} = await this.dataService.createAssertion(rawAssertion.id, rawAssertion.rdf);
+                handlerData.push(object)
+            }
 
-                const status = await this.dataService.verifyAssertion(assertion, rdf);
-                //todo check root hash on the blockchain
-                if (status) {
-                    let object = handlerData.find(x => x.type === assertion.metadata.type && x.id === asset.assetId)
-                    if (!object) {
-                        object = {
-                            type: assertion.metadata.type,
-                            id: asset.assetId,
-                            timestamp: assertion.metadata.timestamp,
-                            data: [],
-                            issuers: [],
-                            assertions: [],
-                            nodes: [rawAssertion.node]
-                        }
-                        handlerData.push(object)
-                    }
+            if (object.nodes.indexOf(assertion.node) === -1) {
+                object.nodes.push(assertion.node);
+            }
 
+            if (object.issuers.indexOf(jsonld.metadata.issuer) === -1) {
+                object.issuers.push(jsonld.metadata.issuer);
+            }
 
-                    if (object.nodes.indexOf(rawAssertion.node) === -1) {
-                        object.nodes.push(rawAssertion.node);
-                    }
-
-                    if (object.issuers.indexOf(assertion.metadata.issuer) === -1) {
-                        object.issuers.push(assertion.metadata.issuer);
-                    }
-
-                    if (object.assertions.indexOf(assertion.id) === -1) {
-                        object.assertions.push(assertion.id);
-                        object.data.push({
-                            id: assertion.id,
-                            timestamp: assertion.metadata.timestamp,
-                            data: assertion.data
-                        });
-                    }
-                    if (new Date(object.timestamp) < new Date(assertion.metadata.timestamp)) {
-                        object.timestamp = assertion.metadata.timestamp;
-                    }
-                }
+            if (object.assertions.indexOf(jsonld.id) === -1) {
+                object.assertions.push(jsonld.id);
+            }
+            if (new Date(object.timestamp) < new Date(jsonld.metadata.timestamp)) {
+                object.timestamp = jsonld.metadata.timestamp;
             }
         }
+
 
         await this.fileService.writeContentsToFile(
             this.fileService.getHandlerIdCachePath(),
@@ -128,14 +115,14 @@ class QueryService {
     }
 
     async handleSearchAssertions(request) {
-        const {query, handlerId, load } = request;
-        let response = await this.dataService.searchAssertions(query, { });
-        return { response, handlerId, load };
+        const {query, options, handlerId} = request;
+        let response = await this.dataService.searchAssertions(query, options);
+        return {response, handlerId};
     }
 
     async handleSearchAssertionsResult(request) {
         // TODO: add mutex
-        const { handlerId, response, load } = request;
+        const {handlerId, response} = request;
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
@@ -146,28 +133,20 @@ class QueryService {
                 if (assertion.nodes.indexOf(object.node) === -1)
                     assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
             } else {
-                if (!object || !object.rdf)
+                if (!object || !object.nquads)
                     continue
 
-                const {assertion, rdf} = await this.dataService.createAssertion(object.assertionId, object.rdf);
-                const status = await this.dataService.verifyAssertion(assertion, rdf);
-                //todo check root hash on the blockchain
-                if (status) {
-                    handlerData.push({
-                        id: assertion.id,
-                        metadata: assertion.metadata,
-                        signature: assertion.signature,
-                        rootHash: assertion.rootHash,
-                        nodes: [object.node]
-                    })
+                const assertion = await this.dataService.createAssertion(object.nquads);
 
-                    if (load) {
-                        await this.dataService.insert(object.rdf, `did:dkg:${object.assertionId}`);
-                        this.logger.info(`Assertion ${object.assertionId} is successfully inserted`);
-                    }
-                }
+                handlerData.push({
+                    id: assertion.jsonld.id,
+                    metadata: assertion.jsonld.metadata,
+                    signature: assertion.jsonld.signature,
+                    nodes: [object.node]
+                })
             }
         }
+
 
         await this.fileService.writeContentsToFile(
             this.fileService.getHandlerIdCachePath(),

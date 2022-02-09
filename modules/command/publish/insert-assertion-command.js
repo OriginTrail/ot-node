@@ -15,22 +15,13 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const {
-            documentPath, keywords, assets, handlerId, operationId,
-        } = command.data;
-
-        const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+        const { documentPath, handlerId } = command.data;
+        let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
-            // Store to local graph database
-            await this.dataService.insert(rdf.join('\n'), `did:dkg:${assertion.id}`);
-            this.logger.info(`Assertion ${assertion.id} is successfully inserted`);
-            // await Models.assertions.create({
-            //     owner: '',
-            //     hash: assertion.id,
-            //     signature: '',
-            //     topics: keywords.join(','),
-            // });
+            // TODO Store to local graph database
+            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);
+            this.logger.info(`Assertion ${assertion.id} has been successfully inserted`);
             await Models.handler_ids.update(
                 {
                     status: 'COMPLETED',
