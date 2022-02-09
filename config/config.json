@@ -17,6 +17,7 @@
       }
     ],
     "graphDatabase": {
+      "implementation": "GraphDB",
       "name": "node0",
       "username": "admin",
       "password": ""
@@ -35,7 +36,7 @@
     "telemetryHub": {
       "enabled": false,
       "packages": ["ot-telemetry-collector"],
-      "url": ""
+      "url": "https://webhook.site/75baabc2-74d0-4994-8b15-b8888bf09629"
     }
   },
   "testnet": {
@@ -56,6 +57,7 @@
       }
     ],
     "graphDatabase": {
+      "implementation": "GraphDB",
       "name": "node0",
       "username": "admin",
       "password": ""
@@ -90,6 +92,7 @@
     },
     "blockchain": [],
     "graphDatabase": {
+      "implementation": "GraphDB",
       "name": "node0",
       "username": "admin",
       "password": ""
