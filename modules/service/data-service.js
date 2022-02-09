@@ -18,7 +18,7 @@ class DataService {
     }
 
     async initialize() {
-        if (this.config.graphDatabase.implementation === 'Blazegraph') {
+        if (this.config.graphDatabase.implementation === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH) {
             this.implementation = new Blazegraph({});
         } else {
             this.implementation = new GraphDB({
