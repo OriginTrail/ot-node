@@ -61,9 +61,9 @@ class PublishService {
             }));
 
         const commandSequence = [
+            'insertAssertionCommand',
             'submitProofsCommand',
             'sendAssertionCommand',
-            'insertAssertionCommand',
         ];
 
         await this.commandExecutor.add({
