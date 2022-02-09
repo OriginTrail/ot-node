@@ -1,104 +1,333 @@
 {
 	"info": {
-		"_postman_id": "d88a8124-f950-4bb2-a9cf-f07512d63555",
+		"_postman_id": "b6a0c71d-0397-4f56-8da6-750dc613207c",
 		"name": "DKGv6",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Info",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": []
-				},
-				"url": {
-					"raw": "{{HOST}}/info",
-					"host": [
-						"{{HOST}}"
-					],
-					"path": [
-						"info"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Publish",
-			"request": {
-				"auth": {
-					"type": "noauth"
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "file",
-							"type": "file",
-							"src": []
+			"name": "Asset API",
+			"item": [
+				{
+					"name": "Provision",
+					"request": {
+						"auth": {
+							"type": "noauth"
 						},
-						{
-							"key": "assets",
-							"value": "[\"ExampleAsset\"]",
-							"type": "text"
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/miloskotlar/ot-node-v6-poc/nft-data/axie1.json"
+								},
+								{
+									"key": "keywords",
+									"value": "[\"Claude\",\"InformationTheory\", \"Cryptographer\"]",
+									"type": "text"
+								},
+								{
+									"key": "visibility",
+									"value": "public",
+									"type": "text"
+								}
+							]
 						},
-						{
-							"key": "keywords",
-							"value": "[\"ExampleAsset\",\"NFT\"]",
-							"type": "text"
-						},
-						{
-							"key": "visibility",
-							"value": "true",
-							"type": "text"
+						"url": {
+							"raw": "{{HOST}}:8900/api/latest/provision",
+							"host": [
+								"{{HOST}}"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"latest",
+								"provision"
+							]
 						}
-					]
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{HOST}}/publish",
-					"host": [
-						"{{HOST}}"
-					],
-					"path": [
-						"publish"
-					]
+				{
+					"name": "Provision Result",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "topic",
+									"value": "blazard1",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{HOST}}:8900/api/latest/provision/result/5015fe5c-8b24-4a60-819f-67f50064500c",
+							"host": [
+								"{{HOST}}"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"latest",
+								"provision",
+								"result",
+								"5015fe5c-8b24-4a60-819f-67f50064500c"
+							],
+							"query": [
+								{
+									"key": "ids",
+									"value": "axie",
+									"disabled": true
+								},
+								{
+									"key": "types",
+									"value": "gs1-epcis",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/miloskotlar/ot-node-v6-poc/nft-data/axie1.json"
+								},
+								{
+									"key": "keywords",
+									"value": "[\"Claude\",\"InformationTheory\", \"Cryptographer\"]",
+									"type": "text"
+								},
+								{
+									"key": "visibility",
+									"value": "public",
+									"type": "text"
+								},
+								{
+									"key": "ual",
+									"value": "7d943dec383a7fc0e4897a0a99ace2eb2fe06b56aff3abea0757b8883e775f7d",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{HOST}}:8900/api/latest/update",
+							"host": [
+								"{{HOST}}"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"latest",
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Result",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "topic",
+									"value": "blazard1",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{HOST}}:8900/api/latest/provision/result/c57908da-6153-4973-a465-098d7f3964f7",
+							"host": [
+								"{{HOST}}"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"latest",
+								"provision",
+								"result",
+								"c57908da-6153-4973-a465-098d7f3964f7"
+							],
+							"query": [
+								{
+									"key": "ids",
+									"value": "axie",
+									"disabled": true
+								},
+								{
+									"key": "types",
+									"value": "gs1-epcis",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "Publish result",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": []
+			"name": "Low level API",
+			"item": [
+				{
+					"name": "Publish",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/miloskotlar/ot-node-v6-poc/nft-data/axie1.json"
+								},
+								{
+									"key": "keywords",
+									"value": "[\"Claude\",\"InformationTheory\", \"Cryptographer\"]",
+									"type": "text"
+								},
+								{
+									"key": "visibility",
+									"value": "public",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{HOST}}:8900/api/latest/publish",
+							"host": [
+								"{{HOST}}"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"latest",
+								"publish"
+							]
+						}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{HOST}}/publish/result/7478256a-36da-4450-adc3-db79cb2d95cc",
-					"host": [
-						"{{HOST}}"
-					],
-					"path": [
-						"publish",
-						"result",
-						"7478256a-36da-4450-adc3-db79cb2d95cc"
-					]
+				{
+					"name": "Publish Result",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "topic",
+									"value": "blazard1",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{HOST}}:8900/api/latest/provision/result/10024045-95fc-4a2f-9ebc-69c55b9a0e9e",
+							"host": [
+								"{{HOST}}"
+							],
+							"port": "8900",
+							"path": [
+								"api",
+								"latest",
+								"provision",
+								"result",
+								"10024045-95fc-4a2f-9ebc-69c55b9a0e9e"
+							],
+							"query": [
+								{
+									"key": "ids",
+									"value": "axie",
+									"disabled": true
+								},
+								{
+									"key": "types",
+									"value": "gs1-epcis",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
 			"name": "Resolve",
@@ -113,17 +342,28 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}/resolve?ids=da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb",
+					"raw": "{{HOST}}:8900/api/latest/resolve?ids=177930cabcf1399dcb25b4cb907d71097b247247d250eb7a35fffc5974ec732f&&load=true",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
+						"api",
+						"latest",
 						"resolve"
 					],
 					"query": [
 						{
 							"key": "ids",
-							"value": "da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb"
+							"value": "177930cabcf1399dcb25b4cb907d71097b247247d250eb7a35fffc5974ec732f"
+						},
+						{
+							"key": null,
+							"value": null
+						},
+						{
+							"key": "load",
+							"value": "true"
 						}
 					]
 				}
@@ -131,7 +371,7 @@
 			"response": []
 		},
 		{
-			"name": "Resolve result",
+			"name": "Resolve Result",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -143,21 +383,36 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}/resolve/result/bed771ec-e8a7-4ec3-9aa8-4df321062895",
+					"raw": "{{HOST}}:8900/api/latest/resolve/result/ea5edd69-e612-450b-b4d9-385e3d0eaaef",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
+						"api",
+						"latest",
 						"resolve",
 						"result",
-						"bed771ec-e8a7-4ec3-9aa8-4df321062895"
+						"ea5edd69-e612-450b-b4d9-385e3d0eaaef"
+					],
+					"query": [
+						{
+							"key": "ids",
+							"value": "axie",
+							"disabled": true
+						},
+						{
+							"key": "types",
+							"value": "gs1-epcis",
+							"disabled": true
+						}
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Search Entities",
+			"name": "Assertions Search",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -188,122 +443,30 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}/entities:search?prefix=true&limit=20&query=exampleAsset",
+					"raw": "{{HOST}}:8900/api/latest/assertions:search?query=InformationTheory",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
-						"entities:search"
-					],
-					"query": [
-						{
-							"key": "ids",
-							"value": "axie",
-							"disabled": true
-						},
-						{
-							"key": "types",
-							"value": "gs1-epcis",
-							"disabled": true
-						},
-						{
-							"key": "prefix",
-							"value": "true"
-						},
-						{
-							"key": "limit",
-							"value": "20"
-						},
-						{
-							"key": "query",
-							"value": "exampleAsset"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Search Entities Result",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": []
-				},
-				"url": {
-					"raw": "{{HOST}}/entities:search/result/116cd013-62f9-4925-b6cc-e8dacea1e06c",
-					"host": [
-						"{{HOST}}"
-					],
-					"path": [
-						"entities:search",
-						"result",
-						"116cd013-62f9-4925-b6cc-e8dacea1e06c"
-					],
-					"query": [
-						{
-							"key": "ids",
-							"value": "axie",
-							"disabled": true
-						},
-						{
-							"key": "types",
-							"value": "gs1-epcis",
-							"disabled": true
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Search Assertions",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "topic",
-							"value": "blazard1",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "limit",
-							"value": "100",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "offset",
-							"value": "0",
-							"type": "text",
-							"disabled": true
-						}
-					]
-				},
-				"url": {
-					"raw": "{{HOST}}/assertions:search?query=exampleAsset",
-					"host": [
-						"{{HOST}}"
-					],
-					"path": [
+						"api",
+						"latest",
 						"assertions:search"
 					],
 					"query": [
 						{
+							"key": "ids",
+							"value": "axie",
+							"disabled": true
+						},
+						{
+							"key": "types",
+							"value": "gs1-epcis",
+							"disabled": true
+						},
+						{
 							"key": "query",
-							"value": "exampleAsset"
+							"value": "InformationTheory"
 						}
 					]
 				}
@@ -311,7 +474,7 @@
 			"response": []
 		},
 		{
-			"name": "Search Assertions Result",
+			"name": "Assertions Search Result",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -322,6 +485,18 @@
 					"mode": "formdata",
 					"formdata": [
 						{
+							"key": "topic",
+							"value": "blazard1",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text",
+							"disabled": true
+						},
+						{
 							"key": "offset",
 							"value": "0",
 							"type": "text",
@@ -330,14 +505,17 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}/assertions:search/result/39f8b937-5aba-42ad-929b-1fd39ca32122",
+					"raw": "{{HOST}}:8900/api/latest/assertions:search/result/2ab488b6-c12e-4e3c-959d-a38fef1f84e3",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
+						"api",
+						"latest",
 						"assertions:search",
 						"result",
-						"39f8b937-5aba-42ad-929b-1fd39ca32122"
+						"2ab488b6-c12e-4e3c-959d-a38fef1f84e3"
 					],
 					"query": [
 						{
@@ -350,6 +528,126 @@
 							"value": "gs1-epcis",
 							"disabled": true
 						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "topic",
+							"value": "blazard1",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}:8900/api/latest/entities:search?query=InformationTheory",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "8900",
+					"path": [
+						"api",
+						"latest",
+						"entities:search"
+					],
+					"query": [
+						{
+							"key": "prefix",
+							"value": "true",
+							"disabled": true
+						},
+						{
+							"key": "ids",
+							"value": "axie",
+							"disabled": true
+						},
+						{
+							"key": "types",
+							"value": "gs1-epcis",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "20",
+							"disabled": true
+						},
+						{
+							"key": "query",
+							"value": "InformationTheory"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search Result",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "topic",
+							"value": "blazard1",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{HOST}}:8900/api/latest/entities:search/result/15857cc9-100b-4420-aadc-c24f8eaa632d",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "8900",
+					"path": [
+						"api",
+						"latest",
+						"entities:search",
+						"result",
+						"15857cc9-100b-4420-aadc-c24f8eaa632d"
 					]
 				}
 			},
@@ -365,17 +663,20 @@
 					"formdata": [
 						{
 							"key": "query",
-							"value": "PREFIX schema: <http://schema.org/>\n\nCONSTRUCT { ?s schema:hasRootHash ?o }\n\nWHERE {\n\nGRAPH ?g {\n\n?s schema:hasRootHash ?o .\n\n}\n\n}",
+							"value": "PREFIX schema: <http://schema.org/>\nCONSTRUCT { ?s schema:name \"Claude Shannon\" }\nWHERE {\n    GRAPH ?g { \n        ?s schema:name \"Claude Shannon\" .\n    }\n}",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}/query?type=construct",
+					"raw": "{{HOST}}:8900/api/latest/query?type=construct",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
+						"api",
+						"latest",
 						"query"
 					],
 					"query": [
@@ -389,7 +690,7 @@
 			"response": []
 		},
 		{
-			"name": "Query result",
+			"name": "Query Result",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -398,17 +699,39 @@
 				"header": [],
 				"body": {
 					"mode": "formdata",
-					"formdata": []
+					"formdata": [
+						{
+							"key": "topic",
+							"value": "blazard1",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text",
+							"disabled": true
+						}
+					]
 				},
 				"url": {
-					"raw": "{{HOST}}/query/result/e14d68ee-be14-4c8d-9e38-5b0479dde03c",
+					"raw": "{{HOST}}:8900/api/latest/query/result/ce1c1ace-3bc7-49b7-8dc8-1fbea25143dc",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
+						"api",
+						"latest",
 						"query",
 						"result",
-						"e14d68ee-be14-4c8d-9e38-5b0479dde03c"
+						"ce1c1ace-3bc7-49b7-8dc8-1fbea25143dc"
 					]
 				}
 			},
@@ -424,31 +747,28 @@
 					"formdata": [
 						{
 							"key": "nquads",
-							"value": "[\"<did:dkg:bb4c2e7dc6519df692cfd88f714f67fe82ba41286058d4d197e55160a1c3092d> <http://schema.org/hasRootHash> \\\"4bf4a3428ef89d7ed3d35037a47c84c70f7b72281767a33f64263fb37e2cb624\\\" .\",\n            \"<did:dkg:2c680c9c36b8ce0c53d8c159bf02d9a5d4083b6acb2445144b72e93260add68a> <http://schema.org/hasRootHash> \\\"94a87ed335c491a1332d58b69974ea94d0e28b3baa14a4f9d1505b8f36afa8ab\\\" .\",\n            \"<did:dkg:e46798b087e2534cccc388b401b0e39e39ac81cbc67784640bdf7d79d77209cb> <http://schema.org/hasRootHash> \\\"462cd1651821ac1786a5af58383e2b1ac91184f7cda46a083d3746d542f8bf67\\\" .\",\n            \"<did:dkg:881de7b1be2b76bdf6133978b47924529d6ba517f60f5fb01161f1d1e3344485> <http://schema.org/hasRootHash> \\\"7c167a73001faedb139103731e521b6cf76941221a0a1e1ffac9d2cb2c641902\\\" .\",\n            \"<did:dkg:54603acdced105f9ed27a8cc56b952ef363ec31df1db7736cb907786fda078ef> <http://schema.org/hasRootHash> \\\"270d0eac754ac95052c7f0d36476d4052acea0428617ea0f4f26f01dc659ba41\\\" .\"\n            ]",
+							"value": "[            \"_:genid2dc4c6c4682460401d8ca7914d9be0ce992dc14n0 <http://schema.org/name> \\\"Claude Shannon\\\" .\"\n]",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}/proofs:get?assertions=da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb",
+					"raw": "{{HOST}}:8900/api/latest/proofs:get",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
+						"api",
+						"latest",
 						"proofs:get"
-					],
-					"query": [
-						{
-							"key": "assertions",
-							"value": "da919440495228954b8d198ac2bffa121f41d1503c12124c3d764d5572e7ebfb"
-						}
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Proofs result",
+			"name": "Proofs Result",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -460,14 +780,17 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}/proofs:get/result/e145a028-5dea-4287-a65f-e1c2dda8c3f6",
+					"raw": "{{HOST}}:8900/api/latest/proofs:get/result/967887f4-96cb-4784-9cd8-fc31a64a8ec8",
 					"host": [
 						"{{HOST}}"
 					],
+					"port": "8900",
 					"path": [
+						"api",
+						"latest",
 						"proofs:get",
 						"result",
-						"e145a028-5dea-4287-a65f-e1c2dda8c3f6"
+						"967887f4-96cb-4784-9cd8-fc31a64a8ec8"
 					]
 				}
 			},

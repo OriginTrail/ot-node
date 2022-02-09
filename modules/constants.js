@@ -4,6 +4,18 @@ exports.BASIC = 'Basic';
 exports.DID = 'DID';
 
 /**
+ * @constant {number} MAX_FILE_SIZE
+ * - Max file size for publish
+ */
+exports.MAX_FILE_SIZE = 26214400;
+
+/**
+ * @constant {number} DID_PREFIX
+ * - DID prefix for graph database
+ */
+exports.DID_PREFIX = 'did:dkg';
+
+/**
  * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  */
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
