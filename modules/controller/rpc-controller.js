@@ -3,16 +3,15 @@ const fileUpload = require('express-fileupload');
 const ipfilter = require('express-ipfilter').IpFilter;
 const fs = require('fs');
 const https = require('https');
-const {IpDeniedError} = require('express-ipfilter');
-const path = require('path')
-const {v1: uuidv1, v4: uuidv4} = require('uuid');
+const { IpDeniedError } = require('express-ipfilter');
+const path = require('path');
+const { v1: uuidv1, v4: uuidv4 } = require('uuid');
+const sortedStringify = require('json-stable-stringify');
+const validator = require('validator');
 const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
-const sortedStringify = require('json-stable-stringify');
-const validator = require('validator');
 const Utilities = require('../utilities');
-
 
 class RpcController {
     constructor(ctx) {
@@ -543,12 +542,13 @@ class RpcController {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
             const operationId = uuidv1();
+            const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of proofs command',
                     Event_name: 'proofs_start',
                     Operation_name: 'proofs',
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
 
                 const inserted_object = await Models.handler_ids.create({
@@ -566,22 +566,20 @@ class RpcController {
                     }
                 }
 
-                const nquads = JSON.parse(req.body.nquads);
+                const reqNquads = JSON.parse(req.body.nquads);
 
                 const result = [];
                 if (!assertions || assertions.length === 0) {
-                    assertions = await this.dataService.findAssertions(nquads);
+                    assertions = await this.dataService.findAssertions(reqNquads);
                 }
                 for (const assertionId of assertions) {
-                    const content = await this.dataService.resolve(assertionId)
+                    const content = await this.dataService.resolve(assertionId);
                     if (content) {
-                        const {rdf} = await this.dataService.createAssertion(assertionId, content);
-                        const proofs = await this.validationService.getProofs(rdf, nquads);
-                        result.push({assertionId, proofs});
+                        const { nquads } = await this.dataService.createAssertion(content.nquads);
+                        const proofs = await this.validationService.getProofs(nquads, reqNquads);
+                        result.push({ assertionId, proofs });
                     }
                 }
-
-                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
                 await this.fileService
                     .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(result));
@@ -591,7 +589,7 @@ class RpcController {
                         status: 'COMPLETED',
                     }, {
                         where: {
-                            handler_id: handlerId
+                            handler_id: handlerId,
                         },
                     },
                 );
@@ -600,14 +598,14 @@ class RpcController {
                     msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.PROOFS_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of proofs command',
                     Event_name: 'proofs_end',
                     Operation_name: 'proofs',
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
             }
         });
