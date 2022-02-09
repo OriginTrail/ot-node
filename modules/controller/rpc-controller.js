@@ -142,13 +142,13 @@ class RpcController {
     initializeServiceApi() {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
-        this.app.post('/publish', async (req, res, next) => {
+        this.app.post('/api/latest/publish', async (req, res, next) => {
             await this.publish(req, res, next, {isAsset: false});
         });
-        this.app.post('/provision', async (req, res, next) => {
+        this.app.post('/api/latest/provision', async (req, res, next) => {
             await this.publish(req, res, next, {isAsset: true, ual: null});
         });
-        this.app.post('/update', async (req, res, next) => {
+        this.app.post('/api/latest/update', async (req, res, next) => {
             if (!req.body.ual) {
                 return next({
                     code: 400,
@@ -158,7 +158,7 @@ class RpcController {
             await this.publish(req, res, next, {isAsset: true, ual: req.body.ual});
         });
 
-        this.app.get('/resolve', async (req, res, next) => {
+        this.app.get('/api/latest/resolve', async (req, res, next) => {
             if (!req.query.ids) {
                 return next({code: 400, message: 'Param ids is required.'});
             }
@@ -200,7 +200,7 @@ class RpcController {
                         response.push(isAsset ? {
                                 type: 'asset',
                                 id: id,
-                                asset: {
+                                result: {
                                     metadata: {
                                         type: assertion.jsonld.metadata.type,
                                         issuer: assertion.jsonld.metadata.issuer,
@@ -229,7 +229,7 @@ class RpcController {
                                 response.push(isAsset ? {
                                         type: 'asset',
                                         id: id,
-                                        asset: {
+                                        result: {
                                             metadata: {
                                                 type: assertion.jsonld.metadata.type,
                                                 issuer: assertion.jsonld.metadata.issuer,
@@ -281,7 +281,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/assertions::search', async (req, res, next) => {
+        this.app.get('/api/latest/assertions::search', async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query is necessary.'});
             }
@@ -364,7 +364,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/entities::search', async (req, res, next) => {
+        this.app.get('/api/latest/entities::search', async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query or ids are necessary.'});
             }
@@ -463,7 +463,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/query', async (req, res, next) => {
+        this.app.post('/api/latest/query', async (req, res, next) => {
             if (!req.body.query || !req.query.type) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
@@ -536,7 +536,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/proofs::get', async (req, res, next) => {
+        this.app.post('/api/latest/proofs::get', async (req, res, next) => {
             if (!req.body.nquads) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
@@ -610,7 +610,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/:operation/result/:handler_id', async (req, res, next) => {
+        this.app.get('/api/latest/:operation/result/:handler_id', async (req, res, next) => {
             if (!['provision', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
@@ -707,6 +707,7 @@ class RpcController {
                         case 'update':
                             if (handlerData) {
                                 const result = await this.fileService.loadJsonFromFile(documentPath);
+                                delete result.assertion.data;
                                 handlerData.data = result.assertion;
                             }
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
@@ -733,7 +734,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/info', async (req, res, next) => {
+        this.app.get('/api/latest/info', async (req, res, next) => {
             try {
                 let version = pjson.version;
 
