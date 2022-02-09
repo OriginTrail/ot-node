@@ -45,6 +45,12 @@ exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 
 /**
+ * @constant {number} MAX_FILE_SIZE
+ * - Max file size for publish
+ */
+exports.MAX_FILE_SIZE = 26214400;
+
+/**
  * @constant {object} ERROR_TYPE -
  *  Types of errors supported
  */

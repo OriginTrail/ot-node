@@ -302,7 +302,7 @@ class GraphdbService {
                             WHERE {
                                 ?assertionId schema:hasKeywords ?keyword .
                                 ${!localQuery ? ' ?assertionId schema:hasVisibility "public" .' : ''}
-                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query.toLowerCase()}')` : `FILTER (lcase(?keyword) = '${query.toLowerCase()}')`}
+                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
                             }
                         ${options.limit ? `LIMIT ${options.limit}` : ''}`;
         let result = await this.execute(sparqlQuery);
@@ -325,7 +325,7 @@ class GraphdbService {
                                                          schema:hasType ?type ;
                                                          schema:hasTimestamp ?timestamp ;
                                                          schema:hasUALs ?assetId .
-                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query.toLowerCase()}')` : `FILTER (lcase(?keyword) = '${query.toLowerCase()}')`}
+                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
                                 ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
                                 ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
                                         }

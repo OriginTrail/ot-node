@@ -37,6 +37,7 @@ class RpcController {
     }
 
     async initialize() {
+        //TODO add body-parser middleware
         this.initializeNetworkApi();
 
         this.initializeAuthenticationMiddleware();
@@ -115,7 +116,7 @@ class RpcController {
     }
 
     initializeNetworkApi() {
-        this.logger.info(`Network API module enabled, server running on port ${this.config.network.port}`);
+        this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
         this.networkService.handleMessage('/store', (result) => this.publishService.handleStore(result));
 
@@ -287,7 +288,8 @@ class RpcController {
             }
 
             let prefix = req.query.prefix,
-                limit = req.query.limit;
+                limit = req.query.limit,
+                query = req.query.query.toLowerCase();
 
             if (!prefix) {
                 prefix = false;
@@ -318,11 +320,11 @@ class RpcController {
 
                 let response;
                 let nodes = [];
-                response = await this.dataService.searchAssertions(req.query.query, {limit, prefix}, true);
-                this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${req.query.query}`);
-                let foundNodes = await this.networkService.findNodes(req.query.query, this.config.replicationFactor);
+                response = await this.dataService.searchAssertions(query, {limit, prefix}, true);
+                this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
+                let foundNodes = await this.networkService.findNodes(query, this.config.replicationFactor);
                 if (foundNodes.length < this.config.replicationFactor)
-                    this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${req.query.query}`);
+                    this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${query}`);
                 nodes = nodes.concat(foundNodes);
 
                 nodes = [...new Set(nodes)];
@@ -342,7 +344,7 @@ class RpcController {
 
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
-                        query: req.query.query,
+                        query,
                         options: {limit, prefix},
                         handlerId
                     }, node);
@@ -377,7 +379,7 @@ class RpcController {
                     Id_operation: operationId
                 });
 
-                let query = escape(req.query.query), ids, issuers, types, prefix = req.query.prefix,
+                let query = req.query.query.toLowerCase(), issuers, types, prefix = req.query.prefix,
                     limit = req.query.limit;
 
                 if (req.query.issuers) {
@@ -611,7 +613,7 @@ class RpcController {
         });
 
         this.app.get('/api/latest/:operation/result/:handler_id', async (req, res, next) => {
-            if (!['provision', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
+            if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
                     message: 'Unexisting operation, available operations are: publish, resolve, query, proofs and search'
@@ -760,10 +762,10 @@ class RpcController {
         if (!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') {
             return next({code: 400, message: 'Assertion file is required field and must be in JSON-LD format.'});
             //TODO determine file size limit
-        } else if (req.files.file.size > 268435456) {
+        } else if (req.files.file.size > constants.MAX_FILE_SIZE) {
             return next({
                 code: 400,
-                message: `File size limit is 256MB.`
+                message: `File size limit is 25MB.`
             });
         } else if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
             return next({

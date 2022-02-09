@@ -107,10 +107,19 @@ class DataService {
         }
     }
 
-    async createAssertion(nquads) {
-        const metadata = nquads.filter((x) => x.startsWith('<did:dkg:'));
-        const data = nquads.filter((x) => !x.startsWith('<did:dkg:'));
-        nquads = nquads.filter((x) => !x.includes('hasRootHash') && !x.includes('hasBlockchain') && !x.includes('hasTransactionHash'));
+    async createAssertion(rawNQuads) {
+        const metadata = [];
+        const data = [];
+        const nquads = [];
+        rawNQuads.forEach((nquad)=>{
+            if (nquad.startsWith('<did:dkg:'))
+                metadata.push(nquad);
+            else
+                data.push(nquad);
+
+            if (!nquad.includes('hasRootHash') && !nquad.includes('hasBlockchain') && !nquad.includes('hasTransactionHash'))
+                nquads.push(nquad);
+        });
         const jsonld = await this.implementation.extractMetadata(metadata);
         jsonld.data = data;
         return {jsonld, nquads};
