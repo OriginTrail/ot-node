@@ -95,11 +95,11 @@ class DataService {
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
             let {nquads, isAsset} = await this.implementation.resolve(id);
-            if (!localQuery && nquads && nquads.find((x) => x.includes(`<did:dkg:${id}> <http://schema.org/hasVisibility> "private" .`))) {
+            if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
                 return null;
             }
             if (metadataOnly) {
-                nquads = nquads.filter((x) => x.startsWith(`<did:dkg:${id}>`));
+                nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
             }
             return {nquads, isAsset};
         } catch (e) {
@@ -112,7 +112,7 @@ class DataService {
         const data = [];
         const nquads = [];
         rawNQuads.forEach((nquad)=>{
-            if (nquad.startsWith('<did:dkg:'))
+            if (nquad.startsWith(`<${constants.DID_PREFIX}:`))
                 metadata.push(nquad);
             else
                 data.push(nquad);
@@ -185,7 +185,7 @@ class DataService {
 
             const result = [];
             for (let assertion of assertions) {
-                const assertionId = assertion.assertionId = assertion.assertionId.value.replace('did:dkg:', '');
+                const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
                 assertion = await this.resolve(assertion.assertionId, localQuery, true);
                 if (!assertion) continue;
@@ -245,7 +245,7 @@ class DataService {
             for (const asset of assets) {
                 const assertions = asset.assertions.value.split(',').filter((x) => x !== '');
                 for (let assertionId of assertions) {
-                    assertionId = assertionId.replace('did:dkg:', '');
+                    assertionId = assertionId.replace(`${constants.DID_PREFIX}:`, '');
 
                     const rawRdf = await this.resolve(assertionId, localQuery);
                     if (!rawRdf) continue;
@@ -315,7 +315,7 @@ class DataService {
 
             const result = [];
             for (let assertion of assertions) {
-                const assertionId = assertion.assertionId = assertion.assertionId.value.replace('did:dkg:', '');
+                const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
                 assertion = await this.resolve(assertion.assertionId, localQuery, true);
                 if (!assertion) continue;
@@ -492,7 +492,7 @@ class DataService {
     async appendBlockchainMetadata(nquads, assertion) {
         const blockchainMetadata = await this.workerPool.exec('toNQuads', [{
             '@context': 'https://www.schema.org/',
-            '@id': `did:dkg:${assertion.id}`,
+            '@id': `${constants.DID_PREFIX}:${assertion.id}`,
             hasBlockchain: assertion.blockchain.name,
             hasTransactionHash: assertion.blockchain.transactionHash,
         }]);

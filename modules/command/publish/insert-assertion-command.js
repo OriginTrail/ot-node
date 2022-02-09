@@ -20,7 +20,7 @@ class InsertAssertionCommand extends Command {
 
         try {
             // TODO Store to local graph database
-            await this.dataService.insert(nquads.join('\n'), `did:dkg:${assertion.id}`);
+            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);
             this.logger.info(`Assertion ${assertion.id} has been successfully inserted`);
             await Models.handler_ids.update(
                 {

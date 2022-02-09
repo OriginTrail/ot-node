@@ -51,6 +51,12 @@ exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 exports.MAX_FILE_SIZE = 26214400;
 
 /**
+ * @constant {number} DID_PREFIX
+ * - DID prefix for graph database
+ */
+exports.DID_PREFIX = 'did:dkg';
+
+/**
  * @constant {object} ERROR_TYPE -
  *  Types of errors supported
  */

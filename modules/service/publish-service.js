@@ -1,3 +1,5 @@
+const constants = require('../constants')
+
 class PublishService {
     constructor(ctx) {
         this.networkService = ctx.networkService;
@@ -85,7 +87,7 @@ class PublishService {
 
         // todo check root hash on the blockchain
         if (status) {
-            await this.dataService.insert(data.nquads.join('\n'), `did:dkg:${data.id}`);
+            await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
             this.logger.info(`Assertion ${data.id} has been successfully inserted`);
         }
         return status;

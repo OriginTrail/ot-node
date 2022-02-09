@@ -23,7 +23,7 @@ class SendAssertionCommand extends Command {
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         if (!assertion.metadata.visibility) {
-            nquads = nquads.filter((x) => x.startsWith('<did:dkg:'));
+            nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:`));
         }
 
         let nodes = [];

@@ -172,7 +172,7 @@ class GraphdbService {
                     switch (quad._predicate.id) {
                         case 'http://schema.org/hasType':
                             result.metadata.type = JSON.parse(quad._object.id);
-                            result.id = quad._subject.id.replace('did:dkg:', '');
+                            result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
                             break;
                         case 'http://schema.org/hasTimestamp':
                             result.metadata.timestamp = JSON.parse(quad._object.id);
@@ -229,7 +229,7 @@ class GraphdbService {
     async createMetadata(assertion) {
         const metadata = {
             '@context': 'https://www.schema.org/',
-            '@id': `did:dkg:${assertion.id}`,
+            '@id': `${constants.DID_PREFIX}:${assertion.id}`,
             hasType: assertion.metadata.type,
             hasSignature: assertion.signature,
             hasIssuer: assertion.metadata.issuer,
@@ -251,7 +251,7 @@ class GraphdbService {
         const query = `PREFIX schema: <http://schema.org/>
                         CONSTRUCT { ?s ?p ?o }
                         WHERE {
-                          GRAPH <did:dkg:${uri}> {
+                          GRAPH <${constants.DID_PREFIX}:${uri}> {
                             ?s ?p ?o
                           }
                         }`;
@@ -293,7 +293,7 @@ class GraphdbService {
                             }
                        }`;
         const g = await this.execute(query);
-        return JSON.parse(g).results.bindings.map((x) => x.g.value.replace('did:dkg:', ''));
+        return JSON.parse(g).results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
     }
 
     async findAssertionsByKeyword(query, options, localQuery) {

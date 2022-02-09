@@ -1,4 +1,5 @@
 const Models = require('../../models/index');
+const constants = require('../constants')
 
 class QueryService {
     constructor(ctx) {
@@ -21,7 +22,7 @@ class QueryService {
         const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads);
 
         if (status && load) {
-            await this.dataService.insert(nquads.join('\n'), `did:dkg:${assertion.json.id}`);
+            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.json.id}`);
             this.logger.info(`Assertion ${assertion.json.id} has been successfully inserted`);
         }
         return status ? {assertion, isAsset} : null;
