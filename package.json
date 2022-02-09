@@ -4,6 +4,7 @@
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
+    "install": "npm config set unsafe-perm true",
     "start": "node index.js",
     "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
   },
