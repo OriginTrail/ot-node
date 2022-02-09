@@ -25,21 +25,6 @@ class InsertAssertionCommand extends Command {
             // Store to local graph database
             await this.dataService.insert(rdf.join('\n'), `did:dkg:${assertion.id}`);
             this.logger.info(`Assertion ${assertion.id} is successfully inserted`);
-            // await Models.assertions.create({
-            //     owner: '',
-            //     hash: assertion.id,
-            //     signature: '',
-            //     topics: keywords.join(','),
-            // });
-            await Models.handler_ids.update(
-                {
-                    status: 'COMPLETED',
-                }, {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
         }

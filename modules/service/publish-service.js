@@ -61,8 +61,8 @@ class PublishService {
             }));
 
         const commandSequence = [
-            'insertAssertionCommand',
             'submitProofsCommand',
+            'insertAssertionCommand',
             'sendAssertionCommand',
         ];
 
