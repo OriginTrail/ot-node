@@ -1,6 +1,7 @@
 const { v1: uuidv1 } = require('uuid');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
+const Blazegraph = require('../../external/blazegraph-service');
 
 class DataService {
     constructor(ctx) {
@@ -17,11 +18,15 @@ class DataService {
     }
 
     async initialize() {
-        this.implementation = new GraphDB({
-            repositoryName: this.config.graphDatabase.name,
-            username: this.config.graphDatabase.username,
-            password: this.config.graphDatabase.password,
-        });
+        if (this.config.graphDatabase.implementation === 'Blazegraph') {
+            this.implementation = new Blazegraph({});
+        } else {
+            this.implementation = new GraphDB({
+                repositoryName: this.config.graphDatabase.name,
+                username: this.config.graphDatabase.username,
+                password: this.config.graphDatabase.password,
+            });
+        }
 
         let ready = await this.healthCheck();
         let retries = 0;
@@ -82,9 +87,9 @@ class DataService {
         }
     }
 
-    async insert(data, rootHash) {
+    async insert(data, assertionId) {
         try {
-            return this.implementation.insert(data, rootHash);
+            return this.implementation.insert(data, assertionId);
         } catch (e) {
             // TODO: Check situation when inserting data recieved from other node
             this.handleUnavailableTripleStoreError(e);
