@@ -82,6 +82,7 @@
     "pino": "^7.5.1",
     "pino-multi-stream": "^6.0.0",
     "pino-pretty": "^7.2.0",
+    "qs": "^6.10.3",
     "rc": "^1.2.8",
     "semver": "^7.3.5",
     "sequelize": "^6.9.0",
