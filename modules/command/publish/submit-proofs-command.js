@@ -1,6 +1,7 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
+const sortedStringify = require("json-stable-stringify");
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {
@@ -9,6 +10,7 @@ class SubmitProofsCommand extends Command {
         this.blockchainService = ctx.blockchainService;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
+        this.workerPool = ctx.workerPool;
     }
 
     /**
@@ -16,14 +18,14 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId, operationId } = command.data;
+        const { documentPath, handlerId } = command.data;
 
         try {
-            const { rdf, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+            let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
+            //TODO extend for asset
             this.logger.info(`Sending transaction to the blockchain: createAssertionRecord(${assertion.id},${assertion.rootHash})`);
-            const { transactionHash, blockchain } = await this.blockchainService
-                .sendProofs(assertion);
+            const { transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
             this.logger.info(`Transaction hash is ${transactionHash} on ${blockchain}`);
 
             assertion.blockchain = {
@@ -31,13 +33,12 @@ class SubmitProofsCommand extends Command {
                 transactionHash,
             };
 
-            const updatedRdf = await this.dataService.appendBlockchainMetadata(rdf, assertion);
-
+            nquads = await this.dataService.appendBlockchainMetadata(nquads, assertion);
             const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
             await this.fileService
-                .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify({
-                    rdf: updatedRdf, assertion,
+                .writeContentsToFile(handlerIdCachePath, handlerId, sortedStringify({
+                    nquads, assertion
                 }));
 
         } catch (e) {

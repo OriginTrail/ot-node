@@ -2,7 +2,7 @@
 
 [Unit]
 Description=GraphDB - OriginTrail V6 Stage 1 Beta Node
-Documentation=https://github.com/OriginTrail/ot-node/tree/v6/release%2Ftestnet
+Documentation=https://github.com/OriginTrail/ot-node
 After=network.target
 
 [Service]

@@ -1,6 +1,8 @@
 const { v1: uuidv1 } = require('uuid');
+const N3 = require('n3');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
+const Blazegraph = require('../../external/blazegraph-service');
 
 class DataService {
     constructor(ctx) {
@@ -10,6 +12,7 @@ class DataService {
         this.validationService = ctx.validationService;
         this.networkService = ctx.networkService;
         this.nodeService = ctx.nodeService;
+        this.workerPool = ctx.workerPool;
     }
 
     getName() {
@@ -17,11 +20,18 @@ class DataService {
     }
 
     async initialize() {
-        this.implementation = new GraphDB({
-            repositoryName: this.config.graphDatabase.name,
-            username: this.config.graphDatabase.username,
-            password: this.config.graphDatabase.password,
-        });
+        if (this.config.graphDatabase.implementation === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH) {
+            this.implementation = new Blazegraph({
+                url: this.config.graphDatabase.url,
+            });
+        } else {
+            this.implementation = new GraphDB({
+                repositoryName: this.config.graphDatabase.name,
+                username: this.config.graphDatabase.username,
+                password: this.config.graphDatabase.password,
+                url: this.config.graphDatabase.url,
+            });
+        }
 
         let ready = await this.healthCheck();
         let retries = 0;
@@ -33,7 +43,7 @@ class DataService {
         }
         if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             this.logger.error({
-                msg: `Triple Store (${this.implementation.getName()}) not available, max retries reached.`,
+                msg: `Triple Store (${this.getName()}) not available, max retries reached.`,
                 Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
             });
             this.nodeService.stop(1);
@@ -54,78 +64,77 @@ class DataService {
 
     async canonize(fileContent, fileExtension) {
         switch (fileExtension) {
-        case '.json':
-            let jsonContent = JSON.parse(fileContent);
-
-            const timestamp = new Date().toISOString();
-            const rdf = await this.implementation.toRDF(jsonContent);
-
-            let type = jsonContent['@type'];
-            delete jsonContent['@type'];
-            if (!type) {
-                type = 'default';
-            }
-
-            jsonContent = await this.fromRDF(rdf, type);
-            return {
-                assertion: {
-                    data: jsonContent,
+            case '.json':
+                const assertion = {
                     metadata: {
-                        type,
-                        timestamp,
+                        timestamp: new Date().toISOString()
                     },
-                },
-                rdf,
-            };
-        default:
-            throw new Error('File format is not supported.');
+                    data: await this.workerPool.exec('JSONParse', [fileContent.toString()])
+                }
+                const nquads = await this.workerPool.exec('toNQuads', [assertion.data])
+                if (nquads && nquads.length === 0) {
+                    throw new Error(`File format is corrupted, no n-quads extracted.`);
+                }
+
+                let type = assertion.data['@type'];
+                delete assertion.data['@type'];
+                if (!type) {
+                    type = 'default';
+                }
+                assertion.metadata.type = type;
+                assertion.data = await this.fromNQuads(nquads, type);
+
+                return {assertion, nquads};
+            default:
+                throw new Error(`File extension ${fileExtension} is not supported.`);
         }
     }
 
-    async insert(data, rootHash) {
+    async insert(data, assertionId) {
         try {
-            return this.implementation.insert(data, rootHash);
+            return this.implementation.insert(data, assertionId);
         } catch (e) {
             // TODO: Check situation when inserting data recieved from other node
             this.handleUnavailableTripleStoreError(e);
         }
     }
 
-    async resolve(assertionId, localQuery = false) {
+    async resolve(id, localQuery = false, metadataOnly = false) {
         try {
-            const rdf = await this.implementation.resolve(assertionId);
-            if (!localQuery && rdf && rdf.find((x) => x.includes(`<did:dkg:${assertionId}> <http://schema.org/hasVisibility> "false"^^<http://www.w3.org/2001/XMLSchema#boolean> .`))) {
+            let {nquads, isAsset} = await this.implementation.resolve(id);
+            if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
                 return null;
             }
-            return rdf;
+            if (metadataOnly) {
+                nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
+            }
+            return {nquads, isAsset};
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
         }
     }
 
-    async createAssertion(assertionId, rdf) {
-        const metadata = rdf.filter((x) => x.startsWith('<did:dkg:'));
-        const data = rdf.filter((x) => !x.startsWith('<did:dkg:'));
-        rdf = rdf.filter((x) => !x.includes('hasKeyword') && !x.includes('hasAsset') && !x.includes('hasRootHash') && !x.includes('hasBlockchain') && !x.includes('hasTransactionHash'));
-        const assertion = await this.implementation.extractMetadata(metadata);
-        assertion.id = assertionId;
-        assertion.data = data;
-        return { assertion, rdf };
+    async createAssertion(rawNQuads) {
+        const metadata = [];
+        const data = [];
+        const nquads = [];
+        rawNQuads.forEach((nquad)=>{
+            if (nquad.startsWith(`<${constants.DID_PREFIX}:`))
+                metadata.push(nquad);
+            else
+                data.push(nquad);
+
+            if (!nquad.includes('hasRootHash') && !nquad.includes('hasBlockchain') && !nquad.includes('hasTransactionHash'))
+                nquads.push(nquad);
+        });
+        const jsonld = await this.extractMetadata(metadata);
+        jsonld.data = data;
+        return {jsonld, nquads};
     }
 
     verifyAssertion(assertion, rdf) {
         return new Promise(async (resolve) => {
             try {
-                const array = rdf.join('\n').match(/<did:dkg:(.)+>/gm)
-                if (array.find(x => !x.includes(`<did:dkg:${assertion.id}>`))) {
-                    this.logger.error({
-                        msg: 'Invalid assertion in named graph',
-                        Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                        Event_value1: 'Invalid assertion in named graph',
-                    });
-                    resolve(false);
-                }
-
                 // let dataHash;
                 // if (assertion.metadata.visibility) {
                 //     const framedData = await this.fromRDF(assertion.data, assertion.metadata.type);
@@ -133,7 +142,7 @@ class DataService {
                 // } else {
                 //     dataHash = assertion.metadata.dataHash;
                 // }
-                const { dataHash } = assertion.metadata;
+                const {dataHash} = assertion.metadata;
 
                 const metadataHash = this.validationService.calculateHash(assertion.metadata);
                 const calculatedAssertionId = this.validationService.calculateHash(metadataHash + dataHash);
@@ -157,14 +166,15 @@ class DataService {
 
                 if (assertion.metadata.visibility) {
                     const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
-                    if (assertion.rootHash !== calculateRootHash) {
-                        this.logger.error({
-                            msg: `Root hash ${assertion.rootHash} doesn't match with calculated ${calculateRootHash}`,
-                            Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                            Event_value1: 'Root hash not matching calculated',
-                        });
-                        return resolve(false);
-                    }
+                    //TODO integrate blockchain
+                    // if (assertion.rootHash !== calculateRootHash) {
+                    //     this.logger.error({
+                    //         msg: `Root hash ${assertion.rootHash} doesn't match with calculated ${calculateRootHash}`,
+                    //         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                    //         Event_value1: 'Root hash not matching calculated',
+                    //     });
+                    //     return resolve(false);
+                    // }
                 }
                 return resolve(true);
             } catch (e) {
@@ -175,138 +185,54 @@ class DataService {
 
     async searchByQuery(query, options, localQuery = false) {
         try {
-            const assets = await this.implementation.searchByQuery(query, options, localQuery);
-            if (!assets) return null;
+
+            const assertions = await this.implementation.findAssetsByKeyword(query, options, localQuery);
+            if (!assertions) return null;
+
 
             const result = [];
-            for (const asset of assets) {
-                const assertions = asset.assertions.value.split(',').filter((x) => x !== '');
-                for (let assertionId of assertions) {
-                    assertionId = assertionId.replace('did:dkg:', '');
+            for (let assertion of assertions) {
+                const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                    const rawRdf = await this.resolve(assertionId, localQuery);
-                    if (!rawRdf) continue;
+                assertion = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!assertion) continue;
 
-                    if (localQuery) {
-                        const {assertion, rdf} = await this.createAssertion(assertionId, rawRdf);
 
-                        let object = result.find((x) => x.type === assertion.metadata.type && x.id === asset.assetId.value);
-                        if (!object) {
-                            object = {
-                                type: assertion.metadata.type,
-                                id: asset.assetId.value,
-                                timestamp: assertion.metadata.timestamp,
-                                data: [],
-                                issuers: [],
-                                assertions: [],
-                                nodes: [this.networkService.getPeerId()],
-                            };
-                            result.push(object);
-                        }
+                if (localQuery) {
+                    assertion = await this.createAssertion(assertion.nquads);
 
-                        if (object.issuers.indexOf(assertion.metadata.issuer) === -1) {
-                            object.issuers.push(assertion.metadata.issuer);
-                        }
-
-                        if (object.assertions.indexOf(assertion.id) === -1) {
-                            object.assertions.push(assertion.id);
-                            object.data.push({
-                                id: assertion.id,
-                                timestamp: assertion.metadata.timestamp,
-                                data: assertion.data,
-                            });
-                        }
-                        if (new Date(object.timestamp) < new Date(assertion.metadata.timestamp)) {
-                            object.timestamp = assertion.metadata.timestamp;
-                        }
-                    } else {
-                        let object = result.find((x) => x.assetId === asset.assetId.value);
-                        if (!object) {
-                            object = {
-                                assetId: asset.assetId.value,
-                                assertions: [],
-                            };
-                            result.push(object);
-                        }
-                        if (!object.assertions.find((x) => x.id === assertionId)) {
-                            object.assertions.push({
-                                id: assertionId,
-                                node: this.networkService.getPeerId(),
-                                rdf: rawRdf,
-                            });
-                        }
+                    let object = result.find((x) => x.type === assertion.jsonld.metadata.type && x.id === assertion.jsonld.metadata.UALs[0]);
+                    if (!object) {
+                        object = {
+                            id: assertion.jsonld.metadata.UALs[0],
+                            type: assertion.jsonld.metadata.type,
+                            timestamp: assertion.jsonld.metadata.timestamp,
+                            issuers: [],
+                            assertions: [],
+                            nodes: [this.networkService.getPeerId()],
+                        };
+                        result.push(object);
                     }
-                }
-            }
 
-            return result;
-        } catch (e) {
-            this.handleUnavailableTripleStoreError(e);
-        }
-    }
+                    if (object.issuers.indexOf(assertion.jsonld.metadata.issuer) === -1) {
+                        object.issuers.push(assertion.jsonld.metadata.issuer);
+                    }
 
-    async searchByIds(ids, options, localQuery = false) {
-        try {
-            const assets = await this.implementation.searchByIds(ids, options, localQuery);
-            if (!assets) return null;
-
-            const result = [];
-            for (const asset of assets) {
-                const assertions = asset.assertions.value.split(',').filter((x) => x !== '');
-                for (let assertionId of assertions) {
-                    assertionId = assertionId.replace('did:dkg:', '');
-
-                    const rawRdf = await this.resolve(assertionId, localQuery);
-                    if (!rawRdf) continue;
-
-                    if (localQuery) {
-                        const { assertion, rdf } = await this.createAssertion(assertionId, rawRdf);
-
-                        let object = result.find((x) => x.type === assertion.metadata.type && x.id === asset.assetId.value);
-                        if (!object) {
-                            object = {
-                                type: assertion.metadata.type,
-                                id: asset.assetId.value,
-                                timestamp: assertion.metadata.timestamp,
-                                data: [],
-                                issuers: [],
-                                assertions: [],
-                                nodes: [this.networkService.getPeerId()],
-                            };
-                            result.push(object);
-                        }
-
-                        if (object.issuers.indexOf(assertion.metadata.issuer) === -1) {
-                            object.issuers.push(assertion.metadata.issuer);
-                        }
-
-                        if (object.assertions.indexOf(assertion.id) === -1) {
-                            object.assertions.push(assertion.id);
-                            object.data.push({
-                                id: assertion.id,
-                                timestamp: assertion.metadata.timestamp,
-                                data: assertion.data,
-                            });
-                        }
-                        if (new Date(object.timestamp) < new Date(assertion.metadata.timestamp)) {
-                            object.timestamp = assertion.metadata.timestamp;
-                        }
-                    } else {
-                        let object = result.find((x) => x.assetId === asset.assetId.value);
-                        if (!object) {
-                            object = {
-                                assetId: asset.assetId.value,
-                                assertions: [],
-                            };
-                            result.push(object);
-                        }
-                        if (!object.assertions.find((x) => x.id === assertionId)) {
-                            object.assertions.push({
-                                id: assertionId,
-                                node: this.networkService.getPeerId(),
-                                rdf: rawRdf,
-                            });
-                        }
+                    if (object.assertions.indexOf(assertion.jsonld.id) === -1) {
+                        object.assertions.push(assertion.jsonld.id);
+                    }
+                    if (new Date(object.timestamp) < new Date(assertion.jsonld.metadata.timestamp)) {
+                        object.timestamp = assertion.jsonld.metadata.timestamp;
+                    }
+                } else {
+                    let object = result.find((x) => x.id === assertionId);
+                    if (!object) {
+                        object = {
+                            assertionId,
+                            node: this.networkService.getPeerId(),
+                            nquads: assertion.nquads,
+                        };
+                        result.push(object);
                     }
                 }
             }
@@ -319,41 +245,37 @@ class DataService {
 
     async searchAssertions(query, options, localQuery = false) {
         try {
-            const assets = await this.implementation.searchByQuery(query, options, localQuery);
-            if (!assets) return null;
+            const assertions = await this.implementation.findAssertionsByKeyword(query, options, localQuery);
+            if (!assertions) return null;
 
             const result = [];
-            for (const asset of assets) {
-                const assertions = asset.assertions.value.split(',').filter((x) => x !== '');
-                for (let assertionId of assertions) {
-                    assertionId = assertionId.replace('did:dkg:', '');
+            for (let assertion of assertions) {
+                const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                    const rawRdf = await this.resolve(assertionId, localQuery);
-                    if (!rawRdf) continue;
+                assertion = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!assertion) continue;
 
-                    if (localQuery) {
-                        const {assertion, rdf} = await this.createAssertion(assertionId, rawRdf);
-                        let object = result.find((x) => x.id === assertion.id);
-                        if (!object) {
-                            object = {
-                                id: assertion.id,
-                                metadata: assertion.metadata,
-                                signature: assertion.signature,
-                                rootHash: assertion.rootHash,
-                                nodes: [this.networkService.getPeerId()],
-                            };
-                            result.push(object);
-                        }
-                    } else {
-                        let object = result.find((x) => x.id === assertionId);
-                        if (!object) {
-                            object = {
-                                assertionId,
-                                node: this.networkService.getPeerId(),
-                                rdf: rawRdf,
-                            };
-                            result.push(object);
-                        }
+                if (localQuery) {
+                    assertion = await this.createAssertion(assertion.nquads);
+                    let object = result.find((x) => x.id === assertion.id);
+                    if (!object) {
+                        object = {
+                            id: assertion.jsonld.id,
+                            metadata: assertion.jsonld.metadata,
+                            signature: assertion.jsonld.signature,
+                            nodes: [this.networkService.getPeerId()],
+                        };
+                        result.push(object);
+                    }
+                } else {
+                    let object = result.find((x) => x.id === assertionId);
+                    if (!object) {
+                        object = {
+                            assertionId,
+                            node: this.networkService.getPeerId(),
+                            nquads: assertion.nquads,
+                        };
+                        result.push(object);
                     }
                 }
             }
@@ -389,23 +311,23 @@ class DataService {
         });
         try {
             switch (type) {
-            // case 'SELECT':
-            //     result = this.implementation.execute(query);
-            //     break;
-            case 'CONSTRUCT':
-                result = await this.implementation.construct(query);
-                result = result.toString();
-                if (result) {
-                    result = result.split('\n').filter((x) => x !== '');
-                } else {
-                    result = [];
-                }
-                break;
-            // case 'ASK':
-            //     result = this.implementation.ask(query);
-            //     break;
-            default:
-                throw Error('Query type not supported');
+                // case 'SELECT':
+                //     result = this.implementation.execute(query);
+                //     break;
+                case 'CONSTRUCT':
+                    result = await this.implementation.construct(query);
+                    result = result.toString();
+                    if (result) {
+                        result = result.split('\n').filter((x) => x !== '');
+                    } else {
+                        result = [];
+                    }
+                    break;
+                // case 'ASK':
+                //     result = this.implementation.ask(query);
+                //     break;
+                default:
+                    throw Error('Query type not supported');
             }
             return result;
         } catch (e) {
@@ -420,7 +342,7 @@ class DataService {
         }
     }
 
-    async fromRDF(rdf, type) {
+    async fromNQuads(nquads, type) {
         const Id_operation = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of fromRDF command',
@@ -428,63 +350,47 @@ class DataService {
             Operation_name: 'fromrdf',
             Id_operation,
         });
-        let context; let
+        let context;
+        let
             frame;
         switch (type) {
-        case this.constants.GS1EPCIS:
-            context = {
-                '@context': [
-                    'https://gs1.github.io/EPCIS/epcis-context.jsonld',
-                    {
-                        example: 'http://ns.example.com/epcis/',
-                    },
-                ],
-            };
+            case this.constants.GS1EPCIS:
+                context = {
+                    '@context': [
+                        'https://gs1.github.io/EPCIS/epcis-context.jsonld',
+                        {
+                            example: 'http://ns.example.com/epcis/',
+                        },
+                    ],
+                };
 
-            frame = {
-                '@context': [
-                    'https://gs1.github.io/EPCIS/epcis-context.jsonld',
-                    {
-                        example: 'http://ns.example.com/epcis/',
-                    },
-                ],
-                isA: 'EPCISDocument',
-            };
-            break;
-        default:
-            context = {
-                '@context': ['https://www.schema.org/'],
-            };
+                frame = {
+                    '@context': [
+                        'https://gs1.github.io/EPCIS/epcis-context.jsonld',
+                        {
+                            example: 'http://ns.example.com/epcis/',
+                        },
+                    ],
+                    isA: 'EPCISDocument',
+                };
+                break;
+            default:
+                context = {
+                    '@context': ['https://www.schema.org/'],
+                };
 
-            frame = {};
+                frame = {};
         }
+        const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame])
 
-        const data = await this.implementation.fromRDF(rdf, context, frame);
         this.logger.emit({
             msg: 'Finished measuring execution of fromRDF command',
             Event_name: 'fromrdf_end',
             Operation_name: 'fromrdf',
             Id_operation,
         });
-        return data;
-        // return sort(data).asc();
-    }
 
-    async frameAsset(data, type, framingCriteria) {
-        data.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        let latest = data[0].data;
-        for (let i = 1; i < data.length; i += 1) {
-            const next = data[i].data;
-
-            for (const row of latest) {
-                if (!next.find((x) => x.includes(row.split(' ')[1]))) next.push(row);
-            }
-
-            latest = next;
-        }
-
-        const jsonld = await this.fromRDF(latest, type);
-        return jsonld;
+        return json;
     }
 
     healthCheck() {
@@ -495,28 +401,131 @@ class DataService {
         return this.implementation.restartService();
     }
 
-    async appendMetadata(rdf, assertion) {
-        const metadata = await this.implementation.createMetadata(assertion);
-        rdf = rdf.concat(metadata);
-        return rdf;
+    async appendMetadata(nquads, assertion) {
+        const metadata = await this.createMetadata(assertion);
+        nquads = nquads.concat(metadata);
+        return nquads;
     }
 
-    async appendBlockchainMetadata(rdf, assertion) {
-        const metadata = await this.implementation.createBlockchainMetadata(assertion);
-        rdf = rdf.concat(metadata);
-        return rdf;
+    async createMetadata(assertion) {
+        const metadata = {
+            '@context': 'https://www.schema.org/',
+            '@id': `${constants.DID_PREFIX}:${assertion.id}`,
+            hasType: assertion.metadata.type,
+            hasSignature: assertion.signature,
+            hasIssuer: assertion.metadata.issuer,
+            hasTimestamp: assertion.metadata.timestamp,
+            hasVisibility: assertion.metadata.visibility,
+            hasDataHash: assertion.metadata.dataHash,
+            hasKeywords: assertion.metadata.keywords,
+        };
+
+        if (assertion.metadata.UALs)
+            metadata.hasUALs = assertion.metadata.UALs;
+
+        const result = await this.workerPool.exec('toNQuads', [metadata]);
+        return result;
     }
 
-    async appendConnections(rdf, options) {
-        const connections = await this.implementation.createConnections(options);
-        rdf = rdf.concat(connections);
-        return rdf;
+    async appendBlockchainMetadata(nquads, assertion) {
+        const blockchainMetadata = await this.workerPool.exec('toNQuads', [{
+            '@context': 'https://www.schema.org/',
+            '@id': `${constants.DID_PREFIX}:${assertion.id}`,
+            hasBlockchain: assertion.blockchain.name,
+            hasTransactionHash: assertion.blockchain.transactionHash,
+        }]);
+        nquads = nquads.concat(blockchainMetadata);
+        return nquads;
+    }
+
+    async extractMetadata(rdf) {
+        return new Promise(async (accept, reject) => {
+            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+            const result = {
+                metadata: {
+                    keywords: [],
+                    UALs: [],
+                },
+                blockchain: {},
+            };
+
+            const quads = [];
+            await parser.parse(
+                rdf.join('\n'),
+                (error, quad, prefixes) => {
+                    if (error) {
+                        reject(error);
+                    }
+                    if (quad) {
+                        quads.push(quad);
+                    }
+                },
+            );
+
+
+            for (const quad of quads) {
+                try {
+                    switch (quad._predicate.id) {
+                        case 'http://schema.org/hasType':
+                            result.metadata.type = JSON.parse(quad._object.id);
+                            result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
+                            break;
+                        case 'http://schema.org/hasTimestamp':
+                            result.metadata.timestamp = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasUALs':
+                            result.metadata.UALs.push(JSON.parse(quad._object.id));
+                            break;
+                        case 'http://schema.org/hasIssuer':
+                            result.metadata.issuer = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasVisibility':
+                            result.metadata.visibility = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasDataHash':
+                            result.metadata.dataHash = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasKeywords':
+                            result.metadata.keywords.push(JSON.parse(quad._object.id));
+                            break;
+                        case 'http://schema.org/hasSignature':
+                            result.signature = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasRootHash':
+                            result.rootHash = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasBlockchain':
+                            result.blockchain.name = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasTransactionHash':
+                            result.blockchain.transactionHash = JSON.parse(quad._object.id);
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (e) {
+                    this.logger.error({
+                        msg: `Error in extracting metadata: ${e}. ${e.stack}`,
+                        Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR,
+                    });
+                }
+            }
+
+            result.metadata.keywords.sort();
+            if (!result.metadata.UALs.length) {
+                delete result.metadata.UALs;
+            } else {
+                result.metadata.UALs.sort();
+            }
+
+            accept(result);
+        });
     }
 
     handleUnavailableTripleStoreError(e) {
         if (e.code === 'ECONNREFUSED') {
             this.logger.error({
-                msg: `Triple Store (${this.implementation.getName()}) not available: ${e.message}. ${e.stack}`,
+                msg: `Triple Store (${this.getName()}) not available: ${e.message}. ${e.stack}`,
                 Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
                 Event_value1: e.message,
             });
