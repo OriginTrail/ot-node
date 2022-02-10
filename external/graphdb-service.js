@@ -187,11 +187,11 @@ class GraphdbService {
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
                             SELECT ?assertionId
                             WHERE {
-                                ?assertionId schema:hasTimestamp ?timestamp ;
+                                ?assertionId schema:hasTimestamp ?latestTimestamp ;
                             ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
                                                      schema:hasUALs ?assetId .
                                     {
-                                        SELECT ?assetId (MAX(?timestamp) AS ?timestamp)
+                                        SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
                                         WHERE {
                                             ?assertionId schema:hasKeywords ?keyword ;
                                                          schema:hasIssuer ?issuer ;

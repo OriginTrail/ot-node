@@ -172,11 +172,11 @@ class BlazegraphService {
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
                             SELECT ?assertionId
                             WHERE {
-                                ?assertionId schema:hasTimestamp ?timestamp ;
+                                ?assertionId schema:hasTimestamp ?latestTimestamp ;
                             ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
                                                      schema:hasUALs ?assetId .
                                     {
-                                        SELECT ?assetId (MAX(?timestamp) AS ?timestamp)
+                                        SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
                                         WHERE {
                                             ?assertionId schema:hasKeywords ?keyword ;
                                                          schema:hasIssuer ?issuer ;
@@ -186,11 +186,11 @@ class BlazegraphService {
                                 ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
                                 ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
                                 ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
-                            }
-                            }
-                        }
-                        group by ?outerAssetId
-                        ${options.limit ? `LIMIT ${options.limit}` : ''}`;
+                                        }
+                                        GROUP BY ?assetId
+                                        ${options.limit ? `LIMIT ${options.limit}` : ''}
+                                    }
+                            }`;
         const result = await this.execute(sparqlQuery);
         return result.results.bindings;
     }
