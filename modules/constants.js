@@ -45,6 +45,11 @@ exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
 /**
+ * @constant {number} DEFAULT_COMMAND_DELAY_IN_MILLS - Delay for default commands
+ */
+exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
+
+/**
  * @constant {number} TRIPLE_STORE_CONNECT_MAX_RETRIES
  * - Maximum retries for connecting to triple store
  */
