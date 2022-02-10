@@ -21,12 +21,15 @@ class DataService {
 
     async initialize() {
         if (this.config.graphDatabase.implementation === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH) {
-            this.implementation = new Blazegraph({});
+            this.implementation = new Blazegraph({
+                url: this.config.graphDatabase.url,
+            });
         } else {
             this.implementation = new GraphDB({
                 repositoryName: this.config.graphDatabase.name,
                 username: this.config.graphDatabase.username,
                 password: this.config.graphDatabase.password,
+                url: this.config.graphDatabase.url,
             });
         }
 

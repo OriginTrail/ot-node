@@ -16,7 +16,7 @@ class GraphdbService {
     async initialize(logger) {
         this.logger = logger;
         this.logger.info(`Data repository name: ${this.config.repositoryName}`);
-        const serverConfig = new ServerClientConfig('http://localhost:7200/')
+        const serverConfig = new ServerClientConfig(this.config.url)
             .setTimeout(40000)
             .setHeaders({
                 Accept: RDFMimeType.N_QUADS,
@@ -33,8 +33,8 @@ class GraphdbService {
 
         const readTimeout = 30000;
         const writeTimeout = 30000;
-        const repositoryServerConfig = new RepositoryClientConfig('http://localhost:7200/')
-            .setEndpoints([`http://localhost:7200/repositories/${this.config.repositoryName}`])
+        const repositoryServerConfig = new RepositoryClientConfig(this.config.url)
+            .setEndpoints([`${this.config.url}/repositories/${this.config.repositoryName}`])
             .setHeaders({
                 Accept: RDFMimeType.N_QUADS,
             })
@@ -135,8 +135,10 @@ class GraphdbService {
                 {
                     SELECT ?ng
                     WHERE {
-                        ?ng schema:hasUALs "${uri}" .
+                        ?ng schema:hasUALs "${uri}" ;
+                            schema:hasTimestamp ?timestamp .
                     }
+                    ORDER BY DESC(?timestamp)
                     LIMIT 1
                 }
                 FILTER (?g = ?ng) .
@@ -211,7 +213,7 @@ class GraphdbService {
 
     async healthCheck() {
         try {
-            const response = await axios.get(`http://localhost:7200/repositories/${this.config.repositoryName}/health`, {},
+            const response = await axios.get(`${this.config.url}/repositories/${this.config.repositoryName}/health`, {},
                 {
                     auth: {
                         username: this.config.username,

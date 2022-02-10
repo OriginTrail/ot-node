@@ -9,6 +9,10 @@ class BlazegraphService {
 
     async initialize(logger) {
         this.logger = logger;
+        this.config.axios = {
+            method: 'post',
+            url: `${this.config.url}/sparql`,
+        };
         this.logger.info('Blazegraph module initialized successfully');
     }
 
@@ -16,16 +20,16 @@ class BlazegraphService {
         const askQuery = `ASK WHERE { GRAPH <${rootHash}> { ?s ?p ?o } }`;
         const exists = await this.ask(askQuery);
         if (!exists) {
-            const config = {
+            this.config.axios = {
                 method: 'post',
-                url: `http://localhost:9999/blazegraph/sparql?context-uri=${rootHash}`,
+                url: `${this.config.url}/sparql?context-uri=${rootHash}`,
                 headers: {
                     'Content-Type': 'text/x-nquads',
                 },
                 data: triples,
             };
 
-            await axios(config).then((response) => true)
+            await axios(this.config.axios).then((response) => true)
                 .catch((error) => {
                     this.logger.error(`Failed to write into Blazegraph: ${error} - ${error.stack}`);
                     return false;
@@ -39,16 +43,16 @@ class BlazegraphService {
             const data = qs.stringify({
                 query,
             });
-            const config = {
+            this.config.axios = {
                 method: 'post',
-                url: 'http://localhost:9999/blazegraph/sparql',
+                url: `${this.config.url}/sparql`,
                 headers: {
                     Accept: 'application/sparql-results+json',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data,
             };
-            axios(config).then((response) => {
+            axios(this.config.axios).then((response) => {
                 accept(response.data);
             }).catch((e) => reject(e));
         });
@@ -59,16 +63,16 @@ class BlazegraphService {
             const data = qs.stringify({
                 query,
             });
-            const config = {
+            this.config.axios = {
                 method: 'post',
-                url: 'http://localhost:9999/blazegraph/sparql',
+                url: `${this.config.url}/sparql`,
                 headers: {
                     Accept: 'text/x-nquads',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data,
             };
-            axios(config).then((response) => {
+            axios(this.config.axios).then((response) => {
                 accept(response.data);
             }).catch((e) => reject(e));
         });
@@ -79,16 +83,16 @@ class BlazegraphService {
             const data = qs.stringify({
                 query,
             });
-            const config = {
+            this.config.axios = {
                 method: 'post',
-                url: 'http://localhost:9999/blazegraph/sparql',
+                url: `${this.config.url}/sparql`,
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data,
             };
-            axios(config).then((response) => {
+            axios(this.config.axios).then((response) => {
                 accept(response.data.boolean);
             }).catch((e) => reject(e));
         });
@@ -193,7 +197,7 @@ class BlazegraphService {
 
     async healthCheck() {
         try {
-            const response = await axios.get('http://localhost:9999/blazegraph/status', {});
+            const response = await axios.get(`${this.config.url}/status`, {});
             if (response.data !== null) {
                 return true;
             }
