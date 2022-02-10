@@ -265,8 +265,10 @@ class GraphdbService {
                 {
                     SELECT ?ng
                     WHERE {
-                        ?ng schema:hasUALs "${uri}" .
+                        ?ng schema:hasUALs "${uri}" ;
+                            schema:hasTimestamp ?timestamp .
                     }
+                    ORDER BY DESC(?timestamp)
                     LIMIT 1
                 }
                 FILTER (?g = ?ng) .
