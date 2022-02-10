@@ -58,8 +58,8 @@ class PublishService {
 
         const commandSequence = [
             'submitProofsCommand',
-            'sendAssertionCommand',
             'insertAssertionCommand',
+            'sendAssertionCommand',
         ];
 
         await this.commandExecutor.add({

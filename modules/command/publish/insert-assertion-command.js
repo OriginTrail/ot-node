@@ -19,18 +19,8 @@ class InsertAssertionCommand extends Command {
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
-            // TODO Store to local graph database
             await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);
             this.logger.info(`Assertion ${assertion.id} has been successfully inserted`);
-            await Models.handler_ids.update(
-                {
-                    status: 'COMPLETED',
-                }, {
-                    where: {
-                        handler_id: handlerId,
-                    },
-                },
-            );
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
         }

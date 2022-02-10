@@ -4,6 +4,18 @@ exports.BASIC = 'Basic';
 exports.DID = 'DID';
 
 /**
+ * @constant {number} MAX_FILE_SIZE
+ * - Max file size for publish
+ */
+exports.MAX_FILE_SIZE = 26214400;
+
+/**
+ * @constant {number} DID_PREFIX
+ * - DID prefix for graph database
+ */
+exports.DID_PREFIX = 'did:dkg';
+
+/**
  * @constant {number} DEFAULT_COMMAND_CLEANUP_TIME_MILLS - Command cleanup interval time
  */
 exports.DEFAULT_COMMAND_CLEANUP_TIME_MILLS = 4 * 24 * 60 * 60 * 1000;
@@ -33,6 +45,11 @@ exports.MAX_COMMAND_DELAY_IN_MILLS = 14400 * 60 * 1000; // 10 days
 exports.DEFAULT_COMMAND_REPEAT_INTERVAL_IN_MILLS = 5000; // 5 seconds
 
 /**
+ * @constant {number} DEFAULT_COMMAND_DELAY_IN_MILLS - Delay for default commands
+ */
+exports.DEFAULT_COMMAND_DELAY_IN_MILLS = 60 * 1000; // 60 seconds
+
+/**
  * @constant {number} TRIPLE_STORE_CONNECT_MAX_RETRIES
  * - Maximum retries for connecting to triple store
  */
@@ -45,16 +62,13 @@ exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 
 /**
- * @constant {number} MAX_FILE_SIZE
- * - Max file size for publish
+ * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
+ *  Names of available triple store implementations
  */
-exports.MAX_FILE_SIZE = 26214400;
-
-/**
- * @constant {number} DID_PREFIX
- * - DID prefix for graph database
- */
-exports.DID_PREFIX = 'did:dkg';
+exports.TRIPLE_STORE_IMPLEMENTATION = {
+    BLAZEGRAPH: 'Blazegraph',
+    GRAPHDB: 'GraphDB',
+};
 
 /**
  * @constant {object} ERROR_TYPE -

@@ -38,7 +38,7 @@ class Logger {
     error(obj) {
         this.pinoLogger.error(obj.msg);
         this.pinoLogger.emit({
-            msg: `Telemetry logging error: ${obj.Event_name}`,
+            msg: `Found error will be reported to Telemetry: ${obj.Event_name}`,
             Operation_name: 'Error',
             Event_name: obj.Event_name,
             Event_value1: obj.Event_value1 ? obj.Event_value1 : '',

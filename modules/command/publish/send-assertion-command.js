@@ -50,6 +50,16 @@ class SendAssertionCommand extends Command {
             });
         }
 
+        await Models.handler_ids.update(
+            {
+                status: 'COMPLETED',
+            }, {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
+
         return this.continueSequence(command.data, command.sequence);
     }
 

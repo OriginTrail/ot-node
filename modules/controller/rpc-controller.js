@@ -3,16 +3,15 @@ const fileUpload = require('express-fileupload');
 const ipfilter = require('express-ipfilter').IpFilter;
 const fs = require('fs');
 const https = require('https');
-const {IpDeniedError} = require('express-ipfilter');
-const path = require('path')
-const {v1: uuidv1, v4: uuidv4} = require('uuid');
+const { IpDeniedError } = require('express-ipfilter');
+const path = require('path');
+const { v1: uuidv1, v4: uuidv4 } = require('uuid');
+const sortedStringify = require('json-stable-stringify');
+const validator = require('validator');
 const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
-const sortedStringify = require('json-stable-stringify');
-const validator = require('validator');
 const Utilities = require('../utilities');
-
 
 class RpcController {
     constructor(ctx) {
@@ -168,6 +167,7 @@ class RpcController {
                 req.query.load = false;
             }
             const operationId = uuidv1();
+            let handlerId = null;
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of resolve command',
@@ -179,7 +179,7 @@ class RpcController {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                const handlerId = inserted_object.dataValues.handler_id;
+                handlerId = inserted_object.dataValues.handler_id;
                 res.status(202).send({
                     handler_id: handlerId,
                 });
@@ -264,7 +264,6 @@ class RpcController {
                         },
                     },
                 );
-
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
@@ -272,6 +271,7 @@ class RpcController {
                     Event_value1: e.message,
                     Id_operation: operationId
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of resolve command',
@@ -302,6 +302,7 @@ class RpcController {
             }
 
             const operationId = uuidv1();
+            let handlerId = null;
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
@@ -312,11 +313,10 @@ class RpcController {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                const handlerId = inserted_object.dataValues.handler_id;
+                handlerId = inserted_object.dataValues.handler_id;
                 res.status(202).send({
                     handler_id: handlerId,
                 });
-
 
                 let response;
                 let nodes = [];
@@ -356,6 +356,7 @@ class RpcController {
                     Event_value1: e.message,
                     Id_operation: operationId
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
@@ -371,6 +372,7 @@ class RpcController {
                 return next({code: 400, message: 'Params query or ids are necessary.'});
             }
             const operationId = uuidv1();
+            let handlerId = null;
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of search command',
@@ -409,7 +411,7 @@ class RpcController {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                const handlerId = inserted_object.dataValues.handler_id;
+                handlerId = inserted_object.dataValues.handler_id;
                 res.status(200).send({
                     handler_id: handlerId,
                 });
@@ -455,6 +457,7 @@ class RpcController {
                     Event_value1: e.message,
                     Id_operation: operationId
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
@@ -474,6 +477,7 @@ class RpcController {
                 return next({code: 400, message: 'Unallowed query type, currently supported types: construct'});
             }
             const operationId = uuidv1();
+            let handlerId = null;
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of query command',
@@ -486,7 +490,7 @@ class RpcController {
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                const handlerId = inserted_object.dataValues.handler_id;
+                handlerId = inserted_object.dataValues.handler_id;
                 res.status(200).send({
                     handler_id: handlerId,
                 });
@@ -509,16 +513,7 @@ class RpcController {
                         },
                     );
                 } catch (e) {
-                    await Models.handler_ids.update(
-                        {
-                            status: 'FAILED',
-                            data: JSON.stringify({errorMessage: e.message})
-                        }, {
-                            where: {
-                                handler_id: handlerId,
-                            },
-                        },
-                    );
+                    this.updateFailedHandlerId(handlerId, e, next);
                 }
             } catch (e) {
                 this.logger.error({
@@ -543,18 +538,20 @@ class RpcController {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
             const operationId = uuidv1();
+            const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
+            let handlerId = null;
             try {
                 this.logger.emit({
                     msg: 'Started measuring execution of proofs command',
                     Event_name: 'proofs_start',
                     Operation_name: 'proofs',
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
 
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
-                const handlerId = inserted_object.dataValues.handler_id;
+                handlerId = inserted_object.dataValues.handler_id;
                 res.status(200).send({
                     handler_id: handlerId,
                 });
@@ -565,23 +562,20 @@ class RpcController {
                         assertions = [...new Set(req.query.assertions)];
                     }
                 }
-
-                const nquads = JSON.parse(req.body.nquads);
+                const reqNquads = JSON.parse(req.body.nquads);
 
                 const result = [];
                 if (!assertions || assertions.length === 0) {
-                    assertions = await this.dataService.findAssertions(nquads);
+                    assertions = await this.dataService.findAssertions(reqNquads);
                 }
                 for (const assertionId of assertions) {
-                    const content = await this.dataService.resolve(assertionId)
+                    const content = await this.dataService.resolve(assertionId);
                     if (content) {
-                        const {rdf} = await this.dataService.createAssertion(assertionId, content);
-                        const proofs = await this.validationService.getProofs(rdf, nquads);
-                        result.push({assertionId, proofs});
+                        const { nquads } = await this.dataService.createAssertion(content.nquads);
+                        const proofs = await this.validationService.getProofs(nquads, reqNquads);
+                        result.push({ assertionId, proofs });
                     }
                 }
-
-                const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
                 await this.fileService
                     .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(result));
@@ -591,7 +585,7 @@ class RpcController {
                         status: 'COMPLETED',
                     }, {
                         where: {
-                            handler_id: handlerId
+                            handler_id: handlerId,
                         },
                     },
                 );
@@ -600,14 +594,15 @@ class RpcController {
                     msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.PROOFS_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of proofs command',
                     Event_name: 'proofs_end',
                     Operation_name: 'proofs',
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
             }
         });
@@ -616,15 +611,15 @@ class RpcController {
             if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
-                    message: 'Unexisting operation, available operations are: publish, resolve, query, proofs and search'
+                    message: 'Unexisting operation, available operations are: provision, update, publish, resolve, entities:search, assertions:search, query and proofs:get',
                 });
             }
 
-            const {handler_id, operation} = req.params;
+            const { handler_id, operation } = req.params;
             if (!validator.isUUID(handler_id)) {
                 return next({
                     code: 400,
-                    message: 'Handler id is in wrong format'
+                    message: 'Handler id is in wrong format',
                 });
             }
 
@@ -637,6 +632,9 @@ class RpcController {
 
                 let response;
                 if (handlerData) {
+                    if (handlerData.status === 'FAILED') {
+                        return res.status(200).send({ status: handlerData.status, data: JSON.parse(handlerData.data) });
+                    }
                     const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                     switch (req.params.operation) {
                         case 'entities:search':
@@ -716,11 +714,9 @@ class RpcController {
                             break;
                         default:
                             handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
-
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                     }
-
                 } else {
                     next({code: 404, message: `Handler with id: ${handler_id} does not exist.`});
                 }
@@ -795,7 +791,6 @@ class RpcController {
         res.status(202).send({
             handler_id: handlerId,
         });
-
         const fileContent = req.files.file.data;
         const fileExtension = path.extname(req.files.file.name).toLowerCase();
         const visibility = req.body.visibility ? req.body.visibility.toLowerCase() : 'public';
@@ -828,13 +823,14 @@ class RpcController {
                     },
                 );
             })
-            .catch(e => {
+            .catch((e) => {
                 this.logger.error({
                     msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             })
             .then(() => {
                 this.logger.emit({
@@ -844,6 +840,26 @@ class RpcController {
                     Id_operation: operationId
                 });
             });
+    }
+
+    updateFailedHandlerId(handlerId, error, next) {
+        if (handlerId !== null) {
+            Models.handler_ids.update(
+                {
+                    status: 'FAILED',
+                    data: JSON.stringify({ errorMessage: error.message }),
+                }, {
+                    where: {
+                        handler_id: handlerId,
+                    },
+                },
+            );
+        } else {
+            return next({
+                code: 400,
+                message: 'Something went wrong with the requested operation, try again.',
+            });
+        }
     }
 }
 

@@ -1,8 +1,8 @@
-const {v1: uuidv1} = require('uuid');
+const { v1: uuidv1 } = require('uuid');
+const N3 = require('n3');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
-const workerpool = require('workerpool');
-
+const Blazegraph = require('../../external/blazegraph-service');
 
 class DataService {
     constructor(ctx) {
@@ -20,11 +20,18 @@ class DataService {
     }
 
     async initialize() {
-        this.implementation = new GraphDB({
-            repositoryName: this.config.graphDatabase.name,
-            username: this.config.graphDatabase.username,
-            password: this.config.graphDatabase.password,
-        });
+        if (this.config.graphDatabase.implementation === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH) {
+            this.implementation = new Blazegraph({
+                url: this.config.graphDatabase.url,
+            });
+        } else {
+            this.implementation = new GraphDB({
+                repositoryName: this.config.graphDatabase.name,
+                username: this.config.graphDatabase.username,
+                password: this.config.graphDatabase.password,
+                url: this.config.graphDatabase.url,
+            });
+        }
 
         let ready = await this.healthCheck();
         let retries = 0;
@@ -36,7 +43,7 @@ class DataService {
         }
         if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             this.logger.error({
-                msg: `Triple Store (${this.implementation.getName()}) not available, max retries reached.`,
+                msg: `Triple Store (${this.getName()}) not available, max retries reached.`,
                 Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
             });
             this.nodeService.stop(1);
@@ -83,9 +90,9 @@ class DataService {
         }
     }
 
-    async insert(data, rootHash) {
+    async insert(data, assertionId) {
         try {
-            return this.implementation.insert(data, rootHash);
+            return this.implementation.insert(data, assertionId);
         } catch (e) {
             // TODO: Check situation when inserting data recieved from other node
             this.handleUnavailableTripleStoreError(e);
@@ -120,7 +127,7 @@ class DataService {
             if (!nquad.includes('hasRootHash') && !nquad.includes('hasBlockchain') && !nquad.includes('hasTransactionHash'))
                 nquads.push(nquad);
         });
-        const jsonld = await this.implementation.extractMetadata(metadata);
+        const jsonld = await this.extractMetadata(metadata);
         jsonld.data = data;
         return {jsonld, nquads};
     }
@@ -226,78 +233,6 @@ class DataService {
                             nquads: assertion.nquads,
                         };
                         result.push(object);
-                    }
-                }
-            }
-
-            return result;
-        } catch (e) {
-            this.handleUnavailableTripleStoreError(e);
-        }
-    }
-
-    async searchByIds(ids, options, localQuery = false) {
-        try {
-            const assets = await this.implementation.searchByIds(ids, options, localQuery);
-            if (!assets) return null;
-
-            const result = [];
-            for (const asset of assets) {
-                const assertions = asset.assertions.value.split(',').filter((x) => x !== '');
-                for (let assertionId of assertions) {
-                    assertionId = assertionId.replace(`${constants.DID_PREFIX}:`, '');
-
-                    const rawRdf = await this.resolve(assertionId, localQuery);
-                    if (!rawRdf) continue;
-
-                    if (localQuery) {
-                        const {assertion, rdf} = await this.createAssertion(assertionId, rawRdf);
-
-                        let object = result.find((x) => x.type === assertion.metadata.type && x.id === asset.assetId.value);
-                        if (!object) {
-                            object = {
-                                type: assertion.metadata.type,
-                                id: asset.assetId.value,
-                                timestamp: assertion.metadata.timestamp,
-                                data: [],
-                                issuers: [],
-                                assertions: [],
-                                nodes: [this.networkService.getPeerId()],
-                            };
-                            result.push(object);
-                        }
-
-                        if (object.issuers.indexOf(assertion.metadata.issuer) === -1) {
-                            object.issuers.push(assertion.metadata.issuer);
-                        }
-
-                        if (object.assertions.indexOf(assertion.id) === -1) {
-                            object.assertions.push(assertion.id);
-                            object.data.push({
-                                id: assertion.id,
-                                timestamp: assertion.metadata.timestamp,
-                                data: assertion.data,
-                            });
-                        }
-                        if (new Date(object.timestamp) < new Date(assertion.metadata.timestamp)) {
-                            object.timestamp = assertion.metadata.timestamp;
-                        }
-                    } else {
-                        let object = result.find((x) => x.assetId === asset.assetId.value);
-                        if (!object) {
-                            object = {
-                                assetId: asset.assetId.value,
-                                assertions: [],
-                            };
-                            result.push(object);
-                        }
-                        if (!object.assertions.find((x) => x.id === assertionId)) {
-                            object.assertions.push({
-                                id: assertionId,
-                                node: this.networkService.getPeerId(),
-                                rdf: rawRdf,
-                            });
-                        }
                     }
                 }
             }
@@ -458,23 +393,6 @@ class DataService {
         return json;
     }
 
-    async frameAsset(data, type, framingCriteria) {
-        data.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        let latest = data[0].data;
-        for (let i = 1; i < data.length; i += 1) {
-            const next = data[i].data;
-
-            for (const row of latest) {
-                if (!next.find((x) => x.includes(row.split(' ')[1]))) next.push(row);
-            }
-
-            latest = next;
-        }
-
-        const jsonld = await this.fromRDF(latest, type);
-        return jsonld;
-    }
-
     healthCheck() {
         return this.implementation.healthCheck();
     }
@@ -484,9 +402,29 @@ class DataService {
     }
 
     async appendMetadata(nquads, assertion) {
-        const metadata = await this.implementation.createMetadata(assertion);
+        const metadata = await this.createMetadata(assertion);
         nquads = nquads.concat(metadata);
         return nquads;
+    }
+
+    async createMetadata(assertion) {
+        const metadata = {
+            '@context': 'https://www.schema.org/',
+            '@id': `${constants.DID_PREFIX}:${assertion.id}`,
+            hasType: assertion.metadata.type,
+            hasSignature: assertion.signature,
+            hasIssuer: assertion.metadata.issuer,
+            hasTimestamp: assertion.metadata.timestamp,
+            hasVisibility: assertion.metadata.visibility,
+            hasDataHash: assertion.metadata.dataHash,
+            hasKeywords: assertion.metadata.keywords,
+        };
+
+        if (assertion.metadata.UALs)
+            metadata.hasUALs = assertion.metadata.UALs;
+
+        const result = await this.workerPool.exec('toNQuads', [metadata]);
+        return result;
     }
 
     async appendBlockchainMetadata(nquads, assertion) {
@@ -500,10 +438,94 @@ class DataService {
         return nquads;
     }
 
+    async extractMetadata(rdf) {
+        return new Promise(async (accept, reject) => {
+            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+            const result = {
+                metadata: {
+                    keywords: [],
+                    UALs: [],
+                },
+                blockchain: {},
+            };
+
+            const quads = [];
+            await parser.parse(
+                rdf.join('\n'),
+                (error, quad, prefixes) => {
+                    if (error) {
+                        reject(error);
+                    }
+                    if (quad) {
+                        quads.push(quad);
+                    }
+                },
+            );
+
+
+            for (const quad of quads) {
+                try {
+                    switch (quad._predicate.id) {
+                        case 'http://schema.org/hasType':
+                            result.metadata.type = JSON.parse(quad._object.id);
+                            result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
+                            break;
+                        case 'http://schema.org/hasTimestamp':
+                            result.metadata.timestamp = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasUALs':
+                            result.metadata.UALs.push(JSON.parse(quad._object.id));
+                            break;
+                        case 'http://schema.org/hasIssuer':
+                            result.metadata.issuer = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasVisibility':
+                            result.metadata.visibility = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasDataHash':
+                            result.metadata.dataHash = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasKeywords':
+                            result.metadata.keywords.push(JSON.parse(quad._object.id));
+                            break;
+                        case 'http://schema.org/hasSignature':
+                            result.signature = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasRootHash':
+                            result.rootHash = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasBlockchain':
+                            result.blockchain.name = JSON.parse(quad._object.id);
+                            break;
+                        case 'http://schema.org/hasTransactionHash':
+                            result.blockchain.transactionHash = JSON.parse(quad._object.id);
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (e) {
+                    this.logger.error({
+                        msg: `Error in extracting metadata: ${e}. ${e.stack}`,
+                        Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR,
+                    });
+                }
+            }
+
+            result.metadata.keywords.sort();
+            if (!result.metadata.UALs.length) {
+                delete result.metadata.UALs;
+            } else {
+                result.metadata.UALs.sort();
+            }
+
+            accept(result);
+        });
+    }
+
     handleUnavailableTripleStoreError(e) {
         if (e.code === 'ECONNREFUSED') {
             this.logger.error({
-                msg: `Triple Store (${this.implementation.getName()}) not available: ${e.message}. ${e.stack}`,
+                msg: `Triple Store (${this.getName()}) not available: ${e.message}. ${e.stack}`,
                 Event_name: constants.ERROR_TYPE.TRIPLE_STORE_UNAVAILABLE_ERROR,
                 Event_value1: e.message,
             });
