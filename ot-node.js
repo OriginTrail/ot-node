@@ -102,7 +102,7 @@ class OTNode {
     async initializeDataModule() {
         try {
             const dataService = this.container.resolve('dataService');
-            dataService.initialize();
+            await dataService.initialize();
             this.logger.info(`Data module: ${dataService.getName()} implementation`);
             db.sequelize.sync();
         } catch (e) {

@@ -62,7 +62,7 @@ class SendTelemetryCommand extends Command {
             data: {
                 message: '',
             },
-            period: 60 * 60 * 1000, // 5 * 60 * 1000
+            period: 60 * 60 * 1000, // 1 hour
             transactional: false,
         };
         Object.assign(command, map);
