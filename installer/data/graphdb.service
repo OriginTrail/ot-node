@@ -2,14 +2,14 @@
 
 [Unit]
 Description=GraphDB - OriginTrail V6 Stage 1 Beta Node
-Documentation=https://github.com/OriginTrail/ot-node/tree/v6/release%2Ftestnet
+Documentation=https://github.com/OriginTrail/ot-node
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/graphdb-free-9.10.1/bin/
-ExecStart=/root/graphdb-free-9.10.1/bin/graphdb
+WorkingDirectory=/root/$(ls /root | grep graphdb-free | grep -v .zip)/bin/
+ExecStart=/root/$(ls /root | grep graphdb-free | grep -v .zip)/bin/graphdb
 Restart=on-failure
 
 [Install]

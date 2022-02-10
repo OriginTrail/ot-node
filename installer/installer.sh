@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OS_VERSION=$(lsb_release -sr)
-GRAPHDB_FILE="/root/graphdb-free-9.10.1-dist.zip"
+GRAPHDB_FILE=$(ls /root | grep graphdb-free | grep .zip)
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
@@ -423,4 +423,4 @@ echo -n "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL st
 echo " "
 read -p "Press enter to continue..."
 
-journalctl -u otnode -f
+journalctl -u otnode --output cat -fn 100
