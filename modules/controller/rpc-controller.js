@@ -265,16 +265,7 @@ class RpcController {
                     },
                 );
             } catch (e) {
-                Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({ errorMessage: e.message }),
-                    }, {
-                        where: {
-                            handler_id: handlerId,
-                        },
-                    },
-                );
+                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
@@ -359,16 +350,7 @@ class RpcController {
                     }, node);
                 }
             } catch (e) {
-                Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({ errorMessage: e.message }),
-                    }, {
-                        where: {
-                            handler_id: handlerId,
-                        },
-                    },
-                );
+                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.SEARCH_ASSERTIONS_ROUTE_ERROR,
@@ -469,16 +451,7 @@ class RpcController {
                 }
 
             } catch (e) {
-                Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({ errorMessage: e.message }),
-                    }, {
-                        where: {
-                            handler_id: handlerId,
-                        },
-                    },
-                );
+                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.SEARCH_ENTITIES_ROUTE_ERROR,
@@ -540,16 +513,7 @@ class RpcController {
                         },
                     );
                 } catch (e) {
-                    Models.handler_ids.update(
-                        {
-                            status: 'FAILED',
-                            data: JSON.stringify({errorMessage: e.message})
-                        }, {
-                            where: {
-                                handler_id: handlerId,
-                            },
-                        },
-                    );
+                    this.updateFailedHandlerId(handlerId, e);
                 }
             } catch (e) {
                 this.logger.error({
@@ -626,16 +590,7 @@ class RpcController {
                     },
                 );
             } catch (e) {
-                Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({ errorMessage: e.message }),
-                    }, {
-                        where: {
-                            handler_id: handlerId,
-                        },
-                    },
-                );
+                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.PROOFS_ROUTE_ERROR,
@@ -869,21 +824,12 @@ class RpcController {
                 );
             })
             .catch((e) => {
-                Models.handler_ids.update(
-                    {
-                        status: 'FAILED',
-                        data: JSON.stringify({ errorMessage: e.message }),
-                    }, {
-                        where: {
-                            handler_id: handlerId,
-                        },
-                    },
-                );
+                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
             })
             .then(() => {
@@ -894,6 +840,21 @@ class RpcController {
                     Id_operation: operationId
                 });
             });
+    }
+
+    updateFailedHandlerId(handlerId, error) {
+        if (handlerId !== null) {
+            Models.handler_ids.update(
+                {
+                    status: 'FAILED',
+                    data: JSON.stringify({ errorMessage: error.message }),
+                }, {
+                    where: {
+                        handler_id: handlerId,
+                    },
+                },
+            );
+        }
     }
 }
 
