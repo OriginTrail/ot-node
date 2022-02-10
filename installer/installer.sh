@@ -10,11 +10,11 @@ NC='\033[0m' # No Color
 
 clear
 
-echo -n "${N1}Checking that the OS is Ubuntu 20.04 ONLY: "
+echo -n "${N1}Checking that the OS is Ubuntu 20.04 or newer: "
 
-if [[ $OS_VERSION != 20.04 ]]; then
+if [[ $OS_VERSION != 20.04 ]] || [[ $OS_VERSION != 21.04 ]] || [[ $OS_VERSION != 21.10 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "This installer requires Ubuntu 20.04. Destroy this VPS and remake using Ubuntu 20.04."
+    echo "This installer requires Ubuntu 20.04 or newer. Destroy this VPS and remake using Ubuntu 20.04 or newer."
     exit 1
 else
     echo -e "${GREEN}SUCCESS${NC}"
@@ -94,13 +94,13 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Copying service file: "
+echo -n "Copying graphdb service file: "
 
 OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error copying the service file."
+    echo "There was an error copying the graphdb service file."
     echo $OUTPUT
     exit 1
 else
@@ -108,6 +108,19 @@ else
 fi
 
 systemctl daemon-reload
+
+echo -n "Enable GraphDB service on boot: "
+
+OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling the GraphDB service."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
 
 echo -n "Starting GraphDB: "
 
@@ -185,24 +198,12 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing nodejs and npm: "
+echo -n "Installing nodejs: "
 
-OUTPUT=$(aptitude install nodejs npm -y >/dev/null 2>&1)
+OUTPUT=$(aptitude install nodejs -y >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing nodejs/npm."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Installing forever: "
-
-OUTPUT=$(npm install forever -g >/dev/null 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing forever."
     echo $OUTPUT
     exit 1
 else
@@ -364,9 +365,38 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Starting the node: "
+echo -n "Copying otnode service file: "
 
-OUTPUT=$(forever start -a -o out.log -e out.log index.js >/dev/null 2>&1)
+OUTPUT=$(cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error copying the otnode service file."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+systemctl daemon-reload
+
+echo -n "Enable otnode service on boot: "
+
+OUTPUT=$(systemctl enable otnode >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling the otnode service."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Starting otnode: "
+
+OUTPUT=$(systemctl start otnode >/dev/null 2>&1)
+
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error starting the node."
@@ -376,8 +406,21 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Confirming the node has started: "
+
+IS_RUNNING=$(systemctl show -p ActiveState --value otnode)
+
+if [[ $IS_RUNNING == "active" ]]; then
+    echo -e "${GREEN}SUCCESS${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error starting the node."
+    echo $OUTPUT
+    exit 1
+fi
+
 echo -n "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt."
 echo " "
 read -p "Press enter to continue..."
 
-tail -f -n100 out.log
+journalctl -u otnode -f
