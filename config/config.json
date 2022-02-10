@@ -18,6 +18,7 @@
     ],
     "graphDatabase": {
       "implementation": "GraphDB",
+      "url": "http://localhost:7200",
       "name": "node0",
       "username": "admin",
       "password": ""
@@ -58,6 +59,7 @@
     ],
     "graphDatabase": {
       "implementation": "GraphDB",
+      "url": "http://localhost:7200",
       "name": "node0",
       "username": "admin",
       "password": ""
@@ -93,6 +95,7 @@
     "blockchain": [],
     "graphDatabase": {
       "implementation": "GraphDB",
+      "url": "http://localhost:7200",
       "name": "node0",
       "username": "admin",
       "password": ""
