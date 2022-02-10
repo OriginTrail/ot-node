@@ -10,17 +10,7 @@ NC='\033[0m' # No Color
 
 clear
 
-cd /root/ot-node
-
-echo -n "Checking that we are in /root directory: "
-
-if [ $PWD != "$OTNODE_DIR" ]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "${N1}This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo.${N1}"
-    exit
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+cd /root
 
 echo -n "Checking that the GraphDB file is present in /root: "
 
