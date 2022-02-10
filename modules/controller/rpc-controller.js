@@ -164,8 +164,8 @@ class RpcController {
                 return next({code: 400, message: 'Param ids is required.'});
             }
 
-            if (!req.query.load) {
-                req.query.load = true;
+            if (req.query.load === undefined) {
+                req.query.load = false;
             }
             const operationId = uuidv1();
             try {
