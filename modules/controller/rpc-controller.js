@@ -265,13 +265,13 @@ class RpcController {
                     },
                 );
             } catch (e) {
-                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: operationId
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of resolve command',
@@ -350,13 +350,13 @@ class RpcController {
                     }, node);
                 }
             } catch (e) {
-                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.SEARCH_ASSERTIONS_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: operationId
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
@@ -451,13 +451,13 @@ class RpcController {
                 }
 
             } catch (e) {
-                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.SEARCH_ENTITIES_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: operationId
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of search command',
@@ -513,7 +513,7 @@ class RpcController {
                         },
                     );
                 } catch (e) {
-                    this.updateFailedHandlerId(handlerId, e);
+                    this.updateFailedHandlerId(handlerId, e, next);
                 }
             } catch (e) {
                 this.logger.error({
@@ -590,13 +590,13 @@ class RpcController {
                     },
                 );
             } catch (e) {
-                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at proofs route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.PROOFS_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: operationId,
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             } finally {
                 this.logger.emit({
                     msg: 'Finished measuring execution of proofs command',
@@ -611,7 +611,7 @@ class RpcController {
             if (!['provision', 'update', 'publish', 'resolve', 'query', 'entities:search', 'assertions:search', 'proofs:get'].includes(req.params.operation)) {
                 return next({
                     code: 400,
-                    message: 'Unexisting operation, available operations are: publish, resolve, query, proofs and search'
+                    message: 'Unexisting operation, available operations are: provision, update, publish, resolve, entities:search, assertions:search, query and proofs:get',
                 });
             }
 
@@ -824,13 +824,13 @@ class RpcController {
                 );
             })
             .catch((e) => {
-                this.updateFailedHandlerId(handlerId, e);
                 this.logger.error({
                     msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
                     Event_value1: e.message,
                     Id_operation: operationId,
                 });
+                this.updateFailedHandlerId(handlerId, e, next);
             })
             .then(() => {
                 this.logger.emit({
@@ -842,7 +842,7 @@ class RpcController {
             });
     }
 
-    updateFailedHandlerId(handlerId, error) {
+    updateFailedHandlerId(handlerId, error, next) {
         if (handlerId !== null) {
             Models.handler_ids.update(
                 {
@@ -854,6 +854,11 @@ class RpcController {
                     },
                 },
             );
+        } else {
+            return next({
+                code: 400,
+                message: 'Something went wrong with the requested operation, try again.',
+            });
         }
     }
 }
