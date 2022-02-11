@@ -37,7 +37,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision",
+							"raw": "{{HOST}}:8900/provision",
 							"host": [
 								"{{HOST}}"
 							],
@@ -83,7 +83,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision/result/940e2924-524e-4ed0-8379-503c5504552a",
+							"raw": "{{HOST}}:8900/provision/result/940e2924-524e-4ed0-8379-503c5504552a",
 							"host": [
 								"{{HOST}}"
 							],
@@ -133,7 +133,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/update",
+							"raw": "{{HOST}}:8900/update",
 							"host": [
 								"{{HOST}}"
 							],
@@ -179,7 +179,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision/result/36f9c131-130f-4d41-86e4-7cc6781bb51c",
+							"raw": "{{HOST}}:8900/provision/result/36f9c131-130f-4d41-86e4-7cc6781bb51c",
 							"host": [
 								"{{HOST}}"
 							],
@@ -229,7 +229,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/publish",
+							"raw": "{{HOST}}:8900/publish",
 							"host": [
 								"{{HOST}}"
 							],
@@ -256,7 +256,7 @@
 							"formdata": []
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision/result/c6c3b9af-0f3c-4324-b5bf-0181d49baa04",
+							"raw": "{{HOST}}:8900/provision/result/c6c3b9af-0f3c-4324-b5bf-0181d49baa04",
 							"host": [
 								"{{HOST}}"
 							],
@@ -299,7 +299,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/resolve?ids=c37c86b59ba64ab269850860621b634feaab9f500a73ef5620000b8b55dcb29a&load=true",
+					"raw": "{{HOST}}:8900/resolve?ids=c37c86b59ba64ab269850860621b634feaab9f500a73ef5620000b8b55dcb29a&load=true",
 					"host": [
 						"{{HOST}}"
 					],
@@ -336,7 +336,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/resolve/result/22419c1a-d41d-4235-9849-e7e1a22edf4f",
+					"raw": "{{HOST}}:8900/resolve/result/22419c1a-d41d-4235-9849-e7e1a22edf4f",
 					"host": [
 						"{{HOST}}"
 					],
@@ -384,7 +384,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/assertions:search?query=scientist",
+					"raw": "{{HOST}}:8900/assertions:search?query=scientist",
 					"host": [
 						"{{HOST}}"
 					],
@@ -446,7 +446,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/assertions:search/result/ccf90eba-4a45-4c47-81e0-1a2e1e679f70",
+					"raw": "{{HOST}}:8900/assertions:search/result/ccf90eba-4a45-4c47-81e0-1a2e1e679f70",
 					"host": [
 						"{{HOST}}"
 					],
@@ -494,7 +494,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/entities:search?query=feynman",
+					"raw": "{{HOST}}:8900/entities:search?query=feynman",
 					"host": [
 						"{{HOST}}"
 					],
@@ -552,7 +552,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/entities:search/result/b18a819d-d546-4bc2-95c1-242d78c094e7",
+					"raw": "{{HOST}}:8900/entities:search/result/b18a819d-d546-4bc2-95c1-242d78c094e7",
 					"host": [
 						"{{HOST}}"
 					],
@@ -584,7 +584,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/query?type=construct",
+					"raw": "{{HOST}}:8900/query?type=construct",
 					"host": [
 						"{{HOST}}"
 					],
@@ -617,7 +617,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/query/result/d3480867-d5f7-4f10-9686-8c658c102dcf",
+					"raw": "{{HOST}}:8900/query/result/d3480867-d5f7-4f10-9686-8c658c102dcf",
 					"host": [
 						"{{HOST}}"
 					],
@@ -649,7 +649,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/proofs:get",
+					"raw": "{{HOST}}:8900/proofs:get",
 					"host": [
 						"{{HOST}}"
 					],
@@ -676,7 +676,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/proofs:get/result/72d7c0b3-a41e-4f90-91d5-082579f25b65",
+					"raw": "{{HOST}}:8900/proofs:get/result/72d7c0b3-a41e-4f90-91d5-082579f25b65",
 					"host": [
 						"{{HOST}}"
 					],
@@ -705,7 +705,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/info",
+					"raw": "{{HOST}}:8900/info",
 					"host": [
 						"{{HOST}}"
 					],
