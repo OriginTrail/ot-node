@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "17f931a1-6044-4026-b9e4-207ef606463d",
+		"_postman_id": "de092a3d-311c-4c22-9fdb-1f1b777c8bbb",
 		"name": "DKGv6",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -43,8 +43,6 @@
 							],
 							"port": "8900",
 							"path": [
-								"api",
-								"latest",
 								"provision"
 							]
 						}
@@ -61,39 +59,18 @@
 						"header": [],
 						"body": {
 							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "topic",
-									"value": "blazard1",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "limit",
-									"value": "100",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "offset",
-									"value": "0",
-									"type": "text",
-									"disabled": true
-								}
-							]
+							"formdata": []
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/provision/result/940e2924-524e-4ed0-8379-503c5504552a",
+							"raw": "{{HOST}}:8900/provision/result/7f3c1fef-2588-45e6-b6f6-72f115da6553",
 							"host": [
 								"{{HOST}}"
 							],
 							"port": "8900",
 							"path": [
-								"api",
-								"latest",
 								"provision",
 								"result",
-								"940e2924-524e-4ed0-8379-503c5504552a"
+								"7f3c1fef-2588-45e6-b6f6-72f115da6553"
 							]
 						}
 					},
@@ -139,8 +116,6 @@
 							],
 							"port": "8900",
 							"path": [
-								"api",
-								"latest",
 								"update"
 							]
 						}
@@ -157,37 +132,16 @@
 						"header": [],
 						"body": {
 							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "topic",
-									"value": "blazard1",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "limit",
-									"value": "100",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "offset",
-									"value": "0",
-									"type": "text",
-									"disabled": true
-								}
-							]
+							"formdata": []
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/provision/result/36f9c131-130f-4d41-86e4-7cc6781bb51c",
+							"raw": "{{HOST}}:8900/update/result/36f9c131-130f-4d41-86e4-7cc6781bb51c",
 							"host": [
 								"{{HOST}}"
 							],
 							"port": "8900",
 							"path": [
-								"api",
-								"latest",
-								"provision",
+								"update",
 								"result",
 								"36f9c131-130f-4d41-86e4-7cc6781bb51c"
 							]
@@ -235,8 +189,6 @@
 							],
 							"port": "8900",
 							"path": [
-								"api",
-								"latest",
 								"publish"
 							]
 						}
@@ -256,29 +208,15 @@
 							"formdata": []
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/provision/result/c6c3b9af-0f3c-4324-b5bf-0181d49baa04",
+							"raw": "{{HOST}}:8900/publish/result/c6c3b9af-0f3c-4324-b5bf-0181d49baa04",
 							"host": [
 								"{{HOST}}"
 							],
 							"port": "8900",
 							"path": [
-								"api",
-								"latest",
-								"provision",
+								"publish",
 								"result",
 								"c6c3b9af-0f3c-4324-b5bf-0181d49baa04"
-							],
-							"query": [
-								{
-									"key": "ids",
-									"value": "axie",
-									"disabled": true
-								},
-								{
-									"key": "types",
-									"value": "gs1-epcis",
-									"disabled": true
-								}
 							]
 						}
 					},
@@ -305,8 +243,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"resolve"
 					],
 					"query": [
@@ -342,8 +278,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"resolve",
 						"result",
 						"22419c1a-d41d-4235-9849-e7e1a22edf4f"
@@ -390,8 +324,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"assertions:search"
 					],
 					"query": [
@@ -424,26 +356,7 @@
 				"header": [],
 				"body": {
 					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "topic",
-							"value": "blazard1",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "limit",
-							"value": "100",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "offset",
-							"value": "0",
-							"type": "text",
-							"disabled": true
-						}
-					]
+					"formdata": []
 				},
 				"url": {
 					"raw": "{{HOST}}:8900/assertions:search/result/ccf90eba-4a45-4c47-81e0-1a2e1e679f70",
@@ -452,8 +365,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"assertions:search",
 						"result",
 						"ccf90eba-4a45-4c47-81e0-1a2e1e679f70"
@@ -500,8 +411,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"entities:search"
 					],
 					"query": [
@@ -558,8 +467,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"entities:search",
 						"result",
 						"b18a819d-d546-4bc2-95c1-242d78c094e7"
@@ -590,8 +497,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"query"
 					],
 					"query": [
@@ -623,8 +528,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"query",
 						"result",
 						"d3480867-d5f7-4f10-9686-8c658c102dcf"
@@ -655,8 +558,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"proofs:get"
 					]
 				}
@@ -682,8 +583,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"proofs:get",
 						"result",
 						"72d7c0b3-a41e-4f90-91d5-082579f25b65"
@@ -711,8 +610,6 @@
 					],
 					"port": "8900",
 					"path": [
-						"api",
-						"latest",
 						"info"
 					]
 				}

@@ -22,8 +22,8 @@ class QueryService {
         const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads, {isAsset: isAssetRequested});
 
         if (status && load) {
-            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.json.id}`);
-            this.logger.info(`Assertion ${assertion.json.id} has been successfully inserted`);
+            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
+            this.logger.info(`Assertion ${assertion.jsonld.metadata.id} has been successfully inserted`);
         }
         return status ? {assertion, isAsset} : null;
     }
