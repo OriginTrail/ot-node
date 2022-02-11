@@ -96,7 +96,7 @@
     "@bugsnag/js": "^7.0.0",
     "@deadcanaries/kadence": "git+https://github.com/OriginTrail/kadence.git",
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "ajv": "^5.5.2",
+    "ajv": "^6.12.3",
     "arangojs": "^5.8.0",
     "asn1.js": "latest",
     "async": "^2.6.0",
