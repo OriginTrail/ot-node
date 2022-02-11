@@ -403,9 +403,9 @@ class DataService {
                 };
                 break;
             case this.constants.NFT:
-                const result = JSON.parse(await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.NFT}.json`));
-                context = result.context;
-                frame = result.frame;
+                const result = await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.NFT}.json`);
+                context = result.data.context;
+                frame = result.data.frame;
                 break;
             default:
                 context = {
