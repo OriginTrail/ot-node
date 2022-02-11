@@ -29,8 +29,8 @@ class BlockchainService {
         return this.implementation.getPublicKey();
     }
 
-    async createAssertionRecord(stateCommitHash, rootHash) {
-        return this.implementation.createAssertionRecord(stateCommitHash, rootHash);
+    async createAssertionRecord(stateCommitHash, rootHash, issuer) {
+        return this.implementation.createAssertionRecord(stateCommitHash, rootHash, issuer);
     }
     async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
         return this.implementation.registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount);

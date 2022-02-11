@@ -23,12 +23,12 @@ class Web3BlockchainService {
         return this.config.publicKey;
     }
 
-    async createAssertionRecord(stateCommitHash, rootHash) {
+    async createAssertionRecord(stateCommitHash, rootHash, issuer) {
         const contractAddress = await this.getAssertionRegistryAddress();
         const contractInstance = new this.web3.eth.Contract(DKGContract, contractAddress);
 
 
-        const encodedABI = contractInstance.methods.createAssertionRecord(`0x${stateCommitHash}`, `0x${rootHash}`,
+        const encodedABI = contractInstance.methods.createAssertionRecord(`0x${stateCommitHash}`, `0x${rootHash}`, issuer,
             new BigNumber(1),
             new BigNumber(1)).encodeABI();
         const tx = {
@@ -54,7 +54,7 @@ class Web3BlockchainService {
             to: contractInstance.options.address,
             data: encodedABI,
             gasPrice: '2000000000',
-            gas: '500000',
+            gas: '900000',
         };
 
         const createdTransaction = await this.web3.eth.accounts.signTransaction(tx, this.config.privateKey);

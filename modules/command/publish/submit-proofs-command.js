@@ -27,7 +27,7 @@ class SubmitProofsCommand extends Command {
             let result;
             switch (method) {
                 case 'publish':
-                    result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash);
+                    result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
                     break;
                 case 'provision':
                     result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);

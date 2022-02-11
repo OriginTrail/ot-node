@@ -8,11 +8,11 @@
     },
     "blockchain": [
       {
-        "blockchainTitle": "Ganache",
-        "networkId": "ganache::mainnet",
-        "hubContractAddress": "0x04d5396358647Cd863293c156037D0AC02328c32",
+        "blockchainTitle": "Polygon",
+        "networkId": "polygon::mainnet",
+        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
         "rpcEndpoints": [
-          "http://localhost:7545"
+          "https://rpc-mumbai.maticvigil.com/"
         ]
       }
     ],
@@ -51,7 +51,7 @@
       {
         "blockchainTitle": "Polygon",
         "networkId": "polygon::testnet",
-        "hubContractAddress": "0xFA421f2b10FBebaAeC281eb6734b0fA9Cc8dbbD7",
+        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
         "rpcEndpoints": [
           "https://rpc-mumbai.maticvigil.com/"
         ]
