@@ -200,7 +200,7 @@ class RpcController {
                     }
                     const result = await this.dataService.resolve(id, true);
 
-                    if (!(result && result.nquads)) {
+                    if (result && result.nquads) {
                         let {nquads} = result;
                         let assertion = await this.dataService.createAssertion(nquads);
                         assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
