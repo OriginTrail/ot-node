@@ -22,10 +22,13 @@ class PublishService {
         assertion.metadata.visibility = visibility;
         assertion.metadata.keywords = keywords;
         assertion.metadata.keywords.sort();
+        let method = 'publish';
         if (ual === null) {
+            method = 'provision';
             ual = this.validationService.calculateHash(assertion.metadata.timestamp + assertion.metadata.type + assertion.metadata.issuer);
             assertion.metadata.UALs = [ual];
         } else if (ual !== undefined) {
+            method = 'update';
             assertion.metadata.UALs = [ual];
         }
 
@@ -67,7 +70,7 @@ class PublishService {
             sequence: commandSequence.slice(1),
             delay: 0,
             data: {
-                documentPath, handlerId,
+                documentPath, handlerId, method
             },
             transactional: false,
         });

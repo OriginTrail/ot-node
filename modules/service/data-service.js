@@ -3,6 +3,7 @@ const N3 = require('n3');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
+const axios = require('axios');
 
 class DataService {
     constructor(ctx) {
@@ -13,6 +14,7 @@ class DataService {
         this.networkService = ctx.networkService;
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
+        this.blockchainService = ctx.blockchainService;
     }
 
     getName() {
@@ -132,7 +134,7 @@ class DataService {
         return {jsonld, nquads};
     }
 
-    verifyAssertion(assertion, rdf) {
+    verifyAssertion(assertion, rdf, options = undefined) {
         return new Promise(async (resolve) => {
             try {
                 // let dataHash;
@@ -165,16 +167,44 @@ class DataService {
                 }
 
                 if (assertion.metadata.visibility) {
-                    const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
-                    //TODO integrate blockchain
-                    // if (assertion.rootHash !== calculateRootHash) {
-                    //     this.logger.error({
-                    //         msg: `Root hash ${assertion.rootHash} doesn't match with calculated ${calculateRootHash}`,
-                    //         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
-                    //         Event_value1: 'Root hash not matching calculated',
-                    //     });
-                    //     return resolve(false);
-                    // }
+                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))){
+                        const {issuer, assertionId} = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
+                        if (assertionId !== assertion.id) {
+                            this.logger.error({
+                                msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
+                                Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                                Event_value1: 'AssertionId not matching calculated',
+                            });
+                            return resolve(false);
+                        }
+                        if (issuer.toLowerCase() !== assertion.metadata.issuer.toLowerCase()) {
+                            this.logger.error({
+                                msg: `Issuer ${issuer} doesn't match with received ${assertion.metadata.issuer}`,
+                                Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                                Event_value1: 'Issuer not matching',
+                            });
+                            return resolve(false);
+                        }
+                    } else{
+                        const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
+                        const {rootHash, issuer} = await this.blockchainService.getAssertionProofs(assertion.id);
+                        if (rootHash !== `0x${calculateRootHash}`) {
+                            this.logger.error({
+                                msg: `Root hash ${rootHash} doesn't match with calculated 0x${calculateRootHash}`,
+                                Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                                Event_value1: 'Root hash not matching calculated',
+                            });
+                            return resolve(false);
+                        }
+                        if (issuer.toLowerCase() !== assertion.metadata.issuer.toLowerCase()) {
+                            this.logger.error({
+                                msg: `Issuer ${issuer} doesn't match with received ${assertion.metadata.issuer}`,
+                                Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
+                                Event_value1: 'Issuer not matching',
+                            });
+                            return resolve(false);
+                        }
+                    }
                 }
                 return resolve(true);
             } catch (e) {
@@ -185,10 +215,8 @@ class DataService {
 
     async searchByQuery(query, options, localQuery = false) {
         try {
-
             const assertions = await this.implementation.findAssetsByKeyword(query, options, localQuery);
             if (!assertions) return null;
-
 
             const result = [];
             for (let assertion of assertions) {
@@ -373,6 +401,11 @@ class DataService {
                     ],
                     isA: 'EPCISDocument',
                 };
+                break;
+            case this.constants.NFT:
+                const result = await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.NFT}.json`);
+                context = result.data.context;
+                frame = result.data.frame;
                 break;
             default:
                 context = {

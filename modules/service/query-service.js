@@ -10,7 +10,7 @@ class QueryService {
         this.fileService = ctx.fileService;
     }
 
-    async resolve(id, load, node) {
+    async resolve(id, load, isAssetRequested, node) {
         let result = await this.networkService.sendMessage('/resolve', id, node);
 
         if (!result) {
@@ -19,7 +19,7 @@ class QueryService {
 
         const {nquads, isAsset} = result;
         let assertion = await this.dataService.createAssertion(nquads);
-        const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads);
+        const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads, {isAsset: isAssetRequested});
 
         if (status && load) {
             await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.json.id}`);
