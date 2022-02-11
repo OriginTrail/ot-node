@@ -21,7 +21,7 @@ config = rc(pjson.name, defaultConfig);
         const node = new OTNode();
         await node.start();
     } catch (e) {
-        console.error(`Error occurred while starting new version, error message: ${e}`);
+        console.error(`Error occurred while starting new version, error message: ${e}. ${e.stack}`);
         if (!config.autoUpdate.enabled) {
             console.log('Auto update is disabled. Shutting down the node...');
             process.exit(1);

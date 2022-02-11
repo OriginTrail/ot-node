@@ -214,7 +214,7 @@ class CommandExecutor {
     async _startDefaultCommand(name) {
         await CommandExecutor._delete(name);
         const handler = this.commandResolver.resolve(name);
-        await this.add(handler.default(), 0, true);
+        await this.add(handler.default(), constants.DEFAULT_COMMAND_DELAY_IN_MILLS, true);
         if (this.verboseLoggingEnabled) {
             this.logger.trace(`Permanent command ${name} created.`);
         }
