@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "b6a0c71d-0397-4f56-8da6-750dc613207c",
+		"_postman_id": "17f931a1-6044-4026-b9e4-207ef606463d",
 		"name": "DKGv6",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -22,11 +22,11 @@
 								{
 									"key": "file",
 									"type": "file",
-									"src": "/Users/miloskotlar/ot-node-v6-poc/nft-data/axie1.json"
+									"src": "/Users/nikolatodorovic/v6/ot-node/demo-data/Feynman.json"
 								},
 								{
 									"key": "keywords",
-									"value": "[\"Claude\",\"InformationTheory\", \"Cryptographer\"]",
+									"value": "[\"Feynman\",\"Physics\", \"Scientist\"]",
 									"type": "text"
 								},
 								{
@@ -37,7 +37,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision",
+							"raw": "{{HOST}}:8900/provision",
 							"host": [
 								"{{HOST}}"
 							],
@@ -83,7 +83,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision/result/5015fe5c-8b24-4a60-819f-67f50064500c",
+							"raw": "{{HOST}}:8900/provision/result/940e2924-524e-4ed0-8379-503c5504552a",
 							"host": [
 								"{{HOST}}"
 							],
@@ -93,19 +93,7 @@
 								"latest",
 								"provision",
 								"result",
-								"5015fe5c-8b24-4a60-819f-67f50064500c"
-							],
-							"query": [
-								{
-									"key": "ids",
-									"value": "axie",
-									"disabled": true
-								},
-								{
-									"key": "types",
-									"value": "gs1-epcis",
-									"disabled": true
-								}
+								"940e2924-524e-4ed0-8379-503c5504552a"
 							]
 						}
 					},
@@ -125,11 +113,11 @@
 								{
 									"key": "file",
 									"type": "file",
-									"src": "/Users/miloskotlar/ot-node-v6-poc/nft-data/axie1.json"
+									"src": "/Users/nikolatodorovic/v6/ot-node/demo-data/Feynman.json"
 								},
 								{
 									"key": "keywords",
-									"value": "[\"Claude\",\"InformationTheory\", \"Cryptographer\"]",
+									"value": "[\"Feynman\",\"Physics\", \"Scientist\"]",
 									"type": "text"
 								},
 								{
@@ -139,13 +127,13 @@
 								},
 								{
 									"key": "ual",
-									"value": "7d943dec383a7fc0e4897a0a99ace2eb2fe06b56aff3abea0757b8883e775f7d",
+									"value": "c37c86b59ba64ab269850860621b634feaab9f500a73ef5620000b8b55dcb29a",
 									"type": "text"
 								}
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/update",
+							"raw": "{{HOST}}:8900/update",
 							"host": [
 								"{{HOST}}"
 							],
@@ -191,7 +179,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision/result/c57908da-6153-4973-a465-098d7f3964f7",
+							"raw": "{{HOST}}:8900/provision/result/36f9c131-130f-4d41-86e4-7cc6781bb51c",
 							"host": [
 								"{{HOST}}"
 							],
@@ -201,19 +189,7 @@
 								"latest",
 								"provision",
 								"result",
-								"c57908da-6153-4973-a465-098d7f3964f7"
-							],
-							"query": [
-								{
-									"key": "ids",
-									"value": "axie",
-									"disabled": true
-								},
-								{
-									"key": "types",
-									"value": "gs1-epcis",
-									"disabled": true
-								}
+								"36f9c131-130f-4d41-86e4-7cc6781bb51c"
 							]
 						}
 					},
@@ -238,11 +214,11 @@
 								{
 									"key": "file",
 									"type": "file",
-									"src": "/Users/miloskotlar/ot-node-v6-poc/nft-data/axie1.json"
+									"src": "/Users/nikolatodorovic/v6/ot-node/demo-data/Galileo.json"
 								},
 								{
 									"key": "keywords",
-									"value": "[\"Claude\",\"InformationTheory\", \"Cryptographer\"]",
+									"value": "[\"Galileo\",\"Scientist\", \"Astronomer\"]",
 									"type": "text"
 								},
 								{
@@ -253,7 +229,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/publish",
+							"raw": "{{HOST}}:8900/publish",
 							"host": [
 								"{{HOST}}"
 							],
@@ -277,29 +253,10 @@
 						"header": [],
 						"body": {
 							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "topic",
-									"value": "blazard1",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "limit",
-									"value": "100",
-									"type": "text",
-									"disabled": true
-								},
-								{
-									"key": "offset",
-									"value": "0",
-									"type": "text",
-									"disabled": true
-								}
-							]
+							"formdata": []
 						},
 						"url": {
-							"raw": "{{HOST}}:8900/api/latest/provision/result/10024045-95fc-4a2f-9ebc-69c55b9a0e9e",
+							"raw": "{{HOST}}:8900/provision/result/c6c3b9af-0f3c-4324-b5bf-0181d49baa04",
 							"host": [
 								"{{HOST}}"
 							],
@@ -309,7 +266,7 @@
 								"latest",
 								"provision",
 								"result",
-								"10024045-95fc-4a2f-9ebc-69c55b9a0e9e"
+								"c6c3b9af-0f3c-4324-b5bf-0181d49baa04"
 							],
 							"query": [
 								{
@@ -342,7 +299,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/resolve?ids=177930cabcf1399dcb25b4cb907d71097b247247d250eb7a35fffc5974ec732f&&load=true",
+					"raw": "{{HOST}}:8900/resolve?ids=c37c86b59ba64ab269850860621b634feaab9f500a73ef5620000b8b55dcb29a&load=true",
 					"host": [
 						"{{HOST}}"
 					],
@@ -355,11 +312,7 @@
 					"query": [
 						{
 							"key": "ids",
-							"value": "177930cabcf1399dcb25b4cb907d71097b247247d250eb7a35fffc5974ec732f"
-						},
-						{
-							"key": null,
-							"value": null
+							"value": "c37c86b59ba64ab269850860621b634feaab9f500a73ef5620000b8b55dcb29a"
 						},
 						{
 							"key": "load",
@@ -383,7 +336,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/resolve/result/ea5edd69-e612-450b-b4d9-385e3d0eaaef",
+					"raw": "{{HOST}}:8900/resolve/result/22419c1a-d41d-4235-9849-e7e1a22edf4f",
 					"host": [
 						"{{HOST}}"
 					],
@@ -393,19 +346,7 @@
 						"latest",
 						"resolve",
 						"result",
-						"ea5edd69-e612-450b-b4d9-385e3d0eaaef"
-					],
-					"query": [
-						{
-							"key": "ids",
-							"value": "axie",
-							"disabled": true
-						},
-						{
-							"key": "types",
-							"value": "gs1-epcis",
-							"disabled": true
-						}
+						"22419c1a-d41d-4235-9849-e7e1a22edf4f"
 					]
 				}
 			},
@@ -443,7 +384,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/assertions:search?query=InformationTheory",
+					"raw": "{{HOST}}:8900/assertions:search?query=scientist",
 					"host": [
 						"{{HOST}}"
 					],
@@ -455,18 +396,18 @@
 					],
 					"query": [
 						{
-							"key": "ids",
-							"value": "axie",
-							"disabled": true
-						},
-						{
-							"key": "types",
-							"value": "gs1-epcis",
-							"disabled": true
-						},
-						{
 							"key": "query",
-							"value": "InformationTheory"
+							"value": "scientist"
+						},
+						{
+							"key": "prefix",
+							"value": "true",
+							"disabled": true
+						},
+						{
+							"key": "limit",
+							"value": "20",
+							"disabled": true
 						}
 					]
 				}
@@ -505,7 +446,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/assertions:search/result/2ab488b6-c12e-4e3c-959d-a38fef1f84e3",
+					"raw": "{{HOST}}:8900/assertions:search/result/ccf90eba-4a45-4c47-81e0-1a2e1e679f70",
 					"host": [
 						"{{HOST}}"
 					],
@@ -515,19 +456,7 @@
 						"latest",
 						"assertions:search",
 						"result",
-						"2ab488b6-c12e-4e3c-959d-a38fef1f84e3"
-					],
-					"query": [
-						{
-							"key": "ids",
-							"value": "axie",
-							"disabled": true
-						},
-						{
-							"key": "types",
-							"value": "gs1-epcis",
-							"disabled": true
-						}
+						"ccf90eba-4a45-4c47-81e0-1a2e1e679f70"
 					]
 				}
 			},
@@ -565,7 +494,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/entities:search?query=InformationTheory",
+					"raw": "{{HOST}}:8900/entities:search?query=feynman",
 					"host": [
 						"{{HOST}}"
 					],
@@ -583,7 +512,7 @@
 						},
 						{
 							"key": "ids",
-							"value": "axie",
+							"value": "",
 							"disabled": true
 						},
 						{
@@ -597,8 +526,13 @@
 							"disabled": true
 						},
 						{
+							"key": "issuers",
+							"value": null,
+							"disabled": true
+						},
+						{
 							"key": "query",
-							"value": "InformationTheory"
+							"value": "feynman"
 						}
 					]
 				}
@@ -615,29 +549,10 @@
 				"header": [],
 				"body": {
 					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "topic",
-							"value": "blazard1",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "limit",
-							"value": "100",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "offset",
-							"value": "0",
-							"type": "text",
-							"disabled": true
-						}
-					]
+					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/entities:search/result/15857cc9-100b-4420-aadc-c24f8eaa632d",
+					"raw": "{{HOST}}:8900/entities:search/result/b18a819d-d546-4bc2-95c1-242d78c094e7",
 					"host": [
 						"{{HOST}}"
 					],
@@ -647,7 +562,7 @@
 						"latest",
 						"entities:search",
 						"result",
-						"15857cc9-100b-4420-aadc-c24f8eaa632d"
+						"b18a819d-d546-4bc2-95c1-242d78c094e7"
 					]
 				}
 			},
@@ -663,13 +578,13 @@
 					"formdata": [
 						{
 							"key": "query",
-							"value": "PREFIX schema: <http://schema.org/>\nCONSTRUCT { ?s schema:name \"Claude Shannon\" }\nWHERE {\n    GRAPH ?g { \n        ?s schema:name \"Claude Shannon\" .\n    }\n}",
+							"value": "PREFIX schema: <http://schema.org/>\nCONSTRUCT { ?s schema:name \"Richard Feynman\" }\nWHERE {\n    GRAPH ?g { \n        ?s schema:name \"Richard Feynman\" .\n    }\n}",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/query?type=construct",
+					"raw": "{{HOST}}:8900/query?type=construct",
 					"host": [
 						"{{HOST}}"
 					],
@@ -699,29 +614,10 @@
 				"header": [],
 				"body": {
 					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "topic",
-							"value": "blazard1",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "limit",
-							"value": "100",
-							"type": "text",
-							"disabled": true
-						},
-						{
-							"key": "offset",
-							"value": "0",
-							"type": "text",
-							"disabled": true
-						}
-					]
+					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/query/result/ce1c1ace-3bc7-49b7-8dc8-1fbea25143dc",
+					"raw": "{{HOST}}:8900/query/result/d3480867-d5f7-4f10-9686-8c658c102dcf",
 					"host": [
 						"{{HOST}}"
 					],
@@ -731,7 +627,7 @@
 						"latest",
 						"query",
 						"result",
-						"ce1c1ace-3bc7-49b7-8dc8-1fbea25143dc"
+						"d3480867-d5f7-4f10-9686-8c658c102dcf"
 					]
 				}
 			},
@@ -747,13 +643,13 @@
 					"formdata": [
 						{
 							"key": "nquads",
-							"value": "[            \"_:genid2dc4c6c4682460401d8ca7914d9be0ce992dc14n0 <http://schema.org/name> \\\"Claude Shannon\\\" .\"\n]",
+							"value": "[  \"_:t1253 <http://schema.org/name> \\\"Richard Feynman\\\" .\"\n]",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/proofs:get",
+					"raw": "{{HOST}}:8900/proofs:get",
 					"host": [
 						"{{HOST}}"
 					],
@@ -780,7 +676,7 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "{{HOST}}:8900/api/latest/proofs:get/result/967887f4-96cb-4784-9cd8-fc31a64a8ec8",
+					"raw": "{{HOST}}:8900/proofs:get/result/72d7c0b3-a41e-4f90-91d5-082579f25b65",
 					"host": [
 						"{{HOST}}"
 					],
@@ -790,7 +686,34 @@
 						"latest",
 						"proofs:get",
 						"result",
-						"967887f4-96cb-4784-9cd8-fc31a64a8ec8"
+						"72d7c0b3-a41e-4f90-91d5-082579f25b65"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Info",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{HOST}}:8900/info",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "8900",
+					"path": [
+						"api",
+						"latest",
+						"info"
 					]
 				}
 			},

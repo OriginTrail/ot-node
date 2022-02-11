@@ -27,7 +27,7 @@ class SendAssertionCommand extends Command {
         }
 
         let nodes = [];
-        for (const keyword of assertion.metadata.keywords) {
+        for (const keyword of assertion.metadata.keywords.concat(assertion.id)) {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
@@ -49,6 +49,16 @@ class SendAssertionCommand extends Command {
                 this.handleError(handlerId, e, `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`);
             });
         }
+
+        await Models.handler_ids.update(
+            {
+                status: 'COMPLETED',
+            }, {
+                where: {
+                    handler_id: handlerId,
+                },
+            },
+        );
 
         return this.continueSequence(command.data, command.sequence);
     }

@@ -29,12 +29,22 @@ class BlockchainService {
         return this.implementation.getPublicKey();
     }
 
-    async sendProofs(assertion) {
-        return this.implementation.sendProofs(assertion);
+    async createAssertionRecord(stateCommitHash, rootHash, issuer) {
+        return this.implementation.createAssertionRecord(stateCommitHash, rootHash, issuer);
+    }
+    async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
+        return this.implementation.registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount);
+    }
+    async updateAsset(UAI, newStateCommitHash, rootHash) {
+        return this.implementation.updateAsset(UAI, newStateCommitHash, rootHash);
     }
 
-    async getProofs(proofs) {
-        return this.implementation.getProofs(proofs);
+    async getAssertionProofs(assertionId) {
+        return this.implementation.getAssertionProofs(assertionId);
+    }
+
+    async getAssetProofs(ual) {
+        return this.implementation.getAssetProofs(ual);
     }
 
     async healthCheck() {

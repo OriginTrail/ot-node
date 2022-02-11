@@ -10,13 +10,15 @@
       {
         "blockchainTitle": "Polygon",
         "networkId": "polygon::mainnet",
-        "hubContractAddress": "0xFA421f2b10FBebaAeC281eb6734b0fA9Cc8dbbD7",
+        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
         "rpcEndpoints": [
           "https://rpc-mumbai.maticvigil.com/"
         ]
       }
     ],
     "graphDatabase": {
+      "implementation": "GraphDB",
+      "url": "http://localhost:7200",
       "name": "node0",
       "username": "admin",
       "password": ""
@@ -49,13 +51,15 @@
       {
         "blockchainTitle": "Polygon",
         "networkId": "polygon::testnet",
-        "hubContractAddress": "0xFA421f2b10FBebaAeC281eb6734b0fA9Cc8dbbD7",
+        "hubContractAddress": "0xFD6ECaed420aB70fb97eB2423780517dc425ef81",
         "rpcEndpoints": [
           "https://rpc-mumbai.maticvigil.com/"
         ]
       }
     ],
     "graphDatabase": {
+      "implementation": "GraphDB",
+      "url": "http://localhost:7200",
       "name": "node0",
       "username": "admin",
       "password": ""
@@ -90,6 +94,8 @@
     },
     "blockchain": [],
     "graphDatabase": {
+      "implementation": "GraphDB",
+      "url": "http://localhost:7200",
       "name": "node0",
       "username": "admin",
       "password": ""

@@ -1,13 +1,11 @@
-const {ServerClientConfig, GraphDBServerClient} = require('graphdb').server;
-const {RepositoryClientConfig, RepositoryConfig, RepositoryType} = require('graphdb').repository;
-const {SparqlXmlResultParser} = require('graphdb').parser;
-const {GetQueryPayload, QueryType} = require('graphdb').query;
-const {RDFMimeType} = require('graphdb').http;
+const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
+const { RepositoryClientConfig, RepositoryConfig, RepositoryType } = require('graphdb').repository;
+const { SparqlXmlResultParser } = require('graphdb').parser;
+const { GetQueryPayload, QueryType } = require('graphdb').query;
+const { RDFMimeType } = require('graphdb').http;
 const axios = require('axios');
-const {execSync} = require('child_process');
-const jsonld = require('jsonld');
-const N3 = require('n3');
-const {BufferList} = require('bl');
+const { execSync } = require('child_process');
+const { BufferList } = require('bl');
 const constants = require('../modules/constants');
 
 class GraphdbService {
@@ -18,7 +16,7 @@ class GraphdbService {
     async initialize(logger) {
         this.logger = logger;
         this.logger.info(`Data repository name: ${this.config.repositoryName}`);
-        const serverConfig = new ServerClientConfig('http://localhost:7200/')
+        const serverConfig = new ServerClientConfig(this.config.url)
             .setTimeout(40000)
             .setHeaders({
                 Accept: RDFMimeType.N_QUADS,
@@ -35,8 +33,8 @@ class GraphdbService {
 
         const readTimeout = 30000;
         const writeTimeout = 30000;
-        const repositoryServerConfig = new RepositoryClientConfig('http://localhost:7200/')
-            .setEndpoints([`http://localhost:7200/repositories/${this.config.repositoryName}`])
+        const repositoryServerConfig = new RepositoryClientConfig(this.config.url)
+            .setEndpoints([`${this.config.url}/repositories/${this.config.repositoryName}`])
             .setHeaders({
                 Accept: RDFMimeType.N_QUADS,
             })
@@ -118,134 +116,6 @@ class GraphdbService {
         });
     }
 
-    async toRDF(jsonContent) {
-        let canonized = await jsonld.canonize(jsonContent, {
-            algorithm: 'URDNA2015',
-            format: 'application/n-quads',
-        });
-
-        canonized = canonized.split('\n');
-        canonized = canonized.filter((x) => x !== '');
-
-        return canonized;
-    }
-
-    async fromRDF(assertion, context, frame) {
-        const copy = await jsonld.fromRDF(assertion.join('\n'), {
-            algorithm: 'URDNA2015',
-            format: 'application/n-quads',
-        });
-
-        const framed = await jsonld.frame(copy, frame);
-
-        const compressed = await jsonld.compact(framed, context);
-        return compressed;
-    }
-
-    async extractMetadata(rdf) {
-        return new Promise(async (accept, reject) => {
-            const parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
-            const result = {
-                metadata: {
-                    keywords: [],
-                    UALs: [],
-                },
-                blockchain: {},
-            };
-
-            const quads = [];
-            await parser.parse(
-                rdf.join('\n'),
-                (error, quad, prefixes) => {
-                    if (error) {
-                        reject(error);
-                    }
-                    if (quad) {
-                        quads.push(quad);
-                    }
-                },
-            );
-
-
-            for (const quad of quads) {
-                try {
-                    switch (quad._predicate.id) {
-                        case 'http://schema.org/hasType':
-                            result.metadata.type = JSON.parse(quad._object.id);
-                            result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
-                            break;
-                        case 'http://schema.org/hasTimestamp':
-                            result.metadata.timestamp = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasUALs':
-                            result.metadata.UALs.push(JSON.parse(quad._object.id));
-                            break;
-                        case 'http://schema.org/hasIssuer':
-                            result.metadata.issuer = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasVisibility':
-                            result.metadata.visibility = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasDataHash':
-                            result.metadata.dataHash = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasKeywords':
-                            result.metadata.keywords.push(JSON.parse(quad._object.id));
-                            break;
-                        case 'http://schema.org/hasSignature':
-                            result.signature = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasRootHash':
-                            result.rootHash = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasBlockchain':
-                            result.blockchain.name = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasTransactionHash':
-                            result.blockchain.transactionHash = JSON.parse(quad._object.id);
-                            break;
-                        default:
-                            break;
-                    }
-                } catch (e) {
-                    this.logger.error({
-                        msg: `Error in extracting metadata: ${e}. ${e.stack}`,
-                        Event_name: constants.ERROR_TYPE.EXTRACT_METADATA_ERROR
-                    });
-                }
-            }
-
-            result.metadata.keywords.sort();
-            if (!result.metadata.UALs.length)
-                delete result.metadata.UALs;
-            else
-                result.metadata.UALs.sort();
-
-
-            accept(result);
-        });
-    }
-
-    async createMetadata(assertion) {
-        const metadata = {
-            '@context': 'https://www.schema.org/',
-            '@id': `${constants.DID_PREFIX}:${assertion.id}`,
-            hasType: assertion.metadata.type,
-            hasSignature: assertion.signature,
-            hasIssuer: assertion.metadata.issuer,
-            hasTimestamp: assertion.metadata.timestamp,
-            hasVisibility: assertion.metadata.visibility,
-            hasDataHash: assertion.metadata.dataHash,
-            hasKeywords: assertion.metadata.keywords,
-        };
-
-        if (assertion.metadata.UALs)
-            metadata.hasUALs = assertion.metadata.UALs;
-
-        const result = await this.toRDF(metadata);
-        return result;
-    }
-
     async resolve(uri) {
         let isAsset = false;
         const query = `PREFIX schema: <http://schema.org/>
@@ -265,8 +135,10 @@ class GraphdbService {
                 {
                     SELECT ?ng
                     WHERE {
-                        ?ng schema:hasUALs "${uri}" .
+                        ?ng schema:hasUALs "${uri}" ;
+                            schema:hasTimestamp ?timestamp .
                     }
+                    ORDER BY DESC(?timestamp)
                     LIMIT 1
                 }
                 FILTER (?g = ?ng) .
@@ -280,20 +152,21 @@ class GraphdbService {
             nquads = nquads.replace(/_:genid(.){37}/gm, '_:$1');
             nquads = nquads.split('\n');
             nquads = nquads.filter((x) => x !== '');
-        } else
+        } else {
             nquads = null;
-        return {nquads, isAsset};
+        }
+        return { nquads, isAsset };
     }
 
     async findAssertions(nquads) {
         const query = `SELECT ?g
                        WHERE {
-                            GRAPH ?g { 
+                            GRAPH ?g {
                             ${nquads}
                             }
                        }`;
-        const g = await this.execute(query);
-        return JSON.parse(g).results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
+        const graph = await this.execute(query);
+        return JSON.parse(graph).results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
     }
 
     async findAssertionsByKeyword(query, options, localQuery) {
@@ -314,11 +187,11 @@ class GraphdbService {
         const sparqlQuery = `PREFIX schema: <http://schema.org/>
                             SELECT ?assertionId
                             WHERE {
-                                ?assertionId schema:hasTimestamp ?timestamp ;
+                                ?assertionId schema:hasTimestamp ?latestTimestamp ;
                             ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
                                                      schema:hasUALs ?assetId .
                                     {
-                                        SELECT ?assetId (MAX(?timestamp) AS ?timestamp)
+                                        SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
                                         WHERE {
                                             ?assertionId schema:hasKeywords ?keyword ;
                                                          schema:hasIssuer ?issuer ;
@@ -338,28 +211,9 @@ class GraphdbService {
         return result;
     }
 
-    async searchByIds(ids, options) {
-        const sparqlQuery = `PREFIX schema: <http://schema.org/>
-                            SELECT ?assetId (GROUP_CONCAT(?assertionId; SEPARATOR=",") AS ?assertions)
-                            WHERE {
-                                ?assertionId schema:hasAsset ?assetId ;
-                                             schema:hasIssuer ?issuer ;
-                                             schema:hasType ?type .
-                                FILTER (?assetId IN (${JSON.stringify(ids).slice(1, -1)}))
-                                ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
-                                ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
-                            }
-                            group by ?assetId
-                            LIMIT ${options.limit}`;
-
-        let result = await this.execute(sparqlQuery);
-        result = JSON.parse(result).results.bindings;
-        return result;
-    }
-
     async healthCheck() {
         try {
-            const response = await axios.get(`http://localhost:7200/repositories/${this.config.repositoryName}/health`, {},
+            const response = await axios.get(`${this.config.url}/repositories/${this.config.repositoryName}/health`, {},
                 {
                     auth: {
                         username: this.config.username,
