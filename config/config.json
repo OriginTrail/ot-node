@@ -8,11 +8,11 @@
     },
     "blockchain": [
       {
-        "blockchainTitle": "Polygon",
-        "networkId": "polygon::mainnet",
-        "hubContractAddress": "0xFA421f2b10FBebaAeC281eb6734b0fA9Cc8dbbD7",
+        "blockchainTitle": "Ganache",
+        "networkId": "ganache::mainnet",
+        "hubContractAddress": "0x04d5396358647Cd863293c156037D0AC02328c32",
         "rpcEndpoints": [
-          "https://rpc-mumbai.maticvigil.com/"
+          "http://localhost:7545"
         ]
       }
     ],

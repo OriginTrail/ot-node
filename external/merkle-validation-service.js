@@ -63,6 +63,7 @@ class MerkleValidationService {
     }
 
     calculateRootHash(assertion) {
+        console.log(assertion);
         const tree = new MerkleTools({
             hashType: 'sha256',
         });

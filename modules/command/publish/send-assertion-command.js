@@ -27,7 +27,7 @@ class SendAssertionCommand extends Command {
         }
 
         let nodes = [];
-        for (const keyword of assertion.metadata.keywords) {
+        for (const keyword of assertion.metadata.keywords.concat(assertion.id)) {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );

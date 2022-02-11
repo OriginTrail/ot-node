@@ -191,16 +191,23 @@ class RpcController {
                 this.logger.info(`Resolve for ${ids} with handler id ${handlerId} initiated.`);
                 const response = [];
 
-                for (const id of ids) {
-                    let result = await this.dataService.resolve(id, true);
-                    if (result) {
-                        let {nquads, isAsset} = result;
+                for (let id of ids) {
+                    let isAsset = false;
+                    let {assertionId} = await this.blockchainService.getAssetProofs(id);
+                    if (assertionId) {
+                        isAsset = true;
+                        id = assertionId;
+                    }
+                    const result = await this.dataService.resolve(id, true);
+
+                    if (!(result && result.nquads)) {
+                        let {nquads} = result;
                         let assertion = await this.dataService.createAssertion(nquads);
                         assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                         assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
                         response.push(isAsset ? {
                                 type: 'asset',
-                                id: id,
+                                id: assertion.jsonld.metadata.UALs[0],
                                 result: {
                                     metadata: {
                                         type: assertion.jsonld.metadata.type,
@@ -222,14 +229,14 @@ class RpcController {
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
                         nodes = [...new Set(nodes)];
                         for (const node of nodes) {
-                            const result = await this.queryService.resolve(id, req.query.load, node);
+                            const result = await this.queryService.resolve(id, req.query.load, isAsset, node);
                             if (result) {
-                                const {assertion, isAsset} = result;
+                                const {assertion} = result;
                                 assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                 assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
                                 response.push(isAsset ? {
                                         type: 'asset',
-                                        id: id,
+                                        id: assertion.jsonld.metadata.UALs[0],
                                         result: {
                                             metadata: {
                                                 type: assertion.jsonld.metadata.type,
