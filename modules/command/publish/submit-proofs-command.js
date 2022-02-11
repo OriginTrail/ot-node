@@ -18,14 +18,25 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId } = command.data;
+        const { documentPath, handlerId, method } = command.data;
 
         try {
             let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
-            //TODO extend for asset
-            this.logger.info(`Sending transaction to the blockchain: createAssertionRecord(${assertion.id},${assertion.rootHash})`);
-            const { transactionHash, blockchain } = await this.blockchainService.sendProofs(assertion);
+            this.logger.info(`Sending transaction to the blockchain`);
+            let result;
+            switch (method) {
+                case 'publish':
+                    result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
+                    break;
+                case 'provision':
+                    result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);
+                    break;
+                case 'update':
+                    result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0],assertion.id, assertion.rootHash);
+                    break;
+            }
+            const { transactionHash, blockchain } = result;
             this.logger.info(`Transaction hash is ${transactionHash} on ${blockchain}`);
 
             assertion.blockchain = {
