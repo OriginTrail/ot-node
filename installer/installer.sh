@@ -135,6 +135,80 @@ else
     exit 1
 fi
 
+OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling GraphDB."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Downloading Blazegraph: "
+
+OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.deb 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error downloading Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Installing Blazegraph: "
+
+OUTPUT=$(dpkg -i blazegraph.deb 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error installing Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Starting Blazegraph: "
+
+OUTPUT=$(systemctl start blazegraph >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error starting Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Confirming Blazegraph has started: "
+
+IS_RUNNING=$(systemctl show -p ActiveState --value blazegraph)
+
+if [[ $IS_RUNNING == "active" ]]; then
+    echo -e "${GREEN}SUCCESS${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error starting Blazegraph."
+    echo $OUTPUT
+    exit 1
+fi
+
+OUTPUT=$(systemctl enable blazegraph >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Downloading Node.js v14: "
 
 OUTPUT=$(wget https://deb.nodesource.com/setup_14.x >/dev/null 2>&1)
@@ -191,18 +265,6 @@ OUTPUT=$(aptitude install nodejs npm -y >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing nodejs/npm."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Installing forever: "
-
-OUTPUT=$(npm install forever -g >/dev/null 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing forever."
     echo $OUTPUT
     exit 1
 else
@@ -279,6 +341,17 @@ OUTPUT=$(systemctl restart mysql >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error restarting mysql."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+OUTPUT=$(systemctl enable mysql >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling mysql."
     echo $OUTPUT
     exit 1
 else
@@ -364,9 +437,35 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Copying otnode service file: "
+
+OUTPUT=$(cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error copying the otnode service file."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+systemctl daemon-reload
+
+OUTPUT=$(systemctl enable otnode >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling otnode."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Starting the node: "
 
-OUTPUT=$(forever start -a -o out.log -e out.log index.js >/dev/null 2>&1)
+OUTPUT=$(systemctl start otnode >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error starting the node."
@@ -380,4 +479,4 @@ echo -n "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL st
 echo " "
 read -p "Press enter to continue..."
 
-tail -f -n100 out.log
+journalctl -u otnode --output cat -fn 100
