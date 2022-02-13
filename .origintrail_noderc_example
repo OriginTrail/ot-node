@@ -9,6 +9,8 @@
     }
   ],
   "graphDatabase": {
+    "implementation": "Blazegraph",
+    "url": "http://localhost:9999/blazegraph",
     "username": "admin",
     "password": ""
   },

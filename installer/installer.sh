@@ -130,6 +130,69 @@ else
     exit 1
 fi
 
+OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.deb 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error downloading Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Installing Blazegraph: "
+
+OUTPUT=$(dpkg -i blazegraph.deb 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error installing Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+systemctl daemon-reload
+
+OUTPUT=$(systemctl enable blazegraph >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Starting Blazegraph: "
+
+OUTPUT=$(systemctl start blazegraph >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error starting Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Confirming Blazegraph has started: "
+
+IS_RUNNING=$(systemctl show -p ActiveState --value blazegraph)
+
+if [[ $IS_RUNNING == "active" ]]; then
+    echo -e "${GREEN}SUCCESS${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error starting Blazegraph."
+    echo $OUTPUT
+    exit 1
+fi
+
 echo -n "Downloading Node.js v14: "
 
 OUTPUT=$(wget https://deb.nodesource.com/setup_14.x >/dev/null 2>&1)
