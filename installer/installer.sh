@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OS_VERSION=$(lsb_release -sr)
-GRAPHDB_FILE="/root/graphdb-free-9.10.1-dist.zip"
+GRAPHDB_FILE=$(ls /root | grep graphdb-free | grep .zip)
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
@@ -10,25 +10,7 @@ NC='\033[0m' # No Color
 
 clear
 
-echo -n "${N1}Checking that the OS is Ubuntu 20.04 ONLY: "
-
-if [[ $OS_VERSION != 20.04 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "This installer requires Ubuntu 20.04. Destroy this VPS and remake using Ubuntu 20.04."
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Checking that we are in /root directory: "
-
-if [ $PWD != "$OTNODE_DIR" ]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "${N1}This installer requires the user to be logged in as root (NOT a regular user using sudo) and in the root directory. Npm install will fail if using sudo.${N1}"
-    exit
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+cd /root
 
 echo -n "Checking that the GraphDB file is present in /root: "
 
@@ -94,13 +76,13 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Copying service file: "
+echo -n "Copying graphdb service file: "
 
 OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error copying the service file."
+    echo "There was an error copying the graphdb service file."
     echo $OUTPUT
     exit 1
 else
@@ -108,6 +90,19 @@ else
 fi
 
 systemctl daemon-reload
+
+echo -n "Enable GraphDB service on boot: "
+
+OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling the GraphDB service."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
 
 echo -n "Starting GraphDB: "
 
@@ -135,17 +130,6 @@ else
     exit 1
 fi
 
-OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
-
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error enabling GraphDB."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
 echo -n "Downloading Blazegraph: "
 
 OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.deb 2>&1)
@@ -166,6 +150,21 @@ OUTPUT=$(dpkg -i blazegraph.deb 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing Blazegraph."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+systemctl daemon-reload
+
+echo -n "Enable GraphDB service on boot: "
+
+OUTPUT=$(systemctl enable blazegraph >/dev/null 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error enabling Blazegraph."
     echo $OUTPUT
     exit 1
 else
@@ -196,17 +195,6 @@ else
     echo "There was an error starting Blazegraph."
     echo $OUTPUT
     exit 1
-fi
-
-OUTPUT=$(systemctl enable blazegraph >/dev/null 2>&1)
-
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error enabling Blazegraph."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
 fi
 
 echo -n "Downloading Node.js v14: "
@@ -259,9 +247,9 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing nodejs and npm: "
+echo -n "Installing nodejs: "
 
-OUTPUT=$(aptitude install nodejs npm -y >/dev/null 2>&1)
+OUTPUT=$(aptitude install nodejs -y >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing nodejs/npm."
@@ -341,17 +329,6 @@ OUTPUT=$(systemctl restart mysql >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error restarting mysql."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-OUTPUT=$(systemctl enable mysql >/dev/null 2>&1)
-
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error enabling mysql."
     echo $OUTPUT
     exit 1
 else
@@ -452,20 +429,23 @@ fi
 
 systemctl daemon-reload
 
+echo -n "Enable otnode service on boot: "
+
 OUTPUT=$(systemctl enable otnode >/dev/null 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error enabling otnode."
+    echo "There was an error enabling the otnode service."
     echo $OUTPUT
     exit 1
 else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Starting the node: "
+echo -n "Starting otnode: "
 
 OUTPUT=$(systemctl start otnode >/dev/null 2>&1)
+
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error starting the node."
@@ -473,6 +453,19 @@ if [[ $? -ne 0 ]]; then
     exit 1
 else
     echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Confirming the node has started: "
+
+IS_RUNNING=$(systemctl show -p ActiveState --value otnode)
+
+if [[ $IS_RUNNING == "active" ]]; then
+    echo -e "${GREEN}SUCCESS${NC}"
+else
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error starting the node."
+    echo $OUTPUT
+    exit 1
 fi
 
 echo -n "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt."
