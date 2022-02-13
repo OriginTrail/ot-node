@@ -102,7 +102,7 @@ class OTNode {
     async initializeDataModule() {
         try {
             const dataService = this.container.resolve('dataService');
-            dataService.initialize();
+            await dataService.initialize();
             this.logger.info(`Data module: ${dataService.getName()} implementation`);
             db.sequelize.sync();
         } catch (e) {
@@ -185,8 +185,9 @@ class OTNode {
     async initializeTelemetryHubModule() {
         try {
             const telemetryHubModuleManager = this.container.resolve('telemetryHubModuleManager');
-            telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger);
-            this.logger.info(`Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`);
+            if (telemetryHubModuleManager.initialize(this.config.telemetryHub, this.logger)) {
+                this.logger.info(`Telemetry hub module initialized successfully, using ${telemetryHubModuleManager.config.telemetryHub.packages} package(s)`);
+            }
         } catch (e) {
             this.logger.error(`Telemetry hub module initialization failed. Error message: ${e.message}`);
         }
