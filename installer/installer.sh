@@ -75,7 +75,9 @@ while true; do
 done
 
 if [[ $DATABASE = "graphdb" ]]; then
+    
     echo -n "Unzipping GraphDB: "
+    
     OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
 
     if [[ $? -ne 0 ]]; then
@@ -143,6 +145,9 @@ if [[ $DATABASE = "graphdb" ]]; then
 fi
 
 if [[ $DATABASE = "blazegraph" ]]; then
+    
+    echo -n "Downloading Blazegraph: " 
+
     OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.deb 2>&1)
 
     if [[ $? -ne 0 ]]; then
@@ -168,6 +173,8 @@ if [[ $DATABASE = "blazegraph" ]]; then
     fi
 
     systemctl daemon-reload
+
+    echo -n "Enable Blazegraph service on boot: "
 
     OUTPUT=$(systemctl enable blazegraph >/dev/null 2>&1)
 
