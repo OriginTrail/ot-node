@@ -59,19 +59,19 @@ class RpcController {
                 formattedWhitelist.push(this.config.ipWhitelist[i]);
             }
         }
-
-        this.app.use(ipfilter(formattedWhitelist,
-            {
-                mode: 'allow',
-                log: false,
-            }));
-
-        this.app.use((error, req, res, next) => {
-            if (error instanceof IpDeniedError) {
-                return res.status(401).send('Access denied')
-            }
-            return next();
-        });
+        // TODO TO BE REVERTED BEFORE MERGE
+        // this.app.use(ipfilter(formattedWhitelist,
+        //     {
+        //         mode: 'allow',
+        //         log: false,
+        //     }));
+        //
+        // this.app.use((error, req, res, next) => {
+        //     if (error instanceof IpDeniedError) {
+        //         return res.status(401).send('Access denied')
+        //     }
+        //     return next();
+        // });
 
         this.app.use((req, res, next) => {
             this.logger.info(`${req.method}: ${req.url} request received`);
@@ -209,6 +209,7 @@ class RpcController {
                                 type: 'asset',
                                 id: assertion.jsonld.metadata.UALs[0],
                                 result: {
+                                    assertions: await this.dataService.assertionsByAsset(assertion.jsonld.metadata.UALs[0]),
                                     metadata: {
                                         type: assertion.jsonld.metadata.type,
                                         issuer: assertion.jsonld.metadata.issuer,
@@ -238,6 +239,7 @@ class RpcController {
                                         type: 'asset',
                                         id: assertion.jsonld.metadata.UALs[0],
                                         result: {
+                                            assertions: await this.dataService.assertionsByAsset(assertion.jsonld.metadata.UALs[0]),
                                             metadata: {
                                                 type: assertion.jsonld.metadata.type,
                                                 issuer: assertion.jsonld.metadata.issuer,

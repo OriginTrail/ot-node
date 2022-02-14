@@ -1,4 +1,4 @@
-const { v1: uuidv1 } = require('uuid');
+const {v1: uuidv1} = require('uuid');
 const N3 = require('n3');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
@@ -116,11 +116,25 @@ class DataService {
         }
     }
 
+    async assertionsByAsset(id) {
+        try {
+            let assertions = await this.implementation.assertionsByAsset(id);
+
+            return assertions.map(x => ({
+                id: x.assertionId.value.slice(8),
+                issuer: x.issuer.value,
+                timestamp: x.timestamp.value
+            }));
+        } catch (e) {
+            this.handleUnavailableTripleStoreError(e);
+        }
+    }
+
     async createAssertion(rawNQuads) {
         const metadata = [];
         const data = [];
         const nquads = [];
-        rawNQuads.forEach((nquad)=>{
+        rawNQuads.forEach((nquad) => {
             if (nquad.startsWith(`<${constants.DID_PREFIX}:`))
                 metadata.push(nquad);
             else
@@ -167,8 +181,11 @@ class DataService {
                 }
 
                 if (assertion.metadata.visibility) {
-                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))){
-                        const {issuer, assertionId} = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
+                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))) {
+                        const {
+                            issuer,
+                            assertionId
+                        } = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
                                 msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
@@ -185,7 +202,7 @@ class DataService {
                             });
                             return resolve(false);
                         }
-                    } else{
+                    } else {
                         const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
                         const {rootHash, issuer} = await this.blockchainService.getAssertionProofs(assertion.id);
                         if (rootHash !== `0x${calculateRootHash}`) {
@@ -473,7 +490,7 @@ class DataService {
 
     async extractMetadata(rdf) {
         return new Promise(async (accept, reject) => {
-            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+            const parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
             const result = {
                 metadata: {
                     keywords: [],
