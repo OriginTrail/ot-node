@@ -152,7 +152,7 @@ class BlazegraphService {
             ORDER BY DESC(?timestamp)`;
         let result = await this.execute(query);
 
-        return JSON.parse(result).results.bindings;
+        return result.results.bindings;
     }
 
     async findAssertions(nquads) {
