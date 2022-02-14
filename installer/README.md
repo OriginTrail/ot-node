@@ -14,7 +14,7 @@ Get this file into the /root directory on the server. Just leave it as a zip fil
 
 **If the repo is not cloned yet:**
 ```
-apt install git -y && cd /root && git clone https://github.com/OriginTrail/ot-node && cd ot-node && git checkout v6/release/testnet && installer/installer.sh
+apt install git -y && cd /root && git clone https://github.com/OriginTrail/ot-node && cd ot-node && git checkout v6/prerelease/testnet && installer/installer.sh
 ```
 
 **If you have already cloned the ot-node repo:**
