@@ -706,7 +706,7 @@ class RpcController {
                             });
                             break;
                         case 'resolve':
-                            if (handlerData) {
+                            if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
                             }
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
@@ -714,7 +714,7 @@ class RpcController {
                         case 'provision':
                         case 'publish':
                         case 'update':
-                            if (handlerData) {
+                            if (handlerData && handlerData.status === "COMPLETED") {
                                 const result = await this.fileService.loadJsonFromFile(documentPath);
                                 delete result.assertion.data;
                                 handlerData.data = result.assertion;
