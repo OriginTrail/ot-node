@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 require('dotenv').config('.env');
 
 const numberOfNodes = process.argv.length === 4 ? parseInt(process.argv[2], 10) : 4;
-const hostIp = process.argv.length === 4 ? process.argv[3] : '127.0.0.1';
+const hostIp = process.argv.length === 4 ? process.argv[3] : null;
 
 console.log(`Host IP ${hostIp}`);
 
@@ -21,17 +21,18 @@ if (!process.env.PRIVATE_KEY || !process.env.PUBLIC_KEY) {
     process.exit(1);
 }
 
-const ipWhitelist = ['127.0.0.1', '::1', hostIp];
+template.blockchain[0].publicKey = process.env.PUBLIC_KEY;
+template.blockchain[0].privateKey = process.env.PRIVATE_KEY;
 
 bootstrapTemplate.blockchain[0].publicKey = process.env.PUBLIC_KEY;
 bootstrapTemplate.blockchain[0].privateKey = process.env.PRIVATE_KEY;
-bootstrapTemplate.ipWhitelist = ipWhitelist;
+if (hostIp) {
+    const ipWhitelist = ['127.0.0.1', '::1', hostIp];
+    bootstrapTemplate.ipWhitelist = ipWhitelist;
+    template.ipWhitelist = ipWhitelist;
+}
 
 fs.writeFileSync('./tools/windows-wsl-local-node-config/.bootstrap_origintrail_noderc', JSON.stringify(bootstrapTemplate, null, 2));
-
-template.blockchain[0].publicKey = process.env.PUBLIC_KEY;
-template.blockchain[0].privateKey = process.env.PRIVATE_KEY;
-template.ipWhitelist = ipWhitelist;
 
 console.log(`Generating ${numberOfNodes} total nodes`);
 

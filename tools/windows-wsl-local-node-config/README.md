@@ -17,7 +17,7 @@ Usage
 
 ## 1. Specify your Node Network ID 
 
-Update the file `.dh_origintrail_noderc` to include your testnet node network id in the bootstrap config: 
+Update the temaplte file `dh_node_config_template` to include your testnet node network id in the bootstrap config: 
 
 ```json
 {
@@ -35,7 +35,7 @@ Replace `<your-network-id>` with your network id. This can be found by starting 
 
 ## 2. <a href="#steptwo"></a>Create Node Configuration
 
-From the ot-node directory, run the below command
+From the ot-node directory (in WSL), run the below command
 
 ```bash
 bash tools/windows-wsl-local-node-config/create-windows-node-configuration.sh
