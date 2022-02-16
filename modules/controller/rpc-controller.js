@@ -514,8 +514,8 @@ class RpcController {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
                     const quads = [];
                     const N3Parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
-                    N3Parser.parse(
-                        response.data.join('\n'),
+                    await N3Parser.parse(
+                        response.join('\n'),
                         (error, quad, prefixes) => {
                             if (quad) {
                                 quads.push({
@@ -743,7 +743,10 @@ class RpcController {
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                         default:
-                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            if (handlerData && handlerData.status === "COMPLETED") {
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }
+
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                     }
