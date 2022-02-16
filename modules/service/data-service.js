@@ -402,8 +402,8 @@ class DataService {
                     isA: 'EPCISDocument',
                 };
                 break;
-            case this.constants.NFT:
-                const result = await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.NFT}.json`);
+            case this.constants.ERC721:
+                const result = await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.ERC721}.json`);
                 context = result.data.context;
                 frame = result.data.frame;
                 break;

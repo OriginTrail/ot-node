@@ -1,5 +1,5 @@
 exports.GS1EPCIS = 'gs1-epcis';
-exports.NFT = 'nft';
+exports.ERC721 = 'erc721';
 exports.MERKLE_TREE = 'Merkle Tree';
 exports.BASIC = 'Basic';
 exports.DID = 'DID';
