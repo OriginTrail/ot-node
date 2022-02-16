@@ -381,7 +381,7 @@ class DataService {
         let context;
         let
             frame;
-        switch (type) {
+        switch (type.toLowerCase()) {
             case this.constants.GS1EPCIS:
                 context = {
                     '@context': [
