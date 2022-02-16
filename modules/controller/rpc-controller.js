@@ -12,6 +12,7 @@ const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
 const Utilities = require('../utilities');
+const N3 = require('n3');
 
 class RpcController {
     constructor(ctx) {
@@ -59,6 +60,12 @@ class RpcController {
                 formattedWhitelist.push(this.config.ipWhitelist[i]);
             }
         }
+
+        this.app.use(function(req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
         // TODO TO BE REVERTED BEFORE MERGE
         // this.app.use(ipfilter(formattedWhitelist,
         //     {
@@ -505,7 +512,21 @@ class RpcController {
                 });
                 try {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
-
+                    const quads = [];
+                    const N3Parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
+                    N3Parser.parse(
+                        response.data.join('\n'),
+                        (error, quad, prefixes) => {
+                            if (quad) {
+                                quads.push({
+                                    subject: quad._subject.id,
+                                    predicate: quad.predicate.id,
+                                    object: quad.object.id
+                                });
+                            }
+                        },
+                    );
+                    response = quads;
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
                     if (response) {
                         await this.fileService
@@ -764,15 +785,7 @@ class RpcController {
     }
 
     async publish(req, res, next, options) {
-        if (!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') {
-            return next({code: 400, message: 'Assertion file is required field and must be in JSON-LD format.'});
-            //TODO determine file size limit
-        } else if (req.files.file.size > constants.MAX_FILE_SIZE) {
-            return next({
-                code: 400,
-                message: `File size limit is 25MB.`
-            });
-        } else if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
+        if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
             return next({
                 code: 400,
                 message: `Keywords must be a non-empty array of strings, all strings must have double quotes.`
@@ -800,8 +813,15 @@ class RpcController {
         res.status(202).send({
             handler_id: handlerId,
         });
-        const fileContent = req.files.file.data;
-        const fileExtension = path.extname(req.files.file.name).toLowerCase();
+        let fileContent,fileExtension;
+        if (req.files) {
+            fileContent = req.files.file.data;
+            fileExtension = path.extname(req.files.file.name).toLowerCase();
+        }
+        else{
+            fileContent = req.body.data
+            fileExtension = '.json'
+        }
         const visibility = req.body.visibility ? req.body.visibility.toLowerCase() : 'public';
         const ual = options.isAsset ? options.ual : undefined;
 
