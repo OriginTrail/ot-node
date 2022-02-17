@@ -12,19 +12,6 @@ clear
 
 cd /root
 
-echo -n "Checking that the GraphDB file is present in /root: "
-
-if [[ ! -f $GRAPHDB_FILE ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "The graphdb file needs to be downloaded to /root. Please create an account at https://www.ontotext.com/products/graphdb/graphdb-free/ and click the standalone version link in the email."
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-# Switch to /root
-cd
-
 echo -n "Updating Ubuntu package repository: "
 
 OUTPUT=$(apt update >/dev/null 2>&1)
@@ -76,6 +63,16 @@ done
 
 if [[ $DATABASE = "graphdb" ]]; then
     
+    echo -n "Checking that the GraphDB file is present in /root: "
+
+    if [[ ! -f $GRAPHDB_FILE ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "The graphdb file needs to be downloaded to /root. Please create an account at https://www.ontotext.com/products/graphdb/graphdb-free/ and click the standalone version link in the email."
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
     echo -n "Unzipping GraphDB: "
     
     OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
