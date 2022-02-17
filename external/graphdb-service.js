@@ -7,6 +7,7 @@ const axios = require('axios');
 const { execSync } = require('child_process');
 const { BufferList } = require('bl');
 const constants = require('../modules/constants');
+const SparqlQuery = require('./sparql/sparql-query');
 
 class GraphdbService {
     constructor(config) {
@@ -14,6 +15,7 @@ class GraphdbService {
     }
 
     async initialize(logger) {
+        this.sparqlQuery = new SparqlQuery();
         this.logger = logger;
         this.logger.info(`Data repository name: ${this.config.repositoryName}`);
         const serverConfig = new ServerClientConfig(this.config.url)
@@ -118,32 +120,13 @@ class GraphdbService {
 
     async resolve(uri) {
         let isAsset = false;
-        const query = `PREFIX schema: <http://schema.org/>
-                        CONSTRUCT { ?s ?p ?o }
-                        WHERE {
-                          GRAPH <${constants.DID_PREFIX}:${uri}> {
-                            ?s ?p ?o
-                          }
-                        }`;
-        let nquads = await this.construct(query);
+
+        const sparqlQuery = this.sparqlQuery.findNQuadsByGraphUri(uri);
+        let nquads = await this.construct(sparqlQuery);
 
         if (!nquads.length) {
-            const query = `PREFIX schema: <http://schema.org/>
-            CONSTRUCT { ?s ?p ?o }
-            WHERE {
-                GRAPH ?g { ?s ?p ?o }
-                {
-                    SELECT ?ng
-                    WHERE {
-                        ?ng schema:hasUALs "${uri}" ;
-                            schema:hasTimestamp ?timestamp .
-                    }
-                    ORDER BY DESC(?timestamp)
-                    LIMIT 1
-                }
-                FILTER (?g = ?ng) .
-            }`;
-            nquads = await this.construct(query);
+            const sparqlQuery = this.sparqlQuery.findNQuadsByUAL(uri);
+            nquads = await this.construct(sparqlQuery);
             isAsset = true;
         }
 
@@ -159,53 +142,42 @@ class GraphdbService {
     }
 
     async findAssertions(nquads) {
-        const query = `SELECT ?g
-                       WHERE {
-                            GRAPH ?g {
-                            ${nquads}
-                            }
-                       }`;
-        const graph = await this.execute(query);
+        const sparqlQuery = this.sparqlQuery.findGraphByNQuads(nquads);
+        const graph = await this.execute(sparqlQuery);
         return JSON.parse(graph).results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
     }
 
-    async findAssertionsByKeyword(query, options, localQuery) {
-        const sparqlQuery = `PREFIX schema: <http://schema.org/>
-                            SELECT distinct ?assertionId
-                            WHERE {
-                                ?assertionId schema:hasKeywords ?keyword .
-                                ${!localQuery ? ' ?assertionId schema:hasVisibility "public" .' : ''}
-                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
-                            }
-                        ${options.limit ? `LIMIT ${options.limit}` : ''}`;
+    async findAssertionsByKeyword(keyword, options, localQuery) {
+        const sparqlQuery = this.sparqlQuery.findAssertionIdsByKeyword(keyword, options, localQuery);
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings;
         return result;
     }
 
-    async findAssetsByKeyword(query, options, localQuery) {
-        const sparqlQuery = `PREFIX schema: <http://schema.org/>
-                            SELECT ?assertionId
-                            WHERE {
-                                ?assertionId schema:hasTimestamp ?latestTimestamp ;
-                            ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
-                                                     schema:hasUALs ?assetId .
-                                    {
-                                        SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
-                                        WHERE {
-                                            ?assertionId schema:hasKeywords ?keyword ;
-                                                         schema:hasIssuer ?issuer ;
-                                                         schema:hasType ?type ;
-                                                         schema:hasTimestamp ?timestamp ;
-                                                         schema:hasUALs ?assetId .
-                                ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
-                                ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
-                                ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
-                                        }
-                                        GROUP BY ?assetId
-                                        ${options.limit ? `LIMIT ${options.limit}` : ''}
-                                    }
-                            }`;
+    async findAssetsByKeyword(keyword, options, localQuery) {
+        // const sparqlQuery = `PREFIX schema: <http://schema.org/>
+        //                     SELECT ?assertionId
+        //                     WHERE {
+        //                         ?assertionId schema:hasTimestamp ?latestTimestamp ;
+        //                     ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
+        //                                              schema:hasUALs ?assetId .
+        //                             {
+        //                                 SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
+        //                                 WHERE {
+        //                                     ?assertionId schema:hasKeywords ?keyword ;
+        //                                                  schema:hasIssuer ?issuer ;
+        //                                                  schema:hasType ?type ;
+        //                                                  schema:hasTimestamp ?timestamp ;
+        //                                                  schema:hasUALs ?assetId .
+        //                         ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
+        //                         ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
+        //                         ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
+        //                                 }
+        //                                 GROUP BY ?assetId
+        //                                 ${options.limit ? `LIMIT ${options.limit}` : ''}
+        //                             }
+        //                     }`;
+        const sparqlQuery = this.sparqlQuery.findAssetsByKeyword(keyword, options, localQuery);
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings;
         return result;
