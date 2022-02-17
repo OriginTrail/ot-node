@@ -1,7 +1,7 @@
 const axios = require('axios');
 const qs = require('qs');
 const constants = require('../modules/constants');
-const SparqlQuery = require('./sparql/sparql-query');
+const SparqlQueryBuilder = require('./sparql/sparql-query-builder');
 
 class BlazegraphService {
     constructor(config) {
@@ -9,7 +9,7 @@ class BlazegraphService {
     }
 
     async initialize(logger) {
-        this.sparqlQuery = new SparqlQuery();
+        this.sparqlQueryBuilder = new SparqlQueryBuilder();
         this.logger = logger;
         this.config.axios = {
             method: 'post',
@@ -103,11 +103,11 @@ class BlazegraphService {
     async resolve(uri) {
         let isAsset = false;
 
-        const sparqlQuery = this.sparqlQuery.findNQuadsByGraphUri(uri);
+        const sparqlQuery = this.sparqlQueryBuilder.findNQuadsByGraphUri(uri);
         let nquads = await this.construct(sparqlQuery);
 
         if (!nquads.length) {
-            const sparqlQuery = this.sparqlQuery.findNQuadsByUAL(uri);
+            const sparqlQuery = this.sparqlQueryBuilder.findNQuadsByUAL(uri);
             nquads = await this.construct(sparqlQuery);
             isAsset = true;
         }
@@ -124,8 +124,7 @@ class BlazegraphService {
     }
 
     async findAssertions(nquads) {
-        const sparqlQuery = this.sparqlQuery.findGraphByNQuads(nquads);
-
+        const sparqlQuery = this.sparqlQueryBuilder.findGraphByNQuads(nquads);
         let graph = await this.execute(sparqlQuery);
         graph = graph.results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
         if (graph.length && graph[0] === 'http://www.bigdata.com/rdf#nullGraph') {
@@ -135,13 +134,13 @@ class BlazegraphService {
     }
 
     async findAssertionsByKeyword(keyword, options, localQuery) {
-        const sparqlQuery = this.sparqlQuery.findAssertionIdsByKeyword(keyword, options, localQuery);
+        const sparqlQuery = this.sparqlQueryBuilder.findAssertionIdsByKeyword(keyword, options, localQuery);
         const result = await this.execute(sparqlQuery);
         return result.results.bindings;
     }
 
     async findAssetsByKeyword(keyword, options, localQuery) {
-        const sparqlQuery = this.sparqlQuery.findAssetsByKeyword(keyword, options, localQuery);                  
+        const sparqlQuery = this.sparqlQueryBuilder.findAssetsByKeyword(keyword, options, localQuery);                  
         const result = await this.execute(sparqlQuery);
         return result.results.bindings;
     }

@@ -1,6 +1,6 @@
 const constants = require('../../modules/constants');
 
-class SparqlQuery {
+class SparqlQueryBuilder {
     findGraphByNQuads(nquads) {
         return `SELECT ?g
                 WHERE {
@@ -74,4 +74,4 @@ class SparqlQuery {
     }
 }
 
-module.exports = SparqlQuery;
+module.exports = SparqlQueryBuilder;

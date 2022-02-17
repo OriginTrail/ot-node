@@ -7,7 +7,7 @@ const axios = require('axios');
 const { execSync } = require('child_process');
 const { BufferList } = require('bl');
 const constants = require('../modules/constants');
-const SparqlQuery = require('./sparql/sparql-query');
+const SparqlQueryBuilder = require('./sparql/sparql-query-builder');
 
 class GraphdbService {
     constructor(config) {
@@ -15,7 +15,7 @@ class GraphdbService {
     }
 
     async initialize(logger) {
-        this.sparqlQuery = new SparqlQuery();
+        this.sparqlQueryBuilder = new SparqlQueryBuilder();
         this.logger = logger;
         this.logger.info(`Data repository name: ${this.config.repositoryName}`);
         const serverConfig = new ServerClientConfig(this.config.url)
@@ -121,11 +121,11 @@ class GraphdbService {
     async resolve(uri) {
         let isAsset = false;
 
-        const sparqlQuery = this.sparqlQuery.findNQuadsByGraphUri(uri);
+        const sparqlQuery = this.sparqlQueryBuilder.findNQuadsByGraphUri(uri);
         let nquads = await this.construct(sparqlQuery);
 
         if (!nquads.length) {
-            const sparqlQuery = this.sparqlQuery.findNQuadsByUAL(uri);
+            const sparqlQuery = this.sparqlQueryBuilder.findNQuadsByUAL(uri);
             nquads = await this.construct(sparqlQuery);
             isAsset = true;
         }
@@ -142,42 +142,20 @@ class GraphdbService {
     }
 
     async findAssertions(nquads) {
-        const sparqlQuery = this.sparqlQuery.findGraphByNQuads(nquads);
+        const sparqlQuery = this.sparqlQueryBuilder.findGraphByNQuads(nquads);
         const graph = await this.execute(sparqlQuery);
         return JSON.parse(graph).results.bindings.map((x) => x.g.value.replace(`${constants.DID_PREFIX}:`, ''));
     }
 
     async findAssertionsByKeyword(keyword, options, localQuery) {
-        const sparqlQuery = this.sparqlQuery.findAssertionIdsByKeyword(keyword, options, localQuery);
+        const sparqlQuery = this.sparqlQueryBuilder.findAssertionIdsByKeyword(keyword, options, localQuery);
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings;
         return result;
     }
 
     async findAssetsByKeyword(keyword, options, localQuery) {
-        // const sparqlQuery = `PREFIX schema: <http://schema.org/>
-        //                     SELECT ?assertionId
-        //                     WHERE {
-        //                         ?assertionId schema:hasTimestamp ?latestTimestamp ;
-        //                     ${!localQuery ? 'schema:hasVisibility "public" ;' : ''}
-        //                                              schema:hasUALs ?assetId .
-        //                             {
-        //                                 SELECT ?assetId (MAX(?timestamp) AS ?latestTimestamp)
-        //                                 WHERE {
-        //                                     ?assertionId schema:hasKeywords ?keyword ;
-        //                                                  schema:hasIssuer ?issuer ;
-        //                                                  schema:hasType ?type ;
-        //                                                  schema:hasTimestamp ?timestamp ;
-        //                                                  schema:hasUALs ?assetId .
-        //                         ${options.prefix ? `FILTER contains(lcase(?keyword),'${query}')` : `FILTER (lcase(?keyword) = '${query}')`}
-        //                         ${options.issuers ? `FILTER (?issuer IN (${JSON.stringify(options.issuers).slice(1, -1)}))` : ''}
-        //                         ${options.types ? `FILTER (?type IN (${JSON.stringify(options.types).slice(1, -1)}))` : ''}
-        //                                 }
-        //                                 GROUP BY ?assetId
-        //                                 ${options.limit ? `LIMIT ${options.limit}` : ''}
-        //                             }
-        //                     }`;
-        const sparqlQuery = this.sparqlQuery.findAssetsByKeyword(keyword, options, localQuery);
+        const sparqlQuery = this.sparqlQueryBuilder.findAssetsByKeyword(keyword, options, localQuery);
         let result = await this.execute(sparqlQuery);
         result = JSON.parse(result).results.bindings;
         return result;
