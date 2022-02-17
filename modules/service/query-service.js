@@ -8,6 +8,7 @@ class QueryService {
         this.validationService = ctx.validationService;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
+        this.workerPool = ctx.workerPool;
     }
 
     async resolve(id, load, isAssetRequested, node) {
@@ -30,7 +31,7 @@ class QueryService {
 
     async handleResolve(id) {
         const {nquads, isAsset} = await this.dataService.resolve(id);
-        this.logger.info(`Retrieved data from the database: ${JSON.stringify(nquads)}`);
+        this.logger.info(`Retrieved data from the database: ${await this.workerPool.exec('JSONStringify', [nquads])}`);
 
         if (!nquads)
             return null;
@@ -93,7 +94,7 @@ class QueryService {
         await this.fileService.writeContentsToFile(
             this.fileService.getHandlerIdCachePath(),
             handlerId,
-            JSON.stringify(handlerData),
+            await this.workerPool.exec('JSONStringify', [handlerData]),
         );
 
         await Models.handler_ids.update(
