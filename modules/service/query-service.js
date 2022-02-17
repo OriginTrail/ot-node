@@ -126,7 +126,8 @@ class QueryService {
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
-
+        console.log(request);
+        console.log(response);
         for (const object of response) {
             const assertion = handlerData.find((x) => x.id === object.assertionId);
             if (assertion) {
