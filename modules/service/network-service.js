@@ -6,6 +6,7 @@ class NetworkService {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.rankingService = ctx.rankingService;
+        this.workerPool = ctx.workerPool;
     }
 
     initialize() {
@@ -15,6 +16,7 @@ class NetworkService {
             bootstrapMultiAddress: this.config.network.bootstrap,
             port: this.config.network.port,
             configFilename,
+            workerPool: this.workerPool,
         });
         return this.implementation.initialize(this.logger);
     }
