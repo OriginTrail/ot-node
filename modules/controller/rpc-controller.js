@@ -350,7 +350,7 @@ class RpcController {
                     .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING'
+                        status: 'COMPLETED'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -448,7 +448,7 @@ class RpcController {
 
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING'
+                        status: 'COMPLETED'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -668,7 +668,11 @@ class RpcController {
                     const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                     switch (req.params.operation) {
                         case 'entities:search':
-                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            if (handlerData && handlerData.status === "COMPLETED") {
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }else{
+                                handlerData.data = [];
+                            }
 
                             response = handlerData.data.map((x) => ({
                                 "@type": "EntitySearchResult",
@@ -697,7 +701,11 @@ class RpcController {
                             });
                             break;
                         case 'assertions:search':
-                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            if (handlerData && handlerData.status === "COMPLETED") {
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }else{
+                                handlerData.data = [];
+                            }
 
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "AssertionSearchResult",
