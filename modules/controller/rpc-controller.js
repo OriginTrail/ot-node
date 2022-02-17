@@ -670,8 +670,6 @@ class RpcController {
                         case 'entities:search':
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
-                            }else{
-                                handlerData.data = [];
                             }
 
                             response = handlerData.data.map((x) => ({
@@ -703,8 +701,6 @@ class RpcController {
                         case 'assertions:search':
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
-                            }else{
-                                handlerData.data = [];
                             }
 
                             response = handlerData.data.map(async (x) => ({
