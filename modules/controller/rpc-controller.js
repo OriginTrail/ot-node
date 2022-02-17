@@ -335,15 +335,7 @@ class RpcController {
                 });
 
                 let response;
-                let nodes = [];
                 response = await this.dataService.searchAssertions(query, {limit, prefix}, true);
-                this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
-                let foundNodes = await this.networkService.findNodes(query, this.config.replicationFactor);
-                if (foundNodes.length < this.config.replicationFactor)
-                    this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${query}`);
-                nodes = nodes.concat(foundNodes);
-
-                nodes = [...new Set(nodes)];
                 const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
                 await this.fileService
@@ -358,6 +350,14 @@ class RpcController {
                     },
                 );
 
+                let nodes = [];
+                this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
+                let foundNodes = await this.networkService.findNodes(query, this.config.replicationFactor);
+                if (foundNodes.length < this.config.replicationFactor)
+                    this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${query}`);
+                nodes = nodes.concat(foundNodes);
+
+                nodes = [...new Set(nodes)];
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
                         query,
@@ -670,6 +670,8 @@ class RpcController {
                         case 'entities:search':
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }else{
+                                handlerData.data = [];
                             }
 
                             response = handlerData.data.map((x) => ({
@@ -701,6 +703,8 @@ class RpcController {
                         case 'assertions:search':
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }else{
+                                handlerData.data = [];
                             }
 
                             response = handlerData.data.map(async (x) => ({
