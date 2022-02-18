@@ -3,7 +3,6 @@ const N3 = require('n3');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
-const axios = require('axios');
 
 class DataService {
     constructor(ctx) {
@@ -403,9 +402,14 @@ class DataService {
                 };
                 break;
             case this.constants.ERC721:
-                const result = await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.ERC721}.json`);
-                context = result.data.context;
-                frame = result.data.frame;
+            case this.constants.OTTELEMETRY:
+                context = {
+                    "@context": "https://www.schema.org/"
+                }
+                frame = {
+                    "@context": "https://www.schema.org/",
+                    "@type": type
+                }
                 break;
             default:
                 context = {
