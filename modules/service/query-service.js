@@ -97,16 +97,6 @@ class QueryService {
             await this.workerPool.exec('JSONStringify', [handlerData]),
         );
 
-        await Models.handler_ids.update(
-            {
-                status: 'PENDING',
-            }, {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
-        );
-
         return true;
     }
 
@@ -153,16 +143,6 @@ class QueryService {
             this.fileService.getHandlerIdCachePath(),
             handlerId,
             JSON.stringify(handlerData),
-        );
-
-        await Models.handler_ids.update(
-            {
-                status: 'PENDING',
-            }, {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
         );
 
         return true;

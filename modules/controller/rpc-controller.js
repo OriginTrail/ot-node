@@ -60,6 +60,12 @@ class RpcController {
             }
         }
 
+        this.app.use(function(req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
+
         this.app.use(ipfilter(formattedWhitelist,
             {
                 mode: 'allow',
@@ -209,6 +215,7 @@ class RpcController {
                                 type: 'asset',
                                 id: assertion.jsonld.metadata.UALs[0],
                                 result: {
+                                    assertions: await this.dataService.assertionsByAsset(assertion.jsonld.metadata.UALs[0]),
                                     metadata: {
                                         type: assertion.jsonld.metadata.type,
                                         issuer: assertion.jsonld.metadata.issuer,
@@ -238,6 +245,7 @@ class RpcController {
                                         type: 'asset',
                                         id: assertion.jsonld.metadata.UALs[0],
                                         result: {
+                                            assertions: await this.dataService.assertionsByAsset(assertion.jsonld.metadata.UALs[0]),
                                             metadata: {
                                                 type: assertion.jsonld.metadata.type,
                                                 issuer: assertion.jsonld.metadata.issuer,
@@ -326,22 +334,14 @@ class RpcController {
                 });
 
                 let response;
-                let nodes = [];
                 response = await this.dataService.searchAssertions(query, {limit, prefix}, true);
-                this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
-                let foundNodes = await this.networkService.findNodes(query, this.config.replicationFactor);
-                if (foundNodes.length < this.config.replicationFactor)
-                    this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${query}`);
-                nodes = nodes.concat(foundNodes);
-
-                nodes = [...new Set(nodes)];
                 const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
                 await this.fileService
                     .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING'
+                        status: 'COMPLETED'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -349,6 +349,14 @@ class RpcController {
                     },
                 );
 
+                let nodes = [];
+                this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
+                let foundNodes = await this.networkService.findNodes(query, this.config.replicationFactor);
+                if (foundNodes.length < this.config.replicationFactor)
+                    this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${query}`);
+                nodes = nodes.concat(foundNodes);
+
+                nodes = [...new Set(nodes)];
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
                         query,
@@ -439,7 +447,7 @@ class RpcController {
 
                 await Models.handler_ids.update(
                     {
-                        status: 'PENDING'
+                        status: 'COMPLETED'
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -645,7 +653,11 @@ class RpcController {
                     const documentPath = this.fileService.getHandlerIdDocumentPath(handler_id);
                     switch (req.params.operation) {
                         case 'entities:search':
-                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            if (handlerData && handlerData.status === "COMPLETED") {
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }else{
+                                handlerData.data = [];
+                            }
 
                             response = handlerData.data.map((x) => ({
                                 "@type": "EntitySearchResult",
@@ -674,7 +686,11 @@ class RpcController {
                             });
                             break;
                         case 'assertions:search':
-                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            if (handlerData && handlerData.status === "COMPLETED") {
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }else{
+                                handlerData.data = [];
+                            }
 
                             response = handlerData.data.map(async (x) => ({
                                 "@type": "AssertionSearchResult",
@@ -704,7 +720,7 @@ class RpcController {
                             });
                             break;
                         case 'resolve':
-                            if (handlerData) {
+                            if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
                             }
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
@@ -712,7 +728,7 @@ class RpcController {
                         case 'provision':
                         case 'publish':
                         case 'update':
-                            if (handlerData) {
+                            if (handlerData && handlerData.status === "COMPLETED") {
                                 const result = await this.fileService.loadJsonFromFile(documentPath);
                                 delete result.assertion.data;
                                 handlerData.data = result.assertion;
@@ -720,7 +736,10 @@ class RpcController {
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                         default:
-                            handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            if (handlerData && handlerData.status === "COMPLETED") {
+                                handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            }
+
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                     }
@@ -762,20 +781,31 @@ class RpcController {
     }
 
     async publish(req, res, next, options) {
-        if (!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') {
-            return next({code: 400, message: 'Assertion file is required field and must be in JSON-LD format.'});
-            //TODO determine file size limit
-        } else if (req.files.file.size > constants.MAX_FILE_SIZE) {
+        if ((!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') && (!req.body.data)) {
+            return next({code: 400, message: 'No data provided. It is required to have assertion file or data in body, they must be in JSON-LD format.'});
+        }
+
+        if (req.files && req.files.file && req.files.file.size > constants.MAX_FILE_SIZE) {
             return next({
                 code: 400,
                 message: `File size limit is 25MB.`
             });
-        } else if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
+        }
+
+        if (req.body && req.body.data && Buffer.byteLength(req.body.data, "utf-8") > constants.MAX_FILE_SIZE) {
+            return next({
+                code: 400,
+                message: `File size limit is 25MB.`
+            });
+        }
+
+        if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
             return next({
                 code: 400,
                 message: `Keywords must be a non-empty array of strings, all strings must have double quotes.`
             });
-        } else if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
+        }
+        if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
             return next({
                 code: 400,
                 message: `Visibility must be a string, value can be public or private.`
@@ -798,8 +828,15 @@ class RpcController {
         res.status(202).send({
             handler_id: handlerId,
         });
-        const fileContent = req.files.file.data;
-        const fileExtension = path.extname(req.files.file.name).toLowerCase();
+        let fileContent,fileExtension;
+        if (req.files) {
+            fileContent = req.files.file.data;
+            fileExtension = path.extname(req.files.file.name).toLowerCase();
+        }
+        else{
+            fileContent = req.body.data
+            fileExtension = '.json'
+        }
         const visibility = req.body.visibility ? req.body.visibility.toLowerCase() : 'public';
         const ual = options.isAsset ? options.ual : undefined;
 
