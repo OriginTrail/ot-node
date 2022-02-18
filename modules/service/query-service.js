@@ -13,8 +13,7 @@ class QueryService {
 
     async resolve(id, load, isAssetRequested, node) {
         let result = await this.networkService.sendMessage('/resolve', id, node);
-
-        if (!result) {
+        if (!result || (Array.isArray(result) && result[0] === "ack")) {
             return null;
         }
 
@@ -27,7 +26,7 @@ class QueryService {
             await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
             this.logger.info(`Assertion ${assertion.jsonld.metadata.id} has been successfully inserted`);
         }
-        return status ? {assertion, isAsset} : null;
+        return status ? { assertion, isAsset } : null;
     }
 
     async handleResolve(id) {
