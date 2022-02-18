@@ -18,12 +18,13 @@ class QueryService {
             return null;
         }
 
-        const {nquads, isAsset} = result;
-        let assertion = await this.dataService.createAssertion(nquads);
+        const { isAsset } = result;
+        const rawNquads = result.nquads ? result.nquads : result;
+        let assertion = await this.dataService.createAssertion(rawNquads);
         const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads, {isAsset: isAssetRequested});
 
         if (status && load) {
-            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
+            await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
             this.logger.info(`Assertion ${assertion.jsonld.metadata.id} has been successfully inserted`);
         }
         return status ? {assertion, isAsset} : null;
@@ -60,7 +61,8 @@ class QueryService {
         for (const assertion of response) {
             if (!assertion || !assertion.nquads) continue;
 
-            const { jsonld, nquads } = await this.dataService.createAssertion(assertion.nquads);
+            const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
+            const { jsonld, nquads } = await this.dataService.createAssertion(rawNquads);
             let object = handlerData.find(x => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
             if (!object) {
                 object = {
@@ -136,8 +138,8 @@ class QueryService {
             } else {
                 if (!object || !object.nquads)
                     continue
-
-                const assertion = await this.dataService.createAssertion(object.nquads);
+                const rawNquads = object.nquads ? object.nquads : object.rdf;
+                const assertion = await this.dataService.createAssertion(rawNquads);
 
                 handlerData.push({
                     id: assertion.jsonld.id,
