@@ -223,6 +223,10 @@ class Libp2pService {
             },
         )
 
+        if(response.toString() === 'ack') {
+            return null;
+        }
+
         return JSON.parse(response);
     }
 
