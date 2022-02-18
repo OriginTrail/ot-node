@@ -84,14 +84,13 @@ class PublishService {
     }
 
     async handleStore(data) {
-        if (!data) return false;
-        const rawNquads = data.nquads ? data.nquads : data.rdf;
-        const { jsonld, nquads } = await this.dataService.createAssertion(rawNquads);
+        if (!data || data.rdf) return false;
+        const { jsonld, nquads } = await this.dataService.createAssertion(data.nquads);
         const status = await this.dataService.verifyAssertion(jsonld, nquads);
 
         // todo check root hash on the blockchain
         if (status) {
-            await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
+            await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
             this.logger.info(`Assertion ${data.id} has been successfully inserted`);
         }
         return status;
