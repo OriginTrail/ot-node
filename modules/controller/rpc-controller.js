@@ -12,7 +12,6 @@ const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
 const Utilities = require('../utilities');
-const N3 = require('n3');
 
 class RpcController {
     constructor(ctx) {
@@ -66,19 +65,19 @@ class RpcController {
             res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
             next();
         });
-        // TODO TO BE REVERTED BEFORE MERGE
-        // this.app.use(ipfilter(formattedWhitelist,
-        //     {
-        //         mode: 'allow',
-        //         log: false,
-        //     }));
-        //
-        // this.app.use((error, req, res, next) => {
-        //     if (error instanceof IpDeniedError) {
-        //         return res.status(401).send('Access denied')
-        //     }
-        //     return next();
-        // });
+
+        this.app.use(ipfilter(formattedWhitelist,
+            {
+                mode: 'allow',
+                log: false,
+            }));
+
+        this.app.use((error, req, res, next) => {
+            if (error instanceof IpDeniedError) {
+                return res.status(401).send('Access denied')
+            }
+            return next();
+        });
 
         this.app.use((req, res, next) => {
             this.logger.info(`${req.method}: ${req.url} request received`);
@@ -512,21 +511,7 @@ class RpcController {
                 });
                 try {
                     let response = await this.dataService.runQuery(req.body.query, req.query.type.toUpperCase());
-                    const quads = [];
-                    const N3Parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
-                    await N3Parser.parse(
-                        response.join('\n'),
-                        (error, quad, prefixes) => {
-                            if (quad) {
-                                quads.push({
-                                    subject: quad._subject.id,
-                                    predicate: quad.predicate.id,
-                                    object: quad.object.id
-                                });
-                            }
-                        },
-                    );
-                    response = quads;
+
                     const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
                     if (response) {
                         await this.fileService
@@ -796,12 +781,31 @@ class RpcController {
     }
 
     async publish(req, res, next, options) {
+        if ((!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') && (!req.body.data)) {
+            return next({code: 400, message: 'No data provided. It is required to have assertion file or data in body, they must be in JSON-LD format.'});
+        }
+
+        if (req.files && req.files.file && req.files.file.size > constants.MAX_FILE_SIZE) {
+            return next({
+                code: 400,
+                message: `File size limit is 25MB.`
+            });
+        }
+
+        if (req.body && req.body.data && Buffer.byteLength(req.body.data, "utf-8") > constants.MAX_FILE_SIZE) {
+            return next({
+                code: 400,
+                message: `File size limit is 25MB.`
+            });
+        }
+
         if (req.body.keywords && !Utilities.isArrayOfStrings(req.body.keywords)) {
             return next({
                 code: 400,
                 message: `Keywords must be a non-empty array of strings, all strings must have double quotes.`
             });
-        } else if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
+        }
+        if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
             return next({
                 code: 400,
                 message: `Visibility must be a string, value can be public or private.`

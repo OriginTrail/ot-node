@@ -15,6 +15,8 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
+        this.N3Parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
+
     }
 
     getName() {
@@ -374,6 +376,21 @@ class DataService {
                 default:
                     throw Error('Query type not supported');
             }
+            const quads = [];
+            await this.N3Parser.parse(
+                result.join('\n'),
+                (error, quad, prefixes) => {
+                    if (quad) {
+                        quads.push({
+                            subject: quad._subject.id,
+                            predicate: quad.predicate.id,
+                            object: quad.object.id
+                        });
+                    }
+                },
+            );
+            result = quads;
+
             return result;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
