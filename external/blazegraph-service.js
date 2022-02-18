@@ -140,6 +140,21 @@ class BlazegraphService {
         return { nquads, isAsset };
     }
 
+
+    async assertionsByAsset(uri) {
+        const query = `PREFIX schema: <http://schema.org/>
+            SELECT ?assertionId ?issuer ?timestamp
+            WHERE {
+                 ?assertionId schema:hasUALs "${uri}" ;
+                     schema:hasTimestamp ?timestamp ;
+                     schema:hasIssuer ?issuer .
+            }
+            ORDER BY DESC(?timestamp)`;
+        let result = await this.execute(query);
+
+        return result.results.bindings;
+    }
+
     async findAssertions(nquads) {
         const query = `SELECT ?g
                        WHERE {
