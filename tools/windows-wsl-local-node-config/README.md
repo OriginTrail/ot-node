@@ -11,25 +11,17 @@ This tool will generate configuration files for mulitple OriginTrail nodes, allo
 
 * A Windows Subsystem for Linux (WSL) environment running Ubuntu 20.04, and configured for OT-Node development.
   * See document: **How to setup a Windows development environment** (currently in review)
+* A `.env` file in the ot-node root folder contianing public and private keys for the polygon blockchain:
+    ```dotenv
+    NODE_ENV=development
+    PUBLIC_KEY=<insert_here>
+    PRIVATE_KEY=<insert_here>
+    ```
 
 Usage
 =====
 
-## 1. (Optional) Specify an existing Network Private Key 
-
-By default, this script will generate a new network private key and node network id when run.
-
-If you'd prefer to run your bootstrap node using an existing node network id, update the template file `bootstrap_node_template` to include the network private key for the node id you'd like to use: 
-
-```json
-{
-    "network": {
-        "privateKey": "CAAS4QQwggJdAgEAAoGBALi8aRb/F4QzgIu+dHaarjpTfVWP3iLumayul7MDunoYBbkg5FOBhq5i/M0p0J1sLMLXEPV/jlkKklVCOdsDdq/49rHT85fnHcQmkuOVas3HYr8ahigdVJkiYSgOZK25LVzNE0Mpa6Fa9lk2ze41YD56Xhw0LJQEqpZx6DHjvwpDAgMBAAECgYEAoiP0FNQGHulZLM4XyPWRL+4xdlSUgpJq3O5MhTmDhT/qXgdpf4WS4SJOgf/ucw0L6GL9JowzMyGdOCmtP/Y1R1WcUBireq/55+swdTy83k5ti6yljS31QUeSIDyF8efzZjGLwkW/J2eh+nFomKdm1IT6k3zvG6K9rFx4ttg1QcECQQDouurQNJWCk8I1DjrgOJ+g4dTDK3gDMPpvc5n2VVwJn1RH0Hh4cewz5VWAsm1NQnwlERAjP/sWwLDI8VLAyFDhAkEAyzUCaWcq0u2H/lfPFqUOwUI6nWsREqWdbCK+kifHCvc0FgYApcM5LLQfT9sc2777B5N/SwFzOruzMK3VD5XrowJANnavxwPXTVSY6WOoIZr+uF7BNN9yWYTXxsdN65j0TggsaX11A/LdLRPpW5HmBGOfu+jvVuB9OUjk1lGrZRQ74QJAHqJnMqyy8AmPLvDd73QCvW/WllTFxiHhkaPLRw1oGzJZT9in0FWWEP82mTtXJmmsPoAl+JDHZltVsEkEjcz0MQJBAMmOAQPqwipaX7XhmYOyNqQ3ccsWv7c960KKl5bX+2qeDNxpsrHjvXWDXt6yK1U6FRvvKYEkDEa/LPFmGXOVQpB="
-    }
-}
-```
-
-## 2. <a href="#steptwo"></a>Create Node Configuration
+## 1. <a href="#steptwo"></a>Create Node Configuration
 
 From the ot-node directory (in WSL), run the below command
 
@@ -48,7 +40,6 @@ And for three DH nodes:
 .dh2_origintrail_noderc
 .dh3_origintrail_noderc
 ```
-**Note:** It's not required to run the bootstrap node if you are already running a local DC node in development, and are using the DC network private key for config creation. See step 1.
 
 ### Specifying the number of nodes
 
