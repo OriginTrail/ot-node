@@ -131,7 +131,7 @@ class BlazegraphService {
 
         if (nquads.length) {
             nquads = nquads.toString();
-            nquads = nquads.replace(/_:t\d+/gm, '_:c14n$1');
+            nquads = nquads.replace(/_:t(\d+)/gm, '_:c14n$1');
             nquads = nquads.split('\n');
             nquads = nquads.filter((x) => x !== '');
         } else {
