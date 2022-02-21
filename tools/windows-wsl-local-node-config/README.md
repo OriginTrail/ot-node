@@ -51,7 +51,7 @@ bash tools/windows-wsl-local-node-config/create-windows-node-configuration.sh --
 
 The first node will be named `bootstrap`, while subsequent nodes will be named `dh1, dh2, ...`.
 
-## 3. Running the nodes
+## 2. Running the nodes
 
 Once the configuration has been created, open a new WSL terminal window for each node you want to start and from your ot-node directory, execute:
 
