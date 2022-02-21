@@ -118,33 +118,33 @@ class QueryService {
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
+        if (response !== undefined && response.length && handlerData) {
+            for (const object of response) {
+                const assertion = handlerData.find((x) => x.id === object.assertionId);
+                if (assertion) {
+                    if (assertion.nodes.indexOf(object.node) === -1)
+                        assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
+                } else {
+                    if (!object || !object.nquads)
+                        continue
+                    const rawNquads = object.nquads ? object.nquads : object.rdf;
+                    const assertion = await this.dataService.createAssertion(rawNquads);
 
-        for (const object of response) {
-            const assertion = handlerData.find((x) => x.id === object.assertionId);
-            if (assertion) {
-                if (assertion.nodes.indexOf(object.node) === -1)
-                    assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
-            } else {
-                if (!object || !object.nquads)
-                    continue
-                const rawNquads = object.nquads ? object.nquads : object.rdf;
-                const assertion = await this.dataService.createAssertion(rawNquads);
-
-                handlerData.push({
-                    id: assertion.jsonld.id,
-                    metadata: assertion.jsonld.metadata,
-                    signature: assertion.jsonld.signature,
-                    nodes: [object.node]
-                })
+                    handlerData.push({
+                        id: assertion.jsonld.id,
+                        metadata: assertion.jsonld.metadata,
+                        signature: assertion.jsonld.signature,
+                        nodes: [object.node]
+                    })
+                }
             }
+
+            await this.fileService.writeContentsToFile(
+                this.fileService.getHandlerIdCachePath(),
+                handlerId,
+                JSON.stringify(handlerData),
+            );
         }
-
-
-        await this.fileService.writeContentsToFile(
-            this.fileService.getHandlerIdCachePath(),
-            handlerId,
-            JSON.stringify(handlerData),
-        );
 
         return true;
     }
