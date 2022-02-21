@@ -72,6 +72,17 @@ class SparqlQueryBuilder {
                         }
                 }`;
     }
+
+    findAssertionsByUAL(ual) {
+        return `PREFIX schema: <http://schema.org/>
+            SELECT ?assertionId ?issuer ?timestamp
+            WHERE {
+                 ?assertionId schema:hasUALs "${ual}" ;
+                     schema:hasTimestamp ?timestamp ;
+                     schema:hasIssuer ?issuer .
+            }
+            ORDER BY DESC(?timestamp)`;
+    }
 }
 
 module.exports = SparqlQueryBuilder;

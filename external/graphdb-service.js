@@ -141,18 +141,9 @@ class GraphdbService {
         return { nquads, isAsset };
     }
 
-
     async assertionsByAsset(uri) {
-        const query = `PREFIX schema: <http://schema.org/>
-            SELECT ?assertionId ?issuer ?timestamp
-            WHERE {
-                 ?assertionId schema:hasUALs "${uri}" ;
-                     schema:hasTimestamp ?timestamp ;
-                     schema:hasIssuer ?issuer .
-            }
-            ORDER BY DESC(?timestamp)`;
-        let result = await this.execute(query);
-
+        const sparqlQuery = this.sparqlQueryBuilder.findAssertionsByUAL(uri);
+        const result = await this.execute(sparqlQuery);
         return JSON.parse(result).results.bindings;
     }
 
