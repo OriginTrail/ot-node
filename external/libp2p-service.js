@@ -173,9 +173,9 @@ class Libp2pService {
                 if (!async) {
                     const result = await handler(data);
                     this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
-
+                    const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
                     await pipe(
-                        [JSON.stringify(result)],
+                        [Buffer.from(stringifiedData)],
                         stream,
                     )
                 } else {
