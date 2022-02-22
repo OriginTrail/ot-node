@@ -79,9 +79,14 @@ class DataService {
                     throw new Error(`File format is corrupted, no n-quads extracted.`);
                 }
 
-                let type = assertion.data['@type'];
-                delete assertion.data['@type'];
-                if (!type) {
+                let type;
+                if (assertion.data['@type']) {
+                    type = assertion.data['@type'];
+                    delete assertion.data['@type'];
+                } else if (assertion.data['type']) {
+                    type = assertion.data['type'];
+                    delete assertion.data['type'];
+                }else {
                     type = 'default';
                 }
                 assertion.metadata.type = type;
