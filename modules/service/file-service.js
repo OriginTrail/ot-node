@@ -25,14 +25,17 @@ class FileService {
                     reject(err);
                 } else {
                     const fullpath = path.join(directory, filename);
-
-                    fs.writeFile(fullpath, data, (err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(fullpath);
-                        }
-                    });
+                    try {
+                        fs.writeFile(fullpath, data, (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(fullpath);
+                            }
+                        });
+                    } catch (e) {
+                        reject(e);
+                    }
                 }
             });
         });

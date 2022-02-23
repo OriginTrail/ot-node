@@ -12,19 +12,6 @@ clear
 
 cd /root
 
-echo -n "Checking that the GraphDB file is present in /root: "
-
-if [[ ! -f $GRAPHDB_FILE ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "The graphdb file needs to be downloaded to /root. Please create an account at https://www.ontotext.com/products/graphdb/graphdb-free/ and click the standalone version link in the email."
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-# Switch to /root
-cd
-
 echo -n "Updating Ubuntu package repository: "
 
 OUTPUT=$(apt update >/dev/null 2>&1)
@@ -64,70 +51,164 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Unzipping GraphDB: "
-OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
+while true; do
+    read -p "Please select the database you would like to use: [1]GraphDB [2]Blazegraph [E]xit: " choice
+    case "$choice" in
+        [1gG]* ) echo -e "GraphDB selected. Proceeding with installation."; DATABASE=graphdb; break;;
+        [2bB]* ) echo -e "Blazegraph selected. Proceeding with installation."; DATABASE=blazegraph; break;;
+        [Ee]* ) echo "Installer stopped by user"; exit;;
+        * ) echo "Please make a valid choice and try again.";;
+    esac
+done
 
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error unzipping GraphDB."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
+if [[ $DATABASE = "graphdb" ]]; then
+    
+    echo -n "Checking that the GraphDB file is present in /root: "
+
+    if [[ ! -f $GRAPHDB_FILE ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "The graphdb file needs to be downloaded to /root. Please create an account at https://www.ontotext.com/products/graphdb/graphdb-free/ and click the standalone version link in the email."
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Unzipping GraphDB: "
+    
+    OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error unzipping GraphDB."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Copying graphdb service file: "
+
+    OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error copying the graphdb service file."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    systemctl daemon-reload
+
+    echo -n "Enable GraphDB service on boot: "
+
+    OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error enabling the GraphDB service."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Starting GraphDB: "
+
+    OUTPUT=$(systemctl start graphdb >/dev/null 2>&1)
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error starting GraphDB."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Confirming GraphDB has started: "
+
+    IS_RUNNING=$(systemctl show -p ActiveState --value graphdb)
+
+    if [[ $IS_RUNNING == "active" ]]; then
+        echo -e "${GREEN}SUCCESS${NC}"
+    else
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error starting GraphDB."
+        echo $OUTPUT
+        exit 1
+    fi
 fi
 
-echo -n "Copying graphdb service file: "
+if [[ $DATABASE = "blazegraph" ]]; then
+    
+    echo -n "Downloading Blazegraph: " 
 
-OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
+    OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.jar 2>&1)
 
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error copying the graphdb service file."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error downloading Blazegraph."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
 
-systemctl daemon-reload
+    echo -n "Copying blazegraph service file: "
 
-echo -n "Enable GraphDB service on boot: "
+    OUTPUT=$(cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ >/dev/null 2>&1)
 
-OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error copying the blazegraph service file."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
 
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error enabling the GraphDB service."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+    systemctl daemon-reload
 
-echo -n "Starting GraphDB: "
+    echo -n "Enable Blazegraph service on boot: "
 
-OUTPUT=$(systemctl start graphdb >/dev/null 2>&1)
+    OUTPUT=$(systemctl enable blazegraph >/dev/null 2>&1)
 
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error starting GraphDB."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error enabling Blazegraph."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
 
-echo -n "Confirming GraphDB has started: "
+    echo -n "Starting Blazegraph: "
 
-IS_RUNNING=$(systemctl show -p ActiveState --value graphdb)
+    OUTPUT=$(systemctl start blazegraph >/dev/null 2>&1)
 
-if [[ $IS_RUNNING == "active" ]]; then
-    echo -e "${GREEN}SUCCESS${NC}"
-else
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error starting GraphDB."
-    echo $OUTPUT
-    exit 1
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error starting Blazegraph."
+        echo $OUTPUT
+        exit 1
+    else
+        echo -e "${GREEN}SUCCESS${NC}"
+    fi
+
+    echo -n "Confirming Blazegraph has started: "
+
+    IS_RUNNING=$(systemctl show -p ActiveState --value blazegraph)
+
+    if [[ $IS_RUNNING == "active" ]]; then
+        echo -e "${GREEN}SUCCESS${NC}"
+    else
+        echo -e "${RED}FAILED${NC}"
+        echo "There was an error starting Blazegraph."
+        echo $OUTPUT
+        exit 1
+    fi
 fi
 
 echo -n "Downloading Node.js v14: "
@@ -206,7 +287,7 @@ fi
 
 echo -n "Creating a local operational database: "
 
-mysql -u root  -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
+mysql -u root -e "CREATE DATABASE operationaldb /*\!40100 DEFAULT CHARACTER SET utf8 */;"
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error creating the database (Step 1 of 3)."
@@ -334,6 +415,11 @@ mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
 
 jq --arg newval "$NODE_PRIVATE_KEY" '.blockchain[].privateKey |= $newval' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
 mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+
+if [[ $DATABASE = "blazegraph" ]]; then
+    jq '.graphDatabase |= {"implementation": "Blazegraph", "url": "http://localhost:9999/blazegraph"} + .' $OTNODE_DIR/.origintrail_noderc >> $OTNODE_DIR/origintrail_noderc_temp
+    mv $OTNODE_DIR/origintrail_noderc_temp $OTNODE_DIR/.origintrail_noderc
+fi
 
 echo -n "Running DB migrations: "
 

@@ -73,6 +73,7 @@ class Libp2pService {
             }
 
             initializationObject.peerId = this.config.peerId;
+            this.workerPool = this.config.workerPool;
 
             Libp2p.create(initializationObject).then((node) => {
                 this.node = node;
@@ -166,21 +167,20 @@ class Libp2pService {
                     return bl;
                 }
             )
-
             try {
-                data = JSON.parse(data);
+                data = await this.workerPool.exec('JSONParse', [data.toString()]);
                 this.logger.info(`Receiving message from ${handlerProps.connection.remotePeer._idB58String} to ${this.config.id}: event=${eventName};`);
                 if (!async) {
                     const result = await handler(data);
                     this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
-
+                    const stringifiedData = await this.workerPool.exec('JSONStringify', [result]);
                     await pipe(
-                        [JSON.stringify(result)],
+                        [Buffer.from(stringifiedData)],
                         stream,
                     )
                 } else {
                     await pipe(
-                        [JSON.stringify(['ack'])],
+                        ['ack'],
                         stream
                     )
 
@@ -198,7 +198,7 @@ class Libp2pService {
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
                 await pipe(
-                    [JSON.stringify(['ack'])],
+                    ['ack'],
                     stream
                 )
 
@@ -209,8 +209,9 @@ class Libp2pService {
     async sendMessage(eventName, data, peerId) {
         this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName};`);
         const {stream} = await this.node.dialProtocol(peerId, eventName);
+        const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
         const response = await pipe(
-            [JSON.stringify(data)],
+            [Buffer.from(stringifiedData)],
             stream,
             async function (source) {
                 const bl = new BufferList()
@@ -221,6 +222,10 @@ class Libp2pService {
                 return bl;
             },
         )
+
+        if(response.toString() === 'ack') {
+            return null;
+        }
 
         return JSON.parse(response);
     }

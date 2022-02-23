@@ -1,9 +1,8 @@
-const { v1: uuidv1 } = require('uuid');
+const {v1: uuidv1} = require('uuid');
 const N3 = require('n3');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
-const axios = require('axios');
 
 class DataService {
     constructor(ctx) {
@@ -15,6 +14,8 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
+        this.N3Parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
+
     }
 
     getName() {
@@ -78,9 +79,14 @@ class DataService {
                     throw new Error(`File format is corrupted, no n-quads extracted.`);
                 }
 
-                let type = assertion.data['@type'];
-                delete assertion.data['@type'];
-                if (!type) {
+                let type;
+                if (assertion.data['@type']) {
+                    type = assertion.data['@type'];
+                    delete assertion.data['@type'];
+                } else if (assertion.data['type']) {
+                    type = assertion.data['type'];
+                    delete assertion.data['type'];
+                }else {
                     type = 'default';
                 }
                 assertion.metadata.type = type;
@@ -116,11 +122,25 @@ class DataService {
         }
     }
 
+    async assertionsByAsset(id) {
+        try {
+            let assertions = await this.implementation.assertionsByAsset(id);
+
+            return assertions.map(x => ({
+                id: x.assertionId.value.slice(8),
+                issuer: x.issuer.value,
+                timestamp: x.timestamp.value
+            }));
+        } catch (e) {
+            this.handleUnavailableTripleStoreError(e);
+        }
+    }
+
     async createAssertion(rawNQuads) {
         const metadata = [];
         const data = [];
         const nquads = [];
-        rawNQuads.forEach((nquad)=>{
+        rawNQuads.forEach((nquad) => {
             if (nquad.startsWith(`<${constants.DID_PREFIX}:`))
                 metadata.push(nquad);
             else
@@ -167,8 +187,11 @@ class DataService {
                 }
 
                 if (assertion.metadata.visibility) {
-                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))){
-                        const {issuer, assertionId} = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
+                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))) {
+                        const {
+                            issuer,
+                            assertionId
+                        } = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
                                 msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
@@ -185,7 +208,7 @@ class DataService {
                             });
                             return resolve(false);
                         }
-                    } else{
+                    } else {
                         const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
                         const {rootHash, issuer} = await this.blockchainService.getAssertionProofs(assertion.id);
                         if (rootHash !== `0x${calculateRootHash}`) {
@@ -357,6 +380,21 @@ class DataService {
                 default:
                     throw Error('Query type not supported');
             }
+            const quads = [];
+            await this.N3Parser.parse(
+                result.join('\n'),
+                (error, quad, prefixes) => {
+                    if (quad) {
+                        quads.push({
+                            subject: quad._subject.id,
+                            predicate: quad.predicate.id,
+                            object: quad.object.id
+                        });
+                    }
+                },
+            );
+            result = quads;
+
             return result;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
@@ -381,7 +419,7 @@ class DataService {
         let context;
         let
             frame;
-        switch (type) {
+        switch (type.toLowerCase()) {
             case this.constants.GS1EPCIS:
                 context = {
                     '@context': [
@@ -402,10 +440,15 @@ class DataService {
                     isA: 'EPCISDocument',
                 };
                 break;
-            case this.constants.NFT:
-                const result = await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.NFT}.json`);
-                context = result.data.context;
-                frame = result.data.frame;
+            case this.constants.ERC721:
+            case this.constants.OTTELEMETRY:
+                context = {
+                    "@context": "https://www.schema.org/"
+                }
+                frame = {
+                    "@context": "https://www.schema.org/",
+                    "@type": type
+                }
                 break;
             default:
                 context = {
@@ -473,7 +516,7 @@ class DataService {
 
     async extractMetadata(rdf) {
         return new Promise(async (accept, reject) => {
-            const parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+            const parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
             const result = {
                 metadata: {
                     keywords: [],
