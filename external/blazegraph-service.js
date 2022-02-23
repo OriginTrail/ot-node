@@ -131,15 +131,45 @@ class BlazegraphService {
 
         if (nquads.length) {
             nquads = nquads.toString();
-            nquads = nquads.replace(/_:t(\d+)/gm, '_:c14n$1');
             nquads = nquads.split('\n');
             nquads = nquads.filter((x) => x !== '');
+            await this.transformBlankNodes(nquads);
         } else {
             nquads = null;
         }
         return { nquads, isAsset };
     }
 
+    async transformBlankNodes(nquads) {
+        // Find minimum blank node value to assign it to _:c14n0
+        let minimumBlankNodeValue = -1;
+        for (const nquad of nquads) {
+            if (nquad.includes('_:t')) {
+                const blankNodes = nquad.split(' ').filter((s) => s.includes('_:t'));
+                for (const bn of blankNodes) {
+                    const bnValue = Number(bn.substring(3));
+                    if (minimumBlankNodeValue === -1 || minimumBlankNodeValue > bnValue) {
+                        minimumBlankNodeValue = bnValue;
+                    }
+                }
+            }
+        }
+
+        // Transform blank nodes, example: _:t145 -> _:c14n3
+        let bnName;
+        for (let nquad of nquads) {
+            if (nquad.includes('_:t')) {
+                const blankNodes = nquad.split(' ').filter((s) => s.includes('_:t'));
+                for (const bn of blankNodes) {
+                    const bnValue = Number(bn.substring(3));
+                    bnName = `_:c14n${bnValue - minimumBlankNodeValue}`;
+                    nquad = nquad.replace(bn, bnName);
+                }
+            }
+        }
+
+        return nquads;
+    }
 
     async assertionsByAsset(uri) {
         const query = `PREFIX schema: <http://schema.org/>
@@ -150,7 +180,7 @@ class BlazegraphService {
                      schema:hasIssuer ?issuer .
             }
             ORDER BY DESC(?timestamp)`;
-        let result = await this.execute(query);
+        const result = await this.execute(query);
 
         return result.results.bindings;
     }
