@@ -1,5 +1,6 @@
 exports.GS1EPCIS = 'gs1-epcis';
 exports.ERC721 = 'erc721';
+exports.OTTELEMETRY = 'ottelemetry';
 exports.MERKLE_TREE = 'Merkle Tree';
 exports.BASIC = 'Basic';
 exports.DID = 'DID';

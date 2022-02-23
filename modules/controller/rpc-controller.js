@@ -205,7 +205,6 @@ class RpcController {
                         id = assertionId;
                     }
                     const result = await this.dataService.resolve(id, true);
-
                     if (result && result.nquads) {
                         let {nquads} = result;
                         let assertion = await this.dataService.createAssertion(nquads);
@@ -236,30 +235,38 @@ class RpcController {
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
                         nodes = [...new Set(nodes)];
                         for (const node of nodes) {
-                            const result = await this.queryService.resolve(id, req.query.load, isAsset, node);
-                            if (result) {
-                                const {assertion} = result;
-                                assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
-                                assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
-                                response.push(isAsset ? {
-                                        type: 'asset',
-                                        id: assertion.jsonld.metadata.UALs[0],
-                                        result: {
-                                            assertions: await this.dataService.assertionsByAsset(assertion.jsonld.metadata.UALs[0]),
-                                            metadata: {
-                                                type: assertion.jsonld.metadata.type,
-                                                issuer: assertion.jsonld.metadata.issuer,
-                                                latestState: assertion.jsonld.metadata.timestamp,
-                                            },
-                                            data: assertion.jsonld.data
+                            try {
+                                const result = await this.queryService.resolve(id, req.query.load, isAsset, node);
+                                if (result) {
+                                    const {assertion} = result;
+                                    assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
+                                    assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
+                                    response.push(isAsset ? {
+                                            type: 'asset',
+                                            id: assertion.jsonld.metadata.UALs[0],
+                                            result: {
+                                                metadata: {
+                                                    type: assertion.jsonld.metadata.type,
+                                                    issuer: assertion.jsonld.metadata.issuer,
+                                                    latestState: assertion.jsonld.metadata.timestamp,
+                                                },
+                                                data: assertion.jsonld.data
+                                            }
+                                        } : {
+                                            type: 'assertion',
+                                            id: id,
+                                            assertion: assertion.jsonld
                                         }
-                                    } : {
-                                        type: 'assertion',
-                                        id: id,
-                                        assertion: assertion.jsonld
-                                    }
-                                );
-                                break;
+                                    );
+                                    break;
+                                }
+                            } catch (e) {
+                                this.logger.error({
+                                    msg: `Error while resolving data from another node: ${e.message}. ${e.stack}`,
+                                    Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
+                                    Event_value1: e.message,
+                                    Id_operation: operationId,
+                                });
                             }
                         }
                     }
@@ -586,7 +593,8 @@ class RpcController {
                 for (const assertionId of assertions) {
                     const content = await this.dataService.resolve(assertionId);
                     if (content) {
-                        const { nquads } = await this.dataService.createAssertion(content.nquads);
+                        const rawNquads = content.nquads ? content.nquads : content.rdf;
+                        const { nquads } = await this.dataService.createAssertion(rawNquads);
                         const proofs = await this.validationService.getProofs(nquads, reqNquads);
                         result.push({ assertionId, proofs });
                     }

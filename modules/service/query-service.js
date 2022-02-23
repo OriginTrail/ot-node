@@ -13,20 +13,20 @@ class QueryService {
 
     async resolve(id, load, isAssetRequested, node) {
         let result = await this.networkService.sendMessage('/resolve', id, node);
-
-        if (!result) {
+        if (!result || (Array.isArray(result) && result[0] === "ack")) {
             return null;
         }
 
-        const {nquads, isAsset} = result;
-        let assertion = await this.dataService.createAssertion(nquads);
+        const { isAsset } = result;
+        const rawNquads = result.nquads ? result.nquads : result;
+        let assertion = await this.dataService.createAssertion(rawNquads);
         const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads, {isAsset: isAssetRequested});
 
         if (status && load) {
-            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
+            await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
             this.logger.info(`Assertion ${assertion.jsonld.metadata.id} has been successfully inserted`);
         }
-        return status ? {assertion, isAsset} : null;
+        return status ? { assertion, isAsset } : null;
     }
 
     async handleResolve(id) {
@@ -60,7 +60,8 @@ class QueryService {
         for (const assertion of response) {
             if (!assertion || !assertion.nquads) continue;
 
-            const { jsonld, nquads } = await this.dataService.createAssertion(assertion.nquads);
+            const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
+            const { jsonld, nquads } = await this.dataService.createAssertion(rawNquads);
             let object = handlerData.find(x => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
             if (!object) {
                 object = {
@@ -107,7 +108,7 @@ class QueryService {
 
     async handleSearchAssertions(request) {
         const {query, options, handlerId} = request;
-        let response = await this.dataService.searchAssertions(query, options);
+        let response = await this.dataService.searchAssertions(query, options || {});
         return {response, handlerId};
     }
 
@@ -117,33 +118,33 @@ class QueryService {
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
+        if (response !== undefined && response.length && handlerData) {
+            for (const object of response) {
+                const assertion = handlerData.find((x) => x.id === object.assertionId);
+                if (assertion) {
+                    if (assertion.nodes.indexOf(object.node) === -1)
+                        assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
+                } else {
+                    if (!object || !object.nquads)
+                        continue
+                    const rawNquads = object.nquads ? object.nquads : object.rdf;
+                    const assertion = await this.dataService.createAssertion(rawNquads);
 
-        for (const object of response) {
-            const assertion = handlerData.find((x) => x.id === object.assertionId);
-            if (assertion) {
-                if (assertion.nodes.indexOf(object.node) === -1)
-                    assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
-            } else {
-                if (!object || !object.nquads)
-                    continue
-
-                const assertion = await this.dataService.createAssertion(object.nquads);
-
-                handlerData.push({
-                    id: assertion.jsonld.id,
-                    metadata: assertion.jsonld.metadata,
-                    signature: assertion.jsonld.signature,
-                    nodes: [object.node]
-                })
+                    handlerData.push({
+                        id: assertion.jsonld.id,
+                        metadata: assertion.jsonld.metadata,
+                        signature: assertion.jsonld.signature,
+                        nodes: [object.node]
+                    })
+                }
             }
+
+            await this.fileService.writeContentsToFile(
+                this.fileService.getHandlerIdCachePath(),
+                handlerId,
+                JSON.stringify(handlerData),
+            );
         }
-
-
-        await this.fileService.writeContentsToFile(
-            this.fileService.getHandlerIdCachePath(),
-            handlerId,
-            JSON.stringify(handlerData),
-        );
 
         return true;
     }
