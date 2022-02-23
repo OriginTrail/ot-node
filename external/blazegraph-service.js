@@ -133,7 +133,7 @@ class BlazegraphService {
             nquads = nquads.toString();
             nquads = nquads.split('\n');
             nquads = nquads.filter((x) => x !== '');
-            await this.transformBlankNodes(nquads);
+            nquads = await this.transformBlankNodes(nquads);
         } else {
             nquads = null;
         }
@@ -157,13 +157,14 @@ class BlazegraphService {
 
         // Transform blank nodes, example: _:t145 -> _:c14n3
         let bnName;
-        for (let nquad of nquads) {
+        for (const nquadIndex in nquads) {
+            const nquad = nquads[nquadIndex];
             if (nquad.includes('_:t')) {
                 const blankNodes = nquad.split(' ').filter((s) => s.includes('_:t'));
                 for (const bn of blankNodes) {
                     const bnValue = Number(bn.substring(3));
                     bnName = `_:c14n${bnValue - minimumBlankNodeValue}`;
-                    nquad = nquad.replace(bn, bnName);
+                    nquads[nquadIndex] = nquad.replace(bn, bnName);
                 }
             }
         }
