@@ -84,8 +84,8 @@ class PublishService {
     }
 
     async handleStore(data) {
-        if (!data) return false;
-        const {jsonld, nquads} = await this.dataService.createAssertion(data.nquads);
+        if (!data || data.rdf) return false;
+        const { jsonld, nquads } = await this.dataService.createAssertion(data.nquads);
         const status = await this.dataService.verifyAssertion(jsonld, nquads);
 
         // todo check root hash on the blockchain
