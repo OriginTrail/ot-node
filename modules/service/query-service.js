@@ -108,7 +108,7 @@ class QueryService {
 
     async handleSearchAssertions(request) {
         const {query, options, handlerId} = request;
-        let response = await this.dataService.searchAssertions(query, options);
+        let response = await this.dataService.searchAssertions(query, options || {});
         return {response, handlerId};
     }
 
