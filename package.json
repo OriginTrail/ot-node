@@ -75,7 +75,7 @@
     "multiformats": "^9.4.7",
     "mysql2": "^2.3.3",
     "n3": "^1.12.2",
-    "ot-telemetry-collector": "^1.0.3",
+    "ot-telemetry-collector": "^1.0.4",
     "p-iteration": "^1.1.8",
     "peer-id": "^0.15.3",
     "pino": "^7.5.1",
