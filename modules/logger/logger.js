@@ -3,6 +3,11 @@ const path = require('path');
 
 class Logger {
     constructor(logLevel = 'trace', telemetryHubEnabled) {
+        this.logLevel = logLevel;
+        this.initialize(logLevel, telemetryHubEnabled);
+    }
+
+    initialize(logLevel, telemetryHubEnabled){
         try {
             const logFilename = path.join(path.resolve(__dirname, '../../'), 'logs/active.log');
             let chosenTargets = [];
@@ -29,6 +34,10 @@ class Logger {
         } catch (e) {
             console.error(`Failed to create logger. Error message: ${e.message}`);
         }
+    }
+
+    restart(){
+        this.initialize(this.logLevel, true);
     }
 
     fatal(obj) {
