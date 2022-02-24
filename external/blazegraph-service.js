@@ -164,7 +164,7 @@ class BlazegraphService {
                 for (const bn of blankNodes) {
                     const bnValue = Number(bn.substring(3));
                     bnName = `_:c14n${bnValue - minimumBlankNodeValue}`;
-                    nquads[nquadIndex] = nquad.replace(bn, bnName);
+                    nquads[nquadIndex] = nquads[nquadIndex].replace(bn, bnName);
                 }
             }
         }
