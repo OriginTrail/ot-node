@@ -23,10 +23,11 @@ class SendTelemetryCommand extends Command {
         this.telemetryHubModuleManager.aggregateTelemetryData()
             .then((jsonld) => {
                 if (jsonld) {
+                    this.logger.restart();
                     Models.handler_ids.create({
                         status: 'PENDING',
                     }).then((insertedObject) => {
-                        this.publishService.publish(JSON.stringify(jsonld), '.json', [`ot-telemetry-${Math.floor(new Date() / (60 * 1000))}`], 'public', undefined, insertedObject.dataValues.handler_id);
+                        this.publishService.publish(JSON.stringify(jsonld), '.json', [`ot-telemetry-${Math.floor(new Date() / (60 * 1000))}`], 'public', undefined, insertedObject.dataValues.handler_id, true);
                     });
                 }
             })
