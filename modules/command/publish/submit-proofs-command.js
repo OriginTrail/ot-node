@@ -11,6 +11,8 @@ class SubmitProofsCommand extends Command {
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
         this.workerPool = ctx.workerPool;
+
+        this.blockchainQueue = ctx.blockchainQueue.promise(this, this.sendTransaction, 1);
     }
 
     /**
@@ -18,24 +20,23 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId, method } = command.data;
+        const { documentPath, handlerId, method, isUrgent } = command.data;
 
         try {
             let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
+
             this.logger.info(`Sending transaction to the blockchain`);
             let result;
-            switch (method) {
-                case 'publish':
-                    result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
-                    break;
-                case 'provision':
-                    result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);
-                    break;
-                case 'update':
-                    result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0],assertion.id, assertion.rootHash);
-                    break;
+            if (isUrgent){
+                result = await this.blockchainQueue.unshift({method, assertion});
+            }else {
+                if (this.blockchainQueue.length()>constants.BLOCKCHAIN_QUEUE_LIMIT){
+                    throw new Error ('Blockchain queue is full');
+                }
+                result = await this.blockchainQueue.push({method, assertion});
             }
+
             const { transactionHash, blockchain } = result;
             this.logger.info(`Transaction hash is ${transactionHash} on ${blockchain}`);
 
@@ -59,6 +60,24 @@ class SubmitProofsCommand extends Command {
         }
 
         return this.continueSequence(command.data, command.sequence);
+    }
+
+    async sendTransaction (args){
+        const { assertion, method} = args;
+        let result;
+        switch (method) {
+            case 'publish':
+                result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
+                break;
+            case 'provision':
+                result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);
+                break;
+            case 'update':
+                result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0],assertion.id, assertion.rootHash);
+                break;
+        }
+
+        return result;
     }
 
     /**

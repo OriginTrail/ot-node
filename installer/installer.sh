@@ -145,7 +145,7 @@ if [[ $DATABASE = "blazegraph" ]]; then
     
     echo -n "Downloading Blazegraph: " 
 
-    OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.deb 2>&1)
+    OUTPUT=$(wget https://github.com/blazegraph/database/releases/download/BLAZEGRAPH_2_1_6_RC/blazegraph.jar 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -156,13 +156,13 @@ if [[ $DATABASE = "blazegraph" ]]; then
         echo -e "${GREEN}SUCCESS${NC}"
     fi
 
-    echo -n "Installing Blazegraph: "
+    echo -n "Copying blazegraph service file: "
 
-    OUTPUT=$(dpkg -i blazegraph.deb 2>&1)
+    OUTPUT=$(cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ >/dev/null 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
-        echo "There was an error installing Blazegraph."
+        echo "There was an error copying the blazegraph service file."
         echo $OUTPUT
         exit 1
     else
