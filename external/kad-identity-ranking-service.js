@@ -26,7 +26,7 @@ class KadIdentityRanking {
         return distance;
     }
 
-    async execute(nodes, topic) {
+    async execute(nodes, topic, replicationFactor) {
         const encodedKey = new TextEncoder().encode(topic);
         const id = (await sha256.digest(encodedKey)).digest;
 
@@ -35,7 +35,7 @@ class KadIdentityRanking {
             this.logger.info(`XOR distance between topic ${topic} and node ${node._idB58String}: ` + this.distance(id, node._id));
         }
 
-        return nodes;
+        return nodes.slice(0, replicationFactor);
     }
 }
 
