@@ -33,7 +33,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 exports.PERMANENT_COMMANDS = [
     'otnodeUpdateCommand', 'sendTelemetryCommand', 'cleanerCommand',
-    'handlerIdsCleanerCommand',
+    'handlerIdsCleanerCommand', 'keepAliveCommand',
 ];
 
 /**

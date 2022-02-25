@@ -18,6 +18,11 @@ class PublishService {
             nquads,
         } = await this.dataService.canonize(fileContent, fileExtension);
 
+        if (keywords.length > 10) {
+            keywords = keywords.slice(0, 10);
+            this.logger.warn('Too many keywords provided, limit is 10. Publishing only to the first 10 keywords.');
+        }
+
         assertion.metadata.issuer = this.validationService.getIssuer();
         assertion.metadata.visibility = visibility;
         assertion.metadata.keywords = keywords;
