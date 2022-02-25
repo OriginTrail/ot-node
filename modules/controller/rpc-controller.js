@@ -850,10 +850,6 @@ class RpcController {
 
         let promise;
         if (req.body.keywords) {
-            if (req.body.keywords.length > 10) {
-                req.body.keywords = req.body.keywords.slice(0, 10);
-                this.logger.warn('Too many keywords provided, limit is 10. Publishing only to the first 10 keywords.');
-            }
             promise = this.workerPool.exec('JSONParse', [req.body.keywords.toLowerCase()]);
         } else {
             promise = new Promise((accept) => accept([]));
