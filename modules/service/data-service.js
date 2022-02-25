@@ -1,5 +1,6 @@
-const {v1: uuidv1} = require('uuid');
+const { v1: uuidv1 } = require('uuid');
 const N3 = require('n3');
+const formatBcp47 = require('format-bcp-47');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
@@ -14,8 +15,7 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
-        this.N3Parser = new N3.Parser({format: 'N-Triples', baseIRI: 'http://schema.org/'});
-
+        this.N3Parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
     }
 
     getName() {
@@ -74,11 +74,12 @@ class DataService {
                     },
                     data: await this.workerPool.exec('JSONParse', [fileContent.toString()])
                 }
-                const nquads = await this.workerPool.exec('toNQuads', [assertion.data])
+                let nquads = await this.workerPool.exec('toNQuads', [assertion.data])
                 if (nquads && nquads.length === 0) {
                     throw new Error(`File format is corrupted, no n-quads extracted.`);
                 }
 
+                nquads = this.formatLanguageTagsToBCP47(nquads);
                 let type;
                 if (assertion.data['@type']) {
                     type = assertion.data['@type'];
@@ -96,6 +97,24 @@ class DataService {
             default:
                 throw new Error(`File extension ${fileExtension} is not supported.`);
         }
+    }
+
+    formatLanguageTagsToBCP47(nquads) {
+        for (const nquadIndex in nquads) {
+            if (nquads[nquadIndex].includes('@')) {
+                const tags = nquads[nquadIndex].split(' ').filter((s) => s.includes('@'));
+                for (const tag of tags) {
+                    const languageTag = tag.match(/"@.+/g);
+                    if (languageTag != null) {
+                        const formattedBcp47 = formatBcp47(languageTag[0].substring(2));
+                        if (formatBcp47 != null) {
+                            nquads[nquadIndex] = nquads[nquadIndex].replace(languageTag, `"@${formattedBcp47}`);
+                        }
+                    }
+                }
+            }
+        }
+        return nquads;
     }
 
     async insert(data, assertionId) {
