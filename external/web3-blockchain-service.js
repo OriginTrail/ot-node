@@ -42,7 +42,8 @@ class Web3BlockchainService {
         const contractAddress = await this.getAssertionRegistryAddress();
         const contractInstance = new this.web3.eth.Contract(DKGContract, contractAddress);
 
-        const calculatedGas = await this.getGasStationPrice();
+        let calculatedGas = await this.getGasStationPrice();
+        calculatedGas = Math.round(calculatedGas);
 
         const encodedABI = contractInstance.methods.createAssertionRecord(`0x${stateCommitHash}`, `0x${rootHash}`, issuer,
             new BigNumber(1),
@@ -51,7 +52,7 @@ class Web3BlockchainService {
             from: this.config.publicKey,
             to: contractInstance.options.address,
             data: encodedABI,
-            gasPrice: calculatedGas ? calculatedGas.toString() : '10000000000',
+            gasPrice: '20000000000',
             gas: '500000',
         };
 
@@ -64,14 +65,15 @@ class Web3BlockchainService {
         const contractAddress = this.config.hubContractAddress;
         const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
 
-        const calculatedGas = await this.getGasStationPrice();
+        let calculatedGas = await this.getGasStationPrice();
+        calculatedGas = Math.round(calculatedGas);
 
         const encodedABI = contractInstance.methods.registerAsset(`0x${uai}`, 0, `0x${uai}`, `0x${stateCommitHash}`, `0x${rootHash}`, 1).encodeABI();
         const tx = {
             from: this.config.publicKey,
             to: contractInstance.options.address,
             data: encodedABI,
-            gasPrice: calculatedGas ? calculatedGas.toString() : '10000000000',
+            gasPrice: '20000000000',
             gas: '900000',
         };
 
@@ -84,14 +86,15 @@ class Web3BlockchainService {
         const contractAddress = this.config.hubContractAddress;
         const contractInstance = new this.web3.eth.Contract(UAIRegistry, contractAddress);
 
-        const calculatedGas = await this.getGasStationPrice();
+        let calculatedGas = await this.getGasStationPrice();
+        calculatedGas = Math.round(calculatedGas);
 
         const encodedABI = contractInstance.methods.updateAssetState(`0x${UAI}`, `0x${newStateCommitHash}`, `0x${rootHash}`).encodeABI();
         const tx = {
             from: this.config.publicKey,
             to: contractInstance.options.address,
             data: encodedABI,
-            gasPrice: calculatedGas ? calculatedGas.toString() : '10000000000',
+            gasPrice: '20000000000',
             gas: '500000',
         };
 
