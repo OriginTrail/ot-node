@@ -9,6 +9,8 @@ const constants = require('./modules/constants');
 const db = require('./models');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
+const queue = require('fastq')
+
 
 class OTNode {
     constructor(config) {
@@ -64,6 +66,7 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
         DependencyInjection.registerValue(this.container, 'constants', constants);
+        DependencyInjection.registerValue(this.container, 'blockchainQueue', queue);
 
         this.logger.info('Dependency injection module is initialized');
     }
