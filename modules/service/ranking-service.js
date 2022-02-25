@@ -11,10 +11,10 @@ class RankingService {
         this.implementation.initialize(this.logger);
     }
 
-    async rank(nodes, topic, rankingTypes) {
+    async rank(nodes, topic, replicationFactor, rankingTypes) {
         let rankedNodes = [];
         // TODO: Iterate and execute all ranking implementations provided in rankingTypes
-        rankedNodes = await this.implementation.execute(nodes, topic);
+        rankedNodes = await this.implementation.execute(nodes, topic, replicationFactor);
         return rankedNodes;
     }
 }

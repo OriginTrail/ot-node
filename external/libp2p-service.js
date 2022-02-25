@@ -114,14 +114,14 @@ class Libp2pService {
         const encodedKey = new TextEncoder().encode(key);
         // Creates a DHT ID by hashing a given Uint8Array
         const id = (await sha256.digest(encodedKey)).digest;
-        const nodes = this.node._dht.routingTable.closestPeers(id, limit);
-        this.logger.info(`Found ${nodes.length} nodes`);
+        const nodes = this.node._dht.peerRouting.getClosestPeers(id);
+        const result = [];
+        for await (const node of nodes) {
+            result.push(node);
+        }
+        this.logger.info(`Found ${result.length} nodes`);
 
-        return nodes;
-    }
-
-    findPeer(peerId, options) {
-        return this.node.peerRouting.findPeer(peerId, options);
+        return result;
     }
 
     getPeers() {
