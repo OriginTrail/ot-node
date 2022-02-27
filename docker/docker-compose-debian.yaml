@@ -17,7 +17,6 @@ services:
        bash -c "
         /bin/sleep 30
         service mariadb start &&
-        npm i &&
         forever index.js
         "
     volumes:
