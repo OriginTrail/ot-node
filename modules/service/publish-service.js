@@ -1,4 +1,5 @@
-const constants = require('../constants')
+const { v1: uuidv1 } = require('uuid');
+const constants = require('../constants');
 
 class PublishService {
     constructor(ctx) {
@@ -61,7 +62,7 @@ class PublishService {
         const documentPath = await this.fileService
             .writeContentsToFile(handlerIdCachePath, handlerId,
                 await this.workerPool.exec('JSONStringify', [{
-                    nquads, assertion
+                    nquads, assertion,
                 }]));
 
         const commandSequence = [
@@ -75,7 +76,7 @@ class PublishService {
             sequence: commandSequence.slice(1),
             delay: 0,
             data: {
-                documentPath, handlerId, method, isUrgent
+                documentPath, handlerId, method, isUrgent,
             },
             transactional: false,
         });
@@ -90,6 +91,14 @@ class PublishService {
 
     async handleStore(data) {
         if (!data || data.rdf) return false;
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of store command',
+            Event_name: 'store_start',
+            Operation_name: 'store',
+            Id_operation: operationId,
+        });
+
         const { jsonld, nquads } = await this.dataService.createAssertion(data.nquads);
         const status = await this.dataService.verifyAssertion(jsonld, nquads);
 
@@ -98,6 +107,14 @@ class PublishService {
             await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
             this.logger.info(`Assertion ${data.id} has been successfully inserted`);
         }
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of store command',
+            Event_name: 'store_end',
+            Operation_name: 'store',
+            Id_operation: operationId,
+        });
+
         return status;
     }
 }

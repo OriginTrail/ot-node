@@ -1,5 +1,5 @@
-const Models = require('../../models/index');
-const constants = require('../constants')
+const { v1: uuidv1 } = require('uuid');
+const constants = require('../constants');
 
 class QueryService {
     constructor(ctx) {
@@ -30,12 +30,28 @@ class QueryService {
     }
 
     async handleResolve(id) {
-        const {nquads, isAsset} = await this.dataService.resolve(id);
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle store command',
+            Event_name: 'handle_store_start',
+            Operation_name: 'handle_store',
+            Id_operation: operationId,
+        });
+
+        const { nquads, isAsset } = await this.dataService.resolve(id);
         this.logger.info(`Retrieved data from the database: ${await this.workerPool.exec('JSONStringify', [nquads])}`);
 
-        if (!nquads)
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle store command',
+            Event_name: 'handle_store_end',
+            Operation_name: 'handle_store',
+            Id_operation: operationId,
+        });
+
+        if (!nquads) {
             return null;
-        return {nquads, isAsset};
+        }
+        return { nquads, isAsset };
     }
 
     async search(data, node) {
@@ -44,25 +60,50 @@ class QueryService {
     }
 
     async handleSearch(request) {
-        const {query, issuers, types, prefix, limit, handlerId} = request;
-        let response = await this.dataService.searchByQuery(query, {issuers, types, prefix, limit});
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search command',
+            Event_name: 'handle_search_start',
+            Operation_name: 'handle_search',
+            Id_operation: operationId,
+        });
 
-        return {response, handlerId};
+        const { query, issuers, types, prefix, limit, handlerId } = request;
+        const response = await this.dataService.searchByQuery(query, { issuers, types, prefix, limit });
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search command',
+            Event_name: 'handle_search_end',
+            Operation_name: 'handle_search',
+            Id_operation: operationId,
+        });
+
+        return { response, handlerId };
     }
 
     async handleSearchResult(request) {
         // TODO: add mutex
-        const {handlerId, response} = request;
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search result command',
+            Event_name: 'handle_search_result_start',
+            Operation_name: 'handle_search_result',
+            Id_operation: operationId,
+        });
+
+        const { handlerId, response } = request;
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
 
         for (const assertion of response) {
-            if (!assertion || !assertion.nquads) continue;
+            if (!assertion || !assertion.nquads) {
+                continue;
+            }
 
             const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
             const { jsonld, nquads } = await this.dataService.createAssertion(rawNquads);
-            let object = handlerData.find(x => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
+            let object = handlerData.find((x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
             if (!object) {
                 object = {
                     type: jsonld.metadata.type,
@@ -70,9 +111,9 @@ class QueryService {
                     timestamp: jsonld.metadata.timestamp,
                     issuers: [],
                     assertions: [],
-                    nodes: [assertion.node]
-                }
-                handlerData.push(object)
+                    nodes: [assertion.node],
+                };
+                handlerData.push(object);
             }
 
             if (object.nodes.indexOf(assertion.node) === -1) {
@@ -91,12 +132,18 @@ class QueryService {
             }
         }
 
-
         await this.fileService.writeContentsToFile(
             this.fileService.getHandlerIdCachePath(),
             handlerId,
             await this.workerPool.exec('JSONStringify', [handlerData]),
         );
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search result command',
+            Event_name: 'handle_search_result_end',
+            Operation_name: 'handle_search_result',
+            Id_operation: operationId,
+        });
 
         return true;
     }
@@ -107,14 +154,36 @@ class QueryService {
     }
 
     async handleSearchAssertions(request) {
-        const {query, options, handlerId} = request;
-        let response = await this.dataService.searchAssertions(query, options || {});
-        return {response, handlerId};
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search assertions command',
+            Event_name: 'handle_search_assertions_start',
+            Operation_name: 'handle_search_assertions',
+            Id_operation: operationId,
+        });
+
+        const { query, options, handlerId } = request;
+        const response = await this.dataService.searchAssertions(query, options || {});
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search assertions command',
+            Event_name: 'handle_search_assertions_end',
+            Operation_name: 'handle_search_assertions',
+            Id_operation: operationId,
+        });
+        return { response, handlerId };
     }
 
     async handleSearchAssertionsResult(request) {
         // TODO: add mutex
-        const {handlerId, response} = request;
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search assertions result command',
+            Event_name: 'handle_search_assertions_result_start',
+            Operation_name: 'handle_search_assertions_result',
+            Id_operation: operationId,
+        });
+        const { handlerId, response } = request;
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
@@ -122,11 +191,13 @@ class QueryService {
             for (const object of response) {
                 const assertion = handlerData.find((x) => x.id === object.assertionId);
                 if (assertion) {
-                    if (assertion.nodes.indexOf(object.node) === -1)
-                        assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
+                    if (assertion.nodes.indexOf(object.node) === -1) {
+                        assertion.nodes = [...new Set(assertion.nodes.concat(object.node))];
+                    }
                 } else {
-                    if (!object || !object.nquads)
+                    if (!object || !object.nquads) {
                         continue
+                    }
                     const rawNquads = object.nquads ? object.nquads : object.rdf;
                     const assertion = await this.dataService.createAssertion(rawNquads);
 
@@ -134,8 +205,8 @@ class QueryService {
                         id: assertion.jsonld.id,
                         metadata: assertion.jsonld.metadata,
                         signature: assertion.jsonld.signature,
-                        nodes: [object.node]
-                    })
+                        nodes: [object.node],
+                    });
                 }
             }
 
@@ -146,6 +217,12 @@ class QueryService {
             );
         }
 
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search assertions result command',
+            Event_name: 'handle_search_assertions_result_end',
+            Operation_name: 'handle_search_assertions_result',
+            Id_operation: operationId,
+        });
         return true;
     }
 }
