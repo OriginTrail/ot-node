@@ -21,7 +21,7 @@ class SubmitProofsCommand extends Command {
      */
     async execute(command) {
         const {
-            documentPath, handlerId, method, isTelemetry,
+            documentPath, handlerId, method, isTelemetry, operationId,
         } = command.data;
 
         try {
