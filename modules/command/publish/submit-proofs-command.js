@@ -20,7 +20,7 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId, method, isUrgent } = command.data;
+        const { documentPath, handlerId, method, isUrgent, operationId } = command.data;
 
         try {
             let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
@@ -50,20 +50,25 @@ class SubmitProofsCommand extends Command {
 
             await this.fileService
                 .writeContentsToFile(handlerIdCachePath, handlerId, sortedStringify({
-                    nquads, assertion
+                    nquads, assertion,
                 }));
 
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
-
+            this.logger.emit({
+                msg: 'Finished measuring execution of publish command',
+                Event_name: 'publish_end',
+                Operation_name: 'publish',
+                Id_operation: operationId,
+            });
             return Command.empty();
         }
 
         return this.continueSequence(command.data, command.sequence);
     }
 
-    async sendTransaction (args){
-        const { assertion, method} = args;
+    async sendTransaction(args) {
+        const { assertion, method } = args;
         let result;
         switch (method) {
             case 'publish':
