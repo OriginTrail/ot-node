@@ -662,7 +662,7 @@ class RpcController {
                         case 'entities:search':
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
-                            }else{
+                            } else {
                                 handlerData.data = [];
                             }
 
@@ -695,7 +695,7 @@ class RpcController {
                         case 'assertions:search':
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
-                            }else{
+                            } else {
                                 handlerData.data = [];
                             }
 
@@ -729,6 +729,8 @@ class RpcController {
                         case 'resolve':
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            } else {
+                                handlerData.data = JSON.parse(handlerData.data);
                             }
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
@@ -739,12 +741,16 @@ class RpcController {
                                 const result = await this.fileService.loadJsonFromFile(documentPath);
                                 delete result.assertion.data;
                                 handlerData.data = result.assertion;
+                            } else {
+                                handlerData.data = JSON.parse(handlerData.data);
                             }
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
                             break;
                         default:
                             if (handlerData && handlerData.status === "COMPLETED") {
                                 handlerData.data = await this.fileService.loadJsonFromFile(documentPath);
+                            } else {
+                                handlerData.data = JSON.parse(handlerData.data);
                             }
 
                             res.status(200).send({status: handlerData.status, data: handlerData.data});
