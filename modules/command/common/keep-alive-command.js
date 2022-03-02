@@ -31,7 +31,6 @@ class KeepAliveCommand extends Command {
             telemetry: {
                 enabled: this.config.telemetryHub.enabled,
             },
-            proof: {},
         };
         try {
             const peerId = await PeerId.createFromPrivKey(this.config.network.privateKey);
