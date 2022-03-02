@@ -60,6 +60,14 @@ class SendAssertionCommand extends Command {
             },
         );
 
+        if (command.data.isTelemetry) {
+            await Models.assertions.create({
+                hash: assertion.id,
+                topics: assertion.metadata.keywords,
+                createdAt: assertion.metadata.timestamp,
+            });
+        }
+
         return this.continueSequence(command.data, command.sequence);
     }
 
