@@ -1,10 +1,11 @@
-const {v1: uuidv1} = require('uuid');
+const { v1: uuidv1 } = require('uuid');
 const PeerId = require('peer-id');
 var axios = require('axios');
+const fs = require('fs');
 const Command = require('../command');
 const pjson = require('../../../package.json');
 const Models = require('../../../models/index');
-const constants = require("../../constants");
+const constants = require('../../constants');
 
 class KeepAliveCommand extends Command {
     constructor(ctx) {
@@ -34,17 +35,21 @@ class KeepAliveCommand extends Command {
             },
         };
         try {
+            if (!this.config.network.privateKey) {
+                const configFile = JSON.parse(fs.readFileSync(this.config.config));
+                this.config.network.privateKey = configFile.network.privateKey;
+            }
             const peerId = await PeerId.createFromPrivKey(this.config.network.privateKey);
             signalingMessage.issuerWallet = this.config.blockchain[0].publicKey;
             signalingMessage.kademliaNodeId = peerId._idB58String;
             signalingMessage.nodeVersion = pjson.version;
-            signalingMessage.telemetry.latestAssertions = Models.assertions.findAll({
+            signalingMessage.telemetry.latestAssertions = (await Models.assertions.findAll({
                 limit: 5,
                 order: [
                     ['created_at', 'DESC'],
                 ],
                 attributes: ['hash', 'topics', 'created_at'],
-            }).map(x => ({assertionId: x.hash, keyword: x.topics, publishTimestamp: x.created_at}));
+            })).map(x => ({assertionId: x.dataValues.hash, keyword: x.dataValues.topics, publishTimestamp: x.dataValues.created_at}));
         } catch (e) {
             this.logger.error({
                 msg: `An error has occurred with signaling data error: ${e}, stack: ${e.stack}`,
