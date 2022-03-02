@@ -69,7 +69,7 @@ class SendAssertionCommand extends Command {
         if (command.data.isTelemetry) {
             await Models.assertions.create({
                 hash: assertion.id,
-                topics: assertion.metadata.keywords,
+                topics: JSON.stringify(assertion.metadata.keywords[0]),
                 createdAt: assertion.metadata.timestamp,
             });
         }
