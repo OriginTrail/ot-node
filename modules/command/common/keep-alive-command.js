@@ -36,7 +36,7 @@ class KeepAliveCommand extends Command {
         };
         try {
             if (!this.config.network.privateKey) {
-                const configFile = JSON.parse(fs.readFileSync(this.config.config));
+                const configFile = JSON.parse(fs.readFileSync(this.config.config ? this.config.config : '.origintrail_noderc'));
                 this.config.network.privateKey = configFile.network.privateKey;
             }
             const peerId = await PeerId.createFromPrivKey(this.config.network.privateKey);
