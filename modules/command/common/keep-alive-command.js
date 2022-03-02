@@ -36,7 +36,7 @@ class KeepAliveCommand extends Command {
         try{
             const peerId = await PeerId.createFromPrivKey(this.config.network.privateKey);
             signalingMessage.issuerWallet = this.config.blockchain[0].publicKey;
-            signalingMessage.kademliaNodeId = peerId;
+            signalingMessage.kademliaNodeId = peerId._idB58String;
             signalingMessage.nodeVersion = pjson.version;
             signalingMessage.telemetry.latestAssertions = [];
         } catch (e) {
@@ -50,9 +50,9 @@ class KeepAliveCommand extends Command {
             method: 'post',
             url: 'http://localhost:3000/signal',
             headers: {
-                'Content-Type': 'application/javascript'
+                'Content-Type': 'application/json'
             },
-            data : signalingMessage
+            data : JSON.stringify(signalingMessage)
         };
 
         axios(config);
