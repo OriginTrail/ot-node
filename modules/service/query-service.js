@@ -32,9 +32,9 @@ class QueryService {
     async handleResolve(id) {
         const operationId = uuidv1();
         this.logger.emit({
-            msg: 'Started measuring execution of handle store command',
-            Event_name: 'handle_store_start',
-            Operation_name: 'handle_store',
+            msg: 'Started measuring execution of handle resolve command',
+            Event_name: 'handle_resolve_start',
+            Operation_name: 'handle_resolve',
             Id_operation: operationId,
         });
 
@@ -42,9 +42,9 @@ class QueryService {
         this.logger.info(`Retrieved data from the database: ${await this.workerPool.exec('JSONStringify', [nquads])}`);
 
         this.logger.emit({
-            msg: 'Finished measuring execution of handle store command',
-            Event_name: 'handle_store_end',
-            Operation_name: 'handle_store',
+            msg: 'Finished measuring execution of handle resolve command',
+            Event_name: 'handle_resolve_end',
+            Operation_name: 'handle_resolve',
             Id_operation: operationId,
         });
 
