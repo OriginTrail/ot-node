@@ -46,7 +46,10 @@ class KeepAliveCommand extends Command {
                 attributes: ['hash', 'topics', 'created_at'],
             }).map(x => ({assertionId: x.hash, keyword: x.topics, publishTimestamp: x.created_at}));
         } catch (e) {
-            this.logger.error(`An error has occurred with signaling data. ${e.message}`);
+            this.logger.error({
+                msg: `An error has occurred with signaling data error: ${e}, stack: ${e.stack}`,
+                Event_name: constants.ERROR_TYPE.KEEP_ALIVE_ERROR,
+            });
         }
 
         const proof = {};
@@ -66,7 +69,7 @@ class KeepAliveCommand extends Command {
 
         const that = this;
         axios(config).catch(e=>{
-            that.handleError(uuidv1(), e, constants.ERROR_TYPE.KEEP_ALIVE, false)
+            that.handleError(uuidv1(), e, constants.ERROR_TYPE.KEEP_ALIVE_ERROR, false)
         });
         return Command.repeat();
     }
