@@ -147,7 +147,7 @@ class Libp2pService {
     async handleMessage(eventName, handler, options) {
         this.logger.info(`Enabling network protocol: ${eventName}`);
 
-        let async = false, timeout = 5e3;
+        let async = false, timeout = 60e3;
         if (options) {
             async = options.async;
             timeout = options.timeout;
