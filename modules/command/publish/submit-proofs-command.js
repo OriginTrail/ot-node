@@ -1,7 +1,7 @@
+const sortedStringify = require('json-stable-stringify');
 const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
-const sortedStringify = require("json-stable-stringify");
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {
@@ -20,21 +20,22 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId, method, isUrgent, operationId } = command.data;
+        const {
+            documentPath, handlerId, method, isTelemetry, operationId,
+        } = command.data;
 
         try {
             let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
-
-            this.logger.info(`Sending transaction to the blockchain`);
+            this.logger.info('Sending transaction to the blockchain');
             let result;
-            if (isUrgent){
-                result = await this.blockchainQueue.unshift({method, assertion});
-            }else {
-                if (this.blockchainQueue.length()>constants.BLOCKCHAIN_QUEUE_LIMIT){
-                    throw new Error ('Blockchain queue is full');
+            if (isTelemetry) {
+                result = await this.blockchainQueue.unshift({ method, assertion });
+            } else {
+                if (this.blockchainQueue.length() > constants.BLOCKCHAIN_QUEUE_LIMIT) {
+                    throw new Error('Blockchain queue is full');
                 }
-                result = await this.blockchainQueue.push({method, assertion});
+                result = await this.blockchainQueue.push({ method, assertion });
             }
 
             const { transactionHash, blockchain } = result;
@@ -52,7 +53,6 @@ class SubmitProofsCommand extends Command {
                 .writeContentsToFile(handlerIdCachePath, handlerId, sortedStringify({
                     nquads, assertion,
                 }));
-
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
             this.logger.emit({

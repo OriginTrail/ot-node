@@ -13,7 +13,7 @@ class PublishService {
         this.workerPool = ctx.workerPool;
     }
 
-    async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, isUrgent = false) {
+    async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, isTelemetry = false) {
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of publish command',
@@ -71,7 +71,7 @@ class PublishService {
             const documentPath = await this.fileService
                 .writeContentsToFile(handlerIdCachePath, handlerId,
                     await this.workerPool.exec('JSONStringify', [{
-                        nquads, assertion,
+                        nquads, assertion
                     }]));
 
             const commandSequence = [
@@ -85,7 +85,7 @@ class PublishService {
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
-                    documentPath, handlerId, method, isUrgent, operationId,
+                    documentPath, handlerId, method, isTelemetry,
                 },
                 transactional: false,
             });
@@ -98,6 +98,7 @@ class PublishService {
                 Operation_name: 'publish',
                 Id_operation: operationId,
             });
+            return null;
         }
     }
 
