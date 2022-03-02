@@ -2,12 +2,15 @@ const { v1: uuidv1 } = require('uuid');
 const Command = require('../command');
 const pjson = require("../../../package.json");
 const PeerId = require("peer-id");
+var axios = require('axios');
+var FormData = require('form-data');
 
 class KeepAliveCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.validationService = ctx.validationService;
     }
 
     /**
@@ -43,7 +46,16 @@ class KeepAliveCommand extends Command {
         signalingMessage.proof.hash = this.validationService.calculateHash(signalingMessage);
         signalingMessage.proof.signature = this.validationService.sign(signalingMessage.proof.hash);
 
-        //TODO send data
+        const config = {
+            method: 'post',
+            url: 'http://localhost:3000/signal',
+            headers: {
+                'Content-Type': 'application/javascript'
+            },
+            data : signalingMessage
+        };
+
+        axios(config);
 
         return Command.repeat();
     }
