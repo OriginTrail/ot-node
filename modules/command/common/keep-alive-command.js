@@ -47,9 +47,12 @@ class KeepAliveCommand extends Command {
         } catch (e) {
             this.logger.error(`An error has occurred with signaling data. ${e.message}`);
         }
-        signalingMessage.proof = {};
-        signalingMessage.proof.hash = this.validationService.calculateHash(signalingMessage);
-        signalingMessage.proof.signature = this.validationService.sign(signalingMessage.proof.hash);
+
+        const proof = {};
+        proof.hash = this.validationService.calculateHash(signalingMessage);
+        proof.signature = this.validationService.sign(proof.hash);
+
+        signalingMessage.proof = proof;
 
         const config = {
             method: 'post',
@@ -60,7 +63,7 @@ class KeepAliveCommand extends Command {
             data : JSON.stringify(signalingMessage)
         };
 
-        axios(config);
+        await axios(config);
         return Command.repeat();
     }
 
