@@ -15,7 +15,7 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId } = command.data;
+        const { documentPath, handlerId, operationId } = command.data;
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
@@ -23,6 +23,13 @@ class InsertAssertionCommand extends Command {
             this.logger.info(`Assertion ${assertion.id} has been successfully inserted`);
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
+            this.logger.emit({
+                msg: 'Finished measuring execution of publish command',
+                Event_name: 'publish_end',
+                Operation_name: 'publish',
+                Id_operation: operationId,
+            });
+            return Command.empty();
         }
 
         return this.continueSequence(command.data, command.sequence);
