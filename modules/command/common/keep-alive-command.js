@@ -54,7 +54,7 @@ class KeepAliveCommand extends Command {
 
         const config = {
             method: 'post',
-            url: 'http://localhost:3000/signal',
+            url: 'https://signum.origintrail.io:3000/signal',
             headers: {
                 'Content-Type': 'application/json'
             },
