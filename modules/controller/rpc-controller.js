@@ -849,22 +849,24 @@ class RpcController {
         promise
             .then((keywords) => this.publishService.publish(fileContent, fileExtension, keywords, visibility, ual, handlerId))
             .then((assertion) => {
-                const handlerData = {
-                    id: assertion.id,
-                    rootHash: assertion.rootHash,
-                    signature: assertion.signature,
-                    metadata: assertion.metadata,
-                };
+                if (assertion) {
+                    const handlerData = {
+                        id: assertion.id,
+                        rootHash: assertion.rootHash,
+                        signature: assertion.signature,
+                        metadata: assertion.metadata,
+                    };
 
-                Models.handler_ids.update(
-                    {
-                        data: JSON.stringify(handlerData),
-                    }, {
-                        where: {
-                            handler_id: handlerId,
+                    Models.handler_ids.update(
+                        {
+                            data: JSON.stringify(handlerData),
+                        }, {
+                            where: {
+                                handler_id: handlerId,
+                            },
                         },
-                    },
-                );
+                    );
+                }
             })
             .catch((e) => {
                 this.updateFailedHandlerId(handlerId, e, next);
