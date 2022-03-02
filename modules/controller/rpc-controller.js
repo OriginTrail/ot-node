@@ -129,15 +129,14 @@ class RpcController {
 
         this.networkService.handleMessage('/search', (result) => this.queryService.handleSearch(result), {
             async: true,
-            timeout: 5e3,
+            timeout: 60e3,
         });
 
         this.networkService.handleMessage('/search/result', (result) => this.queryService.handleSearchResult(result));
 
-
         this.networkService.handleMessage('/search/assertions', (result) => this.queryService.handleSearchAssertions(result), {
             async: true,
-            timeout: 5e3,
+            timeout: 60e3,
         });
 
         this.networkService.handleMessage('/search/assertions/result', (result) => this.queryService.handleSearchAssertionsResult(result));
@@ -820,14 +819,6 @@ class RpcController {
             });
         }
 
-        const operationId = uuidv1();
-        this.logger.emit({
-            msg: 'Started measuring execution of publish command',
-            Event_name: 'publish_start',
-            Operation_name: 'publish',
-            Id_operation: operationId
-        });
-
         const handlerObject = await Models.handler_ids.create({
             status: 'PENDING',
         })
@@ -836,14 +827,14 @@ class RpcController {
         res.status(202).send({
             handler_id: handlerId,
         });
-        let fileContent,fileExtension;
+        let fileContent, fileExtension;
         if (req.files) {
             fileContent = req.files.file.data;
             fileExtension = path.extname(req.files.file.name).toLowerCase();
         }
         else{
-            fileContent = req.body.data
-            fileExtension = '.json'
+            fileContent = req.body.data;
+            fileExtension = '.json';
         }
         const visibility = req.body.visibility ? req.body.visibility.toLowerCase() : 'public';
         const ual = options.isAsset ? options.ual : undefined;
@@ -856,8 +847,8 @@ class RpcController {
         }
 
         promise
-            .then(keywords => this.publishService.publish(fileContent, fileExtension, keywords, visibility, ual, handlerId))
-            .then(assertion => {
+            .then((keywords) => this.publishService.publish(fileContent, fileExtension, keywords, visibility, ual, handlerId))
+            .then((assertion) => {
                 const handlerData = {
                     id: assertion.id,
                     rootHash: assertion.rootHash,
@@ -867,7 +858,7 @@ class RpcController {
 
                 Models.handler_ids.update(
                     {
-                        data: JSON.stringify(handlerData)
+                        data: JSON.stringify(handlerData),
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -876,21 +867,7 @@ class RpcController {
                 );
             })
             .catch((e) => {
-                this.logger.error({
-                    msg: `Unexpected error at publish route: ${e.message}. ${e.stack}`,
-                    Event_name: constants.ERROR_TYPE.PUBLISH_ROUTE_ERROR,
-                    Event_value1: e.message,
-                    Id_operation: operationId,
-                });
                 this.updateFailedHandlerId(handlerId, e, next);
-            })
-            .then(() => {
-                this.logger.emit({
-                    msg: 'Finished measuring execution of publish command',
-                    Event_name: 'publish_end',
-                    Operation_name: 'publish',
-                    Id_operation: operationId
-                });
             });
     }
 

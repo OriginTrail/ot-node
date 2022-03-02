@@ -18,7 +18,7 @@ class SendAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId } = command.data;
+        const { documentPath, handlerId, operationId } = command.data;
 
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
@@ -45,7 +45,7 @@ class SendAssertionCommand extends Command {
         nodes = [...new Set(nodes)];
 
         for (const node of nodes) {
-            this.publishService.store({ id:assertion.id, nquads: nquads }, node).catch((e) => {
+            this.publishService.store({ id: assertion.id, nquads: nquads }, node).catch((e) => {
                 this.handleError(handlerId, e, `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`);
             });
         }
@@ -59,6 +59,12 @@ class SendAssertionCommand extends Command {
                 },
             },
         );
+        this.logger.emit({
+            msg: 'Finished measuring execution of publish command',
+            Event_name: 'publish_end',
+            Operation_name: 'publish',
+            Id_operation: operationId,
+        });
 
         if (command.data.isTelemetry) {
             await Models.assertions.create({

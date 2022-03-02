@@ -1,4 +1,5 @@
-const constants = require('../constants')
+const { v1: uuidv1 } = require('uuid');
+const constants = require('../constants');
 
 class PublishService {
     constructor(ctx) {
@@ -79,8 +80,8 @@ class PublishService {
             },
             transactional: false,
         });
-
-        return assertion;
+      
+      return assertion;
     }
 
     async store(assertion, node) {
@@ -90,6 +91,14 @@ class PublishService {
 
     async handleStore(data) {
         if (!data || data.rdf) return false;
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle store command',
+            Event_name: 'handle_store_start',
+            Operation_name: 'handle_store',
+            Id_operation: operationId,
+        });
+
         const { jsonld, nquads } = await this.dataService.createAssertion(data.nquads);
         const status = await this.dataService.verifyAssertion(jsonld, nquads);
 
@@ -98,6 +107,14 @@ class PublishService {
             await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
             this.logger.info(`Assertion ${data.id} has been successfully inserted`);
         }
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle store command',
+            Event_name: 'handle_store_end',
+            Operation_name: 'handle_store',
+            Id_operation: operationId,
+        });
+
         return status;
     }
 }
