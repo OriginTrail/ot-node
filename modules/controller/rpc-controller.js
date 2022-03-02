@@ -129,7 +129,7 @@ class RpcController {
 
         this.networkService.handleMessage('/search', (result) => this.queryService.handleSearch(result), {
             async: true,
-            timeout: 5e3,
+            timeout: 60e3,
         });
 
         this.networkService.handleMessage('/search/result', (result) => this.queryService.handleSearchResult(result));
@@ -137,7 +137,7 @@ class RpcController {
 
         this.networkService.handleMessage('/search/assertions', (result) => this.queryService.handleSearchAssertions(result), {
             async: true,
-            timeout: 5e3,
+            timeout: 60e3,
         });
 
         this.networkService.handleMessage('/search/assertions/result', (result) => this.queryService.handleSearchAssertionsResult(result));
