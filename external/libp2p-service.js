@@ -147,7 +147,7 @@ class Libp2pService {
     async handleMessage(eventName, handler, options) {
         this.logger.info(`Enabling network protocol: ${eventName}`);
 
-        let async = false, timeout = 5e3;
+        let async = false, timeout = 60e3;
         if (options) {
             async = options.async;
             timeout = options.timeout;
@@ -193,8 +193,9 @@ class Libp2pService {
                     }
                 }
             } catch (e) {
+                const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
                 this.logger.error({
-                   msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${data}`,
+                   msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${stringifiedData}`,
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
                 await pipe(
