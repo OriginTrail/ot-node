@@ -1,9 +1,10 @@
-const { v1: uuidv1 } = require('uuid');
+const {v1: uuidv1} = require('uuid');
 const PeerId = require('peer-id');
 var axios = require('axios');
 const Command = require('../command');
 const pjson = require('../../../package.json');
 const Models = require('../../../models/index');
+const constants = require("../../constants");
 
 class KeepAliveCommand extends Command {
     constructor(ctx) {
@@ -27,7 +28,7 @@ class KeepAliveCommand extends Command {
 
         const signalingMessage = {
             nodeVersion: pjson.version,
-            autoUpdate: this.config.autoUpdate.enabled,
+            autoUpdate: { enabled: this.config.autoUpdate.enabled },
             telemetry: {
                 enabled: this.config.telemetryHub.enabled,
             },
@@ -60,10 +61,13 @@ class KeepAliveCommand extends Command {
             headers: {
                 'Content-Type': 'application/json'
             },
-            data : JSON.stringify(signalingMessage)
+            data: JSON.stringify(signalingMessage)
         };
 
-        await axios(config);
+        const that = this;
+        axios(config).catch(e=>{
+            that.handleError(uuidv1(), e, constants.ERROR_TYPE.KEEP_ALIVE, false)
+        });
         return Command.repeat();
     }
 
