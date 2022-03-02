@@ -47,7 +47,7 @@ class KeepAliveCommand extends Command {
         } catch (e) {
             this.logger.error(`An error has occurred with signaling data. ${e.message}`);
         }
-
+        signalingMessage.proof = {};
         signalingMessage.proof.hash = this.validationService.calculateHash(signalingMessage);
         signalingMessage.proof.signature = this.validationService.sign(signalingMessage.proof.hash);
 
