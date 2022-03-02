@@ -1,9 +1,9 @@
 const { v1: uuidv1 } = require('uuid');
-const Command = require('../command');
-const pjson = require("../../../package.json");
-const PeerId = require("peer-id");
+const PeerId = require('peer-id');
 var axios = require('axios');
-var FormData = require('form-data');
+const Command = require('../command');
+const pjson = require('../../../package.json');
+const Models = require('../../../models/index');
 
 class KeepAliveCommand extends Command {
     constructor(ctx) {
@@ -31,16 +31,22 @@ class KeepAliveCommand extends Command {
             telemetry: {
                 enabled: this.config.telemetryHub.enabled,
             },
-            proof: {}
+            proof: {},
         };
-        try{
+        try {
             const peerId = await PeerId.createFromPrivKey(this.config.network.privateKey);
             signalingMessage.issuerWallet = this.config.blockchain[0].publicKey;
             signalingMessage.kademliaNodeId = peerId._idB58String;
             signalingMessage.nodeVersion = pjson.version;
-            signalingMessage.telemetry.latestAssertions = [];
+            signalingMessage.telemetry.latestAssertions = Models.assertions.findAll({
+                limit: 5,
+                order: [
+                    ['created_at', 'DESC'],
+                ],
+                attributes: ['hash', 'topics', 'created_at'],
+            }).map(x => ({assertionId: x.hash, keyword: x.topics, publishTimestamp: x.created_at}));
         } catch (e) {
-            this.logger.error(`An error has occurred with signaling data. ${e.message}`)
+            this.logger.error(`An error has occurred with signaling data. ${e.message}`);
         }
 
         signalingMessage.proof.hash = this.validationService.calculateHash(signalingMessage);
@@ -56,7 +62,6 @@ class KeepAliveCommand extends Command {
         };
 
         axios(config);
-
         return Command.repeat();
     }
 

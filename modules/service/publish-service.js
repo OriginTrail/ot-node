@@ -12,7 +12,7 @@ class PublishService {
         this.workerPool = ctx.workerPool;
     }
 
-    async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, isUrgent = false) {
+    async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, isTelemetry = false) {
         let {
             assertion,
             nquads,
@@ -75,7 +75,7 @@ class PublishService {
             sequence: commandSequence.slice(1),
             delay: 0,
             data: {
-                documentPath, handlerId, method, isUrgent
+                documentPath, handlerId, method, isTelemetry,
             },
             transactional: false,
         });
