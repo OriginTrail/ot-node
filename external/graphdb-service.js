@@ -122,7 +122,6 @@ class GraphdbService {
         CONSTRUCT { ?s ?p ?o }
         WHERE {
           GRAPH <${constants.DID_PREFIX}:${uri}> {
-            ?s ?p ?o
             ${onlyMetadata ? `<${constants.DID_PREFIX}:${uri}> ?p ?o` : '?s ?p ?o'}
           }
         }`;
