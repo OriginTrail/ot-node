@@ -39,7 +39,9 @@ class QueryService {
         });
 
         const { nquads, isAsset } = await this.dataService.resolve(id);
-        this.logger.info(`Retrieved data from the database: ${await this.workerPool.exec('JSONStringify', [nquads])}`);
+        if (nquads) {
+            this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
+        }
 
         this.logger.emit({
             msg: 'Finished measuring execution of handle resolve command',
