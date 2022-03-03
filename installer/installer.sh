@@ -488,7 +488,9 @@ else
 fi
 
 echo -n "Logs will be displayed. Press ctrl+c to exit the logs. The node WILL stay running after you return to the command prompt."
-echo " "
+echo ""
+echo "If the logs do not show and the screen hangs, press ctrl+c to exit the installation and reboot your server."
+echo ""
 read -p "Press enter to continue..."
 
 journalctl -u otnode --output cat -fn 100
