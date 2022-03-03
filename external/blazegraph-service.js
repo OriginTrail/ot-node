@@ -31,7 +31,10 @@ class BlazegraphService {
 
             await axios(this.config.axios).then((response) => true)
                 .catch((error) => {
-                    this.logger.error(`Failed to write into Blazegraph: ${error} - ${error.stack}`);
+                    this.logger.error({
+                        msg: `Failed to write into Blazegraph: ${error} - ${error.stack}`,
+                        Event_name: constants.ERROR_TYPE.TRIPLE_STORE_INSERT_ERROR,
+                    });
                     return false;
                 });
         }
