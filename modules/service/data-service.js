@@ -109,13 +109,13 @@ class DataService {
 
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
-            let {nquads, isAsset} = await this.implementation.resolve(id);
+            let {nquads, isAsset} = await this.implementation.resolve(id, metadataOnly);
             if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
                 return null;
             }
-            if (metadataOnly) {
-                nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
-            }
+            // if (metadataOnly) {
+            //     nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
+            // }
             return {nquads, isAsset};
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
