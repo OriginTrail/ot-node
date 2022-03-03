@@ -119,12 +119,13 @@ class GraphdbService {
     async resolve(uri, onlyMetadata = false) {
         let isAsset = false;
         const query = `PREFIX schema: <http://schema.org/>
-                        CONSTRUCT { ?s ?p ?o }
-                        WHERE {
-                          GRAPH <${constants.DID_PREFIX}:${uri}> {
-                            ${onlyMetadata ? '<'+constants.DID_PREFIX+':${uri}> ?p ?o':'?s ?p ?o'}
-                          }
-                        }`;
+        CONSTRUCT { ?s ?p ?o }
+        WHERE {
+          GRAPH <${constants.DID_PREFIX}:${uri}> {
+            ?s ?p ?o
+            ${onlyMetadata ? `<${constants.DID_PREFIX}:${uri}> ?p ?o` : '?s ?p ?o'}
+          }
+        }`;
         let nquads = await this.construct(query);
 
         if (!nquads.length) {
@@ -132,7 +133,7 @@ class GraphdbService {
             CONSTRUCT { ?s ?p ?o }
             WHERE {
                 GRAPH ?g { 
-                    ${onlyMetadata ? '<'+constants.DID_PREFIX+':${uri}> ?p ?o':'?s ?p ?o'}
+                    ${onlyMetadata ? `<${constants.DID_PREFIX}:${uri}> ?p ?o` : '?s ?p ?o'}
                 }
                 {
                     SELECT ?ng
