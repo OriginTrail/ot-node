@@ -1,5 +1,5 @@
-const Models = require('../../models/index');
-const constants = require('../constants')
+const { v1: uuidv1 } = require('uuid');
+const constants = require('../constants');
 
 class QueryService {
     constructor(ctx) {
@@ -13,29 +13,45 @@ class QueryService {
 
     async resolve(id, load, isAssetRequested, node) {
         let result = await this.networkService.sendMessage('/resolve', id, node);
-
-        if (!result) {
+        if (!result || (Array.isArray(result) && result[0] === "ack")) {
             return null;
         }
 
-        const {nquads, isAsset} = result;
-        let assertion = await this.dataService.createAssertion(nquads);
+        const { isAsset } = result;
+        const rawNquads = result.nquads ? result.nquads : result;
+        let assertion = await this.dataService.createAssertion(rawNquads);
         const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads, {isAsset: isAssetRequested});
 
         if (status && load) {
-            await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
+            await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
             this.logger.info(`Assertion ${assertion.jsonld.metadata.id} has been successfully inserted`);
         }
-        return status ? {assertion, isAsset} : null;
+        return status ? { assertion, isAsset } : null;
     }
 
     async handleResolve(id) {
-        const {nquads, isAsset} = await this.dataService.resolve(id);
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle resolve command',
+            Event_name: 'handle_resolve_start',
+            Operation_name: 'handle_resolve',
+            Id_operation: operationId,
+        });
+
+        const { nquads, isAsset } = await this.dataService.resolve(id);
         this.logger.info(`Retrieved data from the database: ${await this.workerPool.exec('JSONStringify', [nquads])}`);
 
-        if (!nquads)
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle resolve command',
+            Event_name: 'handle_resolve_end',
+            Operation_name: 'handle_resolve',
+            Id_operation: operationId,
+        });
+
+        if (!nquads) {
             return null;
-        return {nquads, isAsset};
+        }
+        return { nquads, isAsset };
     }
 
     async search(data, node) {
@@ -44,24 +60,50 @@ class QueryService {
     }
 
     async handleSearch(request) {
-        const {query, issuers, types, prefix, limit, handlerId} = request;
-        let response = await this.dataService.searchByQuery(query, {issuers, types, prefix, limit});
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search command',
+            Event_name: 'handle_search_start',
+            Operation_name: 'handle_search',
+            Id_operation: operationId,
+        });
 
-        return {response, handlerId};
+        const { query, issuers, types, prefix, limit, handlerId } = request;
+        const response = await this.dataService.searchByQuery(query, { issuers, types, prefix, limit });
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search command',
+            Event_name: 'handle_search_end',
+            Operation_name: 'handle_search',
+            Id_operation: operationId,
+        });
+
+        return { response, handlerId };
     }
 
     async handleSearchResult(request) {
         // TODO: add mutex
-        const {handlerId, response} = request;
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search result command',
+            Event_name: 'handle_search_result_start',
+            Operation_name: 'handle_search_result',
+            Id_operation: operationId,
+        });
+
+        const { handlerId, response } = request;
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
 
         for (const assertion of response) {
-            if (!assertion || !assertion.nquads) continue;
+            if (!assertion || !assertion.nquads) {
+                continue;
+            }
 
-            const { jsonld, nquads } = await this.dataService.createAssertion(assertion.nquads);
-            let object = handlerData.find(x => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
+            const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
+            const { jsonld, nquads } = await this.dataService.createAssertion(rawNquads);
+            let object = handlerData.find((x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
             if (!object) {
                 object = {
                     type: jsonld.metadata.type,
@@ -69,9 +111,9 @@ class QueryService {
                     timestamp: jsonld.metadata.timestamp,
                     issuers: [],
                     assertions: [],
-                    nodes: [assertion.node]
-                }
-                handlerData.push(object)
+                    nodes: [assertion.node],
+                };
+                handlerData.push(object);
             }
 
             if (object.nodes.indexOf(assertion.node) === -1) {
@@ -90,22 +132,18 @@ class QueryService {
             }
         }
 
-
         await this.fileService.writeContentsToFile(
             this.fileService.getHandlerIdCachePath(),
             handlerId,
             await this.workerPool.exec('JSONStringify', [handlerData]),
         );
 
-        await Models.handler_ids.update(
-            {
-                status: 'PENDING',
-            }, {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
-        );
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search result command',
+            Event_name: 'handle_search_result_end',
+            Operation_name: 'handle_search_result',
+            Id_operation: operationId,
+        });
 
         return true;
     }
@@ -116,55 +154,75 @@ class QueryService {
     }
 
     async handleSearchAssertions(request) {
-        const {query, options, handlerId} = request;
-        let response = await this.dataService.searchAssertions(query, options);
-        return {response, handlerId};
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search assertions command',
+            Event_name: 'handle_search_assertions_start',
+            Operation_name: 'handle_search_assertions',
+            Id_operation: operationId,
+        });
+
+        const { query, options, handlerId } = request;
+        const response = await this.dataService.searchAssertions(query, options || {});
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search assertions command',
+            Event_name: 'handle_search_assertions_end',
+            Operation_name: 'handle_search_assertions',
+            Id_operation: operationId,
+        });
+        return { response, handlerId };
     }
 
     async handleSearchAssertionsResult(request) {
         // TODO: add mutex
-        const {handlerId, response} = request;
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of handle search assertions result command',
+            Event_name: 'handle_search_assertions_result_start',
+            Operation_name: 'handle_search_assertions_result',
+            Id_operation: operationId,
+        });
+        const { handlerId, response } = request;
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
+        if (response !== undefined && response.length && handlerData) {
+            for (const object of response) {
+                const assertion = handlerData.find((x) => x.id === object.assertionId);
+                if (assertion) {
+                    if (assertion.nodes.indexOf(object.node) === -1) {
+                        assertion.nodes = [...new Set(assertion.nodes.concat(object.node))];
+                    }
+                } else {
+                    if (!object || !object.nquads) {
+                        continue
+                    }
+                    const rawNquads = object.nquads ? object.nquads : object.rdf;
+                    const assertion = await this.dataService.createAssertion(rawNquads);
 
-        for (const object of response) {
-            const assertion = handlerData.find((x) => x.id === object.assertionId);
-            if (assertion) {
-                if (assertion.nodes.indexOf(object.node) === -1)
-                    assertion.nodes = [...new Set(assertion.nodes.concat(object.node))]
-            } else {
-                if (!object || !object.nquads)
-                    continue
-
-                const assertion = await this.dataService.createAssertion(object.nquads);
-
-                handlerData.push({
-                    id: assertion.jsonld.id,
-                    metadata: assertion.jsonld.metadata,
-                    signature: assertion.jsonld.signature,
-                    nodes: [object.node]
-                })
+                    handlerData.push({
+                        id: assertion.jsonld.id,
+                        metadata: assertion.jsonld.metadata,
+                        signature: assertion.jsonld.signature,
+                        nodes: [object.node],
+                    });
+                }
             }
+
+            await this.fileService.writeContentsToFile(
+                this.fileService.getHandlerIdCachePath(),
+                handlerId,
+                JSON.stringify(handlerData),
+            );
         }
 
-
-        await this.fileService.writeContentsToFile(
-            this.fileService.getHandlerIdCachePath(),
-            handlerId,
-            JSON.stringify(handlerData),
-        );
-
-        await Models.handler_ids.update(
-            {
-                status: 'PENDING',
-            }, {
-                where: {
-                    handler_id: handlerId,
-                },
-            },
-        );
-
+        this.logger.emit({
+            msg: 'Finished measuring execution of handle search assertions result command',
+            Event_name: 'handle_search_assertions_result_end',
+            Operation_name: 'handle_search_assertions_result',
+            Id_operation: operationId,
+        });
         return true;
     }
 }

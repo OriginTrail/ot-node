@@ -114,14 +114,14 @@ class Libp2pService {
         const encodedKey = new TextEncoder().encode(key);
         // Creates a DHT ID by hashing a given Uint8Array
         const id = (await sha256.digest(encodedKey)).digest;
-        const nodes = this.node._dht.routingTable.closestPeers(id, limit);
-        this.logger.info(`Found ${nodes.length} nodes`);
+        const nodes = this.node._dht.peerRouting.getClosestPeers(id);
+        const result = [];
+        for await (const node of nodes) {
+            result.push(node);
+        }
+        this.logger.info(`Found ${result.length} nodes`);
 
-        return nodes;
-    }
-
-    findPeer(peerId, options) {
-        return this.node.peerRouting.findPeer(peerId, options);
+        return result;
     }
 
     getPeers() {
@@ -147,7 +147,7 @@ class Libp2pService {
     async handleMessage(eventName, handler, options) {
         this.logger.info(`Enabling network protocol: ${eventName}`);
 
-        let async = false, timeout = 5e3;
+        let async = false, timeout = 60e3;
         if (options) {
             async = options.async;
             timeout = options.timeout;
@@ -173,9 +173,9 @@ class Libp2pService {
                 if (!async) {
                     const result = await handler(data);
                     this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
-
+                    const stringifiedData = await this.workerPool.exec('JSONStringify', [result]);
                     await pipe(
-                        [JSON.stringify(result)],
+                        [Buffer.from(stringifiedData)],
                         stream,
                     )
                 } else {
@@ -193,8 +193,9 @@ class Libp2pService {
                     }
                 }
             } catch (e) {
+                const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
                 this.logger.error({
-                   msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${data}`,
+                   msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${stringifiedData}`,
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
                 await pipe(
@@ -222,6 +223,10 @@ class Libp2pService {
                 return bl;
             },
         )
+
+        if(response.toString() === 'ack') {
+            return null;
+        }
 
         return JSON.parse(response);
     }

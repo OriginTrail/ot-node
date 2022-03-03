@@ -1,5 +1,6 @@
 exports.GS1EPCIS = 'gs1-epcis';
 exports.ERC721 = 'erc721';
+exports.OTTELEMETRY = 'ottelemetry';
 exports.MERKLE_TREE = 'Merkle Tree';
 exports.BASIC = 'Basic';
 exports.DID = 'DID';
@@ -32,7 +33,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 exports.PERMANENT_COMMANDS = [
     'otnodeUpdateCommand', 'sendTelemetryCommand', 'cleanerCommand',
-    'handlerIdsCleanerCommand',
+    'handlerIdsCleanerCommand', 'keepAliveCommand',
 ];
 
 /**
@@ -61,6 +62,12 @@ exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
  * - Wait interval between retries for connecting to triple store
  */
 exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
+
+/**
+ * @constant {number} BLOCKCHAIN_QUEUE_LIMIT
+ * - Blockchain queue limit
+ */
+exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
 
 /**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
@@ -93,6 +100,7 @@ exports.ERROR_TYPE = {
     NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
     TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
+    TRIPLE_STORE_INSERT_ERROR: 'TripleStoreInsertError',
     LIBP2P_HANDLE_MSG_ERROR: 'Libp2pHandleMessageError',
     VERIFY_ASSERTION_ERROR: 'VerifyAssertionError',
     BLOCKCHAIN_CHECK_ERROR: 'BlockchainCheckError',
@@ -105,4 +113,5 @@ exports.ERROR_TYPE = {
     BLOCKCHAIN_INITIALIZATION_ERROR: 'BlockchainInitializationError',
     COMMAND_EXECUTOR_INITIALIZATION_ERROR: 'CommandExecutorInitializationError',
     RPC_INITIALIZATION_ERROR: 'RpcInitializationError',
+    KEEP_ALIVE_ERROR: 'KeepAliveError',
 };
