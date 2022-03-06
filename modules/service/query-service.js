@@ -38,7 +38,13 @@ class QueryService {
             Id_operation: operationId,
         });
 
-        const { nquads, isAsset } = await this.dataService.resolve(id);
+        let isAsset = false;
+        const { assertionId } = await this.blockchainService.getAssetProofs(id);
+        if (assertionId) {
+            isAsset = true;
+            id = assertionId;
+        }
+        const nquads = await this.dataService.resolve(id);
         if (nquads) {
             this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
         }

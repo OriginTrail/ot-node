@@ -102,7 +102,6 @@ class BlazegraphService {
     }
 
     async resolve(uri) {
-        let isAsset = false;
         const query = `PREFIX schema: <http://schema.org/>
                         CONSTRUCT { ?s ?p ?o }
                         WHERE {
@@ -112,26 +111,6 @@ class BlazegraphService {
                         }`;
         let nquads = await this.construct(query);
 
-        if (!nquads.length) {
-            const query = `PREFIX schema: <http://schema.org/>
-            CONSTRUCT { ?s ?p ?o }
-            WHERE {
-                GRAPH ?g { ?s ?p ?o }
-                {
-                    SELECT ?ng
-                    WHERE {
-                        ?ng schema:hasUALs "${uri}" ;
-                            schema:hasTimestamp ?timestamp .
-                    }
-                    ORDER BY DESC(?timestamp)
-                    LIMIT 1
-                }
-                FILTER (?g = ?ng) .
-            }`;
-            nquads = await this.construct(query);
-            isAsset = true;
-        }
-
         if (nquads.length) {
             nquads = nquads.toString();
             nquads = nquads.split('\n');
@@ -140,7 +119,7 @@ class BlazegraphService {
         } else {
             nquads = null;
         }
-        return { nquads, isAsset };
+        return nquads;
     }
 
     async transformBlankNodes(nquads) {
