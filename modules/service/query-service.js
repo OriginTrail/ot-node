@@ -110,7 +110,7 @@ class QueryService {
             }
 
             const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
-            const { jsonld, nquads } = await this.dataService.createAssertion(rawNquads);
+            const jsonld = await this.dataService.createAssertion(rawNquads);
             let object = handlerData.find((x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
             if (!object) {
                 object = {

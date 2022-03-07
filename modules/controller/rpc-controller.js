@@ -589,9 +589,8 @@ class RpcController {
                     assertions = await this.dataService.findAssertions(reqNquads);
                 }
                 for (const assertionId of assertions) {
-                    const content = await this.dataService.resolve(assertionId);
-                    if (content) {
-                        const rawNquads = content.rdf ? content.rdf : content;
+                    const rawNquads = await this.dataService.resolve(assertionId);
+                    if (rawNquads) {
                         const { nquads } = await this.dataService.createAssertion(rawNquads);
                         const proofs = await this.validationService.getProofs(nquads, reqNquads);
                         result.push({ assertionId, proofs });
