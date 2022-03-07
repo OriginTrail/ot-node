@@ -70,6 +70,12 @@ exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
 
 /**
+ * @constant {number} RESOLVE_MAX_TIME_MILLIS
+ * - Maximum time for resolve operation
+ */
+exports.RESOLVE_MAX_TIME_MILLIS = 3 * 1000;
+
+/**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
  *  Names of available triple store implementations
  */

@@ -16,7 +16,7 @@ class QueryService {
         const resolvePromise = new Promise(async (resolve, reject) => {
             const timer = setTimeout(() => {
                 resolve(null);
-            }, 3000);
+            }, constants.RESOLVE_MAX_TIME_MILLIS);
 
             const result = await this.networkService.sendMessage('/resolve', id, node);
             clearTimeout(timer);
