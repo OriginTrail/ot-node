@@ -110,6 +110,8 @@ class DataService {
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
             let nquads = await this.implementation.resolve(id);
+
+            // TODO: add function for this conditional expr for increased readability
             if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
                 return null;
             }
