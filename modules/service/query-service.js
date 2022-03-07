@@ -6,6 +6,7 @@ class QueryService {
         this.logger = ctx.logger;
         this.networkService = ctx.networkService;
         this.validationService = ctx.validationService;
+        this.blockchainService = ctx.blockchainService;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
         this.workerPool = ctx.workerPool;
