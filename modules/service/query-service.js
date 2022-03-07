@@ -13,15 +13,29 @@ class QueryService {
     }
 
     async resolve(id, load, isAssetRequested, node) {
-        let result = await this.networkService.sendMessage('/resolve', id, node);
-        if (!result || (Array.isArray(result) && result[0] === "ack")) {
+        const resolvePromise = new Promise(async (resolve, reject) => {
+            const timer = setTimeout(() => {
+                resolve(null);
+            }, 3000);
+
+            const result = await this.networkService.sendMessage('/resolve', id, node);
+            clearTimeout(timer);
+            resolve(result);
+        });
+
+        const result = await resolvePromise;
+        if (!result || (Array.isArray(result) && result[0] === 'ack')) {
             return null;
         }
 
         const { isAsset } = result;
         const rawNquads = result.nquads ? result.nquads : result;
-        let assertion = await this.dataService.createAssertion(rawNquads);
-        const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads, {isAsset: isAssetRequested});
+        const assertion = await this.dataService.createAssertion(rawNquads);
+        const status = await this.dataService.verifyAssertion(
+            assertion.jsonld,
+            assertion.nquads,
+            { isAsset: isAssetRequested },
+        );
 
         if (status && load) {
             await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
