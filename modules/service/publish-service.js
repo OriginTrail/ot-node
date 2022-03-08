@@ -1,4 +1,5 @@
 const { v1: uuidv1 } = require('uuid');
+const sleep = require('sleep-async')().Promise;
 const constants = require('../constants');
 
 class PublishService {
@@ -111,7 +112,7 @@ class PublishService {
             && retries < constants.STORE_MAX_RETRIES
         ) {
             retries += 1;
-            await this.sleepForMilliseconds(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+            await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
             response = await this.networkService.sendMessage('/store', assertion, node);
         }
 
@@ -145,10 +146,6 @@ class PublishService {
         });
 
         return status;
-    }
-
-    async sleepForMilliseconds(milliseconds) {
-        await new Promise((r) => setTimeout(r, milliseconds));
     }
 }
 
