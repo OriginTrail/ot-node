@@ -44,11 +44,17 @@ class SendAssertionCommand extends Command {
         }
         nodes = [...new Set(nodes)];
 
-        for (const node of nodes) {
-            this.publishService.store({ id: assertion.id, nquads: nquads }, node).catch((e) => {
-                this.handleError(handlerId, e, `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`);
-            });
-        }
+        const storePromises = nodes.map((node) => this.publishService
+            .store({ id: assertion.id, nquads }, node)
+            .catch((e) => {
+                this.handleError(
+                    handlerId,
+                    e,
+                    `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
+                );
+            }));
+
+        await Promise.all(storePromises);
 
         await Models.handler_ids.update(
             {

@@ -6,7 +6,6 @@ class QueryService {
         this.logger = ctx.logger;
         this.networkService = ctx.networkService;
         this.validationService = ctx.validationService;
-        this.blockchainService = ctx.blockchainService;
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
         this.workerPool = ctx.workerPool;
@@ -24,11 +23,10 @@ class QueryService {
         });
 
         const result = await resolvePromise;
-        if (!result || (Array.isArray(result) && result[0] === 'ack')) {
+        if (!result || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)) {
             return null;
         }
 
-        const { isAsset } = result;
         const rawNquads = result.nquads ? result.nquads : result;
         const assertion = await this.dataService.createAssertion(rawNquads);
         const status = await this.dataService.verifyAssertion(
@@ -41,7 +39,7 @@ class QueryService {
             await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
             this.logger.info(`Assertion ${assertion.jsonld.metadata.id} has been successfully inserted`);
         }
-        return status ? { assertion, isAsset } : null;
+        return status ? assertion : null;
     }
 
     async handleResolve(id) {
@@ -53,12 +51,6 @@ class QueryService {
             Id_operation: operationId,
         });
 
-        let isAsset = false;
-        const { assertionId } = await this.blockchainService.getAssetProofs(id);
-        if (assertionId) {
-            isAsset = true;
-            id = assertionId;
-        }
         const nquads = await this.dataService.resolve(id);
         if (nquads) {
             this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
@@ -74,7 +66,7 @@ class QueryService {
         if (!nquads) {
             return null;
         }
-        return { nquads, isAsset };
+        return nquads;
     }
 
     async search(data, node) {

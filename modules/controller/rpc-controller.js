@@ -8,6 +8,7 @@ const path = require('path');
 const { v1: uuidv1, v4: uuidv4 } = require('uuid');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
+const slowDown = require('express-slow-down');
 const Models = require('../../models/index');
 const constants = require('../constants');
 const pjson = require('../../package.json');
@@ -74,7 +75,7 @@ class RpcController {
 
         this.app.use((error, req, res, next) => {
             if (error instanceof IpDeniedError) {
-                return res.status(401).send('Access denied')
+                return res.status(401).send('Access denied');
             }
             return next();
         });
@@ -82,7 +83,13 @@ class RpcController {
         this.app.use((req, res, next) => {
             this.logger.info(`${req.method}: ${req.url} request received`);
             return next();
-        })
+        });
+
+        this.app.use(slowDown({
+            windowMs: 1 * 60 * 1000, // 1 minute
+            delayAfter: 30, // allow 30 requests per 1 minute, then...
+            delayMs: 2 * 1000, // begin adding 2s of delay per request above 30;
+        }));
     }
 
     async initializeErrorMiddleware() {
@@ -234,9 +241,8 @@ class RpcController {
                         nodes = [...new Set(nodes)];
                         for (const node of nodes) {
                             try {
-                                const result = await this.queryService.resolve(id, req.query.load, isAsset, node);
-                                if (result) {
-                                    const {assertion} = result;
+                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node);
+                                if (assertion) {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                     assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
                                     response.push(isAsset ? {
