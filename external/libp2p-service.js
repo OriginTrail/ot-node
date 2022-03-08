@@ -27,7 +27,7 @@ const initializationObject = {
         dht: KadDHT,
     },
     dialer: {
-        dialTimeout: 1e3,
+        dialTimeout: 2e3,
     },
     config: {
         dht: {
