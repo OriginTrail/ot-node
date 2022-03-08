@@ -64,6 +64,12 @@ exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 
 /**
+ * @constant {number} TRIPLE_STORE_QUEUE_LIMIT
+ * - Triple store queue limit
+ */
+exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
+
+/**
  * @constant {number} BLOCKCHAIN_QUEUE_LIMIT
  * - Blockchain queue limit
  */
