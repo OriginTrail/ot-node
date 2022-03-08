@@ -12,21 +12,34 @@ class QueryService {
     }
 
     async resolve(id, load, isAssetRequested, node) {
-        let result = await this.networkService.sendMessage('/resolve', id, node);
-        if (!result || (Array.isArray(result) && result[0] === "ack")) {
+        const resolvePromise = new Promise(async (resolve, reject) => {
+            const timer = setTimeout(() => {
+                resolve(null);
+            }, constants.RESOLVE_MAX_TIME_MILLIS);
+
+            const result = await this.networkService.sendMessage('/resolve', id, node);
+            clearTimeout(timer);
+            resolve(result);
+        });
+
+        const result = await resolvePromise;
+        if (!result || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)) {
             return null;
         }
 
-        const { isAsset } = result;
         const rawNquads = result.nquads ? result.nquads : result;
-        let assertion = await this.dataService.createAssertion(rawNquads);
-        const status = await this.dataService.verifyAssertion(assertion.jsonld, assertion.nquads, {isAsset: isAssetRequested});
+        const assertion = await this.dataService.createAssertion(rawNquads);
+        const status = await this.dataService.verifyAssertion(
+            assertion.jsonld,
+            assertion.nquads,
+            { isAsset: isAssetRequested },
+        );
 
         if (status && load) {
             await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
             this.logger.info(`Assertion ${assertion.jsonld.metadata.id} has been successfully inserted`);
         }
-        return status ? { assertion, isAsset } : null;
+        return status ? assertion : null;
     }
 
     async handleResolve(id) {
@@ -38,7 +51,7 @@ class QueryService {
             Id_operation: operationId,
         });
 
-        const { nquads, isAsset } = await this.dataService.resolve(id);
+        const nquads = await this.dataService.resolve(id);
         if (nquads) {
             this.logger.info(`Number of n-quads retrieved from the database is ${nquads.length}`);
         }
@@ -53,7 +66,7 @@ class QueryService {
         if (!nquads) {
             return null;
         }
-        return { nquads, isAsset };
+        return nquads;
     }
 
     async search(data, node) {
@@ -104,7 +117,7 @@ class QueryService {
             }
 
             const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
-            const { jsonld, nquads } = await this.dataService.createAssertion(rawNquads);
+            const jsonld = await this.dataService.createAssertion(rawNquads);
             let object = handlerData.find((x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
             if (!object) {
                 object = {

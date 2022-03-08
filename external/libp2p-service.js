@@ -27,7 +27,7 @@ const initializationObject = {
         dht: KadDHT,
     },
     dialer: {
-        dialTimeout: 1e3,
+        dialTimeout: 2e3,
     },
     config: {
         dht: {
@@ -180,7 +180,7 @@ class Libp2pService {
                     )
                 } else {
                     await pipe(
-                        ['ack'],
+                        [constants.NETWORK_RESPONSES.ACK],
                         stream
                     )
 
@@ -199,7 +199,7 @@ class Libp2pService {
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
                 await pipe(
-                    ['ack'],
+                    [constants.NETWORK_RESPONSES.ACK],
                     stream
                 )
 
@@ -224,7 +224,7 @@ class Libp2pService {
             },
         )
 
-        if(response.toString() === 'ack') {
+        if(response.toString() === constants.NETWORK_RESPONSES.ACK) {
             return null;
         }
 

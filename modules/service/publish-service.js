@@ -1,4 +1,5 @@
 const { v1: uuidv1 } = require('uuid');
+const sleep = require('sleep-async')().Promise;
 const constants = require('../constants');
 
 class PublishService {
@@ -104,11 +105,25 @@ class PublishService {
 
     async store(assertion, node) {
         // await this.networkService.store(node, topic, {});
-        return await this.networkService.sendMessage('/store', assertion, node);
+        let retries = 0;
+        let response = await this.networkService.sendMessage('/store', assertion, node);
+        while (
+            response === constants.NETWORK_RESPONSES.BUSY
+            && retries < constants.STORE_MAX_RETRIES
+        ) {
+            retries += 1;
+            await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+            response = await this.networkService.sendMessage('/store', assertion, node);
+        }
+
+        return response;
     }
 
     async handleStore(data) {
         if (!data || data.rdf) return false;
+        if (this.dataService.getTripleStoreQueueLength() > constants.HANDLE_STORE_BUSINESS_LIMIT) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle store command',
