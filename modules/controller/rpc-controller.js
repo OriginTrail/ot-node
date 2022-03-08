@@ -203,9 +203,8 @@ class RpcController {
                         isAsset = true;
                         id = assertionId;
                     }
-                    const result = await this.dataService.resolve(id, true);
-                    if (result && result.nquads) {
-                        let {nquads} = result;
+                    const nquads = await this.dataService.resolve(id, true);
+                    if (nquads) {
                         let assertion = await this.dataService.createAssertion(nquads);
                         assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                         assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
@@ -590,9 +589,8 @@ class RpcController {
                     assertions = await this.dataService.findAssertions(reqNquads);
                 }
                 for (const assertionId of assertions) {
-                    const content = await this.dataService.resolve(assertionId);
-                    if (content) {
-                        const rawNquads = content.nquads ? content.nquads : content.rdf;
+                    const rawNquads = await this.dataService.resolve(assertionId);
+                    if (rawNquads) {
                         const { nquads } = await this.dataService.createAssertion(rawNquads);
                         const proofs = await this.validationService.getProofs(nquads, reqNquads);
                         result.push({ assertionId, proofs });

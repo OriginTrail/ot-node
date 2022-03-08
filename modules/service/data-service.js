@@ -109,14 +109,16 @@ class DataService {
 
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
-            let {nquads, isAsset} = await this.implementation.resolve(id);
+            let nquads = await this.implementation.resolve(id);
+
+            // TODO: add function for this conditional expr for increased readability
             if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
                 return null;
             }
             if (metadataOnly) {
                 nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
             }
-            return {nquads, isAsset};
+            return nquads;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
         }
@@ -245,12 +247,12 @@ class DataService {
             for (let assertion of assertions) {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                assertion = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!assertion) continue;
+                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!nquads) continue;
 
 
                 if (localQuery) {
-                    assertion = await this.createAssertion(assertion.nquads);
+                    assertion = await this.createAssertion(nquads);
 
                     let object = result.find((x) => x.type === assertion.jsonld.metadata.type && x.id === assertion.jsonld.metadata.UALs[0]);
                     if (!object) {
@@ -281,7 +283,7 @@ class DataService {
                         object = {
                             assertionId,
                             node: this.networkService.getPeerId(),
-                            nquads: assertion.nquads,
+                            nquads,
                         };
                         result.push(object);
                     }
@@ -303,11 +305,11 @@ class DataService {
             for (let assertion of assertions) {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                assertion = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!assertion) continue;
+                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!nquads) continue;
 
                 if (localQuery) {
-                    assertion = await this.createAssertion(assertion.nquads);
+                    assertion = await this.createAssertion(nquads);
                     let object = result.find((x) => x.id === assertion.id);
                     if (!object) {
                         object = {
@@ -324,7 +326,7 @@ class DataService {
                         object = {
                             assertionId,
                             node: this.networkService.getPeerId(),
-                            nquads: assertion.nquads,
+                            nquads,
                         };
                         result.push(object);
                     }
