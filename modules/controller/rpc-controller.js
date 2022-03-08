@@ -234,9 +234,8 @@ class RpcController {
                         nodes = [...new Set(nodes)];
                         for (const node of nodes) {
                             try {
-                                const result = await this.queryService.resolve(id, req.query.load, isAsset, node);
-                                if (result) {
-                                    const {assertion} = result;
+                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node);
+                                if (assertion) {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                     assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
                                     response.push(isAsset ? {

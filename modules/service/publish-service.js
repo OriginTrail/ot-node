@@ -104,7 +104,18 @@ class PublishService {
 
     async store(assertion, node) {
         // await this.networkService.store(node, topic, {});
-        return await this.networkService.sendMessage('/store', assertion, node);
+        let retries = 0;
+        let response = await this.networkService.sendMessage('/store', assertion, node);
+        while (
+            response === constants.NETWORK_RESPONSES.BUSY
+            && retries < constants.STORE_MAX_RETRIES
+        ) {
+            retries += 1;
+            await this.sleepForMilliseconds(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+            response = await this.networkService.sendMessage('/store', assertion, node);
+        }
+
+        return response;
     }
 
     async handleStore(data) {
@@ -134,6 +145,10 @@ class PublishService {
         });
 
         return status;
+    }
+
+    async sleepForMilliseconds(milliseconds) {
+        await new Promise((r) => setTimeout(r, milliseconds));
     }
 }
 

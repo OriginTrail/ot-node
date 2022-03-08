@@ -76,12 +76,35 @@ exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
 exports.RESOLVE_MAX_TIME_MILLIS = 3 * 1000;
 
 /**
+ * @constant {number} STORE_MAX_RETRIES
+ * - Maximum number of retries
+ */
+exports.STORE_MAX_RETRIES = 3;
+
+/**
+ * @constant {number} STORE_BUSY_REPEAT_INTERVAL_IN_MILLS
+ * - Wait interval between retries for sending store requests
+ */
+exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 2 * 1000;
+
+/**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
  *  Names of available triple store implementations
  */
 exports.TRIPLE_STORE_IMPLEMENTATION = {
     BLAZEGRAPH: 'Blazegraph',
     GRAPHDB: 'GraphDB',
+};
+
+/**
+ * @constant {object} NETWORK_RESPONSES -
+ *  Types of known network responses
+ */
+exports.NETWORK_RESPONSES = {
+    TRUE: true,
+    FALSE: false,
+    ACK: 'ack',
+    BUSY: 'busy',
 };
 
 /**
