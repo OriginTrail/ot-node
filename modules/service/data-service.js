@@ -18,6 +18,10 @@ class DataService {
         this.N3Parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
     }
 
+    getTripleStoreQueueLength() {
+        return this.tripleStoreQueue.length();
+    }
+
     getName() {
         return this.implementation.getName();
     }

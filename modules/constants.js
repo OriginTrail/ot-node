@@ -94,6 +94,12 @@ exports.STORE_MAX_RETRIES = 3;
 exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 2 * 1000;
 
 /**
+ * @constant {number} HANDLE_STORE_BUSINESS_LIMIT
+ * - Max number of operations in triple store queue that indicate business
+ */
+exports.HANDLE_STORE_BUSINESS_LIMIT = 20;
+
+/**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
  *  Names of available triple store implementations
  */
