@@ -14,7 +14,7 @@ cd /root
 
 echo -n "Updating Ubuntu package repository: "
 
-OUTPUT=$(apt update >/dev/null 2>&1)
+OUTPUT=$(apt update 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -27,7 +27,7 @@ fi
 
 echo -n "Updating Ubuntu to latest version (may take a few minutes): "
 
-OUTPUT=$(export DEBIAN_FRONTEND=noninteractive && apt upgrade -y >/dev/null 2>&1)
+OUTPUT=$(export DEBIAN_FRONTEND=noninteractive && apt upgrade -y 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -40,7 +40,7 @@ fi
 
 echo -n "Installing default-jre: "
 
-OUTPUT=$(apt install default-jre unzip jq -y >/dev/null 2>&1)
+OUTPUT=$(apt install default-jre unzip jq -y 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -75,7 +75,7 @@ if [[ $DATABASE = "graphdb" ]]; then
 
     echo -n "Unzipping GraphDB: "
     
-    OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
+    OUTPUT=$(unzip -o $GRAPHDB_FILE 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -88,7 +88,7 @@ if [[ $DATABASE = "graphdb" ]]; then
 
     echo -n "Copying graphdb service file: "
 
-    OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
+    OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -103,7 +103,7 @@ if [[ $DATABASE = "graphdb" ]]; then
 
     echo -n "Enable GraphDB service on boot: "
 
-    OUTPUT=$(systemctl enable graphdb >/dev/null 2>&1)
+    OUTPUT=$(systemctl enable graphdb 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -116,7 +116,7 @@ if [[ $DATABASE = "graphdb" ]]; then
 
     echo -n "Starting GraphDB: "
 
-    OUTPUT=$(systemctl start graphdb >/dev/null 2>&1)
+    OUTPUT=$(systemctl start graphdb 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -158,7 +158,7 @@ if [[ $DATABASE = "blazegraph" ]]; then
 
     echo -n "Copying blazegraph service file: "
 
-    OUTPUT=$(cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ >/dev/null 2>&1)
+    OUTPUT=$(cp $OTNODE_DIR/installer/data/blazegraph.service /lib/systemd/system/ 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -173,7 +173,7 @@ if [[ $DATABASE = "blazegraph" ]]; then
 
     echo -n "Enable Blazegraph service on boot: "
 
-    OUTPUT=$(systemctl enable blazegraph >/dev/null 2>&1)
+    OUTPUT=$(systemctl enable blazegraph 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -186,7 +186,7 @@ if [[ $DATABASE = "blazegraph" ]]; then
 
     echo -n "Starting Blazegraph: "
 
-    OUTPUT=$(systemctl start blazegraph >/dev/null 2>&1)
+    OUTPUT=$(systemctl start blazegraph 2>&1)
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}FAILED${NC}"
@@ -213,7 +213,7 @@ fi
 
 echo -n "Downloading Node.js v14: "
 
-OUTPUT=$(wget https://deb.nodesource.com/setup_14.x >/dev/null 2>&1)
+OUTPUT=$(wget https://deb.nodesource.com/setup_14.x 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error downloading nodejs setup."
@@ -227,7 +227,7 @@ echo -n "Setting up Node.js v14: "
 
 OUTPUT=$(chmod +x setup_14.x)
 
-OUTPUT=$(./setup_14.x >/dev/null 2>&1)
+OUTPUT=$(./setup_14.x 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error setting up nodejs."
@@ -239,7 +239,7 @@ fi
 
 echo -n "Updating the Ubuntu repo: "
 
-OUTPUT=$(apt update >/dev/null 2>&1)
+OUTPUT=$(apt update 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error updating the Ubuntu repo."
@@ -251,7 +251,7 @@ fi
 
 echo -n "Installing aptitude: "
 
-OUTPUT=$(apt install aptitude -y >/dev/null 2>&1)
+OUTPUT=$(apt install aptitude -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing aptitude."
@@ -263,7 +263,7 @@ fi
 
 echo -n "Installing nodejs: "
 
-OUTPUT=$(aptitude install nodejs -y >/dev/null 2>&1)
+OUTPUT=$(aptitude install nodejs -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing nodejs/npm."
@@ -275,7 +275,7 @@ fi
 
 echo -n "Installing tcllib and mysql-server: "
 
-OUTPUT=$(apt install tcllib mysql-server -y >/dev/null 2>&1)
+OUTPUT=$(apt install tcllib mysql-server -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing tcllib and mysql-server."
@@ -315,7 +315,7 @@ fi
 
 echo -n "Commenting out max_binlog_size: "
 
-OUTPUT=$(sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf >/dev/null 2>&1)
+OUTPUT=$(sed -i 's|max_binlog_size|#max_binlog_size|' /etc/mysql/mysql.conf.d/mysqld.cnf 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error commenting out max_binlog_size."
@@ -339,7 +339,7 @@ fi
 
 echo -n "Restarting mysql: "
 
-OUTPUT=$(systemctl restart mysql >/dev/null 2>&1)
+OUTPUT=$(systemctl restart mysql 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error restarting mysql."
@@ -354,7 +354,7 @@ cd ot-node
 
 echo -n "Executing npm install: "
 
-OUTPUT=$(npm install >/dev/null 2>&1)
+OUTPUT=$(npm install 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error executing npm install."
@@ -366,7 +366,7 @@ fi
 
 echo -n "Opening firewall ports 22,8900,9000: "
 
-OUTPUT=$(ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000 >/dev/null 2>&1)
+OUTPUT=$(ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error opening the firewall ports."
@@ -378,7 +378,7 @@ fi
 
 echo -n "Enabling the firewall: "
 
-OUTPUT=$(yes | ufw enable >/dev/null 2>&1)
+OUTPUT=$(yes | ufw enable 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error enabling the firewall."
@@ -423,7 +423,7 @@ fi
 
 echo -n "Running DB migrations: "
 
-OUTPUT=$(npx sequelize --config=./config/sequelizeConfig.js db:migrate >/dev/null 2>&1)
+OUTPUT=$(npx sequelize --config=./config/sequelizeConfig.js db:migrate 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error running the db migrations."
@@ -435,7 +435,7 @@ fi
 
 echo -n "Copying otnode service file: "
 
-OUTPUT=$(cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ >/dev/null 2>&1)
+OUTPUT=$(cp $OTNODE_DIR/installer/data/otnode.service /lib/systemd/system/ 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -450,7 +450,7 @@ systemctl daemon-reload
 
 echo -n "Enable otnode service on boot: "
 
-OUTPUT=$(systemctl enable otnode >/dev/null 2>&1)
+OUTPUT=$(systemctl enable otnode 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -463,7 +463,7 @@ fi
 
 echo -n "Starting otnode: "
 
-OUTPUT=$(systemctl start otnode >/dev/null 2>&1)
+OUTPUT=$(systemctl start otnode 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
