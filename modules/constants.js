@@ -139,6 +139,7 @@ exports.ERROR_TYPE = {
     PROOFS_ROUTE_ERROR: 'ProofsRouteError',
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
     NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
+    HANDLE_STORE_ERROR: 'HandleStoreError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
     TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
     TRIPLE_STORE_INSERT_ERROR: 'TripleStoreInsertError',

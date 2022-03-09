@@ -86,7 +86,7 @@ class PublishService {
                 sequence: commandSequence.slice(1),
                 delay: 0,
                 data: {
-                    documentPath, handlerId, method, isTelemetry,
+                    documentPath, handlerId, method, isTelemetry, operationId,
                 },
                 transactional: false,
             });
@@ -132,23 +132,39 @@ class PublishService {
             Id_operation: operationId,
         });
 
-        const { jsonld, nquads } = await this.dataService.createAssertion(data.nquads);
-        const status = await this.dataService.verifyAssertion(jsonld, nquads);
+        try {
+            const { jsonld, nquads } = await this.dataService.createAssertion(data.nquads);
+            const status = await this.dataService.verifyAssertion(jsonld, nquads);
 
-        // todo check root hash on the blockchain
-        if (status) {
-            await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
-            this.logger.info(`Assertion ${data.id} has been successfully inserted`);
+            // todo check root hash on the blockchain
+            if (status) {
+                await this.dataService.insert(data.nquads.join('\n'), `${constants.DID_PREFIX}:${data.id}`);
+                this.logger.info(`Assertion ${data.id} has been successfully inserted`);
+            }
+
+            this.logger.emit({
+                msg: 'Finished measuring execution of handle store command',
+                Event_name: 'handle_store_end',
+                Operation_name: 'handle_store',
+                Id_operation: operationId,
+            });
+
+            return status;
+        } catch (e) {
+            this.logger.emit({
+                msg: 'Finished measuring execution of handle store command',
+                Event_name: 'handle_store_end',
+                Operation_name: 'handle_store',
+                Id_operation: operationId,
+            });
+            this.logger.error({
+                msg: `Error while handling store: ${e} - ${e.stack}`,
+                Operation_name: 'Error',
+                Event_name: constants.ERROR_TYPE.HANDLE_STORE_ERROR,
+                Id_operation: operationId,
+            });
+            return false;
         }
-
-        this.logger.emit({
-            msg: 'Finished measuring execution of handle store command',
-            Event_name: 'handle_store_end',
-            Operation_name: 'handle_store',
-            Id_operation: operationId,
-        });
-
-        return status;
     }
 }
 
