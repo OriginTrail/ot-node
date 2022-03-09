@@ -44,11 +44,34 @@ class SendAssertionCommand extends Command {
         }
         nodes = [...new Set(nodes)];
 
-        for (const node of nodes) {
-            this.publishService.store({ id: assertion.id, nquads: nquads }, node).catch((e) => {
-                this.handleError(handlerId, e, `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`);
-            });
-        }
+        const storePromises = nodes.map((node) => this.publishService
+            .store({ id: assertion.id, nquads }, node)
+            .then((response) => {
+                if (!response) {
+                    this.logger.error({
+                        msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String} - receiving node didn't stored the assertion.`,
+                        Operation_name: 'Error',
+                        Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR,
+                        Id_operation: handlerId,
+                    });
+                } else if (response === 'busy') {
+                    this.logger.error({
+                        msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String} - receiving node is busy to store.`,
+                        Operation_name: 'Error',
+                        Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR,
+                        Id_operation: handlerId,
+                    });
+                }
+            })
+            .catch((e) => {
+                this.handleError(
+                    handlerId,
+                    e,
+                    `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String}. Error message: ${e.message}. ${e.stack}`,
+                );
+            }));
+
+        await Promise.all(storePromises);
 
         await Models.handler_ids.update(
             {
