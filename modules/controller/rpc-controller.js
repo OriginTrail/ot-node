@@ -211,7 +211,7 @@ class RpcController {
                         id = assertionId;
                     }
                     const nquads = await this.dataService.resolve(id, true);
-                    if (nquads) {
+                    if (nquads && false) {
                         let assertion = await this.dataService.createAssertion(nquads);
                         assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                         assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
@@ -239,9 +239,15 @@ class RpcController {
                         if (nodes.length < this.config.replicationFactor)
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
                         nodes = [...new Set(nodes)];
+
+                        console.log(`RESOLVE_LOGS : About to send resolve queries to ${nodes.length} nodes.`);
+                        const start = Date.now();
+
                         for (const node of nodes) {
                             try {
+                                console.log(`RESOLVE_LOGS : About to send resolve queries to node : ${node._idB58String}`);
                                 const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node);
+                                console.log(`Returned nquads length : ${assertion && assertion !== null ? assertion.nquads.length : assertion}`);
                                 if (assertion) {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                     assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
@@ -273,6 +279,8 @@ class RpcController {
                                 });
                             }
                         }
+                        const end = Date.now();
+                        console.log(`RESOLVE_LOGS : total time for resolving : ${(end - start) / 1000}`);
                     }
                 }
 
