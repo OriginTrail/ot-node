@@ -247,7 +247,7 @@ class RpcController {
                             try {
                                 console.log(`RESOLVE_LOGS : About to send resolve queries to node : ${node._idB58String}`);
                                 const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node);
-                                console.log(`Returned nquads length : ${assertion && assertion !== null ? assertion.nquads.length : assertion}`);
+                                console.log(`RESOLVE_LOGS : Returned nquads length : ${assertion && assertion !== null ? assertion.nquads.length : assertion}`);
                                 if (assertion) {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                     assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
