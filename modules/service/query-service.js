@@ -29,7 +29,7 @@ class QueryService {
             'contacted node': node._idB58String,
             executionTime: (end - start) / 1000,
         };
-        console.log(`RESOLVE_LOGS : execution of sendMessage /resolve : ${JSON.stringify(executionResult, null, 4)}`);
+        console.log(`       RESOLVE_LOGS : execution of sendMessage /resolve : ${JSON.stringify(executionResult)}`);
         if (!result || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)) {
             return null;
         }
