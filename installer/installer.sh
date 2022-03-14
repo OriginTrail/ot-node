@@ -55,6 +55,7 @@ if [[ $HELP == 1 ]]; then
 fi
 
 if [[ "${AUTO}" -eq 1 ]]; then
+  source .env.default
   if [[ -z ${PUBLIC_KEY} || -z ${PRIVATE_KEY} ]]; then
     echo "When installer in automatic mode, you need to pass parameters or set PUBLIC_KEY and PRIVATE_KEY variable in your environment"
     usage
