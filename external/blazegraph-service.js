@@ -31,7 +31,10 @@ class BlazegraphService {
 
             await axios(this.config.axios).then((response) => true)
                 .catch((error) => {
-                    this.logger.error(`Failed to write into Blazegraph: ${error} - ${error.stack}`);
+                    this.logger.error({
+                        msg: `Failed to write into Blazegraph: ${error} - ${error.stack}`,
+                        Event_name: constants.ERROR_TYPE.TRIPLE_STORE_INSERT_ERROR,
+                    });
                     return false;
                 });
         }
@@ -99,7 +102,6 @@ class BlazegraphService {
     }
 
     async resolve(uri) {
-        let isAsset = false;
         const query = `PREFIX schema: <http://schema.org/>
                         CONSTRUCT { ?s ?p ?o }
                         WHERE {
@@ -109,35 +111,61 @@ class BlazegraphService {
                         }`;
         let nquads = await this.construct(query);
 
-        if (!nquads.length) {
-            const query = `PREFIX schema: <http://schema.org/>
-            CONSTRUCT { ?s ?p ?o }
-            WHERE {
-                GRAPH ?g { ?s ?p ?o }
-                {
-                    SELECT ?ng
-                    WHERE {
-                        ?ng schema:hasUALs "${uri}" ;
-                            schema:hasTimestamp ?timestamp .
-                    }
-                    ORDER BY DESC(?timestamp)
-                    LIMIT 1
-                }
-                FILTER (?g = ?ng) .
-            }`;
-            nquads = await this.construct(query);
-            isAsset = true;
-        }
-
         if (nquads.length) {
             nquads = nquads.toString();
-            nquads = nquads.replace(/_:genid(.){37}/gm, '_:$1');
             nquads = nquads.split('\n');
             nquads = nquads.filter((x) => x !== '');
+            nquads = await this.transformBlankNodes(nquads);
         } else {
             nquads = null;
         }
-        return { nquads, isAsset };
+        return nquads;
+    }
+
+    async transformBlankNodes(nquads) {
+        // Find minimum blank node value to assign it to _:c14n0
+        let minimumBlankNodeValue = -1;
+        for (const nquad of nquads) {
+            if (nquad.includes('_:t')) {
+                const blankNodes = nquad.split(' ').filter((s) => s.includes('_:t'));
+                for (const bn of blankNodes) {
+                    const bnValue = Number(bn.substring(3));
+                    if (minimumBlankNodeValue === -1 || minimumBlankNodeValue > bnValue) {
+                        minimumBlankNodeValue = bnValue;
+                    }
+                }
+            }
+        }
+
+        // Transform blank nodes, example: _:t145 -> _:c14n3
+        let bnName;
+        for (const nquadIndex in nquads) {
+            const nquad = nquads[nquadIndex];
+            if (nquad.includes('_:t')) {
+                const blankNodes = nquad.split(' ').filter((s) => s.includes('_:t'));
+                for (const bn of blankNodes) {
+                    const bnValue = Number(bn.substring(3));
+                    bnName = `_:c14n${bnValue - minimumBlankNodeValue}`;
+                    nquads[nquadIndex] = nquads[nquadIndex].replace(bn, bnName);
+                }
+            }
+        }
+
+        return nquads;
+    }
+
+    async assertionsByAsset(uri) {
+        const query = `PREFIX schema: <http://schema.org/>
+            SELECT ?assertionId ?issuer ?timestamp
+            WHERE {
+                 ?assertionId schema:hasUALs "${uri}" ;
+                     schema:hasTimestamp ?timestamp ;
+                     schema:hasIssuer ?issuer .
+            }
+            ORDER BY DESC(?timestamp)`;
+        const result = await this.execute(query);
+
+        return result.results.bindings;
     }
 
     async findAssertions(nquads) {

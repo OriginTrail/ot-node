@@ -1,0 +1,16 @@
+#/lib/systemd/system/blazegraph.service
+
+[Unit]
+Description=Blazegraph - OriginTrail V6 Stage 1 Beta Node
+Documentation=https://github.com/OriginTrail/ot-node
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/
+ExecStart=/bin/java -jar /root/blazegraph.jar
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

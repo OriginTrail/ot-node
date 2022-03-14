@@ -3,7 +3,6 @@ const N3 = require('n3');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
-const axios = require('axios');
 
 class DataService {
     constructor(ctx) {
@@ -15,6 +14,12 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
+        this.tripleStoreQueue = ctx.tripleStoreQueue.promise(this, this.handleTripleStoreRequest, 1);
+        this.N3Parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
+    }
+
+    getTripleStoreQueueLength() {
+        return this.tripleStoreQueue.length();
     }
 
     getName() {
@@ -78,9 +83,14 @@ class DataService {
                     throw new Error(`File format is corrupted, no n-quads extracted.`);
                 }
 
-                let type = assertion.data['@type'];
-                delete assertion.data['@type'];
-                if (!type) {
+                let type;
+                if (assertion.data['@type']) {
+                    type = assertion.data['@type'];
+                    delete assertion.data['@type'];
+                } else if (assertion.data['type']) {
+                    type = assertion.data['type'];
+                    delete assertion.data['type'];
+                }else {
                     type = 'default';
                 }
                 assertion.metadata.type = type;
@@ -94,7 +104,8 @@ class DataService {
 
     async insert(data, assertionId) {
         try {
-            return this.implementation.insert(data, assertionId);
+            const result = await this.tripleStoreQueue.push({ operation: 'insert', data, assertionId });
+            return result;
         } catch (e) {
             // TODO: Check situation when inserting data recieved from other node
             this.handleUnavailableTripleStoreError(e);
@@ -103,14 +114,30 @@ class DataService {
 
     async resolve(id, localQuery = false, metadataOnly = false) {
         try {
-            let {nquads, isAsset} = await this.implementation.resolve(id);
+            let nquads = await this.tripleStoreQueue.push({ operation: 'resolve', id });
+
+            // TODO: add function for this conditional expr for increased readability
             if (!localQuery && nquads && nquads.find((x) => x.includes(`<${constants.DID_PREFIX}:${id}> <http://schema.org/hasVisibility> "private" .`))) {
                 return null;
             }
             if (metadataOnly) {
                 nquads = nquads.filter((x) => x.startsWith(`<${constants.DID_PREFIX}:${id}>`));
             }
-            return {nquads, isAsset};
+            return nquads;
+        } catch (e) {
+            this.handleUnavailableTripleStoreError(e);
+        }
+    }
+
+    async assertionsByAsset(id) {
+        try {
+            const assertions = await this.tripleStoreQueue.push({ operation: 'assertionsByAsset', id });
+
+            return assertions.map((x) => ({
+                id: x.assertionId.value.slice(8),
+                issuer: x.issuer.value,
+                timestamp: x.timestamp.value,
+            }));
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
         }
@@ -120,7 +147,7 @@ class DataService {
         const metadata = [];
         const data = [];
         const nquads = [];
-        rawNQuads.forEach((nquad)=>{
+        rawNQuads.forEach((nquad) => {
             if (nquad.startsWith(`<${constants.DID_PREFIX}:`))
                 metadata.push(nquad);
             else
@@ -167,8 +194,11 @@ class DataService {
                 }
 
                 if (assertion.metadata.visibility) {
-                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))){
-                        const {issuer, assertionId} = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
+                    if (assertion.metadata.UALs && (!options || (options && options.isAsset))) {
+                        const {
+                            issuer,
+                            assertionId
+                        } = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
                                 msg: `Assertion ${assertion.id} doesn't match with calculated ${assertionId}`,
@@ -185,7 +215,7 @@ class DataService {
                             });
                             return resolve(false);
                         }
-                    } else{
+                    } else {
                         const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
                         const {rootHash, issuer} = await this.blockchainService.getAssertionProofs(assertion.id);
                         if (rootHash !== `0x${calculateRootHash}`) {
@@ -215,19 +245,19 @@ class DataService {
 
     async searchByQuery(query, options, localQuery = false) {
         try {
-            const assertions = await this.implementation.findAssetsByKeyword(query, options, localQuery);
+            const assertions = await this.tripleStoreQueue.push({ operation: 'findAssetsByKeyword', query, options, localQuery });
             if (!assertions) return null;
 
             const result = [];
             for (let assertion of assertions) {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                assertion = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!assertion) continue;
+                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!nquads) continue;
 
 
                 if (localQuery) {
-                    assertion = await this.createAssertion(assertion.nquads);
+                    assertion = await this.createAssertion(nquads);
 
                     let object = result.find((x) => x.type === assertion.jsonld.metadata.type && x.id === assertion.jsonld.metadata.UALs[0]);
                     if (!object) {
@@ -258,7 +288,7 @@ class DataService {
                         object = {
                             assertionId,
                             node: this.networkService.getPeerId(),
-                            nquads: assertion.nquads,
+                            nquads,
                         };
                         result.push(object);
                     }
@@ -273,18 +303,18 @@ class DataService {
 
     async searchAssertions(query, options, localQuery = false) {
         try {
-            const assertions = await this.implementation.findAssertionsByKeyword(query, options, localQuery);
+            const assertions = await this.tripleStoreQueue.push({ operation: 'findAssertionsByKeyword', query, options, localQuery });
             if (!assertions) return null;
 
             const result = [];
             for (let assertion of assertions) {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
-                assertion = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!assertion) continue;
+                const nquads = await this.resolve(assertion.assertionId, localQuery, true);
+                if (!nquads) continue;
 
                 if (localQuery) {
-                    assertion = await this.createAssertion(assertion.nquads);
+                    assertion = await this.createAssertion(nquads);
                     let object = result.find((x) => x.id === assertion.id);
                     if (!object) {
                         object = {
@@ -301,7 +331,7 @@ class DataService {
                         object = {
                             assertionId,
                             node: this.networkService.getPeerId(),
-                            nquads: assertion.nquads,
+                            nquads,
                         };
                         result.push(object);
                     }
@@ -318,7 +348,7 @@ class DataService {
         try {
             let assertions = [];
             for (const nquad of nquads) {
-                const result = await this.implementation.findAssertions(nquad);
+                const result = await this.tripleStoreQueue.push({ operation: 'findAssertions', nquad });
                 assertions = [...new Set(assertions.concat(result))];
             }
 
@@ -339,24 +369,39 @@ class DataService {
         });
         try {
             switch (type) {
-                // case 'SELECT':
-                //     result = this.implementation.execute(query);
-                //     break;
-                case 'CONSTRUCT':
-                    result = await this.implementation.construct(query);
-                    result = result.toString();
-                    if (result) {
-                        result = result.split('\n').filter((x) => x !== '');
-                    } else {
-                        result = [];
-                    }
-                    break;
-                // case 'ASK':
-                //     result = this.implementation.ask(query);
-                //     break;
-                default:
-                    throw Error('Query type not supported');
+            // case 'SELECT':
+            //     result = this.implementation.execute(query);
+            //     break;
+            case 'CONSTRUCT':
+                result = await this.tripleStoreQueue.push({ operation: 'construct', query });
+                result = result.toString();
+                if (result) {
+                    result = result.split('\n').filter((x) => x !== '');
+                } else {
+                    result = [];
+                }
+                break;
+            // case 'ASK':
+            //     result = this.implementation.ask(query);
+            //     break;
+            default:
+                throw Error('Query type not supported');
             }
+            const quads = [];
+            await this.N3Parser.parse(
+                result.join('\n'),
+                (error, quad, prefixes) => {
+                    if (quad) {
+                        quads.push({
+                            subject: quad._subject.id,
+                            predicate: quad.predicate.id,
+                            object: quad.object.id
+                        });
+                    }
+                },
+            );
+            result = quads;
+
             return result;
         } catch (e) {
             this.handleUnavailableTripleStoreError(e);
@@ -381,38 +426,43 @@ class DataService {
         let context;
         let
             frame;
-        switch (type) {
-            case this.constants.GS1EPCIS:
-                context = {
-                    '@context': [
-                        'https://gs1.github.io/EPCIS/epcis-context.jsonld',
-                        {
-                            example: 'http://ns.example.com/epcis/',
-                        },
-                    ],
-                };
+        switch (type.toLowerCase()) {
+        case this.constants.GS1EPCIS:
+            context = {
+                '@context': [
+                    'https://gs1.github.io/EPCIS/epcis-context.jsonld',
+                    {
+                        example: 'http://ns.example.com/epcis/',
+                    },
+                ],
+            };
 
-                frame = {
-                    '@context': [
-                        'https://gs1.github.io/EPCIS/epcis-context.jsonld',
-                        {
-                            example: 'http://ns.example.com/epcis/',
-                        },
-                    ],
-                    isA: 'EPCISDocument',
-                };
-                break;
-            case this.constants.NFT:
-                const result = await axios.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/v6/develop/frameDocuments/${this.constants.NFT}.json`);
-                context = result.data.context;
-                frame = result.data.frame;
-                break;
-            default:
-                context = {
-                    '@context': ['https://www.schema.org/'],
-                };
+            frame = {
+                '@context': [
+                    'https://gs1.github.io/EPCIS/epcis-context.jsonld',
+                    {
+                        example: 'http://ns.example.com/epcis/',
+                    },
+                ],
+                isA: 'EPCISDocument',
+            };
+            break;
+        case this.constants.ERC721:
+        case this.constants.OTTELEMETRY:
+            context = {
+                "@context": "https://www.schema.org/"
+            };
+            frame = {
+                "@context": "https://www.schema.org/",
+                "@type": type
+            };
+            break;
+        default:
+            context = {
+                '@context': ['https://www.schema.org/'],
+            };
 
-                frame = {};
+            frame = {};
         }
         const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame])
 
@@ -453,8 +503,9 @@ class DataService {
             hasKeywords: assertion.metadata.keywords,
         };
 
-        if (assertion.metadata.UALs)
+        if (assertion.metadata.UALs) {
             metadata.hasUALs = assertion.metadata.UALs;
+        }
 
         const result = await this.workerPool.exec('toNQuads', [metadata]);
         return result;
@@ -553,6 +604,41 @@ class DataService {
 
             accept(result);
         });
+    }
+
+    async handleTripleStoreRequest(args) {
+        if (this.tripleStoreQueue.length() > constants.TRIPLE_STORE_QUEUE_LIMIT) {
+            throw new Error('Triple store queue is full');
+        }
+        const { operation } = args;
+        let result;
+        switch (operation) {
+        case 'insert':
+            result = await this.implementation.insert(args.data, args.assertionId);
+            break;
+        case 'resolve':
+            result = await this.implementation.resolve(args.id);
+            break;
+        case 'assertionsByAsset':
+            result = await this.implementation.assertionsByAsset(args.id);
+            break;
+        case 'findAssetsByKeyword':
+            result = await this.implementation.findAssetsByKeyword(args.query, args.options, args.localQuery);
+            break;
+        case 'findAssertionsByKeyword':
+            result = await this.implementation.findAssertionsByKeyword(args.query, args.options, args.localQuery);
+            break;
+        case 'construct':
+            result = await this.implementation.construct(args.query);
+            break;
+        case 'findAssertions':
+            result = await this.implementation.findAssertions(args.nquad);
+            break;
+        default:
+            throw new Error('Unknown operation for triple store');
+        }
+
+        return result;
     }
 
     handleUnavailableTripleStoreError(e) {

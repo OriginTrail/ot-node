@@ -6,6 +6,7 @@ class NetworkService {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.rankingService = ctx.rankingService;
+        this.workerPool = ctx.workerPool;
     }
 
     initialize() {
@@ -15,6 +16,7 @@ class NetworkService {
             bootstrapMultiAddress: this.config.network.bootstrap,
             port: this.config.network.port,
             configFilename,
+            workerPool: this.workerPool,
         });
         return this.implementation.initialize(this.logger);
     }
@@ -45,7 +47,7 @@ class NetworkService {
         this.logger.emit({
             msg: 'Started measuring execution of rank nodes', Event_name: 'rank_nodes_start', Operation_name: 'find_nodes', Id_operation,
         });
-        const rankedNodes = await this.rankingService.rank(nodes, key, ['kad-identity']);
+        const rankedNodes = await this.rankingService.rank(nodes, key, this.config.replicationFactor, ['kad-identity']);
         this.logger.emit({
             msg: 'Finished measuring execution of rank nodes', Event_name: 'rank_nodes_end', Operation_name: 'find_nodes', Id_operation,
         });
@@ -53,19 +55,6 @@ class NetworkService {
             msg: 'Finished measuring execution of find nodes', Event_name: 'find_nodes_end', Operation_name: 'find_nodes', Id_operation,
         });
         return rankedNodes;
-    }
-
-    /**
-     * Search for a peer with the given ID.
-     *
-     * @param {PeerId} id
-     * @param {Object} [options] - findPeer options
-     * @param {number} [options.timeout=60000] - how long the query
-     * should maximally run, in milliseconds
-     * @returns {Promise<{ id: PeerId, multiaddrs: Multiaddr[] }>}
-     */
-    findPeer(peerId, options) {
-        return this.implementation.findPeer(peerId, options);
     }
 
     getPeers() {

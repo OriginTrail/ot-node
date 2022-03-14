@@ -27,7 +27,7 @@ const initializationObject = {
         dht: KadDHT,
     },
     dialer: {
-        dialTimeout: 1e3,
+        dialTimeout: 2e3,
     },
     config: {
         dht: {
@@ -73,6 +73,7 @@ class Libp2pService {
             }
 
             initializationObject.peerId = this.config.peerId;
+            this.workerPool = this.config.workerPool;
 
             Libp2p.create(initializationObject).then((node) => {
                 this.node = node;
@@ -113,14 +114,14 @@ class Libp2pService {
         const encodedKey = new TextEncoder().encode(key);
         // Creates a DHT ID by hashing a given Uint8Array
         const id = (await sha256.digest(encodedKey)).digest;
-        const nodes = this.node._dht.routingTable.closestPeers(id, limit);
-        this.logger.info(`Found ${nodes.length} nodes`);
+        const nodes = this.node._dht.peerRouting.getClosestPeers(id);
+        const result = [];
+        for await (const node of nodes) {
+            result.push(node);
+        }
+        this.logger.info(`Found ${result.length} nodes`);
 
-        return nodes;
-    }
-
-    findPeer(peerId, options) {
-        return this.node.peerRouting.findPeer(peerId, options);
+        return result;
     }
 
     getPeers() {
@@ -146,7 +147,7 @@ class Libp2pService {
     async handleMessage(eventName, handler, options) {
         this.logger.info(`Enabling network protocol: ${eventName}`);
 
-        let async = false, timeout = 5e3;
+        let async = false, timeout = 60e3;
         if (options) {
             async = options.async;
             timeout = options.timeout;
@@ -166,21 +167,20 @@ class Libp2pService {
                     return bl;
                 }
             )
-
             try {
-                data = JSON.parse(data);
+                data = await this.workerPool.exec('JSONParse', [data.toString()]);
                 this.logger.info(`Receiving message from ${handlerProps.connection.remotePeer._idB58String} to ${this.config.id}: event=${eventName};`);
                 if (!async) {
                     const result = await handler(data);
                     this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
-
+                    const stringifiedData = await this.workerPool.exec('JSONStringify', [result]);
                     await pipe(
-                        [JSON.stringify(result)],
+                        [Buffer.from(stringifiedData)],
                         stream,
                     )
                 } else {
                     await pipe(
-                        [JSON.stringify(['ack'])],
+                        [constants.NETWORK_RESPONSES.ACK],
                         stream
                     )
 
@@ -193,12 +193,13 @@ class Libp2pService {
                     }
                 }
             } catch (e) {
+                const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
                 this.logger.error({
-                   msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${data}`,
+                   msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${stringifiedData}`,
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
                 await pipe(
-                    [JSON.stringify(['ack'])],
+                    [constants.NETWORK_RESPONSES.ACK],
                     stream
                 )
 
@@ -209,8 +210,9 @@ class Libp2pService {
     async sendMessage(eventName, data, peerId) {
         this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName};`);
         const {stream} = await this.node.dialProtocol(peerId, eventName);
+        const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
         const response = await pipe(
-            [JSON.stringify(data)],
+            [Buffer.from(stringifiedData)],
             stream,
             async function (source) {
                 const bl = new BufferList()
@@ -221,6 +223,10 @@ class Libp2pService {
                 return bl;
             },
         )
+
+        if(response.toString() === constants.NETWORK_RESPONSES.ACK) {
+            return null;
+        }
 
         return JSON.parse(response);
     }
