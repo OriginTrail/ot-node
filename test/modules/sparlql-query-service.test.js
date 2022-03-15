@@ -4,14 +4,32 @@ const {
     before,
     after,
 } = require('mocha');
-const { assert } = require('chai');
+const {
+    assert,
+    expect,
+} = require('chai');
+const Sparql = require('../../external/sparqlquery-service');
+const Logger = require('../../modules/logger/logger');
 
-describe('Sparql module ', () => {
-    before('Init Sparql Module', async () => {
-        const config = { url: 'http://localhost:9999/blazegraph/namespace/kb/sparql' };
-        assert.hasAllKeys(config, ['url']);
+const config = { url: 'http://localhost:9999/blazegraph/namespace/kb/sparql' };
+
+let sparqlService = null;
+let logger = null;
+describe('Sparql module', () => {
+    before('Initialize Logger', async () => {
+        logger = new Logger('trace', false);
     });
-    it('test', async () => {
-        const config = { url: 'http://localhost:9999/blazegraph/namespace/kb/sparql' };
+    before('Init Sparql Module', async () => {
+        assert.hasAllKeys(config, ['url']);
+        assert.isNotNull(config.url);
+        assert.isNotEmpty(config.url);
+        sparqlService = new Sparql(config);
+        await sparqlService.initialize(logger);
+    });
+    it('Execute HealthCheck', async () => {
+        const a = await sparqlService.healthCheck();
+        expect(a)
+            .to
+            .equal(true);
     });
 });
