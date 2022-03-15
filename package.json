@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
+    "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:it": "nyc mocha --exit $(find test/modules -name '*.js')"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "@babel/core": "^7.15.5",
     "@babel/eslint-parser": "^7.16.5",
     "@cucumber/cucumber": "^8.0.0-rc.2",
+    "chai": "^4.3.6",
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-airbnb-base": "^14.2.1",
@@ -37,9 +39,12 @@
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "form-data": "^4.0.0",
+    "mocha": "^7.1.1",
+    "nyc": "^15.1.0",
     "request": "^2.88.2"
   },
   "dependencies": {
+    "@comunica/query-sparql": "^2.1.0",
     "app-root-path": "^3.0.0",
     "auto-git-update": "^2.0.2",
     "awilix": "^5.0.1",
