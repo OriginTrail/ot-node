@@ -1,3 +1,6 @@
+const axios = require('axios');
+const Engine = require('@comunica/query-sparql').QueryEngine;
+
 class SparqlqueryService {
     constructor(config) {
         this.config = config;
@@ -6,6 +9,7 @@ class SparqlqueryService {
     async initialize(logger) {
         this.logger = logger;
         this.logger.info('Sparql Query module initialized successfully');
+        this.queryEngine = new Engine();
     }
 
     async insert(triples, rootHash) {
@@ -45,7 +49,12 @@ class SparqlqueryService {
     }
 
     async healthCheck() {
-        this.logger.info('dummy for ESLint');
+        try {
+            const response = await axios.head(`${this.config.url}`, {});
+            return response.data !== null;
+        } catch (e) {
+            return false;
+        }
     }
 
     async execute(query) {
