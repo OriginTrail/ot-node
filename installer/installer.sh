@@ -1,7 +1,8 @@
 #!/bin/bash
 
 OS_VERSION=$(lsb_release -sr)
-GRAPHDB_FILE="/root/graphdb-free-9.10.1-dist.zip"
+GRAPHDB_FILE=$(ls /root/graphdb*.zip)
+GRAPHDB_DIR=$(echo $GRAPHDB_FILE | sed 's|-dist.zip||')
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
@@ -12,7 +13,7 @@ clear
 
 echo -n "${N1}Checking that the OS is Ubuntu 20.04 or 21.10 ONLY: "
 
-if [[ $OS_VERSION != 20.04 && $OS_VERSION != 21.10 ]]
+if [[ $OS_VERSION != 20.04 || $OS_VERSION != 21.10 ]]
         echo -e "${RED}FAILED${NC}"
         echo "This installer requires Ubuntu 20.04 or 21.10. Destroy this VPS and remake using Ubuntu 20.04 or 21.10."
         exit 1
@@ -35,7 +36,7 @@ cd
 
 echo -n "Updating Ubuntu package repository: "
 
-OUTPUT=$(apt update >/dev/null 2>&1)
+OUTPUT=$(apt update 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -48,7 +49,7 @@ fi
 
 echo -n "Updating Ubuntu to latest version (may take a few minutes): "
 
-OUTPUT=$(export DEBIAN_FRONTEND=noninteractive && apt upgrade -y >/dev/null 2>&1)
+OUTPUT=$(export DEBIAN_FRONTEND=noninteractive && apt upgrade -y 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -61,7 +62,7 @@ fi
 
 echo -n "Installing default-jre: "
 
-OUTPUT=$(apt install default-jre unzip jq -y >/dev/null 2>&1)
+OUTPUT=$(apt install default-jre unzip jq -y 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -73,7 +74,7 @@ else
 fi
 
 echo -n "Unzipping GraphDB: "
-OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
+OUTPUT=$(unzip -o $GRAPHDB_FILE 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -84,9 +85,21 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Symlinking GraphDB dir: "
+OUTPUT=$(ln -s $GRAPHDB_DIR graphdb 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error symlinking GraphDB."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Copying service file: "
 
-OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ >/dev/null 2>&1)
+OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -101,7 +114,7 @@ systemctl daemon-reload
 
 echo -n "Starting GraphDB: "
 
-OUTPUT=$(systemctl start graphdb >/dev/null 2>&1)
+OUTPUT=$(systemctl start graphdb 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
@@ -127,7 +140,7 @@ fi
 
 echo -n "Downloading Node.js v14: "
 
-OUTPUT=$(wget https://deb.nodesource.com/setup_14.x >/dev/null 2>&1)
+OUTPUT=$(wget https://deb.nodesource.com/setup_14.x 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error downloading nodejs setup."
@@ -153,7 +166,7 @@ fi
 
 echo -n "Updating the Ubuntu repo: "
 
-OUTPUT=$(apt update >/dev/null 2>&1)
+OUTPUT=$(apt-get update 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error updating the Ubuntu repo."
@@ -163,24 +176,12 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing aptitude: "
+echo -n "Installing nodejs: "
 
-OUTPUT=$(apt install aptitude -y >/dev/null 2>&1)
+OUTPUT=$(apt-get install nodejs -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing aptitude."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Installing nodejs and npm: "
-
-OUTPUT=$(aptitude install nodejs -y >/dev/null 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing nodejs/npm."
+    echo "There was an error installing nodejs."
     echo $OUTPUT
     exit 1
 else
@@ -189,7 +190,7 @@ fi
 
 echo -n "Installing forever: "
 
-OUTPUT=$(npm install forever -g >/dev/null 2>&1)
+OUTPUT=$(npm install forever -g 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing forever."
@@ -201,7 +202,7 @@ fi
 
 echo -n "Installing tcllib and mysql-server: "
 
-OUTPUT=$(apt install tcllib mysql-server -y >/dev/null 2>&1)
+OUTPUT=$(apt-get install tcllib mysql-server -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing tcllib and mysql-server."
@@ -265,7 +266,7 @@ fi
 
 echo -n "Restarting mysql: "
 
-OUTPUT=$(systemctl restart mysql >/dev/null 2>&1)
+OUTPUT=$(systemctl restart mysql 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error restarting mysql."
@@ -292,7 +293,7 @@ fi
 
 echo -n "Opening firewall ports 22,8900,9000: "
 
-OUTPUT=$(ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000 >/dev/null 2>&1)
+OUTPUT=$(ufw allow 22/tcp && ufw allow 8900 && ufw allow 9000 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error opening the firewall ports."
@@ -304,7 +305,7 @@ fi
 
 echo -n "Enabling the firewall: "
 
-OUTPUT=$(yes | ufw enable >/dev/null 2>&1)
+OUTPUT=$(yes | ufw enable 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error enabling the firewall."
