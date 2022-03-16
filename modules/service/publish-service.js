@@ -14,6 +14,7 @@ class PublishService {
         this.workerPool = ctx.workerPool;
     }
 
+    // eslint-disable-next-line max-len
     async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, isTelemetry = false) {
         const operationId = uuidv1();
         this.logger.emit({
@@ -25,6 +26,7 @@ class PublishService {
 
         try {
             let {
+                // eslint-disable-next-line prefer-const
                 assertion,
                 nquads,
             } = await this.dataService.canonize(fileContent, fileExtension);
@@ -41,6 +43,7 @@ class PublishService {
             let method = 'publish';
             if (ual === null) {
                 method = 'provision';
+                // eslint-disable-next-line max-len
                 ual = this.validationService.calculateHash(assertion.metadata.timestamp + assertion.metadata.type + assertion.metadata.issuer);
                 assertion.metadata.UALs = [ual];
             } else if (ual !== undefined) {
@@ -50,6 +53,7 @@ class PublishService {
 
             assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
             assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
+            // eslint-disable-next-line max-len
             assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
             assertion.signature = this.validationService.sign(assertion.id);
 
@@ -72,7 +76,7 @@ class PublishService {
             const documentPath = await this.fileService
                 .writeContentsToFile(handlerIdCachePath, handlerId,
                     await this.workerPool.exec('JSONStringify', [{
-                        nquads, assertion
+                        nquads, assertion,
                     }]));
 
             const commandSequence = [
@@ -112,7 +116,9 @@ class PublishService {
             && retries < constants.STORE_MAX_RETRIES
         ) {
             retries += 1;
+            // eslint-disable-next-line no-await-in-loop
             await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
+            // eslint-disable-next-line no-await-in-loop
             response = await this.networkService.sendMessage('/store', assertion, node);
         }
 

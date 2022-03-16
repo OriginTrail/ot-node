@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation, max-len, no-await-in-loop, no-case-declarations, no-async-promise-executor, no-multi-assign */
 const { v1: uuidv1 } = require('uuid');
 const N3 = require('n3');
 const constants = require('../constants');
@@ -14,6 +15,7 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
+        // eslint-disable-next-line max-len
         this.tripleStoreQueue = ctx.tripleStoreQueue.promise(this, this.handleTripleStoreRequest, 1);
         this.N3Parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
     }
@@ -27,6 +29,7 @@ class DataService {
     }
 
     async initialize() {
+        // eslint-disable-next-line max-len
         if (this.config.graphDatabase.implementation === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH) {
             this.implementation = new Blazegraph({
                 url: this.config.graphDatabase.url,
@@ -71,34 +74,34 @@ class DataService {
 
     async canonize(fileContent, fileExtension) {
         switch (fileExtension) {
-            case '.json':
-                const assertion = {
-                    metadata: {
-                        timestamp: new Date().toISOString()
-                    },
-                    data: await this.workerPool.exec('JSONParse', [fileContent.toString()])
-                }
-                const nquads = await this.workerPool.exec('toNQuads', [assertion.data])
-                if (nquads && nquads.length === 0) {
-                    throw new Error(`File format is corrupted, no n-quads extracted.`);
-                }
+        case '.json':
+            const assertion = {
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                },
+                data: await this.workerPool.exec('JSONParse', [fileContent.toString()]),
+            };
+            const nquads = await this.workerPool.exec('toNQuads', [assertion.data]);
+            if (nquads && nquads.length === 0) {
+                throw new Error('File format is corrupted, no n-quads extracted.');
+            }
 
-                let type;
-                if (assertion.data['@type']) {
-                    type = assertion.data['@type'];
-                    delete assertion.data['@type'];
-                } else if (assertion.data['type']) {
-                    type = assertion.data['type'];
-                    delete assertion.data['type'];
-                }else {
-                    type = 'default';
-                }
-                assertion.metadata.type = type;
-                assertion.data = await this.fromNQuads(nquads, type);
+            let type;
+            if (assertion.data['@type']) {
+                type = assertion.data['@type'];
+                delete assertion.data['@type'];
+            } else if (assertion.data['type']) {
+                type = assertion.data['type'];
+                delete assertion.data['type'];
+            } else {
+                type = 'default';
+            }
+            assertion.metadata.type = type;
+            assertion.data = await this.fromNQuads(nquads, type);
 
-                return {assertion, nquads};
-            default:
-                throw new Error(`File extension ${fileExtension} is not supported.`);
+            return { assertion, nquads };
+        default:
+            throw new Error(`File extension ${fileExtension} is not supported.`);
         }
     }
 
@@ -148,17 +151,18 @@ class DataService {
         const data = [];
         const nquads = [];
         rawNQuads.forEach((nquad) => {
-            if (nquad.startsWith(`<${constants.DID_PREFIX}:`))
+            if (nquad.startsWith(`<${constants.DID_PREFIX}:`)) {
                 metadata.push(nquad);
-            else
+            } else {
                 data.push(nquad);
-
-            if (!nquad.includes('hasRootHash') && !nquad.includes('hasBlockchain') && !nquad.includes('hasTransactionHash'))
+            }
+            if (!nquad.includes('hasRootHash') && !nquad.includes('hasBlockchain') && !nquad.includes('hasTransactionHash')) {
                 nquads.push(nquad);
+            }
         });
         const jsonld = await this.extractMetadata(metadata);
         jsonld.data = data;
-        return {jsonld, nquads};
+        return { jsonld, nquads };
     }
 
     verifyAssertion(assertion, rdf, options = undefined) {
@@ -171,7 +175,7 @@ class DataService {
                 // } else {
                 //     dataHash = assertion.metadata.dataHash;
                 // }
-                const {dataHash} = assertion.metadata;
+                const { dataHash } = assertion.metadata;
 
                 const metadataHash = this.validationService.calculateHash(assertion.metadata);
                 const calculatedAssertionId = this.validationService.calculateHash(metadataHash + dataHash);
@@ -197,7 +201,7 @@ class DataService {
                     if (assertion.metadata.UALs && (!options || (options && options.isAsset))) {
                         const {
                             issuer,
-                            assertionId
+                            assertionId,
                         } = await this.blockchainService.getAssetProofs(assertion.metadata.UALs[0]);
                         if (assertionId !== assertion.id) {
                             this.logger.error({
@@ -217,7 +221,7 @@ class DataService {
                         }
                     } else {
                         const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
-                        const {rootHash, issuer} = await this.blockchainService.getAssertionProofs(assertion.id);
+                        const { rootHash, issuer } = await this.blockchainService.getAssertionProofs(assertion.id);
                         if (rootHash !== `0x${calculateRootHash}`) {
                             this.logger.error({
                                 msg: `Root hash ${rootHash} doesn't match with calculated 0x${calculateRootHash}`,
@@ -245,7 +249,9 @@ class DataService {
 
     async searchByQuery(query, options, localQuery = false) {
         try {
-            const assertions = await this.tripleStoreQueue.push({ operation: 'findAssetsByKeyword', query, options, localQuery });
+            const assertions = await this.tripleStoreQueue.push({
+                operation: 'findAssetsByKeyword', query, options, localQuery,
+            });
             if (!assertions) return null;
 
             const result = [];
@@ -253,8 +259,10 @@ class DataService {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
                 const nquads = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!nquads) continue;
-
+                if (!nquads) {
+                    // eslint-disable-next-line no-continue
+                    continue;
+                }
 
                 if (localQuery) {
                     assertion = await this.createAssertion(nquads);
@@ -303,7 +311,9 @@ class DataService {
 
     async searchAssertions(query, options, localQuery = false) {
         try {
-            const assertions = await this.tripleStoreQueue.push({ operation: 'findAssertionsByKeyword', query, options, localQuery });
+            const assertions = await this.tripleStoreQueue.push({
+                operation: 'findAssertionsByKeyword', query, options, localQuery,
+            });
             if (!assertions) return null;
 
             const result = [];
@@ -311,7 +321,10 @@ class DataService {
                 const assertionId = assertion.assertionId = assertion.assertionId.value.replace(`${constants.DID_PREFIX}:`, '');
 
                 const nquads = await this.resolve(assertion.assertionId, localQuery, true);
-                if (!nquads) continue;
+                if (!nquads) {
+                    // eslint-disable-next-line no-continue
+                    continue;
+                }
 
                 if (localQuery) {
                     assertion = await this.createAssertion(nquads);
@@ -390,7 +403,7 @@ class DataService {
                             quads.push({
                                 subject: quad._subject.id,
                                 predicate: quad.predicate.id,
-                                object: quad.object.id
+                                object: quad.object.id,
                             });
                         }
                     },
@@ -453,11 +466,11 @@ class DataService {
         case this.constants.ERC721:
         case this.constants.OTTELEMETRY:
             context = {
-                "@context": "https://www.schema.org/"
+                '@context': 'https://www.schema.org/',
             };
             frame = {
-                "@context": "https://www.schema.org/",
-                "@type": type
+                '@context': 'https://www.schema.org/',
+                '@type': type,
             };
             break;
         default:
@@ -467,7 +480,7 @@ class DataService {
 
             frame = {};
         }
-        const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame])
+        const json = await this.workerPool.exec('fromNQuads', [nquads, context, frame]);
 
         this.logger.emit({
             msg: 'Finished measuring execution of fromRDF command',
@@ -549,46 +562,45 @@ class DataService {
                 },
             );
 
-
             for (const quad of quads) {
                 try {
                     switch (quad._predicate.id) {
-                        case 'http://schema.org/hasType':
-                            result.metadata.type = JSON.parse(quad._object.id);
-                            result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
-                            break;
-                        case 'http://schema.org/hasTimestamp':
-                            result.metadata.timestamp = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasUALs':
-                            result.metadata.UALs.push(JSON.parse(quad._object.id));
-                            break;
-                        case 'http://schema.org/hasIssuer':
-                            result.metadata.issuer = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasVisibility':
-                            result.metadata.visibility = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasDataHash':
-                            result.metadata.dataHash = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasKeywords':
-                            result.metadata.keywords.push(JSON.parse(quad._object.id));
-                            break;
-                        case 'http://schema.org/hasSignature':
-                            result.signature = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasRootHash':
-                            result.rootHash = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasBlockchain':
-                            result.blockchain.name = JSON.parse(quad._object.id);
-                            break;
-                        case 'http://schema.org/hasTransactionHash':
-                            result.blockchain.transactionHash = JSON.parse(quad._object.id);
-                            break;
-                        default:
-                            break;
+                    case 'http://schema.org/hasType':
+                        result.metadata.type = JSON.parse(quad._object.id);
+                        result.id = quad._subject.id.replace(`${constants.DID_PREFIX}:`, '');
+                        break;
+                    case 'http://schema.org/hasTimestamp':
+                        result.metadata.timestamp = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasUALs':
+                        result.metadata.UALs.push(JSON.parse(quad._object.id));
+                        break;
+                    case 'http://schema.org/hasIssuer':
+                        result.metadata.issuer = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasVisibility':
+                        result.metadata.visibility = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasDataHash':
+                        result.metadata.dataHash = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasKeywords':
+                        result.metadata.keywords.push(JSON.parse(quad._object.id));
+                        break;
+                    case 'http://schema.org/hasSignature':
+                        result.signature = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasRootHash':
+                        result.rootHash = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasBlockchain':
+                        result.blockchain.name = JSON.parse(quad._object.id);
+                        break;
+                    case 'http://schema.org/hasTransactionHash':
+                        result.blockchain.transactionHash = JSON.parse(quad._object.id);
+                        break;
+                    default:
+                        break;
                     }
                 } catch (e) {
                     this.logger.error({
