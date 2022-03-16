@@ -85,12 +85,12 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Symlinking GraphDB: "
-OUTPUT=$(ln -s $GRAPHDB_DIR GraphDB 2>&1)
+echo -n "Rename GraphDB directory: "
+OUTPUT=$(mv $GRAPHDB_DIR graphdb-free 2>&1)
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error symlinking GraphDB."
+    echo "There was an error unzipping GraphDB."
     echo $OUTPUT
     exit 1
 else
