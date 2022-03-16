@@ -211,32 +211,6 @@ if [[ $DATABASE = "blazegraph" ]]; then
     fi
 fi
 
-echo -n "Downloading Node.js v14: "
-
-OUTPUT=$(wget https://deb.nodesource.com/setup_14.x 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error downloading nodejs setup."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Setting up Node.js v14: "
-
-OUTPUT=$(chmod +x setup_14.x)
-
-OUTPUT=$(./setup_14.x 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error setting up nodejs."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
 echo -n "Updating the Ubuntu repo: "
 
 OUTPUT=$(apt update 2>&1)
