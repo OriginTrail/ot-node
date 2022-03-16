@@ -372,7 +372,7 @@ class DataService {
         try {
             switch (type) {
             case 'SELECT':
-                result = await this.implementation.execute(query);
+                result = await this.tripleStoreQueue.push({ operation: 'select', query });
                 result = result.toString();
                 break;
             case 'CONSTRUCT':
@@ -615,6 +615,7 @@ class DataService {
         }
         const { operation } = args;
         let result;
+
         switch (operation) {
         case 'insert':
             result = await this.implementation.insert(args.data, args.assertionId);
@@ -636,6 +637,9 @@ class DataService {
             break;
         case 'findAssertions':
             result = await this.implementation.findAssertions(args.nquad);
+            break;
+        case 'select':
+            result = await this.implementation.execute(args.query);
             break;
         default:
             throw new Error('Unknown operation for triple store');
