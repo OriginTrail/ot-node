@@ -23,7 +23,7 @@ jobs:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
       blazegraph:
-        image: blazegraph:2.1.6
+        image: lyrasis/blazegraph:2.1.6
         ports:
           - 7200:7200
     strategy:
