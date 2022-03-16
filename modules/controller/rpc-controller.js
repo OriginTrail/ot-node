@@ -498,9 +498,11 @@ class RpcController {
             if (!req.body.query || !req.query.type) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
+
+            const allowedQueries = ['construct', 'select'];
             // Handle allowed query types, TODO: expand to select, ask and construct
-            if (req.query.type !== 'construct') {
-                return next({code: 400, message: 'Unallowed query type, currently supported types: construct'});
+            if (!allowedQueries.includes(req.query.type.toLowerCase())) {
+                return next({ code: 400, message: `Unallowed query type, currently supported types: ${allowedQueries.join(', ')}` });
             }
             const operationId = uuidv1();
             let handlerId = null;

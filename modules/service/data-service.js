@@ -367,11 +367,14 @@ class DataService {
             Operation_name: 'query_node',
             Id_operation,
         });
+        const quads = [];
+
         try {
             switch (type) {
-            // case 'SELECT':
-            //     result = this.implementation.execute(query);
-            //     break;
+            case 'SELECT':
+                result = await this.implementation.execute(query);
+                result = result.toString();
+                break;
             case 'CONSTRUCT':
                 result = await this.tripleStoreQueue.push({ operation: 'construct', query });
                 result = result.toString();
@@ -380,6 +383,20 @@ class DataService {
                 } else {
                     result = [];
                 }
+                await this.N3Parser.parse(
+                    result.join('\n'),
+                    (error, quad, prefixes) => {
+                        if (quad) {
+                            quads.push({
+                                subject: quad._subject.id,
+                                predicate: quad.predicate.id,
+                                object: quad.object.id
+                            });
+                        }
+                    },
+                );
+                result = quads;
+
                 break;
             // case 'ASK':
             //     result = this.implementation.ask(query);
@@ -387,20 +404,6 @@ class DataService {
             default:
                 throw Error('Query type not supported');
             }
-            const quads = [];
-            await this.N3Parser.parse(
-                result.join('\n'),
-                (error, quad, prefixes) => {
-                    if (quad) {
-                        quads.push({
-                            subject: quad._subject.id,
-                            predicate: quad.predicate.id,
-                            object: quad.object.id
-                        });
-                    }
-                },
-            );
-            result = quads;
 
             return result;
         } catch (e) {
