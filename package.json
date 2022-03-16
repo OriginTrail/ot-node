@@ -145,7 +145,7 @@
     "leveldown": "^3.0.0",
     "levelup": "4.3.2",
     "libxml-xsd": "^0.5.2",
-    "lodash": "^4.17.5",
+    "lodash": "^4.17.21",
     "machinepack-zip": "^1.1.0",
     "md5": "^2.2.1",
     "minimist": "^1.2.0",
