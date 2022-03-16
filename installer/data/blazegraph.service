@@ -9,7 +9,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/root/
-ExecStart=/bin/java -jar /root/blazegraph.jar
+ExecStart=/usr/bin/java -jar /root/blazegraph.jar
 Restart=on-failure
 
 [Install]
