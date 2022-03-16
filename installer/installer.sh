@@ -11,16 +11,6 @@ NC='\033[0m' # No Color
 
 clear
 
-echo -n "${N1}Checking that the OS is Ubuntu 20.04 or 21.10 ONLY: "
-
-if [[ $OS_VERSION != 20.04 || $OS_VERSION != 21.10 ]]
-        echo -e "${RED}FAILED${NC}"
-        echo "This installer requires Ubuntu 20.04 or 21.10. Destroy this VPS and remake using Ubuntu 20.04 or 21.10."
-        exit 1
-else
-        echo -e "${GREEN}SUCCESS${NC}"
-fi
-
 echo -n "Checking that the GraphDB file is present in /root: "
 
 if [[ ! -f $GRAPHDB_FILE ]]; then
