@@ -85,6 +85,18 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
+echo -n "Symlinking GraphDB: "
+OUTPUT=$(ln -s $GRAPHDB_DIR GraphDB 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error symlinking GraphDB."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Copying service file: "
 
 OUTPUT=$(cp $OTNODE_DIR/installer/data/graphdb.service /lib/systemd/system/ 2>&1)
