@@ -55,7 +55,9 @@ class OTNode {
         } else {
             this.config = rc(pjson.name, defaultConfig);
         }
+        // eslint-disable-next-line max-len
         if (!this.config.blockchain[0].hubContractAddress && this.config.blockchain[0].networkId === defaultConfig.blockchain[0].networkId) {
+            // eslint-disable-next-line max-len
             this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV].blockchain[0].hubContractAddress;
         }
     }
