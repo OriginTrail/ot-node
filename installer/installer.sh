@@ -236,12 +236,36 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing nodejs and npm: "
+echo -n "Installing node.js and npm: "
 
- OUTPUT=$(apt-get install nodejs npm -y 2>&1)
+ OUTPUT=$(apt-get install node.js npm -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing nodejs/npm."
+    echo "There was an error installing node.js/npm."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Updating npm: "
+
+OUTPUT=$(sudo npm install npm -g 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error updating npm."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Updating node.js : "
+
+OUTPUT=$(npm cache clean -f 2>&1 && npm install -g n 2>&1 && sudo n stable 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error updating node.js."
     echo $OUTPUT
     exit 1
 else
