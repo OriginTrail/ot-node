@@ -236,9 +236,9 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing nodejs: "
+echo -n "Installing nodejs and npm: "
 
- OUTPUT=$(apt-get install nodejs -y 2>&1)
+ OUTPUT=$(apt-get install nodejs npm -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing nodejs/npm."
