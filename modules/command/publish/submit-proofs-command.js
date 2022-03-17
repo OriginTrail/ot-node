@@ -25,6 +25,7 @@ class SubmitProofsCommand extends Command {
         } = command.data;
 
         try {
+            // eslint-disable-next-line prefer-const
             let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
             this.logger.info('Sending transaction to the blockchain');
@@ -71,15 +72,20 @@ class SubmitProofsCommand extends Command {
         const { assertion, method } = args;
         let result;
         switch (method) {
-            case 'publish':
-                result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
-                break;
-            case 'provision':
-                result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);
-                break;
-            case 'update':
-                result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0],assertion.id, assertion.rootHash);
-                break;
+        case 'publish':
+            // eslint-disable-next-line max-len
+            result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
+            break;
+        case 'provision':
+            // eslint-disable-next-line max-len
+            result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0], assertion.metadata.type, assertion.metadata.UALs[0], assertion.id, assertion.rootHash, 1);
+            break;
+        case 'update':
+            // eslint-disable-next-line max-len
+            result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0], assertion.id, assertion.rootHash);
+            break;
+        default:
+            break;
         }
 
         return result;

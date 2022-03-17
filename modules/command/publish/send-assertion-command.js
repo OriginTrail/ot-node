@@ -2,7 +2,6 @@ const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
 
-
 class SendAssertionCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -20,6 +19,7 @@ class SendAssertionCommand extends Command {
     async execute(command) {
         const { documentPath, handlerId, operationId } = command.data;
 
+        // eslint-disable-next-line prefer-const
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         if (!assertion.metadata.visibility) {
@@ -31,6 +31,7 @@ class SendAssertionCommand extends Command {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
+            // eslint-disable-next-line no-await-in-loop
             const foundNodes = await this.networkService.findNodes(
                 keyword,
                 this.config.replicationFactor,
@@ -133,7 +134,6 @@ class SendAssertionCommand extends Command {
         Object.assign(command, map);
         return command;
     }
-
 }
 
 module.exports = SendAssertionCommand;

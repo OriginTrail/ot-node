@@ -16,7 +16,7 @@ class InsertAssertionCommand extends Command {
      */
     async execute(command) {
         const { documentPath, handlerId, operationId } = command.data;
-        let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
+        const { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
             await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);
