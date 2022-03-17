@@ -1,6 +1,6 @@
 {
   "name": "origintrail_node",
-  "version": "6.0.0-beta.1.29",
+  "version": "6.0.0-beta.1.30",
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "app-root-path": "^3.0.0",
-    "auto-git-update": "^2.0.2",
+    "auto-git-update": "2.0.2",
     "awilix": "^5.0.1",
     "axios": "^0.24.0",
     "big-number": "^2.0.0",
