@@ -224,6 +224,32 @@ if [[ $DATABASE = "blazegraph" ]]; then
     fi
 fi
 
+echo -n "Downloading Node.js v16: "
+
+OUTPUT=$(wget https://deb.nodesource.com/setup_16.x 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error downloading node.js setup."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Setting up Node.js v16: "
+
+OUTPUT=$(chmod +x setup_16.x)
+
+OUTPUT=$(./setup_16.x 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error setting up node.js."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
 echo -n "Updating the Ubuntu repo: "
 
 OUTPUT=$(apt update 2>&1)
@@ -254,18 +280,6 @@ OUTPUT=$(sudo npm install npm -g 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error updating npm."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Updating node.js : "
-
-OUTPUT=$(npm cache clean -f 2>&1 && npm install -g n 2>&1 && sudo n stable 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error updating node.js."
     echo $OUTPUT
     exit 1
 else
