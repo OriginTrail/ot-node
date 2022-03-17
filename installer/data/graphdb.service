@@ -8,8 +8,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/graphdb-free-9.10.1/bin/
-ExecStart=/root/graphdb-free-9.10.1/bin/graphdb
+WorkingDirectory=/root/graphdb-free/bin/
+ExecStart=/root/graphdb-free/bin/graphdb
 Restart=on-failure
 
 [Install]

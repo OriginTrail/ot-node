@@ -1,7 +1,8 @@
 #!/bin/bash
 
 OS_VERSION=$(lsb_release -sr)
-GRAPHDB_FILE=$(ls /root | grep graphdb-free | grep .zip)
+GRAPHDB_FILE=$(ls /root/graphdb*.zip)
+GRAPHDB_DIR=$(echo $GRAPHDB_FILE | sed 's|-dist.zip||')
 OTNODE_DIR="/root/ot-node"
 N1=$'\n'
 GREEN='\033[0;32m'
@@ -74,17 +75,29 @@ if [[ $DATABASE = "graphdb" ]]; then
     fi
 
     echo -n "Unzipping GraphDB: "
-    
-    OUTPUT=$(unzip -o $GRAPHDB_FILE 2>&1)
+OUTPUT=$(unzip -o $GRAPHDB_FILE >/dev/null 2>&1)
+OUTPUT=$(unzip -o $GRAPHDB_FILE 2>&1)
 
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED}FAILED${NC}"
-        echo "There was an error unzipping GraphDB."
-        echo $OUTPUT
-        exit 1
-    else
-        echo -e "${GREEN}SUCCESS${NC}"
-    fi
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error unzipping GraphDB."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
+
+echo -n "Rename GraphDB directory: "
+OUTPUT=$(mv $GRAPHDB_DIR graphdb-free 2>&1)
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}FAILED${NC}"
+    echo "There was an error unzipping GraphDB."
+    echo $OUTPUT
+    exit 1
+else
+    echo -e "${GREEN}SUCCESS${NC}"
+fi
 
     echo -n "Copying graphdb service file: "
 
@@ -223,21 +236,9 @@ else
     echo -e "${GREEN}SUCCESS${NC}"
 fi
 
-echo -n "Installing aptitude: "
-
-OUTPUT=$(apt install aptitude -y 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error installing aptitude."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
 echo -n "Installing nodejs: "
 
-OUTPUT=$(aptitude install nodejs -y 2>&1)
+ OUTPUT=$(apt-get install nodejs -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing nodejs/npm."
@@ -249,7 +250,7 @@ fi
 
 echo -n "Installing tcllib and mysql-server: "
 
-OUTPUT=$(apt install tcllib mysql-server -y 2>&1)
+OUTPUT=$(apt-get install tcllib mysql-server -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing tcllib and mysql-server."
