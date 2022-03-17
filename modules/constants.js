@@ -10,7 +10,6 @@ exports.DID = 'DID';
  * - Max file size for publish
  */
 exports.MAX_FILE_SIZE = 26214400;
-                        2621440
 
 /**
  * @constant {number} DID_PREFIX
