@@ -264,22 +264,10 @@ fi
 
 echo -n "Installing node.js and npm: "
 
- OUTPUT=$(apt-get install node.js npm -y 2>&1)
+ OUTPUT=$(apt-get install node.js -y 2>&1)
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}FAILED${NC}"
     echo "There was an error installing node.js/npm."
-    echo $OUTPUT
-    exit 1
-else
-    echo -e "${GREEN}SUCCESS${NC}"
-fi
-
-echo -n "Updating npm: "
-
-OUTPUT=$(sudo npm install npm -g 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}FAILED${NC}"
-    echo "There was an error updating npm."
     echo $OUTPUT
     exit 1
 else
