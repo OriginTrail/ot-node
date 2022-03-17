@@ -1,5 +1,5 @@
 const workerpool = require('workerpool');
-const jsonld = require("jsonld");
+const jsonld = require('jsonld');
 
 function JSONParse(args) {
     return JSON.parse(args);
@@ -10,7 +10,7 @@ function JSONStringify(args) {
 }
 
 async function toNQuads(json) {
-    let canonized = await jsonld.canonize(json, {
+    const canonized = await jsonld.canonize(json, {
         algorithm: 'URDNA2015',
         format: 'application/n-quads',
     });
@@ -23,19 +23,18 @@ function fromNQuads(nquads, context, frame) {
         jsonld.fromRDF(nquads.join('\n'), {
             algorithm: 'URDNA2015',
             format: 'application/n-quads',
-        }).then(json =>
-            jsonld.frame(json, frame)
-        ).then((json) =>
-            jsonld.compact(json, context)
-        ).then(result => {
-            accept(result);
-        }).catch(err => reject(err))
+        }).then((json) => jsonld.frame(json, frame))
+            .then((json) => jsonld.compact(json, context))
+            .then((result) => {
+                accept(result);
+            })
+            .catch((err) => reject(err));
     });
 }
 
 workerpool.worker({
-    JSONParse: JSONParse,
-    JSONStringify: JSONStringify,
-    toNQuads: toNQuads,
-    fromNQuads: fromNQuads
+    JSONParse,
+    JSONStringify,
+    toNQuads,
+    fromNQuads,
 });

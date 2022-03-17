@@ -15,6 +15,7 @@ class TelemetryHubModuleManager extends BaseModuleManager {
 
     async aggregateTelemetryData() {
         if (this.initialized) {
+            // eslint-disable-next-line no-return-await
             return await this.handlers[0].module.aggregateTelemetryData();
         }
     }
