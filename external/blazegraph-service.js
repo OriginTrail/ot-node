@@ -1,3 +1,4 @@
+/* eslint-disable no-async-promise-executor */
 const axios = require('axios');
 const qs = require('qs');
 const constants = require('../modules/constants');
