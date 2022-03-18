@@ -250,8 +250,8 @@ class RpcController {
                     if (nquads) {
                         this.logger.emit({
                             msg: 'Started measuring execution of create assertion from nquads',
-                            Event_name: 'create_assertion_from_nquads_start',
-                            Operation_name: 'create_assertion_from_nquads',
+                            Event_name: 'resolve_create_assertion_from_nquads_start',
+                            Operation_name: 'resolve_create_assertion_from_nquads',
                             Id_operation: operationId,
                         });
 
@@ -259,8 +259,8 @@ class RpcController {
 
                         this.logger.emit({
                             msg: 'Finished measuring execution of create assertion from nquads',
-                            Event_name: 'create_assertion_from_nquads_end',
-                            Operation_name: 'create_assertion_from_nquads',
+                            Event_name: 'resolve_create_assertion_from_nquads_end',
+                            Operation_name: 'resolve_create_assertion_from_nquads',
                             Id_operation: operationId,
                         });
 
