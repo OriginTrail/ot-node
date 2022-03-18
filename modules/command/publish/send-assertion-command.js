@@ -19,6 +19,12 @@ class SendAssertionCommand extends Command {
      */
     async execute(command) {
         const { documentPath, handlerId, operationId } = command.data;
+        this.logger.emit({
+            msg: 'Started measuring execution of replicate data to network',
+            Event_name: 'publish_replicate_start',
+            Operation_name: 'publish_replicate',
+            Id_operation: operationId,
+        });
 
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
@@ -82,12 +88,6 @@ class SendAssertionCommand extends Command {
                 },
             },
         );
-        this.logger.emit({
-            msg: 'Finished measuring execution of publish command',
-            Event_name: 'publish_end',
-            Operation_name: 'publish',
-            Id_operation: operationId,
-        });
 
         if (command.data.isTelemetry) {
             await Models.assertions.create({
@@ -96,6 +96,19 @@ class SendAssertionCommand extends Command {
                 createdAt: assertion.metadata.timestamp,
             });
         }
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of replicate data to network',
+            Event_name: 'publish_replicate_end',
+            Operation_name: 'publish_replicate',
+            Id_operation: operationId,
+        });
+        this.logger.emit({
+            msg: 'Finished measuring execution of publish command',
+            Event_name: 'publish_end',
+            Operation_name: 'publish',
+            Id_operation: operationId,
+        });
 
         return this.continueSequence(command.data, command.sequence);
     }
