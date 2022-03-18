@@ -1,6 +1,7 @@
 const Command = require('../command');
 const constants = require('../../constants');
 const Models = require('../../../models/index');
+const {v1: uuidv1} = require("uuid");
 
 class SendTelemetryCommand extends Command {
     constructor(ctx) {
@@ -20,14 +21,25 @@ class SendTelemetryCommand extends Command {
             return Command.empty();
         }
 
+        const operationId = uuidv1();
+
         this.telemetryHubModuleManager.aggregateTelemetryData()
             .then((jsonld) => {
                 if (jsonld) {
                     this.logger.restart();
+                    this.initializeTelemetryPublish(operationId);
                     Models.handler_ids.create({
                         status: 'PENDING',
                     }).then((insertedObject) => {
-                        this.publishService.publish(JSON.stringify(jsonld), '.json', [`ot-telemetry-${Math.floor(new Date() / (60 * 1000))}`], 'public', undefined, insertedObject.dataValues.handler_id, true);
+                        const fileContent = JSON.stringify(jsonld);
+                        const keywords = [`ot-telemetry-${Math.floor(new Date() / (60 * 1000))}`];
+                        this.logger.emit({
+                            msg: 'Finished measuring execution of preparing arguments for publishing',
+                            Event_name: 'publish_prep_args_end',
+                            Operation_name: 'publish_prep_args',
+                            Id_operation: operationId,
+                        });
+                        this.publishService.publish(fileContent, '.json', keywords, 'public', undefined, insertedObject.dataValues.handler_id, operationId, true);
                     });
                 }
             })
@@ -36,6 +48,33 @@ class SendTelemetryCommand extends Command {
             });
 
         return Command.repeat();
+    }
+
+    initializeTelemetryPublish(operationId) {
+        this.logger.emit({
+            msg: 'Started measuring execution of publish command',
+            Event_name: 'publish_start',
+            Operation_name: 'publish',
+            Id_operation: operationId,
+        });
+        this.logger.emit({
+            msg: 'Started measuring execution of check arguments for publishing',
+            Event_name: 'publish_init_start',
+            Operation_name: 'publish_init',
+            Id_operation: operationId,
+        });
+        this.logger.emit({
+            msg: 'Finished measuring execution of check arguments for publishing',
+            Event_name: 'publish_init_end',
+            Operation_name: 'publish_init',
+            Id_operation: operationId,
+        });
+        this.logger.emit({
+            msg: 'Started measuring execution of preparing arguments for publishing',
+            Event_name: 'publish_prep_args_start',
+            Operation_name: 'publish_prep_args',
+            Id_operation: operationId,
+        });
     }
 
     async recover(command, err) {

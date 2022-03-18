@@ -1,10 +1,11 @@
 {
   "name": "origintrail_node",
-  "version": "6.0.0-beta.1.29",
+  "version": "6.0.0-beta.1.30",
   "description": "OTNode v6 Beta 1",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "dev": "nodemon index.js",
     "test:bdd": "cucumber-js --fail-fast --format progress --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/"
   },
   "repository": {
@@ -37,11 +38,12 @@
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "form-data": "^4.0.0",
+    "nodemon": "^2.0.15",
     "request": "^2.88.2"
   },
   "dependencies": {
     "app-root-path": "^3.0.0",
-    "auto-git-update": "^2.0.2",
+    "auto-git-update": "2.0.2",
     "awilix": "^5.0.1",
     "axios": "^0.24.0",
     "big-number": "^2.0.0",
@@ -54,6 +56,7 @@
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "express-ipfilter": "^1.2.0",
+    "express-rate-limit": "^6.3.0",
     "express-slow-down": "^1.4.0",
     "fast-sort": "^3.1.1",
     "fastq": "^1.13.0",

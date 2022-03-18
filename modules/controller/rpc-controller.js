@@ -8,6 +8,7 @@ const path = require('path');
 const { v1: uuidv1, v4: uuidv4 } = require('uuid');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
+const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const Models = require('../../models/index');
 const constants = require('../constants');
@@ -85,10 +86,20 @@ class RpcController {
             return next();
         });
 
+        this.app.use(
+            rateLimit({
+                windowMs: constants.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS,
+                max: constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER,
+                message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER}`,
+                standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+                legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+            }),
+        );
+
         this.app.use(slowDown({
-            windowMs: 1 * 60 * 1000, // 1 minute
-            delayAfter: 30, // allow 30 requests per 1 minute, then...
-            delayMs: 2 * 1000, // begin adding 2s of delay per request above 30;
+            windowMs: constants.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS,
+            delayAfter: constants.SERVICE_API_SLOW_DOWN_DELAY_AFTER,
+            delayMs: constants.SERVICE_API_SLOW_DOWN_DELAY_MILLS,
         }));
     }
 
@@ -171,23 +182,38 @@ class RpcController {
         });
 
         this.app.get('/resolve', async (req, res, next) => {
+            const operationId = uuidv1();
+            this.logger.emit({
+                msg: 'Started measuring execution of resolve command',
+                Event_name: 'resolve_start',
+                Operation_name: 'resolve',
+                Id_operation: operationId,
+            });
+
+            this.logger.emit({
+                msg: 'Started measuring execution of resolve init',
+                Event_name: 'resolve_init_start',
+                Operation_name: 'resolve_init',
+                Id_operation: operationId,
+            });
+
             if (!req.query.ids) {
-                return next({code: 400, message: 'Param ids is required.'});
+                return next({ code: 400, message: 'Param ids is required.' });
             }
 
             if (req.query.load === undefined) {
                 req.query.load = false;
             }
-            const operationId = uuidv1();
+
+            this.logger.emit({
+                msg: 'Finished measuring execution of resolve init',
+                Event_name: 'resolve_init_end',
+                Operation_name: 'resolve_init',
+                Id_operation: operationId,
+            });
+
             let handlerId = null;
             try {
-                this.logger.emit({
-                    msg: 'Started measuring execution of resolve command',
-                    Event_name: 'resolve_start',
-                    Operation_name: 'resolve',
-                    Id_operation: operationId,
-                });
-
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
@@ -205,14 +231,50 @@ class RpcController {
 
                 for (let id of ids) {
                     let isAsset = false;
-                    let {assertionId} = await this.blockchainService.getAssetProofs(id);
+                    const { assertionId } = await this.blockchainService.getAssetProofs(id);
                     if (assertionId) {
                         isAsset = true;
                         id = assertionId;
                     }
+                    this.logger.emit({
+                        msg: id,
+                        Event_name: 'resolve_assertion_id',
+                        Operation_name: 'resolve_assertion_id',
+                        Id_operation: operationId,
+                    });
+                    this.logger.emit({
+                        msg: 'Started measuring execution of resolve local',
+                        Event_name: 'resolve_local_start',
+                        Operation_name: 'resolve_local',
+                        Id_operation: operationId,
+                    });
+
                     const nquads = await this.dataService.resolve(id, true);
+
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of resolve local',
+                        Event_name: 'resolve_local_end',
+                        Operation_name: 'resolve_local',
+                        Id_operation: operationId,
+                    });
+
                     if (nquads) {
+                        this.logger.emit({
+                            msg: 'Started measuring execution of create assertion from nquads',
+                            Event_name: 'resolve_create_assertion_from_nquads_start',
+                            Operation_name: 'resolve_create_assertion_from_nquads',
+                            Id_operation: operationId,
+                        });
+
                         let assertion = await this.dataService.createAssertion(nquads);
+
+                        this.logger.emit({
+                            msg: 'Finished measuring execution of create assertion from nquads',
+                            Event_name: 'resolve_create_assertion_from_nquads_end',
+                            Operation_name: 'resolve_create_assertion_from_nquads',
+                            Id_operation: operationId,
+                        });
+
                         assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                         assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
                         response.push(isAsset ? {
@@ -241,7 +303,7 @@ class RpcController {
                         nodes = [...new Set(nodes)];
                         for (const node of nodes) {
                             try {
-                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node);
+                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node, operationId);
                                 if (assertion) {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                     assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
@@ -278,33 +340,47 @@ class RpcController {
 
                 const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
+                this.logger.emit({
+                    msg: 'Started measuring execution of resolve save assertion',
+                    Event_name: 'resolve_save_assertion_start',
+                    Operation_name: 'resolve_save_assertion',
+                    Id_operation: operationId,
+                });
+
                 await this.fileService
                     .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
 
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve save assertion',
+                    Event_name: 'resolve_save_assertion_end',
+                    Operation_name: 'resolve_save_assertion',
+                    Id_operation: operationId,
+                });
+
                 await Models.handler_ids.update(
                     {
-                        status: 'COMPLETED'
+                        status: 'COMPLETED',
                     }, {
                         where: {
                             handler_id: handlerId,
                         },
                     },
                 );
+
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve command',
+                    Event_name: 'resolve_end',
+                    Operation_name: 'resolve',
+                    Id_operation: operationId,
+                });
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
                 this.updateFailedHandlerId(handlerId, e, next);
-            } finally {
-                this.logger.emit({
-                    msg: 'Finished measuring execution of resolve command',
-                    Event_name: 'resolve_end',
-                    Operation_name: 'resolve',
-                    Id_operation: operationId
-                });
             }
         });
 
@@ -498,9 +574,11 @@ class RpcController {
             if (!req.body.query || !req.query.type) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
+
+            const allowedQueries = ['construct', 'select'];
             // Handle allowed query types, TODO: expand to select, ask and construct
-            if (req.query.type !== 'construct') {
-                return next({code: 400, message: 'Unallowed query type, currently supported types: construct'});
+            if (!allowedQueries.includes(req.query.type.toLowerCase())) {
+                return next({ code: 400, message: `Unallowed query type, currently supported types: ${allowedQueries.join(', ')}` });
             }
             const operationId = uuidv1();
             let handlerId = null;
@@ -792,6 +870,19 @@ class RpcController {
     }
 
     async publish(req, res, next, options) {
+        const operationId = uuidv1();
+        this.logger.emit({
+            msg: 'Started measuring execution of publish command',
+            Event_name: 'publish_start',
+            Operation_name: 'publish',
+            Id_operation: operationId,
+        });
+        this.logger.emit({
+            msg: 'Started measuring execution of check arguments for publishing',
+            Event_name: 'publish_init_start',
+            Operation_name: 'publish_init',
+            Id_operation: operationId,
+        });
         if ((!req.files || !req.files.file || path.extname(req.files.file.name).toLowerCase() !== '.json') && (!req.body.data)) {
             return next({code: 400, message: 'No data provided. It is required to have assertion file or data in body, they must be in JSON-LD format.'});
         }
@@ -799,14 +890,14 @@ class RpcController {
         if (req.files && req.files.file && req.files.file.size > constants.MAX_FILE_SIZE) {
             return next({
                 code: 400,
-                message: `File size limit is 25MB.`
+                message: `File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`,
             });
         }
 
         if (req.body && req.body.data && Buffer.byteLength(req.body.data, "utf-8") > constants.MAX_FILE_SIZE) {
             return next({
                 code: 400,
-                message: `File size limit is 25MB.`
+                message: `File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`,
             });
         }
 
@@ -816,20 +907,34 @@ class RpcController {
                 message: `Keywords must be a non-empty array of strings, all strings must have double quotes.`
             });
         }
+
         if (req.body.visibility && !['public', 'private'].includes(req.body.visibility)) {
             return next({
                 code: 400,
-                message: `Visibility must be a string, value can be public or private.`
+                message: 'Visibility must be a string, value can be public or private.',
             });
         }
 
         const handlerObject = await Models.handler_ids.create({
             status: 'PENDING',
-        })
+        });
 
         const handlerId = handlerObject.dataValues.handler_id;
         res.status(202).send({
             handler_id: handlerId,
+        });
+        this.logger.emit({
+            msg: 'Finished measuring execution of check arguments for publishing',
+            Event_name: 'publish_init_end',
+            Operation_name: 'publish_init',
+            Id_operation: operationId,
+        });
+
+        this.logger.emit({
+            msg: 'Started measuring execution of preparing arguments for publishing',
+            Event_name: 'publish_prep_args_start',
+            Operation_name: 'publish_prep_args',
+            Id_operation: operationId,
         });
         let fileContent, fileExtension;
         if (req.files) {
@@ -851,7 +956,19 @@ class RpcController {
         }
 
         promise
-            .then((keywords) => this.publishService.publish(fileContent, fileExtension, keywords, visibility, ual, handlerId))
+            .then((keywords) => {
+                if (keywords.length > 10) {
+                    keywords = keywords.slice(0, 10);
+                    this.logger.warn('Too many keywords provided, limit is 10. Publishing only to the first 10 keywords.');
+                }
+                this.logger.emit({
+                    msg: 'Finished measuring execution of preparing arguments for publishing',
+                    Event_name: 'publish_prep_args_end',
+                    Operation_name: 'publish_prep_args',
+                    Id_operation: operationId,
+                });
+                this.publishService.publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, operationId);
+            })
             .then((assertion) => {
                 if (assertion) {
                     const handlerData = {
