@@ -39,7 +39,7 @@ exports.SERVICE_API_SLOW_DOWN_DELAY_AFTER = 5;
  * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_MILLS
  * - Express slow down delay between requests in milliseconds
  */
-exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 2 * 1000;
+exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 3 * 1000;
 
 /**
  * @constant {number} DID_PREFIX
@@ -121,7 +121,7 @@ exports.STORE_MAX_RETRIES = 3;
  * @constant {number} STORE_BUSY_REPEAT_INTERVAL_IN_MILLS
  * - Wait interval between retries for sending store requests
  */
-exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 2 * 1000;
+exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
 
 /**
  * @constant {number} HANDLE_STORE_BUSINESS_LIMIT
