@@ -58,11 +58,25 @@ class QueryService {
             Id_operation: operationId,
         });
 
+        this.logger.emit({
+            msg: 'Started measuring execution of resolve verify assertion',
+            Event_name: 'resolve_verify_assertion_start',
+            Operation_name: 'resolve_verify_assertion',
+            Id_operation: operationId,
+        });
+
         const status = await this.dataService.verifyAssertion(
             assertion.jsonld,
             assertion.nquads,
             { isAsset: isAssetRequested },
         );
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of resolve verify assertion',
+            Event_name: 'resolve_verify_assertion_end',
+            Operation_name: 'resolve_verify_assertion',
+            Id_operation: operationId,
+        });
 
         if (status && load) {
             await this.dataService.insert(rawNquads.join('\n'), `${constants.DID_PREFIX}:${assertion.jsonld.metadata.id}`);
