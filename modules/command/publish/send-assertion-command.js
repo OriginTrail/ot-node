@@ -58,7 +58,7 @@ class SendAssertionCommand extends Command {
                     this.logger.error({
                         msg: `Error while sending data with assertion id ${assertion.id} to node ${node._idB58String} - receiving node is busy to store.`,
                         Operation_name: 'Error',
-                        Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR,
+                        Event_name: constants.ERROR_TYPE.SEND_ASSERTION_ERROR_BUSY,
                         Id_operation: handlerId,
                     });
                 }

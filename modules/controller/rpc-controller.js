@@ -8,6 +8,7 @@ const path = require('path');
 const { v1: uuidv1, v4: uuidv4 } = require('uuid');
 const sortedStringify = require('json-stable-stringify');
 const validator = require('validator');
+const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const Models = require('../../models/index');
 const constants = require('../constants');
@@ -85,10 +86,20 @@ class RpcController {
             return next();
         });
 
+        this.app.use(
+            rateLimit({
+                windowMs: constants.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS,
+                max: constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER,
+                message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER}`,
+                standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+                legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+            }),
+        );
+
         this.app.use(slowDown({
-            windowMs: 1 * 60 * 1000, // 1 minute
-            delayAfter: 30, // allow 30 requests per 1 minute, then...
-            delayMs: 2 * 1000, // begin adding 2s of delay per request above 30;
+            windowMs: constants.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS,
+            delayAfter: constants.SERVICE_API_SLOW_DOWN_DELAY_AFTER,
+            delayMs: constants.SERVICE_API_SLOW_DOWN_DELAY_MILLS,
         }));
     }
 
@@ -801,14 +812,14 @@ class RpcController {
         if (req.files && req.files.file && req.files.file.size > constants.MAX_FILE_SIZE) {
             return next({
                 code: 400,
-                message: `File size limit is 25MB.`
+                message: `File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`,
             });
         }
 
         if (req.body && req.body.data && Buffer.byteLength(req.body.data, "utf-8") > constants.MAX_FILE_SIZE) {
             return next({
                 code: 400,
-                message: `File size limit is 25MB.`
+                message: `File size limit is ${constants.MAX_FILE_SIZE / (1024 * 1024)}MB.`,
             });
         }
 
