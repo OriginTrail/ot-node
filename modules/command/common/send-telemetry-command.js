@@ -26,8 +26,8 @@ class SendTelemetryCommand extends Command {
         this.telemetryHubModuleManager.aggregateTelemetryData()
             .then((jsonld) => {
                 if (jsonld) {
-                    this.initializeTelemetryPublish(operationId);
                     this.logger.restart();
+                    this.initializeTelemetryPublish(operationId);
                     Models.handler_ids.create({
                         status: 'PENDING',
                     }).then((insertedObject) => {
