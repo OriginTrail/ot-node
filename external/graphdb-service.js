@@ -119,6 +119,7 @@ class GraphdbService {
     }
 
     async resolve(uri) {
+<<<<<<< HEAD
         let isAsset = false;
 
         const sparqlQuery = this.sparqlQueryBuilder.findNQuadsByGraphUri(uri);
@@ -130,6 +131,17 @@ class GraphdbService {
             isAsset = true;
         }
 
+=======
+        const query = `PREFIX schema: <http://schema.org/>
+                        CONSTRUCT { ?s ?p ?o }
+                        WHERE {
+                          GRAPH <${constants.DID_PREFIX}:${uri}> {
+                            ?s ?p ?o
+                          }
+                        }`;
+        let nquads = await this.construct(query);
+
+>>>>>>> origin/v6/develop
         if (nquads.length) {
             nquads = nquads.toString();
             nquads = nquads.replace(/_:genid(.){37}/gm, '_:$1');
@@ -138,12 +150,25 @@ class GraphdbService {
         } else {
             nquads = null;
         }
-        return { nquads, isAsset };
+        return nquads;
     }
 
     async assertionsByAsset(uri) {
+<<<<<<< HEAD
         const sparqlQuery = this.sparqlQueryBuilder.findAssertionsByUAL(uri);
         const result = await this.execute(sparqlQuery);
+=======
+        const query = `PREFIX schema: <http://schema.org/>
+            SELECT ?assertionId ?issuer ?timestamp
+            WHERE {
+                 ?assertionId schema:hasUALs "${uri}" ;
+                     schema:hasTimestamp ?timestamp ;
+                     schema:hasIssuer ?issuer .
+            }
+            ORDER BY DESC(?timestamp)`;
+        const result = await this.execute(query);
+
+>>>>>>> origin/v6/develop
         return JSON.parse(result).results.bindings;
     }
 

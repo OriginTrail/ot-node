@@ -1,7 +1,7 @@
+const sortedStringify = require('json-stable-stringify');
 const Command = require('../command');
 const Models = require('../../../models/index');
 const constants = require('../../constants');
-const sortedStringify = require("json-stable-stringify");
 
 class SubmitProofsCommand extends Command {
     constructor(ctx) {
@@ -11,6 +11,8 @@ class SubmitProofsCommand extends Command {
         this.dataService = ctx.dataService;
         this.fileService = ctx.fileService;
         this.workerPool = ctx.workerPool;
+
+        this.blockchainQueue = ctx.blockchainQueue.promise(this, this.sendTransaction, 1);
     }
 
     /**
@@ -18,24 +20,30 @@ class SubmitProofsCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId, method } = command.data;
+        const {
+            documentPath, handlerId, method, isTelemetry, operationId,
+        } = command.data;
 
         try {
+            this.logger.emit({
+                msg: 'Started measuring execution of submitting proofs to blockchain',
+                Event_name: 'publish_blockchain_start',
+                Operation_name: 'publish_blockchain',
+                Id_operation: operationId,
+            });
             let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
-            this.logger.info(`Sending transaction to the blockchain`);
+            this.logger.info('Sending transaction to the blockchain');
             let result;
-            switch (method) {
-                case 'publish':
-                    result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
-                    break;
-                case 'provision':
-                    result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);
-                    break;
-                case 'update':
-                    result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0],assertion.id, assertion.rootHash);
-                    break;
+            if (isTelemetry) {
+                result = await this.blockchainQueue.unshift({ method, assertion });
+            } else {
+                if (this.blockchainQueue.length() > constants.BLOCKCHAIN_QUEUE_LIMIT) {
+                    throw new Error('Blockchain queue is full');
+                }
+                result = await this.blockchainQueue.push({ method, assertion });
             }
+
             const { transactionHash, blockchain } = result;
             this.logger.info(`Transaction hash is ${transactionHash} on ${blockchain}`);
 
@@ -49,16 +57,44 @@ class SubmitProofsCommand extends Command {
 
             await this.fileService
                 .writeContentsToFile(handlerIdCachePath, handlerId, sortedStringify({
-                    nquads, assertion
+                    nquads, assertion,
                 }));
-
+            this.logger.emit({
+                msg: 'Finished measuring execution of submitting proofs to blockchain',
+                Event_name: 'publish_blockchain_end',
+                Operation_name: 'publish_blockchain',
+                Id_operation: operationId,
+            });
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
-
+            this.logger.emit({
+                msg: 'Finished measuring execution of publish command',
+                Event_name: 'publish_end',
+                Operation_name: 'publish',
+                Id_operation: operationId,
+            });
             return Command.empty();
         }
 
         return this.continueSequence(command.data, command.sequence);
+    }
+
+    async sendTransaction(args) {
+        const { assertion, method } = args;
+        let result;
+        switch (method) {
+            case 'publish':
+                result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
+                break;
+            case 'provision':
+                result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);
+                break;
+            case 'update':
+                result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0],assertion.id, assertion.rootHash);
+                break;
+        }
+
+        return result;
     }
 
     /**

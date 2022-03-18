@@ -15,14 +15,27 @@ class InsertAssertionCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { documentPath, handlerId } = command.data;
+        const { documentPath, handlerId, operationId } = command.data;
+        this.logger.emit({
+            msg: 'Started measuring execution of storing publishing data into local triple store',
+            Event_name: 'publish_local_store_start',
+            Operation_name: 'publish_local_store',
+            Id_operation: operationId,
+        });
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         try {
             await this.dataService.insert(nquads.join('\n'), `${constants.DID_PREFIX}:${assertion.id}`);
             this.logger.info(`Assertion ${assertion.id} has been successfully inserted`);
+            this.logger.emit({
+                msg: 'Finished measuring execution of storing publishing data into local triple store',
+                Event_name: 'publish_local_store_end',
+                Operation_name: 'publish_local_store',
+                Id_operation: operationId,
+            });
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.INSERT_ASSERTION_ERROR, true);
+            return Command.empty();
         }
 
         return this.continueSequence(command.data, command.sequence);

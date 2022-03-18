@@ -3,6 +3,7 @@ const DeepExtend = require('deep-extend');
 const AutoGitUpdate = require('auto-git-update');
 const rc = require('rc');
 const fs = require('fs');
+const queue = require('fastq');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
@@ -64,6 +65,8 @@ class OTNode {
         DependencyInjection.registerValue(this.container, 'config', this.config);
         DependencyInjection.registerValue(this.container, 'logger', this.logger);
         DependencyInjection.registerValue(this.container, 'constants', constants);
+        DependencyInjection.registerValue(this.container, 'blockchainQueue', queue);
+        DependencyInjection.registerValue(this.container, 'tripleStoreQueue', queue);
 
         this.logger.info('Dependency injection module is initialized');
     }

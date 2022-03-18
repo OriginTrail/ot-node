@@ -1,5 +1,6 @@
 exports.GS1EPCIS = 'gs1-epcis';
 exports.ERC721 = 'erc721';
+exports.OTTELEMETRY = 'ottelemetry';
 exports.MERKLE_TREE = 'Merkle Tree';
 exports.BASIC = 'Basic';
 exports.DID = 'DID';
@@ -8,7 +9,37 @@ exports.DID = 'DID';
  * @constant {number} MAX_FILE_SIZE
  * - Max file size for publish
  */
-exports.MAX_FILE_SIZE = 26214400;
+exports.MAX_FILE_SIZE = 2621440;
+
+/**
+ * @constant {number} SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS
+ * - Express rate limit time window in milliseconds
+ */
+exports.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} SERVICE_API_RATE_LIMIT_MAX_NUMBER
+ * - Express rate limit max number of requests allowed in the specified time window
+ */
+exports.SERVICE_API_RATE_LIMIT_MAX_NUMBER = 10;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS
+ * - Express slow down time window in milliseconds
+ */
+exports.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_AFTER
+ * - Express slow down number of seconds after which it starts delaying requests
+ */
+exports.SERVICE_API_SLOW_DOWN_DELAY_AFTER = 5;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_MILLS
+ * - Express slow down delay between requests in milliseconds
+ */
+exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 3 * 1000;
 
 /**
  * @constant {number} DID_PREFIX
@@ -32,7 +63,7 @@ exports.HANDLER_IDS_COMMAND_CLEANUP_TIME_MILLS = 24 * 60 * 60 * 1000;
  */
 exports.PERMANENT_COMMANDS = [
     'otnodeUpdateCommand', 'sendTelemetryCommand', 'cleanerCommand',
-    'handlerIdsCleanerCommand',
+    'handlerIdsCleanerCommand', 'keepAliveCommand',
 ];
 
 /**
@@ -63,12 +94,59 @@ exports.TRIPLE_STORE_CONNECT_MAX_RETRIES = 10;
 exports.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY = 10; // 10 seconds
 
 /**
+ * @constant {number} TRIPLE_STORE_QUEUE_LIMIT
+ * - Triple store queue limit
+ */
+exports.TRIPLE_STORE_QUEUE_LIMIT = 5000;
+
+/**
+ * @constant {number} BLOCKCHAIN_QUEUE_LIMIT
+ * - Blockchain queue limit
+ */
+exports.BLOCKCHAIN_QUEUE_LIMIT = 25000;
+
+/**
+ * @constant {number} RESOLVE_MAX_TIME_MILLIS
+ * - Maximum time for resolve operation
+ */
+exports.RESOLVE_MAX_TIME_MILLIS = 15 * 1000;
+
+/**
+ * @constant {number} STORE_MAX_RETRIES
+ * - Maximum number of retries
+ */
+exports.STORE_MAX_RETRIES = 3;
+
+/**
+ * @constant {number} STORE_BUSY_REPEAT_INTERVAL_IN_MILLS
+ * - Wait interval between retries for sending store requests
+ */
+exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
+
+/**
+ * @constant {number} HANDLE_STORE_BUSINESS_LIMIT
+ * - Max number of operations in triple store queue that indicate business
+ */
+exports.HANDLE_STORE_BUSINESS_LIMIT = 20;
+
+/**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
  *  Names of available triple store implementations
  */
 exports.TRIPLE_STORE_IMPLEMENTATION = {
     BLAZEGRAPH: 'Blazegraph',
     GRAPHDB: 'GraphDB',
+};
+
+/**
+ * @constant {object} NETWORK_RESPONSES -
+ *  Types of known network responses
+ */
+exports.NETWORK_RESPONSES = {
+    TRUE: true,
+    FALSE: false,
+    ACK: 'ack',
+    BUSY: 'busy',
 };
 
 /**
@@ -79,6 +157,7 @@ exports.ERROR_TYPE = {
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
     SEND_ASSERTION_ERROR: 'SendAssertionError',
+    SEND_ASSERTION_ERROR_BUSY: 'SendAssertionErrorBusy',
     SENDING_TELEMETRY_DATA_ERROR: 'SendingDataTelemetryError',
     CHECKING_UPDATE_ERROR: 'CheckingUpdateError',
     API_ERROR_400: 'ApiError400',
@@ -91,8 +170,10 @@ exports.ERROR_TYPE = {
     PROOFS_ROUTE_ERROR: 'ProofsRouteError',
     RESULTS_ROUTE_ERROR: 'ResultsRouteError',
     NODE_INFO_ROUTE_ERROR: 'NodeInfoRouteError',
+    HANDLE_STORE_ERROR: 'HandleStoreError',
     EXTRACT_METADATA_ERROR: 'ExtractMetadataError',
     TRIPLE_STORE_UNAVAILABLE_ERROR: 'TripleStoreUnavailableError',
+    TRIPLE_STORE_INSERT_ERROR: 'TripleStoreInsertError',
     LIBP2P_HANDLE_MSG_ERROR: 'Libp2pHandleMessageError',
     VERIFY_ASSERTION_ERROR: 'VerifyAssertionError',
     BLOCKCHAIN_CHECK_ERROR: 'BlockchainCheckError',
@@ -105,4 +186,5 @@ exports.ERROR_TYPE = {
     BLOCKCHAIN_INITIALIZATION_ERROR: 'BlockchainInitializationError',
     COMMAND_EXECUTOR_INITIALIZATION_ERROR: 'CommandExecutorInitializationError',
     RPC_INITIALIZATION_ERROR: 'RpcInitializationError',
+    KEEP_ALIVE_ERROR: 'KeepAliveError',
 };
