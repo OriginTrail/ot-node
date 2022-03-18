@@ -104,29 +104,9 @@ class BlazegraphService {
     }
 
     async resolve(uri) {
-<<<<<<< HEAD
-        let isAsset = false;
-
-        const sparqlQuery = this.sparqlQueryBuilder.findNQuadsByGraphUri(uri);
-        let nquads = await this.construct(sparqlQuery);
-
-        if (!nquads.length) {
-            const sparqlQuery = this.sparqlQueryBuilder.findNQuadsByUAL(uri);
-            nquads = await this.construct(sparqlQuery);
-            isAsset = true;
-        }
-
-=======
-        const query = `PREFIX schema: <http://schema.org/>
-                        CONSTRUCT { ?s ?p ?o }
-                        WHERE {
-                          GRAPH <${constants.DID_PREFIX}:${uri}> {
-                            ?s ?p ?o
-                          }
-                        }`;
+        const query = this.sparqlQueryBuilder.findNQuadsByGraphUri(uri);
         let nquads = await this.construct(query);
 
->>>>>>> origin/v6/develop
         if (nquads.length) {
             nquads = nquads.toString();
             nquads = nquads.split('\n');
@@ -138,11 +118,6 @@ class BlazegraphService {
         return nquads;
     }
 
-<<<<<<< HEAD
-    async assertionsByAsset(uri) {
-        const sparqlQuery = this.sparqlQueryBuilder.findAssertionsByUAL(uri);
-        const result = await this.execute(sparqlQuery);
-=======
     async transformBlankNodes(nquads) {
         // Find minimum blank node value to assign it to _:c14n0
         let minimumBlankNodeValue = -1;
@@ -176,17 +151,9 @@ class BlazegraphService {
     }
 
     async assertionsByAsset(uri) {
-        const query = `PREFIX schema: <http://schema.org/>
-            SELECT ?assertionId ?issuer ?timestamp
-            WHERE {
-                 ?assertionId schema:hasUALs "${uri}" ;
-                     schema:hasTimestamp ?timestamp ;
-                     schema:hasIssuer ?issuer .
-            }
-            ORDER BY DESC(?timestamp)`;
+        const query = this.sparqlQueryBuilder.findAssertionsByUAL(uri);
         const result = await this.execute(query);
 
->>>>>>> origin/v6/develop
         return result.results.bindings;
     }
 
@@ -207,7 +174,7 @@ class BlazegraphService {
     }
 
     async findAssetsByKeyword(keyword, options, localQuery) {
-        const sparqlQuery = this.sparqlQueryBuilder.findAssetsByKeyword(keyword, options, localQuery);                  
+        const sparqlQuery = this.sparqlQueryBuilder.findAssetsByKeyword(keyword, options, localQuery);
         const result = await this.execute(sparqlQuery);
         return result.results.bindings;
     }
