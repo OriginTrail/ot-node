@@ -173,6 +173,13 @@ class RpcController {
         this.app.get('/resolve', async (req, res, next) => {
             const operationId = uuidv1();
             this.logger.emit({
+                msg: 'Started measuring execution of resolve command',
+                Event_name: 'resolve_start',
+                Operation_name: 'resolve',
+                Id_operation: operationId,
+            });
+
+            this.logger.emit({
                 msg: 'Started measuring execution of resolve init',
                 Event_name: 'resolve_init_start',
                 Operation_name: 'resolve_init',
@@ -196,13 +203,6 @@ class RpcController {
 
             let handlerId = null;
             try {
-                this.logger.emit({
-                    msg: 'Started measuring execution of resolve command',
-                    Event_name: 'resolve_start',
-                    Operation_name: 'resolve',
-                    Id_operation: operationId,
-                });
-
                 const inserted_object = await Models.handler_ids.create({
                     status: 'PENDING',
                 });
@@ -355,6 +355,13 @@ class RpcController {
                         },
                     },
                 );
+
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve command',
+                    Event_name: 'resolve_end',
+                    Operation_name: 'resolve',
+                    Id_operation: operationId,
+                });
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
@@ -363,13 +370,6 @@ class RpcController {
                     Id_operation: operationId,
                 });
                 this.updateFailedHandlerId(handlerId, e, next);
-            } finally {
-                this.logger.emit({
-                    msg: 'Finished measuring execution of resolve command',
-                    Event_name: 'resolve_end',
-                    Operation_name: 'resolve',
-                    Id_operation: operationId,
-                });
             }
         });
 
