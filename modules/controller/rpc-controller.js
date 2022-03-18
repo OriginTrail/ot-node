@@ -171,14 +171,29 @@ class RpcController {
         });
 
         this.app.get('/resolve', async (req, res, next) => {
+            const operationId = uuidv1();
+            this.logger.emit({
+                msg: 'Started measuring execution of resolve init',
+                Event_name: 'resolve_init_start',
+                Operation_name: 'resolve_init',
+                Id_operation: operationId,
+            });
+
             if (!req.query.ids) {
-                return next({code: 400, message: 'Param ids is required.'});
+                return next({ code: 400, message: 'Param ids is required.' });
             }
 
             if (req.query.load === undefined) {
                 req.query.load = false;
             }
-            const operationId = uuidv1();
+
+            this.logger.emit({
+                msg: 'Finished measuring execution of resolve init',
+                Event_name: 'resolve_init_end',
+                Operation_name: 'resolve_init',
+                Id_operation: operationId,
+            });
+
             let handlerId = null;
             try {
                 this.logger.emit({
@@ -205,14 +220,50 @@ class RpcController {
 
                 for (let id of ids) {
                     let isAsset = false;
-                    let {assertionId} = await this.blockchainService.getAssetProofs(id);
+                    const { assertionId } = await this.blockchainService.getAssetProofs(id);
                     if (assertionId) {
                         isAsset = true;
                         id = assertionId;
                     }
+                    this.logger.emit({
+                        msg: id,
+                        Event_name: 'resolve_assertion_id',
+                        Operation_name: 'resolve_assertion_id',
+                        Id_operation: operationId,
+                    });
+                    this.logger.emit({
+                        msg: 'Started measuring execution of resolve local',
+                        Event_name: 'resolve_local_start',
+                        Operation_name: 'resolve_local',
+                        Id_operation: operationId,
+                    });
+
                     const nquads = await this.dataService.resolve(id, true);
+
+                    this.logger.emit({
+                        msg: 'Finished measuring execution of resolve local',
+                        Event_name: 'resolve_local_end',
+                        Operation_name: 'resolve_local',
+                        Id_operation: operationId,
+                    });
+
                     if (nquads) {
+                        this.logger.emit({
+                            msg: 'Started measuring execution of create assertion from nquads',
+                            Event_name: 'create_assertion_from_nquads_start',
+                            Operation_name: 'create_assertion_from_nquads',
+                            Id_operation: operationId,
+                        });
+
                         let assertion = await this.dataService.createAssertion(nquads);
+
+                        this.logger.emit({
+                            msg: 'Finished measuring execution of create assertion from nquads',
+                            Event_name: 'create_assertion_from_nquads_end',
+                            Operation_name: 'create_assertion_from_nquads',
+                            Id_operation: operationId,
+                        });
+
                         assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                         assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
                         response.push(isAsset ? {
@@ -241,7 +292,7 @@ class RpcController {
                         nodes = [...new Set(nodes)];
                         for (const node of nodes) {
                             try {
-                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node);
+                                const assertion = await this.queryService.resolve(id, req.query.load, isAsset, node, operationId);
                                 if (assertion) {
                                     assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata))
                                     assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)))
@@ -278,12 +329,26 @@ class RpcController {
 
                 const handlerIdCachePath = this.fileService.getHandlerIdCachePath();
 
+                this.logger.emit({
+                    msg: 'Started measuring execution of resolve save assertion',
+                    Event_name: 'resolve_save_assertion_start',
+                    Operation_name: 'resolve_save_assertion',
+                    Id_operation: operationId,
+                });
+
                 await this.fileService
                     .writeContentsToFile(handlerIdCachePath, handlerId, JSON.stringify(response));
 
+                this.logger.emit({
+                    msg: 'Finished measuring execution of resolve save assertion',
+                    Event_name: 'resolve_save_assertion_end',
+                    Operation_name: 'resolve_save_assertion',
+                    Id_operation: operationId,
+                });
+
                 await Models.handler_ids.update(
                     {
-                        status: 'COMPLETED'
+                        status: 'COMPLETED',
                     }, {
                         where: {
                             handler_id: handlerId,
@@ -295,7 +360,7 @@ class RpcController {
                     msg: `Unexpected error at resolve route: ${e.message}. ${e.stack}`,
                     Event_name: constants.ERROR_TYPE.RESOLVE_ROUTE_ERROR,
                     Event_value1: e.message,
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
                 this.updateFailedHandlerId(handlerId, e, next);
             } finally {
@@ -303,7 +368,7 @@ class RpcController {
                     msg: 'Finished measuring execution of resolve command',
                     Event_name: 'resolve_end',
                     Operation_name: 'resolve',
-                    Id_operation: operationId
+                    Id_operation: operationId,
                 });
             }
         });

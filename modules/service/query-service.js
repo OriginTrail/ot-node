@@ -11,7 +11,7 @@ class QueryService {
         this.workerPool = ctx.workerPool;
     }
 
-    async resolve(id, load, isAssetRequested, node) {
+    async resolve(id, load, isAssetRequested, node, operationId) {
         const resolvePromise = new Promise(async (resolve, reject) => {
             const timer = setTimeout(() => {
                 resolve(null);
@@ -22,13 +22,42 @@ class QueryService {
             resolve(result);
         });
 
+        this.logger.emit({
+            msg: 'Started measuring execution of resolve fetch from nodes',
+            Event_name: 'resolve_fetch_from_nodes_start',
+            Operation_name: 'resolve_fetch_from_nodes',
+            Id_operation: operationId,
+        });
+
         const result = await resolvePromise;
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of resolve fetch from nodes',
+            Event_name: 'resolve_fetch_from_nodes_end',
+            Operation_name: 'resolve_fetch_from_nodes',
+            Id_operation: operationId,
+        });
         if (!result || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)) {
             return null;
         }
 
         const rawNquads = result.nquads ? result.nquads : result;
+        this.logger.emit({
+            msg: 'Started measuring execution of create assertion from nquads',
+            Event_name: 'create_assertion_from_nquads_start',
+            Operation_name: 'create_assertion_from_nquads',
+            Id_operation: operationId,
+        });
+
         const assertion = await this.dataService.createAssertion(rawNquads);
+
+        this.logger.emit({
+            msg: 'Finished measuring execution of create assertion from nquads',
+            Event_name: 'create_assertion_from_nquads_end',
+            Operation_name: 'create_assertion_from_nquads',
+            Id_operation: operationId,
+        });
+
         const status = await this.dataService.verifyAssertion(
             assertion.jsonld,
             assertion.nquads,
