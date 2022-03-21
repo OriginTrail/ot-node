@@ -9,7 +9,37 @@ exports.DID = 'DID';
  * @constant {number} MAX_FILE_SIZE
  * - Max file size for publish
  */
-exports.MAX_FILE_SIZE = 26214400;
+exports.MAX_FILE_SIZE = 2621440;
+
+/**
+ * @constant {number} SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS
+ * - Express rate limit time window in milliseconds
+ */
+exports.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} SERVICE_API_RATE_LIMIT_MAX_NUMBER
+ * - Express rate limit max number of requests allowed in the specified time window
+ */
+exports.SERVICE_API_RATE_LIMIT_MAX_NUMBER = 10;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS
+ * - Express slow down time window in milliseconds
+ */
+exports.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_AFTER
+ * - Express slow down number of seconds after which it starts delaying requests
+ */
+exports.SERVICE_API_SLOW_DOWN_DELAY_AFTER = 5;
+
+/**
+ * @constant {number} SERVICE_API_SLOW_DOWN_DELAY_MILLS
+ * - Express slow down delay between requests in milliseconds
+ */
+exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 3 * 1000;
 
 /**
  * @constant {number} DID_PREFIX
@@ -91,7 +121,7 @@ exports.STORE_MAX_RETRIES = 3;
  * @constant {number} STORE_BUSY_REPEAT_INTERVAL_IN_MILLS
  * - Wait interval between retries for sending store requests
  */
-exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 2 * 1000;
+exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
 
 /**
  * @constant {number} HANDLE_STORE_BUSINESS_LIMIT
@@ -127,6 +157,7 @@ exports.ERROR_TYPE = {
     INSERT_ASSERTION_ERROR: 'InsertAssertionError',
     SUBMIT_PROOFS_ERROR: 'SubmitProofsError',
     SEND_ASSERTION_ERROR: 'SendAssertionError',
+    SEND_ASSERTION_ERROR_BUSY: 'SendAssertionErrorBusy',
     SENDING_TELEMETRY_DATA_ERROR: 'SendingDataTelemetryError',
     CHECKING_UPDATE_ERROR: 'CheckingUpdateError',
     API_ERROR_400: 'ApiError400',
