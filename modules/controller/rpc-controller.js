@@ -42,6 +42,8 @@ class RpcController {
         this.initializeNetworkApi();
 
         this.initializeAuthenticationMiddleware();
+        this.initializeRateLimitMiddleware();
+        this.initializeSlowDownMiddleWare();
         this.initializeServiceApi();
         await this.initializeErrorMiddleware();
         if (this.sslEnabled) {
@@ -85,22 +87,6 @@ class RpcController {
             this.logger.info(`${req.method}: ${req.url} request received`);
             return next();
         });
-
-        this.app.use(
-            rateLimit({
-                windowMs: constants.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS,
-                max: constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER,
-                message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER}`,
-                standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-                legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-            }),
-        );
-
-        this.app.use(slowDown({
-            windowMs: constants.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS,
-            delayAfter: constants.SERVICE_API_SLOW_DOWN_DELAY_AFTER,
-            delayMs: constants.SERVICE_API_SLOW_DOWN_DELAY_MILLS,
-        }));
     }
 
     async initializeErrorMiddleware() {
@@ -138,6 +124,24 @@ class RpcController {
         }
     }
 
+    initializeRateLimitMiddleware() {
+        this.rateLimitMiddleware = rateLimit({
+            windowMs: constants.SERVICE_API_RATE_LIMIT_TIME_WINDOW_MILLS,
+            max: constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER,
+            message: `Too many requests sent, maximum number of requests per minute is ${constants.SERVICE_API_RATE_LIMIT_MAX_NUMBER}`,
+            standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+            legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+        });
+    }
+
+    initializeSlowDownMiddleWare() {
+        this.slowDownMiddleware = slowDown({
+            windowMs: constants.SERVICE_API_SLOW_DOWN_TIME_WINDOW_MILLS,
+            delayAfter: constants.SERVICE_API_SLOW_DOWN_DELAY_AFTER,
+            delayMs: constants.SERVICE_API_SLOW_DOWN_DELAY_MILLS,
+        });
+    }
+
     initializeNetworkApi() {
         this.logger.info(`Network API module enabled on port ${this.config.network.port}`);
 
@@ -165,13 +169,13 @@ class RpcController {
     initializeServiceApi() {
         this.logger.info(`Service API module enabled, server running on port ${this.config.rpcPort}`);
 
-        this.app.post('/publish', async (req, res, next) => {
+        this.app.post('/publish', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             await this.publish(req, res, next, {isAsset: false});
         });
-        this.app.post('/provision', async (req, res, next) => {
+        this.app.post('/provision', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             await this.publish(req, res, next, {isAsset: true, ual: null});
         });
-        this.app.post('/update', async (req, res, next) => {
+        this.app.post('/update', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.ual) {
                 return next({
                     code: 400,
@@ -181,7 +185,7 @@ class RpcController {
             await this.publish(req, res, next, {isAsset: true, ual: req.body.ual});
         });
 
-        this.app.get('/resolve', async (req, res, next) => {
+        this.app.get('/resolve', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             const operationId = uuidv1();
             this.logger.emit({
                 msg: 'Started measuring execution of resolve command',
@@ -384,7 +388,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/assertions::search', async (req, res, next) => {
+        this.app.get('/assertions::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query is necessary.'});
             }
@@ -469,7 +473,7 @@ class RpcController {
             }
         });
 
-        this.app.get('/entities::search', async (req, res, next) => {
+        this.app.get('/entities::search', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.query.query || req.params.search !== 'search') {
                 return next({code: 400, message: 'Params query or ids are necessary.'});
             }
@@ -570,7 +574,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/query', async (req, res, next) => {
+        this.app.post('/query', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.query || !req.query.type) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
@@ -637,7 +641,7 @@ class RpcController {
             }
         });
 
-        this.app.post('/proofs::get', async (req, res, next) => {
+        this.app.post('/proofs::get', this.rateLimitMiddleware, this.slowDownMiddleware, async (req, res, next) => {
             if (!req.body.nquads) {
                 return next({code: 400, message: 'Params query and type are necessary.'});
             }
