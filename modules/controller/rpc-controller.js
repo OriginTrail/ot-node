@@ -1,4 +1,3 @@
-/* eslint-disable dot-notation, max-len, no-await-in-loop, no-case-declarations, no-async-promise-executor, no-multi-assign, quote-props */
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const ipfilter = require('express-ipfilter').IpFilter;
@@ -214,8 +213,19 @@ class RpcController {
                     const nquads = await this.dataService.resolve(id, true);
                     if (nquads) {
                         const assertion = await this.dataService.createAssertion(nquads);
-                        assertion.jsonld.metadata = JSON.parse(sortedStringify(assertion.jsonld.metadata));
-                        assertion.jsonld.data = JSON.parse(sortedStringify(await this.dataService.fromNQuads(assertion.jsonld.data, assertion.jsonld.metadata.type)));
+
+                        assertion.jsonld.metadata = JSON.parse(
+                            sortedStringify(assertion.jsonld.metadata),
+                        );
+
+                        assertion.jsonld.data = JSON.parse(
+                            sortedStringify(
+                                await this.dataService.fromNQuads(
+                                    assertion.jsonld.data,
+                                    assertion.jsonld.metadata.type,
+                                ),
+                            ),
+                        );
                         response.push(isAsset ? {
                             type: 'asset',
                             id: assertion.jsonld.metadata.UALs[0],
