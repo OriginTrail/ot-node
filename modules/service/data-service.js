@@ -407,7 +407,6 @@ class DataService {
             switch (type) {
             case 'SELECT':
                 result = await this.tripleStoreQueue.push({ operation: 'select', query });
-                result = result.toString();
                 break;
             case 'CONSTRUCT':
                 result = await this.tripleStoreQueue.push({ operation: 'construct', query });
