@@ -1,6 +1,5 @@
 const sortedStringify = require('json-stable-stringify');
 const Command = require('../command');
-const Models = require('../../../models/index');
 const constants = require('../../constants');
 
 class SubmitProofsCommand extends Command {
@@ -83,15 +82,32 @@ class SubmitProofsCommand extends Command {
         const { assertion, method } = args;
         let result;
         switch (method) {
-            case 'publish':
-                result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
-                break;
-            case 'provision':
-                result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0],assertion.metadata.type,assertion.metadata.UALs[0],assertion.id, assertion.rootHash, 1);
-                break;
-            case 'update':
-                result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0],assertion.id, assertion.rootHash);
-                break;
+        case 'publish':
+            result = await this.blockchainService.createAssertionRecord(
+                assertion.id,
+                assertion.rootHash,
+                assertion.metadata.issuer,
+            );
+            break;
+        case 'provision':
+            result = await this.blockchainService.registerAsset(
+                assertion.metadata.UALs[0],
+                assertion.metadata.type,
+                assertion.metadata.UALs[0],
+                assertion.id,
+                assertion.rootHash,
+                1,
+            );
+            break;
+        case 'update':
+            result = await this.blockchainService.updateAsset(
+                assertion.metadata.UALs[0],
+                assertion.id,
+                assertion.rootHash,
+            );
+            break;
+        default:
+            break;
         }
 
         return result;
