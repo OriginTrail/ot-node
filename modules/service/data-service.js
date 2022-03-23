@@ -701,6 +701,10 @@ class DataService {
             throw e;
         }
     }
+
+    isNodeBusy(busynessLimit) {
+        return this.tripleStoreQueue.length > busynessLimit;
+    }
 }
 
 module.exports = DataService;

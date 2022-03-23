@@ -491,13 +491,13 @@ class RpcController {
                     this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
                 }
 
-                for (const node of nodes) {
-                    await this.queryService.searchAssertions({
-                        query,
-                        options: { limit, prefix },
-                        handlerId,
-                    }, node);
-                }
+                nodes = [...new Set(nodes)];
+                const searchPromises = nodes.map((node) => this.queryService.searchAssertions({
+                    query,
+                    options: { limit, prefix },
+                    handlerId,
+                }, node));
+                await Promise.all(searchPromises);
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search assertions route: ${e.message}. ${e.stack}`,
@@ -601,16 +601,15 @@ class RpcController {
                         },
                     },
                 );
-                for (const node of nodes) {
-                    await this.queryService.search({
-                        query,
-                        issuers,
-                        types,
-                        prefix,
-                        limit,
-                        handlerId,
-                    }, node);
-                }
+                const searchPromises = nodes.map((node) => this.queryService.search({
+                    query,
+                    issuers,
+                    types,
+                    prefix,
+                    limit,
+                    handlerId,
+                }, node));
+                await Promise.all(searchPromises);
             } catch (e) {
                 this.logger.error({
                     msg: `Unexpected error at search entities route: ${e.message}. ${e.stack}`,

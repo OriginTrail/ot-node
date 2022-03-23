@@ -37,7 +37,9 @@ class QueryService {
             Operation_name: 'resolve_fetch_from_nodes',
             Id_operation: operationId,
         });
-        if (!result || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)) {
+        if (!result
+            || (Array.isArray(result) && result[0] === constants.NETWORK_RESPONSES.ACK)
+            || result === constants.NETWORK_RESPONSES.BUSY) {
             return null;
         }
 
@@ -86,6 +88,10 @@ class QueryService {
     }
 
     async handleResolve(id) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_RESOLVE)) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle resolve command',
@@ -118,6 +124,10 @@ class QueryService {
     }
 
     async handleSearch(request) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_SEARCH_ENTITIES)) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle search command',
@@ -127,14 +137,19 @@ class QueryService {
         });
 
         const {
-            query, issuers, types, prefix, limit, handlerId,
-        } = request;
-        const response = await this.dataService.searchByQuery(
             query,
-            {
-                issuers, types, prefix, limit,
-            },
-        );
+            issuers,
+            types,
+            prefix,
+            limit,
+            handlerId,
+        } = request;
+        const response = await this.dataService.searchByQuery(query, {
+            issuers,
+            types,
+            prefix,
+            limit,
+        });
 
         this.logger.emit({
             msg: 'Finished measuring execution of handle search command',
@@ -157,6 +172,10 @@ class QueryService {
         });
 
         const { handlerId, response } = request;
+
+        if (response === constants.NETWORK_RESPONSES.BUSY) {
+            return false;
+        }
 
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
@@ -221,6 +240,10 @@ class QueryService {
     }
 
     async handleSearchAssertions(request) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_SEARCH_ASSERTIONS)) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle search assertions command',
@@ -252,6 +275,10 @@ class QueryService {
         });
         const { handlerId, response } = request;
 
+        if (response === constants.NETWORK_RESPONSES.BUSY) {
+            return false;
+        }
+
         const documentPath = this.fileService.getHandlerIdDocumentPath(handlerId);
         const handlerData = await this.fileService.loadJsonFromFile(documentPath);
         if (response !== undefined && response.length && handlerData) {
@@ -259,6 +286,7 @@ class QueryService {
                 const assertion = handlerData.find((x) => x.id === object.assertionId);
                 if (assertion) {
                     if (assertion.nodes.indexOf(object.node) === -1) {
+                        // TODO: is set needed ?
                         assertion.nodes = [...new Set(assertion.nodes.concat(object.node))];
                     }
                 } else {
