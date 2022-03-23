@@ -130,9 +130,10 @@ class PublishService {
 
     async handleStore(data) {
         if (!data || data.rdf) return false;
-        if (this.dataService.getTripleStoreQueueLength() > constants.HANDLE_STORE_BUSYNESS_LIMIT) {
+        if (this.dataService.isNodeBusy(constants.BUSYNESS_LIMITS.HANDLE_STORE)) {
             return constants.NETWORK_RESPONSES.BUSY;
         }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle store command',
