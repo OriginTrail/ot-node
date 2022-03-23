@@ -130,7 +130,7 @@ class PublishService {
 
     async handleStore(data) {
         if (!data || data.rdf) return false;
-        if (this.dataService.getTripleStoreQueueLength() > constants.HANDLE_STORE_BUSINESS_LIMIT) {
+        if (this.dataService.getTripleStoreQueueLength() > constants.HANDLE_STORE_BUSYNESS_LIMIT) {
             return constants.NETWORK_RESPONSES.BUSY;
         }
         const operationId = uuidv1();

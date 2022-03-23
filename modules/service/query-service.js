@@ -86,6 +86,10 @@ class QueryService {
     }
 
     async handleResolve(id) {
+        if (this.dataService.getTripleStoreQueueLength() > constants.HANDLE_RESOLVE_BUSYNESS_LIMIT) {
+            return constants.NETWORK_RESPONSES.BUSY;
+        }
+
         const operationId = uuidv1();
         this.logger.emit({
             msg: 'Started measuring execution of handle resolve command',
