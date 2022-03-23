@@ -25,7 +25,12 @@ class SubmitProofsCommand extends Command {
         } = command.data;
 
         try {
-            // eslint-disable-next-line prefer-const
+            this.logger.emit({
+                msg: 'Started measuring execution of submitting proofs to blockchain',
+                Event_name: 'publish_blockchain_start',
+                Operation_name: 'publish_blockchain',
+                Id_operation: operationId,
+            });
             let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
             this.logger.info('Sending transaction to the blockchain');
@@ -54,6 +59,12 @@ class SubmitProofsCommand extends Command {
                 .writeContentsToFile(handlerIdCachePath, handlerId, sortedStringify({
                     nquads, assertion,
                 }));
+            this.logger.emit({
+                msg: 'Finished measuring execution of submitting proofs to blockchain',
+                Event_name: 'publish_blockchain_end',
+                Operation_name: 'publish_blockchain',
+                Id_operation: operationId,
+            });
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
             this.logger.emit({
