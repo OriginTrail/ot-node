@@ -142,6 +142,12 @@ exports.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS = 4 * 1000;
 exports.HANDLE_STORE_BUSINESS_LIMIT = 20;
 
 /**
+ * @constant {number} STORE_MIN_SUCCESS_RATE
+ * - Min rate of successful responses from store queries for publish to be maked as COMPLETED
+ */
+exports.STORE_MIN_SUCCESS_RATE = 0.8;
+
+/**
  * @constant {object} TRIPLE_STORE_IMPLEMENTATION -
  *  Names of available triple store implementations
  */

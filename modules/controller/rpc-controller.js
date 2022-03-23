@@ -333,14 +333,10 @@ class RpcController {
                         });
                     } else {
                         this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${id}`);
-                        let nodes = await this.networkService.findNodes(
-                            id,
-                            this.config.replicationFactor,
-                        );
+                        let nodes = await this.networkService.findNodes(id, this.config.replicationFactor);
                         if (nodes.length < this.config.replicationFactor) {
                             this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${id}`);
                         }
-                        nodes = [...new Set(nodes)];
                         for (const node of nodes) {
                             try {
                                 const assertion = await this.queryService.resolve(
@@ -489,18 +485,12 @@ class RpcController {
                     },
                 );
 
-                let nodes = [];
                 this.logger.info(`Searching for closest ${this.config.replicationFactor} node(s) for keyword ${query}`);
-                const foundNodes = await this.networkService.findNodes(
-                    query,
-                    this.config.replicationFactor,
-                );
-                if (foundNodes.length < this.config.replicationFactor) {
-                    this.logger.warn(`Found only ${foundNodes.length} node(s) for keyword ${query}`);
+                let nodes = await this.networkService.findNodes(query, this.config.replicationFactor);
+                if (nodes.length < this.config.replicationFactor) {
+                    this.logger.warn(`Found only ${nodes.length} node(s) for keyword ${query}`);
                 }
-                nodes = nodes.concat(foundNodes);
 
-                nodes = [...new Set(nodes)];
                 for (const node of nodes) {
                     await this.queryService.searchAssertions({
                         query,
