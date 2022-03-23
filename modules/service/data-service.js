@@ -643,7 +643,7 @@ class DataService {
     }
 
     async handleTripleStoreRequest(args) {
-        if (this.tripleStoreQueue.length() > constants.TRIPLE_STORE_QUEUE_LIMIT) {
+        if (this.getTripleStoreQueueLength() > constants.TRIPLE_STORE_QUEUE_LIMIT) {
             throw new Error('Triple store queue is full');
         }
         const { operation } = args;
@@ -703,7 +703,7 @@ class DataService {
     }
 
     isNodeBusy(busynessLimit) {
-        return this.tripleStoreQueue.length > busynessLimit;
+        return this.getTripleStoreQueueLength() > busynessLimit;
     }
 }
 
