@@ -88,6 +88,7 @@
     "pino-pretty": "^7.2.0",
     "qs": "^6.10.3",
     "rc": "^1.2.8",
+    "rolling-rate-limiter": "^0.2.13",
     "semver": "^7.3.5",
     "sequelize": "^6.9.0",
     "sequelize-cli": "^6.3.0",
