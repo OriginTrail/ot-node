@@ -145,6 +145,15 @@ class Libp2pService {
         return rec.serialize();
     }
 
+    async prepareForSending(data) {
+        if(constants.NETWORK_RESPONSES[data]) {
+            data = constants.STRINGIFIED_NETWORK_RESPONSES[data];
+        } else {
+            data = await this.workerPool.exec('JSONStringify', [data]);
+        }
+        return Buffer.from(data);
+    }
+
     async handleMessage(eventName, handler, options) {
         this.logger.info(`Enabling network protocol: ${eventName}`);
 
@@ -158,8 +167,9 @@ class Libp2pService {
             let timestamp = Date.now();
             this.limiter.limit(handlerProps.connection.remotePeer.toB58String()).then(async (blocked) => {
                     if (blocked) {
+                        const preparedBlockedResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.BLOCKED);
                         await pipe(
-                            [Buffer.from(JSON.stringify(constants.NETWORK_RESPONSES.BLOCKED))],
+                            [preparedBlockedResponse],
                             stream
                         );
                         return;
@@ -183,14 +193,15 @@ class Libp2pService {
                 if (!async) {
                     const result = await handler(data);
                     this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
-                    const stringifiedData = await this.workerPool.exec('JSONStringify', [result]);
+                    const preparedData = await this.prepareForSending(result);
                     await pipe(
-                        [Buffer.from(stringifiedData)],
+                        [Buffer.from(preparedData)],
                         stream,
                     )
                 } else {
+                    const preparedAckResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.ACK);
                     await pipe(
-                        [Buffer.from(JSON.stringify(constants.NETWORK_RESPONSES.ACK))],
+                        [preparedAckResponse],
                         stream
                     )
 
@@ -208,8 +219,9 @@ class Libp2pService {
                    msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${stringifiedData}`,
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
+                const preparedErrorResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.ERROR);
                 await pipe(
-                    [Buffer.from(JSON.stringify(constants.NETWORK_RESPONSES.ERROR))],
+                    [preparedErrorResponse],
                     stream
                 );
             }
@@ -219,9 +231,9 @@ class Libp2pService {
     async sendMessage(eventName, data, peerId) {
         this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName};`);
         const {stream} = await this.node.dialProtocol(peerId, eventName);
-        const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
+        const preparedData = await this.prepareForSending(data);
         const response = await pipe(
-            [Buffer.from(stringifiedData)],
+            [Buffer.from(preparedData)],
             stream,
             async function (source) {
                 const bl = new BufferList()

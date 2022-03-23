@@ -164,6 +164,17 @@ exports.NETWORK_RESPONSES = {
 };
 
 /**
+ * @constant {object} STRINGIFIED_NETWORK_RESPONSES -
+ *  Stringified types of known network responses
+ */
+exports.STRINGIFIED_NETWORK_RESPONSES = {
+    ack: '"ack"',
+    busy: '"busy"',
+    blocked: '"blocked"',
+    error: '"error"',
+};
+
+/**
  * @constant {object} ERROR_TYPE -
  *  Types of errors supported
  */
