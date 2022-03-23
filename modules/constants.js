@@ -162,6 +162,12 @@ exports.TRIPLE_STORE_IMPLEMENTATION = {
 };
 
 /**
+ * @constant {number} NETWORK_HANDLER_TIMEOUT -
+ * Timeout for all handler methods for network requests
+ */
+exports.NETWORK_HANDLER_TIMEOUT = 120e3;
+
+/**
  * @constant {object} NETWORK_RESPONSES -
  *  Types of known network responses
  */
