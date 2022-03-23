@@ -14,7 +14,16 @@ class PublishService {
         this.workerPool = ctx.workerPool;
     }
 
-    async publish(fileContent, fileExtension, keywords, visibility, ual, handlerId, operationId, isTelemetry = false) {
+    async publish(
+        fileContent,
+        fileExtension,
+        keywords,
+        visibility,
+        ual,
+        handlerId,
+        operationId,
+        isTelemetry = false,
+    ) {
         try {
             this.logger.emit({
                 msg: 'Started measuring execution of data canonization',
@@ -23,7 +32,6 @@ class PublishService {
                 Id_operation: operationId,
             });
             let {
-                // eslint-disable-next-line prefer-const
                 assertion,
                 nquads,
             } = await this.dataService.canonize(fileContent, fileExtension);
@@ -46,8 +54,11 @@ class PublishService {
             let method = 'publish';
             if (ual === null) {
                 method = 'provision';
-                // eslint-disable-next-line max-len
-                ual = this.validationService.calculateHash(assertion.metadata.timestamp + assertion.metadata.type + assertion.metadata.issuer);
+                ual = this.validationService.calculateHash(
+                    assertion.metadata.timestamp
+                    + assertion.metadata.type
+                    + assertion.metadata.issuer,
+                );
                 assertion.metadata.UALs = [ual];
             } else if (ual !== undefined) {
                 method = 'update';
@@ -56,8 +67,9 @@ class PublishService {
 
             assertion.metadata.dataHash = this.validationService.calculateHash(assertion.data);
             assertion.metadataHash = this.validationService.calculateHash(assertion.metadata);
-            // eslint-disable-next-line max-len
-            assertion.id = this.validationService.calculateHash(assertion.metadataHash + assertion.metadata.dataHash);
+            assertion.id = this.validationService.calculateHash(
+                assertion.metadataHash + assertion.metadata.dataHash,
+            );
             assertion.signature = this.validationService.sign(assertion.id);
 
             nquads = await this.dataService.appendMetadata(nquads, assertion);
@@ -124,9 +136,7 @@ class PublishService {
             && retries < constants.STORE_MAX_RETRIES
         ) {
             retries += 1;
-            // eslint-disable-next-line no-await-in-loop
             await sleep.sleep(constants.STORE_BUSY_REPEAT_INTERVAL_IN_MILLS);
-            // eslint-disable-next-line no-await-in-loop
             response = await this.networkService.sendMessage('/store', assertion, node);
         }
 

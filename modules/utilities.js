@@ -26,7 +26,6 @@ exports.createPutRecord = (key, value) => {
 exports.isArrayOfStrings = (arr) => {
     try {
         const bodyAssets = JSON.parse(arr.toLowerCase());
-        // eslint-disable-next-line no-bitwise
         if (!(Array.isArray(bodyAssets)) | !(bodyAssets.length > 0) | !bodyAssets.every((i) => (typeof i === 'string')) | bodyAssets[0] === '') {
             return false;
         }

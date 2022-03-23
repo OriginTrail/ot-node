@@ -20,7 +20,6 @@ class KadIdentityRanking {
         const min = Math.min(firstId.length, secondId.length);
         const max = Math.max(firstId.length, secondId.length);
         for (; i < min; i += 1) {
-            // eslint-disable-next-line no-bitwise
             distance = distance * 256 + (firstId[i] ^ secondId[i]);
         }
         for (; i < max; i += 1) distance = distance * 256 + 255;
@@ -31,7 +30,6 @@ class KadIdentityRanking {
         const encodedKey = new TextEncoder().encode(topic);
         const id = (await sha256.digest(encodedKey)).digest;
 
-        // eslint-disable-next-line max-len
         nodes.sort((first_node, second_node) => this.distance(id, first_node._id) - this.distance(id, second_node._id));
         for (const node of nodes) {
             this.logger.info(`XOR distance between topic ${topic} and node ${node._idB58String}: ${this.distance(id, node._id)}`);

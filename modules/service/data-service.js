@@ -1,4 +1,3 @@
-/* eslint-disable dot-notation, max-len, no-await-in-loop, no-case-declarations, no-async-promise-executor, no-multi-assign */
 const { v1: uuidv1 } = require('uuid');
 const N3 = require('n3');
 const constants = require('../constants');
@@ -15,8 +14,11 @@ class DataService {
         this.nodeService = ctx.nodeService;
         this.workerPool = ctx.workerPool;
         this.blockchainService = ctx.blockchainService;
-        // eslint-disable-next-line max-len
-        this.tripleStoreQueue = ctx.tripleStoreQueue.promise(this, this.handleTripleStoreRequest, 1);
+        this.tripleStoreQueue = ctx.tripleStoreQueue.promise(
+            this,
+            this.handleTripleStoreRequest,
+            1,
+        );
         this.N3Parser = new N3.Parser({ format: 'N-Triples', baseIRI: 'http://schema.org/' });
     }
 
@@ -29,8 +31,10 @@ class DataService {
     }
 
     async initialize() {
-        // eslint-disable-next-line max-len
-        if (this.config.graphDatabase.implementation === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH) {
+        if (
+            this.config.graphDatabase.implementation
+            === constants.TRIPLE_STORE_IMPLEMENTATION.BLAZEGRAPH
+        ) {
             this.implementation = new Blazegraph({
                 url: this.config.graphDatabase.url,
             });
@@ -48,7 +52,12 @@ class DataService {
         while (!ready && retries < constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
             retries += 1;
             this.logger.warn(`Cannot connect to Triple store (${this.getName()}), retry number: ${retries}/${constants.TRIPLE_STORE_CONNECT_MAX_RETRIES}. Retrying in ${constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY} seconds again.`);
-            await new Promise((resolve) => setTimeout(resolve, constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000));
+            await new Promise(
+                (resolve) => setTimeout(
+                    resolve,
+                    constants.TRIPLE_STORE_CONNECT_RETRY_FREQUENCY * 1000,
+                ),
+            );
             ready = await this.healthCheck();
         }
         if (retries === constants.TRIPLE_STORE_CONNECT_MAX_RETRIES) {
@@ -170,7 +179,7 @@ class DataService {
             try {
                 // let dataHash;
                 // if (assertion.metadata.visibility) {
-                //     const framedData = await this.fromRDF(assertion.data, assertion.metadata.type);
+                //   const framedData = await this.fromRDF(assertion.data, assertion.metadata.type);
                 //     dataHash = this.validationService.calculateHash(framedData);
                 // } else {
                 //     dataHash = assertion.metadata.dataHash;
@@ -178,7 +187,9 @@ class DataService {
                 const { dataHash } = assertion.metadata;
 
                 const metadataHash = this.validationService.calculateHash(assertion.metadata);
-                const calculatedAssertionId = this.validationService.calculateHash(metadataHash + dataHash);
+                const calculatedAssertionId = this.validationService.calculateHash(
+                    metadataHash + dataHash,
+                );
                 if (assertion.id !== calculatedAssertionId) {
                     this.logger.error({
                         msg: `Assertion Id ${assertion.id} doesn't match with calculated ${calculatedAssertionId}`,
@@ -188,7 +199,11 @@ class DataService {
                     return resolve(false);
                 }
 
-                if (!this.validationService.verify(assertion.id, assertion.signature, assertion.metadata.issuer)) {
+                if (!this.validationService.verify(
+                    assertion.id,
+                    assertion.signature,
+                    assertion.metadata.issuer,
+                )) {
                     this.logger.error({
                         msg: 'Signature and issuer don\'t match',
                         Event_name: constants.ERROR_TYPE.VERIFY_ASSERTION_ERROR,
@@ -220,8 +235,11 @@ class DataService {
                             return resolve(false);
                         }
                     } else {
-                        const calculateRootHash = this.validationService.calculateRootHash([...new Set(rdf)]);
-                        const { rootHash, issuer } = await this.blockchainService.getAssertionProofs(assertion.id);
+                        const calculateRootHash = this.validationService.calculateRootHash(
+                            [...new Set(rdf)],
+                        );
+                        const { rootHash, issuer } = await this.blockchainService
+                            .getAssertionProofs(assertion.id);
                         if (rootHash !== `0x${calculateRootHash}`) {
                             this.logger.error({
                                 msg: `Root hash ${rootHash} doesn't match with calculated 0x${calculateRootHash}`,
@@ -260,14 +278,16 @@ class DataService {
 
                 const nquads = await this.resolve(assertion.assertionId, localQuery, true);
                 if (!nquads) {
-                    // eslint-disable-next-line no-continue
                     continue;
                 }
 
                 if (localQuery) {
                     assertion = await this.createAssertion(nquads);
 
-                    let object = result.find((x) => x.type === assertion.jsonld.metadata.type && x.id === assertion.jsonld.metadata.UALs[0]);
+                    let object = result.find(
+                        (x) => x.type === assertion.jsonld.metadata.type
+                            && x.id === assertion.jsonld.metadata.UALs[0],
+                    );
                     if (!object) {
                         object = {
                             id: assertion.jsonld.metadata.UALs[0],
@@ -287,7 +307,9 @@ class DataService {
                     if (object.assertions.indexOf(assertion.jsonld.id) === -1) {
                         object.assertions.push(assertion.jsonld.id);
                     }
-                    if (new Date(object.timestamp) < new Date(assertion.jsonld.metadata.timestamp)) {
+                    if (
+                        new Date(object.timestamp) < new Date(assertion.jsonld.metadata.timestamp)
+                    ) {
                         object.timestamp = assertion.jsonld.metadata.timestamp;
                     }
                 } else {
@@ -322,7 +344,6 @@ class DataService {
 
                 const nquads = await this.resolve(assertion.assertionId, localQuery, true);
                 if (!nquads) {
-                    // eslint-disable-next-line no-continue
                     continue;
                 }
 
@@ -639,10 +660,18 @@ class DataService {
             result = await this.implementation.assertionsByAsset(args.id);
             break;
         case 'findAssetsByKeyword':
-            result = await this.implementation.findAssetsByKeyword(args.query, args.options, args.localQuery);
+            result = await this.implementation.findAssetsByKeyword(
+                args.query,
+                args.options,
+                args.localQuery,
+            );
             break;
         case 'findAssertionsByKeyword':
-            result = await this.implementation.findAssertionsByKeyword(args.query, args.options, args.localQuery);
+            result = await this.implementation.findAssertionsByKeyword(
+                args.query,
+                args.options,
+                args.localQuery,
+            );
             break;
         case 'construct':
             result = await this.implementation.construct(args.query);

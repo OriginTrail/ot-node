@@ -34,8 +34,14 @@ class BlockchainService {
     }
 
     async registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount) {
-        // eslint-disable-next-line max-len
-        return this.implementation.registerAsset(uai, type, alsoKnownAs, stateCommitHash, rootHash, tokenAmount);
+        return this.implementation.registerAsset(
+            uai,
+            type,
+            alsoKnownAs,
+            stateCommitHash,
+            rootHash,
+            tokenAmount,
+        );
     }
 
     async updateAsset(UAI, newStateCommitHash, rootHash) {

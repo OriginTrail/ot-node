@@ -1,6 +1,5 @@
 const sortedStringify = require('json-stable-stringify');
 const Command = require('../command');
-const Models = require('../../../models/index');
 const constants = require('../../constants');
 
 class SubmitProofsCommand extends Command {
@@ -84,16 +83,28 @@ class SubmitProofsCommand extends Command {
         let result;
         switch (method) {
         case 'publish':
-            // eslint-disable-next-line max-len
-            result = await this.blockchainService.createAssertionRecord(assertion.id, assertion.rootHash, assertion.metadata.issuer);
+            result = await this.blockchainService.createAssertionRecord(
+                assertion.id,
+                assertion.rootHash,
+                assertion.metadata.issuer,
+            );
             break;
         case 'provision':
-            // eslint-disable-next-line max-len
-            result = await this.blockchainService.registerAsset(assertion.metadata.UALs[0], assertion.metadata.type, assertion.metadata.UALs[0], assertion.id, assertion.rootHash, 1);
+            result = await this.blockchainService.registerAsset(
+                assertion.metadata.UALs[0],
+                assertion.metadata.type,
+                assertion.metadata.UALs[0],
+                assertion.id,
+                assertion.rootHash,
+                1,
+            );
             break;
         case 'update':
-            // eslint-disable-next-line max-len
-            result = await this.blockchainService.updateAsset(assertion.metadata.UALs[0], assertion.id, assertion.rootHash);
+            result = await this.blockchainService.updateAsset(
+                assertion.metadata.UALs[0],
+                assertion.id,
+                assertion.rootHash,
+            );
             break;
         default:
             break;

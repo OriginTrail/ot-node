@@ -25,7 +25,6 @@ class SendAssertionCommand extends Command {
             Id_operation: operationId,
         });
 
-        // eslint-disable-next-line prefer-const
         let { nquads, assertion } = await this.fileService.loadJsonFromFile(documentPath);
 
         if (!assertion.metadata.visibility) {
@@ -37,7 +36,6 @@ class SendAssertionCommand extends Command {
             this.logger.info(
                 `Searching for closest ${this.config.replicationFactor} node(s) for keyword ${keyword}`,
             );
-            // eslint-disable-next-line no-await-in-loop
             const foundNodes = await this.networkService.findNodes(
                 keyword,
                 this.config.replicationFactor,

@@ -1,4 +1,3 @@
-/* eslint-disable no-async-promise-executor */
 const { ServerClientConfig, GraphDBServerClient } = require('graphdb').server;
 const { RepositoryClientConfig, RepositoryConfig, RepositoryType } = require('graphdb').repository;
 const { SparqlXmlResultParser } = require('graphdb').parser;
@@ -42,8 +41,10 @@ class GraphdbService {
             .setReadTimeout(readTimeout)
             .setWriteTimeout(writeTimeout);
 
-        // eslint-disable-next-line max-len
-        this.repository = await this.server.getRepository(this.config.repositoryName, repositoryServerConfig);
+        this.repository = await this.server.getRepository(
+            this.config.repositoryName,
+            repositoryServerConfig,
+        );
         this.repository.registerParser(new SparqlXmlResultParser());
         this.logger.info('GraphDB module initialized successfully');
     }

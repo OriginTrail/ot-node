@@ -49,8 +49,13 @@ class KeepAliveCommand extends Command {
                     ['created_at', 'DESC'],
                 ],
                 attributes: ['hash', 'topics', 'created_at'],
-                // eslint-disable-next-line max-len
-            })).map((x) => ({ assertionId: x.dataValues.hash, keyword: x.dataValues.topics, publishTimestamp: x.dataValues.created_at }));
+            })).map((x) => (
+                {
+                    assertionId: x.dataValues.hash,
+                    keyword: x.dataValues.topics,
+                    publishTimestamp: x.dataValues.created_at,
+                }
+            ));
         } catch (e) {
             this.logger.error({
                 msg: `An error has occurred with signaling data error: ${e}, stack: ${e.stack}`,

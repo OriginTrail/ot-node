@@ -17,7 +17,6 @@ class WatchdogService {
         this.dog.on('reset', async () => {
             const aliveServices = {};
             for (const service of this.services) {
-                // eslint-disable-next-line no-await-in-loop
                 aliveServices[`${service}ServiceAlive`] = await this[`${service}Service`].healthCheck();
             }
 

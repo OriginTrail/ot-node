@@ -163,15 +163,14 @@ class QueryService {
 
         for (const assertion of response) {
             if (!assertion || !assertion.nquads) {
-                // eslint-disable-next-line no-continue
                 continue;
             }
 
             const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
-            // eslint-disable-next-line no-await-in-loop
             const jsonld = await this.dataService.createAssertion(rawNquads);
-            // eslint-disable-next-line max-len
-            let object = handlerData.find((x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0]);
+            let object = handlerData.find(
+                (x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0],
+            );
             if (!object) {
                 object = {
                     type: jsonld.metadata.type,
@@ -264,11 +263,9 @@ class QueryService {
                     }
                 } else {
                     if (!object || !object.nquads) {
-                        // eslint-disable-next-line no-continue
                         continue;
                     }
                     const rawNquads = object.nquads ? object.nquads : object.rdf;
-                    // eslint-disable-next-line no-await-in-loop
                     const assertion = await this.dataService.createAssertion(rawNquads);
 
                     handlerData.push({
