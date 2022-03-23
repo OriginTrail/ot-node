@@ -16,14 +16,16 @@ if (process.env.NODE_ENV !== 'development') {
     process.abort();
 }
 
-
-
 BeforeAll(() => {
 });
 
 Before(function (testCase, done) {
     this.logger = console;
-    //this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
+    // this.logger.log(
+    //     'Starting scenario: ',
+    //     testCase.pickle.name,
+    //     `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`,
+    // );
 
     // Initialize variables
     this.state = {};

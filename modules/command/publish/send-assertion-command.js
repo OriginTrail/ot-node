@@ -155,7 +155,6 @@ class SendAssertionCommand extends Command {
         Object.assign(command, map);
         return command;
     }
-
 }
 
 module.exports = SendAssertionCommand;

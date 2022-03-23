@@ -126,8 +126,15 @@ class QueryService {
             Id_operation: operationId,
         });
 
-        const { query, issuers, types, prefix, limit, handlerId } = request;
-        const response = await this.dataService.searchByQuery(query, { issuers, types, prefix, limit });
+        const {
+            query, issuers, types, prefix, limit, handlerId,
+        } = request;
+        const response = await this.dataService.searchByQuery(
+            query,
+            {
+                issuers, types, prefix, limit,
+            },
+        );
 
         this.logger.emit({
             msg: 'Finished measuring execution of handle search command',
@@ -161,7 +168,9 @@ class QueryService {
 
             const rawNquads = assertion.nquads ? assertion.nquads : assertion.rdf;
             const jsonld = await this.dataService.createAssertion(rawNquads);
-            let object = handlerData.find((x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0])
+            let object = handlerData.find(
+                (x) => x.type === jsonld.metadata.type && x.id === jsonld.metadata.UALs[0],
+            );
             if (!object) {
                 object = {
                     type: jsonld.metadata.type,
@@ -254,7 +263,7 @@ class QueryService {
                     }
                 } else {
                     if (!object || !object.nquads) {
-                        continue
+                        continue;
                     }
                     const rawNquads = object.nquads ? object.nquads : object.rdf;
                     const assertion = await this.dataService.createAssertion(rawNquads);
