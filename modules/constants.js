@@ -42,6 +42,18 @@ exports.SERVICE_API_SLOW_DOWN_DELAY_AFTER = 5;
 exports.SERVICE_API_SLOW_DOWN_DELAY_MILLS = 3 * 1000;
 
 /**
+ * @constant {number} NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS
+ * - Network (Libp2p) rate limit time window in milliseconds
+ */
+exports.NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
+
+/**
+ * @constant {number} NETWORK_API_RATE_LIMIT_MAX_NUMBER
+ * - Network (Libp2p) rate limit max number of requests allowed in the specified time window
+ */
+exports.NETWORK_API_RATE_LIMIT_MAX_NUMBER = 20;
+
+/**
  * @constant {number} DID_PREFIX
  * - DID prefix for graph database
  */
@@ -147,6 +159,8 @@ exports.NETWORK_RESPONSES = {
     FALSE: false,
     ACK: 'ack',
     BUSY: 'busy',
+    BLOCKED: 'blocked',
+    ERROR: 'error',
 };
 
 /**

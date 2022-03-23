@@ -7,14 +7,11 @@ const MPLEX = require('libp2p-mplex');
 const TCP = require('libp2p-tcp');
 const pipe = require('it-pipe');
 const {sha256} = require('multiformats/hashes/sha2');
-const {v1: uuidv1} = require("uuid");
 const PeerId = require("peer-id");
 const fs = require('fs');
-const {time} = require("streaming-iterables");
 const { BufferList } = require('bl')
+const { InMemoryRateLimiter } = require("rolling-rate-limiter");
 const constants = require('../modules/constants');
-
-
 
 const initializationObject = {
     addresses: {
@@ -74,6 +71,10 @@ class Libp2pService {
 
             initializationObject.peerId = this.config.peerId;
             this.workerPool = this.config.workerPool;
+            this.limiter = new InMemoryRateLimiter({
+                interval: constants.NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS,
+                maxInInterval: constants.NETWORK_API_RATE_LIMIT_MAX_NUMBER,
+            });
 
             Libp2p.create(initializationObject).then((node) => {
                 this.node = node;
@@ -155,7 +156,16 @@ class Libp2pService {
         this.node.handle(eventName, async (handlerProps) => {
             const {stream} = handlerProps;
             let timestamp = Date.now();
-
+            this.limiter.limit(handlerProps.connection.remotePeer.toB58String()).then(async (blocked) => {
+                    if (blocked) {
+                        await pipe(
+                            [Buffer.from(JSON.stringify(constants.NETWORK_RESPONSES.BLOCKED))],
+                            stream
+                        );
+                        return;
+                    }
+                }
+            );
             let data = await pipe(
                 stream,
                 async function (source) {
@@ -180,7 +190,7 @@ class Libp2pService {
                     )
                 } else {
                     await pipe(
-                        [constants.NETWORK_RESPONSES.ACK],
+                        [Buffer.from(JSON.stringify(constants.NETWORK_RESPONSES.ACK))],
                         stream
                     )
 
@@ -199,10 +209,9 @@ class Libp2pService {
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
                 await pipe(
-                    [constants.NETWORK_RESPONSES.ACK],
+                    [Buffer.from(JSON.stringify(constants.NETWORK_RESPONSES.ERROR))],
                     stream
-                )
-
+                );
             }
         });
     }
@@ -224,11 +233,18 @@ class Libp2pService {
             },
         )
 
+        // TODO: Remove - Backwards compatibility check with 1.30 and lower
         if(response.toString() === constants.NETWORK_RESPONSES.ACK) {
             return null;
         }
 
-        return JSON.parse(response);
+        const parsedData = await this.workerPool.exec('JSONParse', [response.toString()]);
+        const suppressedResponses = [constants.NETWORK_RESPONSES.ACK, constants.NETWORK_RESPONSES.BLOCKED, constants.NETWORK_RESPONSES.ERROR];
+        if(suppressedResponses.includes(parsedData)) {
+            return null;
+        }
+
+        return parsedData;
     }
 
     healthCheck() {
