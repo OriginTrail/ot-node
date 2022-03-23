@@ -67,12 +67,6 @@ class SubmitProofsCommand extends Command {
             });
         } catch (e) {
             await this.handleError(handlerId, e, constants.ERROR_TYPE.SUBMIT_PROOFS_ERROR, true);
-            this.logger.emit({
-                msg: 'Finished measuring execution of publish command',
-                Event_name: 'publish_end',
-                Operation_name: 'publish',
-                Id_operation: operationId,
-            });
             return Command.empty();
         }
 
