@@ -12,9 +12,13 @@ const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
 class OTNode {
-    constructor(config) {
+    constructor(config, logger) {
         this.initializeConfiguration(config);
-        this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
+        if (logger) {
+            this.logger = logger;
+        } else {
+            this.logger = new Logger(this.config.logLevel, this.config.telemetryHub.enabled);
+        }
     }
 
     async start() {

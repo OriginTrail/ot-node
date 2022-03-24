@@ -3,12 +3,21 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
+const mysql = require('mysql2');
 
 const basename = path.basename(__filename);
 // eslint-disable-next-line import/no-dynamic-require
 const config = require(`${__dirname}/../config/sequelizeConfig`);
 const db = {};
 let sequelize = {};
+
+const connection = mysql.createConnection({
+    host: config.host,
+    port: config.port,
+    user: config.username,
+    password: config.password,
+});
+connection.query(`CREATE DATABASE IF NOT EXISTS \`${config.database}\`;`);
 
 if (config.use_env_variable) {
     sequelize = new Sequelize(process.env[config.use_env_variable], config);
