@@ -165,19 +165,16 @@ class Libp2pService {
         this.node.handle(eventName, async (handlerProps) => {
             const {stream} = handlerProps;
             let timestamp = Date.now();
-            this.limiter.limit(handlerProps.connection.remotePeer.toB58String()).then(async (blocked) => {
-                    if (blocked) {
-                        const preparedBlockedResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.BLOCKED);
-                        await pipe(
-                            [preparedBlockedResponse],
-                            stream
-                        );
-                        requestBlocked = true;
-                        this.logger.info(`Blocking request from ${handlerProps.connection.remotePeer._idB58String}. Max number of requests exceeded.`);
-                        return;
-                    }
-                }
-            );
+            const blocked = await this.limiter.limit(handlerProps.connection.remotePeer.toB58String());
+            if(blocked) {
+                    const preparedBlockedResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.BLOCKED);
+                    await pipe(
+                        [preparedBlockedResponse],
+                        stream
+                    );
+                    this.logger.info(`Blocking request from ${handlerProps.connection.remotePeer._idB58String}. Max number of requests exceeded.`);
+                    return;
+            }
             let data = await pipe(
                 stream,
                 async function (source) {
