@@ -22,14 +22,17 @@ class OtnodeUpdateCommand extends Command {
         }
         try {
             this.logger.info('Checking for new updates...');
-            const { upToDate, currentVersion, remoteVersion } = await this.updater.compareVersions();
+            const {
+                upToDate,
+                currentVersion,
+                remoteVersion,
+            } = await this.updater.compareVersions();
             if (!upToDate) {
                 if (semver.major(currentVersion) < semver.major(remoteVersion)) {
                     this.logger.info(`New major update available. Please run update to version ${remoteVersion} manually.`);
                     return Command.repeat();
-                } else {
-                    await this.updater.autoUpdate();
                 }
+                await this.updater.autoUpdate();
             }
         } catch (e) {
             await this.handleError(e);

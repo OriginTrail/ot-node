@@ -32,7 +32,7 @@ class KadIdentityRanking {
 
         nodes.sort((first_node, second_node) => this.distance(id, first_node._id) - this.distance(id, second_node._id));
         for (const node of nodes) {
-            this.logger.info(`XOR distance between topic ${topic} and node ${node._idB58String}: ` + this.distance(id, node._id));
+            this.logger.info(`XOR distance between topic ${topic} and node ${node._idB58String}: ${this.distance(id, node._id)}`);
         }
 
         return nodes.slice(0, replicationFactor);
