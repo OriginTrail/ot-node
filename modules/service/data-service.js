@@ -1,5 +1,6 @@
 const { v1: uuidv1 } = require('uuid');
 const N3 = require('n3');
+const toobusy = require('toobusy-js');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
@@ -407,7 +408,6 @@ class DataService {
             switch (type) {
             case 'SELECT':
                 result = await this.tripleStoreQueue.push({ operation: 'select', query });
-                result = result.toString();
                 break;
             case 'CONSTRUCT':
                 result = await this.tripleStoreQueue.push({ operation: 'construct', query });
@@ -643,7 +643,7 @@ class DataService {
     }
 
     async handleTripleStoreRequest(args) {
-        if (this.tripleStoreQueue.length() > constants.TRIPLE_STORE_QUEUE_LIMIT) {
+        if (this.getTripleStoreQueueLength() > constants.TRIPLE_STORE_QUEUE_LIMIT) {
             throw new Error('Triple store queue is full');
         }
         const { operation } = args;
@@ -703,7 +703,15 @@ class DataService {
     }
 
     isNodeBusy(busynessLimit) {
-        return this.tripleStoreQueue.length > busynessLimit;
+        const isTripleStoreBusy = this.getTripleStoreQueueLength() > busynessLimit;
+        const isToobusy = toobusy();
+        if (isTripleStoreBusy) {
+            this.logger.info('TripleStore is busy.');
+        }
+        if (isToobusy) {
+            this.logger.info('TripleStore is busy.');
+        }
+        return isToobusy || isTripleStoreBusy;
     }
 }
 

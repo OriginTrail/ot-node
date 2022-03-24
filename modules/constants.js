@@ -51,7 +51,7 @@ exports.NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS = 1 * 60 * 1000;
  * @constant {number} NETWORK_API_RATE_LIMIT_MAX_NUMBER
  * - Network (Libp2p) rate limit max number of requests allowed in the specified time window
  */
-exports.NETWORK_API_RATE_LIMIT_MAX_NUMBER = 20;
+exports.NETWORK_API_RATE_LIMIT_MAX_NUMBER = 10;
 
 /**
  * @constant {number} DID_PREFIX
