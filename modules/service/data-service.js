@@ -1,5 +1,6 @@
 const { v1: uuidv1 } = require('uuid');
 const N3 = require('n3');
+const toobusy = require('toobusy-js');
 const constants = require('../constants');
 const GraphDB = require('../../external/graphdb-service');
 const Blazegraph = require('../../external/blazegraph-service');
@@ -702,7 +703,15 @@ class DataService {
     }
 
     isNodeBusy(busynessLimit) {
-        return this.getTripleStoreQueueLength() > busynessLimit;
+        const isTripleStoreBusy = this.getTripleStoreQueueLength() > busynessLimit;
+        const isToobusy = toobusy();
+        if (isTripleStoreBusy) {
+            this.logger.info('TripleStore is busy.');
+        }
+        if (isToobusy) {
+            this.logger.info('TripleStore is busy.');
+        }
+        return isToobusy || isTripleStoreBusy;
     }
 }
 

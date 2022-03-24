@@ -172,6 +172,8 @@ class Libp2pService {
                             [preparedBlockedResponse],
                             stream
                         );
+                        requestBlocked = true;
+                        this.logger.info(`Blocking request from ${handlerProps.connection.remotePeer._idB58String}. Max number of requests exceeded.`);
                         return;
                     }
                 }
