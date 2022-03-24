@@ -709,7 +709,7 @@ class DataService {
             this.logger.info('TripleStore is busy.');
         }
         if (isToobusy) {
-            this.logger.info('TripleStore is busy.');
+            this.logger.info('Node is busy.');
         }
         return isToobusy || isTripleStoreBusy;
     }
