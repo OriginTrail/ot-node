@@ -23,19 +23,17 @@ exports.createPutRecord = (key, value) => {
     return rec.serialize();
 };
 
-
-
 exports.isArrayOfStrings = (arr) => {
     try {
         const bodyAssets = JSON.parse(arr.toLowerCase());
-        if (!(Array.isArray(bodyAssets)) | !(bodyAssets.length > 0) | !bodyAssets.every(i => (typeof i === "string")) | bodyAssets[0] === "") {
+        if (!(Array.isArray(bodyAssets)) | !(bodyAssets.length > 0) | !bodyAssets.every((i) => (typeof i === 'string')) | bodyAssets[0] === '') {
             return false;
         }
     } catch (e) {
         return false;
     }
     return true;
-}
+};
 
 class Utilities {
 

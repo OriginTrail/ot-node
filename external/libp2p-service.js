@@ -7,14 +7,11 @@ const MPLEX = require('libp2p-mplex');
 const TCP = require('libp2p-tcp');
 const pipe = require('it-pipe');
 const {sha256} = require('multiformats/hashes/sha2');
-const {v1: uuidv1} = require("uuid");
 const PeerId = require("peer-id");
 const fs = require('fs');
-const {time} = require("streaming-iterables");
 const { BufferList } = require('bl')
+const { InMemoryRateLimiter } = require("rolling-rate-limiter");
 const constants = require('../modules/constants');
-
-
 
 const initializationObject = {
     addresses: {
@@ -74,6 +71,10 @@ class Libp2pService {
 
             initializationObject.peerId = this.config.peerId;
             this.workerPool = this.config.workerPool;
+            this.limiter = new InMemoryRateLimiter({
+                interval: constants.NETWORK_API_RATE_LIMIT_TIME_WINDOW_MILLS,
+                maxInInterval: constants.NETWORK_API_RATE_LIMIT_MAX_NUMBER,
+            });
 
             Libp2p.create(initializationObject).then((node) => {
                 this.node = node;
@@ -115,13 +116,13 @@ class Libp2pService {
         // Creates a DHT ID by hashing a given Uint8Array
         const id = (await sha256.digest(encodedKey)).digest;
         const nodes = this.node._dht.peerRouting.getClosestPeers(id);
-        const result = [];
+        const result = new Set();
         for await (const node of nodes) {
-            result.push(node);
+            result.add(node);
         }
-        this.logger.info(`Found ${result.length} nodes`);
+        this.logger.info(`Found ${result.size} nodes`);
 
-        return result;
+        return [...result];
     }
 
     getPeers() {
@@ -144,10 +145,19 @@ class Libp2pService {
         return rec.serialize();
     }
 
+    async prepareForSending(data) {
+        if(constants.NETWORK_RESPONSES[data]) {
+            data = constants.STRINGIFIED_NETWORK_RESPONSES[data];
+        } else {
+            data = await this.workerPool.exec('JSONStringify', [data]);
+        }
+        return Buffer.from(data);
+    }
+
     async handleMessage(eventName, handler, options) {
         this.logger.info(`Enabling network protocol: ${eventName}`);
 
-        let async = false, timeout = 60e3;
+        let async = false, timeout = constants.NETWORK_HANDLER_TIMEOUT;
         if (options) {
             async = options.async;
             timeout = options.timeout;
@@ -155,7 +165,16 @@ class Libp2pService {
         this.node.handle(eventName, async (handlerProps) => {
             const {stream} = handlerProps;
             let timestamp = Date.now();
-
+            const blocked = await this.limiter.limit(handlerProps.connection.remotePeer.toB58String());
+            if(blocked) {
+                    const preparedBlockedResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.BLOCKED);
+                    await pipe(
+                        [preparedBlockedResponse],
+                        stream
+                    );
+                    this.logger.info(`Blocking request from ${handlerProps.connection.remotePeer._idB58String}. Max number of requests exceeded.`);
+                    return;
+            }
             let data = await pipe(
                 stream,
                 async function (source) {
@@ -173,14 +192,15 @@ class Libp2pService {
                 if (!async) {
                     const result = await handler(data);
                     this.logger.info(`Sending response from ${this.config.id} to ${handlerProps.connection.remotePeer._idB58String}: event=${eventName};`);
-                    const stringifiedData = await this.workerPool.exec('JSONStringify', [result]);
+                    const preparedData = await this.prepareForSending(result);
                     await pipe(
-                        [Buffer.from(stringifiedData)],
+                        [Buffer.from(preparedData)],
                         stream,
                     )
                 } else {
+                    const preparedAckResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.ACK);
                     await pipe(
-                        [constants.NETWORK_RESPONSES.ACK],
+                        [preparedAckResponse],
                         stream
                     )
 
@@ -198,11 +218,11 @@ class Libp2pService {
                    msg: `Error: ${e}, stack: ${e.stack} \n Data received: ${stringifiedData}`,
                    Event_name: constants.ERROR_TYPE.LIBP2P_HANDLE_MSG_ERROR,
                 });
+                const preparedErrorResponse = await this.prepareForSending(constants.NETWORK_RESPONSES.ERROR);
                 await pipe(
-                    [constants.NETWORK_RESPONSES.ACK],
+                    [preparedErrorResponse],
                     stream
-                )
-
+                );
             }
         });
     }
@@ -210,9 +230,9 @@ class Libp2pService {
     async sendMessage(eventName, data, peerId) {
         this.logger.info(`Sending message from ${this.config.id} to ${peerId._idB58String}: event=${eventName};`);
         const {stream} = await this.node.dialProtocol(peerId, eventName);
-        const stringifiedData = await this.workerPool.exec('JSONStringify', [data]);
+        const preparedData = await this.prepareForSending(data);
         const response = await pipe(
-            [Buffer.from(stringifiedData)],
+            [Buffer.from(preparedData)],
             stream,
             async function (source) {
                 const bl = new BufferList()
@@ -224,11 +244,18 @@ class Libp2pService {
             },
         )
 
+        // TODO: Remove - Backwards compatibility check with 1.30 and lower
         if(response.toString() === constants.NETWORK_RESPONSES.ACK) {
             return null;
         }
 
-        return JSON.parse(response);
+        const parsedData = await this.workerPool.exec('JSONParse', [response.toString()]);
+        const suppressedResponses = [constants.NETWORK_RESPONSES.ACK, constants.NETWORK_RESPONSES.BLOCKED, constants.NETWORK_RESPONSES.ERROR];
+        if(suppressedResponses.includes(parsedData)) {
+            return null;
+        }
+
+        return parsedData;
     }
 
     healthCheck() {
