@@ -205,7 +205,7 @@ class LocalBlockchain {
         return this.initialized;
     }
 
-    wallets() {
+    getWallets() {
         return wallets;
     }
 
