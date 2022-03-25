@@ -26,8 +26,6 @@ class DkgClientHelper {
             keywords,
             method: 'publish',
             visibility: 'public',
-        }).catch((error) => {
-            console.log(`error publishing dataset. ${error}`);
         });
     }
 
