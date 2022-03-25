@@ -8,6 +8,8 @@ const client = new DkgClient({
     useSSL: false,
 });
 
+exports.info = async () => client.nodeInfo();
+
 exports.provision = async (data, keywords) => client
     ._publishRequest({
         data,
