@@ -55,7 +55,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             } else {
                 // todo if started
                 const client = new DkgClientHelper({
-                    endpoint: 'http://localhost',
+                    endpoint: 'localhost',
                     port: rpcPort,
                     useSSL: false,
                 });
@@ -102,7 +102,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
         } else {
             // todo if started
             const client = new DkgClientHelper({
-                endpoint: 'http://localhost',
+                endpoint: 'localhost',
                 port: 8900,
                 useSSL: false,
             });

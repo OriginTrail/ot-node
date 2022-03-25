@@ -2,11 +2,7 @@ const DkgClient = require('dkg-client');
 
 class DkgClientHelper {
     constructor(config) {
-        this.client = new DkgClient({
-            endpoint: config.host,
-            port: config.port,
-            useSSL: config.useSSL,
-        });
+        this.client = new DkgClient(config);
     }
 
     async info() {
