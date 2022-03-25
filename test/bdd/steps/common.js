@@ -21,6 +21,7 @@ function getBlockchainConfiguration(localBlockchain, privateKey, publicKey) {
 Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
     const wallets = this.state.localBlockchain.getWallets();
+    let nodesStarted = 0;
     for (let i = 0; i < nodeCount; i += 1) {
         const wallet = wallets[i + 1];
         const rpcPort = 8901 + i;
@@ -49,7 +50,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
         const forkedNode = fork(otNodeProcessPath);
         forkedNode.send(JSON.stringify(nodeConfiguration));
 
-        forkedNode.on('message', async (response) => {
+        forkedNode.on('message', (response) => {
             if (response.error) {
                 // todo handle error
             } else {
@@ -64,7 +65,10 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                     forkedNode,
                 });
             }
-            done();
+            nodesStarted += 1;
+            if (nodesStarted === nodeCount) {
+                done();
+            }
         });
     }
 });
