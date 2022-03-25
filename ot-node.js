@@ -63,6 +63,7 @@ class OTNode {
             this.config.blockchain[0].hubContractAddress = configjson[process.env.NODE_ENV]
                 .blockchain[0].hubContractAddress;
         }
+        console.log(this.config);
     }
 
     initializeDependencyContainer() {
