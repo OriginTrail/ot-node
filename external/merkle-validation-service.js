@@ -1,16 +1,13 @@
 const MerkleTools = require('merkle-tools');
 const SHA256 = require('crypto-js/sha256');
 
-// eslint-disable-next-line import/no-extraneous-dependencies
 const elliptic = require('elliptic');
 
-// eslint-disable-next-line new-cap
 const secp256k1 = new elliptic.ec('secp256k1');
 const sha3 = require('js-sha3');
 
 const BytesUtilities = require('./BytesUtilities');
 
-// eslint-disable-next-line no-cond-assign,func-names,no-unsafe-finally,no-undef-init,no-undef
 const _slicedToArray = (function () {
     function sliceIterator(arr, i) {
         const _arr = [];
