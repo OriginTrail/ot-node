@@ -10,3 +10,12 @@ Given(/^I call info route successfully/, { timeout: 120000 }, function (done) {
         done();
     });
 });
+
+Given(/^I call publish route successfully/, { timeout: 120000 }, function (done) {
+    this.logger.log('I call publish route successfully');
+    const apiHelper = new HttpApiHelper();
+    apiHelper.info('http://localhost:8900').then((result) => {
+        assert.equal(result.version.startsWith('6'), true);
+        done();
+    });
+});

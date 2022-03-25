@@ -28,7 +28,6 @@ jobs:
           - 7200:7200
     strategy:
       matrix:
-        #todo update to latest version
         node-version: [16.x]
     steps:
       - uses: actions/checkout@v2

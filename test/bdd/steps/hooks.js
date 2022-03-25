@@ -49,8 +49,8 @@ After(function (testCase, done) {
                 }
             });
         }));
-    this.state.nodes.forEach((node) => (node.kill()));
-    this.state.bootstraps.forEach((node) => (node.kill()));
+    this.state.nodes.forEach((node) => (node.forkedNode.kill()));
+    this.state.bootstraps.forEach((node) => (node.forkedNode.kill()));
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {
             for (const blockchain of this.state.localBlockchain) {

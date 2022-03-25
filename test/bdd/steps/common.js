@@ -1,6 +1,7 @@
 const { Given } = require('@cucumber/cucumber');
 const { expect } = require('chai');
 const { fork } = require('child_process');
+const DkgClientHelper = require('../../utilities/dkg-client-helper');
 
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
 
@@ -22,6 +23,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     const wallets = this.state.localBlockchain.getWallets();
     for (let i = 0; i < nodeCount; i += 1) {
         const wallet = wallets[i + 1];
+        const rpcPort = 8901 + i;
         const nodeConfiguration = {
             graphDatabase: {
                 name: `origintrail-test-${i}`,
@@ -34,7 +36,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
             operationalDb: {
                 databaseName: `operationaldbnode${i}`,
             },
-            rpcPort: 8901 + i,
+            rpcPort,
             network: {
                 id: 'Devnet',
                 port: 9001 + i,
@@ -52,7 +54,15 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 // todo handle error
             } else {
                 // todo if started
-                this.state.nodes.push(forkedNode);
+                const client = new DkgClientHelper({
+                    endpoint: 'http://localhost',
+                    port: rpcPort,
+                    useSSL: false,
+                });
+                this.state.nodes.push({
+                    client,
+                    forkedNode,
+                });
             }
             done();
         });
@@ -91,7 +101,15 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             // todo handle error
         } else {
             // todo if started
-            this.state.bootstraps.push(forkedNode);
+            const client = new DkgClientHelper({
+                endpoint: 'http://localhost',
+                port: 8900,
+                useSSL: false,
+            });
+            this.state.bootstraps.push({
+                client,
+                forkedNode,
+            });
         }
         done();
     });
