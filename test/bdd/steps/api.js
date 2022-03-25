@@ -1,5 +1,6 @@
 const { Given } = require('@cucumber/cucumber');
 const assert = require('assert');
+const utilities = require('../../utilities/utilities');
 
 Given(/^I call info route successfully on node (\d+)/, { timeout: 120000 }, function (node, done) {
     // todo validate node number
@@ -10,11 +11,13 @@ Given(/^I call info route successfully on node (\d+)/, { timeout: 120000 }, func
     });
 });
 
-Given(/^I call publish route successfully on node (\d+) with keyword: */, { timeout: 120000 }, function (node, done) {
+Given(/^I call publish route successfully on node (\d+) with keyword:*$/, { timeout: 120000 }, function (node, keywords, done) {
     this.logger.log('I call publish route successfully');
-    this.state.nodes[node - 1].client.publish().then((result) => {
-        // do something with result
-        console.log(result);
-        done();
-    });
+    console.log(utilities.unpackRawTableToArray(keywords));
+    done();
+    // this.state.nodes[node - 1].client.publish().then((result) => {
+    //     // do something with result
+    //     console.log(result);
+    //     done();
+    // });
 });
