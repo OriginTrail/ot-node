@@ -7,7 +7,6 @@ const queue = require('fastq');
 const DependencyInjection = require('./modules/service/dependency-injection');
 const Logger = require('./modules/logger/logger');
 const constants = require('./modules/constants');
-const db = require('./models');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
@@ -37,6 +36,7 @@ class OTNode {
         this.initializeDependencyContainer();
         await this.initializeAutoUpdate();
         await this.initializeDataModule();
+        await this.initializeOperationalDbModule();
         await this.initializeValidationModule();
         await this.initializeBlockchainModule();
         await this.initializeNetworkModule();
@@ -111,11 +111,24 @@ class OTNode {
             const dataService = this.container.resolve('dataService');
             await dataService.initialize();
             this.logger.info(`Data module: ${dataService.getName()} implementation`);
-            db.sequelize.sync();
         } catch (e) {
             this.logger.error({
                 msg: `Data module initialization failed. Error message: ${e.message}`,
                 Event_name: constants.ERROR_TYPE.DATA_MODULE_INITIALIZATION_ERROR,
+            });
+        }
+    }
+
+    async initializeOperationalDbModule() {
+        try {
+            this.logger.info('Operational database module: sequelize implementation');
+            // eslint-disable-next-line global-require
+            const db = require('./models');
+            await db.sequelize.sync();
+        } catch (e) {
+            this.logger.error({
+                msg: `Operational database module initialization failed. Error message: ${e.message}`,
+                Event_name: constants.ERROR_TYPE.OPERATIONALDB_MODULE_INITIALIZATION_ERROR,
             });
         }
     }

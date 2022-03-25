@@ -10,6 +10,7 @@ const basename = path.basename(__filename);
 const config = require(`${__dirname}/../config/sequelizeConfig`);
 const db = {};
 let sequelize = {};
+const OPERATIONAL_DB_NAME = process.env.OPERATIONAL_DB_NAME || 'operationaldb';
 
 const connection = mysql.createConnection({
     host: config.host,
@@ -17,12 +18,12 @@ const connection = mysql.createConnection({
     user: config.username,
     password: config.password,
 });
-connection.query(`CREATE DATABASE IF NOT EXISTS \`${config.database}\`;`);
+connection.query(`CREATE DATABASE IF NOT EXISTS \`${OPERATIONAL_DB_NAME}\`;`);
 
 if (config.use_env_variable) {
     sequelize = new Sequelize(process.env[config.use_env_variable], config);
 } else {
-    sequelize = new Sequelize(config.database, config.username, config.password, config);
+    sequelize = new Sequelize(OPERATIONAL_DB_NAME, config.username, config.password, config);
 }
 
 fs

@@ -38,6 +38,9 @@
       "enabled": false,
       "packages": ["ot-telemetry-collector"],
       "url": ""
+    },
+    "operationalDb": {
+      "databaseName": "operationaldb"
     }
   },
   "testnet": {
@@ -83,6 +86,9 @@
       "enabled": true,
       "packages": ["ot-telemetry-collector"],
       "url": "https://polaris.delta.origin-trail.network/metrics/"
+    },
+    "operationalDb": {
+      "databaseName": "operationaldb"
     }
   },
   "mainnet": {
@@ -115,6 +121,9 @@
       "enabled": false,
       "packages": ["ot-telemetry-collector"],
       "url": ""
+    },
+    "operationalDb": {
+      "databaseName": "operationaldb"
     }
   }
 }

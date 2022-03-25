@@ -1,29 +1,19 @@
-/* eslint-disable prefer-arrow-callback */
 require('dotenv').config();
-const rc = require('rc');
-const { forEach } = require('p-iteration');
 const {
     Before, BeforeAll, After, AfterAll,
 } = require('@cucumber/cucumber');
-
-const defaultConfig = require('../../../config/config.json').development;
-const pjson = require('../../../package.json');
-
-const config = rc(pjson.name, defaultConfig);
 
 if (process.env.NODE_ENV !== 'development') {
     console.error('This process requires to run in "development" environment. Please change NODE_ENV.');
     process.abort();
 }
 
-
-
 BeforeAll(() => {
 });
 
 Before(function (testCase, done) {
     this.logger = console;
-    //this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
+    // this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
     // Initialize variables
     this.state = {};
     this.state.localBlockchain = null;
@@ -59,8 +49,8 @@ After(function (testCase, done) {
                 }
             });
         }));
-    this.state.nodes.forEach((node) => (node.stop()));
-    this.state.bootstraps.forEach((node) => (node.isRunning && node.stop()));
+    this.state.nodes.forEach((node) => (node.kill()));
+    this.state.bootstraps.forEach((node) => (node.kill()));
     if (this.state.localBlockchain) {
         if (Array.isArray(this.state.localBlockchain)) {
             for (const blockchain of this.state.localBlockchain) {
@@ -86,8 +76,8 @@ After(function (testCase, done) {
     });
 });
 
-AfterAll(async function () {
-    // Delete database data
+AfterAll(async () => {
+    // todo Delete database data
 });
 
 process.on('unhandledRejection', (reason, p) => {
