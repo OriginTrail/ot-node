@@ -4,7 +4,7 @@ const { fork } = require('child_process');
 
 const otNodeProcessPath = './test/bdd/steps/lib/ot-node-process.js';
 
-function getBlockchainConfiguration(localBlockchain) {
+function getBlockchainConfiguration(localBlockchain, privateKey, publicKey) {
     return [{
         blockchainTitle: 'ganache',
         networkId: 'ganache::testnet',
@@ -12,21 +12,25 @@ function getBlockchainConfiguration(localBlockchain) {
             'http://localhost:7545',
         ],
         hubContractAddress: localBlockchain.dkgContractAddress(),
-        publicKey: '',
-        privateKey: '',
+        publicKey,
+        privateKey,
     }];
 }
 
 Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     this.logger.log(`I setup ${nodeCount} node${nodeCount !== 1 ? 's' : ''}`);
-
-    const promises = [];
+    const wallets = this.state.localBlockchain.getWallets();
     for (let i = 0; i < nodeCount; i += 1) {
+        const wallet = wallets[i + 1];
         const nodeConfiguration = {
             graphDatabase: {
                 name: `origintrail-test-${i}`,
             },
-            blockchain: getBlockchainConfiguration(this.state.localBlockchain),
+            blockchain: getBlockchainConfiguration(
+                this.state.localBlockchain,
+                wallet.privateKey,
+                wallet.address,
+            ),
             operationalDb: {
                 databaseName: `operationaldbnode${i}`,
             },
@@ -59,11 +63,16 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
     console.log('Initializing bootstrap node');
+    const wallets = this.state.localBlockchain.getWallets();
     const bootstrapNodeConfiguration = {
         graphDatabase: {
             name: 'origintrail-test-bootstrap',
         },
-        blockchain: getBlockchainConfiguration(this.state.localBlockchain),
+        blockchain: getBlockchainConfiguration(
+            this.state.localBlockchain,
+            wallets[0].privateKey,
+            wallets[0].address,
+        ),
         operationalDb: {
             databaseName: 'operationaldbbootstrap',
         },
